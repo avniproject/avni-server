@@ -20,7 +20,7 @@ public class ConceptDirtyCheckingIntegrationTest extends AbstractControllerInteg
     private ConceptRepository conceptRepository;
 
     private void post(Object json) {
-        super.post("/concepts", json);
+        super.post("/concepts/bulk", json);
     }
 
     @Before

@@ -42,7 +42,7 @@ public class Concept extends OrganisationAwareEntity {
 
     private Boolean active;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept", orphanRemoval = true)
     @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Set<ConceptAnswer> conceptAnswers = new HashSet<>();
 
@@ -150,6 +150,14 @@ public class Concept extends OrganisationAwareEntity {
                 .orElse(null);
     }
 
+    public ConceptAnswer findConceptAnswerByConceptUUIDOrName(String answerConceptUUID, String name) {
+        return this.getConceptAnswers().stream()
+                .filter(x -> x.getAnswerConcept().getUuid().equals(answerConceptUUID) ||
+                        x.getAnswerConcept().getName().equalsIgnoreCase(name))
+                .findAny()
+                .orElse(null);
+    }
+
     public void addAnswer(ConceptAnswer conceptAnswer) {
         conceptAnswer.setConcept(this);
         this.getConceptAnswers().add(conceptAnswer);
@@ -253,5 +261,9 @@ public class Concept extends OrganisationAwareEntity {
 
     public void setMediaType(String mediaType) {
         this.mediaType = mediaType;
+    }
+
+    public void removeAnswer(ConceptAnswer conceptAnswer) {
+        this.conceptAnswers.remove(conceptAnswer);
     }
 }

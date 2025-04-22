@@ -10,7 +10,6 @@ import org.avni.server.application.ValueType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.*;
-import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.*;
 import org.avni.server.web.api.ApiRequestContextHolder;
 import org.avni.server.web.request.ConceptContract;
@@ -18,7 +17,6 @@ import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
 import org.avni.server.web.request.application.FormUsageContract;
 import org.avni.server.web.response.Response;
-import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,8 +70,11 @@ public class ConceptService implements NonScopeAwareService {
         return jsonMap;
     }
 
-    private Concept fetchOrCreateConcept(String uuid) {
+    private Concept fetchOrCreateConcept(String uuid, String name) {
         Concept concept = conceptRepository.findByUuid(uuid);
+        if (concept == null && StringUtils.hasText(name)) {
+            concept = conceptRepository.findByName(name.trim());
+        }
         if (concept == null) {
             concept = createConcept(uuid);
         }
@@ -82,7 +83,7 @@ public class ConceptService implements NonScopeAwareService {
 
     private Concept createConcept(String uuid) {
         Concept concept = new Concept();
-        concept.setUuid(uuid);
+        concept.assignUUID(uuid);
         return concept;
     }
 
@@ -91,28 +92,14 @@ public class ConceptService implements NonScopeAwareService {
         return concept != null && !concept.getUuid().equals(conceptRequest.getUuid());
     }
 
-    private ConceptAnswer fetchOrCreateConceptAnswer(Concept concept, ConceptContract answerConceptRequest, double answerOrder) throws AnswerConceptNotFoundException {
-        if (StringUtils.isEmpty(answerConceptRequest.getUuid())) {
-            throw new ValidationException("UUID missing for answer");
-        }
-        ConceptAnswer conceptAnswer = concept.findConceptAnswerByConceptUUID(answerConceptRequest.getUuid());
-        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+    private ConceptAnswer fetchOrCreateConceptAnswer(Concept concept, ConceptContract answerConceptRequest, double answerOrder) {
+        ConceptAnswer conceptAnswer = concept.findConceptAnswerByConceptUUIDOrName(answerConceptRequest.getUuid(), answerConceptRequest.getName());
         if (conceptAnswer == null) {
             conceptAnswer = new ConceptAnswer();
             conceptAnswer.assignUUID();
         }
-        Concept answerConcept = conceptRepository.findByUuid(answerConceptRequest.getUuid());
-        if (answerConcept == null) {
-            String message = String.format("Answer concept not found for UUID:%s", answerConceptRequest.getUuid());
-            logger.error(message);
-            throw new AnswerConceptNotFoundException(message);
-        }
-        updateOrganisationIfNeeded(conceptAnswer, answerConceptRequest);
-        if (!conceptAnswer.editableBy(organisation.getId())) {
-            return conceptAnswer;
-        }
+        Concept answerConcept = conceptRepository.findByUuidOrName(answerConceptRequest.getUuid(), answerConceptRequest.getName());
         conceptAnswer.setAnswerConcept(answerConcept);
-//        conceptAnswer.setAnswerConcept(map(answerConceptRequest));
         conceptAnswer.setVoided(answerConceptRequest.isVoided());
         Double providedOrder = answerConceptRequest.getOrder();
         conceptAnswer.setOrder(providedOrder == null ? answerOrder : providedOrder);
@@ -121,7 +108,8 @@ public class ConceptService implements NonScopeAwareService {
         return conceptAnswer;
     }
 
-    private void createCodedConcept(Concept concept, ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
+    private void createCodedConcept(Concept concept, ConceptContract conceptRequest) {
+        Set<ConceptAnswer> existingAnswers = concept.getConceptAnswers();
         List<ConceptContract> answers = (List<ConceptContract>) O.coalesce(conceptRequest.getAnswers(), new ArrayList<>());
         AtomicInteger index = new AtomicInteger(0);
         List<ConceptAnswer> conceptAnswers = new ArrayList<>();
@@ -130,15 +118,21 @@ public class ConceptService implements NonScopeAwareService {
             conceptAnswers.add(conceptAnswer);
         }
         concept.addAll(conceptAnswers);
+        // clone existing answers to new list
+        List<ConceptAnswer> existingAnswersList = new ArrayList<>(existingAnswers);
+        existingAnswersList.forEach(existingAnswer -> {
+            if (!conceptAnswers.contains(existingAnswer)) {
+                concept.removeAnswer(existingAnswer);
+            }
+        });
     }
 
-    private Concept createNumericConcept(Concept concept, ConceptContract conceptRequest) {
+    private void setRangeValues(Concept concept, ConceptContract conceptRequest) {
         concept.setHighAbsolute(conceptRequest.getHighAbsolute());
         concept.setLowAbsolute(conceptRequest.getLowAbsolute());
         concept.setHighNormal(conceptRequest.getHighNormal());
         concept.setLowNormal(conceptRequest.getLowNormal());
         concept.setUnit(conceptRequest.getUnit());
-        return concept;
     }
 
     private String getImpliedDataType(ConceptContract conceptContract, Concept concept) {
@@ -148,49 +142,36 @@ public class ConceptService implements NonScopeAwareService {
         return conceptContract.getDataType();
     }
 
-    private Concept map(@NotNull ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
-        Concept concept = fetchOrCreateConcept(conceptRequest.getUuid());
-
-        concept.setName(conceptRequest.getName() != null ? conceptRequest.getName() : concept.getName());
+    private Concept map(@NotNull ConceptContract conceptRequest, boolean createAnswers) {
+        Concept concept = fetchOrCreateConcept(conceptRequest.getUuid(), conceptRequest.getName());
+        concept.setName(conceptRequest.getName());
         String impliedDataType = getImpliedDataType(conceptRequest, concept);
         concept.setDataType(impliedDataType);
         concept.setVoided(conceptRequest.isVoided());
         concept.setActive(conceptRequest.getActive());
         concept.setKeyValues(conceptRequest.getKeyValues());
-        updateOrganisationIfNeeded(concept, conceptRequest);
         concept.updateAudit();
         switch (ConceptDataType.valueOf(impliedDataType)) {
             case Coded:
-                createCodedConcept(concept, conceptRequest);
+                if (createAnswers)
+                    createCodedConcept(concept, conceptRequest);
                 break;
             case Numeric:
-                createNumericConcept(concept, conceptRequest);
+                setRangeValues(concept, conceptRequest);
                 break;
         }
         return concept;
     }
 
-    private <OAE extends OrganisationAwareEntity> OAE updateOrganisationIfNeeded(@NotNull OAE entity, @NotNull ConceptContract conceptRequest) {
-        String organisationUuid = conceptRequest.getOrganisationUUID();
-        Organisation organisation = organisationRepository.findByUuid(organisationUuid);
-        if (organisationUuid != null && organisation == null) {
-            throw new RuntimeException(String.format("Organisation not found with uuid :'%s'", organisationUuid));
-        }
-        if (organisation != null) {
-            entity.setOrganisationId(organisation.getId());
-        }
-        return entity;
-    }
-
-    private Concept saveOrUpdate(ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
+    private Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers) {
         if (conceptRequest == null) return null;
-        if (conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
+        if (StringUtils.hasText(conceptRequest.getName()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
         logger.info(String.format("Creating concept: %s", conceptRequest));
 
         addToMigrationIfRequired(conceptRequest);
-        Concept concept = map(conceptRequest);
+        Concept concept = map(conceptRequest, createAnswers);
         return conceptRepository.save(concept);
     }
 
@@ -211,33 +192,20 @@ public class ConceptService implements NonScopeAwareService {
         }
     }
 
-    public void saveOrUpdateConcepts(List<ConceptContract> conceptRequests) {
-        List<ConceptContract> failedDueToAnswerConceptNotFound = new ArrayList<>();
-        for (ConceptContract conceptRequest : conceptRequests) {
-            try {
-                saveOrUpdate(conceptRequest);
-            } catch (AnswerConceptNotFoundException answerConceptNotFoundException) {
-                failedDueToAnswerConceptNotFound.add(conceptRequest);
+    public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests) {
+        for (ConceptContract conceptContract : conceptRequests) {
+            Concept concept = this.conceptRepository.findByUuidOrName(conceptContract.getUuid(), conceptContract.getName());
+            if (concept == null) {
+                saveOrUpdate(conceptContract, false);
             }
         }
 
-        //Retry
-        for (ConceptContract conceptRequest : failedDueToAnswerConceptNotFound) {
-            List<ConceptContract> requestAnswers = conceptRequest.getAnswers();
-            try {
-                for (ConceptContract requestAnswer : requestAnswers) {
-                    Optional<ConceptContract> answerConcept = failedDueToAnswerConceptNotFound.stream()
-                            .filter(conceptContract -> conceptContract.getUuid().equals(requestAnswer.getUuid()))
-                            .findFirst();
-                    if (answerConcept.isPresent()) {
-                        saveOrUpdate(answerConcept.get());
-                    }
-                }
-                saveOrUpdate(conceptRequest);
-            } catch (AnswerConceptNotFoundException answerConceptNotFoundException) {
-                throw new ValidationException(answerConceptNotFoundException.getMessage(), answerConceptNotFoundException);
-            }
+        List<String> savedConceptUuids = new ArrayList<>();
+        for (ConceptContract conceptRequest : conceptRequests) {
+            Concept concept = saveOrUpdate(conceptRequest, true);
+            savedConceptUuids.add(concept.getUuid());
         }
+        return savedConceptUuids;
     }
 
     public Concept get(String uuid) {
@@ -259,7 +227,7 @@ public class ConceptService implements NonScopeAwareService {
      */
     public Object getObservationValue(Concept questionConcept, Object value) {
         if (questionConcept.getDataType().equals(ConceptDataType.Date.toString())) {
-            return ApiRequestContextHolder.isVersionGreaterThan(1)?  DateTimeUtil.toDateString((String) value): value;
+            return ApiRequestContextHolder.isVersionGreaterThan(1) ? DateTimeUtil.toDateString((String) value) : value;
         }
 
         if (Arrays.asList(ConceptDataType.Audio, ConceptDataType.Id, ConceptDataType.Encounter, ConceptDataType.DateTime,
@@ -386,20 +354,28 @@ public class ConceptService implements NonScopeAwareService {
 
     public String getAllowedValuesForSyncConcept(Concept concept) {
         switch (ConceptDataType.valueOf(concept.getDataType())) {
-            case Numeric: return STRING_CONSTANT_ANY_NUMBER;
-            case Text: return STRING_CONSTANT_ANY_TEXT;
-            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
-                    .collect(Collectors.joining(STRING_CONSTANT_DELIMITER, STRING_CONSTANT_PREFIX, STRING_CONSTANT_SUFFIX));
-            default: return String.format("Appropriate value for a %s type concept", concept.getDataType());
+            case Numeric:
+                return STRING_CONSTANT_ANY_NUMBER;
+            case Text:
+                return STRING_CONSTANT_ANY_TEXT;
+            case Coded:
+                return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
+                        .collect(Collectors.joining(STRING_CONSTANT_DELIMITER, STRING_CONSTANT_PREFIX, STRING_CONSTANT_SUFFIX));
+            default:
+                return String.format("Appropriate value for a %s type concept", concept.getDataType());
         }
     }
 
     public String getExampleValuesForSyncConcept(Concept concept) {
         switch (ConceptDataType.valueOf(concept.getDataType())) {
-            case Numeric: return STRING_CONSTANT_EXAMPLE_NUMBER;
-            case Text: return STRING_CONSTANT_EXAMPLE_TEXT;
-            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName()).findAny().get();
-            default: return EMPTY_STRING;
+            case Numeric:
+                return STRING_CONSTANT_EXAMPLE_NUMBER;
+            case Text:
+                return STRING_CONSTANT_EXAMPLE_TEXT;
+            case Coded:
+                return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName()).findAny().get();
+            default:
+                return EMPTY_STRING;
         }
     }
 }

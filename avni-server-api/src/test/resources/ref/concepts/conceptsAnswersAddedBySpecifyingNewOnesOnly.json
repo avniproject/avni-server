@@ -26,15 +26,5 @@
     "name": "New Child",
     "uuid": "e1d2e945-9678-4bb4-b103-9426c2389288",
     "dataType": "NA"
-  },
-  {
-    "name": "Parent",
-    "uuid": "d76927d0-a0b9-4cb0-be29-12508275036e",
-    "dataType": "Coded",
-    "answers": [
-      {
-        "uuid": "e1d2e945-9678-4bb4-b103-9426c2389288"
-      }
-    ]
   }
 ]
