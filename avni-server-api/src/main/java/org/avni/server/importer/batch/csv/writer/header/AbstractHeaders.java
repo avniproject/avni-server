@@ -37,6 +37,12 @@ public abstract class AbstractHeaders implements HeaderCreator {
         throw new UnsupportedOperationException("Use getAllHeaders(formMapping, Mode) with runtime data instead");
     }
 
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Mode mode) {
+        return buildFields(formMapping, mode).stream()
+                .filter(HeaderField::isMandatory).map(HeaderField::getHeader)
+                .toArray(String[]::new);
+    }
+
     @Override
     public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
         return buildFields(formMapping, mode).stream()

@@ -28,54 +28,18 @@ public class TestFormService {
     }
 
     public FormMapping createEnrolmentForm(SubjectType subjectType, Program program, String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames) {
-        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.ProgramEnrolment, null, null);
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.ProgramEnrolment, null, null, null, null);
         FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withProgram(program).withUuid(UUID.randomUUID().toString()).withForm(form).build();
         return formMappingRepository.save(formMapping);
     }
 
-    public FormMapping createRegistrationForm(SubjectType subjectType, String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, Concept questionGroupConcept, List<Concept> childQGConcepts) {
-        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.IndividualProfile, questionGroupConcept, childQGConcepts);
+    public FormMapping createRegistrationForm(SubjectType subjectType, String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, Concept questionGroupConcept, List<Concept> childQGConcepts, Concept repeatableQuestionGroupConcept, List<Concept> childRQGConcepts) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.IndividualProfile, questionGroupConcept, childQGConcepts, repeatableQuestionGroupConcept, childRQGConcepts);
         FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withUuid(UUID.randomUUID().toString()).withForm(form).build();
         return formMappingRepository.save(formMapping);
     }
 
-//    private Form createForm(String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, FormType formType) {
-//        Form form = new TestFormBuilder().withName(formName).withFormType(formType).withUuid(UUID.randomUUID().toString()).build();
-//        form = formRepository.save(form);
-//
-//        FormElementGroup formElementGroup = new TestFormElementGroupBuilder().withName("Default").withUuid(UUID.randomUUID().toString()).withDisplayOrder(1d).build();
-//        formElementGroup.setForm(form);
-//        form.addFormElementGroup(formElementGroup);
-//
-//        double i = 1;
-//        for (String conceptName : singleSelectedConceptNames) {
-//            Concept concept = conceptRepository.findByName(conceptName);
-//            new TestFormElementBuilder()
-//                    .withUuid(UUID.randomUUID().toString())
-//                    .withName(conceptName)
-//                    .withConcept(concept)
-//                    .withType(FormElementType.SingleSelect)
-//                    .withDisplayOrder(i++)
-//                    .withFormElementGroup(formElementGroup)
-//                    .withMandatory(true)
-//                    .build();
-//        }
-//        for (String conceptName : multiSelectedConceptNames) {
-//            Concept concept = conceptRepository.findByName(conceptName);
-//            new TestFormElementBuilder()
-//                    .withUuid(UUID.randomUUID().toString())
-//                    .withName(conceptName)
-//                    .withConcept(concept)
-//                    .withType(FormElementType.MultiSelect)
-//                    .withDisplayOrder(i++)
-//                    .withFormElementGroup(formElementGroup)
-//                    .build();
-//        }
-//        formRepository.save(form);
-//        return form;
-//    }
-
-    private Form createForm(String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, FormType formType, Concept questionGroupConcept, List<Concept> qgChildConcepts) {
+    private Form createForm(String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, FormType formType, Concept questionGroupConcept, List<Concept> qgChildConcepts, Concept repeatableQuestionGroupConcept, List<Concept> childRQGConcepts) {
         Form form = new TestFormBuilder().withName(formName).withFormType(formType).withUuid(UUID.randomUUID().toString()).build();
         form = formRepository.save(form);
 
@@ -128,6 +92,31 @@ public class TestFormService {
                         .withDisplayOrder(i++)
                         .withQuestionGroupElement(qgFE)
                         .withMandatory(true)
+                        .build();
+            }
+        }
+
+        if (repeatableQuestionGroupConcept != null) {
+            FormElement rqgFE = new TestFormElementBuilder()
+                    .withUuid(UUID.randomUUID().toString())
+                    .withName(repeatableQuestionGroupConcept.getName())
+                    .withConcept(repeatableQuestionGroupConcept)
+                    .withFormElementGroup(formElementGroup)
+                    .withType(FormElementType.SingleSelect)
+                    .withDisplayOrder(i++)
+                    .withRepeatable(true)
+                    .build();
+
+            for (Concept rqgChildConcept : childRQGConcepts) {
+                new TestFormElementBuilder()
+                        .withUuid(UUID.randomUUID().toString())
+                        .withName(rqgChildConcept.getName())
+                        .withConcept(rqgChildConcept)
+                        .withFormElementGroup(formElementGroup)
+                        .withType(FormElementType.SingleSelect)
+                        .withDisplayOrder(i++)
+                        .withQuestionGroupElement(rqgFE)
+                        .withMandatory(false)
                         .build();
             }
         }

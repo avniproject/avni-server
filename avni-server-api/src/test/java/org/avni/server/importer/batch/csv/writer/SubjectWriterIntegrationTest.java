@@ -362,11 +362,18 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         List<Concept> childQGConcepts = new ArrayList<>();
         childQGConcepts.add(testConceptService.createConcept("QG Numeric Concept", ConceptDataType.Numeric));
         childQGConcepts.add(testConceptService.createConcept("QG Text Concept", ConceptDataType.Text));
+
+        Concept repeatableQuestionGroupConcept = testConceptService.createConcept("Repeatable QuestionGroup Concept", ConceptDataType.QuestionGroup);
+        List<Concept> childRQGConcepts = new ArrayList<>();
+        childRQGConcepts.add(testConceptService.createConcept("RQG Numeric Concept", ConceptDataType.Numeric));
+        childRQGConcepts.add(testConceptService.createConcept("RQG Text Concept", ConceptDataType.Text));
         FormMapping registrationFormMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
                 singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
                 multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
                 questionGroupConcept,
-                childQGConcepts);
+                childQGConcepts,
+                repeatableQuestionGroupConcept,
+                childRQGConcepts);
         testFormService.addDecisionConcepts(registrationFormMapping.getForm().getId(), multiSelectDecisionCoded);
 
         AddressLevel bihar = testLocationService

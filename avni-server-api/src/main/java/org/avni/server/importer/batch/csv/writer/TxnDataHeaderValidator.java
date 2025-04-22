@@ -22,12 +22,18 @@ public class TxnDataHeaderValidator {
         List<String> providedIntendedHeaders = new ArrayList<>(headerList);
 
         String[] expectedHeaders = headerCreator.getAllHeaders(formMapping, mode);
+        String[] expectedMandatoryHeaders = headerCreator.getAllMandatoryHeaders(formMapping, mode);
         String[] expectedIntendedHeaders = Arrays.stream(expectedHeaders)
                 .map(String::trim)
                 .map(String::toLowerCase)
                 .map(S::unDoubleQuote)
                 .toArray(String[]::new);
-        checkForMissingHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));
+        String [] expectedIntendedMandatoryHeaders = Arrays.stream(expectedMandatoryHeaders)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .map(S::unDoubleQuote)
+                .toArray(String[]::new);
+        checkForMissingHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedMandatoryHeaders));
         checkForUnknownHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders), mode);
         checkForDuplicateHeaders(providedIntendedHeaders, allErrorMsgs);
         if (!allErrorMsgs.isEmpty()) {

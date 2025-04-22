@@ -26,6 +26,11 @@ public class GroupMemberHeaders implements HeaderCreator {
     }
 
     @Override
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Mode mode) {
+        return getAllHeaders(formMapping, mode);
+    }
+
+    @Override
     public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         return new String[0];
     }

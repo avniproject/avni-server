@@ -32,6 +32,11 @@ public class LocationHeaderCreator implements HeaderCreator {
     }
 
     @Override
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Mode mode) {
+        return getAllHeaders();
+    }
+
+    @Override
     public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAll();
         ArrayList<String> allKnownNonConceptHeaders = locationTypes.stream().map(AddressLevelType::getName).collect(Collectors.toCollection(ArrayList::new));
