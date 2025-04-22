@@ -12,7 +12,7 @@ public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCr
     public static final String ID = "Id from previous system";
     public static final String ENCOUNTER_TYPE_HEADER = "Encounter Type";
     public static final String PROGRAM_ENROLMENT_ID = "Program Enrolment Id";
-    public static final String PREVIOUS_SYSTEM_PROGRAM_ENROLMENT_ID = "Program Enrolment Id from previous system";
+    public static final String SUBJECT_ID = "Subject Id";
     public static final String VISIT_DATE = "Visit Date";
     public static final String EARLIEST_VISIT_DATE = "Earliest Visit Date";
     public static final String MAX_VISIT_DATE = "Max Visit Date";

@@ -6,6 +6,7 @@ import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EntityApprovalStatus;
+import org.avni.server.domain.Individual;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
@@ -28,7 +29,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Component
 public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final EncounterRepository encounterRepository;
@@ -43,6 +43,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
     private final EncounterHeaderStrategyFactory strategyFactory;
     private final UserService userService;
+    private final SubjectCreator subjectCreator;
 
     @Autowired
     public EncounterWriter(EncounterRepository encounterRepository,
@@ -55,7 +56,10 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
                            ObservationCreator observationCreator,
                            EncounterService encounterService,
                            EntityApprovalStatusWriter entityApprovalStatusWriter,
-                           OrganisationConfigService organisationConfigService, EncounterHeaderStrategyFactory strategyFactory, UserService userService) {
+                           OrganisationConfigService organisationConfigService,
+                           EncounterHeaderStrategyFactory strategyFactory,
+                           UserService userService,
+                           SubjectCreator subjectCreator) {
         super(organisationConfigService);
         this.encounterRepository = encounterRepository;
         this.basicEncounterCreator = basicEncounterCreator;
@@ -69,6 +73,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.strategyFactory = strategyFactory;
         this.userService = userService;
+        this.subjectCreator = subjectCreator;
     }
 
     @Override
@@ -87,12 +92,14 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         }
         Encounter encounter = getOrCreateEncounter(row);
         basicEncounterCreator.updateEncounter(row, encounter, allErrorMsgs);
-        encounter.setVoided(false);
-        encounter.assignUUIDIfRequired();
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(null, null, encounter.getEncounterType().getUuid(), FormType.Encounter);
-        if (formMapping == null) {
-            throw new Exception(String.format("No form found for the encounter type %s", encounter.getEncounterType().getName()));
+
+        String subjectId = row.get(EncounterHeadersCreator.SUBJECT_ID);
+        Individual subject = subjectCreator.getSubject(subjectId, allErrorMsgs, EncounterHeadersCreator.SUBJECT_ID);
+        if (subject == null) {
+            ValidationUtil.handleErrors(allErrorMsgs);
+            return;
         }
+        encounter.setIndividual(subject);
 
         boolean isScheduledVisit = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE) != null;
         LocalDate encounterDate;
@@ -130,6 +137,11 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
 
         ValidationUtil.handleErrors(allErrorMsgs);
 
+        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(subject.getSubjectType().getUuid(), null, encounter.getEncounterType().getUuid(), FormType.Encounter);
+        if (formMapping == null) {
+            throw new Exception(String.format("No form found for the encounter type %s", encounter.getEncounterType().getName()));
+        }
+
         Encounter savedEncounter;
 
         if (skipRuleExecution()) {
@@ -141,9 +153,9 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
             UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), encounter, allErrorMsgs);
             encounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
             decisionCreator.addEncounterDecisions(encounter.getObservations(), ruleResponse.getDecisions());
-            decisionCreator.addRegistrationDecisions(null, ruleResponse.getDecisions());
+            decisionCreator.addRegistrationDecisions(subject.getObservations(), ruleResponse.getDecisions());
             savedEncounter = encounterService.save(encounter);
-            visitCreator.saveScheduledVisits(formMapping.getType(), null, null, ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
+            visitCreator.saveScheduledVisits(formMapping.getType(), subject.getUuid(), null, ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
         }
         entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.Encounter, savedEncounter.getEncounterType().getUuid());
     }
