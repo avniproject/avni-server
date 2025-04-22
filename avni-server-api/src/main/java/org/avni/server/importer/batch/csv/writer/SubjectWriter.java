@@ -7,7 +7,10 @@ import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
-import org.avni.server.importer.batch.csv.creator.*;
+import org.avni.server.importer.batch.csv.creator.AddressLevelCreator;
+import org.avni.server.importer.batch.csv.creator.LocationCreator;
+import org.avni.server.importer.batch.csv.creator.ObservationCreator;
+import org.avni.server.importer.batch.csv.creator.SubjectTypeCreator;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
@@ -156,6 +159,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         if (StringUtils.hasText(externalId)) {
             individual.setLegacyId(externalId);
         }
+        individual.setVoided(false);
+        individual.assignUUIDIfRequired();
         return individual;
     }
 

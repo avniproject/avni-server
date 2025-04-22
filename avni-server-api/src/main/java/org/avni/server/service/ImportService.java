@@ -1,14 +1,18 @@
 package org.avni.server.service;
 
 import jakarta.servlet.http.HttpServletResponse;
-import org.avni.server.application.*;
+import org.avni.server.application.FormElement;
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.LocationWriter;
-import org.avni.server.importer.batch.csv.writer.header.*;
+import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
+import org.avni.server.importer.batch.csv.writer.header.GroupMemberHeaders;
+import org.avni.server.importer.batch.csv.writer.header.HouseholdMemberHeaders;
 import org.avni.server.util.BadRequestError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,23 +172,28 @@ public class ImportService implements ImportLocationsConstants {
                                     String encounterUploadMode,
                                     HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
 
         if (uploadType.equals("locations")) {
             if (!StringUtils.hasText(locationHierarchy)) {
-                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": " + locationHierarchy);
+                throw new BadRequestError(
+                        "Invalid value specified for request param \"locationHierarchy\": " + locationHierarchy);
             }
             if (locationUploadMode == null) {
                 throw new BadRequestError("Missing value for request param \"locationUploadMode\"");
             }
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
             response.getWriter().write(getLocationsSampleFile(locationUploadMode, locationHierarchy));
         } else if (uploadType.startsWith("Encounter---") || uploadType.startsWith("ProgramEncounter---")) {
-
             EncounterUploadMode mode = EncounterUploadMode.fromString(encounterUploadMode);
             String[] uploadSpec = uploadType.split("---");
-            response.getWriter().write(encounterImportService.generateSampleFile(uploadSpec, mode));
 
+            // Include mode in filename for encounter types
+            String filename = String.format("%s_%s.csv", uploadType, mode.getValue());
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+
+            response.getWriter().write(encounterImportService.generateSampleFile(uploadSpec, mode));
         } else {
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
             response.getWriter().write(getSampleFile(uploadType));
         }
     }

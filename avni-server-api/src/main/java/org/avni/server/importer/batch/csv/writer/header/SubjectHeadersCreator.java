@@ -56,7 +56,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
-        fields.add(new HeaderField(registrationLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
+        fields.add(new HeaderField(registrationLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 
         if (subjectType.isPerson()) {
             fields.add(new HeaderField(firstName, "", true, null, null, null));

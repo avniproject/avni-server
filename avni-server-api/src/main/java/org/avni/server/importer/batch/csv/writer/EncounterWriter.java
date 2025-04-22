@@ -158,6 +158,8 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         if (StringUtils.hasText(externalId)) {
             encounter.setLegacyId(externalId);
         }
+        encounter.setVoided(false);
+        encounter.assignUUIDIfRequired();
         return encounter;
     }
 }

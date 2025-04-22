@@ -5,14 +5,12 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.EntityApprovalStatus;
-import org.avni.server.domain.ProgramEncounter;
-import org.avni.server.domain.ProgramEnrolment;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
@@ -25,11 +23,11 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
 
 @Component
 public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
@@ -93,7 +91,22 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
                 allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", legacyId));
             }
         }
+
         ProgramEncounter programEncounter = getOrCreateProgramEncounter(row);
+
+        LocalDate encounterDate = null;
+        String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
+        String maxDateStr = row.get(EncounterHeadersCreator.MAX_VISIT_DATE);
+        EncounterUploadMode mode = null;
+
+        if (StringUtils.hasText(earliestDateStr) && StringUtils.hasText(maxDateStr)) {
+            // This is SCHEDULE_VISIT mode
+            mode = EncounterUploadMode.SCHEDULE_VISIT;
+        } else {
+            // This is UPLOAD_VISIT_DETAILS mode
+            mode = EncounterUploadMode.UPLOAD_VISIT_DETAILS;
+        }
+
         ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID), EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
         SubjectType subjectType = programEnrolment.getIndividual().getSubjectType();
         programEncounter.setProgramEnrolment(programEnrolment);
@@ -106,11 +119,8 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
 
         boolean isScheduledVisit = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE) != null ||
                 row.get(EncounterHeadersCreator.MAX_VISIT_DATE) != null;
-        LocalDate encounterDate;
 
         if (isScheduledVisit) {
-            String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
-            String maxDateStr = row.get(EncounterHeadersCreator.MAX_VISIT_DATE);
             if (earliestDateStr == null || earliestDateStr.trim().isEmpty()) {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
             }
@@ -125,16 +135,29 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
             if (maxDate != null && maxDate.isAfter(LocalDate.now())) {
                 allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.MAX_VISIT_DATE));
             }
-            programEncounter.setEarliestVisitDateTime(earliestDate.toDateTimeAtStartOfDay());
-            programEncounter.setMaxVisitDateTime(maxDate.toDateTimeAtStartOfDay());
+            if (earliestDate != null && maxDate != null) {
+                programEncounter.setEarliestVisitDateTime(earliestDate.toDateTimeAtStartOfDay());
+                programEncounter.setMaxVisitDateTime(maxDate.toDateTimeAtStartOfDay());
+            } else {
+                allErrorMsgs.add("Both earliest and max visit dates are required for scheduling a visit");
+                ValidationUtil.handleErrors(allErrorMsgs);
+                return;
+            }
         } else {
             String encounterDateStr = row.get(EncounterHeadersCreator.VISIT_DATE);
             if (encounterDateStr == null || encounterDateStr.trim().isEmpty()) {
                 allErrorMsgs.add(String.format("'%s' is mandatory for uploaded visits", EncounterHeadersCreator.VISIT_DATE));
+                ValidationUtil.handleErrors(allErrorMsgs);
+                return;
             }
             encounterDate = DateTimeUtil.parseFlexibleDate(encounterDateStr);
-            if (encounterDate != null && encounterDate.isAfter(LocalDate.now())) {
-                allErrorMsgs.add(String.format("'%s' is mandatory for uploaded visits", EncounterHeadersCreator.VISIT_DATE));
+            if (encounterDate == null) {
+                allErrorMsgs.add(String.format("Invalid date format for '%s'. Expected format: DD-MM-YYYY or YYYY-MM-DD", EncounterHeadersCreator.VISIT_DATE));
+                ValidationUtil.handleErrors(allErrorMsgs);
+                return;
+            }
+            if (encounterDate.isAfter(LocalDate.now())) {
+                allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.VISIT_DATE));
             }
             if (encounterDate != null) {
                 LocalDate enrolmentDate = programEnrolment.getEnrolmentDateTime().toLocalDate();
@@ -149,17 +172,22 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
         ProgramEncounter savedEncounter;
         if (skipRuleExecution()) {
             EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator);
+            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
             programEncounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations(), formMapping));
             savedEncounter = programEncounterService.save(programEncounter);
         } else {
-            UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEncounter, allErrorMsgs);
-            programEncounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
-            decisionCreator.addEncounterDecisions(programEncounter.getObservations(), ruleResponse.getDecisions());
-            decisionCreator.addEnrolmentDecisions(programEnrolment.getObservations(), ruleResponse.getDecisions());
-            savedEncounter = programEncounterService.save(programEncounter);
-            programEnrolmentRepository.save(programEnrolment);
-            visitCreator.saveScheduledVisits(formMapping.getType(), null, programEnrolment.getUuid(), ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
+            if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
+                programEncounter.setObservations(new ObservationCollection());
+                savedEncounter = programEncounterService.save(programEncounter);
+            } else {
+                UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEncounter, allErrorMsgs);
+                programEncounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
+                decisionCreator.addEncounterDecisions(programEncounter.getObservations(), ruleResponse.getDecisions());
+                decisionCreator.addEnrolmentDecisions(programEnrolment.getObservations(), ruleResponse.getDecisions());
+                savedEncounter = programEncounterService.save(programEncounter);
+                programEnrolmentRepository.save(programEnrolment);
+                visitCreator.saveScheduledVisits(formMapping.getType(), null, programEnrolment.getUuid(), ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
+            }
         }
         entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.ProgramEncounter, savedEncounter.getEncounterType().getUuid());
     }
@@ -171,7 +199,9 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
 
     private ProgramEncounter createNewEncounter(String externalId) {
         ProgramEncounter programEncounter = new ProgramEncounter();
-        programEncounter.setLegacyId(externalId);
+        if (StringUtils.hasText(externalId)) {
+            programEncounter.setLegacyId(externalId);
+        }
         programEncounter.setVoided(false);
         programEncounter.assignUUIDIfRequired();
         return programEncounter;
