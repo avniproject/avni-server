@@ -71,7 +71,37 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Notes Concept\"",
                 "\"Multi Select Decision Coded\"",
                 "\"QuestionGroup Concept|QG Text Concept\"",
-                "\"QuestionGroup Concept|QG Numeric Concept\""
+                "\"QuestionGroup Concept|QG Numeric Concept\"",
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
+                );
+    }
+
+    private String[] validHeaderWithMultipleRQGValues() {
+        return header("Id from previous system",
+                "Subject Type",
+                "Date Of Registration",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Gender",
+                "Profile Picture",
+                "State",
+                "District",
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Date Concept\"",
+                "\"Text Concept\"",
+                "\"Numeric Concept\"",
+                "\"Notes Concept\"",
+                "\"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\"",
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1",
+                "Repeatable QuestionGroup Concept|RQG Text Concept|1",
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|2",
+                "Repeatable QuestionGroup Concept|RQG Text Concept|2"
                 );
     }
 
@@ -98,7 +128,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Multi Select Decision Coded\"",
                 "\"QuestionGroup Concept|QG Text Concept\"",
                 "\"QuestionGroup Concept|QG Text Concept\"",
-                "\"QuestionGroup Concept|QG Numeric Concept\""
+                "\"QuestionGroup Concept|QG Numeric Concept\"",
+                "\"Repeatable QuestionGroup Concept|RQG Numeric Concept|1\""
         );
     }
     private String[] validDataRow() {
@@ -122,7 +153,36 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "some notes",
                 "\"MSDC Answer 1\", \"MSDC Answer 2\"",
                 "qg text",
-                "456");
+                "456",
+                "789");
+    }
+
+    private String[] validDataRowWithMultipleRQGValues() {
+        return dataRow("ABCD",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "123",
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456",
+                "789",
+                "rqg text1",
+                "987",
+                "rqg text2");
     }
 
     private String[] validDataRowWithoutLegacyId() {
@@ -146,7 +206,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "some notes",
                 "\"MSDC Answer 1\", \"MSDC Answer 2\"",
                 "qg text",
-                "456");
+                "456",
+                "789");
     }
 
     private String[] dataRowWithWrongValues() {
@@ -170,7 +231,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "some notes",
                 "\"MSDC Aswer 1\", \"MSDC Answer 2\"",
                 "qg text",
-                "shouldHaveBeenANumber");
+                "shouldHaveBeenANumber",
+                "789");
     }
 
     private String[] dataRowWithNumericValuesOutsideValidRange() {
@@ -194,7 +256,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "some notes",
                 "\"MSDC Answer 1\", \"MSDC Answer 2\"",
                 "qg text",
-                "456");
+                "456",
+                "789");
     }
     private String[] dataRowWithMissingMandatoryValues() {
         return dataRow("",
@@ -217,7 +280,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "",
                 "\"MSDC Answer 1\", \"MSDC Answer 2\"",
                 "qg text",
-                "456");
+                "456",
+                "");
     }
 
     private String[] dataRowWithMissingMandatoryQGValues() {
@@ -240,6 +304,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "100",
                 "some notes",
                 "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "",
                 "",
                 "");
     }
@@ -265,7 +330,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "some notes",
                 "\"MSDC Answer 1\", \"msdc answer 2\"",
                 "qg text",
-                "456");
+                "456",
+                "123");
     }
 
     @Test
@@ -290,7 +356,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "\"Notes Concept\"",
                         "\"Multi Selec Decision Coded\"",
                         "\"QuestionGroup Concept|QG Text Concept\"",
-                        "\"QuestionGroup Concept|QG Numeric Concept\""
+                        "\"QuestionGroup Concept|QG Numeric Concept\"",
+                        "\"Repeatable QuestionGroup Concept|RQG Numeric Concept|1\""
                 ),
                 validDataRow(),
                 "Mandatory columns are missing from uploaded file - single select coded, date of registration, district. Please refer to sample file for the list of mandatory headers. Unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. Please refer to sample file for valid list of headers.");
@@ -318,7 +385,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Notes Concept\"",
                 " \"Multi Select Decision Coded\"",
                 "\"QuestionGroup Concept|QG Text Concept\"",
-                "\"QuestionGroup Concept|QG Numeric Concept\""
+                "\"QuestionGroup Concept|QG Numeric Concept\"",
+                "\"Repeatable QuestionGroup Concept|RQG Numeric Concept|1\""
         );
         String[] dataRow = validDataRow();
         subjectWriter.write(Chunk.of(new Row(headers, dataRow)));
@@ -432,7 +500,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldFailValidationIfMandatoryFieldsAreNotProvided() {
-        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'Text Concept'");
+        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'RQG Numeric Concept', Value required for mandatory field 'Text Concept'");
     }
 
     @Test
@@ -448,6 +516,11 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void shouldFailValidationIfDuplicateHeadersArePresent() {
         failure(headerWithDuplicates(), validDataRow(), "Headers Text Concept, QuestionGroup Concept|QG Text Concept are repeated. Please update the name or remove the duplicates.");
+    }
+
+    @Test
+    public void shouldHandleMultipleRQGValues() {
+        success(validHeaderWithMultipleRQGValues(), validDataRowWithMultipleRQGValues());
     }
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();

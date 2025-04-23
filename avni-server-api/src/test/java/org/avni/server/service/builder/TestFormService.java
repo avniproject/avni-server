@@ -5,6 +5,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
@@ -91,7 +92,7 @@ public class TestFormService {
                         .withType(FormElementType.SingleSelect)
                         .withDisplayOrder(i++)
                         .withQuestionGroupElement(qgFE)
-                        .withMandatory(true)
+                        .withMandatory(qgChildConcept.getDataType().equals(ConceptDataType.Numeric.toString())) //arbitrarily setting numerics as mandatory to have a mix of mandatory and non mandatory form elements
                         .build();
             }
         }
@@ -116,7 +117,7 @@ public class TestFormService {
                         .withType(FormElementType.SingleSelect)
                         .withDisplayOrder(i++)
                         .withQuestionGroupElement(rqgFE)
-                        .withMandatory(false)
+                        .withMandatory(rqgChildConcept.getDataType().equals(ConceptDataType.Numeric.toString())) //arbitrarily setting numerics as mandatory to have a mix of mandatory and non mandatory form elements
                         .build();
             }
         }
