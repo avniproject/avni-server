@@ -13,27 +13,72 @@ delete from group_subject where 1 = 1;
 delete from public.user_subject_assignment where 1 = 1;
 DELETE FROM entity_approval_status where 1 = 1;
 DELETE FROM individual where 1 = 1;
-DELETE FROM operational_program where 1 = 1;
-DELETE FROM concept_answer where 1 = 1;
-DELETE FROM answer_concept_migration where 1 = 1;
-DELETE FROM concept where 1 = 1;
-delete from group_role where 1 = 1;
-DELETE FROM individual_relationship where 1 = 1;
-DELETE FROM individual_relationship_type where 1 = 1;
-DELETE FROM individual_relation_gender_mapping where 1 = 1;
-DELETE FROM individual_relation where 1 = 1;
-DELETE FROM group_privilege where 1 = 1;
-DELETE FROM program where 1 = 1;
-DELETE FROM encounter_type where 1 = 1;
-DELETE FROM gender where 1 = 1;
-DELETE FROM catchment_address_mapping where 1 = 1;
-DELETE FROM location_location_mapping where 1 = 1;
-DELETE FROM address_level where 1 = 1;
-DELETE FROM address_level_type where 1 = 1;
-DELETE FROM catchment where 1 = 1;
-DELETE FROM account_admin
-       where admin_id <> (select id from users where username = 'admin');
-DELETE FROM user_group where 1 = 1;
+DELETE
+FROM operational_program
+where 1 = 1;
+DELETE
+FROM concept_answer
+where 1 = 1;
+DELETE
+FROM answer_concept_migration
+where 1 = 1;
+DELETE
+FROM concept
+where 1 = 1;
+delete
+from group_role
+where 1 = 1;
+DELETE
+FROM individual_relationship
+where 1 = 1;
+DELETE
+FROM individual_relationship_type
+where 1 = 1;
+DELETE
+FROM individual_relation_gender_mapping
+where 1 = 1;
+DELETE
+FROM individual_relation
+where 1 = 1;
+DELETE
+FROM group_privilege
+where 1 = 1;
+DELETE
+FROM operational_program
+where 1 = 1;
+DELETE
+FROM program
+where 1 = 1;
+DELETE
+FROM operational_encounter_type
+where 1 = 1;
+DELETE
+FROM encounter_type
+where 1 = 1;
+DELETE
+FROM gender
+where 1 = 1;
+DELETE
+FROM catchment_address_mapping
+where 1 = 1;
+DELETE
+FROM location_location_mapping
+where 1 = 1;
+DELETE
+FROM address_level
+where 1 = 1;
+DELETE
+FROM address_level_type
+where 1 = 1;
+DELETE
+FROM catchment
+where 1 = 1;
+DELETE
+FROM account_admin
+where admin_id <> (select id from users where username = 'admin');
+DELETE
+FROM user_group
+where 1 = 1;
 DELETE FROM external_system_config where 1 = 1;
 DELETE FROM organisation_config where 1 = 1;
 delete from message_request_queue where 1 = 1;

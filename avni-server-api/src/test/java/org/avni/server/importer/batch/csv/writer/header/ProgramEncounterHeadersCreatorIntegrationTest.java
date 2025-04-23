@@ -2,24 +2,19 @@ package org.avni.server.importer.batch.csv.writer.header;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.EncounterTypeBuilder;
-import org.avni.server.domain.factory.metadata.FormMappingBuilder;
-import org.avni.server.domain.factory.metadata.TestFormBuilder;
+import org.avni.server.domain.*;
+import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.csv.writer.TxnDataHeaderValidator;
-import org.avni.server.service.builder.TestConceptService;
-import org.avni.server.service.builder.TestDataSetupService;
-import org.avni.server.service.builder.TestFormService;
-import org.avni.server.service.builder.TestSubjectTypeService;
+import org.avni.server.service.builder.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,9 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private EncounterHeadersCreator encounterHeadersCreator;
-
-    @Autowired
-    private FormMappingRepository formMappingRepository;
 
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
@@ -45,6 +37,12 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
     @Autowired
     private TestConceptService testConceptService;
 
+    @Autowired
+    private TestProgramService testProgramService;
+
+    private SubjectType subjectType;
+    private Program program;
+    private EncounterType encounterType;
     private FormMapping formMapping;
 
     @Before
@@ -52,25 +50,19 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
         setUser(organisationData.getUser());
 
-        var subjectType = testSubjectTypeService.createWithDefaults(
+        subjectType = testSubjectTypeService.createWithDefaults(
                 new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().build()
         );
 
-        var form = new TestFormBuilder()
-                .withFormType(FormType.ProgramEncounter)
-                .build();
+        String test_program = "Test Program" + java.util.UUID.randomUUID();
+        program = testProgramService.addProgram(new ProgramBuilder().withName(test_program).build(), subjectType);
 
-        var encounterType = new EncounterTypeBuilder()
+        encounterType = new EncounterTypeBuilder()
                 .withName("Test Program Encounter Type")
                 .withUuid(java.util.UUID.randomUUID().toString())
                 .build();
-
-        formMapping = new FormMappingBuilder()
-                .withForm(form)
-                .withSubjectType(subjectType)
-                .withEncounterType(encounterType)
-                .build();
-        formMappingRepository.save(formMapping);
+        String formName = "Test Program Encounter Form " + java.util.UUID.randomUUID();
+        formMapping = testFormService.createProgramEncounterForm(subjectType, program, encounterType, formName, Collections.emptyList(), Collections.emptyList());
     }
 
     @Test
@@ -104,12 +96,21 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
 
     @Test
     public void testHeaderValidation_allowsOptionalHeaders() {
+        Concept codedConcept = testConceptService.createCodedConcept("Single Select Coded", "SSC Answer 1", "SSC Answer 2");
+        java.util.List<String> singleSelectConcepts = java.util.Collections.singletonList(codedConcept.getName());
+        encounterType = new EncounterTypeBuilder()
+                .withName("Program Encounter Type")
+                .withUuid(java.util.UUID.randomUUID().toString())
+                .build();
+        String formName = "Test Program Encounter Form " + java.util.UUID.randomUUID();
+        formMapping = testFormService.createProgramEncounterForm(subjectType, program, encounterType, formName, singleSelectConcepts, Collections.emptyList());
+
         String[] headers = {
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER
-                // Add a valid concept field header if needed, e.g. "Concept Field Name"
+                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                "\"Single Select Coded\""
         };
         assertDoesNotThrow(() -> {
             TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS);

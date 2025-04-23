@@ -2,12 +2,11 @@ package org.avni.server.importer.batch.csv.writer.header;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.domain.Concept;
+import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.EncounterTypeBuilder;
-import org.avni.server.domain.factory.metadata.FormMappingBuilder;
-import org.avni.server.domain.factory.metadata.TestFormBuilder;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.csv.writer.TxnDataHeaderValidator;
 import org.avni.server.service.builder.TestConceptService;
@@ -20,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,9 +29,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private EncounterHeadersCreator encounterHeadersCreator;
-
-    @Autowired
-    private FormMappingRepository formMappingRepository;
 
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
@@ -45,6 +42,8 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
     @Autowired
     private TestConceptService testConceptService;
 
+    private SubjectType subjectType;
+    private EncounterType encounterType;
     private FormMapping formMapping;
 
     @Before
@@ -52,25 +51,16 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
         setUser(organisationData.getUser());
 
-        var subjectType = testSubjectTypeService.createWithDefaults(
+        subjectType = testSubjectTypeService.createWithDefaults(
                 new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().build()
         );
 
-        var form = new TestFormBuilder()
-                .withFormType(FormType.Encounter)
-                .build();
-
-        var encounterType = new EncounterTypeBuilder()
+        encounterType = new EncounterTypeBuilder()
                 .withName("Test Encounter Type")
                 .withUuid(java.util.UUID.randomUUID().toString())
                 .build();
-
-        formMapping = new FormMappingBuilder()
-                .withForm(form)
-                .withSubjectType(subjectType)
-                .withEncounterType(encounterType) // <-- This line is crucial!
-                .build();
-        formMappingRepository.save(formMapping);
+        String formName = "Test Encounter Form " + java.util.UUID.randomUUID();
+        formMapping = testFormService.createEncounterForm(subjectType, encounterType, formName, Collections.emptyList(), Collections.emptyList());
     }
 
     @Test
@@ -104,12 +94,21 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
 
     @Test
     public void testHeaderValidation_allowsOptionalHeaders() {
+        Concept codedConcept = testConceptService.createCodedConcept("Multi Select Coded", "SSC Answer 1", "SSC Answer 2");
+        java.util.List<String> multiSelectConcept = java.util.Collections.singletonList(codedConcept.getName());
+        encounterType = new EncounterTypeBuilder()
+                .withName("Encounter Type")
+                .withUuid(java.util.UUID.randomUUID().toString())
+                .build();
+        String formName = "Test Encounter Form " + java.util.UUID.randomUUID();
+        formMapping = testFormService.createEncounterForm(subjectType, encounterType, formName, Collections.emptyList(), multiSelectConcept);
+
         String[] headers = {
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.SUBJECT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER
-                // Add a valid concept field header if needed, e.g. "Concept Field Name"
+                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                "\"Multi Select Coded\""
         };
         assertDoesNotThrow(() -> {
             TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS);
