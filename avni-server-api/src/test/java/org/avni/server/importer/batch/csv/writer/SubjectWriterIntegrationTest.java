@@ -505,7 +505,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldFailValidationIfMandatoryQuestionGroupFieldsAreNotProvided() {
-        failure(validHeader(), dataRowWithMissingMandatoryQGValues(), "Value required for mandatory field 'QG Numeric Concept', Value required for mandatory field 'QG Text Concept'");
+        failure(validHeader(), dataRowWithMissingMandatoryQGValues(), "Value required for mandatory field 'QG Numeric Concept', Value required for mandatory field 'RQG Numeric Concept'");
     }
 
     @Test
