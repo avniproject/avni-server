@@ -129,7 +129,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"QuestionGroup Concept|QG Text Concept\"",
                 "\"QuestionGroup Concept|QG Text Concept\"",
                 "\"QuestionGroup Concept|QG Numeric Concept\"",
-                "\"Repeatable QuestionGroup Concept|RQG Numeric Concept|1\""
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
         );
     }
     private String[] validDataRow() {
@@ -281,7 +281,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"MSDC Answer 1\", \"MSDC Answer 2\"",
                 "qg text",
                 "456",
-                "");
+                "789");
     }
 
     private String[] dataRowWithMissingMandatoryQGValues() {
@@ -357,7 +357,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "\"Multi Selec Decision Coded\"",
                         "\"QuestionGroup Concept|QG Text Concept\"",
                         "\"QuestionGroup Concept|QG Numeric Concept\"",
-                        "\"Repeatable QuestionGroup Concept|RQG Numeric Concept|1\""
+                        "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
                 ),
                 validDataRow(),
                 "Mandatory columns are missing from uploaded file - single select coded, date of registration, district. Please refer to sample file for the list of mandatory headers. Unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. Please refer to sample file for valid list of headers.");
@@ -386,13 +386,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 " \"Multi Select Decision Coded\"",
                 "\"QuestionGroup Concept|QG Text Concept\"",
                 "\"QuestionGroup Concept|QG Numeric Concept\"",
-                "\"Repeatable QuestionGroup Concept|RQG Numeric Concept|1\""
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
         );
         String[] dataRow = validDataRow();
         subjectWriter.write(Chunk.of(new Row(headers, dataRow)));
         Individual subject = individualRepository.findByLegacyId("ABCD");
         ObservationCollection observations = subject.getObservations();
-        assertEquals(7, observations.size());
+        assertEquals(9, observations.size());
         assertEquals("John", subject.getFirstName());
     }
 
@@ -460,13 +460,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
         subjectWriter.write(Chunk.of(new Row(header, dataRow)));
         Individual subject = individualRepository.findByLegacyId("ABCD");
-        assertEquals(7, subject.getObservations().size());
+        assertEquals(9, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
 
         // allow edit
         subjectWriter.write(Chunk.of(new Row(header, dataRow)));
         subject = individualRepository.findByLegacyId("ABCD");
-        assertEquals(7, subject.getObservations().size());
+        assertEquals(9, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
     }
 
@@ -495,12 +495,12 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     public void shouldFailValidationIfObservationValuesAreWrong() {
         failure(validHeader(),
                 dataRowWithWrongValues(),
-                "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
+                "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept', Invalid value 'shouldhavebeenanumber' for 'QG Numeric Concept'");
     }
 
     @Test
     public void shouldFailValidationIfMandatoryFieldsAreNotProvided() {
-        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'RQG Numeric Concept', Value required for mandatory field 'Text Concept'");
+        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'Text Concept'");
     }
 
     @Test
@@ -521,6 +521,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void shouldHandleMultipleRQGValues() {
         success(validHeaderWithMultipleRQGValues(), validDataRowWithMultipleRQGValues());
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(9, subject.getObservations().size());
+
     }
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();

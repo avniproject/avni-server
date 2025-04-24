@@ -118,9 +118,9 @@ public class ObservationCreator {
 
             if (formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
                 errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
-            }
-            if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
                 continue;
+            }
+
             ObservationRequest observationRequest = new ObservationRequest();
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
