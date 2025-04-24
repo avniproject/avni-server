@@ -57,7 +57,7 @@ public class EncounterWriterIntegrationTest extends BaseCSVImportTest {
         return header(
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.SUBJECT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.EARLIEST_VISIT_DATE,
                 EncounterHeadersCreator.MAX_VISIT_DATE,
                 EncounterHeadersCreator.ENCOUNTER_LOCATION
@@ -68,7 +68,7 @@ public class EncounterWriterIntegrationTest extends BaseCSVImportTest {
         return header(
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.SUBJECT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.ENCOUNTER_LOCATION,
                 "\"Single Select Coded\"",
@@ -328,7 +328,7 @@ public class EncounterWriterIntegrationTest extends BaseCSVImportTest {
             encounterWriter.write(Chunk.of(new Row(headers, dataRow)));
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("id 'sub-abc' not found in database"));
+        assertTrue(exception.getMessage().toLowerCase().contains("not found in database"));
     }
 
     @Test

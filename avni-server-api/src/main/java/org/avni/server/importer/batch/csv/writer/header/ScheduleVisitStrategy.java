@@ -16,7 +16,7 @@ public class ScheduleVisitStrategy implements EncounterHeaderStrategy {
         boolean isProgramEncounter = formMapping.getType() == FormType.ProgramEncounter;
 
         fields.add(new HeaderField(EncounterHeadersCreator.ID, "Optional. Can be used to later identify the entry", false, null, null, null));
-        fields.add(new HeaderField(EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER, formMapping.getEncounterType().getName(), true, null, null, null, false));
+        fields.add(new HeaderField(EncounterHeadersCreator.ENCOUNTER_TYPE, formMapping.getEncounterType().getName(), true, null, null, null, false));
 
         // Use ternary operator to determine ID and description based on encounter type
         String idField = isProgramEncounter ? EncounterHeadersCreator.PROGRAM_ENROLMENT_ID : EncounterHeadersCreator.SUBJECT_ID;

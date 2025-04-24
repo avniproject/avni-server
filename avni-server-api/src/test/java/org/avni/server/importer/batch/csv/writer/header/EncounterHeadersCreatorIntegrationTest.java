@@ -107,7 +107,7 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.SUBJECT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
                 "\"Multi Select Coded\""
         };
         assertDoesNotThrow(() -> {

@@ -53,7 +53,7 @@ public class BasicEncounterCreator {
             basicEncounter.setEncounterLocation(locationCreator.getGeoLocation(row, EncounterHeadersCreator.ENCOUNTER_LOCATION, allErrorMsgs));
         }
 
-        EncounterType encounterType = encounterTypeCreator.getEncounterType(row.get(EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER), EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER);
+        EncounterType encounterType = encounterTypeCreator.getEncounterType(row.get(EncounterHeadersCreator.ENCOUNTER_TYPE), EncounterHeadersCreator.ENCOUNTER_TYPE);
         basicEncounter.setEncounterType(encounterType);
         return basicEncounter;
     }

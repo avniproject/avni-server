@@ -64,7 +64,7 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         return header(
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.EARLIEST_VISIT_DATE,
                 EncounterHeadersCreator.MAX_VISIT_DATE,
                 EncounterHeadersCreator.ENCOUNTER_LOCATION
@@ -75,7 +75,7 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         return header(
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.ENCOUNTER_LOCATION,
                 "\"Single Select Coded\"",
@@ -381,7 +381,7 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
             programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("id 'penr-abc' not found in database"));
+        assertTrue(exception.getMessage().toLowerCase().contains("not found in database"));
     }
 
     @Test

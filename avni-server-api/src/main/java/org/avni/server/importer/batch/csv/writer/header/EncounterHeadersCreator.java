@@ -10,7 +10,7 @@ import java.util.List;
 public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCreator {
 
     public static final String ID = "Id from previous system";
-    public static final String ENCOUNTER_TYPE_HEADER = "Encounter Type";
+    public static final String ENCOUNTER_TYPE = "Encounter Type";
     public static final String PROGRAM_ENROLMENT_ID = "Program Enrolment Id";
     public static final String SUBJECT_ID = "Subject Id";
     public static final String VISIT_DATE = "Visit Date";

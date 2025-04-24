@@ -109,7 +109,7 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
                 EncounterHeadersCreator.ID,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
-                EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
                 "\"Single Select Coded\""
         };
         assertDoesNotThrow(() -> {
