@@ -179,9 +179,10 @@ public class ConceptService implements NonScopeAwareService {
         }
         logger.info(String.format("Creating concept: %s", conceptRequest));
 
-        addToMigrationIfRequired(conceptRequest);
         Concept concept = map(conceptRequest, createAnswers);
-        return conceptRepository.save(concept);
+        concept = conceptRepository.save(concept);
+        addToMigrationIfRequired(conceptRequest);
+        return concept;
     }
 
     private void addToMigrationIfRequired(ConceptContract conceptRequest) {
@@ -202,11 +203,17 @@ public class ConceptService implements NonScopeAwareService {
     }
 
     public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests) {
-        for (ConceptContract conceptContract : conceptRequests) {
-            Concept concept = this.conceptRepository.findByUuidOrName(conceptContract.getUuid(), conceptContract.getName());
-            if (concept == null) {
-                saveOrUpdate(conceptContract, false);
+        List<ConceptContract> allConceptsInRequest = new ArrayList<>(conceptRequests.size());
+        allConceptsInRequest.addAll(conceptRequests);
+        for (ConceptContract conceptRequest : conceptRequests) {
+            if (conceptRequest.getAnswers() != null) {
+                List<ConceptContract> conceptAnswersProvidedFullyAnswer = conceptRequest.getAnswers().stream().filter(conceptContract -> StringUtils.hasText(conceptContract.getName())).toList();
+                allConceptsInRequest.addAll(conceptAnswersProvidedFullyAnswer);
             }
+        }
+
+        for (ConceptContract conceptContract : allConceptsInRequest) {
+            saveOrUpdate(conceptContract, false);
         }
 
         List<String> savedConceptUuids = new ArrayList<>();

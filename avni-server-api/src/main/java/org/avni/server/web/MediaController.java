@@ -33,7 +33,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -120,6 +123,25 @@ public class MediaController {
     public ResponseEntity<String> generateDownloadUrl(@RequestParam String url) {
         try {
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3Service.generateMediaDownloadUrl(url).toString());
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
+    }
+
+    @RequestMapping(value = "/media/signedUrls", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public ResponseEntity generateDownloadUrls(@RequestBody List<String> urls) {
+        try {
+            Map<String, String> signedUrls = urls.stream()
+                .collect(Collectors.toMap(
+                    url -> url,
+                    url -> s3Service.generateMediaDownloadUrl(url).toString()
+                ));
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(signedUrls);
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
