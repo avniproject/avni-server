@@ -101,6 +101,31 @@ public class EncounterWriterIntegrationTest extends BaseCSVImportTest {
         );
     }
 
+
+    private String[] invalidScheduleVisitDataRow_SubjectNotFound() {
+        return dataRow(
+                "ENC-001",
+                "SUB-ABC",
+                encounterType.getName(),
+                LocalDate.now().minusDays(5).toString("yyyy-MM-dd"),
+                LocalDate.now().toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848"
+        );
+    }
+
+    private String[] invalidUploadVisitDataRow_IdShouldBeUnique() {
+        return dataRow(
+                "ENC-001",
+                "SUB-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "123"
+        );
+    }
+
     private String[] invalidScheduleVisitDataRow_FutureDates() {
         return dataRow(
                 "ENC-003",
@@ -288,6 +313,39 @@ public class EncounterWriterIntegrationTest extends BaseCSVImportTest {
         // Second insert with same legacy ID should fail
         Exception exception = assertThrows(ValidationException.class, () -> {
             encounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("already present in avni"));
+    }
+
+    @Test
+    public void testScheduleVisit_FailsWithSubjectNotFound() throws Exception {
+        String[] headers = validScheduleVisitHeader();
+        String[] dataRow = invalidScheduleVisitDataRow_SubjectNotFound();
+
+        // Execute and verify
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("id 'sub-abc' not found in database"));
+    }
+
+    @Test
+    public void testUploadVisit_FailsWithDuplicateId() throws Exception {
+        String[] headers = validUploadVisitHeader();
+        String[] dataRow = validUploadVisitDataRow();
+
+        // First insert should succeed
+        encounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+
+        // Try to insert another record with the same ID
+        String[] duplicateDataRow = invalidUploadVisitDataRow_IdShouldBeUnique();
+        duplicateDataRow[0] = dataRow[0]; // Use the same ID as the first row
+
+        // Second insert with same legacy ID should fail
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterWriter.write(Chunk.of(new Row(headers, duplicateDataRow)));
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("already present in avni"));

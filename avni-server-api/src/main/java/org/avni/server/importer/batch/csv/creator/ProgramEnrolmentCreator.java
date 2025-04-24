@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.creator;
 
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,11 +17,11 @@ public class ProgramEnrolmentCreator {
 
     public ProgramEnrolment getProgramEnrolment(String enrolmentId, String identifierForErrorMessage) throws Exception {
         if (enrolmentId == null || enrolmentId.isEmpty()) {
-            throw new Exception(String.format("'%s' is required", identifierForErrorMessage));
+            throw new ValidationException(String.format("'%s' is required", identifierForErrorMessage));
         }
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(enrolmentId);
         if (programEnrolment == null) {
-            throw new Exception(String.format("'%s' id '%s' not found in database", identifierForErrorMessage, enrolmentId));
+            throw new ValidationException(String.format("'%s' id '%s' not found in database", identifierForErrorMessage, enrolmentId));
         }
         return programEnrolment;
     }
