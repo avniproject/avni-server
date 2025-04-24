@@ -5,18 +5,16 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Encounter;
-import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
-import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
-import org.avni.server.importer.batch.csv.creator.*;
-import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategy;
+import org.avni.server.importer.batch.csv.creator.BasicEncounterCreator;
+import org.avni.server.importer.batch.csv.creator.ObservationCreator;
+import org.avni.server.importer.batch.csv.creator.SubjectCreator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.EncounterService;
-import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.UserService;
 import org.avni.server.util.DateTimeUtil;
@@ -37,13 +35,8 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     private final EncounterRepository encounterRepository;
     private final BasicEncounterCreator basicEncounterCreator;
     private final FormMappingRepository formMappingRepository;
-    private final ObservationService observationService;
-    private final RuleServerInvoker ruleServerInvoker;
-    private final VisitCreator visitCreator;
-    private final DecisionCreator decisionCreator;
     private final ObservationCreator observationCreator;
     private final EncounterService encounterService;
-    private final EntityApprovalStatusWriter entityApprovalStatusWriter;
     private final EncounterHeaderStrategyFactory strategyFactory;
     private final UserService userService;
     private final SubjectCreator subjectCreator;
@@ -52,13 +45,8 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     public EncounterWriter(EncounterRepository encounterRepository,
                            BasicEncounterCreator basicEncounterCreator,
                            FormMappingRepository formMappingRepository,
-                           ObservationService observationService,
-                           RuleServerInvoker ruleServerInvoker,
-                           VisitCreator visitCreator,
-                           DecisionCreator decisionCreator,
                            ObservationCreator observationCreator,
                            EncounterService encounterService,
-                           EntityApprovalStatusWriter entityApprovalStatusWriter,
                            OrganisationConfigService organisationConfigService,
                            EncounterHeaderStrategyFactory strategyFactory,
                            UserService userService,
@@ -67,13 +55,8 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         this.encounterRepository = encounterRepository;
         this.basicEncounterCreator = basicEncounterCreator;
         this.formMappingRepository = formMappingRepository;
-        this.observationService = observationService;
-        this.ruleServerInvoker = ruleServerInvoker;
-        this.visitCreator = visitCreator;
-        this.decisionCreator = decisionCreator;
         this.observationCreator = observationCreator;
         this.encounterService = encounterService;
-        this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.strategyFactory = strategyFactory;
         this.userService = userService;
         this.subjectCreator = subjectCreator;
@@ -93,8 +76,12 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
                 allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", legacyId));
             }
         }
+        boolean isScheduledVisit = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE) != null;
+        LocalDate encounterDate = null;
+        EncounterUploadMode mode = isScheduledVisit ? EncounterUploadMode.SCHEDULE_VISIT : EncounterUploadMode.UPLOAD_VISIT_DETAILS;
+
         Encounter encounter = getOrCreateEncounter(row);
-        basicEncounterCreator.updateEncounter(row, encounter, allErrorMsgs);
+        basicEncounterCreator.updateEncounter(row, encounter, allErrorMsgs, mode);
 
         String subjectId = row.get(EncounterHeadersCreator.SUBJECT_ID);
         Individual subject = subjectCreator.getSubject(subjectId, allErrorMsgs, EncounterHeadersCreator.SUBJECT_ID);
@@ -103,9 +90,6 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
             return;
         }
         encounter.setIndividual(subject);
-
-        boolean isScheduledVisit = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE) != null;
-        LocalDate encounterDate;
 
         if (isScheduledVisit) {
             String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
@@ -145,36 +129,15 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
             throw new Exception(String.format("No form found for the encounter type %s", encounter.getEncounterType().getName()));
         }
 
-        Encounter savedEncounter;
-        EncounterUploadMode mode = isScheduledVisit ? EncounterUploadMode.SCHEDULE_VISIT : EncounterUploadMode.UPLOAD_VISIT_DETAILS;
-        EncounterHeaderStrategy strategy = strategyFactory.getStrategy(mode);
-
-        if (skipRuleExecution()) {
+        if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
+            // For scheduled visits, skip observation validation
+            encounter.setObservations(new ObservationCollection());
+        } else {
             EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
             TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
-            if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
-                // For scheduled visits, skip observation validation
-                encounter.setObservations(new ObservationCollection());
-            } else {
-                encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
-            }
-            savedEncounter = encounterService.save(encounter);
-        } else {
-            if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
-                // For scheduled visits, set empty observations
-                encounter.setObservations(new ObservationCollection());
-                savedEncounter = encounterService.save(encounter);
-            } else {
-                // Process rules and observations for completed encounters
-                UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), encounter, allErrorMsgs);
-                encounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
-                decisionCreator.addEncounterDecisions(encounter.getObservations(), ruleResponse.getDecisions());
-                decisionCreator.addRegistrationDecisions(subject.getObservations(), ruleResponse.getDecisions());
-                savedEncounter = encounterService.save(encounter);
-                visitCreator.saveScheduledVisits(formMapping.getType(), subject.getUuid(), null, ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
-            }
+            encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
         }
-        entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.Encounter, savedEncounter.getEncounterType().getUuid());
+        encounterService.save(encounter);
     }
 
     private Encounter getOrCreateEncounter(Row row) {

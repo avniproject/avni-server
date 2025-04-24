@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.csv.creator;
 import org.avni.server.domain.AbstractEncounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.UserService;
 import org.joda.time.LocalDate;
@@ -25,32 +26,33 @@ public class BasicEncounterCreator {
         this.locationCreator = new LocationCreator();
     }
 
-    public AbstractEncounter updateEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs) {
+    public AbstractEncounter updateEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs, EncounterUploadMode mode) {
         DateCreator dateCreator = new DateCreator();
-        LocalDate earliestVisitDate = dateCreator.getDate(
-                row,
-                EncounterHeadersCreator.EARLIEST_VISIT_DATE,
-                allErrorMsgs, null
-        );
-        if (earliestVisitDate != null)
-            basicEncounter.setEarliestVisitDateTime(earliestVisitDate.toDateTimeAtStartOfDay());
+        if (EncounterUploadMode.SCHEDULE_VISIT == mode) {
+            LocalDate earliestVisitDate = dateCreator.getDate(
+                    row,
+                    EncounterHeadersCreator.EARLIEST_VISIT_DATE,
+                    allErrorMsgs, null
+            );
+            if (earliestVisitDate != null)
+                basicEncounter.setEarliestVisitDateTime(earliestVisitDate.toDateTimeAtStartOfDay());
+            LocalDate maxVisitDate = dateCreator.getDate(
+                    row,
+                    EncounterHeadersCreator.MAX_VISIT_DATE,
+                    allErrorMsgs, null
+            );
+            if (maxVisitDate != null) basicEncounter.setMaxVisitDateTime(maxVisitDate.toDateTimeAtStartOfDay());
+        } else {
+            LocalDate visitDate = dateCreator.getDate(
+                    row,
+                    EncounterHeadersCreator.VISIT_DATE,
+                    allErrorMsgs, String.format("%s is mandatory", EncounterHeadersCreator.VISIT_DATE
+                    ));
+            if (visitDate != null)
+                basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
+            basicEncounter.setEncounterLocation(locationCreator.getGeoLocation(row, EncounterHeadersCreator.ENCOUNTER_LOCATION, allErrorMsgs));
+        }
 
-        LocalDate maxVisitDate = dateCreator.getDate(
-                row,
-                EncounterHeadersCreator.MAX_VISIT_DATE,
-                allErrorMsgs, null
-        );
-        if (maxVisitDate != null) basicEncounter.setMaxVisitDateTime(maxVisitDate.toDateTimeAtStartOfDay());
-
-        LocalDate visitDate = dateCreator.getDate(
-                row,
-                EncounterHeadersCreator.VISIT_DATE,
-                allErrorMsgs, String.format("%s is mandatory", EncounterHeadersCreator.VISIT_DATE
-                ));
-        if (visitDate != null) basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
-
-        basicEncounter.setEncounterLocation(locationCreator.getGeoLocation(row, EncounterHeadersCreator.ENCOUNTER_LOCATION, allErrorMsgs));
-        basicEncounter.setCancelLocation(locationCreator.getGeoLocation(row, EncounterHeadersCreator.CANCEL_LOCATION, allErrorMsgs));
         EncounterType encounterType = encounterTypeCreator.getEncounterType(row.get(EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER), EncounterHeadersCreator.ENCOUNTER_TYPE_HEADER);
         basicEncounter.setEncounterType(encounterType);
         return basicEncounter;

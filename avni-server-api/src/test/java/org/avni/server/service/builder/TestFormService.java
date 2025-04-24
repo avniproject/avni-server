@@ -137,8 +137,6 @@ public class TestFormService {
         formRepository.save(form);
     }
 
-    // At the end of TestFormService.java
-
     private FormMapping createEncounterFormMapping(
             SubjectType subjectType,
             Program program,
