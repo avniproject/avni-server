@@ -223,6 +223,32 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
+    public void testScheduleVisit_Failure_ForUploadVisitData() {
+        String[] headers = validUploadVisitHeader();
+        String[] dataRow = validUploadVisitDataRow();
+
+        // Execute and verify
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("is mandatory for scheduled visits"));
+    }
+
+    @Test
+    public void testUploadVisit_Failure_ForScheduleVisitData() {
+        String[] headers = validScheduleVisitHeader();
+        String[] dataRow = validScheduleVisitDataRow();
+
+        // Execute and verify
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("is mandatory for uploaded visits"));
+    }
+
+    @Test
     public void testScheduleVisit_Success() throws Exception {
         String[] headers = validScheduleVisitHeader();
         String[] dataRow = validScheduleVisitDataRow();
