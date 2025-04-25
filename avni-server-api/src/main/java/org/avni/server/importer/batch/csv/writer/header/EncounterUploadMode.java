@@ -22,4 +22,8 @@ public enum EncounterUploadMode implements Mode {
         }
         return null;
     }
+
+    public static boolean isScheduleVisitMode(String mode) {
+        return mode != null && EncounterUploadMode.fromString(mode).equals(SCHEDULE_VISIT);
+    }
 }

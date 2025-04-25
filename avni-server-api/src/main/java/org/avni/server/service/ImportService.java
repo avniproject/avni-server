@@ -169,7 +169,7 @@ public class ImportService implements ImportLocationsConstants {
     public void getSampleImportFile(String uploadType,
                                     String locationHierarchy,
                                     LocationWriter.LocationUploadMode locationUploadMode,
-                                    String encounterUploadMode,
+                                    EncounterUploadMode encounterUploadMode,
                                     HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
 
@@ -184,14 +184,12 @@ public class ImportService implements ImportLocationsConstants {
             response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
             response.getWriter().write(getLocationsSampleFile(locationUploadMode, locationHierarchy));
         } else if (uploadType.startsWith("Encounter---") || uploadType.startsWith("ProgramEncounter---")) {
-            EncounterUploadMode mode = EncounterUploadMode.fromString(encounterUploadMode);
             String[] uploadSpec = uploadType.split("---");
 
             // Include mode in filename for encounter types
-            String filename = String.format("%s_%s.csv", uploadType, mode.getValue());
+            String filename = String.format("%s_%s.csv", uploadType, encounterUploadMode.getValue());
             response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
-
-            response.getWriter().write(encounterImportService.generateSampleFile(uploadSpec, mode));
+            response.getWriter().write(encounterImportService.generateSampleFile(uploadSpec, encounterUploadMode));
         } else {
             response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
             response.getWriter().write(getSampleFile(uploadType));

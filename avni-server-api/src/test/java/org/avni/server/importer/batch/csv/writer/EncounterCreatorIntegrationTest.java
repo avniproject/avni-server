@@ -1,21 +1,22 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.Subject;
-import org.avni.server.dao.*;
+import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.OperationalSubjectTypeRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
-import org.avni.server.domain.factory.metadata.ProgramBuilder;
-import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.importer.batch.csv.creator.EncounterCreator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestFormService;
 import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 import org.junit.Test;
-import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Transactional
-public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
+public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private TestDataSetupService testDataSetupService;
     @Autowired
@@ -40,30 +42,22 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private SubjectTypeRepository subjectTypeRepository;
     @Autowired
-    private ProgramEncounterWriter programEncounterWriter;
+    private EncounterCreator encounterCreator;
     @Autowired
     private TestFormService testFormService;
     @Autowired
     private IndividualRepository individualRepository;
     @Autowired
-    private ProgramRepository programRepository;
-    @Autowired
-    private OperationalProgramRepository operationalProgramRepository;
-    @Autowired
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    @Autowired
-    private ProgramEncounterRepository programEncounterRepository;
+    private EncounterRepository encounterRepository;
 
     private SubjectType subjectType;
-    private Program program;
     private EncounterType encounterType;
     private Individual subject;
-    private ProgramEnrolment programEnrolment;
 
     private String[] validScheduleVisitHeader() {
         return header(
                 EncounterHeadersCreator.ID,
-                EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
+                EncounterHeadersCreator.SUBJECT_ID,
                 EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.EARLIEST_VISIT_DATE,
                 EncounterHeadersCreator.MAX_VISIT_DATE,
@@ -74,7 +68,7 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
     private String[] validUploadVisitHeader() {
         return header(
                 EncounterHeadersCreator.ID,
-                EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
+                EncounterHeadersCreator.SUBJECT_ID,
                 EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.ENCOUNTER_LOCATION,
@@ -86,8 +80,8 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
     private String[] validScheduleVisitDataRow() {
         return dataRow(
-                "PENC-001",
-                "PENR-001",
+                "ENC-001",
+                "SUB-001",
                 encounterType.getName(),
                 LocalDate.now().minusDays(5).toString("yyyy-MM-dd"),
                 LocalDate.now().toString("yyyy-MM-dd"),
@@ -97,8 +91,8 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
     private String[] validUploadVisitDataRow() {
         return dataRow(
-                "PENC-002",
-                "PENR-001",
+                "ENC-002",
+                "SUB-001",
                 encounterType.getName(),
                 LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
                 "21.5135243,85.6731848",
@@ -108,10 +102,11 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         );
     }
 
-    private String[] invalidScheduleVisitDataRow_EnrolmentNotFound() {
+
+    private String[] invalidScheduleVisitDataRow_SubjectNotFound() {
         return dataRow(
-                "PENC-001",
-                "PENR-ABC",
+                "ENC-001",
+                "SUB-ABC",
                 encounterType.getName(),
                 LocalDate.now().minusDays(5).toString("yyyy-MM-dd"),
                 LocalDate.now().toString("yyyy-MM-dd"),
@@ -121,8 +116,8 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
     private String[] invalidUploadVisitDataRow_IdShouldBeUnique() {
         return dataRow(
-                "PENC-001",
-                "PENR-001",
+                "ENC-002",
+                "SUB-001",
                 encounterType.getName(),
                 LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
                 "21.5135243,85.6731848",
@@ -134,8 +129,8 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
     private String[] invalidScheduleVisitDataRow_FutureDates() {
         return dataRow(
-                "PENC-003",
-                "PENR-001",
+                "ENC-003",
+                "SUB-001",
                 encounterType.getName(),
                 LocalDate.now().plusDays(5).toString("yyyy-MM-dd"),
                 LocalDate.now().plusDays(10).toString("yyyy-MM-dd"),
@@ -145,8 +140,8 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
     private String[] invalidUploadVisitDataRow_FutureDate() {
         return dataRow(
-                "PENC-004",
-                "PENR-001",
+                "ENC-004",
+                "SUB-001",
                 encounterType.getName(),
                 LocalDate.now().plusDays(2).toString("yyyy-MM-dd"),
                 "21.5135243,85.6731848",
@@ -156,23 +151,10 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         );
     }
 
-    private String[] invalidUploadVisitDataRow_BeforeEnrolmentDate() {
-        return dataRow(
-                "PENC-005",
-                "PENR-001",
-                encounterType.getName(),
-                LocalDate.now().minusDays(15).toString("yyyy-MM-dd"), // Before enrolment date
-                "21.5135243,85.6731848",
-                "SSC Answer 1",
-                "\"MSC Answer 1\", \"MSC Answer 2\"",
-                "123"
-        );
-    }
-
     private String[] invalidUploadVisitDataRow_InvalidConcepts() {
         return dataRow(
-                "PENC-006",
-                "PENR-001",
+                "ENC-005",
+                "SUB-001",
                 encounterType.getName(),
                 LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
                 "21.5135243,85.6731848",
@@ -198,17 +180,8 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         operationalSubjectTypeRepository
                 .save(OperationalSubjectType.fromSubjectType(subjectType, UUID.randomUUID().toString()));
 
-        // Create program with unique name
-        String programName = "Program_" + UUID.randomUUID().toString().substring(0, 8);
-        program = programRepository.save(new ProgramBuilder()
-                .withName(programName)
-                .withUuid(UUID.randomUUID().toString())
-                .build());
-
-        operationalProgramRepository.save(OperationalProgram.fromProgram(program));
-
         // Create encounter type with unique name and UUID
-        String uniqueEncounterTypeName = "Program Encounter Type " + UUID.randomUUID().toString().substring(0, 8);
+        String uniqueEncounterTypeName = "Encounter Type " + UUID.randomUUID().toString().substring(0, 8);
         encounterType = new EncounterTypeBuilder()
                 .withName(uniqueEncounterTypeName)
                 .withUuid(UUID.randomUUID().toString())
@@ -230,35 +203,23 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         singleSelectConcepts.add(numericConcept);
 
         // Create form mapping with unique name
-        String formName = "Test Program Encounter Form " + UUID.randomUUID().toString().substring(0, 8);
-        testFormService.createProgramEncounterForm(
+        String formName = "Test Encounter Form " + UUID.randomUUID().toString().substring(0, 8);
+        testFormService.createEncounterForm(
                 subjectType,
-                program,
                 encounterType,
                 formName,
-                singleSelectConcepts.stream().map(Concept::getName).collect(java.util.stream.Collectors.toList()),
-                multiSelectConcepts.stream().map(Concept::getName).collect(java.util.stream.Collectors.toList())
+                singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
+                multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList())
         );
 
         // Create test subject
         subject = new SubjectBuilder()
-                .withRegistrationDate(LocalDate.now().minusDays(20))
+                .withRegistrationDate(LocalDate.now().minusDays(10))
                 .withSubjectType(subjectType)
                 .withFirstName("Test Subject")
                 .withLegacyId("SUB-001")
-                .withUUID(UUID.randomUUID().toString())
                 .build();
         individualRepository.save(subject);
-
-        // Create program enrolment
-        programEnrolment = new ProgramEnrolmentBuilder()
-                .setProgram(program)
-                .setIndividual(subject)
-                .withMandatoryFieldsForNewEntity()
-                .setEnrolmentDateTime(LocalDateTime.now().minusDays(10).toDateTime())
-                .setLegacyId("PENR-001")
-                .build();
-        programEnrolmentRepository.save(programEnrolment);
     }
 
     @Test
@@ -267,17 +228,17 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validScheduleVisitDataRow();
 
         // Execute
-        programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+        encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
 
         // Verify
-        ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-001");
-        assertNotNull(programEncounter);
-        assertEquals("PENR-001", programEncounter.getProgramEnrolment().getLegacyId());
-        assertEquals(encounterType.getName(), programEncounter.getEncounterType().getName());
-        assertNull(programEncounter.getEncounterDateTime());
-        assertNotNull(programEncounter.getEarliestVisitDateTime());
-        assertNotNull(programEncounter.getMaxVisitDateTime());
-        assertEquals(0, programEncounter.getObservations().size());
+        Encounter encounter = encounterRepository.findByLegacyId("ENC-001");
+        assertNotNull(encounter);
+        assertEquals("SUB-001", encounter.getIndividual().getLegacyId());
+        assertEquals(encounterType.getName(), encounter.getEncounterType().getName());
+        assertNull(encounter.getEncounterDateTime());
+        assertNotNull(encounter.getEarliestVisitDateTime());
+        assertNotNull(encounter.getMaxVisitDateTime());
+        assertEquals(0, encounter.getObservations().size());
     }
 
     @Test
@@ -286,17 +247,17 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validUploadVisitDataRow();
 
         // Execute
-        programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+        encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
 
         // Verify
-        ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-002");
-        assertNotNull(programEncounter);
-        assertEquals("PENR-001", programEncounter.getProgramEnrolment().getLegacyId());
-        assertEquals(encounterType.getName(), programEncounter.getEncounterType().getName());
-        assertNotNull(programEncounter.getEncounterDateTime());
-        assertNull(programEncounter.getEarliestVisitDateTime());
-        assertNull(programEncounter.getMaxVisitDateTime());
-        assertEquals(3, programEncounter.getObservations().size());
+        Encounter encounter = encounterRepository.findByLegacyId("ENC-002");
+        assertNotNull(encounter);
+        assertEquals("SUB-001", encounter.getIndividual().getLegacyId());
+        assertEquals(encounterType.getName(), encounter.getEncounterType().getName());
+        assertNotNull(encounter.getEncounterDateTime());
+        assertNull(encounter.getEarliestVisitDateTime());
+        assertNull(encounter.getMaxVisitDateTime());
+        assertEquals(3, encounter.getObservations().size());
     }
 
     @Test
@@ -306,7 +267,7 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("cannot be in future"));
@@ -319,23 +280,10 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("cannot be in future"));
-    }
-
-    @Test
-    public void testUploadVisit_FailsWithDateBeforeEnrolment() {
-        String[] headers = validUploadVisitHeader();
-        String[] dataRow = invalidUploadVisitDataRow_BeforeEnrolmentDate();
-
-        // Execute and verify
-        Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
-        });
-
-        assertTrue(exception.getMessage().toLowerCase().contains("visit date needs to be after program enrolment date"));
     }
 
     @Test
@@ -345,7 +293,7 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         // Verify all validation errors are reported
@@ -356,29 +304,29 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void testDuplicateProgramEncounter_Fails() throws Exception {
+    public void testDuplicateEncounter_Fails() throws Exception {
         String[] headers = validUploadVisitHeader();
         String[] dataRow = validUploadVisitDataRow();
 
         // First insert should succeed
-        programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+        encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
 
         // Second insert with same legacy ID should fail
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("already present in avni"));
     }
 
     @Test
-    public void testScheduleVisit_FailsWithEnrolmentNotFound() throws Exception {
+    public void testScheduleVisit_FailsWithSubjectNotFound() throws Exception {
         String[] headers = validScheduleVisitHeader();
-        String[] dataRow = invalidScheduleVisitDataRow_EnrolmentNotFound();
+        String[] dataRow = invalidScheduleVisitDataRow_SubjectNotFound();
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("not found in database"));
@@ -390,15 +338,14 @@ public class ProgramEncounterWriterIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validUploadVisitDataRow();
 
         // First insert should succeed
-        programEncounterWriter.write(Chunk.of(new Row(headers, dataRow)));
+        encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
 
         // Try to insert another record with the same ID
         String[] duplicateDataRow = invalidUploadVisitDataRow_IdShouldBeUnique();
-        duplicateDataRow[0] = dataRow[0]; // Use the same ID as the first row
 
         // Second insert with same legacy ID should fail
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterWriter.write(Chunk.of(new Row(headers, duplicateDataRow)));
+            encounterCreator.create(new Row(headers, duplicateDataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("already present in avni"));
