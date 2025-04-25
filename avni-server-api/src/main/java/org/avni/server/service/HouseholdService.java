@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class HouseholdService {
@@ -60,16 +59,16 @@ public class HouseholdService {
         individualRelationship.setIndividuala(headOfHousehold);
         individualRelationship.setIndividualB(memberSubject);
 
-        List<IndividualRelationshipType> possibleRelationshipTypesList = individualRelationshipTypeRepository.findAllByIndividualBIsToA(individualRelation);
+        List<IndividualRelationshipType> possibleRelationshipTypesList = individualRelationshipTypeRepository.findAllByIndividualBIsToAAndIsVoidedFalse(individualRelation);
         if (possibleRelationshipTypesList == null || possibleRelationshipTypesList.isEmpty()) {
             errorMsgs.add(String.format("Could not find RelationshipType with Individual B Relation '%s'", individualRelation.getName()));
             return null;
         }
         if (possibleRelationshipTypesList.size() > 1) {
-            List<String> possibleHeadRelationNames = individualRelationGenderMappingRepository.findAllByGender(headOfHousehold.getGender())
+            List<String> possibleHeadRelationNames = individualRelationGenderMappingRepository.findAllByGenderAndIsVoidedFalse(headOfHousehold.getGender())
                     .stream()
                     .map(possibleGenderMappings -> possibleGenderMappings.getRelation().getName())
-                    .collect(Collectors.toList());
+                    .toList();
 
             List<IndividualRelationshipType> filteredRelationshipTypes = new ArrayList<>();
             possibleRelationshipTypesList.forEach(possibleRelationshipType -> {

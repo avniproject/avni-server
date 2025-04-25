@@ -14,5 +14,5 @@ import java.util.List;
 public interface IndividualRelationshipTypeRepository extends ReferenceDataRepository<IndividualRelationshipType>, FindByLastModifiedDateTime<IndividualRelationshipType> {
     IndividualRelationshipType findByIndividualAIsToBAndIndividualBIsToA(IndividualRelation individualRelation, IndividualRelation reverseRelation);
 
-    List<IndividualRelationshipType> findAllByIndividualBIsToA(IndividualRelation reverseRelation);
+    List<IndividualRelationshipType> findAllByIndividualBIsToAAndIsVoidedFalse(IndividualRelation reverseRelation);
 }
