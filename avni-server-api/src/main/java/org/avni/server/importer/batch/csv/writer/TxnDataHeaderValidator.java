@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
 import org.avni.server.application.FormMapping;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.csv.writer.header.Mode;
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TxnDataHeaderValidator {
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Mode mode) {
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Mode mode) throws ValidationException {
         List<String> headerList = Arrays.stream(headers)
                 .map(String::trim)
                 .map(String::toLowerCase)
@@ -37,11 +38,11 @@ public class TxnDataHeaderValidator {
         checkForUnknownHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders), mode);
         checkForDuplicateHeaders(providedIntendedHeaders, allErrorMsgs);
         if (!allErrorMsgs.isEmpty()) {
-            throw new RuntimeException(createMultiErrorMessage(allErrorMsgs));
+            throw new ValidationException(createMultiErrorMessage(allErrorMsgs));
         }
     }
 
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) {
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) throws ValidationException {
         validateHeaders(headers, formMapping, headerCreator, null);
     }
 

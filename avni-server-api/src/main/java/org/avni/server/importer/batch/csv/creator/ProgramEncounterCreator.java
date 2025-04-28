@@ -78,6 +78,15 @@ public class ProgramEncounterCreator {
         }
         programEncounter.setProgramEnrolment(programEnrolment);
 
+        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(programEnrolment.getIndividual().getSubjectType().getUuid(), programEnrolment.getProgram().getUuid(), programEncounter.getEncounterType().getUuid(), FormType.ProgramEncounter);
+        if (formMapping == null) {
+            throw new Exception(String.format("No form found for the encounter type %s", programEncounter.getEncounterType().getName()));
+        }
+
+        //Validate headers
+        EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
+
         if (isScheduledVisit) {
             String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
             String maxDateStr = row.get(EncounterHeadersCreator.MAX_VISIT_DATE);
@@ -128,17 +137,11 @@ public class ProgramEncounterCreator {
         }
 
         ValidationUtil.handleErrors(allErrorMsgs);
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(programEnrolment.getIndividual().getSubjectType().getUuid(), programEnrolment.getProgram().getUuid(), programEncounter.getEncounterType().getUuid(), FormType.ProgramEncounter);
-        if (formMapping == null) {
-            throw new Exception(String.format("No form found for the encounter type %s", programEncounter.getEncounterType().getName()));
-        }
 
         if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
             programEncounter.setObservations(new ObservationCollection());
         } else {
             // Process observations for completed encounters without rule execution
-            EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
             programEncounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations(), formMapping));
         }
         programEncounterService.save(programEncounter);

@@ -67,8 +67,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
                 EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.EARLIEST_VISIT_DATE,
-                EncounterHeadersCreator.MAX_VISIT_DATE,
-                EncounterHeadersCreator.ENCOUNTER_LOCATION
+                EncounterHeadersCreator.MAX_VISIT_DATE
         );
     }
 
@@ -91,8 +90,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 "PENR-001",
                 encounterType.getName(),
                 LocalDate.now().minusDays(5).toString("yyyy-MM-dd"),
-                LocalDate.now().toString("yyyy-MM-dd"),
-                "21.5135243,85.6731848"
+                LocalDate.now().toString("yyyy-MM-dd")
         );
     }
 
@@ -272,7 +270,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
             programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("is mandatory for scheduled visits"));
+        assertTrue(exception.getMessage().toLowerCase().contains("these fields are not needed when scheduling a visit"));
     }
 
     @Test
@@ -285,7 +283,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
             programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("is mandatory for uploaded visits"));
+        assertTrue(exception.getMessage().toLowerCase().contains("mandatory columns are missing from uploaded file"));
     }
 
     @Test
