@@ -1,6 +1,5 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormMapping;
 import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.AddressLevelTypeRepository;
@@ -8,7 +7,6 @@ import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.OrganisationConfigService;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -36,19 +34,15 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String gender = "Gender";
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectHeadersCreator.class);
-    private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final AddressLevelService addressLevelService;
-    private final ObjectMapper objectMapper;
 
     public SubjectHeadersCreator(
             OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository,
             AddressLevelService addressLevelService) {
-        this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.addressLevelService = addressLevelService;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     @Override
@@ -69,7 +63,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
             fields.add(new HeaderField(lastName, "", true, null, null, null));
             if (subjectType.isAllowProfilePicture())
                 fields.add(new HeaderField(profilePicture, "", false, null, null, null));
-            fields.add(new HeaderField(dateOfBirth, "", false, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
+            fields.add(new HeaderField(dateOfBirth, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
             fields.add(new HeaderField(dobVerified, "Default value: false", false, "Allowed values: {true, false}", null, null));
             fields.add(new HeaderField(gender, "", true, "Allowed values: {Female, Male, Other}", null, null));
         } else if (subjectType.isHousehold()) {

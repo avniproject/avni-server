@@ -95,7 +95,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
         individual.setLastName(row.get(SubjectHeadersCreator.lastName));
         setProfilePicture(subjectType, individual, row, allErrorMsgs);
-        setDateOfBirth(individual, row, allErrorMsgs);
+        if (subjectType.isPerson())
+            setDateOfBirth(individual, row, allErrorMsgs);
         Boolean dobVerified = row.getBool(SubjectHeadersCreator.dobVerified);
         individual.setDateOfBirthVerified(dobVerified != null ? dobVerified : false);
         setRegistrationDate(individual, row, allErrorMsgs);
@@ -167,9 +168,13 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     private void setDateOfBirth(Individual individual, Row row, List<String> errorMsgs) {
+        String dob = row.get(SubjectHeadersCreator.dateOfBirth);
+        if (!StringUtils.hasText(dob)) {
+            errorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.dateOfBirth));
+            return;
+        }
         try {
-            String dob = row.get(SubjectHeadersCreator.dateOfBirth);
-            if (dob != null && !dob.trim().isEmpty())
+            if (!dob.trim().isEmpty())
                 individual.setDateOfBirth(DateTimeUtil.parseFlexibleDate(dob));
         } catch (RuntimeException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));

@@ -392,7 +392,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "21.5135243,85.6731848",
                 "John",
                 "Doe",
-                "1990-01-01",
+                "",
                 "true",
                 "",
                 "",
@@ -408,7 +408,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "qg text",
                 "456",
                 "789");
-        failure(validHeader(), dataRow, "Value required for mandatory field: 'Date Of Registration', Value required for mandatory field: 'Gender'");
+        failure(validHeader(), dataRow, "value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'gender'");
     }
 
     @Test
@@ -437,7 +437,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
                 ),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - single select coded, date of registration, district. Please refer to sample file for the list of mandatory headers. Unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. Please refer to sample file for valid list of headers.");
+                "mandatory columns are missing from uploaded file - single select coded, date of registration, district, date of birth. please refer to sample file for the list of mandatory headers. unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. please refer to sample file for valid list of headers.");
     }
 
     @Test
