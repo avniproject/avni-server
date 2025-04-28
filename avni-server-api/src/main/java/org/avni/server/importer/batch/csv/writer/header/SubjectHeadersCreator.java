@@ -86,25 +86,15 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     }
 
     public List<HeaderField> generateAddressFields(FormMapping formMapping) {
-        List<String> addressHeaders;
-        try {
-            boolean hasCustomLocations = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())
-                    .equals(Collections.emptyList());
+        boolean hasCustomLocations = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())
+                .equals(Collections.emptyList());
 
-            addressHeaders = hasCustomLocations
-                    ? getCustomLocationHeaders(formMapping)
-                    : getDefaultAddressHeaders();
-
-            if (addressHeaders.isEmpty()) {
-                logger.warn("No address headers found for subject type: {}", formMapping.getSubjectType().getName());
-                return Collections.emptyList();
-            }
-        } catch (Exception e) {
-            logger.error("Error retrieving address headers", e);
-            addressHeaders = getDefaultAddressHeaders();
-        }
+        List<String> addressHeaders = hasCustomLocations
+                ? getCustomLocationHeaders(formMapping)
+                : getDefaultAddressHeaders();
 
         if (addressHeaders.isEmpty()) {
+            logger.warn("No address headers found for subject type: {}", formMapping.getSubjectType().getName());
             return Collections.emptyList();
         }
 
