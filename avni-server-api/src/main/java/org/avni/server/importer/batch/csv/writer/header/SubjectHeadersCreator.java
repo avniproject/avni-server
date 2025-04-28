@@ -86,15 +86,12 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     }
 
     public List<HeaderField> generateAddressFields(FormMapping formMapping) {
-        boolean hasCustomLocations = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())
-                .equals(Collections.emptyList());
-
-        List<String> addressHeaders = hasCustomLocations
+        List<String> addressHeaders = hasCustomLocations()
                 ? getCustomLocationHeaders(formMapping)
                 : getDefaultAddressHeaders();
 
         if (addressHeaders.isEmpty()) {
-            logger.warn("No address headers found for subject type: {}", formMapping.getSubjectType().getName());
+            logger.error("No address headers found for subject type: {}", formMapping.getSubjectType().getName());
             return Collections.emptyList();
         }
 
@@ -103,6 +100,15 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         return addressHeaders.stream()
                 .map(header -> new HeaderField(header, "", true, null, null, null, true))
                 .collect(Collectors.toList());
+    }
+
+    private boolean hasCustomLocations() {
+        JsonNode customRegistrationLocations = getCustomRegistrationLocations();
+        if (customRegistrationLocations == null || customRegistrationLocations.isEmpty()) {
+            logger.debug("No custom registration locations configured");
+            return false;
+        }
+        return true;
     }
 
     private List<String> getDefaultAddressHeaders() {
