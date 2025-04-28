@@ -88,7 +88,8 @@ public class OperationalModulesController {
                 .stream()
                 .map(AddressLevelTypeContract::fromAddressLevelType)
                 .collect(Collectors.toList());
-        List<SubjectTypeSetting> customRegistrationLocationTypes = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<List<SubjectTypeSetting>>() {});
+        List<SubjectTypeSetting> customRegistrationLocationTypes = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<>() {
+        });
         List<CustomRegistrationLocationTypeContract> customRegistrationLocationTypeContracts = customRegistrationLocationTypes
                 .stream()
                 .map(this::getCustomRegistrationLocationTypeContract)
@@ -145,7 +146,7 @@ public class OperationalModulesController {
                 .findAllByIsVoidedFalse()
                 .stream()
                 .anyMatch(SubjectType::isDirectlyAssignable);
-        boolean isAnyTaskTypeSetup = taskTypeRepository.findAllByIsVoidedFalse().size() > 0;
+        boolean isAnyTaskTypeSetup = !taskTypeRepository.findAllByIsVoidedFalse().isEmpty();
         return new JsonObject()
                 .with("isAnyDirectlyAssignable", isAnyDirectlyAssignable)
                 .with("isAnyTaskTypeSetup", isAnyTaskTypeSetup);

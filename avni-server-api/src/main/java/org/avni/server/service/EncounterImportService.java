@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -51,7 +52,7 @@ public class EncounterImportService extends AbstractSampleFileExportService {
     }
 
     @Override
-    public String generateSampleFile(String[] uploadSpec, Mode mode) {
+    public String generateSampleFile(String[] uploadSpec, Mode mode) throws InvalidConfigurationException {
         EncounterUploadMode encounterMode = (EncounterUploadMode) mode;
         FormMapping formMapping = getFormMapping(uploadSpec);
         StringBuilder sampleFileBuilder = new StringBuilder();

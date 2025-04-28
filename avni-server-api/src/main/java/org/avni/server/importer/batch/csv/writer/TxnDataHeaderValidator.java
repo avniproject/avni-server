@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.csv.writer;
 import com.google.common.collect.Sets;
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.ValidationException;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.csv.writer.header.Mode;
@@ -13,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TxnDataHeaderValidator {
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Mode mode) throws ValidationException {
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Mode mode) throws InvalidConfigurationException, ValidationException {
         List<String> headerList = Arrays.stream(headers)
                 .map(String::trim)
                 .map(String::toLowerCase)
@@ -42,7 +43,7 @@ public class TxnDataHeaderValidator {
         }
     }
 
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) throws ValidationException {
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) throws InvalidConfigurationException, ValidationException {
         validateHeaders(headers, formMapping, headerCreator, null);
     }
 

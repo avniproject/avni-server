@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.csv.writer.header;
 import jakarta.transaction.Transactional;
 import org.avni.server.application.*;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
@@ -75,7 +76,7 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
     }
 
     @Test
-    public void testBasicHeaderGeneration() {
+    public void testBasicHeaderGeneration() throws InvalidConfigurationException {
         String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, null);
         String[] description = programEnrolmentHeadersCreator.getAllDescriptions(formMapping, null);
 
@@ -86,7 +87,7 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
     }
 
     @Test
-    public void testHeadersWithConceptFields() {
+    public void testHeadersWithConceptFields() throws InvalidConfigurationException {
         Concept textConcept = testConceptService.createConcept("Text,Concept", ConceptDataType.Text);
         Concept notesConcept = testConceptService.createConcept("Notes Concept", ConceptDataType.Notes);
         Concept numericConcept = testConceptService.createConcept("Numeric Concept", ConceptDataType.Numeric);
@@ -153,7 +154,7 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
     }
 
     @Test
-    public void testDescriptionsGeneration() {
+    public void testDescriptionsGeneration() throws InvalidConfigurationException {
         String[] descriptions = programEnrolmentHeadersCreator.getAllDescriptions(formMapping, null);
 
         assertNotNull(descriptions);

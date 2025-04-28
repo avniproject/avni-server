@@ -67,12 +67,26 @@ public class AddressLevelService {
     private Optional<SubjectTypeSetting> getCustomRegistrationSetting(SubjectType subjectType) {
         List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(
                 organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()),
-                new TypeReference<List<SubjectTypeSetting>>() {
+                new TypeReference<>() {
                 });
         return customRegistrationLocations.stream()
                 .filter(crl -> crl.getSubjectTypeUUID()
                         .equals(subjectType.getUuid()))
                 .findFirst();
+    }
+
+    public AddressLevelType getRegistrationLocationType(SubjectType subjectType) {
+        Optional<SubjectTypeSetting> customRegistrationSetting = this.getCustomRegistrationSetting(subjectType);
+        if (customRegistrationSetting.isEmpty()) {
+            return null;
+        }
+
+        SubjectTypeSetting subjectTypeSetting = customRegistrationSetting.get();
+        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByUuidIn(subjectTypeSetting.getLocationTypeUUIDs());
+        if (addressLevelTypes.isEmpty()) {
+            return null;
+        }
+        return addressLevelTypes.get(0);
     }
 
     public List<AddressLevelContract> getAllLocations() {

@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.csv.writer.header;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportService;
@@ -37,14 +38,14 @@ public abstract class AbstractHeaders implements HeaderCreator {
         throw new UnsupportedOperationException("Use getAllHeaders(formMapping, Mode) with runtime data instead");
     }
 
-    public String[] getAllMandatoryHeaders(FormMapping formMapping, Mode mode) {
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .filter(HeaderField::isMandatory).map(HeaderField::getHeader)
                 .toArray(String[]::new);
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
+    public String[] getAllHeaders(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
@@ -61,13 +62,13 @@ public abstract class AbstractHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
+    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getDescription)
                 .toArray(String[]::new);
     }
 
-    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Mode mode);
+    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Mode mode) throws InvalidConfigurationException;
 
     protected static List<HeaderField> generateConceptFields(FormMapping formMapping) {
         return formMapping.getForm().getApplicableFormElements().stream()

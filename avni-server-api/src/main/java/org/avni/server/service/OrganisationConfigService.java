@@ -20,14 +20,11 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -203,7 +200,11 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return organisationConfigRepository.findByOrganisationId(organisationId);
     }
 
-    public void saveCustomRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType) {
+    public void saveRegistrationLocation(AddressLevelType addressLevelType, SubjectType subjectType) {
+        this.saveRegistrationLocations(Collections.singletonList(addressLevelType.getUuid()), subjectType);
+    }
+
+    public void saveRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType) {
         Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
         JsonObject organisationConfigSettings = organisationConfig.getSettings();
@@ -214,7 +215,8 @@ public class OrganisationConfigService implements NonScopeAwareService {
     }
 
     private List<SubjectTypeSetting> getUpdatedCustomRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType, JsonObject organisationConfigSettings, String settingsKeyName) {
-        List<SubjectTypeSetting> savedSettings = objectMapper.convertValue(organisationConfigSettings.getOrDefault(settingsKeyName, Collections.EMPTY_LIST), new TypeReference<List<SubjectTypeSetting>>() {});
+        List<SubjectTypeSetting> savedSettings = objectMapper.convertValue(organisationConfigSettings.getOrDefault(settingsKeyName, Collections.EMPTY_LIST), new TypeReference<>() {
+        });
         List<SubjectTypeSetting> otherSubjectTypeSettings = filterSubjectTypeSettingsBasedOn(savedSettings, setting -> !setting.getSubjectTypeUUID().equals(subjectType.getUuid()));
         SubjectTypeSetting subjectTypeSetting = new SubjectTypeSetting();
         subjectTypeSetting.setSubjectTypeUUID(subjectType.getUuid());

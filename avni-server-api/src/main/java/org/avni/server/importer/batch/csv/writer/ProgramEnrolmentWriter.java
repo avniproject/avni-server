@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -61,11 +62,11 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws ValidationException {
+    public void write(Chunk<? extends Row> chunk) throws ValidationException, InvalidConfigurationException {
         for (Row row : chunk.getItems()) write(row);
     }
 
-    private void write(Row row) throws ValidationException {
+    private void write(Row row) throws ValidationException, InvalidConfigurationException {
         List<String> allErrorMsgs = new ArrayList<>();
         String providedSubjectId = row.get(ProgramEnrolmentHeadersCreator.subjectId);
         Individual individual = subjectCreator.getSubject(providedSubjectId, allErrorMsgs, ProgramEnrolmentHeadersCreator.subjectId);

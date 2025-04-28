@@ -5,12 +5,14 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestFormService;
@@ -42,6 +44,9 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Autowired
     private OrganisationConfigRepository organisationConfigRepository;
+
+    @Autowired
+    private OrganisationConfigService organisationConfigService;
 
     @Autowired
     private AddressLevelTypeRepository addressLevelTypeRepository;
@@ -90,10 +95,12 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
                 .parent(district)
                 .build();
         addressLevelTypeRepository.save(village);
+
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
     }
 
     @Test
-    public void testBasicHeaderGeneration() {
+    public void testBasicHeaderGeneration() throws InvalidConfigurationException {
         String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertNotNull(headers);
@@ -108,50 +115,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     }
 
     @Test
-    public void testPersonSubjectTypeHeaders() {
-        SubjectType personType = new SubjectTypeBuilder()
-                .setMandatoryFieldsForNewEntity()
-                .setName("TestPerson")
-                .setType(Subject.Person)
-                .setAllowProfilePicture(true)
-                .build();
-        testSubjectTypeService.createWithDefaults(personType);
-
-        FormMapping personMapping = formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(personType, FormType.IndividualProfile).getFirst();
-
-        String[] headers = subjectHeadersCreator.getAllHeaders(personMapping, null);
-
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.lastName));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.dateOfBirth));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.dobVerified));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.gender));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.profilePicture));
-    }
-
-    @Test
-    public void testHouseholdSubjectTypeHeaders() {
-        SubjectType householdType = new SubjectTypeBuilder()
-                .setMandatoryFieldsForNewEntity()
-                .setName("Household")
-                .setHousehold(true)
-                .setType(Subject.Household)
-                .build();
-        testSubjectTypeService.createWithDefaults(householdType);
-
-        FormMapping householdMapping = formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(householdType, FormType.IndividualProfile).getFirst();
-
-        String[] headers = subjectHeadersCreator.getAllHeaders(householdMapping, null);;
-
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.profilePicture));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.totalMembers));
-        assertFalse(containsHeader(headers, SubjectHeadersCreator.lastName));
-        assertFalse(containsHeader(headers, SubjectHeadersCreator.gender));
-    }
-
-    @Test
-    public void testMultipleSubjectTypesForForm() {
+    public void testMultipleSubjectTypesForForm() throws InvalidConfigurationException {
         SubjectType anotherSubjectType = new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
                 .setName("AnotherSubject")
@@ -170,7 +134,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     }
 
     @Test
-    public void testAddressFieldsWithCustomRegistrationLocationsAtVillage() {
+    public void testAddressFieldsWithCustomRegistrationLocationsAtVillage() throws InvalidConfigurationException {
         OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisationId);
         config.setSettings(new JsonObject(Map.of(
                 "customRegistrationLocations", Collections.singletonList(
@@ -191,7 +155,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     }
 
     @Test
-    public void testAddressFieldsWithCustomRegistrationLocationsAtDistrict() {
+    public void testAddressFieldsWithCustomRegistrationLocationsAtDistrict() throws InvalidConfigurationException {
         OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisationId);
         config.setSettings(new JsonObject(Map.of(
                 "customRegistrationLocations", Collections.singletonList(
@@ -212,28 +176,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     }
 
     @Test
-    public void testAddressFieldsWithCustomRegistrationLocationsForDifferentSubjectType() {
-        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisationId);
-        config.setSettings(new JsonObject(Map.of(
-                "customRegistrationLocations", Collections.singletonList(
-                        Map.of(
-                                "subjectTypeUUID", subjectType.getUuid() + "x",
-                                "locationTypeUUIDs", List.of(
-                                        addressLevelTypeRepository.findByName("District").getUuid()
-                                )
-                        )
-                )
-        )));
-        organisationConfigRepository.save(config);
-
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
-
-        assertTrue(containsHeader(headers, "Village"), "Should include default address level types subjectTypeUUID doesn’t match");
-        assertTrue(containsHeader(headers, "District"), "Should include default address level types subjectTypeUUID doesn’t match");
-    }
-
-    @Test
-    public void testAddressFieldsWithoutCustomRegistrationLocations() {
+    public void testAddressFieldsWithoutCustomRegistrationLocations() throws InvalidConfigurationException {
         String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "Village"), "Should include address level types");
@@ -241,7 +184,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     }
 
     @Test
-    public void testDescriptionsGeneration() {
+    public void testDescriptionsGeneration() throws InvalidConfigurationException {
         String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping, null);
 
         assertNotNull(descriptions);

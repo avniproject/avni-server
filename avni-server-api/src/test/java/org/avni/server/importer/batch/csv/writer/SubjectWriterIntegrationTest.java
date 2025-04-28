@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.Subject;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -10,6 +11,7 @@ import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.model.Row;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestFormService;
@@ -48,7 +50,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private TestFormService testFormService;
     @Autowired
     private IndividualRepository individualRepository;
-
+    @Autowired
+    private OrganisationConfigService organisationConfigService;
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -259,6 +262,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "456",
                 "789");
     }
+
     private String[] dataRowWithMissingMandatoryValues() {
         return dataRow("",
                 "SubjectType1",
@@ -335,6 +339,79 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
+    public void headerAndDataWithMissingFields() {
+        String[] header = header("Id from previous system",
+                "Subject Type",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Profile Picture",
+                "State",
+                "District",
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Date Concept\"",
+                "\"Text Concept\"",
+                "\"Numeric Concept\"",
+                "\"Notes Concept\"",
+                "\"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\"",
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
+        );
+        String[] dataRow = dataRow("ABCD",
+                "SubjectType1",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "123",
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456",
+                "789");
+        failure(header, dataRow, "mandatory columns are missing from uploaded file - gender, date of registration. please refer to sample file for the list of mandatory headers.");
+    }
+
+    @Test
+    public void missingMandatoryCoreValues() {
+        String[] dataRow = dataRow("ABCD",
+                "SubjectType1",
+                "",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "123",
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456",
+                "789");
+        failure(validHeader(), dataRow, "Value required for mandatory field: 'Date Of Registration', Value required for mandatory field: 'Gender'");
+    }
+
+    @Test
     public void headerWithWrongFields() {
         failure(header("Id from previou system",
                         "Subject Type",
@@ -364,7 +441,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void allowHeaderWithSpaces() throws ValidationException {
+    public void allowHeaderWithSpaces() throws ValidationException, InvalidConfigurationException {
         String[] headers = header(" Id from previous system ",
                 "Subject Type",
                 "Date Of Registration ",
@@ -399,11 +476,11 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Override
     public void setUp() throws Exception {
         testDataSetupService.setupOrganisation("example", "User Group 1");
-        AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID())
-                .build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
                 .build();
-        testDataSetupService.saveLocationTypes(Arrays.asList(district, state));
+        AddressLevelType district = new AddressLevelTypeBuilder().parent(state).name("District").level(3d).withUuid(UUID.randomUUID())
+                .build();
+        testDataSetupService.saveLocationTypes(Arrays.asList(state, district));
         List<Concept> singleSelectConcepts = new ArrayList<>();
         List<Concept> multiSelectConcepts = new ArrayList<>();
         Concept singleSelectCoded = testConceptService.createCodedConcept("Single Select Coded", "SSC Answer 1",
@@ -450,10 +527,12 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 .title("District1").parent(bihar).type(district).build());
         AddressLevel district2 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
                 .title("District2").parent(bihar).type(district).build());
+
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
     }
 
     @Test
-    public void shouldCreateUpdate() throws ValidationException {
+    public void shouldCreateUpdate() throws ValidationException, InvalidConfigurationException {
         // new subject
         String[] header = validHeader();
         String[] dataRow = validDataRow();
@@ -470,7 +549,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         assertEquals("John", subject.getFirstName());
     }
 
-    private void success(String[] headers, String[] values) {
+    private void success(String[] headers, String[] values) throws InvalidConfigurationException {
         try {
             long previousCount = individualRepository.count();
             subjectWriter.write(Chunk.of(new Row(headers, values)));
@@ -481,13 +560,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void allowWithoutLegacyId() {
+    public void allowWithoutLegacyId() throws InvalidConfigurationException {
         success(validHeader(), validDataRowWithoutLegacyId());
         success(validHeader(), validDataRowWithoutLegacyId());
     }
 
     @Test
-    public void allowCodedAnswersInDifferentCase() {
+    public void allowCodedAnswersInDifferentCase() throws InvalidConfigurationException {
         success(validHeader(), dataRowWithCodedAnswersInDifferentCase());
     }
 
@@ -519,7 +598,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldHandleMultipleRQGValues() {
+    public void shouldHandleMultipleRQGValues() throws InvalidConfigurationException {
         success(validHeaderWithMultipleRQGValues(), validDataRowWithMultipleRQGValues());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(9, subject.getObservations().size());
@@ -531,6 +610,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
             subjectWriter.write(Chunk.of(new Row(headers, cells)));
             fail();
         } catch (Exception e) {
+            e.printStackTrace();
             Assert.assertEquals(errorMessage.toLowerCase(), e.getMessage().toLowerCase());
         }
         long after = individualRepository.count();

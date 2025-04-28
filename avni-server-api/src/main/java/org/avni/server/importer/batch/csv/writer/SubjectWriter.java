@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.csv.writer;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -70,7 +71,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws ValidationException {
+    public void write(Chunk<? extends Row> chunk) throws ValidationException, InvalidConfigurationException {
         List<? extends Row> rows = chunk.getItems();
         if (!CollectionUtils.isEmpty(rows)) {
             String subjectType = rows.get(0).get(SubjectHeadersCreator.subjectTypeHeader);
@@ -105,7 +106,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
         individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
 
-        if (individual.getSubjectType().getType().equals(Subject.Person)) setGender(individual, row);
+        if (individual.getSubjectType().getType().equals(Subject.Person))
+            setGender(individual, row, allErrorMsgs);
         FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
         individual.setVoided(false);
         individual.assignUUIDIfRequired();
@@ -177,7 +179,11 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {
         try {
             String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
-            LocalDate providedDate = registrationDate != null && !registrationDate.trim().isEmpty() ? DateTimeUtil.parseFlexibleDate(registrationDate) : LocalDate.now();
+            if (registrationDate == null || registrationDate.trim().isEmpty()) {
+                errorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.registrationDate));
+                return;
+            }
+            LocalDate providedDate = DateTimeUtil.parseFlexibleDate(registrationDate);
             if (providedDate.isAfter(LocalDate.now())) {
                 errorMsgs.add(String.format("'%s' %s is in future", SubjectHeadersCreator.registrationDate, registrationDate));
                 return;
@@ -188,16 +194,17 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         }
     }
 
-    private void setGender(Individual individual, Row row) {
-        try {
-            String genderName = row.get(SubjectHeadersCreator.gender);
-            Gender gender = genderRepository.findByNameIgnoreCase(genderName);
-            if (gender == null) {
-                throw new RuntimeException(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
-            }
-            individual.setGender(gender);
-        } catch (RuntimeException ex) {
-            throw new RuntimeException(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
+    private void setGender(Individual individual, Row row, List<String> allErrorMsgs) {
+        String genderName = row.get(SubjectHeadersCreator.gender);
+        if (!StringUtils.hasText(genderName)) {
+            allErrorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.gender));
+            return;
         }
+        Gender gender = genderRepository.findByNameIgnoreCase(genderName);
+        if (gender == null) {
+            allErrorMsgs.add(String.format("Invalid '%s' %s", SubjectHeadersCreator.gender, genderName));
+            return;
+        }
+        individual.setGender(gender);
     }
 }
