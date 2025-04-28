@@ -78,6 +78,14 @@ public class EncounterCreator {
         }
         encounter.setIndividual(subject);
 
+        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(subject.getSubjectType().getUuid(), null, encounter.getEncounterType().getUuid(), FormType.Encounter);
+        if (formMapping == null) {
+            throw new Exception(String.format("No form found for the encounter type %s", encounter.getEncounterType().getName()));
+        }
+
+        EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
+
         if (isScheduledVisit) {
             String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
             String maxDateStr = row.get(EncounterHeadersCreator.MAX_VISIT_DATE);
@@ -114,17 +122,10 @@ public class EncounterCreator {
 
         ValidationUtil.handleErrors(allErrorMsgs);
 
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(subject.getSubjectType().getUuid(), null, encounter.getEncounterType().getUuid(), FormType.Encounter);
-        if (formMapping == null) {
-            throw new Exception(String.format("No form found for the encounter type %s", encounter.getEncounterType().getName()));
-        }
-
         if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
             // For scheduled visits, skip observation validation
             encounter.setObservations(new ObservationCollection());
         } else {
-            EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
             encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
         }
         encounterService.save(encounter);
