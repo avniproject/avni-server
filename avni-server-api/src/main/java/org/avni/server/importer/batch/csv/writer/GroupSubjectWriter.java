@@ -135,7 +135,7 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
             errorMsgs.add(String.format("Could not find '%s' - '%s'", GroupMemberHeaders.memberId, memberId));
             return null;
         }
-        existingGroupSubject = groupSubjectRepository.findByGroupSubjectAndMemberSubject(existingGroup, existingMember);
+        existingGroupSubject = groupSubjectRepository.findByGroupSubjectAndMemberSubjectAndIsVoidedFalse(existingGroup, existingMember);
 
         return existingGroupSubject == null ? createNewGroupSubject(existingGroup, existingMember, errorMsgs) : existingGroupSubject;
     }
