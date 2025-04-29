@@ -85,20 +85,6 @@ public class ObservationCreator {
         return observationCollection;
     }
 
-    private boolean isNonEmptyQuestionGroup(FormElement formElement, Row row) {
-        Concept concept = formElement.getConcept();
-        if (ConceptDataType.isQuestionGroup(concept.getDataType())) {
-            List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(formElement.getId());
-            return allChildQuestions.stream().anyMatch(fe -> {
-                String parentChildName = concept.getName() + "|" + fe.getConcept().getName();
-                String headerName = formElement.isRepeatable() ? String.format("%s|1", parentChildName) : parentChildName;
-                String rowValue = row.get(headerName);
-                return fe.isMandatory() && !StringUtils.hasText(rowValue);
-            });
-        }
-        return false;
-    }
-
     private String getRowValue(FormElement formElement, Row row, Integer questionGroupIndex) {
         Concept concept = formElement.getConcept();
         if (formElement.getGroup() != null) {
@@ -126,6 +112,10 @@ public class ObservationCreator {
                 }
             }
 
+            if (!StringUtils.hasText(rowValue) && !formElement.isQuestionGroupElement()) {
+                continue;
+            }
+
             ObservationRequest observationRequest = new ObservationRequest();
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
@@ -141,8 +131,9 @@ public class ObservationCreator {
         return observationService.createObservations(observationRequests);
     }
 
-
-    private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations, boolean mandatoryCheckEnabled) {
+    private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs,
+                                              FormElement parentFormElement, FormType formType, ObservationCollection oldObservations,
+                                              boolean mandatoryCheckEnabled) {
         List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(parentFormElement.getId());
         if (parentFormElement.isRepeatable()) {
             Pattern repeatableQuestionGroupPattern = Pattern.compile(String.format("%s\\|.*\\|\\d", parentFormElement.getConcept().getName()));
@@ -154,7 +145,8 @@ public class ObservationCreator {
                     .max().orElse(1);
             List<ObservationCollection> repeatableObservationRequest = new ArrayList<>();
             for (int i = 1; i <= maxIndex; i++) {
-                ObservationCollection questionGroupObservations = getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, i, mandatoryCheckEnabled);
+                ObservationCollection questionGroupObservations = getQuestionGroupObservations(row, headers, errorMsgs,
+                                    formType, oldObservations, allChildQuestions, i, mandatoryCheckEnabled);
                 if (!questionGroupObservations.isEmpty()) {
                     repeatableObservationRequest.add(questionGroupObservations);
                 }

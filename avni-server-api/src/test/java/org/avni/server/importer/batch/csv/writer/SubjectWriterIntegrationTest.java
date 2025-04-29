@@ -77,6 +77,31 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 );
     }
 
+    private String[] dataRowWithNoValueForObs() {
+        return dataRow("ABCD",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "");
+    }
+
     private String[] validHeaderWithMultipleRQGValues() {
         return header("Id from previous system",
                 "Subject Type",
@@ -133,6 +158,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
         );
     }
+
     private String[] validDataRow() {
         return dataRow("ABCD",
                 "SubjectType1",
@@ -544,6 +570,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
+    public void shouldNotFailValidationIfNoValueIsProvidedInObservations() throws InvalidConfigurationException {
+        success(validHeader(), dataRowWithNoValueForObs());
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(2, subject.getObservations().size());
+    }
+
+    @Test
     public void shouldFailValidationIfDuplicateHeadersArePresent() {
         failure(headerWithDuplicates(), validDataRow(), "Headers Text Concept, QuestionGroup Concept|QG Text Concept are repeated. Please update the name or remove the duplicates.");
     }
@@ -600,6 +633,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Invalid answer 'abcd' for 'Subject Concept'");
 
     }
+
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {
