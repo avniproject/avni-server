@@ -21,6 +21,10 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
 
     @Override
     public void reset(ConnectionPool connectionPool, PooledConnection pooledConnection) {
+        if (pooledConnection == null || pooledConnection.getConnection() == null) {
+            logger.trace("No pooled connection present");
+            return;
+        }
         int connectionId = pooledConnection.getConnection().hashCode();
         logger.trace(String.format("Getting connection out of connection pool. ConnectionId: %s", connectionId));
         UserContext userContext = UserContextHolder.getUserContext();
