@@ -13,8 +13,8 @@ import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class HouseholdService {
@@ -60,31 +60,22 @@ public class HouseholdService {
         individualRelationship.setIndividualB(memberSubject);
 
         List<IndividualRelationshipType> possibleRelationshipTypesList = individualRelationshipTypeRepository.findAllByIndividualBIsToAAndIsVoidedFalse(individualRelation);
-        if (possibleRelationshipTypesList == null || possibleRelationshipTypesList.isEmpty()) {
-            errorMsgs.add(String.format("Could not find RelationshipType with Individual B Relation '%s'", individualRelation.getName()));
+        possibleRelationshipTypesList = possibleRelationshipTypesList.stream()
+                .filter(relationshipType -> relationshipType.getIndividualAIsToB().getGenderMappings()
+                        .stream().map(IndividualRelationGenderMapping::getGender).collect(Collectors.toSet()).contains(headOfHousehold.getGender()) &&
+                        relationshipType.getIndividualBIsToA().getGenderMappings()
+                                .stream().map(IndividualRelationGenderMapping::getGender).collect(Collectors.toSet()).contains(memberSubject.getGender())
+                ).toList();
+        if (possibleRelationshipTypesList.isEmpty()) {
+            errorMsgs.add(String.format("Could not find valid RelationshipType with Individual B Relation '%s'", individualRelation.getName()));
             return null;
         }
         if (possibleRelationshipTypesList.size() > 1) {
-            List<String> possibleHeadRelationNames = individualRelationGenderMappingRepository.findAllByGenderAndIsVoidedFalse(headOfHousehold.getGender())
-                    .stream()
-                    .map(possibleGenderMappings -> possibleGenderMappings.getRelation().getName())
-                    .toList();
-
-            List<IndividualRelationshipType> filteredRelationshipTypes = new ArrayList<>();
-            possibleRelationshipTypesList.forEach(possibleRelationshipType -> {
-                if (possibleHeadRelationNames.contains(possibleRelationshipType.getIndividualAIsToB().getName())) {
-                    filteredRelationshipTypes.add(possibleRelationshipType);
-                }
-            });
-            if (filteredRelationshipTypes.size() != 1) {
                 errorMsgs.add(String.format("Indeterminate relationship type '%s' to link to head of household", individualRelation.getName()));
                 return null;
-            } else {
-                individualRelationship.setRelationship(filteredRelationshipTypes.get(0));
-            }
-        } else {
-            individualRelationship.setRelationship(possibleRelationshipTypesList.get(0));
         }
+        individualRelationship.setRelationship(possibleRelationshipTypesList.get(0));
+
         return individualRelationship;
     }
 
