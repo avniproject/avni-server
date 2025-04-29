@@ -2,6 +2,7 @@ package org.avni.server.web;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.avni.server.application.FormElement;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.JobStatus;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.ConceptDataType;
@@ -16,6 +17,7 @@ import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.web.response.ImportSampleCheckResponse;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,11 +88,24 @@ public class ImportController {
                                     @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                     @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
                                     @RequestParam(value = "encounterUploadMode", required = false) EncounterUploadMode encounterUploadMode,
-                                    HttpServletResponse response) throws IOException {
+                                    HttpServletResponse response) throws IOException, InvalidConfigurationException {
         response.setContentType("text/csv");
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
-            "attachment; filename=\"" + uploadType + ".csv\"");
         importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, encounterUploadMode, response);
+    }
+
+    @RequestMapping(value = "/web/importSampleDownloadable", method = RequestMethod.GET)
+    public ResponseEntity<ImportSampleCheckResponse> checkSampleImportFileIsDownloadable(@RequestParam String uploadType,
+                                                                                         @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
+                                                                                         @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
+                                                                                         @RequestParam(value = "encounterUploadMode", required = false) EncounterUploadMode encounterUploadMode,
+                                                                                         HttpServletResponse response) {
+
+        try {
+            importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, encounterUploadMode, null);
+            return ResponseEntity.ok(new ImportSampleCheckResponse(true, "Sample import file is downloadable"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ImportSampleCheckResponse(false, e.getMessage()));
+        }
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)

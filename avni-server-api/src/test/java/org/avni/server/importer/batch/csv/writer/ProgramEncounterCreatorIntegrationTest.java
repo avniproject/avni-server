@@ -283,7 +283,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
             programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("mandatory columns are missing from uploaded file"));
+        assertEquals("unknown headers - earliest visit date, max visit date included in file. please refer to sample file for valid list of headers.", exception.getMessage().toLowerCase());
     }
 
     @Test

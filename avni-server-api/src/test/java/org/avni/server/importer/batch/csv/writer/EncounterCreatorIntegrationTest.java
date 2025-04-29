@@ -50,9 +50,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private EncounterRepository encounterRepository;
 
-    private SubjectType subjectType;
     private EncounterType encounterType;
-    private Individual subject;
 
     private String[] validScheduleVisitHeader() {
         return header(
@@ -169,7 +167,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Create subject type with a unique name
         String subjectTypeName = "SubjectType_" + UUID.randomUUID().toString().substring(0, 8);
-        subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
+        SubjectType subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
                 .setAllowProfilePicture(true)
                 .setType(Subject.Person)
@@ -211,7 +209,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
         );
 
         // Create test subject
-        subject = new SubjectBuilder()
+        Individual subject = new SubjectBuilder()
                 .withRegistrationDate(LocalDate.now().minusDays(10))
                 .withSubjectType(subjectType)
                 .withFirstName("Test Subject")
@@ -243,7 +241,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
             encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("mandatory columns are missing from uploaded file"));
+        assertEquals("unknown headers - earliest visit date, max visit date included in file. please refer to sample file for valid list of headers.", exception.getMessage().toLowerCase());
     }
 
     @Test

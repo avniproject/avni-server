@@ -3,14 +3,13 @@ package org.avni.server.service;
 import org.avni.server.application.FormMapping;
 import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
-import org.avni.server.importer.batch.csv.writer.header.Mode;
 
 import static org.avni.server.service.ImportLocationsConstants.STRING_CONSTANT_SEPARATOR;
 
 public abstract class AbstractSampleFileExportService implements SampleFileExport {
 
     @Override
-    public String generateSampleFile(String[] uploadSpec, Mode mode) throws InvalidConfigurationException {
+    public String generateSampleFile(String[] uploadSpec, Object mode) throws InvalidConfigurationException {
         FormMapping formMapping = getFormMapping(uploadSpec);
 
         StringBuilder sampleFileBuilder = new StringBuilder();

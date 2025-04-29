@@ -15,7 +15,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
     public final static String enrolmentLocation = "Enrolment Location";
 
     @Override
-    protected List<HeaderField> buildFields(FormMapping formMapping, Mode mode) {
+    protected List<HeaderField> buildFields(FormMapping formMapping, Object mode) {
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
@@ -24,7 +24,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
         fields.add(new HeaderField(enrolmentDate, "", false, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
         fields.add(new HeaderField(enrolmentLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 
-        fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
 
         return fields;

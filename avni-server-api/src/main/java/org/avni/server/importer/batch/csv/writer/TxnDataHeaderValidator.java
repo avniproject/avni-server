@@ -6,7 +6,6 @@ import org.avni.server.domain.ValidationException;
 import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
-import org.avni.server.importer.batch.csv.writer.header.Mode;
 import org.avni.server.util.S;
 import org.springframework.util.StringUtils;
 
@@ -14,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TxnDataHeaderValidator {
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Mode mode) throws InvalidConfigurationException, ValidationException {
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Object mode) throws InvalidConfigurationException, ValidationException {
         List<String> headerList = Arrays.stream(headers)
                 .map(String::trim)
                 .map(String::toLowerCase)
@@ -51,7 +50,7 @@ public class TxnDataHeaderValidator {
         return String.join(" ", errorMsgs);
     }
 
-    private static void checkForUnknownHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, Mode mode) {
+    private static void checkForUnknownHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, Object mode) {
         ArrayList<String> workingHeaderList = new ArrayList<>(headerList);
         workingHeaderList.removeIf(header -> !StringUtils.hasText(header));
         HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
@@ -94,7 +93,7 @@ public class TxnDataHeaderValidator {
         HashSet<String> presentHeaders = new HashSet<>(headerList);
         Sets.SetView<String> missingHeaders = Sets.difference(expectedHeaders, presentHeaders);
         if (!missingHeaders.isEmpty()) {
-            allErrorMsgs.add(String.format(CommonWriterError.ERR_MSG_MISSING_MANDATORY_FIELDS, String.join(", ", missingHeaders)));
+            allErrorMsgs.add(String.format(CommonWriterError.ERR_MSG_MISSING_MANDATORY_HEADER_FIELDS, String.join(", ", missingHeaders)));
         }
     }
 }

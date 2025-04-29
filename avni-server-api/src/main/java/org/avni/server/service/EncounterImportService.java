@@ -11,7 +11,6 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
-import org.avni.server.importer.batch.csv.writer.header.Mode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +51,7 @@ public class EncounterImportService extends AbstractSampleFileExportService {
     }
 
     @Override
-    public String generateSampleFile(String[] uploadSpec, Mode mode) throws InvalidConfigurationException {
+    public String generateSampleFile(String[] uploadSpec, Object mode) throws InvalidConfigurationException {
         EncounterUploadMode encounterMode = (EncounterUploadMode) mode;
         FormMapping formMapping = getFormMapping(uploadSpec);
         StringBuilder sampleFileBuilder = new StringBuilder();

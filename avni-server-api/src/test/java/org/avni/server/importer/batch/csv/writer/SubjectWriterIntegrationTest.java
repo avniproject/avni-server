@@ -339,52 +339,6 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void headerAndDataWithMissingFields() {
-        String[] header = header("Id from previous system",
-                "Subject Type",
-                "Registration Location",
-                "First Name",
-                "Last Name",
-                "Date Of Birth",
-                "Date Of Birth Verified",
-                "Profile Picture",
-                "State",
-                "District",
-                "\"Single Select Coded\"",
-                "\"Multi Select Coded\"",
-                "\"Date Concept\"",
-                "\"Text Concept\"",
-                "\"Numeric Concept\"",
-                "\"Notes Concept\"",
-                "\"Multi Select Decision Coded\"",
-                "\"QuestionGroup Concept|QG Text Concept\"",
-                "\"QuestionGroup Concept|QG Numeric Concept\"",
-                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
-        );
-        String[] dataRow = dataRow("ABCD",
-                "SubjectType1",
-                "21.5135243,85.6731848",
-                "John",
-                "Doe",
-                "1990-01-01",
-                "true",
-                "",
-                "Bihar",
-                "District1",
-                "SSC Answer 1",
-                "\"MSC Answer 1\", \"MSC Answer 2\"",
-                "2020-01-01",
-                "text",
-                "123",
-                "some notes",
-                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
-                "qg text",
-                "456",
-                "789");
-        failure(header, dataRow, "mandatory columns are missing from uploaded file - gender, date of registration. please refer to sample file for the list of mandatory headers.");
-    }
-
-    @Test
     public void missingMandatoryCoreValues() {
         String[] dataRow = dataRow("ABCD",
                 "SubjectType1",
@@ -437,7 +391,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
                 ),
                 validDataRow(),
-                "mandatory columns are missing from uploaded file - single select coded, date of registration, district, date of birth. please refer to sample file for the list of mandatory headers. unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. please refer to sample file for valid list of headers.");
+                "mandatory columns are missing in header from uploaded file - date of registration, district, date of birth. please refer to sample file for the list of mandatory headers. unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. please refer to sample file for valid list of headers.");
     }
 
     @Test
@@ -575,11 +529,6 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         failure(validHeader(),
                 dataRowWithWrongValues(),
                 "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept', Invalid value 'shouldhavebeenanumber' for 'QG Numeric Concept'");
-    }
-
-    @Test
-    public void shouldFailValidationIfMandatoryFieldsAreNotProvided() {
-        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'Text Concept'");
     }
 
     @Test

@@ -27,7 +27,7 @@ public class UploadVisitDetailsStrategy implements EncounterHeaderStrategy {
 
         fields.add(new HeaderField(EncounterHeadersCreator.VISIT_DATE, "", false, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(EncounterHeadersCreator.ENCOUNTER_LOCATION, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
-        fields.addAll(AbstractHeaders.generateConceptFields(formMapping));
+        fields.addAll(AbstractHeaders.generateConceptFields(formMapping, false));
 
         return fields;
     }

@@ -46,7 +46,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     }
 
     @Override
-    protected List<HeaderField> buildFields(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
+    protected List<HeaderField> buildFields(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         SubjectType subjectType = formMapping.getSubjectType();
         List<HeaderField> fields = new ArrayList<>();
 
@@ -76,7 +76,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         }
 
         fields.addAll(generateAddressFields(formMapping));
-        fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
 
         return fields;

@@ -38,14 +38,14 @@ public abstract class AbstractHeaders implements HeaderCreator {
         throw new UnsupportedOperationException("Use getAllHeaders(formMapping, Mode) with runtime data instead");
     }
 
-    public String[] getAllMandatoryHeaders(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .filter(HeaderField::isMandatory).map(HeaderField::getHeader)
                 .toArray(String[]::new);
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
+    public String[] getAllHeaders(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
@@ -54,7 +54,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
     @Override
     public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         List<HeaderField> fields = new ArrayList<>();
-        fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
         return fields.stream()
                 .map(HeaderField::getHeader)
@@ -62,18 +62,18 @@ public abstract class AbstractHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) throws InvalidConfigurationException {
+    public String[] getAllDescriptions(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getDescription)
                 .toArray(String[]::new);
     }
 
-    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Mode mode) throws InvalidConfigurationException;
+    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Object mode) throws InvalidConfigurationException;
 
-    protected static List<HeaderField> generateConceptFields(FormMapping formMapping) {
+    protected static List<HeaderField> generateConceptFields(FormMapping formMapping, boolean mandatoryCheckApplied) {
         return formMapping.getForm().getApplicableFormElements().stream()
                 .filter(fe -> !ConceptDataType.isQuestionGroup(fe.getConcept().getDataType()))
-                .map(AbstractHeaders::mapFormElementToField)
+                .map((FormElement fe1) -> mapFormElementToField(fe1, mandatoryCheckApplied))
                 .collect(Collectors.toList());
     }
 
@@ -87,7 +87,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
         return new HeaderField("\"" + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);
     }
 
-    private static HeaderField mapFormElementToField(FormElement fe) {
+    private static HeaderField mapFormElementToField(FormElement fe, boolean mandatoryCheckApplied) {
         Concept concept = fe.getConcept();
         String header = ImportService.getHeaderName(fe);
         FieldDescriptor strategy = getStrategy(concept.getDataType());
@@ -95,6 +95,6 @@ public abstract class AbstractHeaders implements HeaderCreator {
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
 
-        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, true);
+        return new HeaderField(header, "", mandatoryCheckApplied && fe.isMandatory(), allowedValues, format, null, true);
     }
 }

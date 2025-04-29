@@ -79,7 +79,8 @@ public class ObservationCreator {
     public ObservationCollection getObservations(Row row,
                                                  HeaderCreator headers,
                                                  List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) throws ValidationException {
-        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping, row.getHeaders());
+        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType,
+                oldObservations, formMapping, row.getHeaders(), false);
         ValidationUtil.handleErrors(errorMsgs);
         return observationCollection;
     }
@@ -109,14 +110,14 @@ public class ObservationCreator {
         return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders) {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders, boolean performMandatoryCheck) throws ValidationException {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType, formMapping);
             String rowValue = getRowValue(formElement, row, null);
 
-            if (formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
+            if (performMandatoryCheck && formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
                 errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
                 continue;
             }
