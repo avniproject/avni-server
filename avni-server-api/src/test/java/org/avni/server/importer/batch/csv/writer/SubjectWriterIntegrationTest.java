@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import org.avni.server.application.FormMapping;
-import org.avni.server.application.Subject;
+import org.avni.server.application.*;
 import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
@@ -9,23 +8,19 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
+import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.OrganisationConfigService;
-import org.avni.server.service.builder.TestConceptService;
-import org.avni.server.service.builder.TestDataSetupService;
-import org.avni.server.service.builder.TestFormService;
-import org.avni.server.service.builder.TestLocationService;
+import org.avni.server.service.builder.*;
+import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
@@ -52,6 +47,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private IndividualRepository individualRepository;
     @Autowired
     private OrganisationConfigService organisationConfigService;
+    @Autowired
+    private TestSubjectService testSubjectService;
+
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -456,6 +454,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 .setName("SubjectType1").build());
         operationalSubjectTypeRepository
                 .save(OperationalSubjectType.fromSubjectType(subjectType, UUID.randomUUID().toString()));
+        KeyValues subjectConceptKeyValues = new KeyValues();
+        subjectConceptKeyValues.addFirst(new KeyValue(KeyType.subjectTypeUUID, subjectType.getUuid()));
+        singleSelectConcepts.add(testConceptService.createConceptWithKeyValues("Subject Concept", ConceptDataType.Subject, subjectConceptKeyValues));
+        testSubjectService.save(new SubjectBuilder().withSubjectType(subjectType).withLegacyId("EFGH").withUUID("c54c899e-0d77-4ec7-8b2e-6d1b4dea83ff").withFirstName("EFGH").withRegistrationDate(LocalDate.now()).withObservations(new ObservationCollection()).build());
 
         Concept questionGroupConcept = testConceptService.createConcept("QuestionGroup Concept", ConceptDataType.QuestionGroup);
         List<Concept> childQGConcepts = new ArrayList<>();
@@ -551,6 +553,51 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         success(validHeaderWithMultipleRQGValues(), validDataRowWithMultipleRQGValues());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(9, subject.getObservations().size());
+
+    }
+
+    @Test
+    public void shouldSucceedForValidSubjectValue() throws InvalidConfigurationException {
+        success(header("Subject Type",
+                        "Date Of Registration ",
+                        "First Name",
+                        "Last Name",
+                        "Date Of Birth",
+                        "Gender",
+                        "State",
+                        "District",
+                        "Subject Concept"),
+                dataRow("SubjectType1",
+                        "2025-01-01",
+                        "Jane",
+                        "Doe",
+                        "1980-01-01",
+                        "Female",
+                        "Bihar",
+                        "District1",
+                        "c54c899e-0d77-4ec7-8b2e-6d1b4dea83ff"));
+    }
+    @Test
+    public void shouldFailForInvalidSubjectValue() {
+        failure(header("Subject Type",
+                        "Date Of Registration ",
+                        "First Name",
+                        "Last Name",
+                        "Date Of Birth",
+                        "Gender",
+                        "State",
+                        "District",
+                        "Subject Concept"),
+                dataRow("SubjectType1",
+                        "2025-01-01",
+                        "Jane",
+                        "Doe",
+                        "1980-01-01",
+                        "Female",
+                        "Bihar",
+                        "District1",
+                        "abcd"),
+                "Invalid answer 'abcd' for 'Subject Concept'");
 
     }
     private void failure(String[] headers, String[] cells, String errorMessage) {

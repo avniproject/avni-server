@@ -1,5 +1,6 @@
 package org.avni.server.service.builder;
 
+import org.avni.server.application.KeyValues;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
@@ -31,6 +32,11 @@ public class TestConceptService {
 
     public Concept createConcept(String conceptName, ConceptDataType conceptDataType) {
         Concept concept = new ConceptBuilder().withName(conceptName).withDataType(conceptDataType).build();
+        return conceptRepository.save(concept);
+    }
+
+    public Concept createConceptWithKeyValues(String conceptName, ConceptDataType conceptDataType, KeyValues keyValues) {
+        Concept concept = new ConceptBuilder().withName(conceptName).withDataType(conceptDataType).withKeyValues(keyValues).build();
         return conceptRepository.save(concept);
     }
 

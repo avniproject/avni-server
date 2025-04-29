@@ -117,9 +117,13 @@ public class ObservationCreator {
             FormElement formElement = getFormElementForObservationConcept(concept, formType, formMapping);
             String rowValue = getRowValue(formElement, row, null);
 
-            if (performMandatoryCheck && formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
-                errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
-                continue;
+            if (!StringUtils.hasText(rowValue)) {
+                if (performMandatoryCheck && formElement.isMandatory()) {
+                    errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
+                }
+                if (!concept.isQuestionGroup()) {
+                    continue;
+                }
             }
 
             ObservationRequest observationRequest = new ObservationRequest();
