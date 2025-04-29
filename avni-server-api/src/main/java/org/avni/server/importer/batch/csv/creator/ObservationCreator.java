@@ -110,7 +110,7 @@ public class ObservationCreator {
         return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders, boolean performMandatoryCheck) throws ValidationException {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders, boolean performMandatoryCheck) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
@@ -126,7 +126,7 @@ public class ObservationCreator {
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
             try {
-                Object observationValue = getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations);
+                Object observationValue = getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations, performMandatoryCheck);
                 observationRequest.setValue(observationValue);
             } catch (RuntimeException ex) {
                 logger.error(String.format("Error processing observation %s in row %s", rowValue, row), ex);
@@ -138,35 +138,35 @@ public class ObservationCreator {
     }
 
 
-    private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations) {
+    private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations, boolean mandatoryCheckEnabled) {
         List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(parentFormElement.getId());
         if (parentFormElement.isRepeatable()) {
             Pattern repeatableQuestionGroupPattern = Pattern.compile(String.format("%s\\|.*\\|\\d", parentFormElement.getConcept().getName()));
             List<String> repeatableQuestionGroupHeaders = Stream.of(row.getHeaders())
                     .filter(repeatableQuestionGroupPattern.asPredicate())
-                    .collect(Collectors.toList());
+                    .toList();
             int maxIndex = repeatableQuestionGroupHeaders.stream().map(fen -> Integer.valueOf(fen.split("\\|")[2]))
                     .mapToInt(v -> v)
                     .max().orElse(1);
             List<ObservationCollection> repeatableObservationRequest = new ArrayList<>();
             for (int i = 1; i <= maxIndex; i++) {
-                ObservationCollection questionGroupObservations = getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, i);
+                ObservationCollection questionGroupObservations = getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, i, mandatoryCheckEnabled);
                 if (!questionGroupObservations.isEmpty()) {
                     repeatableObservationRequest.add(questionGroupObservations);
                 }
             }
             return repeatableObservationRequest;
         }
-        return getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, null);
+        return getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, null, mandatoryCheckEnabled);
     }
 
-    private ObservationCollection getQuestionGroupObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex) {
+    private ObservationCollection getQuestionGroupObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex, boolean mandatoryCheckEnabled) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         for (FormElement formElement : allChildQuestions) {
             Concept concept = formElement.getConcept();
             String rowValue = getRowValue(formElement, row, questionGroupIndex);
             if (!StringUtils.hasText(rowValue)) {
-                if (formElement.isMandatory()) {
+                if (mandatoryCheckEnabled && formElement.isMandatory()) {
                     errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
                 }
                 continue;
@@ -175,7 +175,7 @@ public class ObservationCreator {
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
             try {
-                observationRequest.setValue(getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations));
+                observationRequest.setValue(getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations, mandatoryCheckEnabled));
             } catch (Exception ex) {
                 logger.error(String.format("Error processing observation %s in row %s", rowValue, row), ex);
                 errorMsgs.add(String.format("Invalid answer '%s' for '%s'", rowValue, concept.getName()));
@@ -211,7 +211,7 @@ public class ObservationCreator {
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
 
-    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, HeaderCreator headers, ObservationCollection oldObservations) {
+    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, HeaderCreator headers, ObservationCollection oldObservations, boolean mandatoryCheckEnabled) {
         Concept concept = formElement.getConcept();
         Object oldValue = oldObservations == null ? null : oldObservations.getOrDefault(concept.getUuid(), null);
         ConceptDataType dataType = ConceptDataType.valueOf(concept.getDataType());
@@ -236,7 +236,7 @@ public class ObservationCreator {
             case PhoneNumber:
                 return handlePhoneNumberValue(answerValue, errorMsgs, concept);
             case QuestionGroup:
-                return this.constructChildObservations(row, headers, errorMsgs, formElement, formType, null);
+                return this.constructChildObservations(row, headers, errorMsgs, formElement, formType, null, mandatoryCheckEnabled);
             default:
                 return answerValue;
         }

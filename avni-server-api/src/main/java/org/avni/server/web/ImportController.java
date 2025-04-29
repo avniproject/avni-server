@@ -87,21 +87,22 @@ public class ImportController {
     public void getSampleImportFile(@RequestParam String uploadType,
                                     @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                     @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
-                                    @RequestParam(value = "encounterUploadMode", required = false) EncounterUploadMode encounterUploadMode,
+                                    @RequestParam(value = "encounterUploadMode", required = false) String encounterUploadMode,
                                     HttpServletResponse response) throws IOException, InvalidConfigurationException {
         response.setContentType("text/csv");
-        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, encounterUploadMode, response);
+        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, EncounterUploadMode.fromString(encounterUploadMode), response);
     }
 
     @RequestMapping(value = "/web/importSampleDownloadable", method = RequestMethod.GET)
     public ResponseEntity<ImportSampleCheckResponse> checkSampleImportFileIsDownloadable(@RequestParam String uploadType,
                                                                                          @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                                                                          @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
-                                                                                         @RequestParam(value = "encounterUploadMode", required = false) EncounterUploadMode encounterUploadMode,
+                                                                                         @RequestParam(value = "encounterUploadMode", required = false) String encounterUploadMode,
                                                                                          HttpServletResponse response) {
 
         try {
-            importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, encounterUploadMode, null);
+            importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode,
+                    EncounterUploadMode.fromString(encounterUploadMode), null);
             return ResponseEntity.ok(new ImportSampleCheckResponse(true, "Sample import file is downloadable"));
         } catch (Exception e) {
             return ResponseEntity.ok(new ImportSampleCheckResponse(false, e.getMessage()));
