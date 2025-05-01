@@ -19,6 +19,7 @@ public interface IdentifierUserAssignmentRepository extends ReferenceDataReposit
             "where iua.assignedTo = :user and iua.identifierSource = :identifierSource and " +
             "      (iua.lastAssignedIdentifier is null or " +
             "      iua.identifierEnd <> iua.lastAssignedIdentifier)" +
+            "      and iua.isVoided is false" +
             "    order by iua.identifierStart asc")
     List<IdentifierUserAssignment> getAllNonExhaustedUserAssignments(
             @Param("user") User user,
