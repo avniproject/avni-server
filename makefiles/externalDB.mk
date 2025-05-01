@@ -94,6 +94,8 @@ tunnel-staging-db:
 	make tunnel-db host=avni-staging dbServer=stagingdb.openchs.org
 tunnel-rwb-prod:
 	make tunnel-db host=rwb-prod dbServer=serverdb.rwb.avniproject.org
+tunnel-rwb-staging-db:
+	make tunnel-db host=rwb-staging dbServer=stagingdb.rwb.avniproject.org
 
 dump-org-data-prerelease:
 	make dump-org-data dbRole=$(dbRole) prefix=prerelease
