@@ -49,6 +49,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private OrganisationConfigService organisationConfigService;
     @Autowired
     private TestSubjectService testSubjectService;
+    private AddressLevelType district;
+    private AddressLevelType state;
+    private SubjectType subjectType;
 
 
     private String[] validHeader() {
@@ -454,9 +457,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Override
     public void setUp() throws Exception {
         testDataSetupService.setupOrganisation("example", "User Group 1");
-        AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
+        state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
                 .build();
-        AddressLevelType district = new AddressLevelTypeBuilder().parent(state).name("District").level(3d).withUuid(UUID.randomUUID())
+        district = new AddressLevelTypeBuilder().parent(state).name("District").level(3d).withUuid(UUID.randomUUID())
                 .build();
         testDataSetupService.saveLocationTypes(Arrays.asList(state, district));
         List<Concept> singleSelectConcepts = new ArrayList<>();
@@ -473,7 +476,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         singleSelectConcepts.add(testConceptService.createNumericConceptWithAbsolutes("Numeric Concept", 1.0, 200.0));
         singleSelectConcepts.add(testConceptService.createConcept("Notes Concept", ConceptDataType.Notes));
 
-        SubjectType subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
+        subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
                 .setAllowProfilePicture(true)
                 .setType(Subject.Person)
@@ -509,12 +512,11 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 .title("District1").parent(bihar).type(district).build());
         AddressLevel district2 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
                 .title("District2").parent(bihar).type(district).build());
-
-        organisationConfigService.saveRegistrationLocation(district, subjectType);
     }
 
     @Test
     public void shouldCreateUpdate() throws ValidationException, InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         // new subject
         String[] header = validHeader();
         String[] dataRow = validDataRow();
@@ -543,17 +545,20 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void allowWithoutLegacyId() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeader(), validDataRowWithoutLegacyId());
         success(validHeader(), validDataRowWithoutLegacyId());
     }
 
     @Test
     public void allowCodedAnswersInDifferentCase() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeader(), dataRowWithCodedAnswersInDifferentCase());
     }
 
     @Test
     public void shouldFailValidationIfObservationValuesAreWrong() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         failure(validHeader(),
                 dataRowWithWrongValues(),
                 "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept', Invalid value 'shouldhavebeenanumber' for 'QG Numeric Concept'");
@@ -561,16 +566,19 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldNotFailValidationIfMandatoryQuestionGroupFieldsAreNotProvided() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeader(), dataRowWithMissingMandatoryQGValues());
     }
 
     @Test
     public void shouldFailValidationIfNumericValueIsOutsideValidRange() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         failure(validHeader(), dataRowWithNumericValuesOutsideValidRange(), "Invalid answer '500' for 'Numeric Concept'");
     }
 
     @Test
     public void shouldNotFailValidationIfNoValueIsProvidedInObservations() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeader(), dataRowWithNoValueForObs());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(2, subject.getObservations().size());
@@ -578,11 +586,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldFailValidationIfDuplicateHeadersArePresent() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         failure(headerWithDuplicates(), validDataRow(), "Headers Text Concept, QuestionGroup Concept|QG Text Concept are repeated. Please update the name or remove the duplicates.");
     }
 
     @Test
     public void shouldHandleMultipleRQGValues() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeaderWithMultipleRQGValues(), validDataRowWithMultipleRQGValues());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(9, subject.getObservations().size());
@@ -591,6 +601,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldSucceedForValidSubjectValue() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(header("Subject Type",
                         "Date Of Registration ",
                         "First Name",
@@ -610,8 +621,32 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "District1",
                         "c54c899e-0d77-4ec7-8b2e-6d1b4dea83ff"));
     }
+
+    @Test
+    public void shouldSucceedForValidSubjectValueWithoutRegistrationLocationOnSubjectType() throws InvalidConfigurationException {
+        success(header("Subject Type",
+                        "Date Of Registration ",
+                        "First Name",
+                        "Last Name",
+                        "Date Of Birth",
+                        "Gender",
+                        "State",
+                        "District",
+                        "Subject Concept"),
+                dataRow("SubjectType1",
+                        "2025-01-01",
+                        "Jane",
+                        "Doe",
+                        "1980-01-01",
+                        "Female",
+                        "Bihar",
+                        "District1",
+                        "c54c899e-0d77-4ec7-8b2e-6d1b4dea83ff"));
+    }
+
     @Test
     public void shouldFailForInvalidSubjectValue() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         failure(header("Subject Type",
                         "Date Of Registration ",
                         "First Name",

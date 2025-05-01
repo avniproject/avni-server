@@ -54,7 +54,6 @@ public class SubjectHeadersCreatorUnitTest {
         when(addressLevelTypeRepository.getAllParentNames(village.getUuid())).thenReturn(List.of(village.getName(), district.getName()));
 
         subjectHeadersCreator = new SubjectHeadersCreator(
-                organisationConfigService,
                 addressLevelTypeRepository,
                 addressLevelService
         );

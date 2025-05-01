@@ -181,4 +181,11 @@ public class AddressLevelService {
         }
         return Optional.empty();
     }
+
+    public AddressLevelType getImpliedRegistrationLocationType() {
+        return addressLevelTypeRepository.findAllByIsVoidedFalse()
+                .stream()
+                .min(Comparator.comparing(AddressLevelType::getLevel))
+                .orElse(null);
+    }
 }

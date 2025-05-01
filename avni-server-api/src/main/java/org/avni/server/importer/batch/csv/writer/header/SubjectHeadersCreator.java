@@ -38,7 +38,6 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     private final AddressLevelService addressLevelService;
 
     public SubjectHeadersCreator(
-            OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository,
             AddressLevelService addressLevelService) {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
@@ -85,7 +84,9 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public List<HeaderField> generateAddressFields(FormMapping formMapping) throws InvalidConfigurationException {
         AddressLevelType registrationLocationType = addressLevelService.getRegistrationLocationType(formMapping.getSubjectType());
         if (registrationLocationType == null) {
-            throw new InvalidConfigurationException("This subject type doesn't have registration location defined.");
+            registrationLocationType = addressLevelService.getImpliedRegistrationLocationType();
+            if (registrationLocationType == null)
+                throw new InvalidConfigurationException("There is no lowest location type in the system.");
         }
         List<String> listOfParentNameList = new ArrayList<>(addressLevelTypeRepository.getAllParentNames(registrationLocationType.getUuid()));
         Collections.reverse(listOfParentNameList);
