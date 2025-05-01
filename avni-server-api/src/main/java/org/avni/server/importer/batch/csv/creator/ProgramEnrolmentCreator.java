@@ -8,14 +8,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ProgramEnrolmentCreator {
-    private ProgramEnrolmentRepository programEnrolmentRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
 
     @Autowired
     public ProgramEnrolmentCreator(ProgramEnrolmentRepository programEnrolmentRepository) {
         this.programEnrolmentRepository = programEnrolmentRepository;
     }
 
-    public ProgramEnrolment getProgramEnrolment(String enrolmentId, String identifierForErrorMessage) throws Exception {
+    public ProgramEnrolment getProgramEnrolment(String enrolmentId, String identifierForErrorMessage) throws ValidationException {
         if (enrolmentId == null || enrolmentId.isEmpty()) {
             throw new ValidationException(String.format("'%s' is required", identifierForErrorMessage));
         }
