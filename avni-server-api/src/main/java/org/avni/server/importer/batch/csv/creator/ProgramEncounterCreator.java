@@ -94,9 +94,6 @@ public class ProgramEncounterCreator {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
             } else {
                 LocalDate earliestDate = DateTimeUtil.parseFlexibleDate(earliestDateStr);
-                if (earliestDate != null && earliestDate.isAfter(LocalDate.now())) {
-                    allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
-                }
                 if (earliestDate != null) {
                     LocalDate enrolmentDate = programEnrolment.getEnrolmentDateTime().toLocalDate();
                     if (earliestDate.isBefore(enrolmentDate)) {
@@ -109,9 +106,6 @@ public class ProgramEncounterCreator {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.MAX_VISIT_DATE));
             } else {
                 LocalDate maxDate = DateTimeUtil.parseFlexibleDate(maxDateStr);
-                if (maxDate != null && maxDate.isAfter(LocalDate.now())) {
-                    allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.MAX_VISIT_DATE));
-                }
                 programEncounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
             }
         } else {

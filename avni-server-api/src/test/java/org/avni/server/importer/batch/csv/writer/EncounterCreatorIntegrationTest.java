@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -283,16 +284,15 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void testScheduleVisit_FailsWithFutureDates() {
+    public void testScheduleVisit_SucceedsWithFutureDates() {
         String[] headers = validScheduleVisitHeader();
         String[] dataRow = invalidScheduleVisitDataRow_FutureDates();
 
         // Execute and verify
-        Exception exception = assertThrows(ValidationException.class, () -> {
+        assertDoesNotThrow(() -> {
             encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("'earliest visit date' cannot be in future, 'max visit date' cannot be in future"));
     }
 
     @Test

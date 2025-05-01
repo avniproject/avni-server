@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -325,16 +326,15 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void testScheduleVisit_FailsWithFutureDates() {
+    public void testScheduleVisit_SucceedsWithFutureDates() {
         String[] headers = validScheduleVisitHeader();
         String[] dataRow = invalidScheduleVisitDataRow_FutureDates();
 
         // Execute and verify
-        Exception exception = assertThrows(ValidationException.class, () -> {
+        assertDoesNotThrow(() -> {
             programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("cannot be in future"));
     }
 
     @Test

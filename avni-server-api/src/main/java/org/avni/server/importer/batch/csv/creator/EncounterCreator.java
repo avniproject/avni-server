@@ -93,18 +93,12 @@ public class EncounterCreator {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
             } else {
                 LocalDate earliestDate = DateTimeUtil.parseFlexibleDate(earliestDateStr);
-                if (earliestDate != null && earliestDate.isAfter(LocalDate.now())) {
-                    allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
-                }
                 encounter.setEarliestVisitDateTime(earliestDate != null ? earliestDate.toDateTimeAtStartOfDay() : null);
             }
             if (maxDateStr == null || maxDateStr.trim().isEmpty()) {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.MAX_VISIT_DATE));
             } else {
                 LocalDate maxDate = DateTimeUtil.parseFlexibleDate(maxDateStr);
-                if (maxDate != null && maxDate.isAfter(LocalDate.now())) {
-                    allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.MAX_VISIT_DATE));
-                }
                 encounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
             }
         } else {
