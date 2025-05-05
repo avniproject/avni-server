@@ -91,6 +91,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         ObservationCollection oldObservations = individual.getObservations();
 
         SubjectType subjectType = setSubjectType(row, individual, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
+
         FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
         if (formMapping == null) {
             throw new RuntimeException(String.format("No form found for the subject type %s", subjectType.getName()));
@@ -150,7 +152,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         String subjectTypeValue = row.get(SubjectHeadersCreator.subjectTypeHeader);
         SubjectType subjectType = subjectTypeCreator.getSubjectType(subjectTypeValue, SubjectHeadersCreator.subjectTypeHeader);
         if (subjectType == null) {
-            allErrorMsgs.add(String.format("Invalid '%s' %s", SubjectHeadersCreator.subjectTypeHeader, subjectTypeValue));
+            allErrorMsgs.add(String.format("Invalid or missing '%s' %s", SubjectHeadersCreator.subjectTypeHeader, subjectTypeValue));
             return null;
         }
         individual.setSubjectType(subjectType);

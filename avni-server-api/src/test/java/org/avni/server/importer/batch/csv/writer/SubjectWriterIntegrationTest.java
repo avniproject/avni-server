@@ -26,8 +26,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -56,6 +58,12 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private AddressLevelType state;
     private SubjectType subjectType;
 
+
+    private String[] missingHeaders() {
+        return header("Id from previous system",
+                "Subject Type"
+        );
+    }
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -493,7 +501,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldCreateUpdate() throws Exception {
+    public void shouldOnlyCreateAndDisallowUpdate() throws Exception {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         // new subject
         String[] header = validHeader();
@@ -647,6 +655,28 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "abcd"),
                 "Invalid answer 'abcd' for 'Subject Concept'");
 
+    }
+
+    @Test
+    public void shouldFailValidationIfSubjectTypeHeadersIsMissing() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] missingHeaders = {""};
+        String[] dataRow = validDataRowWithoutLegacyId();
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)));
+        });
+        assertTrue(exception.getMessage().contains("Invalid or missing 'Subject Type'"));
+    }
+
+    @Test
+    public void shouldFailValidationIfHeadersAreMissing() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] missingHeaders = missingHeaders();
+        String[] dataRow = validDataRowWithoutLegacyId();
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)));
+        });
+        assertTrue(exception.getMessage().contains("Mandatory columns are missing in header from uploaded file"));
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {

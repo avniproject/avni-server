@@ -68,6 +68,13 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
 
     private void write(Row row) throws ValidationException, InvalidConfigurationException {
         List<String> allErrorMsgs = new ArrayList<>();
+        String id = row.get(ProgramEnrolmentHeadersCreator.id);
+        if (id != null && !id.trim().isEmpty()) {
+            ProgramEnrolment existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
+            if (existingEnrolment != null) {
+                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
+            }
+        }
         String providedSubjectId = row.get(ProgramEnrolmentHeadersCreator.subjectId);
         Individual individual = subjectCreator.getSubject(providedSubjectId, ProgramEnrolmentHeadersCreator.subjectId, allErrorMsgs);
         String programNameProvided = row.get(ProgramEnrolmentHeadersCreator.programHeader);
@@ -79,15 +86,6 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
             ValidationUtil.fieldMissing("Subject ID", providedSubjectId, allErrorMsgs);
             ValidationUtil.handleErrors(allErrorMsgs);
         }
-
-        String id = row.get(ProgramEnrolmentHeadersCreator.id);
-        if (id != null && !id.trim().isEmpty()) {
-            ProgramEnrolment existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
-            if (existingEnrolment != null) {
-                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
-            }
-        }
-
         FormMapping formMapping = formMappingRepository.getProgramEnrolmentFormMapping(individual.getSubjectType(), program);
         if (formMapping == null) {
             allErrorMsgs.add(String.format("No form found for the subject type '%s' and program '%s'", individual.getSubjectType().getName(), program.getName()));
