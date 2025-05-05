@@ -494,10 +494,19 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
         AddressLevel bihar = testLocationService
                 .save(new AddressLevelBuilder().withDefaultValuesForNewEntity().title("Bihar").type(state).build());
+        AddressLevel up = testLocationService
+                .save(new AddressLevelBuilder().withDefaultValuesForNewEntity().title("Uttar Pradesh").type(state).build());
+        AddressLevel mp = testLocationService
+                .save(new AddressLevelBuilder().withDefaultValuesForNewEntity().title("Madhya Pradesh").type(state).build());
+
         AddressLevel district1 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
                 .title("District1").parent(bihar).type(district).build());
         AddressLevel district2 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
                 .title("District2").parent(bihar).type(district).build());
+        AddressLevel upDistrict1 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
+                .title("District1").parent(up).type(district).build());
+        AddressLevel mpDistrict1 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
+                .title("District1").parent(mp).type(district).build());
     }
 
     @Test
@@ -565,11 +574,40 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldNotFailValidationIfNoValueIsProvidedInObservations() throws InvalidConfigurationException {
+    public void shouldNotFailValidationIfNoValueIsProvidedInObservations() {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeader(), dataRowWithNoValueForObs());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(2, subject.getObservations().size());
+    }
+
+    @Test
+    public void shouldNotFailValidationIfLocationProvidedCaseIsDifferent() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] dataRow = dataRowWithNoValueForObs();
+        dataRow[11] = "dIstrIct2"; //location should be found
+        success(validHeader(), dataRow);
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(2, subject.getObservations().size());
+    }
+
+    @Test
+    public void shouldNotFailValidationIfLineageProvidedCaseIsDifferent() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] dataRow = dataRowWithNoValueForObs();
+        dataRow[10] = "madhya pradesh"; //location should be found
+        dataRow[11] = "dIstrIct1"; //location should be found
+        success(validHeader(), dataRow);
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(2, subject.getObservations().size());
+    }
+
+    @Test
+    public void shouldFailValidationIfLocationProvidedIsNotFound() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] dataRow = dataRowWithNoValueForObs();
+        dataRow[11] = "District3"; //location is not found
+        failure(validHeader(), dataRow, "Subject registration location provided not found.");
     }
 
     @Test

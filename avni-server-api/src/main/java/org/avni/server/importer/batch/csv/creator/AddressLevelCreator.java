@@ -37,7 +37,7 @@ public class AddressLevelCreator {
         }
 
         String title = row.get(firstMatch.getName());
-        List<AddressLevel> matchingAddressLevels = locationRepository.findByTitleAndType(title, firstMatch, PageRequest.of(0, 2));
+        List<AddressLevel> matchingAddressLevels = locationRepository.findByTitleIgnoreCaseAndType(title, firstMatch, PageRequest.of(0, 2));
         switch (matchingAddressLevels.size()) {
             case 0:
                 return null;
