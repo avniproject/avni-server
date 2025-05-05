@@ -24,6 +24,11 @@ public class ConceptExport {
     private boolean voided;
     private List<AnswerExport> answers;
 
+
+
+    private String mediaType;
+
+
     public KeyValues getKeyValues() {
         return keyValues;
     }
@@ -114,6 +119,13 @@ public class ConceptExport {
         this.voided = voided;
     }
 
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
     public static ConceptExport fromConcept(Concept concept) {
         ConceptExport export = new ConceptExport();
         export.setName(concept.getName());
@@ -127,6 +139,7 @@ public class ConceptExport {
         export.setVoided(concept.isVoided());
         export.setActive(concept.getActive());
         export.setKeyValues(concept.getKeyValues());
+        if (concept.getMediaType() != null) export.setMediaType(String.valueOf(concept.getMediaType()));
         List<ConceptAnswer> conceptAnswersSortedByOrder = concept.getConceptAnswers()
                 .stream()
                 .sorted(Comparator.comparing(ConceptAnswer::getOrder))

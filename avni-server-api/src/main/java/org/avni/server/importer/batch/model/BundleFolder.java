@@ -8,7 +8,8 @@ public enum BundleFolder {
     TRANSLATIONS("translations", "translation"),
     OLD_RULES("oldRules", "oldRule"),
     SUBJECT_TYPE_ICONS("subjectTypeIcons", "subjectTypeIcon"),
-    REPORT_CARD_ICONS("reportCardIcons", "reportCardIcon");
+    REPORT_CARD_ICONS("reportCardIcons", "reportCardIcon"),
+    CONCEPT_MEDIA("conceptMedia", "conceptMedia");
 
     String folderName;
     String modifiedFileName;

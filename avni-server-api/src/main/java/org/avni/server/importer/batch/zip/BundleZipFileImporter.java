@@ -7,6 +7,7 @@ import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.CustomQueryRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Locale;
@@ -89,6 +90,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final RuleService ruleService;
     private final GroupDashboardService groupDashboardService;
     private final CustomQueryService customQueryService;
+    private final ConceptRepository conceptRepository;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -137,6 +139,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add(BundleFolder.OLD_RULES.getFolderName());
         add(BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         add(BundleFolder.REPORT_CARD_ICONS.getFolderName());
+        add(BundleFolder.CONCEPT_MEDIA.getFolderName());
         add("customQueries.json");
     }};
 
@@ -172,7 +175,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  MessagingService messagingService,
                                  RuleDependencyService ruleDependencyService,
                                  TranslationService translationService,
-                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryRepository customQueryRepository, CustomQueryService customQueryService) {
+                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryRepository customQueryRepository, CustomQueryService customQueryService, ConceptRepository conceptRepository) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -207,6 +210,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.ruleService = ruleService;
         this.groupDashboardService = groupDashboardService;
         this.customQueryService = customQueryService;
+        this.conceptRepository = conceptRepository;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -233,13 +237,12 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private String uploadIcon(String iconFileName, byte[] iconFileData) throws IOException {
-        String folderName = MediaFolder.ICONS.label;
-        logger.info("uploading icon {}", iconFileName);
-        String[] splitFileName = iconFileName.split("\\.");
+    private String uploadMedia(String folderName, String mediaFileName, byte[] mediaFileData) throws IOException {
+        logger.info("uploading media {}", mediaFileName);
+        String[] splitFileName = mediaFileName.split("\\.");
         String entityUUID = splitFileName[0];
         String extension = splitFileName[1];
-        return s3Service.uploadByteArray(entityUUID, extension, folderName, iconFileData);
+        return s3Service.uploadByteArray(entityUUID, extension, folderName, mediaFileData);
     }
 
     private void deployFileIfDataExists(String filename, BundleZip bundleZip) throws IOException {
@@ -408,18 +411,25 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 ruleService.createOrUpdate(ruleRequest, organisation);
                 break;
             case SUBJECT_TYPE_ICONS:
-                String stS3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
+                String stS3ObjectKey = uploadMedia(MediaFolder.ICONS.label, fileData.getKey(), fileData.getValue());
                 String subjectTypeUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
                 subjectType.setIconFileS3Key(stS3ObjectKey);
                 subjectTypeRepository.save(subjectType);
                 break;
             case REPORT_CARD_ICONS:
-                String cs3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
+                String cs3ObjectKey = uploadMedia(MediaFolder.ICONS.label, fileData.getKey(), fileData.getValue());
                 String reportCardUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 ReportCard card = cardRepository.findByUuid(reportCardUUID);
                 card.setIconFileS3Key(cs3ObjectKey);
                 cardRepository.save(card);
+                break;
+            case CONCEPT_MEDIA:
+                String medias3ObjectKey = uploadMedia(MediaFolder.MetaData.label, fileData.getKey(), fileData.getValue());
+                String conceptUuid = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
+                Concept concept = conceptRepository.findByUuid(conceptUuid);
+                concept.setMediaUrl(medias3ObjectKey);
+                conceptRepository.save(concept);
                 break;
         }
     }

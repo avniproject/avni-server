@@ -717,7 +717,7 @@ public class OrganisationService {
         for (SubjectType subjectType : subjectTypes) {
             InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
             String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.SUBJECT_TYPE_ICONS.getFolderName(), subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.SUBJECT_TYPE_ICONS.getFolderName(), subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -731,7 +731,20 @@ public class OrganisationService {
             if (StringUtils.isEmpty(reportCard.getIconFileS3Key())) continue;
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+        }
+    }
+
+    public void addConceptMedia(ZipOutputStream zos) throws IOException {
+        List<Concept> conceptsWithMedia = conceptRepository.findAllByMediaUrlNotNull().stream()
+                .filter(concept -> StringUtils.hasText(concept.getMediaUrl())).toList();
+        if (!conceptsWithMedia.isEmpty()) {
+            addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
+        }
+        for (Concept concept : conceptsWithMedia) {
+            InputStream objectContent = s3Service.getObjectContentFromUrl(concept.getMediaUrl());
+            String extension = S.getLastStringAfter(concept.getMediaUrl(), ".");
+            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -828,7 +841,7 @@ public class OrganisationService {
         zos.closeEntry();
     }
 
-    private void addIconToZip(ZipOutputStream zos, String fileName, byte[] bytes) throws IOException {
+    private void addMediaToZip(ZipOutputStream zos, String fileName, byte[] bytes) throws IOException {
         ZipEntry entry = new ZipEntry(fileName);
         zos.putNextEntry(entry);
         if (bytes != null) {
