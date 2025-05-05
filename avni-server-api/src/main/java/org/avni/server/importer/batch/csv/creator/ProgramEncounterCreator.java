@@ -61,6 +61,7 @@ public class ProgramEncounterCreator {
             ProgramEncounter existingEncounter = programEncounterRepository.findByLegacyIdOrUuid(legacyId);
             if (existingEncounter != null) {
                 allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", legacyId));
+                ValidationUtil.handleErrors(allErrorMsgs);
             }
         }
         boolean isScheduledVisit = EncounterUploadMode.isScheduleVisitMode(encounterUploadMode);
@@ -69,13 +70,11 @@ public class ProgramEncounterCreator {
 
         ProgramEncounter programEncounter = getOrCreateProgramEncounter(row);
         basicEncounterCreator.updateEncounter(row, programEncounter, allErrorMsgs, mode);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         String enrolmentId = row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
-        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(enrolmentId, EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
-        if (programEnrolment == null) {
-            ValidationUtil.handleErrors(allErrorMsgs);
-            return;
-        }
+        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(enrolmentId, EncounterHeadersCreator.PROGRAM_ENROLMENT_ID, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
         programEncounter.setProgramEnrolment(programEnrolment);
 
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(programEnrolment.getIndividual().getSubjectType().getUuid(), programEnrolment.getProgram().getUuid(), programEncounter.getEncounterType().getUuid(), FormType.ProgramEncounter);
@@ -85,7 +84,8 @@ public class ProgramEncounterCreator {
 
         //Validate headers
         EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         if (isScheduledVisit) {
             String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
@@ -129,7 +129,6 @@ public class ProgramEncounterCreator {
                 programEncounter.setEncounterDateTime(encounterDate != null ? encounterDate.toDateTimeAtStartOfDay() : null, userService.getCurrentUser());
             }
         }
-
         ValidationUtil.handleErrors(allErrorMsgs);
 
         if (mode == EncounterUploadMode.SCHEDULE_VISIT) {

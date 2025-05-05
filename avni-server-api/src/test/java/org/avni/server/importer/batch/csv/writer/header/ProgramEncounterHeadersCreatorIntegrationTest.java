@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -89,7 +90,7 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
     public void testHeaderValidation_failsOnMissingMandatoryHeaders() {
         String[] headers = {EncounterHeadersCreator.VISIT_DATE}; // missing ID
         Exception exception = assertThrows(Exception.class, () -> {
-            TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.SCHEDULE_VISIT);
+            TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.SCHEDULE_VISIT, new ArrayList<>());
         });
         assertTrue(exception.getMessage().contains("Mandatory columns are missing"));
     }
@@ -113,7 +114,8 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
                 "\"Single Select Coded\""
         };
         assertDoesNotThrow(() -> {
-            TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS);
+            TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS, new ArrayList<>()
+            );
         });
     }
 }

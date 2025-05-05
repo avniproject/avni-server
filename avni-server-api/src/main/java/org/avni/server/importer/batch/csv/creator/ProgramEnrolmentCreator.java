@@ -6,6 +6,8 @@ import org.avni.server.domain.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ProgramEnrolmentCreator {
     private final ProgramEnrolmentRepository programEnrolmentRepository;
@@ -15,13 +17,15 @@ public class ProgramEnrolmentCreator {
         this.programEnrolmentRepository = programEnrolmentRepository;
     }
 
-    public ProgramEnrolment getProgramEnrolment(String enrolmentId, String identifierForErrorMessage) throws ValidationException {
+    public ProgramEnrolment getProgramEnrolment(String enrolmentId, String identifierForErrorMessage, List<String> allErrorMsgs) throws ValidationException {
         if (enrolmentId == null || enrolmentId.isEmpty()) {
-            throw new ValidationException(String.format("'%s' is required", identifierForErrorMessage));
+            allErrorMsgs.add(String.format("'%s' is required", identifierForErrorMessage));
+            return null;
         }
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(enrolmentId);
         if (programEnrolment == null) {
-            throw new ValidationException(String.format("'%s' id '%s' not found in database", identifierForErrorMessage, enrolmentId));
+            allErrorMsgs.add(String.format("'%s' id '%s' not found in database", identifierForErrorMessage, enrolmentId));
+            return null;
         }
         return programEnrolment;
     }

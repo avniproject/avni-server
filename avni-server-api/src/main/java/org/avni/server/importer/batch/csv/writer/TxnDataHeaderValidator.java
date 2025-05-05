@@ -2,8 +2,8 @@ package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
 import org.avni.server.application.FormMapping;
-import org.avni.server.domain.ValidationException;
 import org.avni.server.config.InvalidConfigurationException;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.util.S;
@@ -13,13 +13,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TxnDataHeaderValidator {
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Object mode) throws InvalidConfigurationException, ValidationException {
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, Object mode, List<String> allErrorMsgs) throws InvalidConfigurationException, ValidationException {
         List<String> headerList = Arrays.stream(headers)
                 .map(String::trim)
                 .map(String::toLowerCase)
                 .map(S::unDoubleQuote)
                 .toList();
-        List<String> allErrorMsgs = new ArrayList<>();
         List<String> providedIntendedHeaders = new ArrayList<>(headerList);
 
         String[] expectedHeaders = headerCreator.getAllHeaders(formMapping, mode);
@@ -42,8 +41,8 @@ public class TxnDataHeaderValidator {
         }
     }
 
-    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) throws InvalidConfigurationException, ValidationException {
-        validateHeaders(headers, formMapping, headerCreator, null);
+    public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator, List<String> allErrorMsgs) throws InvalidConfigurationException, ValidationException {
+        validateHeaders(headers, formMapping, headerCreator, null, allErrorMsgs);
     }
 
     private static String createMultiErrorMessage(List<String> errorMsgs) {

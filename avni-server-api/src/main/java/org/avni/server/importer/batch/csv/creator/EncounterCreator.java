@@ -61,6 +61,7 @@ public class EncounterCreator {
             Encounter existingEncounter = encounterRepository.findByLegacyIdOrUuid(legacyId);
             if (existingEncounter != null) {
                 allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", legacyId));
+                ValidationUtil.handleErrors(allErrorMsgs);
             }
         }
         boolean isScheduledVisit = EncounterUploadMode.isScheduleVisitMode(encounterUploadMode);
@@ -69,13 +70,11 @@ public class EncounterCreator {
 
         Encounter encounter = getOrCreateEncounter(row);
         basicEncounterCreator.updateEncounter(row, encounter, allErrorMsgs, mode);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         String subjectId = row.get(EncounterHeadersCreator.SUBJECT_ID);
-        Individual subject = subjectCreator.getSubject(subjectId, allErrorMsgs, EncounterHeadersCreator.SUBJECT_ID);
-        if (subject == null) {
-            ValidationUtil.handleErrors(allErrorMsgs);
-            return;
-        }
+        Individual subject = subjectCreator.getSubject(subjectId, EncounterHeadersCreator.SUBJECT_ID, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
         encounter.setIndividual(subject);
 
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(subject.getSubjectType().getUuid(), null, encounter.getEncounterType().getUuid(), FormType.Encounter);
@@ -84,7 +83,8 @@ public class EncounterCreator {
         }
 
         EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         if (isScheduledVisit) {
             String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
@@ -113,7 +113,6 @@ public class EncounterCreator {
                 encounter.setEncounterDateTime(encounterDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
             }
         }
-
         ValidationUtil.handleErrors(allErrorMsgs);
 
         if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
@@ -122,6 +121,7 @@ public class EncounterCreator {
         } else {
             encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
         }
+        ValidationUtil.handleErrors(allErrorMsgs);
         encounterService.save(encounter);
     }
 

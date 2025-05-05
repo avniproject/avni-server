@@ -20,7 +20,10 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
@@ -422,7 +425,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void allowHeaderWithSpaces() throws ValidationException, InvalidConfigurationException {
+    public void allowHeaderWithSpaces() throws Exception {
         String[] headers = header(" Id from previous system ",
                 "Subject Type",
                 "Date Of Registration ",
@@ -515,7 +518,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldCreateUpdate() throws ValidationException, InvalidConfigurationException {
+    public void shouldCreateUpdate() throws Exception {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         // new subject
         String[] header = validHeader();
@@ -526,19 +529,21 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         assertEquals(9, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
 
-        // allow edit
-        subjectWriter.write(Chunk.of(new Row(header, dataRow)));
-        subject = individualRepository.findByLegacyId("ABCD");
-        assertEquals(9, subject.getObservations().size());
-        assertEquals("John", subject.getFirstName());
+        // disallow edit
+        try {
+            subjectWriter.write(Chunk.of(new Row(header, dataRow)));
+            fail("Should not allow edit");
+        } catch (ValidationException e) {
+            e.getMessage().contains("Entry with id from previous system, ABCD already present in Avni");
+        }
     }
 
-    private void success(String[] headers, String[] values) throws InvalidConfigurationException {
+    private void success(String[] headers, String[] values) {
         try {
             long previousCount = individualRepository.count();
             subjectWriter.write(Chunk.of(new Row(headers, values)));
             assertEquals(previousCount + 1, individualRepository.count());
-        } catch (ValidationException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -561,7 +566,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         failure(validHeader(),
                 dataRowWithWrongValues(),
-                "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept', Invalid value 'shouldhavebeenanumber' for 'QG Numeric Concept'");
+                "'Date Of Registration' 2090-01-01 cannot be in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept', Invalid value 'shouldhavebeenanumber' for 'QG Numeric Concept'");
     }
 
     @Test

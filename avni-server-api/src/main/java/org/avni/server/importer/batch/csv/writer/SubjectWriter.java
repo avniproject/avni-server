@@ -3,7 +3,6 @@ package org.avni.server.importer.batch.csv.writer;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
-import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -71,23 +70,32 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws ValidationException, InvalidConfigurationException {
+    public void write(Chunk<? extends Row> chunk) throws Exception {
         List<? extends Row> rows = chunk.getItems();
         if (!CollectionUtils.isEmpty(rows)) {
-            String subjectType = rows.get(0).get(SubjectHeadersCreator.subjectTypeHeader);
-            FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectTypeCreator.getSubjectType(subjectType, SubjectHeadersCreator.subjectTypeHeader));
-            TxnDataHeaderValidator.validateHeaders(rows.get(0).getHeaders(), formMapping, subjectHeadersCreator);
             for (Row row : rows) write(row);
         }
     }
 
-    private void write(Row row) throws ValidationException {
-        Individual individual = getOrCreateIndividual(row);
+    private void write(Row row) throws Exception {
+        List<String> allErrorMsgs = new ArrayList<>();
+        String id = row.get(SubjectHeadersCreator.id);
+        if (!(id == null || id.trim().isEmpty())) {
+            if (individualRepository.findByLegacyIdOrUuid(id) != null) {
+                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
+                ValidationUtil.handleErrors(allErrorMsgs);
+            }
+        }
+        Individual individual = createNewIndividual(id);
         AddressLevel oldAddressLevel = individual.getAddressLevel();
         ObservationCollection oldObservations = individual.getObservations();
-        List<String> allErrorMsgs = new ArrayList<>();
 
         SubjectType subjectType = setSubjectType(row, individual, allErrorMsgs);
+        FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
+        if (formMapping == null) {
+            throw new RuntimeException(String.format("No form found for the subject type %s", subjectType.getName()));
+        }
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, subjectHeadersCreator, allErrorMsgs);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         individual.setFirstName(row.get(SubjectHeadersCreator.firstName));
@@ -109,13 +117,10 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
 
         if (individual.getSubjectType().getType().equals(Subject.Person))
             setGender(individual, row, allErrorMsgs);
-        FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
         individual.setVoided(false);
         individual.assignUUIDIfRequired();
-        if (formMapping == null) {
-            throw new RuntimeException(String.format("No form found for the subject type %s", subjectType.getName()));
-        }
         ObservationCollection observations = observationCreator.getObservations(row, subjectHeadersCreator, allErrorMsgs, FormType.IndividualProfile, individual.getObservations(), formMapping);
+        ValidationUtil.handleErrors(allErrorMsgs);
         individual.setObservations(observations);
         Individual savedIndividual = individualService.save(individual);
         if (oldAddressLevel != null) {
@@ -146,15 +151,6 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         } catch (Exception e) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.profilePicture));
         }
-    }
-
-    private Individual getOrCreateIndividual(Row row) {
-        String id = row.get(SubjectHeadersCreator.id);
-        Individual existingIndividual = null;
-        if (!(id == null || id.isEmpty())) {
-            existingIndividual = individualRepository.findByLegacyIdOrUuid(id);
-        }
-        return existingIndividual == null ? createNewIndividual(id) : existingIndividual;
     }
 
     private Individual createNewIndividual(String externalId) {
@@ -190,7 +186,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             }
             LocalDate providedDate = DateTimeUtil.parseFlexibleDate(registrationDate);
             if (providedDate.isAfter(LocalDate.now())) {
-                errorMsgs.add(String.format("'%s' %s is in future", SubjectHeadersCreator.registrationDate, registrationDate));
+                errorMsgs.add(String.format("'%s' %s cannot be in future", SubjectHeadersCreator.registrationDate, registrationDate));
                 return;
             }
             individual.setRegistrationDate(providedDate);

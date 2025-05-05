@@ -242,7 +242,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
             encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertEquals("unknown headers - earliest visit date, max visit date included in file. please refer to sample file for valid list of headers.", exception.getMessage().toLowerCase());
+        assertEquals("visit date is mandatory", exception.getMessage().toLowerCase());
     }
 
     @Test

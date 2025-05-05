@@ -69,7 +69,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     private void write(Row row) throws ValidationException, InvalidConfigurationException {
         List<String> allErrorMsgs = new ArrayList<>();
         String providedSubjectId = row.get(ProgramEnrolmentHeadersCreator.subjectId);
-        Individual individual = subjectCreator.getSubject(providedSubjectId, allErrorMsgs, ProgramEnrolmentHeadersCreator.subjectId);
+        Individual individual = subjectCreator.getSubject(providedSubjectId, ProgramEnrolmentHeadersCreator.subjectId, allErrorMsgs);
         String programNameProvided = row.get(ProgramEnrolmentHeadersCreator.programHeader);
         Program program = programRepository.findByName(programNameProvided);
         if (program == null) {
@@ -92,7 +92,8 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         if (formMapping == null) {
             allErrorMsgs.add(String.format("No form found for the subject type '%s' and program '%s'", individual.getSubjectType().getName(), program.getName()));
         }
-        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, programEnrolmentHeadersCreator);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, programEnrolmentHeadersCreator, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         ProgramEnrolment programEnrolment = getOrCreateProgramEnrolment(row);
         programEnrolment.setIndividual(individual);
