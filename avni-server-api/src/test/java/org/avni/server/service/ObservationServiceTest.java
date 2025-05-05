@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -87,6 +88,30 @@ public class ObservationServiceTest {
         ObservationCollection observationCollection = observationService.createObservations(requests);
 
         assertEquals(1, observationCollection.size());
+    }
+
+    @Test
+    public void shouldReplaceConceptUUIDWithMappedConcept() {
+        // Given
+        String originalConceptUuid = "0e1dab85-dc65-419a-9278-2095e2849b63";
+        String replacementConceptUuid = "b103929e-2832-4ad5-9b17-db8536925ec3";
+
+        Concept replacementConcept = new Concept();
+        replacementConcept.setUuid(replacementConceptUuid);
+        replacementConcept.setName("Replacement Concept");
+
+        when(conceptRepository.findByUuid(replacementConceptUuid)).thenReturn(replacementConcept);
+
+        ObservationRequest observationRequest = new ObservationRequest();
+        observationRequest.setConceptUUID(originalConceptUuid);
+        observationRequest.setValue("some value");
+
+        // When
+        ObservationCollection observationCollection = observationService.createObservations(Collections.singletonList(observationRequest));
+
+        // Then
+        assertEquals(1, observationCollection.size());
+        assertEquals("some value", observationCollection.get(replacementConceptUuid));
     }
 
     @Test

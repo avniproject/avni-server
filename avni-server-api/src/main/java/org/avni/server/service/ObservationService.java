@@ -38,6 +38,15 @@ public class ObservationService {
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final EnhancedValidationService enhancedValidationService;
 
+    private final static Map<String, String> replacedConceptUUIDs = new HashMap<>();
+    static {
+        replacedConceptUUIDs.put("0e1dab85-dc65-419a-9278-2095e2849b63", "b103929e-2832-4ad5-9b17-db8536925ec3");
+        replacedConceptUUIDs.put("180be136-7173-4fd2-9c80-2909af98de4c", "d8f3f74d-90f4-4dca-8002-ca9e0e5fdf83");
+        replacedConceptUUIDs.put("49844fa0-2fe2-4cbb-a605-183916e4034c", "fe72871e-48f0-44b5-a5ab-112a6628a387");
+        replacedConceptUUIDs.put("f5daf5b4-d0bd-4e17-9807-92efe715deb4", "34f3bb3a-188f-4848-90d3-44e33e12e173");
+        replacedConceptUUIDs.put("5a336f93-fb7a-487c-b49d-6237e025bc4a", "e11d9cac-0b02-4041-be7f-822dbcdf4e02");
+    }
+
     @Autowired
     public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, Optional<EnhancedValidationService> enhancedValidationService) {
         this.conceptRepository = conceptRepository;
@@ -58,6 +67,8 @@ public class ObservationService {
                             String conceptUUID = concept.getUuid();
                             observationRequest.setConceptUUID(conceptUUID);
                         }
+                    } else if (replacedConceptUUIDs.containsKey(observationRequest.getConceptUUID())) {
+                        concept = conceptRepository.findByUuid(replacedConceptUUIDs.get(observationRequest.getConceptUUID()));
                     } else {
                         concept = conceptRepository.findByUuid(observationRequest.getConceptUUID());
                     }
