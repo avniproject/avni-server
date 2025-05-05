@@ -31,13 +31,16 @@ public class AddressLevelCreator {
         AddressLevelType firstMatch = orderedLocationTypes.stream()
                 .filter(addressLevelType -> row.get(addressLevelType.getName()) != null && !StringUtils.isEmpty(row.get(addressLevelType.getName()).trim()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No matching location types found. If subject type has registration locations then only those will be used for matching."));
+                .orElse(null);
+        if (firstMatch == null) {
+            return null;
+        }
 
         String title = row.get(firstMatch.getName());
         List<AddressLevel> matchingAddressLevels = locationRepository.findByTitleAndType(title, firstMatch, PageRequest.of(0, 2));
         switch (matchingAddressLevels.size()) {
             case 0:
-                throw new RuntimeException(("Address not found: " + title));
+                return null;
             case 1:
                 return matchingAddressLevels.get(0);
             default:

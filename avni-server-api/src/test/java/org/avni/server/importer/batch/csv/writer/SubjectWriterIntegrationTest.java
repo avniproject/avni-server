@@ -293,31 +293,6 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "789");
     }
 
-    private String[] dataRowWithMissingMandatoryValues() {
-        return dataRow("",
-                "SubjectType1",
-                "2020-01-01",
-                "21.5135243,85.6731848",
-                "John",
-                "Doe",
-                "1990-01-01",
-                "true",
-                "Male",
-                "",
-                "Bihar",
-                "District1",
-                "SSC Answer 1",
-                "\"MSC Answer 1\", \"MSC Answer 2\"",
-                "",
-                "",
-                "",
-                "",
-                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
-                "qg text",
-                "456",
-                "789");
-    }
-
     private String[] dataRowWithMissingMandatoryQGValues() {
         return dataRow("",
                 "SubjectType1",
@@ -374,14 +349,14 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "SubjectType1",
                 "",
                 "21.5135243,85.6731848",
-                "John",
-                "Doe",
+                "",
+                "",
                 "",
                 "true",
                 "",
                 "",
                 "Bihar",
-                "District1",
+                "",
                 "SSC Answer 1",
                 "\"MSC Answer 1\", \"MSC Answer 2\"",
                 "2020-01-01",
@@ -392,7 +367,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "qg text",
                 "456",
                 "789");
-        failure(validHeader(), dataRow, "value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'gender'");
+        failure(validHeader(), dataRow, "subject registration location provided not found., value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender'");
     }
 
     @Test

@@ -98,7 +98,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, subjectHeadersCreator, allErrorMsgs);
         ValidationUtil.handleErrors(allErrorMsgs);
 
-        individual.setFirstName(row.get(SubjectHeadersCreator.firstName));
+        setFirstName(row, individual, allErrorMsgs);
         if (subjectType.isAllowMiddleName())
             individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
         individual.setLastName(row.get(SubjectHeadersCreator.lastName));
@@ -113,7 +113,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
 
         AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
-        individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
+        setAddressLevel(row, individual, registrationLocationTypes, allErrorMsgs);
 
         if (individual.getSubjectType().getType().equals(Subject.Person))
             setGender(individual, row, allErrorMsgs);
@@ -126,6 +126,24 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         if (oldAddressLevel != null) {
             subjectMigrationService.markSubjectMigrationIfRequired(savedIndividual.getUuid(), oldAddressLevel, savedIndividual.getAddressLevel(), oldObservations, savedIndividual.getObservations(), false);
         }
+    }
+
+    private void setAddressLevel(Row row, Individual individual, AddressLevelTypes registrationLocationTypes, List<String> allErrorMsgs) {
+        AddressLevel addressLevel = addressLevelCreator.findAddressLevel(row, registrationLocationTypes);
+        if (addressLevel == null) {
+            allErrorMsgs.add("Subject registration location provided not found.");
+            return;
+        }
+        individual.setAddressLevel(addressLevel);
+    }
+
+    private static void setFirstName(Row row, Individual individual, List<String> allErrorMsgs) {
+        String firstName = row.get(SubjectHeadersCreator.firstName);
+        if (!StringUtils.hasText(firstName)) {
+            allErrorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.firstName));
+            return;
+        }
+        individual.setFirstName(firstName);
     }
 
     private SubjectType setSubjectType(Row row, Individual individual, List<String> allErrorMsgs) {
