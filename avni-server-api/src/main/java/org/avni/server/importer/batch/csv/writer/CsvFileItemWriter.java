@@ -32,7 +32,7 @@ public class CsvFileItemWriter implements ItemWriter<Row> {
     public CsvFileItemWriter(AuthService authService,
                              LocationWriter locationWriter,
                              UserAndCatchmentWriter userAndCatchmentWriter,
-                             SubjectWriter subjectWriter,
+                             SubjectWriterWrapper subjectWriterWrapper,
                              ProgramEnrolmentWriter programEnrolmentWriter,
                              ProgramEncounterWriter programEncounterWriter,
                              EncounterWriter encounterWriter,
@@ -40,7 +40,7 @@ public class CsvFileItemWriter implements ItemWriter<Row> {
         this.authService = authService;
         writers.put("locations", locationWriter);
         writers.put("usersAndCatchments", userAndCatchmentWriter);
-        writers.put("Subject", subjectWriter);
+        writers.put("Subject", subjectWriterWrapper);
         writers.put("ProgramEnrolment", programEnrolmentWriter);
         writers.put("ProgramEncounter", programEncounterWriter);
         writers.put("Encounter", encounterWriter);
