@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.Subject;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
@@ -94,7 +95,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                         "Enrolment Location",
                         "\"Single SSSelect Coded\""),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - Enrolment Date, Single Select Coded, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Enrolent Date, Single SSSelect Coded, Id from previus system included in file. Please refer to sample file for valid list of headers.");
+                "unknown headers - enrolent date, single ssselect coded, id from previus system included in file. please refer to sample file for valid list of headers.");
     }
 
     @Override
@@ -142,7 +143,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldCreateUpdate() throws ValidationException {
+    public void shouldCreateUpdate() throws ValidationException, InvalidConfigurationException {
         // new subject
         String[] header = validHeader();
         String[] dataRow = validDataRow();
@@ -158,7 +159,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         assertTrue(exception.getMessage().toLowerCase().contains("entry with id from previous system, efgh already present in avni"));
     }
 
-    private void success(String[] headers, String[] values) {
+    private void success(String[] headers, String[] values) throws InvalidConfigurationException {
         try {
             long previousCount = programEnrolmentRepository.count();
             programEnrolmentWriter.write(Chunk.of(new Row(headers, values)));
@@ -169,7 +170,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void allowWithoutLegacyId() {
+    public void allowWithoutLegacyId() throws InvalidConfigurationException {
         success(validHeader(), validDataRowWithoutLegacyId());
         success(validHeader(), validDataRowWithoutLegacyId());
     }

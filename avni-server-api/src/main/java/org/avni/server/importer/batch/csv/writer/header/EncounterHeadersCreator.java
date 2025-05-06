@@ -10,9 +10,9 @@ import java.util.List;
 public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCreator {
 
     public static final String ID = "Id from previous system";
-    public static final String ENCOUNTER_TYPE_HEADER = "Encounter Type";
+    public static final String ENCOUNTER_TYPE = "Encounter Type";
     public static final String PROGRAM_ENROLMENT_ID = "Program Enrolment Id";
-    public static final String PREVIOUS_SYSTEM_PROGRAM_ENROLMENT_ID = "Program Enrolment Id from previous system";
+    public static final String SUBJECT_ID = "Subject Id";
     public static final String VISIT_DATE = "Visit Date";
     public static final String EARLIEST_VISIT_DATE = "Earliest Visit Date";
     public static final String MAX_VISIT_DATE = "Max Visit Date";
@@ -33,21 +33,21 @@ public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCr
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
+    public String[] getAllHeaders(FormMapping formMapping, Object mode) {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
+    public String[] getAllDescriptions(FormMapping formMapping, Object mode) {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getDescription)
                 .toArray(String[]::new);
     }
 
     @Override
-    protected List<HeaderField> buildFields(FormMapping formMapping, Mode mode) {
+    protected List<HeaderField> buildFields(FormMapping formMapping, Object mode) {
         EncounterUploadMode encounterMode = (EncounterUploadMode) mode;
         EncounterHeaderStrategy strategy = strategyFactory.getStrategy(encounterMode);
         return strategy.generateHeaders(formMapping);

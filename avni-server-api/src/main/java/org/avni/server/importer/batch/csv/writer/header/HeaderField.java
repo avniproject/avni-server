@@ -30,6 +30,10 @@ public class HeaderField {
         return header;
     }
 
+    public boolean isMandatory() {
+        return mandatory;
+    }
+
     private String formatForCsv(String input) {
         if (input == null) {
             return "";

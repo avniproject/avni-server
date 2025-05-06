@@ -16,5 +16,6 @@ delete from operational_subject_type where organisation_id = :orgId;
 delete from subject_type where organisation_id = :orgId;
 delete from catchment where organisation_id = :orgId;
 delete from concept_answer where organisation_id = :orgId;
+delete from answer_concept_migration where organisation_id = :orgId;
 delete from concept where organisation_id = :orgId;
 delete from non_applicable_form_element where organisation_id = :orgId;

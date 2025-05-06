@@ -5,6 +5,7 @@ import org.avni.server.domain.metabase.Group;
 import org.avni.server.domain.metabase.GroupPermissionResponse;
 import org.avni.server.domain.metabase.GroupPermissionsBody;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -25,15 +26,12 @@ public class MetabaseGroupRepository extends MetabaseConnector {
 
     public Group createGroup(String name) {
         String url = metabaseApiUrl + "/permissions/group";
+        GroupPermissionsBody body = new GroupPermissionsBody(name);
         try {
-            GroupPermissionsBody body = new GroupPermissionsBody(new Group(name).getName());
             HttpEntity<Map<String, Object>> entity = createJsonEntity(body);
             return restTemplate.postForObject(url, entity, Group.class);
-        } catch (RuntimeException e) {
-            logger.error("Create group failed for: {}", url);
-            throw e;
         } catch (Exception e) {
-            logger.error("Create group failed for: {}", url);
+            logger.error("Create group failed for: {} and {}", url, ObjectMapperSingleton.writeValueAsStringSafe(body));
             throw new RuntimeException(e);
         }
     }
@@ -45,16 +43,12 @@ public class MetabaseGroupRepository extends MetabaseConnector {
     public Group findGroup(String name) {
         try {
             List<GroupPermissionResponse> existingGroups = getAllGroups();
-
             for (GroupPermissionResponse group : existingGroups) {
-                if (group.getName().equals(name)) {
+                if (group.getName().equalsIgnoreCase(name)) {
                     return new Group(group.getName(), group.getId());
                 }
             }
             return null;
-        } catch (RuntimeException e) {
-            logger.error("Find group failed for name: {}", name);
-            throw e;
         } catch (Exception e) {
             logger.error("Find group failed for name: {}", name);
             throw new RuntimeException(e);
@@ -70,9 +64,6 @@ public class MetabaseGroupRepository extends MetabaseConnector {
         try {
             GroupPermissionResponse[] response = getForObject(url, GroupPermissionResponse[].class);
             return Arrays.asList(response);
-        } catch (RuntimeException e) {
-            logger.error("Get all groups failed for: {}", url);
-            throw e;
         } catch (Exception e) {
             logger.error("Get all groups failed for: {}", url);
             throw new RuntimeException(e);

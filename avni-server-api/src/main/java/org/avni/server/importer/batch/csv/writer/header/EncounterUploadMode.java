@@ -1,6 +1,6 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
-public enum EncounterUploadMode implements Mode {
+public enum EncounterUploadMode {
     SCHEDULE_VISIT("schedule_a_visit"),
     UPLOAD_VISIT_DETAILS("upload_visit_details");
 
@@ -21,5 +21,9 @@ public enum EncounterUploadMode implements Mode {
             }
         }
         return null;
+    }
+
+    public static boolean isScheduleVisitMode(String mode) {
+        return mode != null && EncounterUploadMode.fromString(mode).equals(SCHEDULE_VISIT);
     }
 }

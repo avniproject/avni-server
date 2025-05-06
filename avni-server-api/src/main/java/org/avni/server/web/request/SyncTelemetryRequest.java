@@ -14,6 +14,7 @@ public class SyncTelemetryRequest {
     private String androidVersion;
     private String deviceName;
     private JsonObject deviceInfo;
+    private JsonObject appInfo;
     private String syncSource;
 
     public JsonObject getDeviceInfo() {
@@ -102,5 +103,13 @@ public class SyncTelemetryRequest {
 
     public void setSyncSource(String syncSource) {
         this.syncSource = syncSource;
+    }
+
+    public JsonObject getAppInfo() {
+        return appInfo;
+    }
+
+    public void setAppInfo(JsonObject appInfo) {
+        this.appInfo = appInfo;
     }
 }

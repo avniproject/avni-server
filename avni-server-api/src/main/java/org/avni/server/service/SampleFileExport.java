@@ -1,9 +1,9 @@
 package org.avni.server.service;
 
 import org.avni.server.application.FormMapping;
-import org.avni.server.importer.batch.csv.writer.header.Mode;
+import org.avni.server.config.InvalidConfigurationException;
 
 public interface SampleFileExport {
-    String generateSampleFile(String[] uploadSpec, Mode mode);
+    String generateSampleFile(String[] uploadSpec, Object mode) throws InvalidConfigurationException;
     FormMapping getFormMapping(String[] uploadSpec);
 }

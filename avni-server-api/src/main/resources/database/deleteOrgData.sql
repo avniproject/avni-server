@@ -16,6 +16,7 @@ delete from encounter_type where organisation_id = :orgId and organisation_id > 
 delete from non_applicable_form_element where organisation_id = :orgId and organisation_id > 1;
 delete from form_element where organisation_id = :orgId and organisation_id > 1;
 delete from individual_relation_gender_mapping where organisation_id = :orgId and organisation_id > 1;
+delete from answer_concept_migration where organisation_id = :orgId and organisation_id > 1;
 delete from concept where organisation_id = :orgId and organisation_id > 1;
 delete from form_element_group where organisation_id = :orgId and organisation_id > 1;
 delete from form_mapping where organisation_id = :orgId and organisation_id > 1;

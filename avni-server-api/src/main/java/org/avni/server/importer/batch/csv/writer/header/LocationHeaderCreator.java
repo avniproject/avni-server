@@ -27,7 +27,12 @@ public class LocationHeaderCreator implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
+    public String[] getAllHeaders(FormMapping formMapping, Object mode) {
+        return getAllHeaders();
+    }
+
+    @Override
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Object mode) {
         return getAllHeaders();
     }
 
@@ -43,7 +48,7 @@ public class LocationHeaderCreator implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
+    public String[] getAllDescriptions(FormMapping formMapping, Object mode) {
         return new String[0];
     }
 }

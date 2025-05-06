@@ -50,6 +50,10 @@ public class DateTimeUtil {
     }
 
     public static LocalDate parseFlexibleDate(String date) {
+        if (date == null || date.trim().isEmpty()) {
+            return null;
+        }
+
         // parse date in DD-MM-YYYY format
         try {
             return LocalDate.parse(date, DateTimeFormat.forPattern("dd-MM-yyyy"));

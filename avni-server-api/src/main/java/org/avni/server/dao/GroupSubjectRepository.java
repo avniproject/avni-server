@@ -40,7 +40,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
         throw new UnsupportedOperationException("No field 'name' in GroupSubject");
     }
 
-    GroupSubject findByGroupSubjectAndMemberSubject(Individual groupSubject, Individual memberSubject);
+    GroupSubject findByGroupSubjectAndMemberSubjectAndIsVoidedFalse(Individual groupSubject, Individual memberSubject);
 
     @Query("select gs from GroupSubject gs " +
             "where gs.memberSubject.id = :individualId or gs.groupSubject.id = :individualId " )

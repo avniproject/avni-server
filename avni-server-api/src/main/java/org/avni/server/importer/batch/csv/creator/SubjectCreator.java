@@ -16,7 +16,7 @@ public class SubjectCreator {
         this.individualRepository = individualRepository;
     }
 
-    public Individual getSubject(String subjectId, List<String> errorMsgs, String identifierForErrorMessage) {
+    public Individual getSubject(String subjectId, String identifierForErrorMessage, List<String> errorMsgs) {
         if (subjectId == null || subjectId.isEmpty()) {
             errorMsgs.add(String.format("'%s' is required", identifierForErrorMessage));
             return null;

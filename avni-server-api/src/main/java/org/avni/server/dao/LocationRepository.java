@@ -266,6 +266,8 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     List<AddressLevel> findByTitleAndType(String title, AddressLevelType lowestAddressLevelType, Pageable pageable);
 
+    List<AddressLevel> findByTitleIgnoreCaseAndType(String title, AddressLevelType lowestAddressLevelType, Pageable pageable);
+
     AddressLevel findByTitleAndTypeAndIsVoidedFalse(String title, AddressLevelType addressLevelType);
 
     List<AddressLevel> findAllByIdIn(List<Long> addressIds);

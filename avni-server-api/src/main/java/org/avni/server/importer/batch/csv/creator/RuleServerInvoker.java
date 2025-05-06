@@ -1,6 +1,5 @@
 package org.avni.server.importer.batch.csv.creator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.Form;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.Individual;
@@ -11,7 +10,6 @@ import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContr
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.EntityApprovalStatusService;
 import org.avni.server.service.ObservationService;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.external.RuleServiceClient;
 import org.avni.server.web.request.rules.RulesContractWrapper.EncounterContract;
 import org.avni.server.web.request.rules.RulesContractWrapper.IndividualContract;
@@ -49,7 +47,6 @@ public class RuleServerInvoker {
     }
 
     private UploadRuleServerResponseContract invokeRuleServer(Row row, Form form, Object entity, List<String> allErrorMsgs) throws Exception {
-        ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
         UploadRuleServerRequestContract contract = UploadRuleServerRequestContract.buildRuleServerContract(row, form, entity);
         UploadRuleServerResponseContract ruleResponse = (UploadRuleServerResponseContract) restClient.post("/api/upload", contract, UploadRuleServerResponseContract.class);
         allErrorMsgs.addAll(ruleResponse.getErrors());

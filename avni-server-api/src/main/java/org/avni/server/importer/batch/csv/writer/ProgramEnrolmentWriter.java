@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -61,14 +62,21 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws ValidationException {
+    public void write(Chunk<? extends Row> chunk) throws ValidationException, InvalidConfigurationException {
         for (Row row : chunk.getItems()) write(row);
     }
 
-    private void write(Row row) throws ValidationException {
+    private void write(Row row) throws ValidationException, InvalidConfigurationException {
         List<String> allErrorMsgs = new ArrayList<>();
+        String id = row.get(ProgramEnrolmentHeadersCreator.id);
+        if (id != null && !id.trim().isEmpty()) {
+            ProgramEnrolment existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
+            if (existingEnrolment != null) {
+                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
+            }
+        }
         String providedSubjectId = row.get(ProgramEnrolmentHeadersCreator.subjectId);
-        Individual individual = subjectCreator.getSubject(providedSubjectId, allErrorMsgs, ProgramEnrolmentHeadersCreator.subjectId);
+        Individual individual = subjectCreator.getSubject(providedSubjectId, ProgramEnrolmentHeadersCreator.subjectId, allErrorMsgs);
         String programNameProvided = row.get(ProgramEnrolmentHeadersCreator.programHeader);
         Program program = programRepository.findByName(programNameProvided);
         if (program == null) {
@@ -78,20 +86,12 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
             ValidationUtil.fieldMissing("Subject ID", providedSubjectId, allErrorMsgs);
             ValidationUtil.handleErrors(allErrorMsgs);
         }
-
-        String id = row.get(ProgramEnrolmentHeadersCreator.id);
-        if (id != null && !id.trim().isEmpty()) {
-            ProgramEnrolment existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
-            if (existingEnrolment != null) {
-                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
-            }
-        }
-
         FormMapping formMapping = formMappingRepository.getProgramEnrolmentFormMapping(individual.getSubjectType(), program);
         if (formMapping == null) {
             allErrorMsgs.add(String.format("No form found for the subject type '%s' and program '%s'", individual.getSubjectType().getName(), program.getName()));
         }
-        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, programEnrolmentHeadersCreator);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, programEnrolmentHeadersCreator, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         ProgramEnrolment programEnrolment = getOrCreateProgramEnrolment(row);
         programEnrolment.setIndividual(individual);

@@ -48,6 +48,10 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     private JsonObject deviceInfo;
 
     @Column
+    @Type(value = JSONObjectUserType.class)
+    private JsonObject appInfo;
+
+    @Column
     private String syncSource;
 
     public JsonObject getDeviceInfo() {
@@ -128,5 +132,13 @@ public class SyncTelemetry extends OrganisationAwareEntity{
 
     public void setSyncSource(String syncSource) {
         this.syncSource = syncSource;
+    }
+
+    public JsonObject getAppInfo() {
+        return appInfo;
+    }
+
+    public void setAppInfo(JsonObject appInfo) {
+        this.appInfo = appInfo;
     }
 }
