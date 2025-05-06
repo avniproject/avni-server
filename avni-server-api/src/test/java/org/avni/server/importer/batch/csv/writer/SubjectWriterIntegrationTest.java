@@ -700,7 +700,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] missingHeaders = {""};
         String[] dataRow = validDataRowWithoutLegacyId();
         Exception exception = assertThrows(ValidationException.class, () -> {
-            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)));
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1");
         });
         assertTrue(exception.getMessage().contains("Invalid or missing 'Subject Type'"));
     }
@@ -711,7 +711,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] missingHeaders = missingHeaders();
         String[] dataRow = validDataRowWithoutLegacyId();
         Exception exception = assertThrows(ValidationException.class, () -> {
-            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)));
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1");
         });
         assertTrue(exception.getMessage().contains("Mandatory columns are missing in header from uploaded file"));
     }
