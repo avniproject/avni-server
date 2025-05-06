@@ -105,6 +105,17 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         );
     }
 
+
+    private String[] invalidScheduleVisitDataRowForFutureDates() {
+        return dataRow(
+                "PENC-001",
+                "PENR-001",
+                encounterType.getName(),
+                LocalDate.now().plusDays(15).toString("yyyy-MM-dd"),
+                LocalDate.now().plusDays(10).toString("yyyy-MM-dd")
+        );
+    }
+
     private String[] validUploadVisitDataRow() {
         return dataRow(
                 "PENC-002",
@@ -390,6 +401,19 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("visit date needs to be after program enrolment date"));
+    }
+
+    @Test
+    public void testScheduleVisit_FailsWithMaxDateBeforeEarliestDate() {
+        String[] headers = validScheduleVisitHeader();
+        String[] dataRow = invalidScheduleVisitDataRowForFutureDates();
+
+        // Execute and verify
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("max visit date needs to be after earliest visit date"));
     }
 
     @Test

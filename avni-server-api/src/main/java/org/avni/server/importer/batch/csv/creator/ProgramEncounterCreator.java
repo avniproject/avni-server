@@ -106,6 +106,9 @@ public class ProgramEncounterCreator {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.MAX_VISIT_DATE));
             } else {
                 LocalDate maxDate = DateTimeUtil.parseFlexibleDate(maxDateStr);
+                if (maxDate.isBefore(programEncounter.getEarliestVisitDateTime().toLocalDate())) {
+                    allErrorMsgs.add("Max visit date needs to be after Earliest visit date");
+                }
                 programEncounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
             }
         } else {

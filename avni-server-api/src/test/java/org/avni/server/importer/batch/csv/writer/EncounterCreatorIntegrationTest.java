@@ -96,6 +96,16 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
         );
     }
 
+    private String[] invalidScheduleVisitDataRowForFutureDates() {
+        return dataRow(
+                "ENC-001",
+                "SUB-001",
+                encounterType.getName(),
+                LocalDate.now().plusDays(15).toString("yyyy-MM-dd"),
+                LocalDate.now().plusDays(10).toString("yyyy-MM-dd")
+        );
+    }
+
     private String[] validUploadVisitDataRow() {
         return dataRow(
                 "ENC-002",
@@ -335,6 +345,19 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("'visit date' cannot be in future"));
+    }
+
+    @Test
+    public void testScheduleVisit_FailsWithMaxDateBeforeEarliestDate() {
+        String[] headers = validScheduleVisitHeader();
+        String[] dataRow = invalidScheduleVisitDataRowForFutureDates();
+
+        // Execute and verify
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("max visit date needs to be after earliest visit date"));
     }
 
     @Test
