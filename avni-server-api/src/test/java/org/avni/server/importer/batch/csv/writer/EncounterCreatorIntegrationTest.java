@@ -86,6 +86,16 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
         );
     }
 
+    private String[] validScheduleVisitDataRowForFutureDates() {
+        return dataRow(
+                "ENC-001",
+                "SUB-001",
+                encounterType.getName(),
+                LocalDate.now().plusDays(5).toString("yyyy-MM-dd"),
+                LocalDate.now().plusDays(10).toString("yyyy-MM-dd")
+        );
+    }
+
     private String[] validUploadVisitDataRow() {
         return dataRow(
                 "ENC-002",
@@ -249,6 +259,25 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
     public void testScheduleVisit_Success() throws Exception {
         String[] headers = validScheduleVisitHeader();
         String[] dataRow = validScheduleVisitDataRow();
+
+        // Execute
+        encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+
+        // Verify
+        Encounter encounter = encounterRepository.findByLegacyId("ENC-001");
+        assertNotNull(encounter);
+        assertEquals("SUB-001", encounter.getIndividual().getLegacyId());
+        assertEquals(encounterType.getName(), encounter.getEncounterType().getName());
+        assertNull(encounter.getEncounterDateTime());
+        assertNotNull(encounter.getEarliestVisitDateTime());
+        assertNotNull(encounter.getMaxVisitDateTime());
+        assertEquals(0, encounter.getObservations().size());
+    }
+
+    @Test
+    public void testScheduleVisitInFuture_Success() throws Exception {
+        String[] headers = validScheduleVisitHeader();
+        String[] dataRow = validScheduleVisitDataRowForFutureDates();
 
         // Execute
         encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
