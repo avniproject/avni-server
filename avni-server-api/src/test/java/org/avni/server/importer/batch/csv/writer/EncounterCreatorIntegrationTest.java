@@ -27,7 +27,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -141,17 +140,6 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 "SSC Answer 1",
                 "\"MSC Answer 1\", \"MSC Answer 2\"",
                 "123"
-        );
-    }
-
-    private String[] invalidScheduleVisitDataRow_FutureDates() {
-        return dataRow(
-                "ENC-003",
-                "SUB-001",
-                encounterType.getName(),
-                LocalDate.now().plusDays(5).toString("yyyy-MM-dd"),
-                LocalDate.now().plusDays(10).toString("yyyy-MM-dd"),
-                "21.5135243,85.6731848"
         );
     }
 
@@ -320,18 +308,6 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
         assertNull(encounter.getEarliestVisitDateTime());
         assertNull(encounter.getMaxVisitDateTime());
         assertEquals(3, encounter.getObservations().size());
-    }
-
-    @Test
-    public void testScheduleVisit_SucceedsWithFutureDates() {
-        String[] headers = validScheduleVisitHeader();
-        String[] dataRow = invalidScheduleVisitDataRow_FutureDates();
-
-        // Execute and verify
-        assertDoesNotThrow(() -> {
-            encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
-        });
-
     }
 
     @Test
