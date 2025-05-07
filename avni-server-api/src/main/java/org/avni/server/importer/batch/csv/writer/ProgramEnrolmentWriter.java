@@ -30,12 +30,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Component
 public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final SubjectCreator subjectCreator;
-    private final DateCreator dateCreator;
     private final FormMappingRepository formMappingRepository;
     private final ObservationCreator observationCreator;
     private final ProgramEnrolmentService programEnrolmentService;
@@ -56,7 +54,6 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         this.formMappingRepository = formMappingRepository;
         this.observationCreator = observationCreator;
         this.programEnrolmentService = programEnrolmentService;
-        this.dateCreator = new DateCreator();
         this.programEnrolmentHeadersCreator = programEnrolmentHeadersCreator;
         this.programRepository = programRepository;
     }
@@ -95,6 +92,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
 
         ProgramEnrolment programEnrolment = getOrCreateProgramEnrolment(row);
         programEnrolment.setIndividual(individual);
+        DateCreator dateCreator = new DateCreator();
         LocalDate enrolmentDate = dateCreator.getDate(
                 row,
                 ProgramEnrolmentHeadersCreator.enrolmentDate,

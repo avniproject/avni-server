@@ -9,7 +9,6 @@ import java.util.List;
 
 @Component
 public class UploadVisitDetailsStrategy implements EncounterHeaderStrategy {
-
     @Override
     public List<HeaderField> generateHeaders(FormMapping formMapping) {
         List<HeaderField> fields = new ArrayList<>();
@@ -25,7 +24,7 @@ public class UploadVisitDetailsStrategy implements EncounterHeaderStrategy {
 
         fields.add(new HeaderField(idField, idDescription, true, null, null, null));
 
-        fields.add(new HeaderField(EncounterHeadersCreator.VISIT_DATE, "", false, null, "Format: DD-MM-YYYY", null));
+        fields.add(new HeaderField(EncounterHeadersCreator.VISIT_DATE, "", true, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(EncounterHeadersCreator.ENCOUNTER_LOCATION, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
         fields.addAll(AbstractHeaders.generateConceptFields(formMapping, false));
 

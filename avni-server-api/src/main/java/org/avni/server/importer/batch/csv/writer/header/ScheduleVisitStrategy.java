@@ -9,7 +9,6 @@ import java.util.List;
 
 @Component
 public class ScheduleVisitStrategy implements EncounterHeaderStrategy {
-
     @Override
     public List<HeaderField> generateHeaders(FormMapping formMapping) {
         List<HeaderField> fields = new ArrayList<>();
@@ -26,8 +25,8 @@ public class ScheduleVisitStrategy implements EncounterHeaderStrategy {
 
         fields.add(new HeaderField(idField, idDescription, true, null, null, null));
 
-        fields.add(new HeaderField(EncounterHeadersCreator.EARLIEST_VISIT_DATE, "", false, null, "Format: DD-MM-YYYY", null));
-        fields.add(new HeaderField(EncounterHeadersCreator.MAX_VISIT_DATE, "", false, null, "Format: DD-MM-YYYY", null));
+        fields.add(new HeaderField(EncounterHeadersCreator.EARLIEST_VISIT_DATE, "", true, null, "Format: DD-MM-YYYY", null));
+        fields.add(new HeaderField(EncounterHeadersCreator.MAX_VISIT_DATE, "", true, null, "Format: DD-MM-YYYY", null));
         return fields;
     }
 }
