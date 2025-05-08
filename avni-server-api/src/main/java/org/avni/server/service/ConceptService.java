@@ -174,7 +174,7 @@ public class ConceptService implements NonScopeAwareService {
 
     private Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers) {
         if (conceptRequest == null) return null;
-        if (StringUtils.hasText(conceptRequest.getName()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
+        if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
         logger.info(String.format("Creating concept: %s", conceptRequest));
