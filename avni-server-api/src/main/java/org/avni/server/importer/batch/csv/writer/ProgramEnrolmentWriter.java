@@ -81,8 +81,8 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         }
         if (individual == null) {
             ValidationUtil.fieldMissing("Subject ID", providedSubjectId, allErrorMsgs);
-            ValidationUtil.handleErrors(allErrorMsgs);
         }
+        ValidationUtil.handleErrors(allErrorMsgs);
         FormMapping formMapping = formMappingRepository.getProgramEnrolmentFormMapping(individual.getSubjectType(), program);
         if (formMapping == null) {
             allErrorMsgs.add(String.format("No form found for the subject type '%s' and program '%s'", individual.getSubjectType().getName(), program.getName()));

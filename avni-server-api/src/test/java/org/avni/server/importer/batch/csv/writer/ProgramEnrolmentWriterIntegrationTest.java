@@ -78,6 +78,33 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "SSC Answer 1");
     }
 
+    private String[] dataRowWithNoFields() {
+        return dataRow("",
+                "",
+                "",
+                "",
+                "",
+                "");
+    }
+
+    private String[] dataRowWithOnlySubjectId() {
+        return dataRow("",
+                "ABCD",
+                "",
+                "",
+                "",
+                "");
+    }
+
+    private String[] dataRowWithNoEnrolmentDate() {
+        return dataRow("",
+                "ABCD",
+                "Program1",
+                "",
+                "",
+                "");
+    }
+
     private String[] validDataRowWithoutLegacyId() {
         return dataRow("",
                 "ABCD",
@@ -175,12 +202,23 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         success(validHeader(), validDataRowWithoutLegacyId());
     }
 
+    @Test
+    public void noData() {
+        failure(validHeader(), dataRowWithNoFields(),
+                "'subject id from previous system' is required, program '' not found, subject id '' not found");
+        failure(validHeader(), dataRowWithOnlySubjectId(),
+                "program '' not found");
+        failure(validHeader(), dataRowWithNoEnrolmentDate(),
+                "enrolment date is mandatory");
+    }
+
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {
             programEnrolmentWriter.write(Chunk.of(new Row(headers, cells)));
             fail();
         } catch (Exception e) {
+            e.printStackTrace();
             Assert.assertEquals(errorMessage.toLowerCase(), e.getMessage().toLowerCase());
         }
         long after = individualRepository.count();
