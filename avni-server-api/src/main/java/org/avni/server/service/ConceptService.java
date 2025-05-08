@@ -7,7 +7,10 @@ import org.avni.server.application.FormElement;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.KeyValues;
 import org.avni.server.application.ValueType;
-import org.avni.server.dao.*;
+import org.avni.server.dao.AnswerConceptMigrationRepository;
+import org.avni.server.dao.ConceptAnswerRepository;
+import org.avni.server.dao.ConceptRepository;
+import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.*;
 import org.avni.server.util.*;
@@ -171,7 +174,7 @@ public class ConceptService implements NonScopeAwareService {
 
     private Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers) {
         if (conceptRequest == null) return null;
-        if (StringUtils.hasText(conceptRequest.getName()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
+        if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
         logger.info(String.format("Creating concept: %s", conceptRequest));
