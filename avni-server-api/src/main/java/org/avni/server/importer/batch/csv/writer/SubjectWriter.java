@@ -181,35 +181,19 @@ public class SubjectWriter extends EntityWriter {
     }
 
     private void setDateOfBirth(Individual individual, Row row, List<String> errorMsgs) {
-        String dob = row.get(SubjectHeadersCreator.dateOfBirth);
-        if (!StringUtils.hasText(dob)) {
-            errorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.dateOfBirth));
+        LocalDate date = row.ensureDateIsPresentAndNotInFuture(SubjectHeadersCreator.dateOfBirth, errorMsgs);
+        if (date == null) {
             return;
         }
-        try {
-            if (!dob.trim().isEmpty())
-                individual.setDateOfBirth(DateTimeUtil.parseFlexibleDate(dob));
-        } catch (RuntimeException ex) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));
-        }
+        individual.setRegistrationDate(date);
     }
 
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {
-        try {
-            String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
-            if (registrationDate == null || registrationDate.trim().isEmpty()) {
-                errorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.registrationDate));
-                return;
-            }
-            LocalDate providedDate = DateTimeUtil.parseFlexibleDate(registrationDate);
-            if (providedDate.isAfter(LocalDate.now())) {
-                errorMsgs.add(String.format("'%s' %s cannot be in future", SubjectHeadersCreator.registrationDate, registrationDate));
-                return;
-            }
-            individual.setRegistrationDate(providedDate);
-        } catch (IllegalArgumentException ex) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.registrationDate));
+        LocalDate date = row.ensureDateIsPresentAndNotInFuture(SubjectHeadersCreator.registrationDate, errorMsgs);
+        if (date == null) {
+            return;
         }
+        individual.setRegistrationDate(date);
     }
 
     private void setGender(Individual individual, Row row, List<String> allErrorMsgs) {

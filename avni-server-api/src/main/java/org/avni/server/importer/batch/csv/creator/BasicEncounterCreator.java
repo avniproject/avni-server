@@ -26,7 +26,7 @@ public class BasicEncounterCreator {
         this.locationCreator = new LocationCreator();
     }
 
-    public AbstractEncounter updateEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs, EncounterUploadMode mode) {
+    public void updateEncounterFields(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs, EncounterUploadMode mode) {
         DateCreator dateCreator = new DateCreator();
         if (EncounterUploadMode.SCHEDULE_VISIT == mode) {
             LocalDate earliestVisitDate = dateCreator.getDate(
@@ -43,11 +43,7 @@ public class BasicEncounterCreator {
             );
             if (maxVisitDate != null) basicEncounter.setMaxVisitDateTime(maxVisitDate.toDateTimeAtStartOfDay());
         } else {
-            LocalDate visitDate = dateCreator.getDate(
-                    row,
-                    EncounterHeadersCreator.VISIT_DATE,
-                    allErrorMsgs, String.format("%s is mandatory", EncounterHeadersCreator.VISIT_DATE
-                    ));
+            LocalDate visitDate = row.ensureDateIsPresentAndNotInFuture(EncounterHeadersCreator.VISIT_DATE, allErrorMsgs);
             if (visitDate != null)
                 basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
             basicEncounter.setEncounterLocation(locationCreator.getGeoLocation(row, EncounterHeadersCreator.ENCOUNTER_LOCATION, allErrorMsgs));
@@ -55,6 +51,5 @@ public class BasicEncounterCreator {
 
         EncounterType encounterType = encounterTypeCreator.getEncounterType(row.get(EncounterHeadersCreator.ENCOUNTER_TYPE), EncounterHeadersCreator.ENCOUNTER_TYPE);
         basicEncounter.setEncounterType(encounterType);
-        return basicEncounter;
     }
 }

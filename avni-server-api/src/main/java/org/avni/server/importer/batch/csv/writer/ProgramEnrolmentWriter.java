@@ -92,15 +92,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
 
         ProgramEnrolment programEnrolment = getOrCreateProgramEnrolment(row);
         programEnrolment.setIndividual(individual);
-        DateCreator dateCreator = new DateCreator();
-        LocalDate enrolmentDate = dateCreator.getDate(
-                row,
-                ProgramEnrolmentHeadersCreator.enrolmentDate,
-                allErrorMsgs, String.format("%s is mandatory", ProgramEnrolmentHeadersCreator.enrolmentDate)
-        );
-        if (enrolmentDate != null && enrolmentDate.isAfter(LocalDate.now())) {
-            allErrorMsgs.add("Enrolment date cannot be in future");
-        }
+        LocalDate enrolmentDate = row.ensureDateIsPresentAndNotInFuture(ProgramEnrolmentHeadersCreator.enrolmentDate, allErrorMsgs);
         if (enrolmentDate != null) programEnrolment.setEnrolmentDateTime(enrolmentDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();

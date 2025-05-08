@@ -293,7 +293,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
             programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertEquals("visit date is mandatory", exception.getMessage().toLowerCase());
+        assertEquals("value required for mandatory field: 'visit date'", exception.getMessage().toLowerCase());
     }
 
     @Test

@@ -209,7 +209,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         failure(validHeader(), dataRowWithOnlySubjectId(),
                 "program '' not found");
         failure(validHeader(), dataRowWithNoEnrolmentDate(),
-                "enrolment date is mandatory");
+                "value required for mandatory field: 'enrolment date'");
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {
