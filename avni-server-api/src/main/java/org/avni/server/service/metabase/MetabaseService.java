@@ -184,6 +184,7 @@ public class MetabaseService {
     }
 
     public static final String SYNC_STATUS_TIMED_OUT = "TimedOut";
+    public static final String SYNC_STATUS_INCOMPLETE = "incomplete";
     private final OrganisationConfigService organisationConfigService;
 
     @Autowired
@@ -226,6 +227,13 @@ public class MetabaseService {
         boolean syncRunning = false;
         boolean syncCompleted = false;
 
+        // Check initial sync status
+        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(database);
+        String initialSyncStatus = databaseSyncStatus.getInitialSyncStatus();
+        if (SYNC_STATUS_INCOMPLETE.equalsIgnoreCase(initialSyncStatus)) {
+            logger.info("Initial sync status is incomplete for {}, waiting for completion", organisation.getName());
+        }
+
         while (true) {
             long timeSpent = System.currentTimeMillis() - startTime;
             long timeLeft = (MAX_WAIT_TIME_IN_SECONDS * 1000) - timeSpent;
@@ -236,7 +244,21 @@ public class MetabaseService {
             }
 
             try {
+                // Check if sync is still running
                 syncRunning = this.databaseRepository.isSyncRunning(database);
+
+                // If sync is not running, check if initial sync status is complete
+                if (!syncRunning) {
+                    databaseSyncStatus = databaseRepository.getInitialSyncStatus(database);
+                    initialSyncStatus = databaseSyncStatus.getInitialSyncStatus();
+
+                    if (SYNC_STATUS_INCOMPLETE.equalsIgnoreCase(initialSyncStatus)) {
+                        // Initial sync is still incomplete, continue waiting
+                        syncRunning = true;
+                        logger.info("Initial sync status is still incomplete for {}, continuing to wait", organisation.getName());
+                    }
+                }
+
                 if (syncRunning) {
                     Thread.sleep(EACH_SLEEP_DURATION * 2000);
                     logger.info("Sync not complete after {} seconds, waiting for manual metabase database sync {}", timeSpent / 1000, organisation.getName());
