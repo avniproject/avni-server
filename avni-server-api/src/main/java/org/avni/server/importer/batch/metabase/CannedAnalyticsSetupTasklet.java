@@ -2,8 +2,6 @@ package org.avni.server.importer.batch.metabase;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
-
-import org.springframework.http.*;
 import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
@@ -24,6 +22,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -68,7 +67,16 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
         metabaseService.syncDatabase();
-        metabaseService.waitForManualSchemaSyncToComplete(organisation);
+        
+        // Wait for manual schema sync to complete
+        // If it returns false, we should not proceed with the next steps
+        boolean syncCompleted = metabaseService.waitForManualSchemaSyncToComplete(organisation);
+        if (!syncCompleted) {
+            logger.info("Manual schema sync not completed for organisation {}, will resume on next run", organisation.getName());
+            return; // Exit early, we'll continue on the next run
+        }
+
+        // Only proceed with these steps if sync completed successfully
         metabaseService.fixDatabaseSyncSchedule();
         databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {

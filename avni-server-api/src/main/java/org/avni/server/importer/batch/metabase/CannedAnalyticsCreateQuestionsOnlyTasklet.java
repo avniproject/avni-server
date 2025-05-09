@@ -19,8 +19,8 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Component
 @JobScope
@@ -60,7 +60,15 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
             CannedAnalyticsLockProvider.acquireLock(organisation);
             logger.info("Create questions job acquired Lock for organisation {}", organisation.getName());
             metabaseService.syncDatabase();
-            metabaseService.waitForManualSchemaSyncToComplete(organisation);
+
+            // Wait for manual schema sync to complete
+            // If it returns false, we should not proceed with the next steps
+            boolean syncCompleted = metabaseService.waitForManualSchemaSyncToComplete(organisation);
+            if (!syncCompleted) {
+                logger.info("Manual schema sync not completed for organisation {}, will resume on next run", organisation.getName());
+                return RepeatStatus.FINISHED; // Exit early, we'll continue on the next run
+            }
+            
             logger.info("Synced database for organisation {}", organisation.getName());
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());

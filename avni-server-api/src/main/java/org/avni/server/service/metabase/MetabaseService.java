@@ -5,6 +5,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.OrganisationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ public class MetabaseService {
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
 
     private final OrganisationService organisationService;
+    public static final String SYNC_STATUS_AWAITING = "Awaiting ManualSchemaSyncCompletion";
     private final AvniDatabase avniDatabase;
     private final MetabaseDatabaseRepository databaseRepository;
     private final GroupPermissionsRepository groupPermissionsRepository;
@@ -35,27 +37,7 @@ public class MetabaseService {
 
     private static final long MAX_WAIT_TIME_IN_SECONDS = 300;
     private static final long EACH_SLEEP_DURATION = 3;
-
-    @Autowired
-    public MetabaseService(OrganisationService organisationService,
-                           AvniDatabase avniDatabase,
-                           MetabaseDatabaseRepository databaseRepository,
-                           GroupPermissionsRepository groupPermissionsRepository,
-                           CollectionPermissionsRepository collectionPermissionsRepository,
-                           CollectionRepository collectionRepository,
-                           MetabaseDashboardRepository metabaseDashboardRepository,
-                           MetabaseGroupRepository metabaseGroupRepository,
-                           MetabaseUserRepository metabaseUserRepository) {
-        this.organisationService = organisationService;
-        this.avniDatabase = avniDatabase;
-        this.databaseRepository = databaseRepository;
-        this.groupPermissionsRepository = groupPermissionsRepository;
-        this.collectionPermissionsRepository = collectionPermissionsRepository;
-        this.collectionRepository = collectionRepository;
-        this.metabaseDashboardRepository = metabaseDashboardRepository;
-        this.metabaseGroupRepository = metabaseGroupRepository;
-        this.metabaseUserRepository = metabaseUserRepository;
-    }
+    public static final String SYNC_STATUS_COMPLETE = "Complete";
 
     private boolean setupDatabase() {
         Organisation organisation = organisationService.getCurrentOrganisation();
@@ -201,27 +183,76 @@ public class MetabaseService {
         }
     }
 
-    public void waitForManualSchemaSyncToComplete(Organisation organisation) throws InterruptedException {
+    public static final String SYNC_STATUS_TIMED_OUT = "TimedOut";
+    private final OrganisationConfigService organisationConfigService;
+
+    @Autowired
+    public MetabaseService(OrganisationService organisationService,
+                           OrganisationConfigService organisationConfigService,
+                           AvniDatabase avniDatabase,
+                           MetabaseDatabaseRepository databaseRepository,
+                           GroupPermissionsRepository groupPermissionsRepository,
+                           CollectionPermissionsRepository collectionPermissionsRepository,
+                           CollectionRepository collectionRepository,
+                           MetabaseDashboardRepository metabaseDashboardRepository,
+                           MetabaseGroupRepository metabaseGroupRepository,
+                           MetabaseUserRepository metabaseUserRepository) {
+        this.organisationService = organisationService;
+        this.organisationConfigService = organisationConfigService;
+        this.avniDatabase = avniDatabase;
+        this.databaseRepository = databaseRepository;
+        this.groupPermissionsRepository = groupPermissionsRepository;
+        this.collectionPermissionsRepository = collectionPermissionsRepository;
+        this.collectionRepository = collectionRepository;
+        this.metabaseDashboardRepository = metabaseDashboardRepository;
+        this.metabaseGroupRepository = metabaseGroupRepository;
+        this.metabaseUserRepository = metabaseUserRepository;
+    }
+
+    public boolean waitForManualSchemaSyncToComplete(Organisation organisation) throws InterruptedException {
+        // Check if we're already in the middle of waiting for sync
+        String currentStatus = organisationConfigService.getMetabaseSyncStatus(organisation);
+        if (SYNC_STATUS_AWAITING.equals(currentStatus)) {
+            logger.info("Organisation {} is already awaiting manual schema sync completion", organisation.getName());
+            return false; // Indicate that we should not proceed with next steps
+        }
+
+        // Set status to awaiting
+        organisationConfigService.setMetabaseSyncStatus(organisation, SYNC_STATUS_AWAITING);
+
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for manual metabase database sync {}", organisation.getName());
         Database database = this.databaseRepository.getDatabase(organisation);
         boolean syncRunning = false;
+        boolean syncCompleted = false;
+
         while (true) {
             long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
-            if (!(timeLeft < 0)) {
+            long timeLeft = (MAX_WAIT_TIME_IN_SECONDS * 1000) - timeSpent;
+            if (timeLeft <= 0) {
                 logger.info("Manual metabase database sync timed out after {} seconds", timeSpent / 1000);
+                organisationConfigService.setMetabaseSyncStatus(organisation, SYNC_STATUS_TIMED_OUT);
                 break;
             }
 
-            syncRunning = this.databaseRepository.isSyncRunning(database);
-            if (syncRunning) {
-                Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for manual metabase database sync {}", timeSpent / 1000, organisation.getName());
-            } else {
-                break;
+            try {
+                syncRunning = this.databaseRepository.isSyncRunning(database);
+                if (syncRunning) {
+                    Thread.sleep(EACH_SLEEP_DURATION * 2000);
+                    logger.info("Sync not complete after {} seconds, waiting for manual metabase database sync {}", timeSpent / 1000, organisation.getName());
+                } else {
+                    syncCompleted = true;
+                    organisationConfigService.setMetabaseSyncStatus(organisation, SYNC_STATUS_COMPLETE);
+                    logger.info("Manual metabase database sync completed for {}", organisation.getName());
+                    break;
+                }
+            } catch (Exception e) {
+                logger.error("Error checking sync status for {}: {}", organisation.getName(), e.getMessage());
+                Thread.sleep(EACH_SLEEP_DURATION * 2000); // Wait before retrying
             }
         }
+
+        return syncCompleted; // Return true if sync completed successfully, false otherwise
     }
 
     public SyncStatus getInitialSyncStatus() {
