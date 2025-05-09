@@ -69,7 +69,7 @@ public class ProgramEncounterCreator {
         EncounterUploadMode mode = isScheduledVisit ? EncounterUploadMode.SCHEDULE_VISIT : EncounterUploadMode.UPLOAD_VISIT_DETAILS;
 
         ProgramEncounter programEncounter = getOrCreateProgramEncounter(row);
-        basicEncounterCreator.updateEncounter(row, programEncounter, allErrorMsgs, mode);
+        basicEncounterCreator.updateEncounterFields(row, programEncounter, allErrorMsgs, mode);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         String enrolmentId = row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);

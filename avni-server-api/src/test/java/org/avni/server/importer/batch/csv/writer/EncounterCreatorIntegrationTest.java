@@ -250,7 +250,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
             encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertEquals("visit date is mandatory", exception.getMessage().toLowerCase());
+        assertEquals("value required for mandatory field: 'visit date'", exception.getMessage().toLowerCase());
     }
 
     @Test
@@ -320,7 +320,9 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
             encounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
-        assertTrue(exception.getMessage().toLowerCase().contains("'visit date' cannot be in future"));
+        String message = exception.getMessage().toLowerCase();
+        assertTrue(message, message.contains("'visit date'"));
+        assertTrue(message, message.contains("cannot be in future"));
     }
 
     @Test

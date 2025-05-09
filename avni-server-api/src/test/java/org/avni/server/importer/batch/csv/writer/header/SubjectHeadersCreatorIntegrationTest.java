@@ -9,7 +9,6 @@ import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
@@ -41,9 +40,6 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     private TestSubjectTypeService testSubjectTypeService;
 
     @Autowired
-    private OrganisationConfigRepository organisationConfigRepository;
-
-    @Autowired
     private OrganisationConfigService organisationConfigService;
 
     @Autowired
@@ -60,16 +56,16 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     private FormMapping formMapping;
     private SubjectType subjectType;
-    private long organisationId;
 
     @Autowired
     private SubjectTypeRepository subjectTypeRepository;
+    private AddressLevelType district;
+    private AddressLevelType village;
 
     @Before
     public void setUp() throws Exception{
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
         setUser(organisationData.getUser());
-        organisationId = organisationData.getOrganisationId();
 
         subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
@@ -95,26 +91,25 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
                 childRQGConcepts);
         testFormService.addDecisionConcepts(formMapping.getForm().getId(), multiSelectDecisionCoded);
 
-        AddressLevelType district = new AddressLevelTypeBuilder()
+        district = new AddressLevelTypeBuilder()
                 .name("District")
                 .level(2.0)
                 .withUuid(UUID.randomUUID().toString())
                 .build();
         addressLevelTypeRepository.save(district);
 
-        AddressLevelType village = new AddressLevelTypeBuilder()
+        village = new AddressLevelTypeBuilder()
                 .name("Village")
                 .level(1.0)
                 .withUuid(UUID.randomUUID().toString())
                 .parent(district)
                 .build();
         addressLevelTypeRepository.save(village);
-
-        organisationConfigService.saveRegistrationLocation(village, subjectType);
     }
 
     @Test
     public void testBasicHeaderGeneration() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
         String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertNotNull(headers);
@@ -132,6 +127,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testMultipleSubjectTypesForForm() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
         SubjectType anotherSubjectType = new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
                 .setName("AnotherSubject")
@@ -151,19 +147,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testAddressFieldsWithCustomRegistrationLocationsAtVillage() throws InvalidConfigurationException {
-        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisationId);
-        config.setSettings(new JsonObject(Map.of(
-                "customRegistrationLocations", Collections.singletonList(
-                        Map.of(
-                                "subjectTypeUUID", subjectType.getUuid(),
-                                "locationTypeUUIDs", List.of(
-                                        addressLevelTypeRepository.findByName("Village").getUuid()
-                                )
-                        )
-                )
-        )));
-        organisationConfigRepository.save(config);
-
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
         String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "Village"), "Should include Village as custom location");
@@ -171,19 +155,8 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     }
 
     @Test
-    public void testAddressFieldsWithCustomRegistrationLocationsAtDistrict() throws InvalidConfigurationException {
-        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisationId);
-        config.setSettings(new JsonObject(Map.of(
-                "customRegistrationLocations", Collections.singletonList(
-                        Map.of(
-                                "subjectTypeUUID", subjectType.getUuid(),
-                                "locationTypeUUIDs", List.of(
-                                        addressLevelTypeRepository.findByName("District").getUuid()
-                                )
-                        )
-                )
-        )));
-        organisationConfigRepository.save(config);
+    public void testAddressFieldsWithCustomRegistrationLocationsAtNotTheLowestLevel() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
 
         String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
@@ -193,6 +166,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testAddressFieldsWithoutCustomRegistrationLocations() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
         String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "Village"), "Should include address level types");
@@ -201,6 +175,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testDescriptionsGeneration() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
         String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping, null);
 
         assertEquals("Optional. Can be used to later identify the entry.", descriptions[0]);

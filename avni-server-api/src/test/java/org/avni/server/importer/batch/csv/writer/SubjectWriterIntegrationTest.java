@@ -55,9 +55,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private TestSubjectService testSubjectService;
     private AddressLevelType district;
-    private AddressLevelType state;
     private SubjectType subjectType;
-
 
     private String[] missingHeaders() {
         return header("Id from previous system",
@@ -433,8 +431,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
         );
         String[] dataRow = validDataRow();
-        subjectWriter.write(Chunk.of(new Row(headers, dataRow)));
+        subjectWriter.write(Chunk.of(new Row(headers, dataRow)), "Subject---SubjectType1");
         Individual subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(1990, subject.getDateOfBirth().getYear());
+        assertEquals(2020, subject.getRegistrationDate().getYear());
         ObservationCollection observations = subject.getObservations();
         assertEquals(9, observations.size());
         assertEquals("John", subject.getFirstName());
@@ -443,7 +443,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Override
     public void setUp() throws Exception {
         testDataSetupService.setupOrganisation("example", "User Group 1");
-        state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
+        AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
                 .build();
         district = new AddressLevelTypeBuilder().parent(state).name("District").level(3d).withUuid(UUID.randomUUID())
                 .build();
@@ -516,14 +516,14 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] header = validHeader();
         String[] dataRow = validDataRow();
 
-        subjectWriter.write(Chunk.of(new Row(header, dataRow)));
+        subjectWriter.write(Chunk.of(new Row(header, dataRow)), "Subject---SubjectType1");
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(9, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
 
         // disallow edit
         try {
-            subjectWriter.write(Chunk.of(new Row(header, dataRow)));
+            subjectWriter.write(Chunk.of(new Row(header, dataRow)), "SubjectType1");
             fail("Should not allow edit");
         } catch (ValidationException e) {
             e.getMessage().contains("Entry with id from previous system, ABCD already present in Avni");
@@ -533,7 +533,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private void success(String[] headers, String[] values) {
         try {
             long previousCount = individualRepository.count();
-            subjectWriter.write(Chunk.of(new Row(headers, values)));
+            subjectWriter.write(Chunk.of(new Row(headers, values)), "Subject---SubjectType1");
             assertEquals(previousCount + 1, individualRepository.count());
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -541,7 +541,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void allowWithoutLegacyId() throws InvalidConfigurationException {
+    public void allowWithoutLegacyId() {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(validHeader(), validDataRowWithoutLegacyId());
         success(validHeader(), validDataRowWithoutLegacyId());
@@ -626,7 +626,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldSucceedForValidSubjectValue() throws InvalidConfigurationException {
+    public void shouldSucceedForValidSubjectValue() {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         success(header("Subject Type",
                         "Date Of Registration ",
@@ -701,7 +701,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] missingHeaders = {""};
         String[] dataRow = validDataRowWithoutLegacyId();
         Exception exception = assertThrows(ValidationException.class, () -> {
-            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)));
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1");
         });
         assertTrue(exception.getMessage().contains("Invalid or missing 'Subject Type'"));
     }
@@ -712,7 +712,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] missingHeaders = missingHeaders();
         String[] dataRow = validDataRowWithoutLegacyId();
         Exception exception = assertThrows(ValidationException.class, () -> {
-            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)));
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1");
         });
         assertTrue(exception.getMessage().contains("Mandatory columns are missing in header from uploaded file"));
     }
@@ -720,7 +720,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {
-            subjectWriter.write(Chunk.of(new Row(headers, cells)));
+            subjectWriter.write(Chunk.of(new Row(headers, cells)), "Subject---SubjectType1");
             fail();
         } catch (Exception e) {
             e.printStackTrace();

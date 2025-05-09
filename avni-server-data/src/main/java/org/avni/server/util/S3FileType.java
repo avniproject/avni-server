@@ -6,5 +6,6 @@ public enum S3FileType {
     Global,
     Export,
     BulkUploadsError,
-    BulkUploadsInput;
+    BulkUploadsInput,
+    RelativePath
 }

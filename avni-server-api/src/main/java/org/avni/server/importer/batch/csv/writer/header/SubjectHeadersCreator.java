@@ -33,7 +33,6 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String dobVerified = "Date Of Birth Verified";
     public final static String gender = "Gender";
 
-    private static final Logger logger = LoggerFactory.getLogger(SubjectHeadersCreator.class);
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final AddressLevelService addressLevelService;
 

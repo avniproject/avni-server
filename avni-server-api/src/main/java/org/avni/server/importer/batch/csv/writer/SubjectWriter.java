@@ -17,21 +17,17 @@ import org.avni.server.service.*;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ValidationUtil;
 import org.joda.time.LocalDate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.Chunk;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
+public class SubjectWriter extends EntityWriter {
     private final IndividualRepository individualRepository;
     private final GenderRepository genderRepository;
     private final SubjectTypeCreator subjectTypeCreator;
@@ -43,8 +39,6 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final SubjectMigrationService subjectMigrationService;
     private final SubjectTypeService subjectTypeService;
     private final SubjectHeadersCreator subjectHeadersCreator;
-
-    private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
     @Autowired
     public SubjectWriter(IndividualRepository individualRepository,
@@ -69,15 +63,14 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.subjectHeadersCreator = subjectHeadersCreator;
     }
 
-    @Override
-    public void write(Chunk<? extends Row> chunk) throws Exception {
+    public void write(Chunk<? extends Row> chunk, String type) throws Exception {
         List<? extends Row> rows = chunk.getItems();
         if (!CollectionUtils.isEmpty(rows)) {
-            for (Row row : rows) write(row);
+            for (Row row : rows) write(row, type);
         }
     }
 
-    private void write(Row row) throws Exception {
+    private void write(Row row, String type) throws Exception {
         List<String> allErrorMsgs = new ArrayList<>();
         String id = row.get(SubjectHeadersCreator.id);
         if (!(id == null || id.trim().isEmpty())) {
@@ -90,7 +83,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         AddressLevel oldAddressLevel = individual.getAddressLevel();
         ObservationCollection oldObservations = individual.getObservations();
 
-        SubjectType subjectType = setSubjectType(row, individual, allErrorMsgs);
+        SubjectType subjectType = setSubjectType(row, individual, allErrorMsgs, type);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
@@ -148,11 +141,15 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         individual.setFirstName(firstName);
     }
 
-    private SubjectType setSubjectType(Row row, Individual individual, List<String> allErrorMsgs) {
+    private SubjectType setSubjectType(Row row, Individual individual, List<String> allErrorMsgs, String type) {
+        String subjectTypeChosen = type.split("---")[1];
         String subjectTypeValue = row.get(SubjectHeadersCreator.subjectTypeHeader);
         SubjectType subjectType = subjectTypeCreator.getSubjectType(subjectTypeValue, SubjectHeadersCreator.subjectTypeHeader);
         if (subjectType == null) {
             allErrorMsgs.add(String.format("Invalid or missing '%s' %s", SubjectHeadersCreator.subjectTypeHeader, subjectTypeValue));
+            return null;
+        } else if (!subjectTypeChosen.equalsIgnoreCase(subjectType.getName())) {
+            allErrorMsgs.add("Upload file type chosen to upload does not match with the subject type provided in the file");
             return null;
         }
         individual.setSubjectType(subjectType);
@@ -184,35 +181,19 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     private void setDateOfBirth(Individual individual, Row row, List<String> errorMsgs) {
-        String dob = row.get(SubjectHeadersCreator.dateOfBirth);
-        if (!StringUtils.hasText(dob)) {
-            errorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.dateOfBirth));
+        LocalDate date = row.ensureDateIsPresentAndNotInFuture(SubjectHeadersCreator.dateOfBirth, errorMsgs);
+        if (date == null) {
             return;
         }
-        try {
-            if (!dob.trim().isEmpty())
-                individual.setDateOfBirth(DateTimeUtil.parseFlexibleDate(dob));
-        } catch (RuntimeException ex) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));
-        }
+        individual.setDateOfBirth(date);
     }
 
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {
-        try {
-            String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
-            if (registrationDate == null || registrationDate.trim().isEmpty()) {
-                errorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.registrationDate));
-                return;
-            }
-            LocalDate providedDate = DateTimeUtil.parseFlexibleDate(registrationDate);
-            if (providedDate.isAfter(LocalDate.now())) {
-                errorMsgs.add(String.format("'%s' %s cannot be in future", SubjectHeadersCreator.registrationDate, registrationDate));
-                return;
-            }
-            individual.setRegistrationDate(providedDate);
-        } catch (IllegalArgumentException ex) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.registrationDate));
+        LocalDate date = row.ensureDateIsPresentAndNotInFuture(SubjectHeadersCreator.registrationDate, errorMsgs);
+        if (date == null) {
+            return;
         }
+        individual.setRegistrationDate(date);
     }
 
     private void setGender(Individual individual, Row row, List<String> allErrorMsgs) {
