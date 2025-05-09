@@ -185,7 +185,7 @@ public class SubjectWriter extends EntityWriter {
         if (date == null) {
             return;
         }
-        individual.setRegistrationDate(date);
+        individual.setDateOfBirth(date);
     }
 
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {

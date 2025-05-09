@@ -57,7 +57,6 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private AddressLevelType district;
     private SubjectType subjectType;
 
-
     private String[] missingHeaders() {
         return header("Id from previous system",
                 "Subject Type"
@@ -434,6 +433,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validDataRow();
         subjectWriter.write(Chunk.of(new Row(headers, dataRow)), "Subject---SubjectType1");
         Individual subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(1990, subject.getDateOfBirth().getYear());
+        assertEquals(2020, subject.getRegistrationDate().getYear());
         ObservationCollection observations = subject.getObservations();
         assertEquals(9, observations.size());
         assertEquals("John", subject.getFirstName());
