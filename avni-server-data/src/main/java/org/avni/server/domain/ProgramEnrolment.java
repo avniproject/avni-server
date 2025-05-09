@@ -212,8 +212,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
         return getId();
     }
 
-    public JsModelObservation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
-        RuleObservationRepository ruleObservationRepository = RepositoryProvider.getRuleObservationRepository();
-        return ruleObservationRepository.findObservation(this.getObservations(), conceptNameOrUuid, parentConceptNameOrUuid);
+    public boolean isActive() {
+        return this.getProgramExitDateTime() == null && !this.isVoided();
     }
 }

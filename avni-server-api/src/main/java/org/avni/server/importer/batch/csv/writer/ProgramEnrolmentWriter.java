@@ -83,6 +83,12 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
             ValidationUtil.fieldMissing("Subject ID", providedSubjectId, allErrorMsgs);
         }
         ValidationUtil.handleErrors(allErrorMsgs);
+
+        if (!program.isAllowMultipleEnrolments() && programEnrolmentService.alreadyEnrolled(individual, program)) {
+            allErrorMsgs.add(String.format("Subject '%s' is already enrolled in program '%s' and the program doesn't allow for multiple enrolments", providedSubjectId, program.getName()));
+            ValidationUtil.handleErrors(allErrorMsgs);
+        }
+
         FormMapping formMapping = formMappingRepository.getProgramEnrolmentFormMapping(individual.getSubjectType(), program);
         if (formMapping == null) {
             allErrorMsgs.add(String.format("No form found for the subject type '%s' and program '%s'", individual.getSubjectType().getName(), program.getName()));

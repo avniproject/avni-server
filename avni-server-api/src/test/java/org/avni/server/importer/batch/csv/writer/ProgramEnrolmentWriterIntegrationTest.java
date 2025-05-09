@@ -78,6 +78,15 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "SSC Answer 1");
     }
 
+    private String[] validDataRowWithNoIdFromPreviousSystem() {
+        return dataRow("",
+                "ABCD",
+                "Program1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1");
+    }
+
     private String[] dataRowWithNoFields() {
         return dataRow("",
                 "",
@@ -171,7 +180,6 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldCreateUpdate() throws ValidationException, InvalidConfigurationException {
-        // new subject
         String[] header = validHeader();
         String[] dataRow = validDataRow();
 
@@ -199,7 +207,12 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void allowWithoutLegacyId() throws InvalidConfigurationException {
         success(validHeader(), validDataRowWithoutLegacyId());
-        success(validHeader(), validDataRowWithoutLegacyId());
+    }
+
+    @Test
+    public void doNotAllowMultipleEnrolmentsIfNotEnabled() throws InvalidConfigurationException {
+        success(validHeader(), validDataRowWithNoIdFromPreviousSystem());
+        failure(validHeader(), validDataRowWithNoIdFromPreviousSystem(), "subject 'abcd' is already enrolled in program 'program1' and the program doesn't allow for multiple enrolments");
     }
 
     @Test
