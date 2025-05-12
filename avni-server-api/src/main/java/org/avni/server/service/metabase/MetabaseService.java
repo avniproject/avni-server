@@ -210,12 +210,12 @@ public class MetabaseService {
         this.metabaseUserRepository = metabaseUserRepository;
     }
 
-    public boolean waitForManualSchemaSyncToComplete(Organisation organisation) throws InterruptedException {
+    public void waitForManualSchemaSyncToComplete(Organisation organisation) throws InterruptedException, CannedAnalyticsException {
         // Check if we're already in the middle of waiting for sync
         String currentStatus = organisationConfigService.getMetabaseSyncStatus(organisation);
         if (SYNC_STATUS_AWAITING.equals(currentStatus)) {
             logger.info("Organisation {} is already awaiting manual schema sync completion", organisation.getName());
-            return false; // Indicate that we should not proceed with next steps
+            throw new CannedAnalyticsException("Already awaiting manual schema sync completion");
         }
 
         // Set status to awaiting
@@ -224,7 +224,7 @@ public class MetabaseService {
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for manual metabase database sync {}", organisation.getName());
         Database database = this.databaseRepository.getDatabase(organisation);
-        boolean syncRunning = false;
+        boolean syncRunning;
         boolean syncCompleted = false;
 
         // Check initial sync status
@@ -274,7 +274,8 @@ public class MetabaseService {
             }
         }
 
-        return syncCompleted; // Return true if sync completed successfully, false otherwise
+        if (!syncCompleted)
+            throw new CannedAnalyticsException("Manual metabase database sync didn't completed in time");
     }
 
     public SyncStatus getInitialSyncStatus() {

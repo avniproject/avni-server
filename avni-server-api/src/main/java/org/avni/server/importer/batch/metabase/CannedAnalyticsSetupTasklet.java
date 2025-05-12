@@ -7,6 +7,7 @@ import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.metabase.CannedAnalyticsException;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.GroupsService;
 import org.avni.server.service.OrganisationConfigService;
@@ -61,20 +62,16 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
         DbRoleRepository.setDbRoleFromContext(entityManager);
     }
 
-    private void setup(Organisation organisation) throws InterruptedException {
+    private void setup(Organisation organisation) throws InterruptedException, CannedAnalyticsException {
         GroupContract groupContract = new GroupContract();
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
         metabaseService.syncDatabase();
-        
+
         // Wait for manual schema sync to complete
         // If it returns false, we should not proceed with the next steps
-        boolean syncCompleted = metabaseService.waitForManualSchemaSyncToComplete(organisation);
-        if (!syncCompleted) {
-            logger.info("Manual schema sync not completed for organisation {}, will resume on next run", organisation.getName());
-            return; // Exit early, we'll continue on the next run
-        }
+        metabaseService.waitForManualSchemaSyncToComplete(organisation);
 
         // Only proceed with these steps if sync completed successfully
         metabaseService.fixDatabaseSyncSchedule();

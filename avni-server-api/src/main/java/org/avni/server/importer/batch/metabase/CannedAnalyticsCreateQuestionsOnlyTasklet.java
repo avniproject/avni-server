@@ -63,12 +63,8 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
 
             // Wait for manual schema sync to complete
             // If it returns false, we should not proceed with the next steps
-            boolean syncCompleted = metabaseService.waitForManualSchemaSyncToComplete(organisation);
-            if (!syncCompleted) {
-                logger.info("Manual schema sync not completed for organisation {}, will resume on next run", organisation.getName());
-                return RepeatStatus.FINISHED; // Exit early, we'll continue on the next run
-            }
-            
+            metabaseService.waitForManualSchemaSyncToComplete(organisation);
+
             logger.info("Synced database for organisation {}", organisation.getName());
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());
