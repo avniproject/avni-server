@@ -104,6 +104,7 @@ public class EncounterCreator {
                 }
                 encounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
             }
+            encounter.setName(encounter.getEncounterType().getName());
         } else {
             String encounterDateStr = row.get(EncounterHeadersCreator.VISIT_DATE);
             if (encounterDateStr == null || encounterDateStr.trim().isEmpty()) {

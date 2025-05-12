@@ -179,7 +179,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping, null);
 
         assertEquals("Optional. Can be used to later identify the entry.", descriptions[0]);
-        assertEquals("SubjectType1", descriptions[1]);
+        assertEquals("Mandatory. SubjectType1.", descriptions[1]);
         assertEquals("Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.", descriptions[2]);
         assertEquals("\"Optional. Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172).\"", descriptions[3]);
         assertEquals("Mandatory", descriptions[4]);

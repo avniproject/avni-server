@@ -49,7 +49,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
-        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
+        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, true));
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 
