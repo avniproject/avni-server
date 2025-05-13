@@ -200,7 +200,7 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         List<TableDetails> tables = this.getTables(database, schemaName);
         TableDetails table = tables.stream().filter(t -> t.getName().equalsIgnoreCase(tableName)).findFirst().orElseThrow(() -> new RuntimeException("Table not found: " + tableName));
         List<FieldDetails> fields = this.getFields(table);
-        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElseThrow(() -> new RuntimeException("Field: " + fieldName + " not found in table: " + tableName));
+        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElseThrow(() -> new RuntimeException("Field: " + fieldName + " not found in table: " + tableName + " in schema: " + schemaName + ". Fields present: " + FieldDetails.toString(fields)));
     }
 
     public static void clearThreadLocalContext() {

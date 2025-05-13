@@ -205,6 +205,7 @@ public class MetabaseService {
                 Thread.sleep(EACH_SLEEP_DURATION * 2000);
                 logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent / 1000, organisation.getName());
             } else {
+                logger.info("Metabase database sync completed after {} seconds", timeSpent / 1000);
                 break;
             }
         }
