@@ -14,7 +14,7 @@ import org.avni.server.service.builder.identifier.IdentifierUserAssignmentBuilde
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mock;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.*;
@@ -22,6 +22,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -38,10 +39,10 @@ public class PrefixedUserPoolBasedIdentifierGeneratorIntegrationTest extends Abs
     private static final long LOW_MINIMUM_BALANCE = 2L;
     private static final long HIGH_MINIMUM_BALANCE = 10L;
 
-    @MockBean
+    @Mock
     private IdentifierUserAssignmentRepository identifierUserAssignmentRepository;
 
-    @MockBean
+    @Mock
     private IdentifierAssignmentRepository identifierAssignmentRepository;
 
     private User user;
@@ -50,6 +51,7 @@ public class PrefixedUserPoolBasedIdentifierGeneratorIntegrationTest extends Abs
 
     @Before
     public void setup() {
+        openMocks(this);
         prefixedUserPoolBasedIdentifierGenerator = new PrefixedUserPoolBasedIdentifierGenerator(
                 identifierAssignmentRepository, identifierUserAssignmentRepository);
 
