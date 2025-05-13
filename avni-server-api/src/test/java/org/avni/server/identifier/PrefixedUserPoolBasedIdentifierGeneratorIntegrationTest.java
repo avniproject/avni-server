@@ -65,6 +65,8 @@ public class PrefixedUserPoolBasedIdentifierGeneratorIntegrationTest extends Abs
                 .setType(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)
                 .setBatchGenerationSize(batchSize)
                 .setMinimumBalance(minimumBalance)
+                .setMinLength(5)
+                .setMaxLength(6)
                 .build();
     }
 

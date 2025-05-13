@@ -111,9 +111,17 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
     }
 
     private String addPaddingIfNecessary(String identifier, IdentifierSource identifierSource) {
+        // Get prefix from options
+        String prefix = identifierSource.getPrefix();
+        int prefixLength = prefix != null ? prefix.length() : 0;
+
+        // Calculate required length for the numeric part
+        int requiredNumericLength = identifierSource.getMinLength() - prefixLength;
+
+        // Add padding if necessary
         int lengthOfIdentifier = identifier.length();
-        if (lengthOfIdentifier < identifierSource.getMinLength()) {
-            int paddingLength = identifierSource.getMinLength() - lengthOfIdentifier;
+        if (lengthOfIdentifier < requiredNumericLength) {
+            int paddingLength = requiredNumericLength - lengthOfIdentifier;
             String padding = new String(new char[paddingLength]).replace("\0", PADDING_STRING);
             identifier = padding + identifier;
         }
