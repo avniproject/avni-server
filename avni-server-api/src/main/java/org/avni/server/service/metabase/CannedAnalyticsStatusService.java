@@ -18,12 +18,16 @@ public class CannedAnalyticsStatusService {
     private final BatchJobService batchJobService;
     private final boolean avniReportingMetabaseSelfServiceEnabled;
     private final ImplementationRepository implementationRepository;
+    private final MetabaseService metabaseService;
+    @Value("${avni.environment}")
+    private String avniEnvironment;
 
-    public CannedAnalyticsStatusService(OrganisationConfigService organisationConfigService, BatchJobService batchJobService, @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled, ImplementationRepository implementationRepository) {
+    public CannedAnalyticsStatusService(OrganisationConfigService organisationConfigService, BatchJobService batchJobService, @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled, ImplementationRepository implementationRepository, MetabaseService metabaseService) {
         this.organisationConfigService = organisationConfigService;
         this.batchJobService = batchJobService;
         this.avniReportingMetabaseSelfServiceEnabled = avniReportingMetabaseSelfServiceEnabled;
         this.implementationRepository = implementationRepository;
+        this.metabaseService = metabaseService;
     }
 
     public CannedAnalyticsStatus getStatus(Organisation organisation) {
@@ -39,6 +43,6 @@ public class CannedAnalyticsStatusService {
         else
             cannedAnalyticsLastCompletionStatus = CannedAnalyticsLastCompletionStatus.NotSetup;
 
-        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus);
+        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus, metabaseService.getResourcesPresent(), avniEnvironment);
     }
 }

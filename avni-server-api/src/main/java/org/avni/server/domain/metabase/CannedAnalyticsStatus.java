@@ -5,15 +5,20 @@ import org.avni.server.domain.batch.BatchJobStatus;
 import org.avni.server.importer.batch.metabase.CannedAnalyticsLastCompletionStatus;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class CannedAnalyticsStatus {
     private final CannedAnalyticsLastCompletionStatus status;
     private Map<String, BatchJobStatus> jobStatuses = new HashMap<>();
+    private final List<MetabaseResource> resources;
+    private final String avniEnvironment;
 
-    public CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus status, Map<String, BatchJobStatus> jobStatuses) {
+    public CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus status, Map<String, BatchJobStatus> jobStatuses, List<MetabaseResource> resources, String avniEnvironment) {
         this.status = status;
         this.jobStatuses = jobStatuses;
+        this.resources = resources;
+        this.avniEnvironment = avniEnvironment;
     }
 
     public CannedAnalyticsLastCompletionStatus getStatus() {
@@ -27,5 +32,13 @@ public final class CannedAnalyticsStatus {
     @JsonIgnore
     public boolean isCreateQuestionAllowed() {
         return status != CannedAnalyticsLastCompletionStatus.NotSetup;
+    }
+
+    public List<MetabaseResource> getResources() {
+        return resources;
+    }
+
+    public String getAvniEnvironment() {
+        return avniEnvironment;
     }
 }
