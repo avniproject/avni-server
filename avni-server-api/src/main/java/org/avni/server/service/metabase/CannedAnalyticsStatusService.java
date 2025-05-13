@@ -4,12 +4,16 @@ import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.batch.BatchJobStatus;
 import org.avni.server.domain.metabase.CannedAnalyticsStatus;
+import org.avni.server.domain.metabase.MetabaseResource;
 import org.avni.server.importer.batch.metabase.CannedAnalyticsLastCompletionStatus;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.batch.BatchJobService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -43,6 +47,10 @@ public class CannedAnalyticsStatusService {
         else
             cannedAnalyticsLastCompletionStatus = CannedAnalyticsLastCompletionStatus.NotSetup;
 
-        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus, metabaseService.getResourcesPresent(), avniEnvironment);
+        List<MetabaseResource> resourcesPresent = new ArrayList<>();
+        if (Arrays.asList("prerelease", "staging").contains(avniEnvironment)) {
+            resourcesPresent = metabaseService.getResourcesPresent();
+        }
+        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus, resourcesPresent, avniEnvironment);
     }
 }

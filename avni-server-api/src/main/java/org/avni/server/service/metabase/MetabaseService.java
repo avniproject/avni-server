@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +21,9 @@ public class MetabaseService {
     private static final String DB_ENGINE = "postgres";
 
     @Value("${avni.default.org.user.db.password}")
-    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
+    private String avniDefaultOrgUserDbPassword;
+    @Value("${avni.reporting.metabase.db.sync.max.timeout.in.minutes}")
+    private int avniReportingMetabaseDbSyncMaxTimeoutInMinutes;
 
     private final OrganisationService organisationService;
     public static final String SYNC_STATUS_AWAITING = "Awaiting ManualSchemaSyncCompletion";
@@ -37,7 +38,6 @@ public class MetabaseService {
 
     private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
 
-    private static final long MAX_WAIT_TIME_IN_SECONDS = 300;
     private static final long EACH_SLEEP_DURATION = 3;
     public static final String SYNC_STATUS_COMPLETE = "Complete";
 
@@ -46,7 +46,7 @@ public class MetabaseService {
         Database database = databaseRepository.getDatabase(organisation);
         if (database == null) {
             database = Database.forDatabasePayload(organisation.getName(),
-                    DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
+                    DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), avniDefaultOrgUserDbPassword));
             databaseRepository.save(database);
             return true;
         }
@@ -170,7 +170,7 @@ public class MetabaseService {
         logger.info("Waiting for initial metabase database sync {}", organisation.getName());
         while (true) {
             long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
+            long timeLeft = timeSpent - (this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes * 1000L);
             if (!(timeLeft < 0)) {
                 logger.info("Initial metabase database sync timed out after {} seconds", timeSpent / 1000);
                 break;
