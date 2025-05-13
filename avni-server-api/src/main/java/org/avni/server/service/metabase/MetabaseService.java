@@ -62,16 +62,15 @@ public class MetabaseService {
         this.metabaseDatabaseRepository = metabaseDatabaseRepository;
     }
 
-    private boolean setupDatabase() {
+    private Database setupDatabase() {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
-        if (database == null) {
-            database = Database.forDatabasePayload(organisation.getName(),
+        if (database != null) return database;
+
+        database = Database.forDatabasePayload(organisation.getName(),
                     DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), avniDefaultOrgUserDbPassword));
-            databaseRepository.save(database);
-            return true;
-        }
-        return false;
+        databaseRepository.save(database);
+        return databaseRepository.getDatabase(organisation);
     }
 
     private void tearDownDatabase() {
@@ -132,10 +131,8 @@ public class MetabaseService {
     public void setupMetabase() throws InterruptedException {
         Organisation organisation = organisationService.getCurrentOrganisation();
         logger.info("[{}] Setting up database", organisation.getName());
-        boolean newDatabaseCreated = setupDatabase();
-        if (newDatabaseCreated) {
-            this.waitForInitialSyncToComplete(organisation);
-        }
+        Database database = setupDatabase();
+        this.waitForDatabaseSyncToComplete(organisation, database);
         logger.info("[{}] Setting up collection", organisation.getName());
         setupCollection();
         logger.info("[{}] Setting up group", organisation.getName());
@@ -186,7 +183,7 @@ public class MetabaseService {
         databaseRepository.moveDatabaseScanningToFarFuture(database);
     }
 
-    public void waitForInitialSyncToComplete(Organisation organisation) throws InterruptedException {
+    public void waitForDatabaseSyncToComplete(Organisation organisation, Database database) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for initial metabase database sync {}", organisation.getName());
         while (true) {
@@ -197,7 +194,8 @@ public class MetabaseService {
                 break;
             }
             SyncStatus syncStatus = this.getInitialSyncStatus();
-            if (syncStatus != SyncStatus.COMPLETE) {
+            boolean syncRunning = metabaseDatabaseRepository.isSyncRunning(database);
+            if (syncStatus != SyncStatus.COMPLETE || syncRunning) {
                 Thread.sleep(EACH_SLEEP_DURATION * 2000);
                 logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent / 1000, organisation.getName());
             } else {
@@ -235,26 +233,5 @@ public class MetabaseService {
         if (database != null)
             metabaseResources.add(MetabaseResource.Database);
         return metabaseResources;
-    }
-
-    public void waitForManualSyncToComplete(Database database) throws InterruptedException {
-        Organisation organisation = UserContextHolder.getOrganisation();
-        long startTime = System.currentTimeMillis();
-        logger.info("Waiting for manual metabase database sync {}", organisation.getName());
-        while (true) {
-            long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes * 1000L);
-            if (!(timeLeft < 0)) {
-                logger.info("Initial manual database sync timed out after {} seconds", timeSpent / 1000);
-                break;
-            }
-            boolean syncRunning = metabaseDatabaseRepository.isSyncRunning(database);
-            if (syncRunning) {
-                Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for manual metabase database sync {}", timeSpent / 1000, organisation.getName());
-            } else {
-                break;
-            }
-        }
     }
 }

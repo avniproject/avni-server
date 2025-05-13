@@ -15,7 +15,6 @@ public class Group extends OrganisationAwareEntity {
     public static final String Administrators = "Administrators";
     public static final String Everyone = "Everyone";
     public static final String METABASE_USERS = "Metabase Users";
-    ;
 
     @Column
     private String name;

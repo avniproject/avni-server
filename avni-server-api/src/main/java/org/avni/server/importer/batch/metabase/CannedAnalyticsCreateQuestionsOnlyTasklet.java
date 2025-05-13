@@ -62,7 +62,7 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
             logger.info("Create questions job acquired Lock for organisation {}", organisation.getName());
             Database database = metabaseService.syncDatabase();
             logger.info("Synced database for organisation {}", organisation.getName());
-            metabaseService.waitForManualSyncToComplete(database);
+            metabaseService.waitForDatabaseSyncToComplete(organisation, database);
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());
         } catch (HttpServerErrorException e) {
