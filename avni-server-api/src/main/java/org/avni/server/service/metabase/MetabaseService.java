@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.sql.Array;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -236,5 +238,21 @@ public class MetabaseService {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
         databaseRepository.reSyncSchema(database);
+    }
+
+    public List<MetabaseResource> getResourcesPresent() {
+        List<MetabaseResource> metabaseResources = new ArrayList<>();
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        Group group = metabaseGroupRepository.findGroup(currentOrganisation);
+        if (group != null) {
+            metabaseResources.add(MetabaseResource.UserGroup);
+        }
+        CollectionInfoResponse collection = collectionRepository.getCollection(currentOrganisation);
+        if (collection != null)
+            metabaseResources.add(MetabaseResource.Collection);
+        Database database = databaseRepository.getDatabase(currentOrganisation);
+        if (database != null)
+            metabaseResources.add(MetabaseResource.Database);
+        return metabaseResources;
     }
 }
