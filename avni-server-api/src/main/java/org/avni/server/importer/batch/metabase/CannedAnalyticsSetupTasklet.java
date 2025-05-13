@@ -62,18 +62,11 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
         DbRoleRepository.setDbRoleFromContext(entityManager);
     }
 
-    private void setup(Organisation organisation) throws InterruptedException, CannedAnalyticsException {
+    private void setup(Organisation organisation) throws InterruptedException {
         GroupContract groupContract = new GroupContract();
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
-        metabaseService.syncDatabase();
-
-        // Wait for manual schema sync to complete
-        // If it returns false, we should not proceed with the next steps
-        metabaseService.waitForManualSchemaSyncToComplete(organisation);
-
-        // Only proceed with these steps if sync completed successfully
         metabaseService.fixDatabaseSyncSchedule();
         databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {

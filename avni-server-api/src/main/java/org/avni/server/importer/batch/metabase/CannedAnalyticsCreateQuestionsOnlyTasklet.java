@@ -6,6 +6,7 @@ import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.metabase.Database;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.service.metabase.MetabaseService;
@@ -59,13 +60,9 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
         try {
             CannedAnalyticsLockProvider.acquireLock(organisation);
             logger.info("Create questions job acquired Lock for organisation {}", organisation.getName());
-            metabaseService.syncDatabase();
-
-            // Wait for manual schema sync to complete
-            // If it returns false, we should not proceed with the next steps
-            metabaseService.waitForManualSchemaSyncToComplete(organisation);
-
+            Database database = metabaseService.syncDatabase();
             logger.info("Synced database for organisation {}", organisation.getName());
+            metabaseService.waitForManualSyncToComplete(database);
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());
         } catch (HttpServerErrorException e) {
