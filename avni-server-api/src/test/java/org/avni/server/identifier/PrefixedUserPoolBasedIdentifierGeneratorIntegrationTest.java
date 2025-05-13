@@ -293,9 +293,6 @@ public class PrefixedUserPoolBasedIdentifierGeneratorIntegrationTest extends Abs
         }
     }
 
-    // Test for overlapping ranges removed as it's not a valid business concern for this class
-    // Preventing overlapping ranges is a responsibility of the data validation or service layer
-
     @Test
     public void shouldNotGenerateIdentifiersWhenAssignmentExhausted() {
         // Setup
@@ -496,99 +493,4 @@ public class PrefixedUserPoolBasedIdentifierGeneratorIntegrationTest extends Abs
         verify(identifierUserAssignmentRepository, atLeastOnce()).saveAll(ArgumentCaptor.forClass(List.class).capture());
     }
 
-    @Test
-    public void shouldHandleOverlappingIdentifierRanges() {
-        // Setup two users with overlapping identifier ranges
-        User user1 = new UserBuilder().withDefaultValuesForNewEntity().build();
-        User user2 = new UserBuilder().withDefaultValuesForNewEntity().build();
-
-        // Create a test identifier source with a larger batch size
-        IdentifierSource testIdentifierSource = new IdentifierSourceBuilder()
-                .addPrefix(PREFIX)
-                .setType(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)
-                .setBatchGenerationSize(MEDIUM_BATCH_SIZE)
-                .setMinimumBalance(LOW_MINIMUM_BALANCE)
-                .build();
-
-        // User1's assignment with range 7100-7150
-        IdentifierUserAssignment user1Assignment = new IdentifierUserAssignmentBuilder()
-                .setIdentifierSource(testIdentifierSource)
-                .setIdentifierStart(PREFIX + "7100")
-                .setIdentifierEnd(PREFIX + "7150")
-                .setAssignedTo(user1)
-                .build();
-
-        // User2's assignment with overlapping range 7140-7190
-        IdentifierUserAssignment user2Assignment = new IdentifierUserAssignmentBuilder()
-                .setIdentifierSource(testIdentifierSource)
-                .setIdentifierStart(PREFIX + "7140")
-                .setIdentifierEnd(PREFIX + "7190")
-                .setAssignedTo(user2)
-                .build();
-
-        // Setup existing identifiers for user1 (7100-7145 already used)
-        List<IdentifierAssignment> user1ExistingIdentifiers = new ArrayList<>();
-        for (int i = 0; i <= 45; i++) {
-            String identifierValue = PREFIX + String.format("%04d", i + 7100);
-            IdentifierAssignment assignment = new IdentifierAssignment(
-                    testIdentifierSource, identifierValue, i + 7100l, user1, "device1");
-            user1ExistingIdentifiers.add(assignment);
-        }
-
-        // Mock repository responses
-        when(identifierUserAssignmentRepository.getAllNonExhaustedUserAssignments(user1, testIdentifierSource))
-                .thenReturn(Collections.singletonList(user1Assignment));
-        when(identifierUserAssignmentRepository.getAllNonExhaustedUserAssignments(user2, testIdentifierSource))
-                .thenReturn(Collections.singletonList(user2Assignment));
-
-        // Mock existsByIdentifierAndIdentifierSourceAndIsVoidedFalse to simulate existing identifiers
-        when(identifierAssignmentRepository.existsByIdentifierAndIdentifierSourceAndIsVoidedFalse(anyString(), eq(testIdentifierSource)))
-                .thenAnswer(invocation -> {
-                    String identifier = invocation.getArgument(0);
-                    // Return true for identifiers 7100-7145 (already used by user1)
-                    int identifierNum = Integer.parseInt(identifier.replace(PREFIX, ""));
-                    return identifierNum >= 7100 && identifierNum <= 7145;
-                });
-
-        when(identifierAssignmentRepository.findByAssignedToAndDeviceIdAndUsedFalseAndIsVoidedFalse(eq(user2), anyString()))
-                .thenReturn(new ArrayList<>());
-
-        // Execute - generate identifiers for user2
-        prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(testIdentifierSource, user2, PREFIX, "device2");
-
-        // Capture the saved identifier assignments
-        ArgumentCaptor<List<IdentifierAssignment>> identifierAssignmentsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(identifierAssignmentRepository, atLeastOnce()).saveAll(identifierAssignmentsCaptor.capture());
-
-        // Collect all saved identifiers
-        Set<String> savedIdentifiers = new HashSet<>();
-        for (List<IdentifierAssignment> batch : identifierAssignmentsCaptor.getAllValues()) {
-            for (IdentifierAssignment assignment : batch) {
-                savedIdentifiers.add(assignment.getIdentifier());
-            }
-        }
-
-        // Verify that no identifiers in the range 7100-7145 were generated (as they're already used)
-        for (int i = 0; i <= 45; i++) {
-            String identifierValue = PREFIX + String.format("%04d", 7100 + i);
-            assertFalse("Identifier " + identifierValue + " should not have been generated as it already exists",
-                    savedIdentifiers.contains(identifierValue));
-        }
-
-        // Verify that identifiers were generated from the non-overlapping part of user2's range
-        boolean foundNonOverlappingIdentifier = false;
-        for (int i = 46; i <= 90; i++) {
-            String identifierValue = PREFIX + String.format("%04d", 7100 + i);
-            if (savedIdentifiers.contains(identifierValue)) {
-                foundNonOverlappingIdentifier = true;
-                break;
-            }
-        }
-
-        assertTrue("Should have generated at least one identifier from the non-overlapping range",
-                foundNonOverlappingIdentifier);
-
-        // Verify that the total number of identifiers is correct (should be 10 as per batch size)
-        assertEquals("Should have generated exactly 10 identifiers", 10, savedIdentifiers.size());
-    }
 }

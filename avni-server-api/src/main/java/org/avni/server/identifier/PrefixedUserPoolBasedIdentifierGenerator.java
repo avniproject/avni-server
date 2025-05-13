@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -22,12 +24,15 @@ import java.util.stream.Collectors;
  * It is assumed here that generation of identifiers for the same user will not happen in parallel.
  * If it does happen, there are database checks that ensure that one of the transactions will fail due to
  * uniqueness constraints. One of the transactions will fail in such scenarios.
- *
+ * <p>
  * It is also assumed that every id is pre-assigned to a single user. This is to ensure server does not need to have
  * costly locking mechanisms.
- *
+ * <p>
  * We will need to introduce row-locking on the identifier_user_assignment table if we expect parallel calls for
  * identifier generation for the same id.
+ * <p>
+ * Note: While this class shall not handle overlapping identifier ranges.
+ * Preventing such overlaps is the responsibility of the data validation or service layer.
  */
 @Service
 public class PrefixedUserPoolBasedIdentifierGenerator {
@@ -53,7 +58,6 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
 
             Long batchGenerationSize = identifierSource.getBatchGenerationSize();
             List<IdentifierAssignment> generatedIdentifiers = new ArrayList<>();
-            Set<IdentifierUserAssignment> modifiedAssignments = new HashSet<>();
 
             for (int i = 0; i < batchGenerationSize; i++) {
                 try {
@@ -209,29 +213,13 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
         }
 
         IdentifierSource identifierSource = identifierUserAssignment.getIdentifierSource();
-        long endIdentifier = extractNumericPart(identifierUserAssignment.getIdentifierEnd(), prefix);
         long currentIdentifier = determineStartingIdentifier(identifierUserAssignment, prefix);
 
-        int maxAttempts = 10;
-        for (int attempt = 0; attempt < maxAttempts && currentIdentifier <= endIdentifier; attempt++) {
-            String formattedIdentifier = formatIdentifier(currentIdentifier, identifierSource, prefix);
+        String formattedIdentifier = formatIdentifier(currentIdentifier, identifierSource, prefix);
+        identifierUserAssignment.setLastAssignedIdentifier(formattedIdentifier);
 
-            if (!identifierExists(formattedIdentifier, identifierSource)) {
-                identifierUserAssignment.setLastAssignedIdentifier(formattedIdentifier);
-                return createIdentifierAssignment(identifierSource, formattedIdentifier, currentIdentifier,
-                        identifierUserAssignment.getAssignedTo(), deviceId);
-            }
-
-            logger.info("Identifier {} already exists, trying next one", formattedIdentifier);
-            currentIdentifier++;
-        }
-
-        if (currentIdentifier > endIdentifier) {
-            identifierUserAssignment.setLastAssignedIdentifier(identifierUserAssignment.getIdentifierEnd());
-            throw new RuntimeException("Not enough identifiers available. Please contact your admin to get more assigned.");
-        } else {
-            throw new RuntimeException("Failed to generate a unique identifier after " + maxAttempts + " attempts");
-        }
+        return createIdentifierAssignment(identifierSource, formattedIdentifier, currentIdentifier,
+                identifierUserAssignment.getAssignedTo(), deviceId);
     }
 
     private long extractNumericPart(String identifier, String prefix) {
