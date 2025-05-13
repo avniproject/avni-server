@@ -2,7 +2,6 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.metabase.db.MetabaseDbConnectionFactory;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
@@ -11,11 +10,13 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,7 +200,7 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         List<TableDetails> tables = this.getTables(database, schemaName);
         TableDetails table = tables.stream().filter(t -> t.getName().equalsIgnoreCase(tableName)).findFirst().orElseThrow(() -> new RuntimeException("Table not found: " + tableName));
         List<FieldDetails> fields = this.getFields(table);
-        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElseThrow(() -> new RuntimeException("Field: " + fieldName + "not found in table: " + tableName));
+        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElseThrow(() -> new RuntimeException("Field: " + fieldName + " not found in table: " + tableName));
     }
 
     public static void clearThreadLocalContext() {

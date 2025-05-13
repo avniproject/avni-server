@@ -62,15 +62,15 @@ public class MetabaseService {
         this.metabaseDatabaseRepository = metabaseDatabaseRepository;
     }
 
-    private Database setupDatabase() {
+    private boolean setupDatabase() {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
-        if (database != null) return database;
+        if (database != null) return false;
 
         database = Database.forDatabasePayload(organisation.getName(),
                     DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), avniDefaultOrgUserDbPassword));
         databaseRepository.save(database);
-        return databaseRepository.getDatabase(organisation);
+        return true;
     }
 
     private void tearDownDatabase() {
@@ -131,7 +131,13 @@ public class MetabaseService {
     public void setupMetabase() throws InterruptedException {
         Organisation organisation = organisationService.getCurrentOrganisation();
         logger.info("[{}] Setting up database", organisation.getName());
-        Database database = setupDatabase();
+        boolean databaseSetup = setupDatabase();
+        if (!databaseSetup) {
+            logger.info("[{}] Database previously setup so possible ETL has new schema entities", organisation.getName());
+            this.syncDatabase();
+        }
+
+        Database database = databaseRepository.getDatabase(organisation);
         this.waitForDatabaseSyncToComplete(organisation, database);
         logger.info("[{}] Setting up collection", organisation.getName());
         setupCollection();
