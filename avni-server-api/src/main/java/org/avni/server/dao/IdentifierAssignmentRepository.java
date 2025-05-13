@@ -10,6 +10,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "identifierAssignment", path = "identifierAssignment")
@@ -21,4 +22,8 @@ public interface IdentifierAssignmentRepository extends TransactionalDataReposit
     Integer countIdentifierAssignmentByIdentifierSourceEqualsAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNullAndUsedIsFalseAndDeviceIdEquals(IdentifierSource identifierSource, User assignedTo, String deviceId);
 
     boolean existsByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullAndDeviceIdEquals(User currentUser, Date lastModifiedDateTime, String deviceId);
+
+    List<IdentifierAssignment> findByAssignedToAndDeviceIdAndUsedFalseAndIsVoidedFalse(User currentUser, String deviceId);
+
+    boolean existsByIdentifierAndIdentifierSourceAndIsVoidedFalse(String identifier, IdentifierSource identifierSource);
 }
