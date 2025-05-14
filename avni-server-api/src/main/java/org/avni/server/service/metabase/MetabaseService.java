@@ -240,7 +240,7 @@ public class MetabaseService {
         Database database = databaseRepository.getDatabase(currentOrganisation);
         if (database != null) {
             DatabaseDetails details = database.getDetails();
-            metabaseResources.add(String.format("%s - %s - %s", MetabaseResource.Database, details.getHost(), details.getPort()));
+            metabaseResources.add(String.format("%s - %s - %s", MetabaseResource.Database, details.getHost(), details.getDbname()));
         }
         return metabaseResources;
     }
