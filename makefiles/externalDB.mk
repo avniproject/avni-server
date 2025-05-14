@@ -84,6 +84,8 @@ endif
 
 tunnel-prerelease-db:
 	make tunnel-db host=avni-prerelease dbServer=prereleasedb.avniproject.org
+tunnel-prerelease-metabase-db:
+	ssh avni-staging -L 5434:stagingdb.avniproject.org:5432
 tunnel-prod-read-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.read.openchs.org
 tunnel-metabase-db:

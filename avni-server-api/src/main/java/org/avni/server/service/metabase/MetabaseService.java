@@ -7,6 +7,7 @@ import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.OrganisationService;
+import org.avni.server.util.SyncTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -190,22 +191,22 @@ public class MetabaseService {
     }
 
     public void waitForDatabaseSyncToComplete(Organisation organisation, Database database) throws InterruptedException {
-        long startTime = System.currentTimeMillis();
+        SyncTimer timer = new SyncTimer(this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes);
         logger.info("Waiting for initial metabase database sync {}", organisation.getName());
         while (true) {
-            long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes * 1000L);
+            timer.start();
+            long timeLeft = timer.getTimeLeft();
             if (!(timeLeft < 0)) {
-                logger.info("Initial metabase database sync timed out after {} seconds", timeSpent / 1000);
+                logger.info("Initial metabase database sync timed out. {}", timer);
                 break;
             }
             SyncStatus syncStatus = this.getInitialSyncStatus();
             boolean syncRunning = metabaseDatabaseRepository.isSyncRunning(database);
             if (syncStatus != SyncStatus.COMPLETE || syncRunning) {
                 Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent / 1000, organisation.getName());
+                logger.info("{} waiting for metabase database sync not complete and time expired. {}", organisation.getName(), timer);
             } else {
-                logger.info("Metabase database sync completed after {} seconds", timeSpent / 1000);
+                logger.info("Metabase database sync completed. {}", timer);
                 break;
             }
         }
