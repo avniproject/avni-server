@@ -62,6 +62,4 @@ public class Database {
     public void setDetails(DatabaseDetails details) {
         this.details = details;
     }
-
-
 }

@@ -11,11 +11,12 @@ import java.util.Map;
 public final class CannedAnalyticsStatus {
     private final CannedAnalyticsLastCompletionStatus status;
     private Map<String, BatchJobStatus> jobStatuses = new HashMap<>();
-    private final List<MetabaseResource> resources;
+    private final List<String> resources;
     private final String avniEnvironment;
     private final int timeoutInMillis;
 
-    public CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus status, Map<String, BatchJobStatus> jobStatuses, List<MetabaseResource> resources, String avniEnvironment, int timeoutInMillis) {
+    public CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus status, Map<String, BatchJobStatus> jobStatuses,
+                                 List<String> resources, String avniEnvironment, int timeoutInMillis) {
         this.status = status;
         this.jobStatuses = jobStatuses;
         this.resources = resources;

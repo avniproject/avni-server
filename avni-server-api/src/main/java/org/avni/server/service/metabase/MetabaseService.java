@@ -227,19 +227,21 @@ public class MetabaseService {
         return database;
     }
 
-    public List<MetabaseResource> getResourcesPresent() {
-        List<MetabaseResource> metabaseResources = new ArrayList<>();
+    public List<String> getResourcesPresent() {
+        List<String> metabaseResources = new ArrayList<>();
         Organisation currentOrganisation = organisationService.getCurrentOrganisation();
         Group group = metabaseGroupRepository.findGroup(currentOrganisation);
         if (group != null) {
-            metabaseResources.add(MetabaseResource.UserGroup);
+            metabaseResources.add(MetabaseResource.UserGroup.name());
         }
         CollectionInfoResponse collection = collectionRepository.getCollection(currentOrganisation);
         if (collection != null)
-            metabaseResources.add(MetabaseResource.Collection);
+            metabaseResources.add(MetabaseResource.Collection.name());
         Database database = databaseRepository.getDatabase(currentOrganisation);
-        if (database != null)
-            metabaseResources.add(MetabaseResource.Database);
+        if (database != null) {
+            DatabaseDetails details = database.getDetails();
+            metabaseResources.add(String.format("%s - %s - %s", MetabaseResource.Database, details.getHost(), details.getPort()));
+        }
         return metabaseResources;
     }
 }
