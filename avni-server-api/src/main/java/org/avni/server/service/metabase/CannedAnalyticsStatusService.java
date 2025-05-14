@@ -1,5 +1,6 @@
 package org.avni.server.service.metabase;
 
+import org.avni.server.config.SelfServiceBatchConfig;
 import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.batch.BatchJobStatus;
@@ -23,15 +24,17 @@ public class CannedAnalyticsStatusService {
     private final boolean avniReportingMetabaseSelfServiceEnabled;
     private final ImplementationRepository implementationRepository;
     private final MetabaseService metabaseService;
+    private final SelfServiceBatchConfig selfServiceBatchConfig;
     @Value("${avni.environment}")
     private String avniEnvironment;
 
-    public CannedAnalyticsStatusService(OrganisationConfigService organisationConfigService, BatchJobService batchJobService, @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled, ImplementationRepository implementationRepository, MetabaseService metabaseService) {
+    public CannedAnalyticsStatusService(OrganisationConfigService organisationConfigService, BatchJobService batchJobService, @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled, ImplementationRepository implementationRepository, MetabaseService metabaseService, SelfServiceBatchConfig selfServiceBatchConfig) {
         this.organisationConfigService = organisationConfigService;
         this.batchJobService = batchJobService;
         this.avniReportingMetabaseSelfServiceEnabled = avniReportingMetabaseSelfServiceEnabled;
         this.implementationRepository = implementationRepository;
         this.metabaseService = metabaseService;
+        this.selfServiceBatchConfig = selfServiceBatchConfig;
     }
 
     public CannedAnalyticsStatus getStatus(Organisation organisation) {
@@ -51,6 +54,6 @@ public class CannedAnalyticsStatusService {
         if (Arrays.asList("prerelease", "staging").contains(avniEnvironment)) {
             resourcesPresent = metabaseService.getResourcesPresent();
         }
-        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus, resourcesPresent, avniEnvironment);
+        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus, resourcesPresent, avniEnvironment, selfServiceBatchConfig.getTotalTimeoutInMillis());
     }
 }

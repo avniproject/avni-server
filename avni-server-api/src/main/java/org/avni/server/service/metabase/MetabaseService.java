@@ -1,11 +1,11 @@
 package org.avni.server.service.metabase;
 
+import org.avni.server.config.SelfServiceBatchConfig;
 import org.avni.server.dao.metabase.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.OrganisationService;
 import org.avni.server.util.SyncTimer;
 import org.slf4j.Logger;
@@ -21,11 +21,10 @@ import java.util.List;
 public class MetabaseService {
     private static final String DB_ENGINE = "postgres";
     private final MetabaseDatabaseRepository metabaseDatabaseRepository;
+    private final SelfServiceBatchConfig selfServiceBatchConfig;
 
     @Value("${avni.default.org.user.db.password}")
     private String avniDefaultOrgUserDbPassword;
-    @Value("${avni.reporting.metabase.db.sync.max.timeout.in.minutes}")
-    private int avniReportingMetabaseDbSyncMaxTimeoutInMinutes;
 
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
@@ -42,7 +41,6 @@ public class MetabaseService {
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
-                           OrganisationConfigService organisationConfigService,
                            AvniDatabase avniDatabase,
                            MetabaseDatabaseRepository databaseRepository,
                            GroupPermissionsRepository groupPermissionsRepository,
@@ -50,7 +48,8 @@ public class MetabaseService {
                            CollectionRepository collectionRepository,
                            MetabaseDashboardRepository metabaseDashboardRepository,
                            MetabaseGroupRepository metabaseGroupRepository,
-                           MetabaseUserRepository metabaseUserRepository, MetabaseDatabaseRepository metabaseDatabaseRepository) {
+                           MetabaseUserRepository metabaseUserRepository, MetabaseDatabaseRepository metabaseDatabaseRepository,
+                           SelfServiceBatchConfig selfServiceBatchConfig) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
@@ -61,6 +60,7 @@ public class MetabaseService {
         this.metabaseGroupRepository = metabaseGroupRepository;
         this.metabaseUserRepository = metabaseUserRepository;
         this.metabaseDatabaseRepository = metabaseDatabaseRepository;
+        this.selfServiceBatchConfig = selfServiceBatchConfig;
     }
 
     private boolean setupDatabase() {
@@ -191,7 +191,7 @@ public class MetabaseService {
     }
 
     public void waitForDatabaseSyncToComplete(Organisation organisation, Database database) throws InterruptedException {
-        SyncTimer timer = SyncTimer.fromMinutes(this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes);
+        SyncTimer timer = SyncTimer.fromMinutes(selfServiceBatchConfig.getAvniReportingMetabaseDbSyncMaxTimeoutInMinutes());
         logger.info("Waiting for initial metabase database sync {}", organisation.getName());
         timer.start();
         while (true) {
