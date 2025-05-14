@@ -37,7 +37,7 @@ public final class CannedAnalyticsStatus {
         return status != CannedAnalyticsLastCompletionStatus.NotSetup;
     }
 
-    public List<MetabaseResource> getResources() {
+    public List<String> getResources() {
         return resources;
     }
 
