@@ -191,20 +191,20 @@ public class MetabaseService {
     }
 
     public void waitForDatabaseSyncToComplete(Organisation organisation, Database database) throws InterruptedException {
-        SyncTimer timer = new SyncTimer(this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes);
+        SyncTimer timer = SyncTimer.fromMinutes(this.avniReportingMetabaseDbSyncMaxTimeoutInMinutes);
         logger.info("Waiting for initial metabase database sync {}", organisation.getName());
+        timer.start();
         while (true) {
-            timer.start();
             long timeLeft = timer.getTimeLeft();
-            if (!(timeLeft < 0)) {
-                logger.info("Initial metabase database sync timed out. {}", timer);
+            if (timeLeft < 0) {
+                logger.info("Metabase database sync timed out. {}", timer);
                 break;
             }
             SyncStatus syncStatus = this.getInitialSyncStatus();
             boolean syncRunning = metabaseDatabaseRepository.isSyncRunning(database);
             if (syncStatus != SyncStatus.COMPLETE || syncRunning) {
                 Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("{} waiting for metabase database sync not complete and time expired. {}", organisation.getName(), timer);
+                logger.info("{} Metabase database sync not complete in allotted time. {}", organisation.getName(), timer);
             } else {
                 logger.info("Metabase database sync completed. {}", timer);
                 break;

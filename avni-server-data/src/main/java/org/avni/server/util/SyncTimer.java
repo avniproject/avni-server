@@ -1,11 +1,19 @@
 package org.avni.server.util;
 
 public class SyncTimer {
-    private final int durationInMinutes;
+    private final long durationInMillis;
     private long startTime;
 
-    public SyncTimer(int durationInMinutes) {
-        this.durationInMinutes = durationInMinutes;
+    private SyncTimer(long durationInMillis) {
+        this.durationInMillis = durationInMillis;
+    }
+
+    public static SyncTimer fromMinutes(int durationInMinutes) {
+        return new SyncTimer((long) durationInMinutes * 60 * 1000);
+    }
+
+    public static SyncTimer fromMillis(int durationInMillis) {
+        return new SyncTimer(durationInMillis);
     }
 
     public void start() {
@@ -17,7 +25,7 @@ public class SyncTimer {
     }
 
     public long getTimeLeft() {
-        return ((long) durationInMinutes * 60 * 1000) - getTimeSpent();
+        return durationInMillis - getTimeSpent();
     }
 
     @Override
