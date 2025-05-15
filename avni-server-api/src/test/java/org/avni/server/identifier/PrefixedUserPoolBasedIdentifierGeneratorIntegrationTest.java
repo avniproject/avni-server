@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -491,6 +492,102 @@ public class PrefixedUserPoolBasedIdentifierGeneratorIntegrationTest extends Abs
 
         // Verify that the last assigned identifier for each range is correct
         verify(identifierUserAssignmentRepository, atLeastOnce()).saveAll(ArgumentCaptor.forClass(List.class).capture());
+    }
+
+    @Test
+    public void shouldAddPaddingToIdentifiersWhenMinLengthIsSpecified() throws Exception {
+        // Setup - Create a test method to access the private method
+        Method addPaddingMethod = PrefixedUserPoolBasedIdentifierGenerator.class.getDeclaredMethod(
+                "addPaddingIfNecessary", String.class, IdentifierSource.class);
+        addPaddingMethod.setAccessible(true);
+
+        // Create identifier source with min length requirement
+        IdentifierSource identifierSource = new IdentifierSourceBuilder()
+                .addPrefix(PREFIX) // "PH"
+                .setType(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)
+                .setMinLength(7) // Prefix(2) + numeric part(5) = 7
+                .setMaxLength(8)
+                .build();
+
+        // Test cases with different numeric parts
+        String result1 = (String) addPaddingMethod.invoke(prefixedUserPoolBasedIdentifierGenerator, "123", identifierSource);
+        String result2 = (String) addPaddingMethod.invoke(prefixedUserPoolBasedIdentifierGenerator, "12345", identifierSource);
+        String result3 = (String) addPaddingMethod.invoke(prefixedUserPoolBasedIdentifierGenerator, "123456", identifierSource);
+
+        // Verify padding is added correctly
+        assertEquals("Should add padding to short identifiers", "00123", result1);
+        assertEquals("Should not add padding when length is exactly right", "12345", result2);
+        assertEquals("Should not add padding when length exceeds minimum", "123456", result3);
+    }
+
+    @Test
+    public void shouldHandleNullPrefixWhenAddingPadding() throws Exception {
+        // Setup - Create a test method to access the private method
+        Method addPaddingMethod = PrefixedUserPoolBasedIdentifierGenerator.class.getDeclaredMethod(
+                "addPaddingIfNecessary", String.class, IdentifierSource.class);
+        addPaddingMethod.setAccessible(true);
+
+        // Create identifier source with null prefix
+        IdentifierSource identifierSource = new IdentifierSourceBuilder()
+                .setType(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)
+                .setMinLength(5) // No prefix + numeric part(5) = 5
+                .setMaxLength(6)
+                .build();
+
+        // Test case with a short numeric part
+        String result = (String) addPaddingMethod.invoke(prefixedUserPoolBasedIdentifierGenerator, "123", identifierSource);
+
+        // Verify padding is added correctly
+        assertEquals("Should add padding to reach min length with null prefix", "00123", result);
+    }
+
+    @Test
+    public void shouldVerifyPaddingInGeneratedIdentifiers() {
+        // Setup
+        IdentifierSource identifierSource = new IdentifierSourceBuilder()
+                .addPrefix(PREFIX) // "PH"
+                .setType(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)
+                .setBatchGenerationSize(5L)
+                .setMinimumBalance(2L)
+                .setMinLength(7) // Prefix(2) + numeric part(5) = 7
+                .setMaxLength(8)
+                .build();
+
+        // Create an assignment with small numbers that will need padding
+        IdentifierUserAssignment assignment = new IdentifierUserAssignmentBuilder()
+                .setIdentifierSource(identifierSource)
+                .setIdentifierStart(PREFIX + "1") // This should become PH00001 with padding
+                .setIdentifierEnd(PREFIX + "10") // This should become PH00010 with padding
+                .setAssignedTo(user)
+                .build();
+
+        List<IdentifierUserAssignment> assignments = new ArrayList<>();
+        assignments.add(assignment);
+
+        when(identifierUserAssignmentRepository.getAllNonExhaustedUserAssignments(user, identifierSource))
+                .thenReturn(assignments);
+
+        when(identifierAssignmentRepository.findByAssignedToAndDeviceIdAndUsedFalseAndIsVoidedFalse(eq(user), anyString()))
+                .thenReturn(new ArrayList<>());
+
+        // Execute
+        prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(identifierSource, user, PREFIX, DEVICE_ID);
+
+        // Capture the saved identifier assignments
+        ArgumentCaptor<List<IdentifierAssignment>> identifierAssignmentsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(identifierAssignmentRepository, atLeastOnce()).saveAll(identifierAssignmentsCaptor.capture());
+
+        // Verify padding in generated identifiers
+        List<IdentifierAssignment> capturedAssignments = identifierAssignmentsCaptor.getValue();
+        for (IdentifierAssignment identifierAssignment : capturedAssignments) {
+            String identifier = identifierAssignment.getIdentifier();
+            assertTrue("Identifier should start with prefix", identifier.startsWith(PREFIX));
+
+            // Remove prefix and check the numeric part
+            String numericPart = identifier.substring(PREFIX.length());
+            assertEquals("Numeric part should be padded to 5 digits", 5, numericPart.length());
+            assertTrue("Numeric part should start with zeros for small numbers", numericPart.startsWith("0"));
+        }
     }
 
 }
