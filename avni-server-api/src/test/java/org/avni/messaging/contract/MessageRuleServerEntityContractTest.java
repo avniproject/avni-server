@@ -15,7 +15,7 @@ public class MessageRuleServerEntityContractTest {
 
     @Test
     public void shouldConvertContractToNewModel() {
-        MessageRuleContract messageRuleContract = new MessageRuleContract();
+        MessageRuleWebContract messageRuleContract = new MessageRuleWebContract();
         String name = "Rule 1.2.3";
         messageRuleContract.setName(name);
         messageRuleContract.setMessageRule("messageRule");
@@ -33,12 +33,12 @@ public class MessageRuleServerEntityContractTest {
 
     @Test
     public void shouldNotFailForMissingFields() {
-        new MessageRuleContract().toModel(null);
+        new MessageRuleWebContract().toModel(null);
     }
 
     @Test
     public void shouldSetVoidedToFalseByDefault() {
-        MessageRule messageRule = new MessageRuleContract().toModel(null);
+        MessageRule messageRule = new MessageRuleWebContract().toModel(null);
 
         assertFalse(messageRule.isVoided());
     }
@@ -46,7 +46,7 @@ public class MessageRuleServerEntityContractTest {
     @Test
     public void shouldUseExistingModelIfProvided() {
         MessageRule messageRule = new MessageRule();
-        MessageRule result = new MessageRuleContract().toModel(messageRule);
+        MessageRule result = new MessageRuleWebContract().toModel(messageRule);
 
     }
 

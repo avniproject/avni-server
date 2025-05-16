@@ -39,7 +39,6 @@ import org.avni.server.web.request.application.menu.MenuItemContract;
 import org.avni.server.web.request.webapp.CatchmentExport;
 import org.avni.server.web.request.webapp.CatchmentsExport;
 import org.avni.server.web.request.webapp.ConceptExport;
-import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
@@ -518,15 +517,8 @@ public class OrganisationService {
 
     public void addIdentifierSourceJson(ZipOutputStream zos, boolean includeLocations) throws IOException {
         List<IdentifierSource> identifierSources = identifierSourceRepository.findAll();
-        List<IdentifierSourceContractWeb> identifierSourceContractWeb = identifierSources.stream().map(IdentifierSourceContractWeb::fromIdentifierSource)
-                .peek(id -> {
-                    if (id.getCatchmentId() == null) {
-                        id.setCatchmentUUID(null);
-                    } else {
-                        id.setCatchmentUUID(catchmentRepository.findOne(id.getCatchmentId()).getUuid());
-                    }
-                })
-                .filter(idSource -> includeLocations || idSource.getCatchmentId() == null)
+        List<IdentifierSourceContract> identifierSourceContractWeb = identifierSources.stream().map(IdentifierSourceContract::fromIdentifierSource)
+                .filter(idSource -> includeLocations || idSource.getCatchmentUUID() == null)
                 .collect(Collectors.toList());
         if (!identifierSourceContractWeb.isEmpty()) {
             addFileToZip(zos, "identifierSource.json", identifierSourceContractWeb);

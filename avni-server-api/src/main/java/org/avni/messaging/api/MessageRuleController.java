@@ -1,6 +1,6 @@
 package org.avni.messaging.api;
 
-import org.avni.messaging.contract.MessageRuleContract;
+import org.avni.messaging.contract.MessageRuleWebContract;
 import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.domain.MessageRule;
 import org.avni.messaging.service.MessagingService;
@@ -31,7 +31,7 @@ public class MessageRuleController {
 
     @RequestMapping(value = "/web/messageRule", method = RequestMethod.POST)
     @Transactional
-    public ResponseEntity<MessageRuleContract> save(@RequestBody MessageRuleContract messageRuleContract) {
+    public ResponseEntity<MessageRuleWebContract> save(@RequestBody MessageRuleWebContract messageRuleContract) {
         accessControlService.checkPrivilege(entityTypeRetrieverService.findPrivilegeType(StringUtils
                 .capitalize(messageRuleContract.getEntityType())));
 
@@ -39,7 +39,7 @@ public class MessageRuleController {
         MessageRule messageRule = messageRuleContract.toModel(existingEntity);
 
         messageRule = messagingService.saveRule(messageRule);
-        return ResponseEntity.ok(new MessageRuleContract(messageRule, null));
+        return ResponseEntity.ok(new MessageRuleWebContract(messageRule, null));
     }
 
     /**
@@ -54,20 +54,20 @@ public class MessageRuleController {
      */
     @RequestMapping(value = "/web/messageRule", method = RequestMethod.GET)
     @Transactional
-    public Page<MessageRuleContract> find(@RequestParam(required = false) String entityType, @RequestParam (required = false) Long entityTypeId, Pageable pageable) {
+    public Page<MessageRuleWebContract> find(@RequestParam(required = false) String entityType, @RequestParam (required = false) Long entityTypeId, Pageable pageable) {
         if (isAString(entityType) && entityTypeId != null) {
             EntityType entityTypeValue = EntityType.valueOf(StringUtils.capitalize(entityType));
-            return messagingService.findByEntityTypeAndEntityTypeId(entityTypeValue, entityTypeId, pageable).map(messageRule -> new MessageRuleContract(messageRule, null));
+            return messagingService.findByEntityTypeAndEntityTypeId(entityTypeValue, entityTypeId, pageable).map(messageRule -> new MessageRuleWebContract(messageRule, null));
         }
 
-        return messagingService.findAll(pageable).map(messageRule -> new MessageRuleContract(messageRule, null));
+        return messagingService.findAll(pageable).map(messageRule -> new MessageRuleWebContract(messageRule, null));
     }
 
     @RequestMapping(value = "/web/messageRule/{id}", method = RequestMethod.GET)
     @Transactional
-    public ResponseEntity<MessageRuleContract> findOne(@PathVariable("id") Long id ) {
+    public ResponseEntity<MessageRuleWebContract> findOne(@PathVariable("id") Long id ) {
         MessageRule messageRule = messagingService.find(id);
-        return messageRule == null? ResponseEntity.notFound().build() : ResponseEntity.ok(new MessageRuleContract(messageRule, null));
+        return messageRule == null? ResponseEntity.notFound().build() : ResponseEntity.ok(new MessageRuleWebContract(messageRule, null));
     }
 
     private boolean isAString(String s) {

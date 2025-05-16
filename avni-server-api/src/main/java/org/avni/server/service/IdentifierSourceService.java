@@ -7,7 +7,7 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.identifier.IdentifierGeneratorType;
-import org.avni.server.util.DateTimeUtil;
+import org.avni.server.web.request.IdentifierSourceContract;
 import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +35,15 @@ public class IdentifierSourceService implements NonScopeAwareService {
         return identifierSourceRepository.save(createIdSource(identifierSource, request));
     }
 
+    public IdentifierSource saveIdSource(IdentifierSourceContract request) {
+        IdentifierSource identifierSource = identifierSourceRepository.findByUuid(request.getUuid());
+        if (identifierSource == null) {
+            identifierSource = new IdentifierSource();
+            identifierSource.setUuid(request.getUuid() == null ? UUID.randomUUID().toString() : request.getUuid());
+        }
+        return identifierSourceRepository.save(createIdSource(identifierSource, request));
+    }
+
     public IdentifierSource updateIdSource(IdentifierSource identifierSource, IdentifierSourceContractWeb request) {
         return identifierSourceRepository.save(createIdSource(identifierSource, request));
     }
@@ -42,6 +51,19 @@ public class IdentifierSourceService implements NonScopeAwareService {
     private IdentifierSource createIdSource(IdentifierSource identifierSource, IdentifierSourceContractWeb request) {
         identifierSource.setBatchGenerationSize(request.getBatchGenerationSize());
         identifierSource.setCatchment(getCatchment(request.getCatchmentId(), request.getCatchmentUUID()));
+        identifierSource.setMinimumBalance(request.getMinimumBalance());
+        identifierSource.setName(request.getName());
+        identifierSource.setOptions(request.getOptions() == null ? new JsonObject() : request.getOptions());
+        identifierSource.setType(IdentifierGeneratorType.valueOf(request.getType()));
+        identifierSource.setVoided(request.isVoided());
+        identifierSource.setMinLength(request.getMinLength());
+        identifierSource.setMaxLength(request.getMaxLength());
+        return identifierSource;
+    }
+
+    private IdentifierSource createIdSource(IdentifierSource identifierSource, IdentifierSourceContract request) {
+        identifierSource.setBatchGenerationSize(request.getBatchGenerationSize());
+        identifierSource.setCatchment(getCatchment(null, request.getCatchmentUUID()));
         identifierSource.setMinimumBalance(request.getMinimumBalance());
         identifierSource.setName(request.getName());
         identifierSource.setOptions(request.getOptions() == null ? new JsonObject() : request.getOptions());
@@ -70,6 +92,16 @@ public class IdentifierSourceService implements NonScopeAwareService {
                 saveIdSource(identifierSourceContractWeb);
             } catch (Exception e) {
                 throw new BulkItemSaveException(identifierSourceContractWeb, e);
+            }
+        }
+    }
+
+    public void saveIdSources(IdentifierSourceContract[] identifierSourceContracts) {
+        for (IdentifierSourceContract identifierSourceContract : identifierSourceContracts) {
+            try {
+                saveIdSource(identifierSourceContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(identifierSourceContract, e);
             }
         }
     }
