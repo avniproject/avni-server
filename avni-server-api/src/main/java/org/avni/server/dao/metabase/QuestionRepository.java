@@ -28,7 +28,7 @@ public class QuestionRepository extends MetabaseConnector {
                 .withAggregation(AggregationType.COUNT)
                 .withBreakout(question.getBreakoutField())
                 .withVisualization(visualizationType);
-        if(!withoutFilters){
+        if (!withoutFilters) {
             config.withFilters(getFilterConditions(additionalFilterConditions, database, question).toArray(FilterCondition[]::new));
         }
 
@@ -108,7 +108,7 @@ public class QuestionRepository extends MetabaseConnector {
                 .forTable(primaryTable)
                 .addAggregation(config.getAggregationType())
                 .addBreakout(breakoutField.getId());
-        if(config.getFilters()!=null && config.getFilters().length!=0 ){
+        if (config.getFilters() != null && config.getFilters().length != 0) {
             builder.addFilter(config.getFilters());
         }
         return builder.build();
