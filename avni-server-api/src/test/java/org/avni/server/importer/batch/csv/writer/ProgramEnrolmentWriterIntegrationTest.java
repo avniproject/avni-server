@@ -78,13 +78,50 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "SSC Answer 1");
     }
 
+    private String[] validDataRowWithNoIdFromPreviousSystem() {
+        return dataRow("",
+                "ABCD",
+                "Program1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1");
+    }
+
+    private String[] dataRowWithNoFields() {
+        return dataRow("",
+                "",
+                "",
+                "",
+                "",
+                "");
+    }
+
+    private String[] dataRowWithOnlySubjectId() {
+        return dataRow("",
+                "ABCD",
+                "",
+                "",
+                "",
+                "");
+    }
+
+    private String[] dataRowWithNoEnrolmentDate() {
+        return dataRow("",
+                "ABCD",
+                "Program1",
+                "",
+                "",
+                "");
+    }
+
     private String[] validDataRowWithoutLegacyId() {
         return dataRow("",
                 "ABCD",
                 "Program1",
                 "2020-01-01",
                 "21.5135243,85.6731848",
-                "SSC Answer 1");    }
+                "SSC Answer 1");
+    }
 
     @Test
     public void headerWithWrongFields() {
@@ -95,7 +132,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                         "Enrolment Location",
                         "\"Single SSSelect Coded\""),
                 validDataRow(),
-                "unknown headers - enrolent date, single ssselect coded, id from previus system included in file. please refer to sample file for valid list of headers.");
+                "mandatory columns are missing in header from uploaded file - enrolment date. please refer to sample file for the list of mandatory headers. unknown headers - enrolent date, single ssselect coded, id from previus system included in file. please refer to sample file for valid list of headers.");
     }
 
     @Override
@@ -144,7 +181,6 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void shouldCreateUpdate() throws ValidationException, InvalidConfigurationException {
-        // new subject
         String[] header = validHeader();
         String[] dataRow = validDataRow();
 
@@ -172,7 +208,22 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void allowWithoutLegacyId() throws InvalidConfigurationException {
         success(validHeader(), validDataRowWithoutLegacyId());
-        success(validHeader(), validDataRowWithoutLegacyId());
+    }
+
+    @Test
+    public void doNotAllowMultipleEnrolmentsIfNotEnabled() throws InvalidConfigurationException {
+        success(validHeader(), validDataRowWithNoIdFromPreviousSystem());
+        failure(validHeader(), validDataRowWithNoIdFromPreviousSystem(), "subject 'abcd' is already enrolled in program 'program1' and the program doesn't allow for multiple enrolments");
+    }
+
+    @Test
+    public void noData() {
+        failure(validHeader(), dataRowWithNoFields(),
+                "'subject id from previous system' is required, program '' not found, subject id '' not found");
+        failure(validHeader(), dataRowWithOnlySubjectId(),
+                "program '' not found");
+        failure(validHeader(), dataRowWithNoEnrolmentDate(),
+                "value required for mandatory field: 'enrolment date'");
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {
@@ -181,6 +232,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
             programEnrolmentWriter.write(Chunk.of(new Row(headers, cells)));
             fail();
         } catch (Exception e) {
+            e.printStackTrace();
             Assert.assertEquals(errorMessage.toLowerCase(), e.getMessage().toLowerCase());
         }
         long after = individualRepository.count();

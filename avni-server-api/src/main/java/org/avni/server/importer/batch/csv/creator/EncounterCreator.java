@@ -65,11 +65,11 @@ public class EncounterCreator {
             }
         }
         boolean isScheduledVisit = EncounterUploadMode.isScheduleVisitMode(encounterUploadMode);
-        LocalDate encounterDate = null;
+        LocalDate encounterDate;
         EncounterUploadMode mode = isScheduledVisit ? EncounterUploadMode.SCHEDULE_VISIT : EncounterUploadMode.UPLOAD_VISIT_DETAILS;
 
         Encounter encounter = getOrCreateEncounter(row);
-        basicEncounterCreator.updateEncounter(row, encounter, allErrorMsgs, mode);
+        basicEncounterCreator.updateEncounterFields(row, encounter, allErrorMsgs, mode);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         String subjectId = row.get(EncounterHeadersCreator.SUBJECT_ID);
@@ -95,15 +95,16 @@ public class EncounterCreator {
                 LocalDate earliestDate = DateTimeUtil.parseFlexibleDate(earliestDateStr);
                 encounter.setEarliestVisitDateTime(earliestDate != null ? earliestDate.toDateTimeAtStartOfDay() : null);
             }
-            if (maxDateStr == null || maxDateStr.trim().isEmpty()) {
+            if (!StringUtils.hasText(maxDateStr)) {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.MAX_VISIT_DATE));
             } else {
                 LocalDate maxDate = DateTimeUtil.parseFlexibleDate(maxDateStr);
-                if (maxDate.isBefore(encounter.getEarliestVisitDateTime().toLocalDate())) {
+                if (maxDate != null && maxDate.isBefore(encounter.getEarliestVisitDateTime().toLocalDate())) {
                     allErrorMsgs.add("Max visit date needs to be after Earliest visit date");
                 }
                 encounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
             }
+            encounter.setName(encounter.getEncounterType().getName());
         } else {
             String encounterDateStr = row.get(EncounterHeadersCreator.VISIT_DATE);
             if (encounterDateStr == null || encounterDateStr.trim().isEmpty()) {

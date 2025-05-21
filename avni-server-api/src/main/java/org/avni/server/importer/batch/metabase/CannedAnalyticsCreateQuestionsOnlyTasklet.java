@@ -6,6 +6,7 @@ import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.metabase.Database;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.service.metabase.MetabaseService;
@@ -19,8 +20,8 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Component
 @JobScope
@@ -48,8 +49,13 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
 
     @PostConstruct
     public void authenticateUser() {
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        try {
+            authService.authenticateByUserId(userId, organisationUUID);
+            DbRoleRepository.setDbRoleFromContext(entityManager);
+        } catch (Exception e) {
+            logger.error("Error authenticating user {} for organisation {}", userId, organisationUUID, e);
+            throw e;
+        }
     }
 
     @Override
@@ -59,9 +65,9 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
         try {
             CannedAnalyticsLockProvider.acquireLock(organisation);
             logger.info("Create questions job acquired Lock for organisation {}", organisation.getName());
-            metabaseService.syncDatabase();
-            metabaseService.waitForManualSchemaSyncToComplete(organisation);
+            Database database = metabaseService.syncDatabase();
             logger.info("Synced database for organisation {}", organisation.getName());
+            metabaseService.waitForDatabaseSyncToComplete(organisation, database);
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());
         } catch (HttpServerErrorException e) {

@@ -32,6 +32,7 @@ public class JobStatus {
     private String programUUID;
     private String encounterTypeUUID;
     private String reportType;
+    private long executionId;
 
     public Date getStartDate() {
         return startDate;
@@ -193,4 +194,11 @@ public class JobStatus {
         this.reportType = reportType;
     }
 
+    public long getExecutionId() {
+        return executionId;
+    }
+
+    public void setExecutionId(long executionId) {
+        this.executionId = executionId;
+    }
 }

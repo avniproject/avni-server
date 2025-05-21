@@ -95,6 +95,6 @@ public abstract class AbstractHeaders implements HeaderCreator {
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
 
-        return new HeaderField(header, "", mandatoryCheckApplied && fe.isMandatory(), allowedValues, format, null, true);
+        return new HeaderField(header, "", mandatoryCheckApplied && fe.isMandatory(), allowedValues, format, null, mandatoryCheckApplied);
     }
 }

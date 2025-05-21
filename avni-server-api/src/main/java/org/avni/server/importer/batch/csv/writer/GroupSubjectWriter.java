@@ -36,8 +36,6 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
     private final HouseholdService householdService;
     private final GroupSubjectService groupSubjectService;
 
-    private DateCreator dateCreator;
-
     @Autowired
     public GroupSubjectWriter(GroupSubjectRepository groupSubjectRepository,
                               GroupRoleRepository groupRoleRepository,
@@ -52,7 +50,6 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
         this.individualRelationshipRepository = individualRelationshipRepository;
         this.householdService = householdService;
         this.groupSubjectService = groupSubjectService;
-        this.dateCreator = new DateCreator();
     }
 
     @Override
@@ -199,6 +196,7 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
     }
 
     private void saveMembershipDates(Row row, GroupSubject groupSubject, List<String> errorMsgs) {
+        DateCreator dateCreator = new DateCreator();
         LocalDate membershipStartDate = dateCreator.getDate(row, GroupMemberHeaders.membershipStartDate, errorMsgs, null);
         groupSubject.setMembershipStartDate(membershipStartDate != null ? membershipStartDate.toDateTimeAtStartOfDay() : LocalDate.now().toDateTimeAtCurrentTime());
 

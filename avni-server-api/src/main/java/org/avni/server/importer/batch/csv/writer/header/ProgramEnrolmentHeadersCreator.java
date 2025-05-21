@@ -20,8 +20,8 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         fields.add(new HeaderField(subjectId, "Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file)", true, null, null, null));
-        fields.add(new HeaderField(programHeader, formMapping.getProgram().getName(), true, null, null, null, false));
-        fields.add(new HeaderField(enrolmentDate, "", false, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
+        fields.add(new HeaderField(programHeader, formMapping.getProgram().getName(), true, null, null, null, true));
+        fields.add(new HeaderField(enrolmentDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
         fields.add(new HeaderField(enrolmentLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 
         fields.addAll(generateConceptFields(formMapping, false));

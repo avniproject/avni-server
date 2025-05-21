@@ -51,4 +51,9 @@ public class BulkUploadS3Service {
         S3File s3File = S3File.organisationFile(UserContextHolder.getOrganisation(), format("%s.csv", jobUuid), S3FileType.BulkUploadsError);
         return s3Service.getFileStream(s3File);
     }
+
+    public InputStream downloadInputFile(String filePath) {
+        S3File s3File = S3File.organisationFile(UserContextHolder.getOrganisation(), filePath, S3FileType.Global);
+        return s3Service.getFileStream(s3File);
+    }
 }

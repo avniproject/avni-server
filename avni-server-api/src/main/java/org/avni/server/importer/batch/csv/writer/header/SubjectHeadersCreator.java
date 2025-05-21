@@ -6,9 +6,6 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.AddressLevelService;
-import org.avni.server.service.OrganisationConfigService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -33,7 +30,6 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String dobVerified = "Date Of Birth Verified";
     public final static String gender = "Gender";
 
-    private static final Logger logger = LoggerFactory.getLogger(SubjectHeadersCreator.class);
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final AddressLevelService addressLevelService;
 
@@ -50,7 +46,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
-        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
+        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, true));
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 

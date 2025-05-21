@@ -2,15 +2,10 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.micrometer.observation.Observation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
-import org.avni.server.dao.ConceptRepository;
-import org.avni.server.dao.RepositoryProvider;
-import org.avni.server.dao.ruleServer.RuleObservationRepository;
-import org.avni.server.domain.jsRuleSupport.JsModelObservation;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
@@ -18,9 +13,9 @@ import org.avni.server.geo.PointType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentExitObservations;
@@ -212,8 +207,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
         return getId();
     }
 
-    public JsModelObservation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
-        RuleObservationRepository ruleObservationRepository = RepositoryProvider.getRuleObservationRepository();
-        return ruleObservationRepository.findObservation(this.getObservations(), conceptNameOrUuid, parentConceptNameOrUuid);
+    public boolean isActive() {
+        return this.getProgramExitDateTime() == null && !this.isVoided();
     }
 }

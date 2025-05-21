@@ -361,4 +361,15 @@ public class OrganisationConfigService implements NonScopeAwareService {
         OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
         return config.isMetabaseSetupEnabled();
     }
+
+    public String getMetabaseSyncStatus(Organisation organisation) {
+        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        return config.getMetabaseSyncStatus();
+    }
+
+    public void setMetabaseSyncStatus(Organisation organisation, String status) {
+        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        config.setMetabaseSyncStatus(status);
+        organisationConfigRepository.save(config);
+    }
 }

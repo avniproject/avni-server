@@ -2,7 +2,7 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.avni.server.dao.ProgramRepository;
+import org.avni.server.config.SelfServiceBatchConfig;
 import org.avni.server.dao.metabase.db.MetabaseDbConnectionFactory;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
@@ -11,11 +11,13 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,16 +27,18 @@ import java.util.Objects;
 public class MetabaseDatabaseRepository extends MetabaseConnector {
     private final CollectionRepository collectionRepository;
     private final MetabaseDbConnectionFactory metabaseDbConnectionFactory;
+    private final SelfServiceBatchConfig selfServiceBatchConfig;
     private static final Logger logger = LoggerFactory.getLogger(MetabaseDatabaseRepository.class);
 
     private static ThreadLocal<Map<String, List<TableDetails>>> tablesThreadLocalContext = new ThreadLocal<>();
     private static ThreadLocal<Map<Integer, List<FieldDetails>>> fieldsThreadLocalContext = new ThreadLocal<>();
 
     @Autowired
-    public MetabaseDatabaseRepository(RestTemplateBuilder restTemplateBuilder, CollectionRepository collectionRepository, MetabaseDbConnectionFactory metabaseDbConnectionFactory) {
+    public MetabaseDatabaseRepository(RestTemplateBuilder restTemplateBuilder, CollectionRepository collectionRepository, MetabaseDbConnectionFactory metabaseDbConnectionFactory, SelfServiceBatchConfig selfServiceBatchConfig) {
         super(restTemplateBuilder);
         this.collectionRepository = collectionRepository;
         this.metabaseDbConnectionFactory = metabaseDbConnectionFactory;
+        this.selfServiceBatchConfig = selfServiceBatchConfig;
     }
 
     public Database save(Database database) {
@@ -199,7 +203,7 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         List<TableDetails> tables = this.getTables(database, schemaName);
         TableDetails table = tables.stream().filter(t -> t.getName().equalsIgnoreCase(tableName)).findFirst().orElseThrow(() -> new RuntimeException("Table not found: " + tableName));
         List<FieldDetails> fields = this.getFields(table);
-        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElseThrow(() -> new RuntimeException("Field: " + fieldName + "not found in table: " + tableName));
+        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElseThrow(() -> new RuntimeException("Field: " + fieldName + " not found in table: " + tableName + " in schema: " + schemaName + ". Fields present: " + FieldDetails.toString(fields)));
     }
 
     public static void clearThreadLocalContext() {
@@ -241,11 +245,14 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         Connection connection = null;
         PreparedStatement ps = null;
         ResultSet resultSet = null;
+        int timeoutInMinutes = this.selfServiceBatchConfig.getAvniReportingMetabaseDbSyncMaxTimeoutInMinutes();
+        ;
         try {
             connection = this.metabaseDbConnectionFactory.getConnection();
-            ps = connection.prepareStatement("""
-                    select count(*) from task_history where db_id = ? and task in ('sync-fields', 'sync-tables') and started_at >= current_timestamp - interval '10 minutes' and ended_at is null
-                    """);
+            ps = connection.prepareStatement(String.format("""
+                    select count(*) from task_history where db_id = ? and task in ('sync-fields', 'sync-tables') and ended_at is null 
+                                                        and started_at >= current_timestamp - interval '%s'
+                    """, (timeoutInMinutes + " minutes")));
             ps.setLong(1, database.getId());
             resultSet = ps.executeQuery();
             resultSet.next();

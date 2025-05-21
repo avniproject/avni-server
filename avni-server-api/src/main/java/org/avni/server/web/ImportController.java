@@ -30,7 +30,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -163,6 +162,19 @@ public class ImportController {
     public ResponseEntity<InputStreamResource> getDocument(@RequestParam String jobUuid) {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
+        return ResponseEntity.ok()
+                .contentType(TEXT_PLAIN)
+                .cacheControl(CacheControl.noCache())
+                .header("Content-Disposition", "attachment; ")
+                .body(new InputStreamResource(file));
+    }
+
+    @GetMapping(value = "/import/inputFile",
+            produces = TEXT_PLAIN_VALUE,
+            consumes = APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<InputStreamResource> getInputDocument(@RequestParam String filePath) {
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        InputStream file = bulkUploadS3Service.downloadInputFile(filePath);
         return ResponseEntity.ok()
                 .contentType(TEXT_PLAIN)
                 .cacheControl(CacheControl.noCache())

@@ -2,8 +2,6 @@ package org.avni.server.importer.batch.metabase;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
-
-import org.springframework.http.*;
 import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
@@ -24,6 +22,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -57,9 +56,14 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
 
     @PostConstruct
     public void authenticateUser() {
-        DbRoleRepository.setDbRoleNone(entityManager);
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        try {
+            DbRoleRepository.setDbRoleNone(entityManager);
+            authService.authenticateByUserId(userId, organisationUUID);
+            DbRoleRepository.setDbRoleFromContext(entityManager);
+        } catch (Exception e) {
+            logger.error("Error authenticating user {} for organisation {}", userId, organisationUUID, e);
+            throw e;
+        }
     }
 
     private void setup(Organisation organisation) throws InterruptedException {
@@ -67,8 +71,6 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
-        metabaseService.syncDatabase();
-        metabaseService.waitForManualSchemaSyncToComplete(organisation);
         metabaseService.fixDatabaseSyncSchedule();
         databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {

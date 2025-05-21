@@ -4,6 +4,8 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.SearchSubjectEnrolledProgram;
@@ -136,7 +138,10 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "from individual i" +
             " where i.address_id = :addressId and i.id = e.individual_id and e.is_voided = false", nativeQuery = true)
     void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+
     default void voidSubjectItemsAt(AddressLevel address) {
         this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
+
+    List<ProgramEnrolment> findByIndividualAndProgram(Individual individual, Program program);
 }

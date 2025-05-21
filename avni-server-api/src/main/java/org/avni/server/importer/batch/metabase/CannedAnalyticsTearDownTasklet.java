@@ -19,9 +19,8 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpServerErrorException;
-
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Component
 @JobScope
@@ -49,9 +48,14 @@ public class CannedAnalyticsTearDownTasklet implements Tasklet {
 
     @PostConstruct
     public void authenticateUser() {
-        DbRoleRepository.setDbRoleNone(entityManager);
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        try {
+            DbRoleRepository.setDbRoleNone(entityManager);
+            authService.authenticateByUserId(userId, organisationUUID);
+            DbRoleRepository.setDbRoleFromContext(entityManager);
+        } catch (Exception e) {
+            logger.error("Error authenticating user {} for organisation {}", userId, organisationUUID, e);
+            throw e;
+        }
     }
 
     @Override

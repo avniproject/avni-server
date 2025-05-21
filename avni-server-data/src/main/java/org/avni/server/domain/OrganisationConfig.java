@@ -3,6 +3,9 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
@@ -11,8 +14,6 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -154,6 +155,14 @@ public class OrganisationConfig extends OrganisationAwareEntity {
 
     public void setMetabaseSetupEnabled(boolean setupEnabled) {
         settings.put("metabaseSetupEnabled", setupEnabled);
+    }
+
+    public String getMetabaseSyncStatus() {
+        return (String) settings.get("metabaseSyncStatus");
+    }
+
+    public void setMetabaseSyncStatus(String status) {
+        settings.put("metabaseSyncStatus", status);
     }
 
 }

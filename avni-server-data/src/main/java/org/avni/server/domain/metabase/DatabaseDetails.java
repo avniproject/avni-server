@@ -21,6 +21,22 @@ public class DatabaseDetails {
     @JsonProperty("tunnel-enabled")
     private boolean tunnelEnabled;
 
+    @JsonProperty("json-unfolding")
+    private boolean jsonUnfolding;
+
+    @JsonProperty("advanced-options")
+    private boolean advancedOptions;
+
+    // org schema name
+//    @JsonProperty("schema-filters-patterns")
+//    private String schemaFilterPatterns;
+
+//    @JsonProperty("schema-filters-type")
+//    private String schemaFilterType = "inclusion";
+
+    @JsonProperty("use-auth-provider")
+    private boolean useAuthProvider;
+
     public DatabaseDetails() {
     }
 
@@ -34,6 +50,9 @@ public class DatabaseDetails {
         this.sslMode = "require";
         this.sslUseClientAuth = false;
         this.tunnelEnabled = false;
+        this.jsonUnfolding = false;
+        this.advancedOptions = true;
+        this.useAuthProvider = false;
     }
 
     public String getHost() {
@@ -70,5 +89,17 @@ public class DatabaseDetails {
 
     public boolean isTunnelEnabled() {
         return tunnelEnabled;
+    }
+
+    public boolean isJsonUnfolding() {
+        return jsonUnfolding;
+    }
+
+    public boolean isAdvancedOptions() {
+        return advancedOptions;
+    }
+
+    public boolean isUseAuthProvider() {
+        return useAuthProvider;
     }
 }

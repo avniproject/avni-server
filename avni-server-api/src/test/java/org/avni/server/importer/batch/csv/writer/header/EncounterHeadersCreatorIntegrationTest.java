@@ -65,7 +65,7 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
     }
 
     @Test
-    public void testBasicHeaderGeneration_scheduleVisit() {
+    public void testBasicHeaderGeneration_ScheduledVisit() {
         String[] headers = encounterHeadersCreator.getAllHeaders(formMapping, EncounterUploadMode.SCHEDULE_VISIT);
         System.out.println("Generated headers: " + Arrays.toString(headers));
         assertNotNull(headers);
@@ -73,6 +73,9 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
         assertTrue(Arrays.asList(headers).contains(EncounterHeadersCreator.ID));
         assertTrue(Arrays.asList(headers).contains(EncounterHeadersCreator.EARLIEST_VISIT_DATE));
         assertTrue(Arrays.asList(headers).contains(EncounterHeadersCreator.MAX_VISIT_DATE));
+
+        String[] allDescriptions = encounterHeadersCreator.getAllDescriptions(formMapping, EncounterUploadMode.SCHEDULE_VISIT);
+        assertEquals("Mandatory. Test Encounter Type.", allDescriptions[1]);
     }
 
     @Test
@@ -94,7 +97,7 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
     }
 
     @Test
-    public void testHeaderValidation_allowsOptionalHeaders() {
+    public void testAllowsOptionalHeaders() {
         Concept codedConcept = testConceptService.createCodedConcept("Multi Select Coded", "SSC Answer 1", "SSC Answer 2");
         java.util.List<String> multiSelectConcept = java.util.Collections.singletonList(codedConcept.getName());
         encounterType = new EncounterTypeBuilder()

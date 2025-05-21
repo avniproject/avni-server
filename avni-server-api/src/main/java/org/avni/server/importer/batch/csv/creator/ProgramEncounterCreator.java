@@ -69,7 +69,7 @@ public class ProgramEncounterCreator {
         EncounterUploadMode mode = isScheduledVisit ? EncounterUploadMode.SCHEDULE_VISIT : EncounterUploadMode.UPLOAD_VISIT_DETAILS;
 
         ProgramEncounter programEncounter = getOrCreateProgramEncounter(row);
-        basicEncounterCreator.updateEncounter(row, programEncounter, allErrorMsgs, mode);
+        basicEncounterCreator.updateEncounterFields(row, programEncounter, allErrorMsgs, mode);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         String enrolmentId = row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
@@ -102,15 +102,16 @@ public class ProgramEncounterCreator {
                 }
                 programEncounter.setEarliestVisitDateTime(earliestDate != null ? earliestDate.toDateTimeAtStartOfDay() : null);
             }
-            if (maxDateStr == null || maxDateStr.trim().isEmpty()) {
+            if (!StringUtils.hasText(maxDateStr)) {
                 allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.MAX_VISIT_DATE));
             } else {
                 LocalDate maxDate = DateTimeUtil.parseFlexibleDate(maxDateStr);
                 if (maxDate.isBefore(programEncounter.getEarliestVisitDateTime().toLocalDate())) {
                     allErrorMsgs.add("Max visit date needs to be after Earliest visit date");
                 }
-                programEncounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
+                programEncounter.setMaxVisitDateTime(maxDate.toDateTimeAtStartOfDay());
             }
+            programEncounter.setName(programEncounter.getEncounterType().getName());
         } else {
             String encounterDateStr = row.get(EncounterHeadersCreator.VISIT_DATE);
             if (encounterDateStr == null || encounterDateStr.trim().isEmpty()) {
