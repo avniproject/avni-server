@@ -6,6 +6,8 @@ import org.avni.server.web.contract.ArchivalConfigContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
+
 @Service
 public class ArchivalConfigService {
 
@@ -26,6 +28,25 @@ public class ArchivalConfigService {
         archivalConfigToSaveOrUpdate.assignUUIDIfRequired();
         archivalConfigToSaveOrUpdate.updateAudit();
         return archivalConfigRepository.save(archivalConfigToSaveOrUpdate);
+    }
+
+    public ArchivalConfig getArchivalConfig() {
+        try {
+            return archivalConfigRepository.findByIsVoidedFalse().getFirst();
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+    }
+
+    public ArchivalConfigContract toContract(ArchivalConfig archivalConfig) {
+        ArchivalConfigContract contract = new ArchivalConfigContract();
+        contract.setId(archivalConfig.getId());
+        contract.setUuid(archivalConfig.getUuid());
+        contract.setVoided(archivalConfig.isVoided());
+        contract.setSqlQuery(archivalConfig.getSqlQuery());
+        contract.setRealmQuery(archivalConfig.getRealmQuery());
+        contract.setBatchSize(archivalConfig.getBatchSize());
+        return contract;
     }
 
 }

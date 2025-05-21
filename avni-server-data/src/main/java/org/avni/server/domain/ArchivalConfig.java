@@ -9,7 +9,7 @@ public class ArchivalConfig extends OrganisationAwareEntity {
     @Column(name = "sql_query", nullable = false)
     private String sqlQuery;
 
-    @Column(name = "realm_query", nullable = false)
+    @Column(name = "realm_query")
     private String realmQuery;
 
     @Column(name = "batch_size")
