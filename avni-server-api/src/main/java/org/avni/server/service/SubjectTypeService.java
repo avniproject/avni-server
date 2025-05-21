@@ -209,7 +209,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString("uuid", jobUUID)
                 .addString("type", String.format("Subjects Create - %s", subjectType.getName()), false)
-                .addString("organisationUUID", userContext.getOrganisationUUID())
+                .addString("organisationUUID", userContext.getOrganisation().getUuid())
                 .addLong("userId", userContext.getUser().getId())
                 .addLong("subjectTypeId", subjectType.getId())
                 .toJobParameters();
