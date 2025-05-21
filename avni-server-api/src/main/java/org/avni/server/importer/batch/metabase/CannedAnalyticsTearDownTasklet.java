@@ -49,9 +49,14 @@ public class CannedAnalyticsTearDownTasklet implements Tasklet {
 
     @PostConstruct
     public void authenticateUser() {
-        DbRoleRepository.setDbRoleNone(entityManager);
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        try {
+            DbRoleRepository.setDbRoleNone(entityManager);
+            authService.authenticateByUserId(userId, organisationUUID);
+            DbRoleRepository.setDbRoleFromContext(entityManager);
+        } catch (Exception e) {
+            logger.error("Error authenticating user {} for organisation {}", userId, organisationUUID, e);
+            throw e;
+        }
     }
 
     @Override

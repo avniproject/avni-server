@@ -49,8 +49,13 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
 
     @PostConstruct
     public void authenticateUser() {
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        try {
+            authService.authenticateByUserId(userId, organisationUUID);
+            DbRoleRepository.setDbRoleFromContext(entityManager);
+        } catch (Exception e) {
+            logger.error("Error authenticating user {} for organisation {}", userId, organisationUUID, e);
+            throw e;
+        }
     }
 
     @Override
