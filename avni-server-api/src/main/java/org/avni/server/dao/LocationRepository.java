@@ -126,10 +126,10 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             nativeQuery = true)
     Page<AddressLevel> getAddressLevelsByLquery(@Param("lquery") String lquery, Pageable pageable);
 
-    AddressLevel findByParentAndTitleIgnoreCaseAndIsVoidedFalse(AddressLevel parent, String title);
+    AddressLevel findByParentAndTypeAndTitleIgnoreCaseAndIsVoidedFalse(AddressLevel parent, AddressLevelType addressLevelType, String title);
 
-    default AddressLevel findChildLocation(AddressLevel parent, String title) {
-        return this.findByParentAndTitleIgnoreCaseAndIsVoidedFalse(parent, title);
+    default AddressLevel findChildLocation(AddressLevel parent, AddressLevelType addressLevelType, String title) {
+        return this.findByParentAndTypeAndTitleIgnoreCaseAndIsVoidedFalse(parent, addressLevelType, title);
     }
 
     @Query("select a from AddressLevel a where (a.uuid =?1 or a.legacyId = ?1) and a.organisationId = ?2")

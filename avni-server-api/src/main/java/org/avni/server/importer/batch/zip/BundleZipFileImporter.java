@@ -326,8 +326,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 individualRelationshipTypeService.saveRelationshipTypes(individualRelationshipTypeContracts);
                 break;
             case "identifierSource.json":
-                IdentifierSourceContractWeb[] identifierSourceContractWebs = convertString(fileData, IdentifierSourceContractWeb[].class);
-                identifierSourceService.saveIdSources(identifierSourceContractWebs);
+                IdentifierSourceContract[] identifierSourceContracts = convertString(fileData, IdentifierSourceContract[].class);
+                identifierSourceService.saveIdSources(identifierSourceContracts);
                 break;
             case "checklist.json":
                 ChecklistDetailRequest[] checklistDetailRequests = convertString(fileData, ChecklistDetailRequest[].class);

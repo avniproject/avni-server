@@ -1,5 +1,6 @@
 package org.avni.server.web.request;
 
+import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.JsonObject;
 
 public class IdentifierSourceContract extends CHSRequest {
@@ -74,5 +75,22 @@ public class IdentifierSourceContract extends CHSRequest {
 
     public void setMaxLength(Integer maxLength) {
         this.maxLength = maxLength;
+    }
+
+    public static IdentifierSourceContract fromIdentifierSource(IdentifierSource identifierSource) {
+        IdentifierSourceContract contract = new IdentifierSourceContract();
+        contract.setBatchGenerationSize(identifierSource.getBatchGenerationSize());
+        if (identifierSource.getCatchment() != null)
+            contract.setCatchmentUUID(identifierSource.getCatchment().getUuid());
+        contract.setMaxLength(identifierSource.getMaxLength());
+        contract.setMinLength(identifierSource.getMinLength());
+        contract.setMinimumBalance(identifierSource.getMinimumBalance());
+        contract.setName(identifierSource.getName());
+        contract.setType(identifierSource.getType().name());
+        contract.setOptions(identifierSource.getOptions());
+        contract.setId(identifierSource.getId());
+        contract.setVoided(identifierSource.isVoided());
+        contract.setUuid(identifierSource.getUuid());
+        return contract;
     }
 }
