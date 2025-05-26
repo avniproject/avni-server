@@ -118,7 +118,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     private ProgramEnrolment createNewEnrolment(String externalId) {
         ProgramEnrolment programEnrolment = new ProgramEnrolment();
         if (StringUtils.hasText(externalId)) {
-            programEnrolment.setLegacyId(externalId);
+        programEnrolment.setLegacyId(externalId);
         }
         programEnrolment.setVoided(false);
         programEnrolment.assignUUIDIfRequired();

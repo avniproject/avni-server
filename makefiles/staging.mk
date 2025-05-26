@@ -27,6 +27,15 @@ debug_server_staging: build_server
 	OPENCHS_DATABASE_HOST=localhost OPENCHS_DATABASE_PORT=5433 \
 		java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
+
+debug_server_staging_s3_without_idp: build_server
+	AVNI_IDP_TYPE=none OPENCHS_DATABASE=$(DB) OPENCHS_IAM_USER=$(OPENCHS_STAGING_IAM_USER) \
+	OPENCHS_IAM_USER_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_ACCESS_KEY) \
+	OPENCHS_IAM_USER_SECRET_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_SECRET_ACCESS_KEY) \
+	OPENCHS_S3_IN_DEV=true \
+	OPENCHS_BUCKET_NAME=staging-user-media \
+	java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+
 tail-staging-log:
 	ssh avni-staging "tail -f -n1000 /var/log/avni_server/chs.log"
 

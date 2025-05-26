@@ -62,6 +62,7 @@ public class BundleService {
             organisationService.addTaskStatus(zos);
             organisationService.addSubjectTypeIcons(zos);
             organisationService.addReportCardIcons(zos);
+            organisationService.addConceptMedia(zos);
             organisationService.addApplicationMenus(zos);
             organisationService.addMessageRules(zos);
             organisationService.addTranslations(orgId, zos);

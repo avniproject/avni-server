@@ -239,31 +239,31 @@ public class ObservationCreator {
     }
 
     private Object handleCodedValue(FormElement formElement, String answerValue, List<String> errorMsgs, Concept concept) {
-        if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
-            String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
-            return Stream.of(providedAnswers)
-                    .map(String::trim)
-                    .map(answer -> {
-                        Concept answerConcept = concept.findAnswerConcept(answer);
-                        if (answerConcept == null) {
-                            errorMsgs.add(format("Invalid answer '%s' for '%s'", answer, concept.getName()));
-                            return null;
-                        }
-                        return answerConcept.getUuid();
-                    })
-                    .collect(Collectors.toList());
-        } else {
-            Concept answerConcept = concept.findAnswerConcept(answerValue.trim());
-            if (answerConcept == null) {
-                errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue.trim(), concept.getName()));
-                return null;
-            }
-            return answerConcept.getUuid();
-        }
+                if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
+                    String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
+                    return Stream.of(providedAnswers)
+                            .map(String::trim)
+                            .map(answer -> {
+                                Concept answerConcept = concept.findAnswerConcept(answer);
+                                if (answerConcept == null) {
+                                    errorMsgs.add(format("Invalid answer '%s' for '%s'", answer, concept.getName()));
+                                    return null;
+                                }
+                                return answerConcept.getUuid();
+                            })
+                            .collect(Collectors.toList());
+                } else {
+                    Concept answerConcept = concept.findAnswerConcept(answerValue.trim());
+                    if (answerConcept == null) {
+                        errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue.trim(), concept.getName()));
+                        return null;
+                    }
+                    return answerConcept.getUuid();
+                }
     }
 
     private Object handleNumericValue(String answerValue, List<String> errorMsgs, Concept concept) {
-        try {
+                try {
             double value = Double.parseDouble(answerValue);
             Double lowAbsolute = concept.getLowAbsolute();
             Double highAbsolute = concept.getHighAbsolute();
@@ -273,10 +273,10 @@ public class ObservationCreator {
                 return null;
             }
             return value;
-        } catch (NumberFormatException e) {
-            errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
-            return null;
-        }
+                } catch (NumberFormatException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
     }
 
     private boolean isWithinRange(double value, Double lowAbsolute, Double highAbsolute) {
@@ -291,34 +291,34 @@ public class ObservationCreator {
     }
 
     private Object handleDateValue(String answerValue, List<String> errorMsgs, Concept concept) {
-        try {
-            String trimmed = answerValue.trim();
-            return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed);
-        } catch (IllegalArgumentException e) {
-            errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
-            return null;
-        }
+                try {
+                    String trimmed = answerValue.trim();
+                    return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed);
+                } catch (IllegalArgumentException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
     }
 
     private Object handleDateTimeValue(String answerValue, List<String> errorMsgs, Concept concept) {
-        try {
-            return (answerValue.trim().isEmpty()) ? null : toISODateFormat(answerValue);
+                try {
+                    return (answerValue.trim().isEmpty()) ? null : toISODateFormat(answerValue);
         } catch (IllegalArgumentException e) {
-            errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
-            return null;
-        }
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
     }
 
     private Object handleMediaValue(FormElement formElement, String answerValue, List<String> errorMsgs, Object oldValue) {
-        if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
-            String[] providedURLs = S.splitMultiSelectAnswer(answerValue);
-            return Stream.of(providedURLs)
-                    .map(url -> getMediaObservationValue(url, errorMsgs, null))
-                    .collect(Collectors.toList());
-        } else {
-            return getMediaObservationValue(answerValue, errorMsgs, oldValue);
+                if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
+                    String[] providedURLs = S.splitMultiSelectAnswer(answerValue);
+                    return Stream.of(providedURLs)
+                            .map(url -> getMediaObservationValue(url, errorMsgs, null))
+                            .collect(Collectors.toList());
+                } else {
+                    return getMediaObservationValue(answerValue, errorMsgs, oldValue);
+                }
         }
-    }
 
     private Object handlePhoneNumberValue(String answerValue, List<String> errorMsgs, Concept concept) {
         String trimmedValue = answerValue.trim();

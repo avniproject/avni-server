@@ -173,10 +173,6 @@ public class Concept extends OrganisationAwareEntity {
         nonRepeatingNewOnes.forEach(conceptAnswer -> conceptAnswer.setConcept(this));
     }
 
-    public void voidOrphanedConceptAnswers(List<String> answerConceptUUIDs) {
-        this.getConceptAnswers().forEach(conceptAnswer -> conceptAnswer.setVoided(!answerConceptUUIDs.contains(conceptAnswer.getAnswerConcept().getUuid())));
-    }
-
     public String getUnit() {
         return unit;
     }
