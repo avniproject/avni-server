@@ -103,7 +103,8 @@ public class BulkLocationCreator extends BulkLocationModifier {
 
     private AddressLevel createAddressLevel(Row row, AddressLevel parent, String header, List<String> locationTypeNames) throws BuilderException {
         AddressLevel location;
-        location = locationRepository.findChildLocation(parent, row.get(header));
+        AddressLevelType addressLevelType = addressLevelTypeRepository.findByNameIgnoreCaseAndIsVoidedFalse(header);
+        location = locationRepository.findChildLocation(parent, addressLevelType, row.get(header));
         if (location == null) {
             LocationContract locationContract = new LocationContract();
             locationContract.setupUuidIfNeeded();
