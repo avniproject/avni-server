@@ -65,6 +65,14 @@ public class AbstractEncounter extends SyncAttributeEntity {
     @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
     private User filledBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_modified_by_id")
+    private User lastModifiedBy;
+
     public EncounterType getEncounterType() {
         return encounterType;
     }
@@ -206,5 +214,23 @@ public class AbstractEncounter extends SyncAttributeEntity {
 
     public void setFilledBy(User filledBy) {
         this.filledBy = filledBy;
+    }
+
+    @JsonIgnore
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @JsonIgnore
+    public User getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(User lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 }
