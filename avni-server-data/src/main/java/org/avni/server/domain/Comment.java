@@ -24,6 +24,9 @@ public class Comment extends OrganisationAwareEntity {
     @JoinColumn(name = "comment_thread_id")
     private CommentThread commentThread;
 
+    @Column
+    private boolean syncDisabled;
+
     public String getText() {
         return text;
     }
@@ -59,5 +62,13 @@ public class Comment extends OrganisationAwareEntity {
 
     public String getCommentThreadUUID() {
         return this.commentThread.getUuid();
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

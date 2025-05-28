@@ -33,6 +33,9 @@ public class ChecklistItem extends OrganisationAwareEntity {
     @JoinColumn(name = "checklist_id")
     private Checklist checklist;
 
+    @Column
+    private boolean syncDisabled;
+
     public DateTime getCompletionDate() {
         return completionDate;
     }
@@ -64,5 +67,13 @@ public class ChecklistItem extends OrganisationAwareEntity {
 
     public void setChecklistItemDetail(ChecklistItemDetail checklistItemDetail) {
         this.checklistItemDetail = checklistItemDetail;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

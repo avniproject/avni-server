@@ -27,6 +27,9 @@ public class ProgramEncounter extends AbstractEncounter implements MessageableEn
     @JoinColumn(name = "individual_id")
     private Individual individual;
 
+    @Column
+    private boolean syncDisabled;
+
     public ProgramEnrolment getProgramEnrolment() {
         return programEnrolment;
     }

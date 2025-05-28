@@ -21,6 +21,9 @@ public class Encounter extends AbstractEncounter implements MessageableEntity {
     @JoinColumn(name = "individual_id")
     private Individual individual;
 
+    @Column
+    private boolean syncDisabled;
+
     public Individual getIndividual() {
         return individual;
     }

@@ -70,6 +70,9 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @Column(name = "address_id")
     private Long addressId;
 
+    @Column
+    private boolean syncDisabled;
+
     public boolean isExited() {
         return this.getProgramExitDateTime() != null;
     }
@@ -193,6 +196,14 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     public void setAddressId(Long addressId) {
         this.addressId = addressId;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 
     @Override

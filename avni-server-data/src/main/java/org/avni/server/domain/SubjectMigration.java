@@ -40,6 +40,9 @@ public class SubjectMigration extends OrganisationAwareEntity {
     @JoinColumn(name = "subject_type_id")
     private SubjectType subjectType;
 
+    @Column
+    private boolean syncDisabled;
+
     public Individual getIndividual() {
         return individual;
     }
@@ -102,5 +105,13 @@ public class SubjectMigration extends OrganisationAwareEntity {
 
     public void setSubjectType(SubjectType subjectType) {
         this.subjectType = subjectType;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

@@ -47,6 +47,9 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
     @Column(name = "address_id")
     private Long addressId;
 
+    @Column
+    private boolean syncDisabled;
+
     public Individual getIndividual() {
         return individual;
     }
@@ -125,5 +128,13 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
 
     public void setAddressId(Long addressId) {
         this.addressId = addressId;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

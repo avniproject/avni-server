@@ -36,6 +36,9 @@ public class Checklist extends OrganisationAwareEntity {
     @Convert(converter = JodaDateTimeConverter.class)
     private DateTime baseDate;
 
+    @Column
+    private boolean syncDisabled;
+
     public ChecklistDetail getChecklistDetail() {
         return checklistDetail;
     }
@@ -66,5 +69,13 @@ public class Checklist extends OrganisationAwareEntity {
 
     public void setItems(List<ChecklistItem> items) {
         this.items = items;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

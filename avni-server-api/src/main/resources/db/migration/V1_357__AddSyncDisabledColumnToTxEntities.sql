@@ -1,0 +1,12 @@
+ALTER TABLE individual_relationship ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE group_subject ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE program_encounter ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE program_enrolment ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE encounter ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE individual ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE checklist_item ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE checklist ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE entity_approval_status ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE subject_migration ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE comment ADD COLUMN sync_disabled boolean DEFAULT FALSE;
+ALTER TABLE comment_thread ADD COLUMN sync_disabled boolean DEFAULT FALSE;

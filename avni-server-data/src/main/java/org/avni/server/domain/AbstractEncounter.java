@@ -65,6 +65,9 @@ public class AbstractEncounter extends SyncAttributeEntity {
     @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
     private User filledBy;
 
+    @Column
+    private boolean syncDisabled;
+
     public EncounterType getEncounterType() {
         return encounterType;
     }
@@ -206,5 +209,13 @@ public class AbstractEncounter extends SyncAttributeEntity {
 
     public void setFilledBy(User filledBy) {
         this.filledBy = filledBy;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

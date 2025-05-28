@@ -45,6 +45,9 @@ public class IndividualRelationship extends OrganisationAwareEntity {
     @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection exitObservations;
 
+    @Column
+    private boolean syncDisabled;
+
     public IndividualRelationshipType getRelationship() {
         return relationship;
     }
@@ -91,5 +94,13 @@ public class IndividualRelationship extends OrganisationAwareEntity {
 
     public void setExitObservations(ObservationCollection exitObservations) {
         this.exitObservations = exitObservations;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

@@ -51,6 +51,9 @@ public class GroupSubject extends OrganisationAwareEntity {
     @Column(name = "group_subject_sync_concept_2_value")
     private String groupSubjectSyncConcept2Value;
 
+    @Column
+    private boolean syncDisabled;
+
     public Individual getGroupSubject() {
         return groupSubject;
     }
@@ -139,4 +142,11 @@ public class GroupSubject extends OrganisationAwareEntity {
         this.groupSubjectSyncConcept2Value = groupSubjectSyncConcept2Value;
     }
 
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
+    }
 }

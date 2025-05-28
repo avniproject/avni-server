@@ -34,6 +34,9 @@ public class CommentThread extends OrganisationAwareEntity {
     @Convert(converter = JodaDateTimeConverter.class)
     private DateTime resolvedDateTime;
 
+    @Column
+    private boolean syncDisabled;
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "commentThread")
     private Set<Comment> comments = new HashSet<>();
 
@@ -72,6 +75,14 @@ public class CommentThread extends OrganisationAwareEntity {
     @JsonIgnore
     public Set<Comment> getNonVoidedComments() {
         return comments.stream().filter(c -> !c.isVoided()).collect(Collectors.toSet());
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 
     public enum CommentThreadStatus {
