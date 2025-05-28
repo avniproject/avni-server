@@ -192,20 +192,28 @@ public class MediaController {
         File tempSourceFile;
         try {
             tempSourceFile = AvniFiles.convertMultiPartToFile(file, "");
-            AvniFiles.ImageType imageType = AvniFiles.guessImageTypeFromStream(tempSourceFile);
+            AvniFiles.ImageType imageType = AvniFiles.guessImageType(tempSourceFile);
             if (AvniFiles.ImageType.Unknown.equals(imageType)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use .bmp, .jpg, .jpeg, .png, .gif file.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. File type: %s. Use .bmp, .jpg, .jpeg, .png, .gif file.", imageType));
             }
             if (folder.equals(MediaFolder.ICONS) && isInvalidDimension(tempSourceFile, imageType)) {
                 accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
                     PrivilegeType.EditSubjectType,
                     PrivilegeType.EditOfflineDashboardAndReportCard
                 ));
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 75 X 75 or smaller.");
+                Dimension imageDimension = AvniFiles.getImageDimension(tempSourceFile, imageType);
+                String dimension = imageDimension.getWidth() + " X " + imageDimension.getHeight();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. Image size: %s. Use image of size 75 X 75 or smaller.", dimension));
             }
             if (folder.equals(MediaFolder.NEWS) && isInvalidImageSize(file)) {
+                double sizeInKB = AvniFiles.getSizeInKB(file);
                 accessControlService.checkPrivilege(PrivilegeType.EditNews);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 500KB or smaller.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. File size: %s. Use image of size 500KB or smaller.", sizeInKB));
             }
             if (folder.equals(MediaFolder.PROFILE_PICS)) {
                 // not checking privileges for specific subject type here as that will be checked while saving the entity
