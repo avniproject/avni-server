@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.domain.ArchivalConfig;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.ArchivalConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -15,9 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ArchivalConfigController {
-
     private final ArchivalConfigService archivalConfigService;
-
     private final AccessControlService accessControlService;
 
     @Autowired
@@ -27,10 +26,14 @@ public class ArchivalConfigController {
     }
 
     @PostMapping(value = "/web/archivalConfig")
-    public ResponseEntity<ArchivalConfig> createOrUpdateArchivalConfig(@RequestBody ArchivalConfigContract archivalConfig) {
+    public ResponseEntity createOrUpdateArchivalConfig(@RequestBody ArchivalConfigContract archivalConfig) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        ArchivalConfig savedConfig = archivalConfigService.saveOrUpdate(archivalConfig);
-        return new ResponseEntity<>(savedConfig, HttpStatus.CREATED);
+        try {
+            ArchivalConfig savedConfig = archivalConfigService.saveOrUpdate(archivalConfig);
+            return new ResponseEntity<>(savedConfig, HttpStatus.CREATED);
+        } catch (ValidationException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping(value = "/web/archivalConfig")

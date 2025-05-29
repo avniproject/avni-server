@@ -2,7 +2,6 @@ package org.avni.server.web;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.GeneralRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -67,8 +66,6 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestDataSetupService testDataSetupService;
     @Autowired
     private UserSubjectAssignmentService userSubjectAssignmentService;
-    @Autowired
-    private GeneralRepository generalRepository;
 
     private TestDataSetupService.TestOrganisationData organisationData;
     private TestDataSetupService.TestCatchmentData catchmentData;
