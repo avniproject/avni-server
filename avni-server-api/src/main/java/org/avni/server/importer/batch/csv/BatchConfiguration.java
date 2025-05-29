@@ -119,11 +119,12 @@ public class BatchConfiguration {
     private String[] getHeaders(Reader reader) throws IOException {
         BufferedReader csvReader = new BufferedReader(reader);
         String headerLine = csvReader.readLine();
+        String cleanedHeaderLine = headerLine.replace("\uFEFF", "");
         csvReader.close();
 
         final List<String> headers = new ArrayList<>();
         new DelimitedLineTokenizer() {{
-            headers.addAll(doTokenize(headerLine));
+            headers.addAll(doTokenize(cleanedHeaderLine));
         }};
 
         return headers.toArray(new String[]{});

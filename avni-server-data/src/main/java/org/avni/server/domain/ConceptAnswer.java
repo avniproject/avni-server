@@ -11,8 +11,6 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.springframework.data.rest.core.config.Projection;
 
-import java.util.Objects;
-
 @Entity
 @Table(name = "concept_answer")
 @BatchSize(size = 100)

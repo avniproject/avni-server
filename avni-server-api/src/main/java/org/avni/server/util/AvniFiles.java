@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static java.lang.String.format;
+import org.apache.tika.Tika;
 
 public class AvniFiles {
     public static final String APP_ZIP = "application/zip";
@@ -42,6 +43,22 @@ public class AvniFiles {
     }
 
     public static final List<String> ZipFiles = Arrays.asList(APP_ZIP, APP_X_ZIP_COMPRESSED);
+
+    static public ImageType guessImageType(File tempSourceFile) throws IOException {
+        ImageType imageType = AvniFiles.guessImageTypeFromStream(tempSourceFile);
+        if (ImageType.Unknown == imageType) {
+            Tika tika = new Tika();
+            String mimeType = tika.detect(tempSourceFile);
+            return switch (mimeType) {
+                case "image/jpeg" -> ImageType.JPEG;
+                case "image/png" -> ImageType.PNG;
+                case "image/gif" -> ImageType.GIF;
+                case "image/bmp" -> ImageType.BMP;
+                default -> ImageType.Unknown;
+            };
+        }
+        return imageType;
+    }
 
     /**
      * Sources:

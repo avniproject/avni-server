@@ -8,8 +8,8 @@ import org.avni.server.application.KeyValues;
 import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
-import org.springframework.data.rest.core.config.Projection;
 import org.joda.time.DateTime;
+import org.springframework.data.rest.core.config.Projection;
 
 import java.util.Set;
 
