@@ -1,9 +1,6 @@
 package org.avni.server.backgroundJob;
 
-import java.util.List;
-
 import jakarta.persistence.EntityManager;
-import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.domain.ArchivalConfig;
 import org.avni.server.domain.Organisation;
@@ -14,6 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import java.util.List;
 
 @Component
 public class StorageManagementJob {
@@ -34,7 +34,7 @@ public class StorageManagementJob {
     // this method runs without organisation context
     @Scheduled(cron = "0 0 2 * * *")
     public void manage() {
-        logger.info("Starting nightly archival job");
+        logger.info("Starting archival job. " );
         List<ArchivalConfig> archivalConfigs = this.archivalConfigService.getAllArchivalConfigs();
         for (ArchivalConfig archivalConfig : archivalConfigs) {
             this.markSyncDisabled(archivalConfig);
@@ -43,6 +43,8 @@ public class StorageManagementJob {
     }
 
     private void markSyncDisabled(ArchivalConfig archivalConfig) {
+//        these work only with Job test, so commented. had added to verify whether indeed new transaction is created
+//        assert !TransactionSynchronizationManager.isActualTransactionActive();
         Organisation organisation = organisationRepository.findOne(archivalConfig.getOrganisationId());
         List<Long> subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
         while (!subjectIds.isEmpty()) {
@@ -54,5 +56,6 @@ public class StorageManagementJob {
                 throw new RuntimeException("Same subject ids retrieved again");
             }
         }
+//        assert !TransactionSynchronizationManager.isActualTransactionActive();
     }
 }
