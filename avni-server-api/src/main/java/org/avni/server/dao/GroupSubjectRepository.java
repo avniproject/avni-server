@@ -123,6 +123,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     default boolean isEntityChanged(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 

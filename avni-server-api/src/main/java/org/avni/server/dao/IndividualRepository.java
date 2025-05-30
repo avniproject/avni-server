@@ -38,6 +38,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         return count(audit
                 .and(subjectType)
                 .and(location_AndDirectAssignment_AndSyncAttributes)
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 

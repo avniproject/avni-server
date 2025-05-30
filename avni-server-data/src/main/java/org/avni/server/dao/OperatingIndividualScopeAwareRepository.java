@@ -2,12 +2,9 @@ package org.avni.server.dao;
 
 import jakarta.persistence.criteria.*;
 import org.avni.server.application.Subject;
+import org.avni.server.domain.*;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.SubjectType;
-import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
 import org.avni.server.util.JsonObjectUtil;
@@ -40,7 +37,14 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         if (syncParameters.getSyncEntityName() != null && syncParameters.getEntityTypeUuid() != null)
             specification = specification.and(syncTypeIdSpecification(syncParameters.getEntityTypeUuid(), syncParameters.getSyncEntityName()));
 
+        specification = specification.and(syncDisabledSpecification());
+
         return specification;
+    }
+
+    default Specification<T> syncDisabledSpecification() {
+        return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                cb.equal(root.get("syncDisabled"), false);
     }
 
     @Override

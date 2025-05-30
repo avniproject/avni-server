@@ -73,6 +73,7 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
     default boolean isEntityChanged(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 

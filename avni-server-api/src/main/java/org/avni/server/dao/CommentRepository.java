@@ -34,6 +34,7 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
     default boolean isEntityChanged(SyncParameters syncParameters){
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 

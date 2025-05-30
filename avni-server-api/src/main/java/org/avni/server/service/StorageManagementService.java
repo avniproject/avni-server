@@ -1,12 +1,14 @@
 package org.avni.server.service;
 
+import jakarta.persistence.EntityManager;
+import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.domain.ArchivalConfig;
+import org.avni.server.domain.Organisation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
 @Component
 public class StorageManagementService {
     private final JdbcTemplate jdbcTemplate;
+    private final EntityManager entityManager;
     private static final List<String> tablesLinkedViaSubjectId = List.of(
             "encounter",
             "program_enrolment",
@@ -24,19 +27,25 @@ public class StorageManagementService {
     private static final Logger logger = LoggerFactory.getLogger(StorageManagementService.class);
 
     @Autowired
-    public StorageManagementService(JdbcTemplate jdbcTemplate) {
+    public StorageManagementService(JdbcTemplate jdbcTemplate, EntityManager entityManager) {
         this.jdbcTemplate = jdbcTemplate;
+        this.entityManager = entityManager;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void markSyncDisabled(List<Long> subjectIds) {
-        updateSubjects(subjectIds);
-        updateSubjectLinkedUpdateQuery(subjectIds);
-        updateGroupSubject(subjectIds);
-        updateIndividualRelationship(subjectIds);
-        updateCommentThread(subjectIds);
-        updateChecklist(subjectIds);
-        updateChecklistItem(subjectIds);
+    @Transactional
+    public void markSyncDisabled(List<Long> subjectIds, Organisation organisation) {
+        DbRoleRepository.setDbRole(entityManager, organisation);
+        try {
+            updateSubjects(subjectIds);
+            updateSubjectLinkedUpdateQuery(subjectIds);
+            updateGroupSubject(subjectIds);
+            updateIndividualRelationship(subjectIds);
+            updateCommentThread(subjectIds);
+            updateChecklist(subjectIds);
+            updateChecklistItem(subjectIds);
+        } finally {
+            DbRoleRepository.setDbRoleNone(entityManager);
+        }
     }
 
     public List<Long> getNextSubjectIds(ArchivalConfig archivalConfig) {
