@@ -212,4 +212,6 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     default void voidSubjectItemsAt(AddressLevel address) {
         this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
+
+    int countBySyncDisabled(boolean syncDisabled);
 }

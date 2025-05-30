@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class StorageManagementJob {
@@ -33,6 +34,7 @@ public class StorageManagementJob {
 
     // this method runs without organisation context
     @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
     public void manage() {
         logger.info("Starting nightly archival job");
         List<ArchivalConfig> archivalConfigs = this.archivalConfigService.getAllArchivalConfigs();
@@ -50,15 +52,14 @@ public class StorageManagementJob {
 
     private void markSyncDisabled(ArchivalConfig archivalConfig) {
         List<Long> subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
-        List<Long> previousSubjectIds;
-        do {
-            previousSubjectIds = subjectIds;
+        while (!subjectIds.isEmpty()) {
+            List<Long> previousSubjectIds = subjectIds;
             storageManagementService.markSyncDisabled(subjectIds);
             subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
             if (subjectIds.equals(previousSubjectIds)) {
                 logger.info("Same subject ids retrieved again: {}", archivalConfig.getUuid());
                 throw new RuntimeException("Same subject ids retrieved again");
             }
-        } while (!subjectIds.isEmpty());
+        };
     }
 }

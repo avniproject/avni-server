@@ -40,7 +40,13 @@ public class StorageManagementService {
     }
 
     public List<Long> getNextSubjectIds(ArchivalConfig archivalConfig) {
-        String query = String.format("%s limit 100", archivalConfig.getSqlQuery());
+        String query = String.format("""
+                        SELECT ind.id FROM public.individual ind
+                            join (%s) as user_query on user_query.id = ind.id
+                            WHERE ind.sync_disabled = false
+                         limit 100
+                        """,
+                archivalConfig.getSqlQuery());
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getLong("id"));
     }
 

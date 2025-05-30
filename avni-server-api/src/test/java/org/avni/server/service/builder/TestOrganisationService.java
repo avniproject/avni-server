@@ -33,7 +33,7 @@ public class TestOrganisationService {
     public void createOrganisation(Organisation organisation, User adminUser) {
         organisationRepository.save(organisation);
         User orgUser = createUser(organisation, adminUser);
-        implementationRepository.createDBUser(organisation.getDbUser(),AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
+        implementationRepository.createDBUser(organisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
         testWebContextService.setUser(orgUser);
         organisationService.setupBaseOrganisationMetadata(organisation);
     }

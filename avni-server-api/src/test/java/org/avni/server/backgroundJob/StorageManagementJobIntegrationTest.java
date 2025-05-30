@@ -1,7 +1,9 @@
-package org.avni.server.service;
+package org.avni.server.backgroundJob;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.dao.ArchivalConfigRepository;
 import org.avni.server.dao.GroupRoleRepository;
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
@@ -14,13 +16,14 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.List;
+import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class StorageManagementServiceIntegrationTest extends AbstractControllerIntegrationTest {
+public class StorageManagementJobIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;
     @Autowired
@@ -36,10 +39,15 @@ public class StorageManagementServiceIntegrationTest extends AbstractControllerI
     @Autowired
     private TestGroupSubjectService testGroupSubjectService;
     @Autowired
-    private StorageManagementService storageManagementService;
+    private ArchivalConfigRepository archivalConfigRepository;
+    @Autowired
+    private StorageManagementJob storageManagementJob;
+    @Autowired
+    private IndividualRepository individualRepository;
 
-    @Test
-    public void markSyncDisabled() throws ValidationException {
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
         testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData catchmentData = testDataSetupService.setupACatchment();
         SubjectType subjectType = testSubjectTypeService.createWithDefaults(
@@ -73,12 +81,32 @@ public class StorageManagementServiceIntegrationTest extends AbstractControllerI
         Individual group = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).build());
         testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(inTheCatchment).build());
         testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRole).withMember(inTheCatchment).withGroup(group).build());
+    }
 
+    @Test
+    public void markSyncDisabledInOneGo() {
+        saveArchivalConfig("select id from individual");
+        int count = individualRepository.countBySyncDisabled(false);
+        assertEquals(3, count);
+        storageManagementJob.manage();
+        assertEquals(count, individualRepository.countBySyncDisabled(true));
+        assertEquals(0, individualRepository.countBySyncDisabled(false));
+    }
+
+    @Test
+    public void markSyncDisabledInLoops() {
+        saveArchivalConfig("select id from individual limit 1");
+        int count = individualRepository.countBySyncDisabled(false);
+        assertEquals(3, count);
+        storageManagementJob.manage();
+        assertEquals(count, individualRepository.countBySyncDisabled(true));
+        assertEquals(0, individualRepository.countBySyncDisabled(false));
+    }
+
+    private void saveArchivalConfig(String query) {
         ArchivalConfig archivalConfig = new ArchivalConfig();
-        archivalConfig.setSqlQuery("select id from individual");
-        List<Long> nextSubjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
-        assertNotEquals(0, nextSubjectIds.size());
-
-        storageManagementService.markSyncDisabled(nextSubjectIds);
+        archivalConfig.setSqlQuery(query);
+        archivalConfig.setUuid(UUID.randomUUID().toString());
+        archivalConfigRepository.save(archivalConfig);
     }
 }

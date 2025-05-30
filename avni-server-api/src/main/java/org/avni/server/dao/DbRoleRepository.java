@@ -16,7 +16,8 @@ public class DbRoleRepository {
 
     public static void setDbRole(EntityManager entityManager, Organisation organisation) {
         logger.info("Setting role back to user: " + organisation.getDbUser());
-        Query setRoleBackToOrgDbUser = entityManager.createNativeQuery("set role \"" + organisation.getDbUser() + "\"");
+        String setRoleQuery = "set role \"" + organisation.getDbUser() + "\"";
+        Query setRoleBackToOrgDbUser = entityManager.createNativeQuery(setRoleQuery);
         setRoleBackToOrgDbUser.executeUpdate();
     }
 
