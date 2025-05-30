@@ -18,6 +18,9 @@ public class UserSubjectAssignment extends OrganisationAwareEntity {
     @JoinColumn(name = "subject_id")
     private Individual subject;
 
+    @Column
+    private boolean syncDisabled;
+
     public User getUser() {
         return user;
     }
@@ -44,5 +47,9 @@ public class UserSubjectAssignment extends OrganisationAwareEntity {
         userSubjectAssignment.setUser(user);
         userSubjectAssignment.setSubject(subject);
         return userSubjectAssignment;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
     }
 }

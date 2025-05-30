@@ -74,6 +74,7 @@ public class StorageManagementService {
         }
         updateSubjectLinkedTable(subjectIds, "comment", "subject_id");
         updateSubjectLinkedTable(subjectIds, "user_subject_assignment", "subject_id");
+        updateSubjectLinkedTable(subjectIds, "subject_program_eligibility", "subject_id");
     }
 
     private void updateSubjectLinkedTable(List<Long> subjectIds, String descendantTable, String columnName) {

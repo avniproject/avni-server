@@ -29,6 +29,9 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     private DateTime checkDate;
 
     @Column
+    private boolean syncDisabled;
+
+    @Column
     @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
@@ -70,5 +73,9 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
 
     public void setObservations(ObservationCollection observations) {
         this.observations = observations;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
     }
 }
