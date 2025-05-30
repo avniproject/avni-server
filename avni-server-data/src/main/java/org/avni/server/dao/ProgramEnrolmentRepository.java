@@ -144,4 +144,5 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
     }
 
     List<ProgramEnrolment> findByIndividualAndProgram(Individual individual, Program program);
+    int countBySyncDisabled(boolean syncDisabled);
 }

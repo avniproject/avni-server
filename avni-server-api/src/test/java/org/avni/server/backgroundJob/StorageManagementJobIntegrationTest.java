@@ -4,6 +4,7 @@ import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.ArchivalConfigRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
@@ -44,6 +45,8 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
     private StorageManagementJob storageManagementJob;
     @Autowired
     private IndividualRepository individualRepository;
+    @Autowired
+    private ProgramEnrolmentRepository programEnrolmentRepository;
 
     @Override
     public void setUp() throws Exception {
@@ -88,9 +91,11 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
         saveArchivalConfig("select id from individual");
         int count = individualRepository.countBySyncDisabled(false);
         assertEquals(3, count);
+        assertNotEquals(0, programEnrolmentRepository.countBySyncDisabled(false));
         storageManagementJob.manage();
         assertEquals(count, individualRepository.countBySyncDisabled(true));
         assertEquals(0, individualRepository.countBySyncDisabled(false));
+        assertEquals(0, programEnrolmentRepository.countBySyncDisabled(false));
     }
 
     @Test
@@ -98,9 +103,12 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
         saveArchivalConfig("select id from individual limit 1");
         int count = individualRepository.countBySyncDisabled(false);
         assertEquals(3, count);
+        int enrolmentCount = programEnrolmentRepository.countBySyncDisabled(false);
+        assertNotEquals(0, enrolmentCount);
         storageManagementJob.manage();
         assertEquals(count, individualRepository.countBySyncDisabled(true));
         assertEquals(0, individualRepository.countBySyncDisabled(false));
+        assertEquals(0, programEnrolmentRepository.countBySyncDisabled(false));
     }
 
     private void saveArchivalConfig(String query) {
