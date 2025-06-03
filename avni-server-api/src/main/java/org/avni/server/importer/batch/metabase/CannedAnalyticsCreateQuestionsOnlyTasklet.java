@@ -1,13 +1,10 @@
 package org.avni.server.importer.batch.metabase;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityManager;
-import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.Database;
-import org.avni.server.framework.security.AuthService;
+import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
 import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.service.metabase.MetabaseService;
 import org.slf4j.Logger;
@@ -28,42 +25,31 @@ import org.springframework.web.client.HttpServerErrorException;
 public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
     private static final Logger logger = LoggerFactory.getLogger(CannedAnalyticsCreateQuestionsOnlyTasklet.class);
 
-    private final AuthService authService;
     private final OrganisationRepository organisationRepository;
     private final DatabaseService databaseService;
-    private final EntityManager entityManager;
     private final MetabaseService metabaseService;
+    private final AvniSpringBatchJobHelper avniSpringBatchJobHelper;
     @Value("#{jobParameters['userId']}")
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
     @Autowired
-    public CannedAnalyticsCreateQuestionsOnlyTasklet(AuthService authService, OrganisationRepository organisationRepository, DatabaseService databaseService, EntityManager entityManager, MetabaseService metabaseService) {
-        this.authService = authService;
+    public CannedAnalyticsCreateQuestionsOnlyTasklet(OrganisationRepository organisationRepository,
+                                                     DatabaseService databaseService, MetabaseService metabaseService, AvniSpringBatchJobHelper avniSpringBatchJobHelper) {
         this.organisationRepository = organisationRepository;
         this.databaseService = databaseService;
-        this.entityManager = entityManager;
         this.metabaseService = metabaseService;
-    }
-
-    @PostConstruct
-    public void authenticateUser() {
-        try {
-            DbRoleRepository.setDbRoleNone(entityManager);
-            authService.authenticateByUserId(userId, organisationUUID);
-            DbRoleRepository.setDbRoleFromContext(entityManager);
-        } catch (Exception e) {
-            logger.error("Error authenticating user {} for organisation {}", userId, organisationUUID, e);
-            throw e;
-        }
+        this.avniSpringBatchJobHelper = avniSpringBatchJobHelper;
     }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        avniSpringBatchJobHelper.authenticate(userId, organisationUUID);
         Organisation organisation = organisationRepository.findByUuid(organisationUUID);
-        logger.info("Creating questions for canned analytics for organisation {}", organisation.getName());
         try {
+            logger.info("Creating questions for canned analytics for organisation {}", organisation.getName());
+
             CannedAnalyticsLockProvider.acquireLock(organisation);
             logger.info("Create questions job acquired Lock for organisation {}", organisation.getName());
             Database database = metabaseService.syncDatabase();

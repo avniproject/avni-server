@@ -2,18 +2,17 @@ package org.avni.server.importer.batch.zip;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.ConceptRepository;
-import org.avni.server.dao.CustomQueryRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
 import org.avni.server.importer.batch.model.BundleFile;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.importer.batch.model.BundleZip;
@@ -29,7 +28,6 @@ import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
-import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
@@ -83,7 +81,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final TaskTypeService taskTypeService;
     private final TaskStatusService taskStatusService;
     private final MenuItemService menuItemService;
-    private final EntityTypeRetrieverService entityTypeRetrieverService;
     private final MessagingService messagingService;
     private final RuleDependencyService ruleDependencyService;
     private final TranslationService translationService;
@@ -91,6 +88,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final GroupDashboardService groupDashboardService;
     private final CustomQueryService customQueryService;
     private final ConceptRepository conceptRepository;
+    private final AvniSpringBatchJobHelper avniSpringBatchJobHelper;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -171,11 +169,11 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  TaskTypeService taskTypeService,
                                  TaskStatusService taskStatusService,
                                  MenuItemService menuItemService,
-                                 EntityTypeRetrieverService entityTypeRetrieverService,
                                  MessagingService messagingService,
                                  RuleDependencyService ruleDependencyService,
                                  TranslationService translationService,
-                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryRepository customQueryRepository, CustomQueryService customQueryService, ConceptRepository conceptRepository) {
+                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryService customQueryService, ConceptRepository conceptRepository,
+                                 AvniSpringBatchJobHelper avniSpringBatchJobHelper) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -203,7 +201,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.taskTypeService = taskTypeService;
         this.taskStatusService = taskStatusService;
         this.menuItemService = menuItemService;
-        this.entityTypeRetrieverService = entityTypeRetrieverService;
         this.messagingService = messagingService;
         this.ruleDependencyService = ruleDependencyService;
         this.translationService = translationService;
@@ -211,16 +208,13 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.groupDashboardService = groupDashboardService;
         this.customQueryService = customQueryService;
         this.conceptRepository = conceptRepository;
+        this.avniSpringBatchJobHelper = avniSpringBatchJobHelper;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
-    }
-
-    @PostConstruct
-    public void authenticateUser() {
-        authService.authenticateByUserId(userId, organisationUUID);
     }
 
     @Override
     public void write(Chunk<? extends BundleFile> chunk) throws Exception {
+        authService.authenticateByUserId(userId, organisationUUID);
         List<? extends BundleFile> bundleFiles = chunk.getItems();
         BundleZip bundleZip = new BundleZip(bundleFiles.stream().collect(Collectors.toMap(BundleFile::getName, BundleFile::getContent)));
         for (String filename : fileSequence) {
