@@ -50,6 +50,7 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
     @PostConstruct
     public void authenticateUser() {
         try {
+            DbRoleRepository.setDbRoleNone(entityManager);
             authService.authenticateByUserId(userId, organisationUUID);
             DbRoleRepository.setDbRoleFromContext(entityManager);
         } catch (Exception e) {
