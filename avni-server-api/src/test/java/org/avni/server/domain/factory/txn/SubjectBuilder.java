@@ -77,4 +77,9 @@ public class SubjectBuilder {
         individual.setLegacyId(legacyId);
         return this;
     }
+
+    public SubjectBuilder withSyncDisabled(boolean syncDisabled) {
+        individual.setSyncDisabled(syncDisabled);
+        return this;
+    }
 }

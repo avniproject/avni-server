@@ -1,6 +1,8 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
@@ -9,10 +11,12 @@ import org.joda.time.DateTime;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Date;
+
 @Entity
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"approvalStatus"})
-public class EntityApprovalStatus extends SyncAttributeEntity {
+public class EntityApprovalStatus extends SyncAttributeEntity implements SubjectLinkedSyncEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
@@ -49,6 +53,9 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
 
     @Column
     private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public Individual getIndividual() {
         return individual;
@@ -134,7 +141,22 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
         return syncDisabled;
     }
 
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
     }
 }

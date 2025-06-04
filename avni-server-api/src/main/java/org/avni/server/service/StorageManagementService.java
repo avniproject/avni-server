@@ -54,16 +54,16 @@ public class StorageManagementService {
         String query = String.format("""
                         SELECT ind.id FROM public.individual ind
                             join (%s) as user_query on user_query.id = ind.id
-                            WHERE ind.sync_disabled = false
+                            WHERE ind.sync_disabled = false and ind.organisation_id = %d
                          limit 100
                         """,
-                archivalConfig.getSqlQuery());
+                archivalConfig.getSqlQuery(), archivalConfig.getOrganisationId());
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getLong("id"));
     }
 
     private void updateSubjects(List<Long> subjectIds) {
         String query = String.format("""
-                            UPDATE public.individual as entity 
+                            UPDATE public.individual as entity
                                 SET sync_disabled = true
                             FROM (
                                 SELECT id FROM public.individual WHERE id IN (%s)

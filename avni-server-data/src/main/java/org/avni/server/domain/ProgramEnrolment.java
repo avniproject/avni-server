@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
@@ -14,6 +16,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -25,7 +28,7 @@ import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentObserv
 @Table(name = TableNames.ProgramEnrolment)
 @JsonIgnoreProperties({"programEncounters", "individual"})
 @BatchSize(size = 100)
-public class ProgramEnrolment extends SyncAttributeEntity implements MessageableEntity {
+public class ProgramEnrolment extends SyncAttributeEntity implements MessageableEntity, SubjectLinkedSyncEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id")
@@ -72,6 +75,9 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     @Column
     private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public boolean isExited() {
         return this.getProgramExitDateTime() != null;
@@ -220,5 +226,19 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     public boolean isActive() {
         return this.getProgramExitDateTime() == null && !this.isVoided();
+    }
+
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
     }
 }

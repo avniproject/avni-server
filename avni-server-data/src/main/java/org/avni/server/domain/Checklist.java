@@ -3,6 +3,8 @@ package org.avni.server.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
@@ -11,13 +13,14 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "checklist")
 @JsonIgnoreProperties({"items", "programEnrolment"})
 @BatchSize(size = 100)
-public class Checklist extends OrganisationAwareEntity {
+public class Checklist extends OrganisationAwareEntity implements SubjectLinkedSyncEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
     @JoinColumn(name = "checklist_detail_id")
@@ -38,6 +41,9 @@ public class Checklist extends OrganisationAwareEntity {
 
     @Column
     private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public ChecklistDetail getChecklistDetail() {
         return checklistDetail;
@@ -75,7 +81,22 @@ public class Checklist extends OrganisationAwareEntity {
         return syncDisabled;
     }
 
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getProgramEnrolment().getIndividual());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getProgramEnrolment().getIndividual());
     }
 }

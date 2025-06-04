@@ -6,17 +6,21 @@ import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import java.util.Date;
+
 @Entity
 @Table(name = "individual_relationship")
 @JsonIgnoreProperties({"individuala", "individualB"})
 @BatchSize(size = 100)
-public class IndividualRelationship extends OrganisationAwareEntity {
+public class IndividualRelationship extends OrganisationAwareEntity implements SubjectLinkedSyncEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "relationship_type_id")
@@ -47,6 +51,9 @@ public class IndividualRelationship extends OrganisationAwareEntity {
 
     @Column
     private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public IndividualRelationshipType getRelationship() {
         return relationship;
@@ -100,7 +107,22 @@ public class IndividualRelationship extends OrganisationAwareEntity {
         return syncDisabled;
     }
 
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividuala(), this.getIndividualB());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividuala(), this.getIndividualB());
     }
 }

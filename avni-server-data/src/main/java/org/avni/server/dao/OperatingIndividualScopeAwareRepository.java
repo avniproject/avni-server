@@ -42,6 +42,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         return specification;
     }
 
+    // add sync disabled datetime
     default Specification<T> syncDisabledSpecification() {
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 cb.equal(root.get("syncDisabled"), false);

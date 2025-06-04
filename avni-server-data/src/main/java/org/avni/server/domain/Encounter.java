@@ -7,15 +7,19 @@ import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.domain.EncounterType.EncounterTypeProjection;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 import org.springframework.data.rest.core.config.Projection;
+
+import java.util.Date;
 
 @Entity
 @Table(name = TableNames.Encounter)
 @JsonIgnoreProperties({"individual"})
 @BatchSize(size = 100)
-public class Encounter extends AbstractEncounter implements MessageableEntity {
+public class Encounter extends AbstractEncounter implements MessageableEntity, SubjectLinkedSyncEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
@@ -23,6 +27,9 @@ public class Encounter extends AbstractEncounter implements MessageableEntity {
 
     @Column
     private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public Individual getIndividual() {
         return individual;
@@ -49,5 +56,20 @@ public class Encounter extends AbstractEncounter implements MessageableEntity {
         EncounterTypeProjection getEncounterType();
 
         DateTime getEncounterDateTime();
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
     }
 }

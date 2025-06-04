@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
@@ -11,6 +13,7 @@ import org.joda.time.DateTime;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,8 +22,7 @@ import java.util.stream.Collectors;
 @Table(name = "comment_thread")
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"comments"})
-public class CommentThread extends OrganisationAwareEntity {
-
+public class CommentThread extends OrganisationAwareEntity implements SubjectLinkedSyncEntity {
     @NotNull
     @Enumerated(EnumType.STRING)
     private CommentThreadStatus status;
@@ -36,6 +38,9 @@ public class CommentThread extends OrganisationAwareEntity {
 
     @Column
     private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "commentThread")
     private Set<Comment> comments = new HashSet<>();
@@ -81,6 +86,11 @@ public class CommentThread extends OrganisationAwareEntity {
         return syncDisabled;
     }
 
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
     }
@@ -88,5 +98,18 @@ public class CommentThread extends OrganisationAwareEntity {
     public enum CommentThreadStatus {
         Open,
         Resolved
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this,
+                this.getComments().stream()
+                        .map(Comment::getSubject)
+                        .collect(Collectors.toList()));
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        this.beforeSave();
     }
 }
