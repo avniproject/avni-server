@@ -74,7 +74,7 @@ public class AvniJobRepository {
 
     public BatchJobStatus getJobStatus(String jobName, String parameterName, String parameterValue) {
         String baseQuery = """
-                                select bje.status, bje.create_time createDateTime, bje.end_time endDateTime, bje.exit_message exitMessage, bje.exit_code exitCode  
+                                select bje.status, bje.create_time createDateTime, bje.end_time endDateTime, bje.exit_message exitMessage, bje.exit_code exitCode
                                     from batch_job_instance i
                                          left join batch_job_execution bje on i.job_instance_id = bje.job_instance_id
                                          left join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
