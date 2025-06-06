@@ -275,7 +275,7 @@ public class AvniFiles {
         }
     }
 
-    private static String detectMimeType(MultipartFile file) throws IOException {
+    public static String detectMimeType(MultipartFile file) throws IOException {
         TikaConfig tika = TikaConfig.getDefaultConfig();
         Metadata metadata = new Metadata();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getOriginalFilename());
