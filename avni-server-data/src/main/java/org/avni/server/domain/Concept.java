@@ -154,7 +154,7 @@ public class Concept extends OrganisationAwareEntity {
     public ConceptAnswer findConceptAnswerByConceptUUIDOrName(String answerConceptUUID, String name) {
         return this.getConceptAnswers().stream()
                 .filter(x -> x.getAnswerConcept().getUuid().equals(answerConceptUUID) ||
-                        x.getAnswerConcept().getName().equalsIgnoreCase(name))
+                        x.getAnswerConcept().getName().equals(name))
                 .findAny()
                 .orElse(null);
     }
