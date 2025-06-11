@@ -124,11 +124,6 @@ public class ImportController {
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         try {
             assertTrue(!StringUtils.isEmpty(type), "File type not provided");
-            String mimeType = detectMimeType(file);
-            if ("application/vnd.ms-excel".equals(mimeType)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Try re-uploading using Chrome browser.");
-            }
             validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
         } catch (BadRequestError e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

@@ -1,6 +1,7 @@
 package org.avni.server.util;
 
 import org.apache.commons.csv.*;
+import org.apache.tika.Tika;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -26,7 +27,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static java.lang.String.format;
-import org.apache.tika.Tika;
 
 public class AvniFiles {
     public static final String APP_ZIP = "application/zip";
@@ -194,7 +194,8 @@ public class AvniFiles {
         assertTrue(contentTypeMatch, format("Expected content type: %s, Got, %s", expectedMimeTypeString, file.getContentType()));
         String actualMimeType = detectMimeType(file);
         boolean mimeTypeMatch = expectedMimeTypes.stream().anyMatch(mimeType -> mimeType.equals(actualMimeType));
-        assertTrue(mimeTypeMatch, format("Expected mimetype: %s, Got, %s", expectedMimeTypeString, actualMimeType));
+        String additionalErrorText = actualMimeType.equals("application/vnd.ms-excel") && expectedMimeTypes.contains("text/csv") ? "Retry using Chrome browser." : "";
+        assertTrue(mimeTypeMatch, format("Expected mimetype: %s, Got, %s. %s", expectedMimeTypeString, actualMimeType, additionalErrorText));
     }
 
     private static File cleanCsv(File unverifiedFile) throws IOException {
@@ -275,7 +276,7 @@ public class AvniFiles {
         }
     }
 
-    public static String detectMimeType(MultipartFile file) throws IOException {
+    private static String detectMimeType(MultipartFile file) throws IOException {
         TikaConfig tika = TikaConfig.getDefaultConfig();
         Metadata metadata = new Metadata();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getOriginalFilename());
