@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class StorageManagementJob {
     }
 
     // this method runs without organisation context
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Kolkata")
     public void manage() {
         logger.info("Starting archival job. " );
         List<ArchivalConfig> archivalConfigs = this.archivalConfigService.getAllArchivalConfigs();
