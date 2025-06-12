@@ -72,4 +72,9 @@ public class Encounter extends AbstractEncounter implements MessageableEntity, S
     public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
         this.syncDisabledDateTime = syncDisabledDateTime;
     }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
 }

@@ -10,9 +10,6 @@ import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -93,6 +90,11 @@ public class CommentThread extends OrganisationAwareEntity implements SubjectLin
 
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
+    }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
     }
 
     public enum CommentThreadStatus {

@@ -213,6 +213,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
+
+    @Override
     @JsonIgnore
     public Long getEntityTypeId() {
         return getProgram().getId();

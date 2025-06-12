@@ -76,6 +76,11 @@ public class ProgramEncounter extends AbstractEncounter implements MessageableEn
         this.syncDisabled = syncDisabled;
     }
 
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
+
     @Projection(name = "ProgramEncounterProjectionMinimal", types = {ProgramEncounter.class})
     public interface ProgramEncounterProjectionMinimal extends BaseProjection {
         EncounterTypeProjection getEncounterType();

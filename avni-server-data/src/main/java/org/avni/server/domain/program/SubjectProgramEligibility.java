@@ -105,4 +105,9 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity implement
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
     }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return null;
+    }
 }

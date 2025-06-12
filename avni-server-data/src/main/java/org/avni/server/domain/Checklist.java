@@ -9,9 +9,6 @@ import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -88,6 +85,11 @@ public class Checklist extends OrganisationAwareEntity implements SubjectLinkedS
 
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
+    }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
     }
 
     @PrePersist

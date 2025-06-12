@@ -5,4 +5,5 @@ import java.util.Date;
 public interface SubjectLinkedSyncEntity {
     void setSyncDisabledDateTime(Date syncDisabledDateTime);
     void setSyncDisabled(boolean syncDisabled);
+    Date getSyncDisabledDateTime();
 }

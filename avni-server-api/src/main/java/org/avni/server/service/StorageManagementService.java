@@ -64,7 +64,7 @@ public class StorageManagementService {
     private void updateSubjects(List<Long> subjectIds) {
         String query = String.format("""
                             UPDATE public.individual as entity
-                                SET sync_disabled = true
+                                SET sync_disabled = true, sync_disabled_date_time = now()
                             FROM (
                                 SELECT id FROM public.individual WHERE id IN (%s)
                             ) subject_ids
@@ -91,7 +91,7 @@ public class StorageManagementService {
     private void updateSubjectLinkedTable(List<Long> subjectIds, String descendantTable, String columnName) {
         String query = String.format("""
                     UPDATE public.%s as entity
-                        SET sync_disabled = true
+                        SET sync_disabled = true, sync_disabled_date_time = now()
                     FROM (
                         SELECT id FROM public.individual WHERE id IN (%s)
                     ) subject_ids
@@ -104,7 +104,7 @@ public class StorageManagementService {
     private void updateCommentThread(List<Long> subjectIds) {
         String query = String.format("""
                     UPDATE public.comment_thread as comment_thread
-                        SET sync_disabled = true
+                        SET sync_disabled = true, sync_disabled_date_time = now()
                     FROM (
                         SELECT id FROM public.individual WHERE id IN (%s)
                     ) subject_ids,
@@ -118,7 +118,7 @@ public class StorageManagementService {
     private void updateChecklistItem(List<Long> subjectIds) {
         String query = String.format("""
                     UPDATE public.checklist_item as checklist_item
-                        SET sync_disabled = true
+                        SET sync_disabled = true, sync_disabled_date_time = now()
                     FROM (
                         SELECT id FROM public.individual WHERE id IN (%s)
                     ) subject_ids,
@@ -133,7 +133,7 @@ public class StorageManagementService {
     private void updateChecklist(List<Long> subjectIds) {
         String query = String.format("""
                     UPDATE public.checklist as checklist
-                        SET sync_disabled = true
+                        SET sync_disabled = true, sync_disabled_date_time = now()
                     FROM (
                         SELECT id FROM public.individual WHERE id IN (%s)
                     ) subject_ids,
@@ -147,7 +147,7 @@ public class StorageManagementService {
     private void updateIndividualRelationship(List<Long> subjectIds) {
         String query = String.format("""
                     UPDATE public.individual_relationship as individual_relationship
-                        SET sync_disabled = true
+                        SET sync_disabled = true, sync_disabled_date_time = now()
                     FROM (
                         SELECT id FROM public.individual WHERE id IN (%s)
                     ) subject_ids
@@ -160,7 +160,7 @@ public class StorageManagementService {
     private void updateGroupSubject(List<Long> subjectIds) {
         String query = String.format("""
                     UPDATE public.group_subject as group_subject
-                        SET sync_disabled = true
+                        SET sync_disabled = true, sync_disabled_date_time = now()
                     FROM (
                         SELECT id FROM public.individual WHERE id IN (%s)
                     ) subject_ids

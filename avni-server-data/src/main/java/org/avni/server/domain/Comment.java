@@ -84,6 +84,11 @@ public class Comment extends OrganisationAwareEntity implements SubjectLinkedSyn
         this.syncDisabled = syncDisabled;
     }
 
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return null;
+    }
+
     @PrePersist
     public void beforeSave() {
         SyncDisabledEntityHelper.handleSave(this, this.getSubject());

@@ -2,15 +2,13 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
-import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
-
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import java.util.Date;
 
@@ -160,6 +158,11 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
 
     public void setSyncDisabled(boolean syncDisabled) {
         this.syncDisabled = syncDisabled;
+    }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
     }
 
     @PrePersist

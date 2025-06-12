@@ -116,6 +116,11 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
         this.syncDisabled = syncDisabled;
     }
 
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
+
     @PrePersist
     public void beforeSave() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividuala(), this.getIndividualB());

@@ -128,6 +128,11 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
         this.syncDisabled = syncDisabled;
     }
 
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
+
     @PrePersist
     public void beforeSave() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
