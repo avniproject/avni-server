@@ -31,7 +31,7 @@ public class StorageManagementJob {
     }
 
     // this method runs without organisation context
-    @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Kolkata")
+    @Scheduled(cron = "${avni.job.storagemanagement.cron}", zone = "Asia/Kolkata")
     public void manage() {
         logger.info("Starting archival job. " );
         List<ArchivalConfig> archivalConfigs = this.archivalConfigService.getAllArchivalConfigs();
