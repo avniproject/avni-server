@@ -20,6 +20,8 @@ public class ConceptMapper {
         conceptContract.setHighNormal(concept.getHighNormal());
         conceptContract.setUnit(concept.getUnit());
         conceptContract.setVoided(concept.isVoided());
+        conceptContract.setKeyValues(concept.getKeyValues());
+        conceptContract.setActive(concept.getActive());
 
         if (dataTypeMatches(ConceptDataType.Coded, concept)) {
             conceptContract.setAnswers(new ArrayList<>());
@@ -32,6 +34,7 @@ public class ConceptMapper {
                 answerConceptContract.setOrder(answer.getOrder());
                 answerConceptContract.setAbnormal(answer.isAbnormal());
                 answerConceptContract.setUnique(answer.isUnique());
+                answerConceptContract.setKeyValues(answerConcept.getKeyValues());
 
                 conceptContract.getAnswers().add(answerConceptContract);
             }
