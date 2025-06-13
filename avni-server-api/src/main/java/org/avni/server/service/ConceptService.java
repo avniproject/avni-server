@@ -145,14 +145,13 @@ public class ConceptService implements NonScopeAwareService {
 
     private Concept map(@NotNull ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
         Concept concept = fetchOrCreateConcept(conceptRequest.getUuid(), conceptRequest.getName());
-        concept.setName(conceptRequest.getName());
-
         if (!concept.isNew() && skipUpdateIfPresent) {
             // If the concept already exists, and we've been asked tp skip updating it, return the existing concept
             return concept;
         }
 
         String impliedDataType = getImpliedDataType(conceptRequest, concept);
+        concept.setName(conceptRequest.getName());
         concept.setDataType(impliedDataType);
         concept.setVoided(conceptRequest.isVoided());
         concept.setActive(conceptRequest.getActive());
@@ -178,7 +177,7 @@ public class ConceptService implements NonScopeAwareService {
         return concept;
     }
 
-    private Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
+    public Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
         if (conceptRequest == null) return null;
         if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
