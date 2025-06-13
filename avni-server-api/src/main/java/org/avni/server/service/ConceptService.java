@@ -143,9 +143,15 @@ public class ConceptService implements NonScopeAwareService {
         return conceptContract.getDataType();
     }
 
-    private Concept map(@NotNull ConceptContract conceptRequest, boolean createAnswers) {
+    private Concept map(@NotNull ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
         Concept concept = fetchOrCreateConcept(conceptRequest.getUuid(), conceptRequest.getName());
         concept.setName(conceptRequest.getName());
+
+        if (!concept.isNew() && skipUpdateIfPresent) {
+            // If the concept already exists, and we've been asked tp skip updating it, return the existing concept
+            return concept;
+        }
+
         String impliedDataType = getImpliedDataType(conceptRequest, concept);
         concept.setDataType(impliedDataType);
         concept.setVoided(conceptRequest.isVoided());
@@ -172,14 +178,14 @@ public class ConceptService implements NonScopeAwareService {
         return concept;
     }
 
-    private Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers) {
+    private Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
         if (conceptRequest == null) return null;
         if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
         logger.info(String.format("Creating concept: %s", conceptRequest));
 
-        Concept concept = map(conceptRequest, createAnswers);
+        Concept concept = map(conceptRequest, createAnswers, skipUpdateIfPresent);
         concept = conceptRepository.save(concept);
         addToMigrationIfRequired(conceptRequest);
         return concept;
@@ -204,21 +210,22 @@ public class ConceptService implements NonScopeAwareService {
 
     public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests) {
         List<ConceptContract> allConceptsInRequest = new ArrayList<>(conceptRequests.size());
+        List<ConceptContract> codedConceptAnswers = new ArrayList<>();
         allConceptsInRequest.addAll(conceptRequests);
         for (ConceptContract conceptRequest : conceptRequests) {
+            saveOrUpdate(conceptRequest, false, false);
             if (conceptRequest.getAnswers() != null) {
-                List<ConceptContract> conceptAnswersProvidedFullyAnswer = conceptRequest.getAnswers().stream().filter(conceptContract -> StringUtils.hasText(conceptContract.getName())).toList();
-                allConceptsInRequest.addAll(conceptAnswersProvidedFullyAnswer);
+                codedConceptAnswers.addAll(conceptRequest.getAnswers().stream().filter(conceptContract -> StringUtils.hasText(conceptContract.getName())).toList());
             }
         }
 
-        for (ConceptContract conceptContract : allConceptsInRequest) {
-            saveOrUpdate(conceptContract, false);
+        for (ConceptContract conceptRequest : codedConceptAnswers) {
+            saveOrUpdate(conceptRequest, false, true);
         }
 
         List<String> savedConceptUuids = new ArrayList<>();
         for (ConceptContract conceptRequest : conceptRequests) {
-            Concept concept = saveOrUpdate(conceptRequest, true);
+            Concept concept = saveOrUpdate(conceptRequest, true, false);
             savedConceptUuids.add(concept.getUuid());
         }
         return savedConceptUuids;
