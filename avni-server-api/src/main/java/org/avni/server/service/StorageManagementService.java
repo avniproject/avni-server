@@ -58,7 +58,7 @@ public class StorageManagementService {
                             order by ind.id
                          limit 100
                         """,
-                archivalConfig.getSqlQuery(), archivalConfig.getOrganisationId());
+                archivalConfig.getSqlQuery().replace(";", ""), archivalConfig.getOrganisationId());
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getLong("id"));
     }
 
