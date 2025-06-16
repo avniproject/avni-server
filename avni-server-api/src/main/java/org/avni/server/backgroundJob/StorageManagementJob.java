@@ -45,16 +45,20 @@ public class StorageManagementJob {
 //        these work only with Job test, so commented. had added to verify whether indeed new transaction is created
 //        assert !TransactionSynchronizationManager.isActualTransactionActive();
         Organisation organisation = organisationRepository.findOne(archivalConfig.getOrganisationId());
-        List<Long> subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
-        while (!subjectIds.isEmpty()) {
-            logger.info("Running for: {}. Current batch size: {}", organisation.getDbUser(), subjectIds.size());
-            List<Long> previousSubjectIds = subjectIds;
-            storageManagementService.markSyncDisabled(subjectIds, organisation);
-            subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
-            if (subjectIds.equals(previousSubjectIds)) {
-                logger.info("Same subject ids retrieved again: {}", archivalConfig.getUuid());
-                throw new RuntimeException("Same subject ids retrieved again");
+        try {
+            List<Long> subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
+            while (!subjectIds.isEmpty()) {
+                logger.info("Running for: {}. Current batch size: {}", organisation.getDbUser(), subjectIds.size());
+                List<Long> previousSubjectIds = subjectIds;
+                storageManagementService.markSyncDisabled(subjectIds, organisation);
+                subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
+                if (subjectIds.equals(previousSubjectIds)) {
+                    logger.info("Same subject ids retrieved again: {}", archivalConfig.getUuid());
+                    throw new RuntimeException("Same subject ids retrieved again");
+                }
             }
+        } catch (Exception e) {
+            logger.error("Failed to mark sync disabled for: {}", organisation.getDbUser(), e);
         }
 //        assert !TransactionSynchronizationManager.isActualTransactionActive();
     }

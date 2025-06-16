@@ -55,6 +55,7 @@ public class StorageManagementService {
                         SELECT ind.id FROM public.individual ind
                             join (%s) as user_query on user_query.id = ind.id
                             WHERE ind.sync_disabled = false and ind.organisation_id = %d
+                            order by ind.id
                          limit 100
                         """,
                 archivalConfig.getSqlQuery(), archivalConfig.getOrganisationId());
