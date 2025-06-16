@@ -33,12 +33,12 @@ public class StorageManagementJob {
     // this method runs without organisation context
     @Scheduled(cron = "${avni.job.storagemanagement.cron}", zone = "Asia/Kolkata")
     public void manage() {
-        logger.info("Starting archival job. " );
+        logger.info("Starting archival job." );
         List<ArchivalConfig> archivalConfigs = this.archivalConfigService.getAllArchivalConfigs();
         for (ArchivalConfig archivalConfig : archivalConfigs) {
             this.markSyncDisabled(archivalConfig);
         }
-        logger.info("Completed nightly archival job");
+        logger.info("Completed nightly archival job.");
     }
 
     private void markSyncDisabled(ArchivalConfig archivalConfig) {
@@ -47,6 +47,7 @@ public class StorageManagementJob {
         Organisation organisation = organisationRepository.findOne(archivalConfig.getOrganisationId());
         List<Long> subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
         while (!subjectIds.isEmpty()) {
+            logger.info("Running for: {}. Current batch size: {}", organisation.getDbUser(), subjectIds.size());
             List<Long> previousSubjectIds = subjectIds;
             storageManagementService.markSyncDisabled(subjectIds, organisation);
             subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);

@@ -98,7 +98,7 @@ public class StorageManagementService {
                     WHERE entity.%s = subject_ids.id
                 """, descendantTable, getAsInQueryParam(subjectIds), columnName);
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: {}}", updatedRows, descendantTable);
+        logger.info("Updated {} rows in table: {}", updatedRows, descendantTable);
     }
 
     private void updateCommentThread(List<Long> subjectIds) {
@@ -112,7 +112,7 @@ public class StorageManagementService {
                     WHERE comment.subject_id = subject_ids.id and comment_thread.id = comment.comment_thread_id
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: comment_thread}", updatedRows);
+        logger.info("Updated {} rows in table: comment_thread", updatedRows);
     }
 
     private void updateChecklistItem(List<Long> subjectIds) {
@@ -127,7 +127,7 @@ public class StorageManagementService {
                     WHERE enrolment.individual_id = subject_ids.id and checklist_item.checklist_id = checklist.id and checklist.program_enrolment_id = enrolment.id
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: checklist_item}", updatedRows);
+        logger.info("Updated {} rows in table: checklist_item", updatedRows);
     }
 
     private void updateChecklist(List<Long> subjectIds) {
@@ -141,7 +141,7 @@ public class StorageManagementService {
                     WHERE enrolment.individual_id = subject_ids.id and checklist.program_enrolment_id = enrolment.id
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: checklist}", updatedRows);
+        logger.info("Updated {} rows in table: checklist", updatedRows);
     }
 
     private void updateIndividualRelationship(List<Long> subjectIds) {
