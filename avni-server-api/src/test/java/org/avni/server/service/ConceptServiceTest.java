@@ -115,8 +115,8 @@ public class ConceptServiceTest {
 
         // Assert
         assertEquals(2, savedUuids.size());
-        assertEquals(uuid1, savedUuids.get(1));
-        assertEquals(answerUuid1, savedUuids.get(0));
+        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(answerUuid1, savedUuids.get(1));
 
         // Verify concepts were saved with correct properties
         ArgumentCaptor<Concept> conceptCaptor = ArgumentCaptor.forClass(Concept.class);
@@ -176,8 +176,8 @@ public class ConceptServiceTest {
 
         // Assert
         assertEquals(2, savedUuids.size());
-        assertEquals(answerUuid1, savedUuids.get(0));
-        assertEquals(uuid1, savedUuids.get(1));
+        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(answerUuid1, savedUuids.get(1));
 
         // Verify that answer concept maintained its original name
         // This will fail if skipUpdateIfPresent functionality is commented out
@@ -233,9 +233,9 @@ public class ConceptServiceTest {
 
         // Assert
         assertEquals(3, savedUuids.size());
-        assertEquals(answerUuid, savedUuids.get(0));
-        assertEquals(uuid1, savedUuids.get(1));
-        assertEquals(uuid2, savedUuids.get(2));
+        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(uuid2, savedUuids.get(1));
+        assertEquals(answerUuid, savedUuids.get(2));
 
         // Verify repository interactions
         ArgumentCaptor<Concept> conceptCaptor = ArgumentCaptor.forClass(Concept.class);

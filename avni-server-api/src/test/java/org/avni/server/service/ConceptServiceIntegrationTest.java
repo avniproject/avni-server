@@ -92,9 +92,9 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
         // Assert
         assertEquals(3, savedUuids.size());
-        assertEquals(answerUuid1, savedUuids.get(0));
-        assertEquals(answerUuid2, savedUuids.get(1));
-        assertEquals(uuid1, savedUuids.get(2));
+        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(answerUuid1, savedUuids.get(1));
+        assertEquals(answerUuid2, savedUuids.get(2));
 
         Concept savedConcept = conceptRepository.findByUuid(uuid1);
         assertNotNull(savedConcept);
@@ -155,9 +155,9 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
         // Assert
         assertEquals(3, savedUuids.size());
-        assertEquals(answerUuid, savedUuids.get(0));
-        assertEquals(uuid1, savedUuids.get(1));
-        assertEquals(uuid2, savedUuids.get(2));
+        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(uuid2, savedUuids.get(1));
+        assertEquals(answerUuid, savedUuids.get(2));
 
         Concept savedConcept1 = conceptRepository.findByUuid(uuid1);
         Concept savedConcept2 = conceptRepository.findByUuid(uuid2);
@@ -212,8 +212,8 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
         // Assert
         assertEquals(2, updatedUuids.size());
-        assertEquals(answerUuid, updatedUuids.get(0));
-        assertEquals(uuid, updatedUuids.get(1));
+        assertEquals(uuid, updatedUuids.get(0));
+        assertEquals(answerUuid, updatedUuids.get(1));
 
         Concept updatedConceptEntity = conceptRepository.findByUuid(uuid);
         assertNotNull(updatedConceptEntity);
