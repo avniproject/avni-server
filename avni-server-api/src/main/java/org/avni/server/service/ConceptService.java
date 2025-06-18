@@ -218,16 +218,18 @@ public class ConceptService implements NonScopeAwareService {
             }
         }
 
-        List<String> savedConceptUuids = new ArrayList<>();
+        List<String> savedAnswerConceptUuids = new ArrayList<>();
         for (ConceptContract conceptRequest : codedConceptAnswers) {
             Concept concept = saveOrUpdate(conceptRequest, false, true);
-            savedConceptUuids.add(concept.getUuid());
+            savedAnswerConceptUuids.add(concept.getUuid());
         }
 
+        List<String> savedConceptUuids = new ArrayList<>();
         for (ConceptContract conceptRequest : conceptRequests) {
             Concept concept = saveOrUpdate(conceptRequest, true, false);
             savedConceptUuids.add(concept.getUuid());
         }
+        savedConceptUuids.addAll(savedAnswerConceptUuids);
         return savedConceptUuids;
     }
 
