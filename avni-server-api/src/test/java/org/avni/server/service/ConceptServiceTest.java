@@ -9,6 +9,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.web.request.ConceptContract;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static org.avni.server.util.AvniFiles.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -143,42 +145,36 @@ public class ConceptServiceTest {
         // Create the "existing" answer concept that should not be updated
         Concept existingAnswerConcept = new Concept();
         existingAnswerConcept.setUuid(answerUuid1);
+        existingAnswerConcept.setId(2l);
         existingAnswerConcept.setName("Existing Answer"); // Note: different name than in the contract
 
-        // Create the main concept
-        Concept mainConcept = new Concept();
-        mainConcept.setUuid(uuid1);
-
-        // Create ConceptService spy
-        ConceptService spyService = Mockito.spy(conceptService);
-
-        // Mock repository behavior for finding existing answer concept
+        // Save the existing answer concept
         when(conceptRepository.findByUuid(answerUuid1)).thenReturn(existingAnswerConcept);
-
-        // Mock saveOrUpdate to properly simulate behavior with skipUpdateIfPresent=true
-        doReturn(mainConcept).when(spyService).saveOrUpdate(eq(conceptContract), eq(false), eq(false));
-        doReturn(existingAnswerConcept).when(spyService).saveOrUpdate(eq(answerContract), eq(false), eq(true)); // Important: return existing concept
-        doReturn(mainConcept).when(spyService).saveOrUpdate(eq(conceptContract), eq(true), eq(false));
+        when(conceptRepository.save(any(Concept.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(conceptRepository.findByName(anyString())).thenReturn(null);
 
         // Act
-        List<String> savedUuids = spyService.saveOrUpdateConcepts(conceptRequests);
+        List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
 
         // Assert
         assertEquals(1, savedUuids.size());
         assertEquals(uuid1, savedUuids.get(0));
 
-        // Verify the saveOrUpdate method was called with specific parameters for each phase
-        // First pass: save main concept without answers
-        verify(spyService).saveOrUpdate(eq(conceptContract), eq(false), eq(false));
+        // Verify that answer concept maintained its original name
+        // This will fail if skipUpdateIfPresent functionality is commented out
+        ArgumentCaptor<Concept> conceptCaptor = ArgumentCaptor.forClass(Concept.class);
+        verify(conceptRepository, atLeastOnce()).save(conceptCaptor.capture());
 
-        // Second pass: save answer concept WITH skipUpdateIfPresent=true
-        verify(spyService).saveOrUpdate(eq(answerContract), eq(false), eq(true));
+        boolean foundAnswerConcept = false;
+        for (Concept savedConcept : conceptCaptor.getAllValues()) {
+            if (answerUuid1.equals(savedConcept.getUuid())) {
+                foundAnswerConcept = true;
+                assertEquals("Answer concept name should not be updated when skipUpdateIfPresent is true",
+                        "Existing Answer", savedConcept.getName());
+            }
+        }
 
-        // Third pass: save main concept with createAnswers=true
-        verify(spyService).saveOrUpdate(eq(conceptContract), eq(true), eq(false));
-
-        // The most important verification: for the answer concept, the saveOrUpdate method
-        // should have been called with skipUpdateIfPresent=true
+        assertTrue(foundAnswerConcept, "The answer concept should have been saved");
     }
 
     @Test
