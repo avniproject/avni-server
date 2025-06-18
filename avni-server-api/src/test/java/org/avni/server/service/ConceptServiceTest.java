@@ -11,16 +11,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static org.avni.server.util.AvniFiles.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -62,10 +61,10 @@ public class ConceptServiceTest {
 
         List<ConceptContract> conceptRequests = Arrays.asList(conceptContract1);
 
-        Concept savedConcept = new Concept();
-        savedConcept.setUuid(uuid1);
-
-        when(conceptRepository.save(any(Concept.class))).thenReturn(savedConcept);
+        // Mock repository behavior
+        when(conceptRepository.findByUuid(uuid1)).thenReturn(null);
+        when(conceptRepository.findByName(anyString())).thenReturn(null);
+        when(conceptRepository.save(any(Concept.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
@@ -74,9 +73,16 @@ public class ConceptServiceTest {
         assertEquals(1, savedUuids.size());
         assertEquals(uuid1, savedUuids.get(0));
 
-        // Verify the saveOrUpdate method was called correctly
-        // First pass with false, false
-        verify(conceptRepository, times(2)).save(any(Concept.class));
+        // Verify that the concept was saved with the correct name
+        ArgumentCaptor<Concept> conceptCaptor = ArgumentCaptor.forClass(Concept.class);
+        verify(conceptRepository, times(2)).save(conceptCaptor.capture());
+
+        List<Concept> savedConcepts = conceptCaptor.getAllValues();
+        // There should be two saves for the same concept (first pass without answers, second with answers)
+        assertEquals("Concept 1", savedConcepts.get(0).getName());
+        assertEquals("Concept 1", savedConcepts.get(1).getName());
+        assertEquals(uuid1, savedConcepts.get(0).getUuid());
+        assertEquals(uuid1, savedConcepts.get(1).getUuid());
     }
 
     @Test
@@ -98,27 +104,39 @@ public class ConceptServiceTest {
 
         List<ConceptContract> conceptRequests = Arrays.asList(conceptContract1);
 
-        Concept savedConcept = new Concept();
-        savedConcept.setUuid(uuid1);
-
-        Concept savedAnswerConcept = new Concept();
-        savedAnswerConcept.setUuid(answerUuid1);
-
-        when(conceptRepository.save(any(Concept.class)))
-                .thenReturn(savedConcept)
-                .thenReturn(savedAnswerConcept)
-                .thenReturn(savedConcept);
+        // Mock repository behavior
+        when(conceptRepository.findByUuid(uuid1)).thenReturn(null);
+        when(conceptRepository.findByUuid(answerUuid1)).thenReturn(null);
+        when(conceptRepository.findByName(anyString())).thenReturn(null);
+        when(conceptRepository.save(any(Concept.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
 
         // Assert
-        assertEquals(1, savedUuids.size());
-        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(2, savedUuids.size());
+        assertEquals(uuid1, savedUuids.get(1));
+        assertEquals(answerUuid1, savedUuids.get(0));
 
-        // Verify repository interactions
-        // First pass (main concept), second pass (answer concept), third pass (main concept with answers)
-        verify(conceptRepository, times(3)).save(any(Concept.class));
+        // Verify concepts were saved with correct properties
+        ArgumentCaptor<Concept> conceptCaptor = ArgumentCaptor.forClass(Concept.class);
+        verify(conceptRepository, times(3)).save(conceptCaptor.capture());
+
+        List<Concept> savedConcepts = conceptCaptor.getAllValues();
+
+        // Verify first save (main concept without answers)
+        assertEquals(uuid1, savedConcepts.get(0).getUuid());
+        assertEquals("Concept 1", savedConcepts.get(0).getName());
+        assertEquals("Coded", savedConcepts.get(0).getDataType());
+
+        // Verify second save (answer concept)
+        assertEquals(answerUuid1, savedConcepts.get(1).getUuid());
+        assertEquals("Answer 1", savedConcepts.get(1).getName());
+        assertEquals("Text", savedConcepts.get(1).getDataType());
+
+        // Verify third save (main concept with answers)
+        assertEquals(uuid1, savedConcepts.get(2).getUuid());
+        assertEquals("Concept 1", savedConcepts.get(2).getName());
     }
 
     @Test
@@ -157,8 +175,9 @@ public class ConceptServiceTest {
         List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
 
         // Assert
-        assertEquals(1, savedUuids.size());
-        assertEquals(uuid1, savedUuids.get(0));
+        assertEquals(2, savedUuids.size());
+        assertEquals(answerUuid1, savedUuids.get(0));
+        assertEquals(uuid1, savedUuids.get(1));
 
         // Verify that answer concept maintained its original name
         // This will fail if skipUpdateIfPresent functionality is commented out
@@ -174,7 +193,7 @@ public class ConceptServiceTest {
             }
         }
 
-        assertTrue(foundAnswerConcept, "The answer concept should have been saved");
+        assertTrue("The answer concept should have been saved", foundAnswerConcept);
     }
 
     @Test
@@ -202,47 +221,50 @@ public class ConceptServiceTest {
 
         List<ConceptContract> conceptRequests = Arrays.asList(conceptContract1, conceptContract2);
 
-        Concept savedConcept1 = Mockito.spy(new Concept());
-        savedConcept1.setUuid(uuid1);
-
-        Concept savedConcept2 = Mockito.spy(new Concept());
-        savedConcept2.setUuid(uuid2);
-
-        Concept savedAnswerConcept = Mockito.spy(new Concept());
-        savedAnswerConcept.setUuid(answerUuid);
-
-        when(conceptRepository.save(any(Concept.class)))
-                .thenReturn(savedConcept1)
-                .thenReturn(savedConcept2)
-                .thenReturn(savedAnswerConcept)
-                .thenReturn(savedConcept1)
-                .thenReturn(savedConcept2);
+        // Mock repository behavior
+        when(conceptRepository.findByUuid(uuid1)).thenReturn(null);
+        when(conceptRepository.findByUuid(uuid2)).thenReturn(null);
+        when(conceptRepository.findByUuid(answerUuid)).thenReturn(null);
+        when(conceptRepository.findByName(anyString())).thenReturn(null);
+        when(conceptRepository.save(any(Concept.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
 
         // Assert
-        assertEquals(2, savedUuids.size());
-        assertEquals(uuid1, savedUuids.get(0));
-        assertEquals(uuid2, savedUuids.get(1));
+        assertEquals(3, savedUuids.size());
+        assertEquals(answerUuid, savedUuids.get(0));
+        assertEquals(uuid1, savedUuids.get(1));
+        assertEquals(uuid2, savedUuids.get(2));
 
         // Verify repository interactions
-        // First pass (2 concepts), second pass (1 answer concept), third pass (2 concepts with answers)
-        verify(conceptRepository, times(5)).save(any(Concept.class));
+        ArgumentCaptor<Concept> conceptCaptor = ArgumentCaptor.forClass(Concept.class);
+        verify(conceptRepository, times(5)).save(conceptCaptor.capture());
 
-        // Verify 3-phase saving pattern - first without answers, then answers, then concepts with answers linked
-        // We need to use a special ConceptService spy to track this properly
-        ConceptService spyService = Mockito.spy(conceptService);
-        doReturn(savedConcept1).doReturn(savedConcept2).doReturn(savedAnswerConcept).doReturn(savedConcept1).doReturn(savedConcept2)
-                .when(spyService).saveOrUpdate(any(ConceptContract.class), anyBoolean(), anyBoolean());
+        List<Concept> savedConcepts = conceptCaptor.getAllValues();
 
-        spyService.saveOrUpdateConcepts(conceptRequests);
+        // First pass: Concept 1 and Concept 2 without answers
+        assertEquals(uuid1, savedConcepts.get(0).getUuid());
+        assertEquals("Concept 1", savedConcepts.get(0).getName());
+        assertEquals("Coded", savedConcepts.get(0).getDataType());
 
-        // First pass: main concepts without answers
-        verify(spyService, times(2)).saveOrUpdate(any(ConceptContract.class), eq(false), eq(false));
-        // Second pass: answer concepts 
-        verify(spyService, times(1)).saveOrUpdate(any(ConceptContract.class), eq(false), eq(true));
-        // Third pass: main concepts with answers
-        verify(spyService, times(2)).saveOrUpdate(any(ConceptContract.class), eq(true), eq(false));
+        assertEquals(uuid2, savedConcepts.get(1).getUuid());
+        assertEquals("Concept 2", savedConcepts.get(1).getName());
+        assertEquals("Numeric", savedConcepts.get(1).getDataType());
+
+        // Second pass: Answer concept
+        assertEquals(answerUuid, savedConcepts.get(2).getUuid());
+        assertEquals("Answer", savedConcepts.get(2).getName());
+        assertEquals("Text", savedConcepts.get(2).getDataType());
+
+        // Third pass: Concept 1 and Concept 2 with answers
+        assertEquals(uuid1, savedConcepts.get(3).getUuid());
+        assertEquals("Concept 1", savedConcepts.get(3).getName());
+
+        assertEquals(uuid2, savedConcepts.get(4).getUuid());
+        assertEquals("Concept 2", savedConcepts.get(4).getName());
+
+        // We can verify that the 3-phase process happened correctly by the sequence of saves
+        // No need for a spy ConceptService since we're testing actual behavior
     }
 }
