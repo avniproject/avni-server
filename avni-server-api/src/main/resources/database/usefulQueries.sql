@@ -988,9 +988,9 @@ commit;
 
 -- Queries to create a read-only user - START
 
-CREATE USER dalgo_user WITH PASSWORD 'dalgo123';
-GRANT CONNECT ON DATABASE openchs TO dalgo_user;
-GRANT pg_read_all_data TO dalgo_user;
+CREATE USER reporting_ro_user WITH PASSWORD '<password>';
+GRANT CONNECT ON DATABASE openchs TO reporting_ro_user;
+GRANT pg_read_all_data TO reporting_ro_user;
 
 CREATE OR REPLACE FUNCTION grant_roles_to_user(inrolname text)
     RETURNS BIGINT AS
@@ -1003,7 +1003,7 @@ BEGIN
         SELECT rolname
         FROM pg_roles
         WHERE rolcanlogin = true
-          AND rolname NOT IN ('openchs', 'rdsadmin', 'dalgo_user')
+          AND rolname NOT IN ('openchs', 'rdsadmin', 'reporting_ro_user')
         LOOP
             RAISE NOTICE 'Granting role % to %', inrolname, rname;
             EXECUTE 'GRANT ' || quote_ident(rname) || ' TO ' || quote_ident(inrolname);
@@ -1013,6 +1013,6 @@ BEGIN
 END
 $BODY$ LANGUAGE PLPGSQL;
 
-select grant_roles_to_user('dalgo_user');
+select grant_roles_to_user('reporting_ro_user');
 
 -- Queries to create a read-only user - END
