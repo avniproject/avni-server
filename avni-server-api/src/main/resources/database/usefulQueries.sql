@@ -964,12 +964,50 @@ set cron_expression = '0 0 0 1 1 ? 2090'
 where trigger_name like 'metabase.task.sync-and-analyze.trigger.%';
 
 update metabase_database
-set metadata_sync_schedule = '0 0 0 1 1 ? 2090', cache_field_values_schedule = '0 0 0 1 1 ? 2090'
-where metadata_sync_schedule <> '0 0 0 1 1 ? 2090' or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
+set metadata_sync_schedule      = '0 0 0 1 1 ? 2090',
+    cache_field_values_schedule = '0 0 0 1 1 ? 2090'
+where metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+   or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
 
-select * from qrtz_cron_triggers
-where cron_expression <> '0 0 0 1 1 ? 2090' and trigger_name like 'metabase.task.sync-and-analyze.trigger.%';
+select *
+from qrtz_cron_triggers
+where cron_expression <> '0 0 0 1 1 ? 2090'
+  and trigger_name like 'metabase.task.sync-and-analyze.trigger.%';
 
-select * from metabase_database where metadata_sync_schedule <> '0 0 0 1 1 ? 2090' or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
+select *
+from metabase_database
+where metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+   or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
 
 commit;
+
+-- Queries to create a read-only user - START
+
+CREATE USER dalgo_user WITH PASSWORD 'dalgo123';
+GRANT CONNECT ON DATABASE openchs TO dalgo_user;
+GRANT pg_read_all_data TO dalgo_user;
+
+CREATE OR REPLACE FUNCTION grant_roles_to_user(inrolname text)
+    RETURNS BIGINT AS
+$BODY$
+DECLARE
+    affected BIGINT := 0;
+    rname    text;
+BEGIN
+    FOR rname IN
+        SELECT rolname
+        FROM pg_roles
+        WHERE rolcanlogin = true
+          AND rolname NOT IN ('openchs', 'rdsadmin', 'dalgo_user')
+        LOOP
+            RAISE NOTICE 'Granting role % to %', inrolname, rname;
+            EXECUTE 'GRANT ' || quote_ident(rname) || ' TO ' || quote_ident(inrolname);
+            affected := affected + 1;
+        END LOOP;
+    RETURN affected;
+END
+$BODY$ LANGUAGE PLPGSQL;
+
+select grant_roles_to_user('dalgo_user');
+
+-- Queries to create a read-only user - END
