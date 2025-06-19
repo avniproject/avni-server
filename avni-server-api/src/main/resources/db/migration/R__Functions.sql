@@ -403,3 +403,20 @@ begin
     return true;
 end
 $$;
+
+create or replace function encounter_sync_disabled_same_as_individual(syncDisabled bool, encounterId bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    if exists(select encounter.id from encounter
+        join individual on encounter.individual_id = individual.id
+                        where syncDisabled <> individual.sync_disabled and encounter.id = encounterId) then
+        raise 'Encounter sync disabled value cannot be different from individual. For encounter id: % & encounter sync disabled: %',
+            encounterId, syncDisabled;
+    end if;
+    return true;
+end
+$$;
