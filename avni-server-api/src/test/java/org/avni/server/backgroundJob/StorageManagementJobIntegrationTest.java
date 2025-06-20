@@ -15,6 +15,8 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.UncategorizedSQLException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.UUID;
@@ -47,6 +49,11 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
     private IndividualRepository individualRepository;
     @Autowired
     private ProgramEnrolmentRepository programEnrolmentRepository;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+    private Individual memberSubject;
+    private Individual groupSubject;
+    private GroupSubject group;
 
     @Override
     public void setUp() throws Exception {
@@ -79,11 +86,38 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
                         .withMemberSubjectType(subjectType)
                         .build());
 
-        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).build());
+        memberSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).build());
         testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectType).withLocation(catchmentData.getAddressLevel1()).build());
-        Individual group = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).build());
-        testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(inTheCatchment).build());
-        testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRole).withMember(inTheCatchment).withGroup(group).build());
+        groupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).build());
+        testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(memberSubject).build());
+        group = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRole).withMember(memberSubject).withGroup(groupSubject).build());
+    }
+
+    @Test(expected = UncategorizedSQLException.class)
+    public void doNotAllowEnrolmentsSyncDisabledToGoOutOfSyncWithSubjectOnSingleRowUpdate() {
+        jdbcTemplate.execute("update individual set sync_disabled = false, sync_disabled_date_time = null where id = "
+                + memberSubject.getId());
+        jdbcTemplate.execute("update program_enrolment set sync_disabled = true, sync_disabled_date_time = now() where individual_id = " + memberSubject.getId());
+    }
+
+    @Test(expected = UncategorizedSQLException.class)
+    public void doNotAllowEnrolmentsSyncDisabledToGoOutOfSyncWithSubject() {
+        jdbcTemplate.execute("update individual set sync_disabled = false, sync_disabled_date_time = null where 1 = 1");
+        jdbcTemplate.execute("update program_enrolment set sync_disabled = true, sync_disabled_date_time = now() where 1 = 1");
+    }
+
+    @Test
+    public void allowGroupSubjectSyncToBeDisabledEvenIfOneSubjectInDisable() {
+        jdbcTemplate.execute("update individual set sync_disabled = false, sync_disabled_date_time = null where id = "
+                + memberSubject.getId());
+        jdbcTemplate.execute("update group_subject set sync_disabled = true, sync_disabled_date_time = now() where member_subject_id = " + memberSubject.getId());
+    }
+
+    @Test(expected = UncategorizedSQLException.class)
+    public void doNotAllowGroupSubjectSyncToBeEnabledIfEitherOfSubjectsSyncIsEnabled() {
+        jdbcTemplate.execute("update individual set sync_disabled = true, sync_disabled_date_time = null where id = "
+                + memberSubject.getId());
+        jdbcTemplate.execute("update group_subject set sync_disabled = false, sync_disabled_date_time = null where id = " + group.getId());
     }
 
     @Test

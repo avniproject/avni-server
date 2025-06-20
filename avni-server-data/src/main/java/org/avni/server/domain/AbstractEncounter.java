@@ -65,7 +65,7 @@ public class AbstractEncounter extends SyncAttributeEntity {
     @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
     private User filledBy;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     public EncounterType getEncounterType() {

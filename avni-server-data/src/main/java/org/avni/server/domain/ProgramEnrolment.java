@@ -73,7 +73,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @Column(name = "address_id")
     private Long addressId;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

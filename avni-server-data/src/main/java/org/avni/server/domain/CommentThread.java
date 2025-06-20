@@ -33,7 +33,7 @@ public class CommentThread extends OrganisationAwareEntity implements SubjectLin
     @Convert(converter = JodaDateTimeConverter.class)
     private DateTime resolvedDateTime;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

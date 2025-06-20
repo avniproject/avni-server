@@ -45,6 +45,9 @@ public class StorageManagementService {
             updateCommentThread(subjectIds);
             updateChecklist(subjectIds);
             updateChecklistItem(subjectIds);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw e;
         } finally {
             DbRoleRepository.setDbRoleNone(entityManager);
         }
@@ -73,7 +76,7 @@ public class StorageManagementService {
                         """,
                 getAsInQueryParam(subjectIds));
         int rowsUpdated = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: individual", rowsUpdated);
+        logger.info("Updated {} rows in table: individual using subject ids {}", rowsUpdated, subjectIds);
     }
 
     private static String getAsInQueryParam(List<Long> subjectIds) {
@@ -99,7 +102,7 @@ public class StorageManagementService {
                     WHERE entity.%s = subject_ids.id
                 """, descendantTable, getAsInQueryParam(subjectIds), columnName);
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: {}", updatedRows, descendantTable);
+        logger.info("Updated {} rows in table: {} with subject ids: {}", updatedRows, descendantTable, subjectIds);
     }
 
     private void updateCommentThread(List<Long> subjectIds) {
@@ -113,7 +116,7 @@ public class StorageManagementService {
                     WHERE comment.subject_id = subject_ids.id and comment_thread.id = comment.comment_thread_id
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: comment_thread", updatedRows);
+        logger.info("Updated {} rows in table: comment_thread for subject ids: {}", updatedRows, subjectIds);
     }
 
     private void updateChecklistItem(List<Long> subjectIds) {
@@ -128,7 +131,7 @@ public class StorageManagementService {
                     WHERE enrolment.individual_id = subject_ids.id and checklist_item.checklist_id = checklist.id and checklist.program_enrolment_id = enrolment.id
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: checklist_item", updatedRows);
+        logger.info("Updated {} rows in table: checklist_item for subject ids: {}", updatedRows, subjectIds);
     }
 
     private void updateChecklist(List<Long> subjectIds) {
@@ -142,7 +145,7 @@ public class StorageManagementService {
                     WHERE enrolment.individual_id = subject_ids.id and checklist.program_enrolment_id = enrolment.id
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: checklist", updatedRows);
+        logger.info("Updated {} rows in table: checklist for subject ids: {}", updatedRows, subjectIds);
     }
 
     private void updateIndividualRelationship(List<Long> subjectIds) {
@@ -155,7 +158,7 @@ public class StorageManagementService {
                     WHERE (individual_relationship.individual_a_id = subject_ids.id or individual_relationship.individual_b_id = subject_ids.id)
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: individual_relationship", updatedRows);
+        logger.info("Updated {} rows in table: individual_relationship for subject ids: {}", updatedRows, subjectIds);
     }
 
     private void updateGroupSubject(List<Long> subjectIds) {
@@ -168,6 +171,6 @@ public class StorageManagementService {
                     WHERE (group_subject.group_subject_id = subject_ids.id or group_subject.member_subject_id = subject_ids.id)
                 """, getAsInQueryParam(subjectIds));
         int updatedRows = jdbcTemplate.update(query);
-        logger.info("Updated {} rows in table: group_subject", updatedRows);
+        logger.info("Updated {} rows in table: group_subject for subject ids: {}", updatedRows, subjectIds);
     }
 }

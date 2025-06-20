@@ -28,7 +28,7 @@ public class Comment extends OrganisationAwareEntity implements SubjectLinkedSyn
     @JoinColumn(name = "comment_thread_id")
     private CommentThread commentThread;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

@@ -32,7 +32,7 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity implement
     @Column
     private DateTime checkDate;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

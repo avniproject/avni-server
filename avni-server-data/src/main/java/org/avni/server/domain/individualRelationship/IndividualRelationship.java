@@ -49,7 +49,7 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection exitObservations;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

@@ -53,7 +53,7 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @Column(name = "group_subject_sync_concept_2_value")
     private String groupSubjectSyncConcept2Value;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

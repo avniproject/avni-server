@@ -22,7 +22,7 @@ public class UserSubjectAssignment extends OrganisationAwareEntity implements Su
     @JoinColumn(name = "subject_id")
     private Individual subject;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

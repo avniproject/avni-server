@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
@@ -92,6 +93,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private SubjectType subjectTypeForDirectAssignment;
     private SubjectType groupSubjectTypeForDirectAssignment;
     private Program programForDirectAssignment;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setup() {
@@ -442,6 +445,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertFalse(hasEntity(enrolmentObsNotPresent, enrolments));
 
         // Group Subject
+        jdbcTemplate.execute("update individual set sync_disabled = false where 1 = 1");
         Individual groupHasMatchingObs = testSubjectService.save(
                 new SubjectBuilder()
                         .withMandatoryFieldsForNewEntity()
@@ -474,6 +478,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
 
         // Standalone Subject
+        enableSyncOnAll();
         UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(organisationData.getUser()).build());
         storageManagementJob.manage();
 
@@ -484,16 +489,10 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         ProgramEnrolment enrolmentAssignedNow = enrolmentNotAssigned;
         enrolments = testSyncService.getEnrolments(programForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
         assertFalse(hasEntity(enrolmentAssignedNow, enrolments));
+    }
 
-        // Group Subject
-        Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
-        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithDirectAssignment).withMember(assigned).withGroup(assignedGroupSubject).build());
-        userSubjectAssignmentService.assignSubjects(organisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
-
-        storageManagementJob.manage();
-
-        groupSubjects = getGroupSubjects(groupSubjectTypeForDirectAssignment);
-        assertFalse(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
+    private void enableSyncOnAll() {
+        jdbcTemplate.execute("update individual set sync_disabled = false, sync_disabled_date_time = null where 1 = 1");
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {

@@ -36,7 +36,7 @@ public class Checklist extends OrganisationAwareEntity implements SubjectLinkedS
     @Convert(converter = JodaDateTimeConverter.class)
     private DateTime baseDate;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

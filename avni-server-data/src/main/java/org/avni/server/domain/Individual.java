@@ -92,7 +92,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "subject")
     private Set<UserSubject> userSubjects;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     public static Individual create(String firstName, String lastName, String profilePicture, LocalDate dateOfBirth, boolean dateOfBirthVerified, Gender gender, AddressLevel address, LocalDate registrationDate) {

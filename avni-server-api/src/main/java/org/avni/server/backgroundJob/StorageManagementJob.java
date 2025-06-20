@@ -58,7 +58,8 @@ public class StorageManagementJob {
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to mark sync disabled for: {}", organisation.getDbUser(), e);
+            String msg = String.format("Failed to mark sync disabled for: %s", organisation.getDbUser());
+            logger.error(msg, e);
         }
 //        assert !TransactionSynchronizationManager.isActualTransactionActive();
     }

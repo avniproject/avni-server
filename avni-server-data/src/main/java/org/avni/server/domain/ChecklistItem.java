@@ -35,7 +35,7 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @JoinColumn(name = "checklist_id")
     private Checklist checklist;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

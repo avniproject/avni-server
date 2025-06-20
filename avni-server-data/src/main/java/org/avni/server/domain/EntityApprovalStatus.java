@@ -49,7 +49,7 @@ public class EntityApprovalStatus extends SyncAttributeEntity implements Subject
     @Column(name = "address_id")
     private Long addressId;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull

@@ -45,7 +45,7 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @JoinColumn(name = "subject_type_id")
     private SubjectType subjectType;
 
-    @Column
+    @Column(updatable = false)
     private boolean syncDisabled;
 
     @NotNull
