@@ -143,9 +143,9 @@ public class ConceptService implements NonScopeAwareService {
         return conceptContract.getDataType();
     }
 
-    private Concept map(@NotNull ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
+    private Concept map(@NotNull ConceptContract conceptRequest, boolean isAnswer) {
         Concept concept = fetchOrCreateConcept(conceptRequest.getUuid(), conceptRequest.getName());
-        if (!concept.isNew() && skipUpdateIfPresent) {
+        if (!concept.isNew() && isAnswer) {
             // If the concept already exists, and we've been asked tp skip updating it, return the existing concept
             return concept;
         }
@@ -167,7 +167,7 @@ public class ConceptService implements NonScopeAwareService {
         concept.updateAudit();
         switch (ConceptDataType.valueOf(impliedDataType)) {
             case Coded:
-                if (createAnswers)
+                if (!isAnswer)
                     createCodedConcept(concept, conceptRequest);
                 break;
             case Numeric:
@@ -177,14 +177,14 @@ public class ConceptService implements NonScopeAwareService {
         return concept;
     }
 
-    public Concept saveOrUpdate(ConceptContract conceptRequest, boolean createAnswers, boolean skipUpdateIfPresent) {
+    public Concept saveOrUpdate(ConceptContract conceptRequest, boolean isAnswer) {
         if (conceptRequest == null) return null;
         if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
         logger.info(String.format("Creating concept: %s", conceptRequest));
 
-        Concept concept = map(conceptRequest, createAnswers, skipUpdateIfPresent);
+        Concept concept = map(conceptRequest, isAnswer);
         concept = conceptRepository.save(concept);
         addToMigrationIfRequired(conceptRequest);
         return concept;
@@ -208,29 +208,31 @@ public class ConceptService implements NonScopeAwareService {
     }
 
     public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests) {
-        List<ConceptContract> allConceptsInRequest = new ArrayList<>(conceptRequests.size());
-        List<ConceptContract> codedConceptAnswers = new ArrayList<>();
-        allConceptsInRequest.addAll(conceptRequests);
-        for (ConceptContract conceptRequest : conceptRequests) {
-            saveOrUpdate(conceptRequest, false, false);
-            if (conceptRequest.getAnswers() != null) {
-                codedConceptAnswers.addAll(conceptRequest.getAnswers().stream().filter(conceptContract -> StringUtils.hasText(conceptContract.getName())).toList());
-            }
-        }
+        List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequests);
 
         List<String> savedAnswerConceptUuids = new ArrayList<>();
-        for (ConceptContract conceptRequest : codedConceptAnswers) {
-            Concept concept = saveOrUpdate(conceptRequest, false, true);
+        for (ConceptContract codedAnswerConcept : answerConcepts) {
+            Concept concept = saveOrUpdate(codedAnswerConcept, true);
             savedAnswerConceptUuids.add(concept.getUuid());
         }
 
         List<String> savedConceptUuids = new ArrayList<>();
         for (ConceptContract conceptRequest : conceptRequests) {
-            Concept concept = saveOrUpdate(conceptRequest, true, false);
+            Concept concept = saveOrUpdate(conceptRequest, false);
             savedConceptUuids.add(concept.getUuid());
         }
         savedConceptUuids.addAll(savedAnswerConceptUuids);
         return savedConceptUuids;
+    }
+
+    private static List<ConceptContract> getAnswerConcepts(List<ConceptContract> conceptRequests) {
+        List<ConceptContract> answerConcepts = new ArrayList<>();
+        for (ConceptContract conceptRequest : conceptRequests) {
+            if (conceptRequest.getAnswers() != null) {
+                answerConcepts.addAll(conceptRequest.getAnswers().stream().filter(conceptContract -> StringUtils.hasText(conceptContract.getName())).toList());
+            }
+        }
+        return answerConcepts;
     }
 
     public Concept get(String uuid) {
