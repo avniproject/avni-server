@@ -11,4 +11,4 @@ $$;
 
 alter table encounter
     add constraint constraint_encounter_sync_disabled_same_as_individual
-        check (encounter_sync_disabled_same_as_individual(sync_disabled, id));
+        check (encounter_sync_disabled_same_as_individual(sync_disabled, id)) NOT VALID;

@@ -540,3 +540,5 @@ begin
     return true;
 end
 $$;
+
+-- added line to change checksum
