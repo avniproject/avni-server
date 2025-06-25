@@ -4,7 +4,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.service.LocationService;
-import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlServiceStub;
 import org.avni.server.web.request.AddressLevelTypeContract;
 import org.junit.Before;
@@ -30,6 +30,8 @@ public class AddressLevelTypeControllerUnitTest {
     @Mock
     private LocationRepository locationRepository;
     @Mock
+    private OrganisationConfigService organisationConfigService;
+    @Mock
     private ProjectionFactory projectionFactory;
 
     private AddressLevelTypeController addressLevelTypeController;
@@ -39,7 +41,7 @@ public class AddressLevelTypeControllerUnitTest {
     @Before
     public void setup() {
         initMocks(this);
-        addressLevelTypeController = new AddressLevelTypeController(addressLevelTypeRepository, locationService, projectionFactory, new AccessControlServiceStub());
+        addressLevelTypeController = new AddressLevelTypeController(addressLevelTypeRepository, locationService, projectionFactory, new AccessControlServiceStub(), organisationConfigService);
         AddressLevelType foo = new AddressLevelType();
         foo.setUuid(FOO_UUID);
         foo.setName("foo");

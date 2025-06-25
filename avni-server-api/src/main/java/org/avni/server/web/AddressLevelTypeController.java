@@ -6,7 +6,9 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.util.EntityUtil;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.LocationService;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.util.ValidationUtil;
@@ -32,13 +34,15 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     private final LocationService locationService;
     private final ProjectionFactory projectionFactory;
     private final AccessControlService accessControlService;
+    private final OrganisationConfigService organisationConfigService;
 
     @Autowired
-    public AddressLevelTypeController(AddressLevelTypeRepository addressLevelTypeRepository, LocationService locationService, ProjectionFactory projectionFactory, AccessControlService accessControlService) {
+    public AddressLevelTypeController(AddressLevelTypeRepository addressLevelTypeRepository, LocationService locationService, ProjectionFactory projectionFactory, AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationService = locationService;
         this.projectionFactory = projectionFactory;
         this.accessControlService = accessControlService;
+        this.organisationConfigService = organisationConfigService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -70,7 +74,7 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
         if (addressLevelTypeRepository.findByName(contract.getName()) != null)
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
 
-        AddressLevelType addressLevelType = locationService.createAddressLevelType(contract);
+        AddressLevelType addressLevelType = locationService.createAddressLevelType(UserContextHolder.getOrganisation(), contract);
         return new ResponseEntity<>(addressLevelType, HttpStatus.CREATED);
     }
 
@@ -80,7 +84,7 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
         accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
         for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
             logger.info(String.format("Processing addressLevelType request: %s", addressLevelTypeContract.getUuid()));
-            locationService.createAddressLevelType(addressLevelTypeContract);
+            locationService.createAddressLevelType(UserContextHolder.getOrganisation(), addressLevelTypeContract);
         }
         return ResponseEntity.ok(null);
     }
@@ -123,6 +127,9 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
         }
         addressLevelType.setName(EntityUtil.getVoidedName(addressLevelType.getName(), addressLevelType.getId()));
         addressLevelType.setVoided(true);
+
+        // Clean up references in custom registration locations
+        organisationConfigService.removeVoidedAddressLevelTypeFromCustomRegistrationLocations(UserContextHolder.getOrganisation(), addressLevelType.getUuid());
         return new ResponseEntity<>(addressLevelType, HttpStatus.OK);
     }
 }
