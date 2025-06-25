@@ -37,6 +37,7 @@ public class SubjectTypeContractWeb {
     private String type;
     private String subjectSummaryRule;
     private String programEligibilityCheckRule;
+    private String memberAdditionEligibilityCheckRule;
     private List<String> locationTypeUUIDs;
     private boolean allowEmptyLocation;
     private boolean allowProfilePicture;
@@ -84,6 +85,7 @@ public class SubjectTypeContractWeb {
         contract.setType(operationalSubjectType.getType().name());
         contract.setSubjectSummaryRule(operationalSubjectType.getSubjectSummaryRule());
         contract.setProgramEligibilityCheckRule(operationalSubjectType.getProgramEligibilityCheckRule());
+        contract.setMemberAdditionEligibilityCheckRule(operationalSubjectType.getMemberAdditionEligibilityCheckRule());
         contract.setValidFirstNameFormat(FormatContract.fromFormat(operationalSubjectType.getValidFirstNameFormat()));
         contract.setAllowMiddleName(operationalSubjectType.getSubjectType().isAllowMiddleName());
         contract.setValidMiddleNameFormat(FormatContract.fromFormat(operationalSubjectType.getSubjectType().getValidMiddleNameFormat()));
@@ -255,6 +257,14 @@ public class SubjectTypeContractWeb {
 
     public void setProgramEligibilityCheckRule(String programEligibilityCheckRule) {
         this.programEligibilityCheckRule = programEligibilityCheckRule;
+    }
+
+    public String getMemberAdditionEligibilityCheckRule() {
+        return memberAdditionEligibilityCheckRule;
+    }
+
+    public void setMemberAdditionEligibilityCheckRule(String memberAdditionEligibilityCheckRule) {
+        this.memberAdditionEligibilityCheckRule = memberAdditionEligibilityCheckRule;
     }
 
     public boolean isAllowEmptyLocation() {

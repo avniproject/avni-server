@@ -162,6 +162,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         subjectType.setType(Subject.valueOf(request.getType()));
         subjectType.setSubjectSummaryRule(request.getSubjectSummaryRule());
         subjectType.setProgramEligibilityCheckRule(request.getProgramEligibilityCheckRule());
+        subjectType.setMemberAdditionEligibilityCheckRule(request.getMemberAdditionEligibilityCheckRule());
         subjectType.setAllowMiddleName(request.isAllowMiddleName());
         subjectType.setValidFirstNameFormat(request.getValidFirstNameFormat());
         subjectType.setValidMiddleNameFormat(request.getValidMiddleNameFormat());

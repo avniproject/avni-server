@@ -24,6 +24,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
     private String subjectSummaryRule;
 
     private String programEligibilityCheckRule;
+    private String memberAdditionEligibilityCheckRule;
 
     private DeclarativeRule programEligibilityCheckDeclarativeRule;
 
@@ -64,6 +65,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
         contract.setType(subjectType.getType().name());
         contract.setSubjectSummaryRule(subjectType.getSubjectSummaryRule());
         contract.setProgramEligibilityCheckRule(subjectType.getProgramEligibilityCheckRule());
+        contract.setMemberAdditionEligibilityCheckRule(subjectType.getMemberAdditionEligibilityCheckRule());
         contract.setProgramEligibilityCheckDeclarativeRule(subjectType.getProgramEligibilityCheckDeclarativeRule());
         contract.setAllowEmptyLocation(subjectType.isAllowEmptyLocation());
         contract.setAllowProfilePicture(subjectType.isAllowProfilePicture());
@@ -267,6 +269,14 @@ public class SubjectTypeContract extends ReferenceDataContract {
 
     public void setProgramEligibilityCheckRule(String programEligibilityCheckRule) {
         this.programEligibilityCheckRule = programEligibilityCheckRule;
+    }
+
+    public String getMemberAdditionEligibilityCheckRule() {
+        return memberAdditionEligibilityCheckRule;
+    }
+
+    public void setMemberAdditionEligibilityCheckRule(String memberAdditionEligibilityCheckRule) {
+        this.memberAdditionEligibilityCheckRule = memberAdditionEligibilityCheckRule;
     }
 
     public DeclarativeRule getProgramEligibilityCheckDeclarativeRule() {
