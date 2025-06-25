@@ -263,7 +263,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "addressLevelTypes.json":
                 AddressLevelTypeContract[] addressLevelTypeContracts = convertString(fileData, AddressLevelTypeContract[].class);
-                locationService.createAddressLevelTypes(addressLevelTypeContracts);
+                locationService.createAddressLevelTypes(organisation, addressLevelTypeContracts);
                 break;
             case "locations.json":
                 LocationContract[] locationContracts = convertString(fileData, LocationContract[].class);

@@ -372,4 +372,42 @@ public class OrganisationConfigService implements NonScopeAwareService {
         config.setMetabaseSyncStatus(status);
         organisationConfigRepository.save(config);
     }
+
+    public void removeVoidedAddressLevelTypeFromCustomRegistrationLocations(Organisation organisation, String voidedAddressLevelTypeUuid) {
+        OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        JsonObject organisationConfigSettings = organisationConfig.getSettings();
+        String settingsKeyName = KeyType.customRegistrationLocations.toString();
+
+        // Get the current custom registration location settings
+        List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(
+                organisationConfigSettings.getOrDefault(settingsKeyName, Collections.EMPTY_LIST),
+                new TypeReference<>() {
+                });
+
+        // For each subject type setting, remove the voided address level type from locationTypeUUIDs
+        List<SubjectTypeSetting> updatedSettings = new ArrayList<>();
+        boolean configChanged = false;
+
+        for (SubjectTypeSetting setting : customRegistrationLocations) {
+            List<String> locationTypeUUIDs = setting.getLocationTypeUUIDs();
+            if (locationTypeUUIDs != null && locationTypeUUIDs.contains(voidedAddressLevelTypeUuid)) {
+                // Remove the voided type from the list
+                locationTypeUUIDs.remove(voidedAddressLevelTypeUuid);
+                configChanged = true;
+            }
+
+            // Only add settings that still have at least one location type
+            if (locationTypeUUIDs != null && !locationTypeUUIDs.isEmpty()) {
+                updatedSettings.add(setting);
+            } else {
+                configChanged = true; // Setting removed completely
+            }
+        }
+
+        // Update the config if changes were made
+        if (configChanged) {
+            organisationConfigSettings.put(settingsKeyName, updatedSettings);
+            organisationConfigRepository.save(organisationConfig);
+        }
+    }
 }

@@ -9,8 +9,8 @@ import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
-import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
 import org.avni.server.util.ValidationUtil;
@@ -42,15 +42,17 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     private final LocationRepository locationRepository;
     private final LocationMappingRepository locationMappingRepository;
     private final ResetSyncService resetSyncService;
+    private final OrganisationConfigService organisationConfigService;
     private final Logger logger;
 
     @Autowired
-    public LocationService(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationRepository organisationRepository, LocationMappingRepository locationMappingRepository, ResetSyncService resetSyncService) {
+    public LocationService(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationRepository organisationRepository, LocationMappingRepository locationMappingRepository, ResetSyncService resetSyncService, OrganisationConfigService organisationConfigService) {
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationRepository = organisationRepository;
         this.locationMappingRepository = locationMappingRepository;
         this.resetSyncService = resetSyncService;
+        this.organisationConfigService = organisationConfigService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -223,7 +225,7 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
                 || (!location.isTopLevel() && parent != null && !parent.containsSubLocationExcept(title, type, location));
     }
 
-    public AddressLevelType createAddressLevelType(AddressLevelTypeContract contract) {
+    public AddressLevelType createAddressLevelType(Organisation organisation, AddressLevelTypeContract contract) {
         AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
         if (addressLevelType == null) {
             addressLevelType = new AddressLevelType();
@@ -240,6 +242,9 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         }
         addressLevelType.setLevel(contract.getLevel());
         addressLevelType.setVoided(contract.isVoided());
+        // Clean up references in custom registration locations
+        organisationConfigService.removeVoidedAddressLevelTypeFromCustomRegistrationLocations(organisation, addressLevelType.getUuid());
+
         AddressLevelType parent = null;
         if (contract.getParent() != null && StringUtils.hasText(contract.getParent().getName())) {
             parent = addressLevelTypeRepository.findByName(contract.getParent().getName());
@@ -307,10 +312,10 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
                 locationRepository.getParents(uuid) : locationRepository.getParentsWithMaxLevelTypeId(uuid, maxLevelTypeId);
     }
 
-    public void createAddressLevelTypes(AddressLevelTypeContract[] addressLevelTypeContracts) {
+    public void createAddressLevelTypes(Organisation organisation, AddressLevelTypeContract[] addressLevelTypeContracts) {
         for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
             try {
-                this.createAddressLevelType(addressLevelTypeContract);
+                this.createAddressLevelType(organisation, addressLevelTypeContract);
             } catch (Exception e) {
                 throw new BulkItemSaveException(addressLevelTypeContract, e);
             }

@@ -27,13 +27,15 @@ public class LocationServiceTest {
     private LocationRepository locationRepository;
     @Mock
     private ResetSyncService resetSyncService;
+    @Mock
+    private OrganisationConfigService organisationConfigService;
 
     private LocationService locationService;
 
     @Before
     public void before() {
         initMocks(this);
-        locationService = new LocationService(locationRepository, addressLevelTypeRepository, organisationRepository, locationMappingRepository, resetSyncService);
+        locationService = new LocationService(locationRepository, addressLevelTypeRepository, organisationRepository, locationMappingRepository, resetSyncService, organisationConfigService);
     }
 
     @Test
