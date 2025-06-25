@@ -7,6 +7,8 @@ import org.avni.server.application.KeyValues;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.util.BadRequestError;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +31,16 @@ public class ConceptContract extends ReferenceDataContract {
     private KeyValues keyValues;
     private String mediaUrl;
     private Concept.MediaType mediaType;
+
+    public void validate() {
+        if (!StringUtils.hasText(this.getUuid()) && !StringUtils.hasText(this.getName())) {
+            throw new BadRequestError("Answer concept must have either uuid or name");
+        }
+    }
+
+    public static enum RequestType {
+        Inline, Full, Bundle
+    }
 
     public static ConceptContract create(Concept concept) {
         ConceptContract conceptContract = new ConceptContract();
@@ -196,5 +208,9 @@ public class ConceptContract extends ReferenceDataContract {
 
     public void setMediaType(Concept.MediaType mediaType) {
         this.mediaType = mediaType;
+    }
+
+    public boolean hasNameOrUUID() {
+        return StringUtils.hasText(this.getName()) || StringUtils.hasText(this.getUuid());
     }
 }

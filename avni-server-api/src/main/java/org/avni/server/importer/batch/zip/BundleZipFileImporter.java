@@ -303,7 +303,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "concepts.json":
                 ConceptContract[] conceptContracts = convertString(fileData, ConceptContract[].class);
-                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts));
+                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts), ConceptContract.RequestType.Bundle);
                 break;
             case "formMappings.json":
                 FormMappingContract[] formMappingContracts = convertString(fileData, FormMappingContract[].class);
