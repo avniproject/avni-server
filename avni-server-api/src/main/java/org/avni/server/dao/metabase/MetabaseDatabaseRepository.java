@@ -242,39 +242,6 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public void createScheduleProtectionTrigger() {
-        Connection connection = null;
-        Statement stmt = null;
-        try {
-            connection = this.metabaseDbConnectionFactory.getConnection();
-            stmt = connection.createStatement();
-
-            stmt.execute("""
-            CREATE OR REPLACE FUNCTION prevent_schedule_update() RETURNS TRIGGER AS $$
-            BEGIN
-                IF NEW.metadata_sync_schedule <> OLD.metadata_sync_schedule OR 
-                   NEW.cache_field_values_schedule <> OLD.cache_field_values_schedule THEN
-                    RAISE EXCEPTION 'Manual updates to metabase database schedule are not allowed';
-                END IF;
-                RETURN NEW;
-            END;
-            $$ LANGUAGE plpgsql;
-        """);
-
-            stmt.execute("""
-            CREATE TRIGGER protect_schedule_trigger
-            BEFORE UPDATE ON metabase_database
-            FOR EACH ROW
-            EXECUTE FUNCTION prevent_schedule_update();
-        """);
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
-            safeClose(stmt, connection);
-        }
-    }
-
     public boolean isSyncRunning(Database database) {
         Connection connection = null;
         PreparedStatement ps = null;
