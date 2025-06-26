@@ -32,12 +32,6 @@ public class ConceptContract extends ReferenceDataContract {
     private String mediaUrl;
     private Concept.MediaType mediaType;
 
-    public void validate() {
-        if (!StringUtils.hasText(this.getUuid()) && !StringUtils.hasText(this.getName())) {
-            throw new BadRequestError("Answer concept must have either uuid or name");
-        }
-    }
-
     public static enum RequestType {
         Inline, Full, Bundle
     }
@@ -212,5 +206,11 @@ public class ConceptContract extends ReferenceDataContract {
 
     public boolean hasNameOrUUID() {
         return StringUtils.hasText(this.getName()) || StringUtils.hasText(this.getUuid());
+    }
+
+    public void validate() {
+        if (!hasNameOrUUID()) {
+            throw new BadRequestError("Answer concept must have either uuid or name");
+        }
     }
 }

@@ -127,7 +127,7 @@ public class Concept extends OrganisationAwareEntity {
     @JsonIgnore
     public ConceptAnswer getConceptAnswer(String answerConceptUUID) {
         return this.getConceptAnswers().stream()
-                .filter(x -> x.getAnswerConcept().getUuid().equals(answerConceptUUID))
+                .filter(x -> !x.isVoided() && !x.getAnswerConcept().isVoided() && x.getAnswerConcept().getUuid().equals(answerConceptUUID))
                 .findAny()
                 .orElse(null);
     }
