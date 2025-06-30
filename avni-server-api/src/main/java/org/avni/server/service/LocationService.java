@@ -225,7 +225,17 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
                 || (!location.isTopLevel() && parent != null && !parent.containsSubLocationExcept(title, type, location));
     }
 
+    public AddressLevelType findAddressLevelTypeByName(String name, String excludeUuid) {
+        AddressLevelType existingType = addressLevelTypeRepository.findByNameIgnoreCaseAndIsVoidedFalse(name);
+        if (existingType != null && (excludeUuid == null || !existingType.getUuid().equals(excludeUuid))) {
+            return existingType;
+        }
+        return null;
+    }
+
     public AddressLevelType createAddressLevelType(Organisation organisation, AddressLevelTypeContract contract) {
+        // Validate name uniqueness - moved to controller to provide better error messages for API consumers
+
         AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
         if (addressLevelType == null) {
             addressLevelType = new AddressLevelType();
