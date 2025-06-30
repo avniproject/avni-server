@@ -7,7 +7,6 @@ import org.avni.server.application.KeyType;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
-import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.sync.SyncEntityName;
@@ -28,9 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -323,12 +320,27 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     }
 
     public void createAddressLevelTypes(Organisation organisation, AddressLevelTypeContract[] addressLevelTypeContracts) {
-        for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
-            try {
-                this.createAddressLevelType(organisation, addressLevelTypeContract);
-            } catch (Exception e) {
-                throw new BulkItemSaveException(addressLevelTypeContract, e);
+        // First, validate for case-insensitive duplicate names across all contracts
+        Map<String, AddressLevelTypeContract> nameToContractMap = new HashMap<>();
+        for (AddressLevelTypeContract contract : addressLevelTypeContracts) {
+            String name = contract.getName();
+            if (name != null) {
+                // Check for duplicates within the batch
+                if (nameToContractMap.containsKey(name.toLowerCase())) {
+                    throw new ValidationException(String.format("Duplicate location type name '%s' found in the request", name));
+                }
+                // Check for existing duplicates in the database (excluding the contract's own UUID if it's an update)
+                AddressLevelType existingType = findAddressLevelTypeByName(name, contract.getUuid());
+                if (existingType != null) {
+                    throw new ValidationException(String.format("Location type with name '%s' already exists", name));
+                }
+                nameToContractMap.put(name.toLowerCase(), contract);
             }
+        }
+
+        // Once validated, process all contracts
+        for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
+            this.createAddressLevelType(organisation, addressLevelTypeContract);
         }
     }
 }

@@ -5,11 +5,13 @@ import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.Organisation;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.accessControl.AccessControlServiceStub;
 import org.avni.server.web.request.AddressLevelTypeContract;
+import org.avni.server.web.validation.ValidationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -160,5 +162,26 @@ public class AddressLevelTypeControllerUnitTest {
     public void shouldVoidAddressLevelTypeAndCleanupReferences() throws Exception {
         ResponseEntity responseEntity = addressLevelTypeController.voidAddressLevelType(1L);
         assertThat(responseEntity.getStatusCodeValue(), is(equalTo(200)));
+    }
+
+    @Test(expected = ValidationException.class)
+    public void shouldDetectDuplicatesInCreateAddressLevelTypesBatch() throws Exception {
+        Organisation testOrg = new Organisation();
+        testOrg.setId(1L);
+
+        AddressLevelTypeContract contract1 = new AddressLevelTypeContract();
+        contract1.setUuid(UUID.randomUUID().toString());
+        contract1.setName("Test Location Type");
+        contract1.setLevel(1d);
+
+        AddressLevelTypeContract contract2 = new AddressLevelTypeContract();
+        contract2.setUuid(UUID.randomUUID().toString());
+        contract2.setName("TEST LOCATION TYPE"); // Same name with different case
+        contract2.setLevel(2d);
+
+        AddressLevelTypeContract[] contracts = new AddressLevelTypeContract[]{contract1, contract2};
+
+        // This should throw ValidationException due to case-insensitive name conflict
+        locationService.createAddressLevelTypes(testOrg, contracts);
     }
 }
