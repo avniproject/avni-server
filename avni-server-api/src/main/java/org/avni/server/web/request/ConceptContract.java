@@ -210,7 +210,7 @@ public class ConceptContract extends ReferenceDataContract {
 
     public void validate() {
         if (!hasNameOrUUID()) {
-            throw new BadRequestError("Answer concept must have either uuid or name");
+            throw new BadRequestError("Concept must have either uuid or name");
         }
     }
 }

@@ -6,6 +6,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.builder.TestDataSetupService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -256,6 +257,81 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         assertFalse(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
         assertEquals("foo", concept.getAnswerConcept("Answer 1").getMediaUrl());
         assertEquals("bar", concept.getAnswerConcept("Answer 2").getMediaUrl());
+    }
+
+    @Test
+    public void shouldThrowErrorWhenCreatingConceptWithSameNameButDifferentUUID() {
+        // Arrange
+        // First create a concept
+        String firstConceptUuid = UUID.randomUUID().toString();
+        ConceptContract firstConceptContract = new ConceptContract();
+        firstConceptContract.setUuid(firstConceptUuid);
+        firstConceptContract.setName("Duplicate Name Concept");
+        firstConceptContract.setDataType("Numeric");
+
+        conceptService.saveOrUpdateConcepts(List.of(firstConceptContract), ConceptContract.RequestType.Full);
+
+        // Verify first concept is saved correctly
+        Concept savedFirstConcept = conceptRepository.findByUuid(firstConceptUuid);
+        assertNotNull(savedFirstConcept);
+        assertEquals("Duplicate Name Concept", savedFirstConcept.getName());
+
+        // Now try to create a second concept with the same name but different UUID
+        String secondConceptUuid = UUID.randomUUID().toString();
+        ConceptContract secondConceptContract = new ConceptContract();
+        secondConceptContract.setUuid(secondConceptUuid);
+        secondConceptContract.setName("Duplicate Name Concept"); // Same name as first concept
+        secondConceptContract.setDataType("Text"); // Different data type
+
+        // Assert that it throws BadRequestError with appropriate message
+        BadRequestError error = assertThrows(BadRequestError.class, () ->
+                conceptService.saveOrUpdateConcepts(List.of(secondConceptContract), ConceptContract.RequestType.Full)
+        );
+
+        // Verify error message contains useful information
+        String errorMessage = error.getMessage();
+        assertTrue(errorMessage.contains("Duplicate Name Concept"));
+        assertTrue(errorMessage.contains("already exists with different UUID"));
+        assertTrue(errorMessage.contains(firstConceptUuid));
+    }
+
+    @Test
+    public void shouldThrowErrorWhenCreatingAnswerConceptWithSameNameButDifferentUUID() {
+        // Arrange
+        // First create a standalone concept that will be used later as an answer
+        String standaloneConceptUuid = UUID.randomUUID().toString();
+        ConceptContract standaloneConceptContract = new ConceptContract();
+        standaloneConceptContract.setUuid(standaloneConceptUuid);
+        standaloneConceptContract.setName("Duplicate Answer Name");
+        standaloneConceptContract.setDataType("NA");
+
+        conceptService.saveOrUpdateConcepts(List.of(standaloneConceptContract), ConceptContract.RequestType.Full);
+
+        // Now create a parent concept with a different answer concept that has the same name
+        String parentConceptUuid = UUID.randomUUID().toString();
+        String newAnswerUuid = UUID.randomUUID().toString(); // Different from standaloneConceptUuid
+
+        ConceptContract answerContract = new ConceptContract();
+        answerContract.setUuid(newAnswerUuid);
+        answerContract.setName("Duplicate Answer Name"); // Same name as standalone concept
+        answerContract.setDataType("NA");
+
+        ConceptContract parentConceptContract = new ConceptContract();
+        parentConceptContract.setUuid(parentConceptUuid);
+        parentConceptContract.setName("Parent Coded Concept");
+        parentConceptContract.setDataType("Coded");
+        parentConceptContract.setAnswers(List.of(answerContract));
+
+        // Assert that it throws BadRequestError with appropriate message
+        BadRequestError error = assertThrows(BadRequestError.class, () ->
+                conceptService.saveOrUpdateConcepts(List.of(parentConceptContract), ConceptContract.RequestType.Full)
+        );
+
+        // Verify error message contains useful information
+        String errorMessage = error.getMessage();
+        assertTrue(errorMessage.contains("Duplicate Answer Name"));
+        assertTrue(errorMessage.contains("already exists with different UUID"));
+        assertTrue(errorMessage.contains(standaloneConceptUuid));
     }
 
     @Test

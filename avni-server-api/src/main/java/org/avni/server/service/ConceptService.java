@@ -70,11 +70,26 @@ public class ConceptService implements NonScopeAwareService {
         return jsonMap;
     }
 
-    private Concept fetchOrCreateConcept(String uuid, String name) {
-        Concept concept = conceptRepository.findByUuid(uuid);
-        if (concept == null && StringUtils.hasText(name)) {
-            concept = conceptRepository.findByName(name.trim());
+    private Concept fetchOrCreateConcept(ConceptContract conceptRequest) {
+        if (conceptRequest == null) {
+            throw new BadRequestError("Concept request cannot be null");
         }
+        conceptRequest.validate();
+        assertNotDuplicate(conceptRequest);
+        String uuid = conceptRequest.getUuid();
+        String name = conceptRequest.getName();
+        Concept concept = conceptRepository.findByUuid(uuid);
+        Concept existingConceptWithSameName = null;
+
+        if (concept == null && StringUtils.hasText(name)) {
+            existingConceptWithSameName = conceptRepository.findByName(name.trim());
+            if (existingConceptWithSameName != null && !existingConceptWithSameName.getUuid().equals(uuid)) {
+                throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
+                        name.trim(), existingConceptWithSameName.getUuid()));
+            }
+            concept = existingConceptWithSameName;
+        }
+
         if (concept == null) {
             concept = createConcept(uuid);
         }
@@ -172,10 +187,7 @@ public class ConceptService implements NonScopeAwareService {
             logger.info("Processing concept: {} {}", conceptRequest.getName(), conceptRequest.getUuid());
             List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequest);
             for (ConceptContract answerConceptRequest : answerConcepts) {
-                answerConceptRequest.validate();
-                assertNotDuplicate(conceptRequest);
-
-                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest.getUuid(), answerConceptRequest.getName());
+                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest);
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
@@ -192,7 +204,7 @@ public class ConceptService implements NonScopeAwareService {
                 addToMigrationIfRequired(answerConceptRequest);
             }
 
-            Concept concept = fetchOrCreateConcept(conceptRequest.getUuid(), conceptRequest.getName());
+            Concept concept = fetchOrCreateConcept(conceptRequest);
             String dataType = getDataType(conceptRequest, concept);
             concept.setName(conceptRequest.getName());
             concept.setDataType(dataType);
@@ -235,7 +247,9 @@ public class ConceptService implements NonScopeAwareService {
 
     private void assertNotDuplicate(ConceptContract conceptRequest) {
         if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
-            throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
+            Concept existingConcept = conceptRepository.findByName(conceptRequest.getName().trim());
+            throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
+                    conceptRequest.getName(), existingConcept.getUuid()));
         }
     }
 
