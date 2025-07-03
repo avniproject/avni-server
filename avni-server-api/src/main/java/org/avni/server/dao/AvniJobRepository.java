@@ -79,9 +79,9 @@ public class AvniJobRepository {
                                          left join batch_job_execution bje on i.job_instance_id = bje.job_instance_id
                                          left join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
                                 where i.job_name = :jobName
-                                  and start_time is not null
+                                  and create_time is not null
                                   and bjep.parameter_name = :parameterName and bjep.parameter_value = :parameterValue
-                                order by start_time desc
+                                order by create_time desc
                                 limit 1;
                 """;
         Map<String, Object> params = new HashMap<>();
