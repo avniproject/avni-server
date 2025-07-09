@@ -3,8 +3,8 @@ package org.avni.server.domain;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "archival_config")
-public class ArchivalConfig extends OrganisationAwareEntity {
+@Table(name = "storage_management_config")
+public class StorageManagementConfig extends OrganisationAwareEntity {
 
     @Column(name = "sql_query", nullable = false)
     private String sqlQuery;

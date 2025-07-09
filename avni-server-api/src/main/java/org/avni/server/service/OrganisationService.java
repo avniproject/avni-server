@@ -168,7 +168,7 @@ public class OrganisationService {
     private final DashboardMapper dashboardMapper;
     private final GroupDashboardService groupDashboardService;
     private final CustomQueryService customQueryService;
-    private final ArchivalConfigRepository archivalConfigRepository;
+    private final StorageManagementConfigRepository storageManagementConfigRepository;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -265,7 +265,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, ArchivalConfigRepository archivalConfigRepository) {
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -364,7 +364,7 @@ public class OrganisationService {
         this.jdbcTemplate = jdbcTemplate;
         this.dashboardService = dashboardService;
         this.customQueryService = customQueryService;
-        this.archivalConfigRepository = archivalConfigRepository;
+        this.storageManagementConfigRepository = storageManagementConfigRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -477,7 +477,7 @@ public class OrganisationService {
                 locationMappingRepository,
                 locationRepository,
                 addressLevelTypeRepository,
-                archivalConfigRepository,
+                storageManagementConfigRepository,
                 organisationConfigRepository,
         };
         return adminConfigRepositories;

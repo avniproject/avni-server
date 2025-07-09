@@ -1,7 +1,7 @@
 package org.avni.server.backgroundJob;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.ArchivalConfigRepository;
+import org.avni.server.dao.StorageManagementConfigRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -26,7 +26,7 @@ import static org.junit.Assert.assertNotEquals;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class StorageManagementJobIntegrationTest extends AbstractControllerIntegrationTest {
+public class StorageManagementConfigJobIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;
     @Autowired
@@ -42,7 +42,7 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
     @Autowired
     private TestGroupSubjectService testGroupSubjectService;
     @Autowired
-    private ArchivalConfigRepository archivalConfigRepository;
+    private StorageManagementConfigRepository storageManagementConfigRepository;
     @Autowired
     private StorageManagementJob storageManagementJob;
     @Autowired
@@ -122,7 +122,7 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
 
     @Test
     public void markSyncDisabledInOneGo() {
-        saveArchivalConfig("select id from individual");
+        saveStorageManagementConfig("select id from individual");
         int count = individualRepository.countBySyncDisabled(false);
         assertEquals(3, count);
         assertNotEquals(0, programEnrolmentRepository.countBySyncDisabled(false));
@@ -134,7 +134,7 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
 
     @Test
     public void markSyncDisabledInLoops() {
-        saveArchivalConfig("select id from individual limit 1");
+        saveStorageManagementConfig("select id from individual limit 1");
         int count = individualRepository.countBySyncDisabled(false);
         assertEquals(3, count);
         int enrolmentCount = programEnrolmentRepository.countBySyncDisabled(false);
@@ -145,10 +145,10 @@ public class StorageManagementJobIntegrationTest extends AbstractControllerInteg
         assertEquals(0, programEnrolmentRepository.countBySyncDisabled(false));
     }
 
-    private void saveArchivalConfig(String query) {
-        ArchivalConfig archivalConfig = new ArchivalConfig();
-        archivalConfig.setSqlQuery(query);
-        archivalConfig.setUuid(UUID.randomUUID().toString());
-        archivalConfigRepository.save(archivalConfig);
+    private void saveStorageManagementConfig(String query) {
+        StorageManagementConfig storageManagementConfig = new StorageManagementConfig();
+        storageManagementConfig.setSqlQuery(query);
+        storageManagementConfig.setUuid(UUID.randomUUID().toString());
+        storageManagementConfigRepository.save(storageManagementConfig);
     }
 }
