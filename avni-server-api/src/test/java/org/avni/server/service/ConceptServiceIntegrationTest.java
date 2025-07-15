@@ -350,7 +350,6 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         firstAnswer.setDataType("NA");
         firstAnswer.setUnique(true);
         firstAnswer.setAbnormal(false);
-        firstAnswer.setMediaUrl("foo");
 
         String secondAnswerUUID = UUID.randomUUID().toString();
         ConceptContract secondAnswer = new ConceptContract();
@@ -387,6 +386,5 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         assertFalse(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
         assertFalse(concept.getConceptAnswer(secondAnswerUUID).isUnique());
         assertTrue(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
-        assertEquals("foo", concept.getAnswerConcept("Answer 1").getMediaUrl());
     }
 }

@@ -423,6 +423,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 String conceptUuid = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 Concept concept = conceptRepository.findByUuid(conceptUuid);
                 concept.setMediaUrl(medias3ObjectKey);
+                concept.setMediaType(Concept.MediaType.Image);
                 conceptRepository.save(concept);
                 break;
         }

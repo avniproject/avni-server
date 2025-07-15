@@ -192,7 +192,7 @@ public class ConceptService implements NonScopeAwareService {
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
 
-                if (requestType.equals(ConceptContract.RequestType.Full)) {
+                if (!requestType.equals(ConceptContract.RequestType.Inline)) {
                     // inline creation doesn't provide these fields on answer concepts
                     answerConcept.setVoided(answerConceptRequest.isVoided());
                     answerConcept.setActive(answerConceptRequest.getActive());
