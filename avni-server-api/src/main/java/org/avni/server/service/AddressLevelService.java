@@ -82,7 +82,8 @@ public class AddressLevelService {
         }
 
         SubjectTypeSetting subjectTypeSetting = customRegistrationSetting.get();
-        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByUuidIn(subjectTypeSetting.getLocationTypeUUIDs());
+        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByUuidIn(subjectTypeSetting.getLocationTypeUUIDs())
+                .stream().filter(addressLevelType -> !addressLevelType.isVoided()).collect(Collectors.toList());
         if (addressLevelTypes.isEmpty()) {
             return null;
         }

@@ -6,6 +6,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.builder.TestDataSetupService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -32,10 +32,15 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
     @Autowired
     private ConceptRepository conceptRepository;
 
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        testDataSetupService.setupOrganisation();
+    }
+
     @Test
     @Transactional
-    public void shouldSaveOrUpdateConcepts_WithNoAnswers() {
-        testDataSetupService.setupOrganisation();
+    public void shouldCreateConcepts_WithNoAnswers() {
         // Arrange
         String uuid1 = UUID.randomUUID().toString();
         ConceptContract conceptContract1 = new ConceptContract();
@@ -43,10 +48,10 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptContract1.setName("Test Concept 1");
         conceptContract1.setDataType("Numeric");
 
-        List<ConceptContract> conceptRequests = Arrays.asList(conceptContract1);
+        List<ConceptContract> conceptRequests = List.of(conceptContract1);
 
         // Act
-        List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
+        List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests, ConceptContract.RequestType.Full);
 
         // Assert
         assertEquals(1, savedUuids.size());
@@ -60,8 +65,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
     @Test
     @Transactional
-    public void shouldSaveOrUpdateConcepts_WithAnswers() {
-        testDataSetupService.setupOrganisation();
+    public void shouldCreateConcepts_WithAnswers() {
         // Arrange
         String uuid1 = UUID.randomUUID().toString();
         String answerUuid1 = UUID.randomUUID().toString();
@@ -70,12 +74,12 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         ConceptContract answerContract1 = new ConceptContract();
         answerContract1.setUuid(answerUuid1);
         answerContract1.setName("Answer 1");
-        answerContract1.setDataType("Text");
+        answerContract1.setDataType(ConceptDataType.NA.name());
 
         ConceptContract answerContract2 = new ConceptContract();
         answerContract2.setUuid(answerUuid2);
         answerContract2.setName("Answer 2");
-        answerContract2.setDataType("Text");
+        answerContract2.setDataType(ConceptDataType.NA.name());
 
         List<ConceptContract> answers = Arrays.asList(answerContract1, answerContract2);
 
@@ -85,17 +89,12 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptContract.setDataType("Coded");
         conceptContract.setAnswers(answers);
 
-        List<ConceptContract> conceptRequests = Arrays.asList(conceptContract);
+        List<ConceptContract> conceptRequests = List.of(conceptContract);
 
         // Act
-        List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
+        conceptService.saveOrUpdateConcepts(conceptRequests, ConceptContract.RequestType.Full);
 
         // Assert
-        assertEquals(3, savedUuids.size());
-        assertEquals(uuid1, savedUuids.get(0));
-        assertEquals(answerUuid1, savedUuids.get(1));
-        assertEquals(answerUuid2, savedUuids.get(2));
-
         Concept savedConcept = conceptRepository.findByUuid(uuid1);
         assertNotNull(savedConcept);
         assertEquals("Test Coded Concept", savedConcept.getName());
@@ -108,7 +107,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
         List<String> answerUuids = conceptAnswers.stream()
                 .map(ca -> ca.getAnswerConcept().getUuid())
-                .collect(Collectors.toList());
+                .toList();
 
         assertTrue(answerUuids.contains(answerUuid1));
         assertTrue(answerUuids.contains(answerUuid2));
@@ -125,8 +124,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
     @Test
     @Transactional
-    public void shouldSaveOrUpdateConcepts_WithMultipleConcepts() {
-        testDataSetupService.setupOrganisation();
+    public void shouldCreateMultipleConcepts_WithAnswers() {
         // Arrange
         String uuid1 = UUID.randomUUID().toString();
         String uuid2 = UUID.randomUUID().toString();
@@ -141,7 +139,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptContract1.setUuid(uuid1);
         conceptContract1.setName("First Coded Concept");
         conceptContract1.setDataType("Coded");
-        conceptContract1.setAnswers(Arrays.asList(answerContract));
+        conceptContract1.setAnswers(List.of(answerContract));
 
         ConceptContract conceptContract2 = new ConceptContract();
         conceptContract2.setUuid(uuid2);
@@ -151,14 +149,9 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         List<ConceptContract> conceptRequests = Arrays.asList(conceptContract1, conceptContract2);
 
         // Act
-        List<String> savedUuids = conceptService.saveOrUpdateConcepts(conceptRequests);
+        conceptService.saveOrUpdateConcepts(conceptRequests, ConceptContract.RequestType.Full);
 
         // Assert
-        assertEquals(3, savedUuids.size());
-        assertEquals(uuid1, savedUuids.get(0));
-        assertEquals(uuid2, savedUuids.get(1));
-        assertEquals(answerUuid, savedUuids.get(2));
-
         Concept savedConcept1 = conceptRepository.findByUuid(uuid1);
         Concept savedConcept2 = conceptRepository.findByUuid(uuid2);
 
@@ -180,46 +173,218 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
     @Test
     @Transactional
-    public void shouldSaveOrUpdateConcepts_WithUpdatingExistingConcepts() {
-        testDataSetupService.setupOrganisation();
+    public void shouldUpdateConcepts() {
         // Arrange - First save
         String uuid = UUID.randomUUID().toString();
 
         ConceptContract initialConcept = new ConceptContract();
         initialConcept.setUuid(uuid);
         initialConcept.setName("Initial Name");
-        initialConcept.setDataType("Text");
+        initialConcept.setDataType("Coded");
 
-        List<ConceptContract> firstSave = Arrays.asList(initialConcept);
-        conceptService.saveOrUpdateConcepts(firstSave);
+        conceptService.saveOrUpdateConcepts(List.of(initialConcept), ConceptContract.RequestType.Full);
 
-        // Arrange - Now update
+        // Arrange - Now to update
         ConceptContract updatedConcept = new ConceptContract();
         updatedConcept.setUuid(uuid); // Same UUID
         updatedConcept.setName("Updated Name");
-        updatedConcept.setDataType("Text");
+        updatedConcept.setDataType("Coded");
 
         String answerUuid = UUID.randomUUID().toString();
         ConceptContract answerContract = new ConceptContract();
         answerContract.setUuid(answerUuid);
         answerContract.setName("New Answer");
-        answerContract.setDataType("Text");
+        answerContract.setDataType("NA");
 
-        updatedConcept.setAnswers(Arrays.asList(answerContract));
+        updatedConcept.setAnswers(List.of(answerContract));
 
-        // Act - Update the concept
-        List<String> updatedUuids = conceptService.saveOrUpdateConcepts(Arrays.asList(updatedConcept));
+        // Act
+        conceptService.saveOrUpdateConcepts(List.of(updatedConcept), ConceptContract.RequestType.Full);
 
         // Assert
-        assertEquals(2, updatedUuids.size());
-        assertEquals(uuid, updatedUuids.get(0));
-        assertEquals(answerUuid, updatedUuids.get(1));
-
         Concept updatedConceptEntity = conceptRepository.findByUuid(uuid);
         assertNotNull(updatedConceptEntity);
         assertEquals("Updated Name", updatedConceptEntity.getName()); // Name should be updated
 
         // Even though we passed an answer, the dataType doesn't change
-        assertEquals(ConceptDataType.Text.toString(), updatedConceptEntity.getDataType());
+        assertEquals(ConceptDataType.Coded.name(), updatedConceptEntity.getDataType());
+        assertEquals("New Answer", updatedConceptEntity.getConceptAnswers().stream()
+                .findFirst().get().getAnswerConcept().getName()); // Check the answer was added
+    }
+
+    @Test
+    public void editCodedConcept() {
+        // Arrange
+        String uuid = UUID.randomUUID().toString();
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Coded Concept");
+        conceptContract.setDataType("Coded");
+
+        String firstAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        firstAnswer.setDataType("NA");
+        firstAnswer.setUnique(true);
+        firstAnswer.setMediaUrl("foo");
+
+        String secondAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+        secondAnswer.setDataType("NA");
+        firstAnswer.setAbnormal(true);
+
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        // Act
+        firstAnswer.setUnique(false);
+        firstAnswer.setAbnormal(true);
+        secondAnswer.setUnique(true);
+        secondAnswer.setAbnormal(false);
+        secondAnswer.setMediaUrl("bar");
+
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        // Assert
+        Concept concept = conceptRepository.findByUuid(uuid);
+
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isUnique());
+        assertTrue(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
+        assertTrue(concept.getConceptAnswer(secondAnswerUUID).isUnique());
+        assertFalse(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
+        assertEquals("foo", concept.getAnswerConcept("Answer 1").getMediaUrl());
+        assertEquals("bar", concept.getAnswerConcept("Answer 2").getMediaUrl());
+    }
+
+    @Test
+    public void shouldThrowErrorWhenCreatingConceptWithSameNameButDifferentUUID() {
+        // Arrange
+        // First create a concept
+        String firstConceptUuid = UUID.randomUUID().toString();
+        ConceptContract firstConceptContract = new ConceptContract();
+        firstConceptContract.setUuid(firstConceptUuid);
+        firstConceptContract.setName("Duplicate Name Concept");
+        firstConceptContract.setDataType("Numeric");
+
+        conceptService.saveOrUpdateConcepts(List.of(firstConceptContract), ConceptContract.RequestType.Full);
+
+        // Verify first concept is saved correctly
+        Concept savedFirstConcept = conceptRepository.findByUuid(firstConceptUuid);
+        assertNotNull(savedFirstConcept);
+        assertEquals("Duplicate Name Concept", savedFirstConcept.getName());
+
+        // Now try to create a second concept with the same name but different UUID
+        String secondConceptUuid = UUID.randomUUID().toString();
+        ConceptContract secondConceptContract = new ConceptContract();
+        secondConceptContract.setUuid(secondConceptUuid);
+        secondConceptContract.setName("Duplicate Name Concept"); // Same name as first concept
+        secondConceptContract.setDataType("Text"); // Different data type
+
+        // Assert that it throws BadRequestError with appropriate message
+        BadRequestError error = assertThrows(BadRequestError.class, () ->
+                conceptService.saveOrUpdateConcepts(List.of(secondConceptContract), ConceptContract.RequestType.Full)
+        );
+
+        // Verify error message contains useful information
+        String errorMessage = error.getMessage();
+        assertTrue(errorMessage.contains("Duplicate Name Concept"));
+        assertTrue(errorMessage.contains("already exists with different UUID"));
+        assertTrue(errorMessage.contains(firstConceptUuid));
+    }
+
+    @Test
+    public void shouldThrowErrorWhenCreatingAnswerConceptWithSameNameButDifferentUUID() {
+        // Arrange
+        // First create a standalone concept that will be used later as an answer
+        String standaloneConceptUuid = UUID.randomUUID().toString();
+        ConceptContract standaloneConceptContract = new ConceptContract();
+        standaloneConceptContract.setUuid(standaloneConceptUuid);
+        standaloneConceptContract.setName("Duplicate Answer Name");
+        standaloneConceptContract.setDataType("NA");
+
+        conceptService.saveOrUpdateConcepts(List.of(standaloneConceptContract), ConceptContract.RequestType.Full);
+
+        // Now create a parent concept with a different answer concept that has the same name
+        String parentConceptUuid = UUID.randomUUID().toString();
+        String newAnswerUuid = UUID.randomUUID().toString(); // Different from standaloneConceptUuid
+
+        ConceptContract answerContract = new ConceptContract();
+        answerContract.setUuid(newAnswerUuid);
+        answerContract.setName("Duplicate Answer Name"); // Same name as standalone concept
+        answerContract.setDataType("NA");
+
+        ConceptContract parentConceptContract = new ConceptContract();
+        parentConceptContract.setUuid(parentConceptUuid);
+        parentConceptContract.setName("Parent Coded Concept");
+        parentConceptContract.setDataType("Coded");
+        parentConceptContract.setAnswers(List.of(answerContract));
+
+        // Assert that it throws BadRequestError with appropriate message
+        BadRequestError error = assertThrows(BadRequestError.class, () ->
+                conceptService.saveOrUpdateConcepts(List.of(parentConceptContract), ConceptContract.RequestType.Full)
+        );
+
+        // Verify error message contains useful information
+        String errorMessage = error.getMessage();
+        assertTrue(errorMessage.contains("Duplicate Answer Name"));
+        assertTrue(errorMessage.contains("already exists with different UUID"));
+        assertTrue(errorMessage.contains(standaloneConceptUuid));
+    }
+
+    @Test
+    public void bundleUploadUpdateCodedConcept() {
+        // Arrange
+        String uuid = UUID.randomUUID().toString();
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Coded Concept");
+        conceptContract.setDataType("Coded");
+
+        String firstAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        firstAnswer.setDataType("NA");
+        firstAnswer.setUnique(true);
+        firstAnswer.setAbnormal(false);
+
+        String secondAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+        secondAnswer.setDataType("NA");
+        secondAnswer.setUnique(false);
+        secondAnswer.setAbnormal(true);
+
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        // Act
+        conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Coded Concept New");
+        conceptContract.setDataType("Coded");
+
+        firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Bundle);
+
+        // Assert
+        Concept concept = conceptRepository.findByUuid(uuid);
+
+        assertTrue(concept.getConceptAnswer(firstAnswerUUID).isUnique());
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
+        assertFalse(concept.getConceptAnswer(secondAnswerUUID).isUnique());
+        assertTrue(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
     }
 }

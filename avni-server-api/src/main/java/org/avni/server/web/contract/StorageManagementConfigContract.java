@@ -3,7 +3,7 @@ package org.avni.server.web.contract;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.web.request.CHSRequest;
 
-public class ArchivalConfigContract extends CHSRequest {
+public class StorageManagementConfigContract extends CHSRequest {
 
     @NotNull
     private String sqlQuery;

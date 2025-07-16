@@ -188,7 +188,6 @@ public class MetabaseService {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
         databaseRepository.moveDatabaseScanningToFarFuture(database);
-        databaseRepository.createScheduleProtectionTrigger();
     }
 
     public void waitForDatabaseSyncToComplete(Organisation organisation, Database database) throws InterruptedException {

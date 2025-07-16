@@ -2,9 +2,9 @@ package org.avni.server.backgroundJob;
 
 import jakarta.persistence.EntityManager;
 import org.avni.server.dao.OrganisationRepository;
-import org.avni.server.domain.ArchivalConfig;
+import org.avni.server.domain.StorageManagementConfig;
 import org.avni.server.domain.Organisation;
-import org.avni.server.service.ArchivalConfigService;
+import org.avni.server.service.StorageManagementConfigService;
 import org.avni.server.service.StorageManagementService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,14 +18,14 @@ import java.util.List;
 public class StorageManagementJob {
     private static final Logger logger = LoggerFactory.getLogger(StorageManagementJob.class);
     private final StorageManagementService storageManagementService;
-    private final ArchivalConfigService archivalConfigService;
+    private final StorageManagementConfigService storageManagementConfigService;
     private final OrganisationRepository organisationRepository;
     private final EntityManager entityManager;
 
     @Autowired
-    public StorageManagementJob(StorageManagementService storageManagementService, ArchivalConfigService archivalConfigService, OrganisationRepository organisationRepository, EntityManager entityManager) {
+    public StorageManagementJob(StorageManagementService storageManagementService, StorageManagementConfigService storageManagementConfigService, OrganisationRepository organisationRepository, EntityManager entityManager) {
         this.storageManagementService = storageManagementService;
-        this.archivalConfigService = archivalConfigService;
+        this.storageManagementConfigService = storageManagementConfigService;
         this.organisationRepository = organisationRepository;
         this.entityManager = entityManager;
     }
@@ -33,27 +33,27 @@ public class StorageManagementJob {
     // this method runs without organisation context
     @Scheduled(cron = "${avni.job.storagemanagement.cron}", zone = "Asia/Kolkata")
     public void manage() {
-        logger.info("Starting archival job." );
-        List<ArchivalConfig> archivalConfigs = this.archivalConfigService.getAllArchivalConfigs();
-        for (ArchivalConfig archivalConfig : archivalConfigs) {
-            this.markSyncDisabled(archivalConfig);
+        logger.info("Starting storage management job." );
+        List<StorageManagementConfig> storageManagementConfigs = this.storageManagementConfigService.getAllStorageManagementConfigs();
+        for (StorageManagementConfig storageManagementConfig : storageManagementConfigs) {
+            this.markSyncDisabled(storageManagementConfig);
         }
-        logger.info("Completed nightly archival job.");
+        logger.info("Completed storage management job.");
     }
 
-    private void markSyncDisabled(ArchivalConfig archivalConfig) {
+    private void markSyncDisabled(StorageManagementConfig storageManagementConfig) {
 //        these work only with Job test, so commented. had added to verify whether indeed new transaction is created
 //        assert !TransactionSynchronizationManager.isActualTransactionActive();
-        Organisation organisation = organisationRepository.findOne(archivalConfig.getOrganisationId());
+        Organisation organisation = organisationRepository.findOne(storageManagementConfig.getOrganisationId());
         try {
-            List<Long> subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
+            List<Long> subjectIds = storageManagementService.getNextSubjectIds(storageManagementConfig);
             while (!subjectIds.isEmpty()) {
                 logger.info("Running for: {}. Current batch size: {}", organisation.getDbUser(), subjectIds.size());
                 List<Long> previousSubjectIds = subjectIds;
                 storageManagementService.markSyncDisabled(subjectIds, organisation);
-                subjectIds = storageManagementService.getNextSubjectIds(archivalConfig);
+                subjectIds = storageManagementService.getNextSubjectIds(storageManagementConfig);
                 if (subjectIds.equals(previousSubjectIds)) {
-                    logger.info("Same subject ids retrieved again: {}", archivalConfig.getUuid());
+                    logger.info("Same subject ids retrieved again: {}", storageManagementConfig.getUuid());
                     throw new RuntimeException("Same subject ids retrieved again");
                 }
             }

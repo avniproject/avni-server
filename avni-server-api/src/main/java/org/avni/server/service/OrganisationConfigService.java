@@ -1,6 +1,5 @@
 package org.avni.server.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.avni.server.application.KeyType;
@@ -207,16 +206,14 @@ public class OrganisationConfigService implements NonScopeAwareService {
     public void saveRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType) {
         Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
-        JsonObject organisationConfigSettings = organisationConfig.getSettings();
         String settingsKeyName = KeyType.customRegistrationLocations.toString();
-        List<SubjectTypeSetting> updatedCustomRegistrationLocations = getUpdatedCustomRegistrationLocations(locationTypeUUIDs, subjectType, organisationConfigSettings, settingsKeyName);
-        organisationConfigSettings.put(settingsKeyName, updatedCustomRegistrationLocations);
+        List<SubjectTypeSetting> updatedCustomRegistrationLocations = getUpdatedCustomRegistrationLocations(locationTypeUUIDs, subjectType, organisationConfig);
+        organisationConfig.getSettings().put(settingsKeyName, updatedCustomRegistrationLocations);
         organisationConfigRepository.save(organisationConfig);
     }
 
-    private List<SubjectTypeSetting> getUpdatedCustomRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType, JsonObject organisationConfigSettings, String settingsKeyName) {
-        List<SubjectTypeSetting> savedSettings = objectMapper.convertValue(organisationConfigSettings.getOrDefault(settingsKeyName, Collections.EMPTY_LIST), new TypeReference<>() {
-        });
+    private List<SubjectTypeSetting> getUpdatedCustomRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType, OrganisationConfig organisationConfig) {
+        List<SubjectTypeSetting> savedSettings = organisationConfig.getCustomRegistrationLocations();
         List<SubjectTypeSetting> otherSubjectTypeSettings = filterSubjectTypeSettingsBasedOn(savedSettings, setting -> !setting.getSubjectTypeUUID().equals(subjectType.getUuid()));
         SubjectTypeSetting subjectTypeSetting = new SubjectTypeSetting();
         subjectTypeSetting.setSubjectTypeUUID(subjectType.getUuid());
@@ -371,5 +368,39 @@ public class OrganisationConfigService implements NonScopeAwareService {
         OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
         config.setMetabaseSyncStatus(status);
         organisationConfigRepository.save(config);
+    }
+
+    public void removeVoidedAddressLevelTypeFromCustomRegistrationLocations(Organisation organisation, String voidedAddressLevelTypeUuid) {
+        OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        String settingsKeyName = KeyType.customRegistrationLocations.toString();
+
+        // Get the current custom registration location settings
+        List<SubjectTypeSetting> customRegistrationLocations = organisationConfig.getCustomRegistrationLocations();
+
+        // For each subject type setting, remove the voided address level type from locationTypeUUIDs
+        List<SubjectTypeSetting> updatedSettings = new ArrayList<>();
+        boolean configChanged = false;
+
+        for (SubjectTypeSetting setting : customRegistrationLocations) {
+            List<String> locationTypeUUIDs = setting.getLocationTypeUUIDs();
+            if (locationTypeUUIDs != null && locationTypeUUIDs.contains(voidedAddressLevelTypeUuid)) {
+                // Remove the voided type from the list
+                locationTypeUUIDs.remove(voidedAddressLevelTypeUuid);
+                configChanged = true;
+            }
+
+            // Only add settings that still have at least one location type
+            if (locationTypeUUIDs != null && !locationTypeUUIDs.isEmpty()) {
+                updatedSettings.add(setting);
+            } else {
+                configChanged = true; // Setting removed completely
+            }
+        }
+
+        // Update the config if changes were made
+        if (configChanged) {
+            organisationConfig.getSettings().put(settingsKeyName, updatedSettings);
+            organisationConfigRepository.save(organisationConfig);
+        }
     }
 }

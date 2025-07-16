@@ -14,6 +14,7 @@ import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.SubjectTypeSetting;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -22,7 +23,6 @@ import org.avni.server.web.request.CustomRegistrationLocationTypeContract;
 import org.avni.server.web.request.FormMappingContract;
 import org.avni.server.web.request.application.FormContractWeb;
 import org.avni.server.web.request.webapp.IndividualRelationContract;
-import org.avni.server.domain.SubjectTypeSetting;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -117,7 +117,9 @@ public class OperationalModulesController {
         CustomRegistrationLocationTypeContract customRegistrationLocationTypeContract = new CustomRegistrationLocationTypeContract();
         customRegistrationLocationTypeContract.setSubjectTypeUUID(lt.getSubjectTypeUUID());
         List<AddressLevelTypeContract> addressLevelTypeContractList = lt.getLocationTypeUUIDs().stream()
-                .map(uuid -> AddressLevelTypeContract.fromAddressLevelType(addressLevelTypeRepository.findByUuid(uuid)))
+                .map(addressLevelTypeRepository::findByUuid)
+                .filter(addressLevelType -> addressLevelType != null && !addressLevelType.isVoided())
+                .map(AddressLevelTypeContract::fromAddressLevelType)
                 .collect(Collectors.toList());
         customRegistrationLocationTypeContract.setAddressLevels(addressLevelTypeContractList);
         return customRegistrationLocationTypeContract;

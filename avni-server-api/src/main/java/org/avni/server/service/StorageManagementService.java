@@ -2,7 +2,7 @@ package org.avni.server.service;
 
 import jakarta.persistence.EntityManager;
 import org.avni.server.dao.DbRoleRepository;
-import org.avni.server.domain.ArchivalConfig;
+import org.avni.server.domain.StorageManagementConfig;
 import org.avni.server.domain.Organisation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class StorageManagementService {
         }
     }
 
-    public List<Long> getNextSubjectIds(ArchivalConfig archivalConfig) {
+    public List<Long> getNextSubjectIds(StorageManagementConfig storageManagementConfig) {
         String query = String.format("""
                         SELECT ind.id FROM public.individual ind
                             join (%s) as user_query on user_query.id = ind.id
@@ -61,7 +61,7 @@ public class StorageManagementService {
                             order by ind.id
                          limit 100
                         """,
-                archivalConfig.getSqlQuery().replace(";", ""), archivalConfig.getOrganisationId());
+                storageManagementConfig.getSqlQuery().replace(";", ""), storageManagementConfig.getOrganisationId());
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getLong("id"));
     }
 

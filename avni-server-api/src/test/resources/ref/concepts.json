@@ -49,11 +49,13 @@
     "dataType": "Coded",
     "answers": [
       {
-        "uuid": "28e76608-dddd-4914-bd44-3689eccfa5ca"
+        "uuid": "28e76608-dddd-4914-bd44-3689eccfa5ca",
+        "name": "Yes, started"
       },
       {
         "name": "No",
-        "uuid": "e7b50c78-3d90-484d-a224-9887887780dc"
+        "uuid": "e7b50c78-3d90-484d-a224-9887887780dc",
+        "comment": "This is a comment for the answer"
       }
     ]
   }

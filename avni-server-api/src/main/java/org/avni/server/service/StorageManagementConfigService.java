@@ -1,9 +1,9 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.ArchivalConfigRepository;
-import org.avni.server.domain.ArchivalConfig;
+import org.avni.server.dao.StorageManagementConfigRepository;
+import org.avni.server.domain.StorageManagementConfig;
 import org.avni.server.domain.ValidationException;
-import org.avni.server.web.contract.ArchivalConfigContract;
+import org.avni.server.web.contract.StorageManagementConfigContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +19,14 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Service
-public class ArchivalConfigService {
-    private final ArchivalConfigRepository archivalConfigRepository;
+public class StorageManagementConfigService {
+    private final StorageManagementConfigRepository storageManagementConfigRepository;
     private final JdbcTemplate jdbcTemplate;
-    private static final Logger logger = LoggerFactory.getLogger(ArchivalConfigService.class);
+    private static final Logger logger = LoggerFactory.getLogger(StorageManagementConfigService.class);
 
     @Autowired
-    public ArchivalConfigService(ArchivalConfigRepository archivalConfigRepository, JdbcTemplate jdbcTemplate) {
-        this.archivalConfigRepository = archivalConfigRepository;
+    public StorageManagementConfigService(StorageManagementConfigRepository storageManagementConfigRepository, JdbcTemplate jdbcTemplate) {
+        this.storageManagementConfigRepository = storageManagementConfigRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -42,43 +42,43 @@ public class ArchivalConfigService {
         }
     }
 
-    public ArchivalConfig saveOrUpdate(ArchivalConfigContract configContract) throws ValidationException {
+    public StorageManagementConfig saveOrUpdate(StorageManagementConfigContract configContract) throws ValidationException {
         String errorMessage = this.validateQuery(configContract.getSqlQuery());
         if (errorMessage != null) {
             logger.warn("Validation failed for query: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-        ArchivalConfig existingArchivalConfig = archivalConfigRepository.findByUuid(configContract.getUuid());
-        ArchivalConfig archivalConfig = existingArchivalConfig != null ? existingArchivalConfig : new ArchivalConfig();
-        archivalConfig.setSqlQuery(configContract.getSqlQuery());
-        archivalConfig.setRealmQuery(configContract.getRealmQuery());
-        archivalConfig.setBatchSize(configContract.getBatchSize());
-        archivalConfig.setVoided(configContract.isVoided());
-        archivalConfig.assignUUIDIfRequired();
-        archivalConfig.updateAudit();
-        return archivalConfigRepository.save(archivalConfig);
+        StorageManagementConfig existingStorageManagementConfig = storageManagementConfigRepository.findByUuid(configContract.getUuid());
+        StorageManagementConfig storageManagementConfig = existingStorageManagementConfig != null ? existingStorageManagementConfig : new StorageManagementConfig();
+        storageManagementConfig.setSqlQuery(configContract.getSqlQuery());
+        storageManagementConfig.setRealmQuery(configContract.getRealmQuery());
+        storageManagementConfig.setBatchSize(configContract.getBatchSize());
+        storageManagementConfig.setVoided(configContract.isVoided());
+        storageManagementConfig.assignUUIDIfRequired();
+        storageManagementConfig.updateAudit();
+        return storageManagementConfigRepository.save(storageManagementConfig);
     }
 
-    public ArchivalConfig getArchivalConfig() {
-        List<ArchivalConfig> archivalConfigs = archivalConfigRepository.findByIsVoidedFalse();
-        if (archivalConfigs.isEmpty()) {
+    public StorageManagementConfig getStorageManagementConfig() {
+        List<StorageManagementConfig> storageManagementConfigs = storageManagementConfigRepository.findByIsVoidedFalse();
+        if (storageManagementConfigs.isEmpty()) {
             return null;
         }
-        return archivalConfigs.get(0);
+        return storageManagementConfigs.get(0);
     }
 
-    public List<ArchivalConfig> getAllArchivalConfigs() {
-        return archivalConfigRepository.findByIsVoidedFalse();
+    public List<StorageManagementConfig> getAllStorageManagementConfigs() {
+        return storageManagementConfigRepository.findByIsVoidedFalse();
     }
 
-    public ArchivalConfigContract toContract(ArchivalConfig archivalConfig) {
-        ArchivalConfigContract contract = new ArchivalConfigContract();
-        contract.setId(archivalConfig.getId());
-        contract.setUuid(archivalConfig.getUuid());
-        contract.setVoided(archivalConfig.isVoided());
-        contract.setSqlQuery(archivalConfig.getSqlQuery());
-        contract.setRealmQuery(archivalConfig.getRealmQuery());
-        contract.setBatchSize(archivalConfig.getBatchSize());
+    public StorageManagementConfigContract toContract(StorageManagementConfig storageManagementConfig) {
+        StorageManagementConfigContract contract = new StorageManagementConfigContract();
+        contract.setId(storageManagementConfig.getId());
+        contract.setUuid(storageManagementConfig.getUuid());
+        contract.setVoided(storageManagementConfig.isVoided());
+        contract.setSqlQuery(storageManagementConfig.getSqlQuery());
+        contract.setRealmQuery(storageManagementConfig.getRealmQuery());
+        contract.setBatchSize(storageManagementConfig.getBatchSize());
         return contract;
     }
 

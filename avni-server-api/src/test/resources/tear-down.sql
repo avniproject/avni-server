@@ -97,7 +97,7 @@ delete from dashboard_section where 1 = 1;
 delete from dashboard_filter where 1 = 1;
 delete from dashboard where 1 = 1;
 DELETE FROM groups where 1 = 1;
-delete from archival_config where 1 = 1;
+delete from storage_management_config where 1 = 1;
 DELETE FROM users where username <> 'admin';
 DELETE FROM organisation where name <> 'OpenCHS';
 DELETE FROM audit where 1 = 1;

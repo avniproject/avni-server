@@ -33,7 +33,6 @@ public class FormMappingsIntegrationTest extends AbstractControllerIntegrationTe
         post("/programs", getJSON("/ref/program.json"));
     }
 
-
     @Test
     public void shouldCreateFormMappings() throws IOException {
         Object json = getJSON("/ref/formMappings/formMappings.json");

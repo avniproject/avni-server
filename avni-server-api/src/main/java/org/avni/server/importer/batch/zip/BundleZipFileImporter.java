@@ -263,7 +263,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "addressLevelTypes.json":
                 AddressLevelTypeContract[] addressLevelTypeContracts = convertString(fileData, AddressLevelTypeContract[].class);
-                locationService.createAddressLevelTypes(addressLevelTypeContracts);
+                locationService.createAddressLevelTypes(organisation, addressLevelTypeContracts);
                 break;
             case "locations.json":
                 LocationContract[] locationContracts = convertString(fileData, LocationContract[].class);
@@ -303,7 +303,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "concepts.json":
                 ConceptContract[] conceptContracts = convertString(fileData, ConceptContract[].class);
-                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts));
+                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts), ConceptContract.RequestType.Bundle);
                 break;
             case "formMappings.json":
                 FormMappingContract[] formMappingContracts = convertString(fileData, FormMappingContract[].class);
@@ -423,6 +423,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 String conceptUuid = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 Concept concept = conceptRepository.findByUuid(conceptUuid);
                 concept.setMediaUrl(medias3ObjectKey);
+                concept.setMediaType(Concept.MediaType.Image);
                 conceptRepository.save(concept);
                 break;
         }

@@ -3,7 +3,7 @@ package org.avni.server.web;
 import jakarta.transaction.Transactional;
 import org.avni.server.backgroundJob.StorageManagementJob;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.ArchivalConfigRepository;
+import org.avni.server.dao.StorageManagementConfigRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -74,7 +74,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
     private StorageManagementJob storageManagementJob;
     @Autowired
-    private ArchivalConfigRepository archivalConfigRepository;
+    private StorageManagementConfigRepository storageManagementConfigRepository;
 
     private TestDataSetupService.TestOrganisationData organisationData;
     private TestDataSetupService.TestCatchmentData catchmentData;
@@ -365,11 +365,11 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertFalse(hasEntity(enrolmentAssigned, enrolments));
     }
 
-    private void saveArchivalConfig(String query) {
-        ArchivalConfig archivalConfig = new ArchivalConfig();
-        archivalConfig.setSqlQuery(query);
-        archivalConfig.setUuid(UUID.randomUUID().toString());
-        archivalConfigRepository.save(archivalConfig);
+    private void saveStorageManagementConfig(String query) {
+        StorageManagementConfig storageManagementConfig = new StorageManagementConfig();
+        storageManagementConfig.setSqlQuery(query);
+        storageManagementConfig.setUuid(UUID.randomUUID().toString());
+        storageManagementConfigRepository.save(storageManagementConfig);
     }
 
     @Test
@@ -410,7 +410,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         setUser(organisationData.getUser().getUsername());
 
         // Disable syncs
-        saveArchivalConfig("select id from public.individual");
+        saveStorageManagementConfig("select id from public.individual");
         storageManagementJob.manage();
 
         List syncDetails = testSyncService.getSyncDetails();
