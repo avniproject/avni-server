@@ -83,7 +83,7 @@ public class ConceptService implements NonScopeAwareService {
 
         if (concept == null && StringUtils.hasText(name)) {
             existingConceptWithSameName = conceptRepository.findByName(name.trim());
-            if (existingConceptWithSameName != null && !existingConceptWithSameName.getUuid().equals(uuid)) {
+            if (existingConceptWithSameName != null && StringUtils.hasText(uuid) && !existingConceptWithSameName.getUuid().equals(uuid)) {
                 throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
                         name.trim(), existingConceptWithSameName.getUuid()));
             }
