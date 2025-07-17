@@ -25,7 +25,8 @@ public enum ConceptDataType {
     Audio,
     File,
     QuestionGroup,
-    Encounter;
+    Encounter,
+    Signature;
 
     private static final List<ConceptDataType> dateTypes = Arrays.asList(Date, DateTime, Duration, Time);
     public static final List<ConceptDataType> dashboardFilterSupportedTypes = Arrays.asList(Numeric, Text, Notes, Coded, Date, DateTime, Time, Id, Location);
