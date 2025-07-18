@@ -70,7 +70,7 @@ public class ConceptService implements NonScopeAwareService {
         return jsonMap;
     }
 
-    private Concept fetchOrCreateConcept(ConceptContract conceptRequest) {
+    private Concept fetchOrCreateConcept(ConceptContract conceptRequest, ConceptContract.RequestType requestType) {
         if (conceptRequest == null) {
             throw new BadRequestError("Concept request cannot be null");
         }
@@ -83,7 +83,8 @@ public class ConceptService implements NonScopeAwareService {
 
         if (concept == null && StringUtils.hasText(name)) {
             existingConceptWithSameName = conceptRepository.findByName(name.trim());
-            if (existingConceptWithSameName != null && StringUtils.hasText(uuid) && !existingConceptWithSameName.getUuid().equals(uuid)) {
+            if (existingConceptWithSameName != null &&
+                    (requestType.equals(ConceptContract.RequestType.Inline) ? StringUtils.hasText(uuid) : !existingConceptWithSameName.getUuid().equals(uuid))) {
                 throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
                         name.trim(), existingConceptWithSameName.getUuid()));
             }
@@ -187,7 +188,8 @@ public class ConceptService implements NonScopeAwareService {
             logger.info("Processing concept: {} {}", conceptRequest.getName(), conceptRequest.getUuid());
             List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequest);
             for (ConceptContract answerConceptRequest : answerConcepts) {
-                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest);
+                ConceptContract.RequestType getAnswerConceptRequestType = requestType.equals(ConceptContract.RequestType.Bundle) ? ConceptContract.RequestType.Bundle : ConceptContract.RequestType.Inline;
+                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, getAnswerConceptRequestType);
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
@@ -204,7 +206,7 @@ public class ConceptService implements NonScopeAwareService {
                 addToMigrationIfRequired(answerConceptRequest);
             }
 
-            Concept concept = fetchOrCreateConcept(conceptRequest);
+            Concept concept = fetchOrCreateConcept(conceptRequest, requestType);
             String dataType = getDataType(conceptRequest, concept);
             concept.setName(conceptRequest.getName());
             concept.setDataType(dataType);
