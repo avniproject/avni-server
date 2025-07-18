@@ -235,9 +235,17 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         secondAnswer.setUuid(secondAnswerUUID);
         secondAnswer.setName("Answer 2");
         secondAnswer.setDataType("NA");
-        firstAnswer.setAbnormal(true);
+        secondAnswer.setAbnormal(true);
 
-        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+        String thirdAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract thirdAnswer = new ConceptContract();
+        thirdAnswer.setUuid(thirdAnswerUUID);
+        thirdAnswer.setName("Answer 3");
+        thirdAnswer.setDataType("NA");
+        thirdAnswer.setAbnormal(false);
+        thirdAnswer.setUnique(false);
+
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer, thirdAnswer));
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
 
         // Act
@@ -246,18 +254,24 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         secondAnswer.setUnique(true);
         secondAnswer.setAbnormal(false);
         secondAnswer.setMediaUrl("bar");
+        thirdAnswer.setVoided(true);
 
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
 
         // Assert
         Concept concept = conceptRepository.findByUuid(uuid);
+        Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
+        Concept thirdAnswerConcept = conceptRepository.findByUuid(thirdAnswerUUID);
 
         assertFalse(concept.getConceptAnswer(firstAnswerUUID).isUnique());
         assertTrue(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
         assertTrue(concept.getConceptAnswer(secondAnswerUUID).isUnique());
         assertFalse(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
+        assertTrue(secondAnswerConcept.getMediaUrl().equals("bar"));
         assertEquals("foo", concept.getAnswerConcept("Answer 1").getMediaUrl());
         assertEquals("bar", concept.getAnswerConcept("Answer 2").getMediaUrl());
+        assertNull(concept.getConceptAnswer(thirdAnswerUUID));
+        assertFalse(thirdAnswerConcept.isVoided());
     }
 
     @Test
