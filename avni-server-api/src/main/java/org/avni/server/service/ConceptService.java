@@ -199,13 +199,11 @@ public class ConceptService implements NonScopeAwareService {
             concept.setName(conceptRequest.getName());
             concept.setDataType(dataType);
 
-            if (!requestType.equals(ConceptContract.RequestType.Inline)) {
-                // inline creation doesn't provide these fields on parent concepts
-                concept.setVoided(conceptRequest.isVoided());
-                concept.setActive(conceptRequest.getActive());
-                concept.setKeyValues(conceptRequest.getKeyValues());
-                updateMediaInfo(conceptRequest, concept);
-            }
+            // inline creation doesn't provide these fields on parent concepts
+            concept.setVoided(conceptRequest.isVoided());
+            concept.setActive(conceptRequest.getActive());
+            concept.setKeyValues(conceptRequest.getKeyValues());
+            updateMediaInfo(conceptRequest, concept);
             concept.updateAudit();
 
             switch (ConceptDataType.valueOf(dataType)) {
