@@ -188,14 +188,7 @@ public class ConceptService implements NonScopeAwareService {
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
-
-                if (!requestType.equals(ConceptContract.RequestType.Inline)) {
-                    // inline creation doesn't provide these fields on answer concepts
-                    answerConcept.setVoided(answerConceptRequest.isVoided());
-                    answerConcept.setActive(answerConceptRequest.getActive());
-                    answerConcept.setKeyValues(answerConceptRequest.getKeyValues());
-                    updateMediaInfo(answerConceptRequest, answerConcept);
-                }
+                updateMediaInfo(answerConceptRequest, answerConcept);
                 answerConcept.updateAudit();
                 conceptRepository.save(answerConcept);
                 addToMigrationIfRequired(answerConceptRequest);
