@@ -586,9 +586,74 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         firstAnswer = new ConceptContract();
         firstAnswer.setUuid(firstAnswerUUID);
         firstAnswer.setName("Answer 1");
+        firstAnswer.setAbnormal(true);
         secondAnswer = new ConceptContract();
         secondAnswer.setUuid(secondAnswerUUID);
         secondAnswer.setName("Answer 2");
+        secondAnswer.setUnique(true);
+
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Bundle);
+
+        // Assert
+        Concept concept = conceptRepository.findByUuid(uuid);
+
+        assertTrue(concept.getName().equals("Test Coded Concept New"));
+        assertTrue(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isUnique());
+        assertFalse(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
+        assertTrue(concept.getConceptAnswer(secondAnswerUUID).isUnique());
+    }
+
+    @Test
+    public void bundleUploadRemovalOfAnswerConceptShouldNotVoidConceptItself() {
+        // Arrange
+        String uuid = UUID.randomUUID().toString();
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Coded Concept");
+        conceptContract.setDataType("Coded");
+
+        String firstAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        firstAnswer.setDataType("NA");
+        firstAnswer.setUnique(true);
+        firstAnswer.setAbnormal(false);
+
+        String secondAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+        secondAnswer.setDataType("NA");
+        secondAnswer.setUnique(false);
+        secondAnswer.setAbnormal(true);
+
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        // Act
+        conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Coded Concept New");
+        conceptContract.setDataType("Coded");
+
+        firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        firstAnswer.setDataType("NA");
+        firstAnswer.setUnique(true);
+        firstAnswer.setAbnormal(false);
+        firstAnswer.setVoided(false);
+        secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+        secondAnswer.setDataType("NA");
+        secondAnswer.setUnique(false);
+        secondAnswer.setAbnormal(true);
+        secondAnswer.setVoided(true); // Void this answer
 
         conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
 
@@ -599,7 +664,12 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
         assertTrue(concept.getConceptAnswer(firstAnswerUUID).isUnique());
         assertFalse(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
-        assertFalse(concept.getConceptAnswer(secondAnswerUUID).isUnique());
-        assertTrue(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isVoided());
+        assertNull(concept.getConceptAnswer(secondAnswerUUID));
+
+
+        // Assert
+        Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
+        assertFalse(secondAnswerConcept.isVoided());
     }
 }
