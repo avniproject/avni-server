@@ -100,6 +100,7 @@ public class ConceptService implements NonScopeAwareService {
     private Concept createConcept(String uuid) {
         Concept concept = new Concept();
         concept.assignUUID(uuid);
+        concept.setActive(true);
         return concept;
     }
 
