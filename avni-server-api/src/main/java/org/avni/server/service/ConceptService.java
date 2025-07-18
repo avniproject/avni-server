@@ -120,15 +120,9 @@ public class ConceptService implements NonScopeAwareService {
         conceptAnswer.setAnswerConcept(answerConcept);
         Double providedOrder = answerConceptRequest.getOrder();
         conceptAnswer.setOrder(providedOrder == null ? answerOrder : providedOrder);
-
-        if (requestType.equals(ConceptContract.RequestType.Bundle))
-            return conceptAnswer; // Bundle only provides the uuid of the child concepts, which is meant for association only
-
         conceptAnswer.setAbnormal(answerConceptRequest.isAbnormal());
         conceptAnswer.setUnique(answerConceptRequest.isUnique());
-
-        if (!requestType.equals(ConceptContract.RequestType.Inline))
-            conceptAnswer.setVoided(answerConceptRequest.isVoided()); // only create happens in the inline UI
+        conceptAnswer.setVoided(answerConceptRequest.isVoided()); // only create happens in the inline UI
         return conceptAnswer;
     }
 
