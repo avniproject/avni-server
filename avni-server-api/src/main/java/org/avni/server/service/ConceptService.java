@@ -70,7 +70,7 @@ public class ConceptService implements NonScopeAwareService {
         return jsonMap;
     }
 
-    private Concept fetchOrCreateConcept(ConceptContract conceptRequest, ConceptContract.RequestType requestType) {
+    private Concept fetchOrCreateConcept(ConceptContract conceptRequest, boolean ignoreAnswerConceptUUIDAbsence) {
         if (conceptRequest == null) {
             throw new BadRequestError("Concept request cannot be null");
         }
@@ -79,12 +79,11 @@ public class ConceptService implements NonScopeAwareService {
         String uuid = conceptRequest.getUuid();
         String name = conceptRequest.getName();
         Concept concept = conceptRepository.findByUuid(uuid);
-        Concept existingConceptWithSameName = null;
 
         if (concept == null && StringUtils.hasText(name)) {
-            existingConceptWithSameName = conceptRepository.findByName(name.trim());
+            Concept existingConceptWithSameName = conceptRepository.findByName(name.trim());
             if (existingConceptWithSameName != null &&
-                    (requestType.equals(ConceptContract.RequestType.Inline) ? StringUtils.hasText(uuid) : !existingConceptWithSameName.getUuid().equals(uuid))) {
+                    (ignoreAnswerConceptUUIDAbsence ? StringUtils.hasText(uuid) : !existingConceptWithSameName.getUuid().equals(uuid))) {
                 throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
                         name.trim(), existingConceptWithSameName.getUuid()));
             }
@@ -109,8 +108,7 @@ public class ConceptService implements NonScopeAwareService {
         return concept != null && !concept.getUuid().equals(conceptRequest.getUuid());
     }
 
-    private ConceptAnswer fetchOrCreateConceptAnswer(Concept concept, ConceptContract answerConceptRequest, double answerOrder,
-                                                     ConceptContract.RequestType requestType) {
+    private ConceptAnswer fetchOrCreateConceptAnswer(Concept concept, ConceptContract answerConceptRequest, double answerOrder) {
         ConceptAnswer conceptAnswer = concept.findConceptAnswerByConceptUUIDOrName(answerConceptRequest.getUuid(), answerConceptRequest.getName());
         if (conceptAnswer == null) {
             conceptAnswer = new ConceptAnswer();
@@ -122,17 +120,17 @@ public class ConceptService implements NonScopeAwareService {
         conceptAnswer.setOrder(providedOrder == null ? answerOrder : providedOrder);
         conceptAnswer.setAbnormal(answerConceptRequest.isAbnormal());
         conceptAnswer.setUnique(answerConceptRequest.isUnique());
-        conceptAnswer.setVoided(answerConceptRequest.isVoided()); // only create happens in the inline UI
+        conceptAnswer.setVoided(answerConceptRequest.isVoided());
         return conceptAnswer;
     }
 
-    private void createCodedConcept(Concept concept, ConceptContract conceptRequest, ConceptContract.RequestType requestType) {
+    private void createCodedConcept(Concept concept, ConceptContract conceptRequest) {
         Set<ConceptAnswer> existingAnswers = concept.getConceptAnswers();
         List<ConceptContract> answers = (List<ConceptContract>) O.coalesce(conceptRequest.getAnswers(), new ArrayList<>());
         AtomicInteger index = new AtomicInteger(0);
         List<ConceptAnswer> conceptAnswers = new ArrayList<>();
         for (ConceptContract answerContract : answers) {
-            ConceptAnswer conceptAnswer = fetchOrCreateConceptAnswer(concept, answerContract, (short) index.incrementAndGet(), requestType);
+            ConceptAnswer conceptAnswer = fetchOrCreateConceptAnswer(concept, answerContract, (short) index.incrementAndGet());
             conceptAnswers.add(conceptAnswer);
         }
         concept.addAll(conceptAnswers);
@@ -183,8 +181,7 @@ public class ConceptService implements NonScopeAwareService {
             logger.info("Processing concept: {} {}", conceptRequest.getName(), conceptRequest.getUuid());
             List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequest);
             for (ConceptContract answerConceptRequest : answerConcepts) {
-                ConceptContract.RequestType getAnswerConceptRequestType = requestType.equals(ConceptContract.RequestType.Bundle) ? ConceptContract.RequestType.Bundle : ConceptContract.RequestType.Inline;
-                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, getAnswerConceptRequestType);
+                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, !requestType.equals(ConceptContract.RequestType.Bundle));
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
@@ -194,12 +191,11 @@ public class ConceptService implements NonScopeAwareService {
                 addToMigrationIfRequired(answerConceptRequest);
             }
 
-            Concept concept = fetchOrCreateConcept(conceptRequest, requestType);
+            Concept concept = fetchOrCreateConcept(conceptRequest, false);
             String dataType = getDataType(conceptRequest, concept);
             concept.setName(conceptRequest.getName());
             concept.setDataType(dataType);
 
-            // inline creation doesn't provide these fields on parent concepts
             concept.setVoided(conceptRequest.isVoided());
             concept.setActive(conceptRequest.getActive());
             concept.setKeyValues(conceptRequest.getKeyValues());
@@ -208,7 +204,7 @@ public class ConceptService implements NonScopeAwareService {
 
             switch (ConceptDataType.valueOf(dataType)) {
                 case Coded:
-                    createCodedConcept(concept, conceptRequest, requestType);
+                    createCodedConcept(concept, conceptRequest);
                     break;
                 case Numeric:
                     setRangeValues(concept, conceptRequest);
