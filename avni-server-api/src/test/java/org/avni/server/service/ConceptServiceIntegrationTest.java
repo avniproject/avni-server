@@ -1,5 +1,7 @@
 package org.avni.server.service;
 
+import org.avni.server.application.KeyValue;
+import org.avni.server.application.KeyValues;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.avni.server.application.KeyType.TrueValue;
 import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -270,6 +273,80 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
         Concept thirdAnswerConcept = conceptRepository.findByUuid(thirdAnswerUUID);
 
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isUnique());
+        assertTrue(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
+        assertTrue(concept.getConceptAnswer(secondAnswerUUID).isUnique());
+        assertFalse(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
+        assertTrue(secondAnswerConcept.getMediaUrl().equals("bar"));
+        assertEquals("new-media-url", concept.getMediaUrl());
+        assertEquals("foo", concept.getAnswerConcept("Answer 1").getMediaUrl());
+        assertEquals("bar", concept.getAnswerConcept("Answer 2").getMediaUrl());
+        assertNull(concept.getConceptAnswer(thirdAnswerUUID));
+        assertFalse(thirdAnswerConcept.isVoided());
+    }
+
+    @Test
+    public void createCodedConceptShouldRetainAnswerKeyValues() {
+        String firstAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        firstAnswer.setDataType("NA");
+        firstAnswer.setUnique(true);
+        firstAnswer.setMediaUrl("foo");
+        KeyValues keyValues = new KeyValues();
+        keyValues.add(new KeyValue(TrueValue, "Value1"));
+        firstAnswer.setKeyValues(keyValues);
+
+        String secondAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+        secondAnswer.setDataType("NA");
+        secondAnswer.setAbnormal(true);
+
+        String thirdAnswerUUID = UUID.randomUUID().toString();
+        ConceptContract thirdAnswer = new ConceptContract();
+        thirdAnswer.setUuid(thirdAnswerUUID);
+        thirdAnswer.setName("Answer 3");
+        thirdAnswer.setDataType("NA");
+        thirdAnswer.setAbnormal(false);
+        thirdAnswer.setUnique(false);
+
+        conceptService.saveOrUpdateConcepts(List.of(firstAnswer, secondAnswer, thirdAnswer), ConceptContract.RequestType.Full);
+        Concept firstConcept = conceptRepository.findByUuid(firstAnswerUUID);
+        assertEquals(true, firstConcept.getKeyValues().containsKey(TrueValue));
+
+        // Arrange
+        String uuid = UUID.randomUUID().toString();
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Coded Concept");
+        conceptContract.setDataType("Coded");
+        conceptContract.setMediaUrl("original-media-url");
+
+        // Set up the concept with answers
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer, thirdAnswer));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        // Act
+        conceptContract.setMediaUrl("new-media-url");
+        firstAnswer.setUnique(false);
+        firstAnswer.setAbnormal(true);
+        secondAnswer.setUnique(true);
+        secondAnswer.setAbnormal(false);
+        secondAnswer.setMediaUrl("bar");
+        thirdAnswer.setVoided(true);
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        // Assert
+        Concept concept = conceptRepository.findByUuid(uuid);
+        Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
+        Concept thirdAnswerConcept = conceptRepository.findByUuid(thirdAnswerUUID);
+        firstConcept = conceptRepository.findByUuid(firstAnswerUUID);
+
+
+        assertEquals(true, firstConcept.getKeyValues().containsKey(TrueValue));
         assertFalse(concept.getConceptAnswer(firstAnswerUUID).isUnique());
         assertTrue(concept.getConceptAnswer(firstAnswerUUID).isAbnormal());
         assertTrue(concept.getConceptAnswer(secondAnswerUUID).isUnique());
