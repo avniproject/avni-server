@@ -882,4 +882,60 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         assertEquals("new-media-url", naAnswerConcept.getMediaUrl());
         assertEquals("new-media-url", codedConcept.getAnswerConcept("NA Concept with Media").getMediaUrl());
     }
+
+    @Test
+    public void shouldVoidConceptAnswerWhenAnswerIsRemoved() {
+        // Create a concept with two answers
+        String uuid = UUID.randomUUID().toString();
+        String firstAnswerUUID = UUID.randomUUID().toString();
+        String secondAnswerUUID = UUID.randomUUID().toString();
+
+        // Create initial concept with two answers
+        ConceptContract firstAnswer = new ConceptContract();
+        firstAnswer.setUuid(firstAnswerUUID);
+        firstAnswer.setName("Answer 1");
+        firstAnswer.setDataType("NA");
+        firstAnswer.setOrder(1.0);
+
+        ConceptContract secondAnswer = new ConceptContract();
+        secondAnswer.setUuid(secondAnswerUUID);
+        secondAnswer.setName("Answer 2");
+        secondAnswer.setDataType("NA");
+        secondAnswer.setOrder(2.0);
+
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Test Concept");
+        conceptContract.setDataType("Coded");
+        conceptContract.setActive(true);
+        conceptContract.setAnswers(List.of(firstAnswer, secondAnswer));
+
+        // Save initial concept with both answers
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Bundle);
+
+        // Verify both answers exist and are not voided
+        Concept concept = conceptRepository.findByUuid(uuid);
+        assertNotNull(concept.getConceptAnswer(firstAnswerUUID));
+        assertNotNull(concept.getConceptAnswer(secondAnswerUUID));
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isVoided());
+        assertFalse(concept.getConceptAnswer(secondAnswerUUID).isVoided());
+
+        // Remove the second answer by not including it in the update
+        conceptContract.setAnswers(List.of(firstAnswer));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Bundle);
+
+        // Reload the concept
+        concept = conceptRepository.findByUuid(uuid);
+
+        // The first answer should still exist and not be voided
+        assertNotNull(concept.getConceptAnswer(firstAnswerUUID));
+        assertFalse(concept.getConceptAnswer(firstAnswerUUID).isVoided());
+
+        // The second answer should still exist but be voided
+        assertTrue(concept.findConceptAnswerByConceptUUID(secondAnswerUUID).isVoided());
+
+        // The answer concept itself should not be voided
+        Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
+        assertFalse(secondAnswerConcept.isVoided());
+    }
 }

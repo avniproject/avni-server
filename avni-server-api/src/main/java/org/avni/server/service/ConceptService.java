@@ -138,6 +138,9 @@ public class ConceptService implements NonScopeAwareService {
         List<ConceptAnswer> existingAnswersList = new ArrayList<>(existingAnswers);
         existingAnswersList.forEach(existingAnswer -> {
             if (!conceptAnswers.contains(existingAnswer)) {
+                ConceptAnswer removedAnswer = getAnswer(concept.getUuid(), existingAnswer.getAnswerConcept().getUuid());
+                removedAnswer.setVoided(true);
+                conceptAnswerRepository.save(removedAnswer);
                 concept.removeAnswer(existingAnswer);
             }
         });
