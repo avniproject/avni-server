@@ -175,6 +175,20 @@ public class ConceptService implements NonScopeAwareService {
         }
     }
 
+    private static void updateMediaInfo(ConceptContract conceptRequest, Concept concept, boolean ignoreConceptRequestMediaAbsence) {
+        if (StringUtils.hasText(conceptRequest.getMediaUrl())) {
+            concept.setMediaType(Concept.MediaType.Image);
+            concept.setMediaUrl(conceptRequest.getMediaUrl());
+        } else {
+            if (ignoreConceptRequestMediaAbsence && StringUtils.hasText(concept.getMediaUrl())) {
+                return; // Ignore if no media URL is provided, and we should not remove the existing media info
+            } else {
+                concept.setMediaType(null);
+                concept.setMediaUrl(null);
+            }
+        }
+    }
+
     public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests, ConceptContract.RequestType requestType) {
         ArrayList<Concept> concepts = new ArrayList<>();
         for (ConceptContract conceptRequest : conceptRequests) {
@@ -185,7 +199,7 @@ public class ConceptService implements NonScopeAwareService {
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
-                updateMediaInfo(answerConceptRequest, answerConcept);
+                updateMediaInfo(answerConceptRequest, answerConcept, true);
                 answerConcept.updateAudit();
                 conceptRepository.save(answerConcept);
                 addToMigrationIfRequired(answerConceptRequest);
@@ -199,7 +213,7 @@ public class ConceptService implements NonScopeAwareService {
             concept.setVoided(conceptRequest.isVoided());
             concept.setActive(conceptRequest.getActive());
             concept.setKeyValues(conceptRequest.getKeyValues());
-            updateMediaInfo(conceptRequest, concept);
+            updateMediaInfo(conceptRequest, concept, false);
             concept.updateAudit();
 
             switch (ConceptDataType.valueOf(dataType)) {
@@ -217,16 +231,6 @@ public class ConceptService implements NonScopeAwareService {
         return concepts.stream()
                 .map(Concept::getUuid)
                 .collect(Collectors.toList());
-    }
-
-    private static void updateMediaInfo(ConceptContract conceptRequest, Concept answerConcept) {
-        if (StringUtils.hasText(conceptRequest.getMediaUrl())) {
-            answerConcept.setMediaType(Concept.MediaType.Image);
-            answerConcept.setMediaUrl(conceptRequest.getMediaUrl());
-        } else {
-            answerConcept.setMediaType(null);
-            answerConcept.setMediaUrl(null);
-        }
     }
 
     private void assertNotDuplicate(ConceptContract conceptRequest) {

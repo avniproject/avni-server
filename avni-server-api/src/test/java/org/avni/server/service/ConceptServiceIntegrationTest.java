@@ -182,14 +182,18 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         initialConcept.setUuid(uuid);
         initialConcept.setName("Initial Name");
         initialConcept.setDataType("Coded");
+        initialConcept.setMediaUrl("original-media-url");
 
         conceptService.saveOrUpdateConcepts(List.of(initialConcept), ConceptContract.RequestType.Full);
+        Concept initialConceptEntity = conceptRepository.findByUuid(uuid);
+        assertEquals("original-media-url", initialConceptEntity.getMediaUrl());   // Media URL should be present
 
         // Arrange - Now to update
         ConceptContract updatedConcept = new ConceptContract();
         updatedConcept.setUuid(uuid); // Same UUID
         updatedConcept.setName("Updated Name");
         updatedConcept.setDataType("Coded");
+        updatedConcept.setMediaUrl(null); // Clear media URL
 
         String answerUuid = UUID.randomUUID().toString();
         ConceptContract answerContract = new ConceptContract();
@@ -206,6 +210,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         Concept updatedConceptEntity = conceptRepository.findByUuid(uuid);
         assertNotNull(updatedConceptEntity);
         assertEquals("Updated Name", updatedConceptEntity.getName()); // Name should be updated
+        assertEquals(null, updatedConceptEntity.getMediaUrl());   // Media URL should be updated
 
         // Even though we passed an answer, the dataType doesn't change
         assertEquals(ConceptDataType.Coded.name(), updatedConceptEntity.getDataType());
@@ -221,6 +226,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptContract.setUuid(uuid);
         conceptContract.setName("Test Coded Concept");
         conceptContract.setDataType("Coded");
+        conceptContract.setMediaUrl("original-media-url");
 
         String firstAnswerUUID = UUID.randomUUID().toString();
         ConceptContract firstAnswer = new ConceptContract();
@@ -249,6 +255,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
 
         // Act
+        conceptContract.setMediaUrl("new-media-url");
         firstAnswer.setUnique(false);
         firstAnswer.setAbnormal(true);
         secondAnswer.setUnique(true);
@@ -268,6 +275,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         assertTrue(concept.getConceptAnswer(secondAnswerUUID).isUnique());
         assertFalse(concept.getConceptAnswer(secondAnswerUUID).isAbnormal());
         assertTrue(secondAnswerConcept.getMediaUrl().equals("bar"));
+        assertEquals("new-media-url", concept.getMediaUrl());
         assertEquals("foo", concept.getAnswerConcept("Answer 1").getMediaUrl());
         assertEquals("bar", concept.getAnswerConcept("Answer 2").getMediaUrl());
         assertNull(concept.getConceptAnswer(thirdAnswerUUID));
@@ -685,5 +693,116 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         // Assert
         Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
         assertFalse(secondAnswerConcept.isVoided());
+    }
+
+    @Test
+    public void shouldRetainMediaContentWhenAddingNAConceptAsAnswerWithoutMediaContent() {
+        // Arrange - First create a NA concept with mediaUrl
+        String naConceptUUID = UUID.randomUUID().toString();
+        ConceptContract naConceptContract = new ConceptContract();
+        naConceptContract.setUuid(naConceptUUID);
+        naConceptContract.setName("NA Concept with Media");
+        naConceptContract.setDataType("NA");
+        naConceptContract.setMediaUrl("original-media-url");
+
+        conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Full);
+
+        // Create a Coded concept
+        String codedConceptUUID = UUID.randomUUID().toString();
+        ConceptContract codedConceptContract = new ConceptContract();
+        codedConceptContract.setUuid(codedConceptUUID);
+        codedConceptContract.setName("Coded Concept");
+        codedConceptContract.setDataType("Coded");
+
+        // Act - Add the NA concept as an answer without specifying media content
+        ConceptContract answerContract = new ConceptContract();
+        answerContract.setUuid(EMPTY_STRING);
+        answerContract.setName("NA Concept with Media");
+        // Note: Not setting mediaUrl here to test retention
+
+        codedConceptContract.setAnswers(List.of(answerContract));
+        conceptService.saveOrUpdateConcepts(List.of(codedConceptContract), ConceptContract.RequestType.Full);
+
+        // Assert - Media content should be retained
+        Concept codedConcept = conceptRepository.findByUuid(codedConceptUUID);
+        Concept naAnswerConcept = conceptRepository.findByUuid(naConceptUUID);
+
+        assertNotNull(codedConcept.getConceptAnswer(naConceptUUID));
+        assertEquals("original-media-url", naAnswerConcept.getMediaUrl());
+        assertEquals("original-media-url", codedConcept.getAnswerConcept("NA Concept with Media").getMediaUrl());
+    }
+
+    @Test
+    public void shouldRetainMediaContentWhenAddingNAConceptAsAnswerWithoutMediaContentBundle() {
+        // Arrange - First create a NA concept with mediaUrl
+        String naConceptUUID = UUID.randomUUID().toString();
+        ConceptContract naConceptContract = new ConceptContract();
+        naConceptContract.setUuid(naConceptUUID);
+        naConceptContract.setName("NA Concept with Media");
+        naConceptContract.setDataType("NA");
+        naConceptContract.setMediaUrl("original-media-url");
+
+        conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Bundle);
+
+        // Create a Coded concept
+        String codedConceptUUID = UUID.randomUUID().toString();
+        ConceptContract codedConceptContract = new ConceptContract();
+        codedConceptContract.setUuid(codedConceptUUID);
+        codedConceptContract.setName("Coded Concept");
+        codedConceptContract.setDataType("Coded");
+
+        // Act - Add the NA concept as an answer without specifying media content
+        ConceptContract answerContract = new ConceptContract();
+        answerContract.setUuid(naConceptUUID);
+        answerContract.setName("NA Concept with Media");
+        // Note: Not setting mediaUrl here to test retention
+
+        codedConceptContract.setAnswers(List.of(answerContract));
+        conceptService.saveOrUpdateConcepts(List.of(codedConceptContract), ConceptContract.RequestType.Bundle);
+
+        // Assert - Media content should be retained
+        Concept codedConcept = conceptRepository.findByUuid(codedConceptUUID);
+        Concept naAnswerConcept = conceptRepository.findByUuid(naConceptUUID);
+
+        assertNotNull(codedConcept.getConceptAnswer(naConceptUUID));
+        assertEquals("original-media-url", naAnswerConcept.getMediaUrl());
+        assertEquals("original-media-url", codedConcept.getAnswerConcept("NA Concept with Media").getMediaUrl());
+    }
+
+    @Test
+    public void shouldUpdateMediaContentWhenAddingNAConceptAsAnswerWithPreviousMediaContent() {
+        // Arrange - First create a NA concept with mediaUrl
+        String naConceptUUID = UUID.randomUUID().toString();
+        ConceptContract naConceptContract = new ConceptContract();
+        naConceptContract.setUuid(naConceptUUID);
+        naConceptContract.setName("NA Concept with Media");
+        naConceptContract.setDataType("NA");
+        naConceptContract.setMediaUrl("original-media-url");
+
+        conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Full);
+
+        // Create a Coded concept
+        String codedConceptUUID = UUID.randomUUID().toString();
+        ConceptContract codedConceptContract = new ConceptContract();
+        codedConceptContract.setUuid(codedConceptUUID);
+        codedConceptContract.setName("Coded Concept");
+        codedConceptContract.setDataType("Coded");
+
+        // Act - Add the NA concept as an answer while updating media content
+        ConceptContract answerContract = new ConceptContract();
+        answerContract.setUuid(EMPTY_STRING);
+        answerContract.setName("NA Concept with Media");
+        answerContract.setMediaUrl("new-media-url");
+
+        codedConceptContract.setAnswers(List.of(answerContract));
+        conceptService.saveOrUpdateConcepts(List.of(codedConceptContract), ConceptContract.RequestType.Full);
+
+        // Assert - Media content should be updated
+        Concept codedConcept = conceptRepository.findByUuid(codedConceptUUID);
+        Concept naAnswerConcept = conceptRepository.findByUuid(naConceptUUID);
+
+        assertNotNull(codedConcept.getConceptAnswer(naConceptUUID));
+        assertEquals("new-media-url", naAnswerConcept.getMediaUrl());
+        assertEquals("new-media-url", codedConcept.getAnswerConcept("NA Concept with Media").getMediaUrl());
     }
 }
