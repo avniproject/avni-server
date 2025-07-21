@@ -43,7 +43,7 @@ public class Concept extends OrganisationAwareEntity {
 
     private Boolean active;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept", orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept")
     @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Set<ConceptAnswer> conceptAnswers = new HashSet<>();
 
