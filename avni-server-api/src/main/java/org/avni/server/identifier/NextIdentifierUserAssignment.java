@@ -2,6 +2,7 @@ package org.avni.server.identifier;
 
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.IdentifierUserAssignment;
+import org.avni.server.domain.identifier.IdentifierGeneratorType;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -59,7 +60,7 @@ public class NextIdentifierUserAssignment {
         String identifierEnd = assignment.getIdentifierEnd();
 
         IdentifierSource identifierSource = assignment.getIdentifierSource();
-        String prefix = identifierSource.getPrefix();
+        String prefix = identifierSource.getType().equals(IdentifierGeneratorType.userPoolBasedIdentifierGenerator) ? identifierSource.getPrefix() : assignment.getAssignedTo().getUserSettings().getIdPrefix();
 
         String lastAssignedNumericStr = lastAssignedIdentifier.replaceFirst(prefix, "");
         String endNumericStr = identifierEnd.replaceFirst(prefix, "");
