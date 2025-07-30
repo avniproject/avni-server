@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -73,6 +74,12 @@ public class MetabaseConnector {
         HttpHeaders headers = getHeaders();
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         return restTemplate.exchange(url, HttpMethod.GET, entity, responseType).getBody();
+    }
+
+    protected <T> T getForObject(String url, ParameterizedTypeReference responseTypeReference) {
+        HttpHeaders headers = getHeaders();
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        return (T) restTemplate.exchange(url, HttpMethod.GET, entity, responseTypeReference).getBody();
     }
 
     protected <T> T deleteForObject(String url, Class<T> responseType) {

@@ -147,6 +147,8 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
 
     User findTopByOrderByIdDesc();
 
+    List<User> findAllByEmailIgnoreCaseAndIsVoidedFalse(String email);
+
     default User getLatestUser() {
         return this.findTopByOrderByIdDesc();
     }
