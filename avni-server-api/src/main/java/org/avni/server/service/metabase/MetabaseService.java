@@ -1,6 +1,7 @@
 package org.avni.server.service.metabase;
 
 import org.avni.server.config.SelfServiceBatchConfig;
+import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.metabase.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserGroup;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.avni.server.domain.Group.METABASE_USERS;
 
 @Service
 public class MetabaseService {
@@ -35,6 +38,7 @@ public class MetabaseService {
     private final MetabaseDashboardRepository metabaseDashboardRepository;
     private final MetabaseGroupRepository metabaseGroupRepository;
     private final MetabaseUserRepository metabaseUserRepository;
+    private final UserRepository userRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
     private static final long EACH_SLEEP_DURATION = 3;
@@ -49,7 +53,7 @@ public class MetabaseService {
                            MetabaseDashboardRepository metabaseDashboardRepository,
                            MetabaseGroupRepository metabaseGroupRepository,
                            MetabaseUserRepository metabaseUserRepository, MetabaseDatabaseRepository metabaseDatabaseRepository,
-                           SelfServiceBatchConfig selfServiceBatchConfig) {
+                           SelfServiceBatchConfig selfServiceBatchConfig, UserRepository userRepository) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
@@ -61,6 +65,7 @@ public class MetabaseService {
         this.metabaseUserRepository = metabaseUserRepository;
         this.metabaseDatabaseRepository = metabaseDatabaseRepository;
         this.selfServiceBatchConfig = selfServiceBatchConfig;
+        this.userRepository = userRepository;
     }
 
     private boolean setupDatabase() {
@@ -161,27 +166,41 @@ public class MetabaseService {
         return collectionRepository.getCollection(organisation);
     }
 
-    public void upsertUsersOnMetabase(List<UserGroup> usersToBeAdded) {
+    public void upsertUsersOnMetabase(List<UserGroup> userGroups) {
         Group group = metabaseGroupRepository.findGroup(UserContextHolder.getOrganisation().getName());
+        List<UserGroup> changesToMetabaseUsersGroup = userGroups.stream().filter(ug -> ug.getGroupName().equals(METABASE_USERS)).toList();
         if (group != null) {
-            List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.getUserGroupMemberships();
-            for (UserGroup value : usersToBeAdded) {
-                if (value.getGroupName().contains(org.avni.server.domain.Group.METABASE_USERS)
-                        && !metabaseUserRepository.emailExists(value.getUser().getEmail())) {
-                    String[] nameParts = value.getUser().getName().split(" ", 2);
-                    String firstName = nameParts[0];
-                    String lastName = (nameParts.length > 1) ? nameParts[1] : null;
-                    metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, value.getUser().getEmail(), userGroupMemberships));
-                } else {
-                    if (!metabaseUserRepository.activeUserExists(value.getUser().getEmail())) {
-                        metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
+            for (UserGroup value : changesToMetabaseUsersGroup) {
+                boolean usersSharingEmailAddress = userRepository.findAllByEmailIgnoreCaseAndIsVoidedFalse(value.getUser().getEmail()).size() > 1;
+                MetabaseUserData metabaseUser = metabaseUserRepository.getUserFromEmail(value.getUser().getEmail());
+                if (value.isVoided()) {
+                    // Email uniquely identifies a user on metabase but on avni.
+                    // Remove the user from the org group on metabase only if the email id used is unique on avni as well.
+                    if (!usersSharingEmailAddress) {
+                        if (metabaseUser != null && metabaseUser.getGroupIds().contains(group.getId())) {
+                            removeUserFromMetabaseGroup(group.getId(), metabaseUser.getId());
+                        }
                     }
-                    if (!metabaseUserRepository.userExistsInCurrentOrgGroup((value.getUser().getEmail()))) {
-                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(value.getUser().getEmail()).getId(), group.getId()));
+                } else {
+                    if (metabaseUser == null) {
+                        String[] nameParts = value.getUser().getName().split(" ", 2);
+                        String firstName = nameParts[0];
+                        String lastName = (nameParts.length > 1) ? nameParts[1] : null;
+                        List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.buildDefaultUserGroupMemberships(group);
+                        metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, value.getUser().getEmail(), userGroupMemberships));
+                    } else {
+                        if (!metabaseUser.getGroupIds().contains(group.getId())) {
+                            metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUser.getId(), group.getId()));
+                        }
                     }
                 }
             }
         }
+    }
+
+    public void removeUserFromMetabaseGroup(Integer groupId, Integer userId) {
+        metabaseUserRepository.getAllMemberships().get(String.valueOf(userId)).stream().filter(metabaseGroupMembership -> metabaseGroupMembership.groupId().equals(groupId) && metabaseGroupMembership.userId().equals(userId))
+                .findFirst().ifPresent(metabaseUserRepository::deleteMembership);
     }
 
     public void fixDatabaseSyncSchedule() {

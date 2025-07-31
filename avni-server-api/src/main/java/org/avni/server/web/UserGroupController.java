@@ -5,7 +5,6 @@ import jakarta.transaction.Transactional;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.metabase.MetabaseUserRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
@@ -36,19 +35,17 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final AccessControlService accessControlService;
-    private final MetabaseUserRepository metabaseUserRepository;
     private final OrganisationConfigService organisationConfigService;
     private final MetabaseService metabaseService;
 
     @Autowired
     public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository,
-                               AccessControlService accessControlService, MetabaseUserRepository metabaseUserRepository,
+                               AccessControlService accessControlService,
                                OrganisationConfigService organisationConfigService, MetabaseService metabaseService) {
         this.userGroupRepository = userGroupRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.accessControlService = accessControlService;
-        this.metabaseUserRepository = metabaseUserRepository;
         this.organisationConfigService = organisationConfigService;
         this.metabaseService = metabaseService;
     }
@@ -113,14 +110,8 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         userGroupRepository.save(userGroup);
         if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 userGroup.getGroupName().contains(Group.METABASE_USERS)) {
-            deactivateUserOnMetabase(userGroup);
+            metabaseService.upsertUsersOnMetabase(List.of(userGroup));
         }
         return new ResponseEntity<>(UserGroupContract.fromEntity(userGroup), HttpStatus.OK);
-    }
-
-    private void deactivateUserOnMetabase(UserGroup userGroup) {
-        if (metabaseUserRepository.activeUserExists(userGroup.getUser().getEmail(), true)) {
-            metabaseUserRepository.deactivateMetabaseUser(userGroup.getUser().getEmail());
-        }
     }
 }

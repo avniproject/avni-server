@@ -7,10 +7,12 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class MetabaseUserRepository extends MetabaseConnector {
@@ -38,6 +40,16 @@ public class MetabaseUserRepository extends MetabaseConnector {
                 .filter(user -> user.getEmail().equalsIgnoreCase(email))
                 .findAny()
                 .orElse(null);
+    }
+
+    public Map<String, List<MetabaseGroupMembership>> getAllMemberships() {
+        String url = metabaseApiUrl + "/permissions/membership";
+        return getForObject(url, new ParameterizedTypeReference<Map<String, List<MetabaseGroupMembership>>>() {});
+    }
+
+    public void deleteMembership(MetabaseGroupMembership membership) {
+        String url = metabaseApiUrl + "/permissions/membership/" + membership.membershipId();
+        deleteForObject(url, String.class);
     }
 
     public boolean activeUserExists(String email, boolean excludeSuperAdmins) {
@@ -75,15 +87,20 @@ public class MetabaseUserRepository extends MetabaseConnector {
         sendPutRequest(url, null);
     }
 
-    public List<UserGroupMemberships> getUserGroupMemberships() {
+    public List<UserGroupMemberships> buildDefaultUserGroupMemberships(Group orgMetabaseGroup) {
+        List<UserGroupMemberships> userGroupMemberships = buildAllUserGroupMembership();
+        if (orgMetabaseGroup == null) orgMetabaseGroup = metabaseGroupRepository.getGroup();
+        if (orgMetabaseGroup != null) {
+            UserGroupMemberships currentOrganisationGroup = new UserGroupMemberships(orgMetabaseGroup.getId(), false);
+            userGroupMemberships.add(currentOrganisationGroup);
+        }
+        return userGroupMemberships;
+    }
+
+    public List<UserGroupMemberships> buildAllUserGroupMembership() {
         List<UserGroupMemberships> userGroupMemberships = new ArrayList<>();
         UserGroupMemberships defaultAllUsers = new UserGroupMemberships(1, false);
         userGroupMemberships.add(defaultAllUsers);
-        Group group = metabaseGroupRepository.getGroup();
-        if (group != null) {
-            UserGroupMemberships currentOrganisationGroup = new UserGroupMemberships(group.getId(), false);
-            userGroupMemberships.add(currentOrganisationGroup);
-        }
         return userGroupMemberships;
     }
 
