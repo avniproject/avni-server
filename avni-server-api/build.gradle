@@ -112,6 +112,23 @@ dependencies {
     implementation('org.apache.tika:tika-core:2.7.0') {
         exclude group: 'org.apache.tika', module: 'tika-parsers'
     }
+    
+    // Sync-related dependencies
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-jackson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+    implementation 'com.h2database:h2:2.2.220'
+    implementation 'org.jdbi:jdbi3-core:3.39.1'
+    implementation 'org.jdbi:jdbi3-sqlobject:3.39.1'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'commons-io:commons-io:2.11.0'
+    implementation 'com.typesafe:config:1.4.2'
+    
+    // Test dependencies for sync
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.4.0'
 }
 
 bootRun {
