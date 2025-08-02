@@ -2,9 +2,13 @@ package org.avni.camp.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.avni.camp.client.AvniApiClient;
+import org.avni.camp.web.AuthController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -12,6 +16,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
+
+import java.io.IOException;
 
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +55,24 @@ public class CampConfig {
             .connectTimeout(campProperties.getHttp().getConnectionTimeoutSeconds(), TimeUnit.SECONDS)
             .readTimeout(campProperties.getHttp().getReadTimeoutSeconds(), TimeUnit.SECONDS)
             .writeTimeout(campProperties.getHttp().getWriteTimeoutSeconds(), TimeUnit.SECONDS);
+        
+        // Add auth interceptor to automatically include auth token
+        builder.addInterceptor(new Interceptor() {
+            @Override
+            public Response intercept(Chain chain) throws IOException {
+                Request originalRequest = chain.request();
+                String authToken = AuthController.getStoredAuthToken();
+                
+                if (authToken != null) {
+                    Request authenticatedRequest = originalRequest.newBuilder()
+                        .header("auth-token", authToken)
+                        .build();
+                    return chain.proceed(authenticatedRequest);
+                }
+                
+                return chain.proceed(originalRequest);
+            }
+        });
         
         // Add logging interceptor if enabled
         if (campProperties.getHttp().isLoggingEnabled()) {
