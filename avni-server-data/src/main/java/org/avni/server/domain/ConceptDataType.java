@@ -30,7 +30,7 @@ public enum ConceptDataType {
 
     private static final List<ConceptDataType> dateTypes = Arrays.asList(Date, DateTime, Duration, Time);
     public static final List<ConceptDataType> dashboardFilterSupportedTypes = Arrays.asList(Numeric, Text, Notes, Coded, Date, DateTime, Time, Id, Location);
-    public static final List<ConceptDataType> mediaDataTypes = Arrays.asList(Image, ImageV2, Video, File, Audio);
+    public static final List<ConceptDataType> mediaDataTypes = Arrays.asList(Image, ImageV2, Video, File, Audio, Signature);
     public static final List<ConceptDataType> multiSelectTypes = Arrays.asList(Coded, Subject, Image, ImageV2, Video, File, Encounter);
 
     public static boolean dateType(String dataType) {
