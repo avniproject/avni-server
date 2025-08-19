@@ -20,21 +20,30 @@ public class GroupsService implements NonScopeAwareService {
         this.groupRepository = groupRepository;
     }
 
+    private Group createNewGroup(GroupContract groupContract, Organisation organisation) {
+        Group group = new Group();
+        group.setUuid(groupContract.getUuid() == null ? UUID.randomUUID().toString() : groupContract.getUuid());
+        group.setName(groupContract.getName());
+        group.setOrganisationId(organisation.getId());
+        return group;
+    }
+
     public Group saveGroup(GroupContract groupContract, Organisation organisation) {
         Group group;
-        if (groupRepository.findByNameAndOrganisationId(groupContract.getName(), organisation.getId()) != null) {
-            return null;
-        }
-        if (groupContract.isNotEveryoneGroup()) {
-            group = groupRepository.findByUuid(groupContract.getUuid());
-            if (group == null) {
-                group = new Group();
-            }
-            group.setUuid(groupContract.getUuid() == null ? UUID.randomUUID().toString() : groupContract.getUuid());
-            group.setName(groupContract.getName());
+        boolean isDefaultGroup = Group.Everyone.equals(groupContract.getName()) ||
+                                 Group.Administrators.equals(groupContract.getName()) ||
+                                 Group.METABASE_USERS.equals(groupContract.getName()) ;
+        
+        if (isDefaultGroup) {
+            group = groupRepository.findByNameAndOrganisationId(groupContract.getName(), organisation.getId());
         } else {
-            group = groupRepository.findByNameAndOrganisationId(Group.Everyone, organisation.getId());
+            group = groupRepository.findByUuid(groupContract.getUuid());
         }
+        
+        if (group == null) {
+            group = createNewGroup(groupContract, organisation);
+        }
+        
         group.setVoided(groupContract.isVoided());
         group.setHasAllPrivileges(groupContract.isHasAllPrivileges());
         return groupRepository.save(group);
