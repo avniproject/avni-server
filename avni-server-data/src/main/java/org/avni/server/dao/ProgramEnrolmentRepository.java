@@ -125,7 +125,7 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
     @Query(value = "update program_enrolment enl set " +
             "sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
             "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
-            "last_modified_date_time = (current_timestamp + id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "last_modified_date_time = (current_timestamp + enl.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
             "from individual i " +
             "where enl.individual_id = i.id and i.subject_type_id = :subjectTypeId", nativeQuery = true)
     void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Long lastModifiedById);
