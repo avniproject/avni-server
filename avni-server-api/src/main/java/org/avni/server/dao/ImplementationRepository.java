@@ -30,7 +30,7 @@ public interface ImplementationRepository extends AvniCrudRepository<Organisatio
      */
     Organisation findByName(String name);
 
-    @Query(value = "select count(*) from scheduled_job_run where success = true and job_name = :jobName", nativeQuery = true)
+    @Query(value = "select count(*) from scheduled_job_run where success = true and job_name = :jobName limit 1", nativeQuery = true)
     int countSuccessfulRuns(String jobName);
 
     default boolean hasETLRun(Organisation organisation) {

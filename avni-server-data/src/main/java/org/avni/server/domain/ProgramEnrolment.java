@@ -2,15 +2,12 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.micrometer.observation.Observation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
-import org.avni.server.dao.ConceptRepository;
-import org.avni.server.dao.RepositoryProvider;
-import org.avni.server.dao.ruleServer.RuleObservationRepository;
-import org.avni.server.domain.jsRuleSupport.JsModelObservation;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
@@ -18,9 +15,10 @@ import org.avni.server.geo.PointType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentExitObservations;
@@ -30,7 +28,7 @@ import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentObserv
 @Table(name = TableNames.ProgramEnrolment)
 @JsonIgnoreProperties({"programEncounters", "individual"})
 @BatchSize(size = 100)
-public class ProgramEnrolment extends SyncAttributeEntity implements MessageableEntity {
+public class ProgramEnrolment extends SyncAttributeEntity implements MessageableEntity, SubjectLinkedSyncEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_id")
@@ -74,6 +72,12 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     @Column(name = "address_id")
     private Long addressId;
+
+    @Column(updatable = false)
+    private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public boolean isExited() {
         return this.getProgramExitDateTime() != null;
@@ -200,6 +204,19 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
         this.addressId = addressId;
     }
 
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
+    }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
+
     @Override
     @JsonIgnore
     public Long getEntityTypeId() {
@@ -212,8 +229,21 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
         return getId();
     }
 
-    public JsModelObservation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
-        RuleObservationRepository ruleObservationRepository = RepositoryProvider.getRuleObservationRepository();
-        return ruleObservationRepository.findObservation(this.getObservations(), conceptNameOrUuid, parentConceptNameOrUuid);
+    public boolean isActive() {
+        return this.getProgramExitDateTime() == null && !this.isVoided();
+    }
+
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
     }
 }

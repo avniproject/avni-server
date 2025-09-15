@@ -16,10 +16,12 @@
     "dataType": "Coded",
     "answers": [
       {
-        "uuid": "90e44d61-97c3-471d-964d-44b2488d0204"
+        "uuid": "90e44d61-97c3-471d-964d-44b2488d0204",
+        "name": "An answer"
       },
       {
-        "uuid": "b82d4ed8-6e9f-4c67-bfdc-b1a04861bc20"
+        "uuid": "b82d4ed8-6e9f-4c67-bfdc-b1a04861bc20",
+        "name": "NA concept"
       }
     ]
   },
@@ -30,7 +32,8 @@
     "dataType": "Coded",
     "answers": [
       {
-        "uuid": "90e44d61-97c3-471d-964d-44b2488d0204"
+        "uuid": "90e44d61-97c3-471d-964d-44b2488d0204",
+        "name": "An answer"
       }
     ]
   },

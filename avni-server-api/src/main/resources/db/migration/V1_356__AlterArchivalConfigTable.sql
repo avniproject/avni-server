@@ -1,0 +1,1 @@
+ALTER TABLE archival_config ALTER COLUMN realm_query DROP NOT NULL;

@@ -4,10 +4,10 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.EntityApprovalStatus;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.joda.time.DateTime;
@@ -82,8 +82,8 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     }
 
     @Override
-    default boolean isEntityChanged(SyncParameters syncParameters){
-        return true;
+    default boolean isEntityChanged(SyncParameters syncParameters) {
+        return count(syncDisabledSpecification()) > 0;
     }
 
     @Modifying(clearAutomatically = true)

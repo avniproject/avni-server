@@ -951,3 +951,68 @@ where (f.form_type = 'IndividualProfile' and (entity_Id is not null or fm.observ
    or (f.form_type = 'IndividualEncounterCancellation' and
        (entity_Id is not null or observations_type_entity_id is null));
 -- END //  To identify form mappings with wrong values
+
+-- update cron expression for metadata sync and cache field values
+begin transaction;
+
+select *
+from qrtz_cron_triggers
+where cron_expression <> '0 0 0 1 1 ? 2090'
+  and trigger_name like 'metabase.task.sync-and-analyze.trigger.%';
+select *
+from metabase_database
+where metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+   or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
+
+update qrtz_cron_triggers
+set cron_expression = '0 0 0 1 1 ? 2090'
+where trigger_name like 'metabase.task.sync-and-analyze.trigger.%';
+
+update metabase_database
+set metadata_sync_schedule      = '0 0 0 1 1 ? 2090',
+    cache_field_values_schedule = '0 0 0 1 1 ? 2090'
+where metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+   or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
+
+select *
+from qrtz_cron_triggers
+where cron_expression <> '0 0 0 1 1 ? 2090'
+  and trigger_name like 'metabase.task.sync-and-analyze.trigger.%';
+
+select *
+from metabase_database
+where metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+   or cache_field_values_schedule <> '0 0 0 1 1 ? 2090';
+
+commit;
+
+-- Queries to create a read-only user - START
+
+CREATE USER reporting_ro_user WITH PASSWORD '<password>';
+GRANT CONNECT ON DATABASE openchs TO reporting_ro_user;
+GRANT pg_read_all_data TO reporting_ro_user;
+
+CREATE OR REPLACE FUNCTION grant_roles_to_user(inrolname text)
+    RETURNS BIGINT AS
+$BODY$
+DECLARE
+    affected BIGINT := 0;
+    rname    text;
+BEGIN
+    FOR rname IN
+        SELECT rolname
+        FROM pg_roles
+        WHERE rolcanlogin = true
+          AND rolname NOT IN ('openchs', 'rdsadmin', 'reporting_ro_user')
+        LOOP
+            RAISE NOTICE 'Granting role % to %', inrolname, rname;
+            EXECUTE 'GRANT ' || quote_ident(rname) || ' TO ' || quote_ident(inrolname);
+            affected := affected + 1;
+        END LOOP;
+    RETURN affected;
+END
+$BODY$ LANGUAGE PLPGSQL;
+
+select grant_roles_to_user('reporting_ro_user');
+
+-- Queries to create a read-only user - END

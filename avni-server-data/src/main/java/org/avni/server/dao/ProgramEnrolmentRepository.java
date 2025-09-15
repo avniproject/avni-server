@@ -4,6 +4,8 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.SearchSubjectEnrolledProgram;
@@ -102,6 +104,7 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                 .and(syncStrategySpecification(syncParameters))
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 
@@ -122,7 +125,7 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
     @Query(value = "update program_enrolment enl set " +
             "sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
             "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
-            "last_modified_date_time = (current_timestamp + id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "last_modified_date_time = (current_timestamp + enl.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
             "from individual i " +
             "where enl.individual_id = i.id and i.subject_type_id = :subjectTypeId", nativeQuery = true)
     void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Long lastModifiedById);
@@ -136,7 +139,11 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "from individual i" +
             " where i.address_id = :addressId and i.id = e.individual_id and e.is_voided = false", nativeQuery = true)
     void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+
     default void voidSubjectItemsAt(AddressLevel address) {
         this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
+
+    List<ProgramEnrolment> findByIndividualAndProgram(Individual individual, Program program);
+    int countBySyncDisabled(boolean syncDisabled);
 }

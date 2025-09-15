@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -285,19 +286,19 @@ public class BaseSubjectSearchQueryBuilder<T> {
             if (c.getDataType().equalsIgnoreCase("NUMERIC")) {
                 if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
                     if (!StringUtils.isEmpty(c.getMinValue())) {
-                        Float value = Float.parseFloat(c.getMinValue());
+                        BigDecimal value = new BigDecimal(c.getMinValue());
                         String param = "numericValueMin" + ci;
                         addParameter(param, value);
                         whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->> :" + conceptUuidParam + " as numeric)  >= :" + param));
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
-                        Float value = Float.parseFloat(c.getMaxValue());
+                        BigDecimal value = new BigDecimal(c.getMaxValue());
                         String param = "numericValueMax" + ci;
                         addParameter(param, value);
                         whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as numeric)  <= :" + param));
                     }
                 } else {
-                    Float value = Float.parseFloat(c.getMinValue());
+                    BigDecimal value = new BigDecimal(c.getMinValue());
                     String param = "numericValueMin" + ci;
                     addParameter(param, value);
                     whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as numeric)  = :" + param));

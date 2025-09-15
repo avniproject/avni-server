@@ -1,11 +1,10 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.avni.server.application.FormMapping;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.dao.application.FormMappingRepository;
 import org.junit.Before;
 import org.junit.Test;
-import org.avni.server.application.FormMapping;
-import org.avni.server.dao.application.FormMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -28,12 +27,11 @@ public class FormMappingsIntegrationTest extends AbstractControllerIntegrationTe
     public void setUp() throws Exception {
         super.setUp();
         setUser("demo-admin");
-        post("/concepts", getJSON("/ref/concepts.json"));
+        post("/concepts/bulk", getJSON("/ref/concepts.json"));
         post("/encounterTypes", getJSON("/ref/encounterTypes/encounterTypes.json"));
         post("/forms", getJSON("/ref/forms/originalForm.json"));
         post("/programs", getJSON("/ref/program.json"));
     }
-
 
     @Test
     public void shouldCreateFormMappings() throws IOException {

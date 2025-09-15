@@ -1,11 +1,11 @@
 DROP FUNCTION IF EXISTS create_db_user(inrolname text, inpassword text);
 CREATE OR REPLACE FUNCTION create_db_user(inrolname text, inpassword text)
-  RETURNS BIGINT AS
+    RETURNS BIGINT AS
 $BODY$
-  BEGIN
+BEGIN
     IF NOT EXISTS(SELECT rolname FROM pg_roles WHERE rolname = inrolname)
     THEN
-      EXECUTE 'CREATE ROLE ' || quote_ident(inrolname) || ' NOINHERIT LOGIN PASSWORD ' || quote_literal(inpassword);
+        EXECUTE 'CREATE ROLE ' || quote_ident(inrolname) || ' NOINHERIT LOGIN PASSWORD ' || quote_literal(inpassword);
     END IF;
     EXECUTE 'GRANT ' || quote_ident(inrolname) || ' TO openchs';
     PERFORM grant_all_on_all(inrolname);
@@ -27,7 +27,8 @@ $BODY$ LANGUAGE PLPGSQL;
 
 
 CREATE OR REPLACE FUNCTION jsonb_object_values_contain(obs JSONB, pattern TEXT)
-  RETURNS BOOLEAN AS $$
+    RETURNS BOOLEAN AS
+$$
 BEGIN
     return EXISTS (select true from jsonb_each_text(obs) where value ilike pattern);
 END;
@@ -35,17 +36,22 @@ $$
     LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION create_audit(user_id NUMERIC)
-  RETURNS INTEGER AS $$
-DECLARE result INTEGER;
+    RETURNS INTEGER AS
+$$
+DECLARE
+    result INTEGER;
 BEGIN
     INSERT INTO audit(created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-  VALUES(user_id, user_id, now(), now()) RETURNING id into result;
+    VALUES (user_id, user_id, now(), now())
+    RETURNING id into result;
     RETURN result;
-END $$
+END
+$$
     LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION create_audit()
-  RETURNS INTEGER AS 'select create_audit(1)' language sql;
+    RETURNS INTEGER AS
+'select create_audit(1)' language sql;
 
 -- These were failing tests, removing them for now.
 -- DROP function if exists get_observation_pattern;
@@ -101,7 +107,8 @@ BEGIN
     BEGIN
         IF JSONB_TYPEOF(obs) = 'array'
         THEN
-            select STRING_AGG(obs_store -> OB.UUID, ', ') from JSONB_ARRAY_ELEMENTS_TEXT(obs) AS OB (UUID)
+            select STRING_AGG(obs_store -> OB.UUID, ', ')
+            from JSONB_ARRAY_ELEMENTS_TEXT(obs) AS OB (UUID)
             INTO RESULT;
         ELSE
             SELECT obs_store -> (obs ->> 0) INTO RESULT;
@@ -205,7 +212,10 @@ $$
 DECLARE
     archived_row_count bigint;
 BEGIN
-    CREATE TABLE IF NOT EXISTS public.sync_telemetry_history (LIKE public.sync_telemetry INCLUDING ALL);
+    CREATE TABLE IF NOT EXISTS public.sync_telemetry_history
+    (
+        LIKE public.sync_telemetry INCLUDING ALL
+    );
     PERFORM enable_rls_on_tx_table('sync_telemetry_history');
     INSERT INTO public.sync_telemetry_history SELECT * from public.sync_telemetry WHERE sync_start_time < olderthan;
     DELETE FROM public.sync_telemetry WHERE sync_start_time < olderthan;
@@ -218,17 +228,13 @@ CREATE OR REPLACE FUNCTION grant_all_on_table(rolename text, tablename text)
     RETURNS text AS
 $body$
 BEGIN
-    EXECUTE (
-        SELECT 'GRANT ALL ON TABLE '
+    EXECUTE (SELECT 'GRANT ALL ON TABLE '
                         || tablename
-                   || ' TO ' || quote_ident(rolename)
-    );
+                        || ' TO ' || quote_ident(rolename));
 
-    EXECUTE (
-        SELECT 'GRANT SELECT ON '
+    EXECUTE (SELECT 'GRANT SELECT ON '
                         || tablename
-                   || ' TO ' || quote_ident(rolename)
-    );
+                        || ' TO ' || quote_ident(rolename));
 
     EXECUTE 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename) || '';
     RETURN 'ALL PERMISSIONS GRANTED TO ' || quote_ident(rolename);
@@ -239,23 +245,19 @@ CREATE OR REPLACE FUNCTION grant_all_on_all(rolename text)
     RETURNS text AS
 $body$
 BEGIN
-    EXECUTE (
-        SELECT 'GRANT ALL ON TABLE '
+    EXECUTE (SELECT 'GRANT ALL ON TABLE '
                         || string_agg(format('%I.%I', table_schema, table_name), ',')
                         || ' TO ' || quote_ident(rolename) || ''
              FROM information_schema.tables
              WHERE table_schema = 'public'
-          AND table_type = 'BASE TABLE'
-    );
+               AND table_type = 'BASE TABLE');
 
-    EXECUTE (
-        SELECT 'GRANT SELECT ON '
+    EXECUTE (SELECT 'GRANT SELECT ON '
                         || string_agg(format('%I.%I', schemaname, viewname), ',')
                         || ' TO ' || quote_ident(rolename) || ''
              FROM pg_catalog.pg_views
              WHERE schemaname = 'public'
-          and viewowner in ('openchs')
-    );
+               and viewowner in ('openchs'));
 
     EXECUTE 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename) || '';
     EXECUTE 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO ' || quote_ident(rolename) || '';
@@ -285,44 +287,59 @@ END;
 $body$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION multi_select_coded(obs JSONB)
-  RETURNS VARCHAR LANGUAGE plpgsql
-AS $$
-DECLARE result VARCHAR;
+    RETURNS VARCHAR
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    result VARCHAR;
 BEGIN
     BEGIN
         IF JSONB_TYPEOF(obs) = 'array'
         THEN
-      SELECT STRING_AGG(C.NAME, ' ,') FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) AS OB (UUID)
+            SELECT STRING_AGG(C.NAME, ' ,')
+            FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) AS OB (UUID)
                      JOIN CONCEPT C ON C.UUID = OB.UUID
             INTO RESULT;
         ELSE
             SELECT SINGLE_SELECT_CODED(obs) INTO RESULT;
         END IF;
         RETURN RESULT;
-  EXCEPTION WHEN OTHERS
+    EXCEPTION
+        WHEN OTHERS
             THEN
                 RAISE NOTICE 'Failed while processing multi_select_coded(''%'')', obs :: TEXT;
                 RAISE NOTICE '% %', SQLERRM, SQLSTATE;
     END;
-END $$;
+END
+$$;
 
 CREATE OR REPLACE FUNCTION single_select_coded(obs TEXT)
-  RETURNS VARCHAR LANGUAGE plpgsql
-AS $$
-DECLARE result VARCHAR;
+    RETURNS VARCHAR
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    result VARCHAR;
 BEGIN
     BEGIN
-    SELECT name FROM concept WHERE uuid = obs
+        SELECT name
+        FROM concept
+        WHERE uuid = obs
         INTO result;
         RETURN result;
     END;
-END $$
+END
+$$
     STABLE;
 
 CREATE OR REPLACE FUNCTION single_select_coded(obs JSONB)
-  RETURNS VARCHAR LANGUAGE plpgsql
-AS $$
-DECLARE result VARCHAR;
+    RETURNS VARCHAR
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    result VARCHAR;
 BEGIN
     BEGIN
         IF JSONB_TYPEOF(obs) = 'array'
@@ -357,28 +374,28 @@ begin
     if exists(select *
               from public.form f
               where (
-                            (
-                                    (f.form_type = 'IndividualProfile' and
-                                     (entityId is not null or observationsTypeEntityId is not null))
-                                    or
-                                    (f.form_type = 'ProgramEnrolment' and
-                                     (entityId is null or observationsTypeEntityId is not null))
-                                    or
-                                    (f.form_type = 'ProgramExit' and
-                                     (entityId is null or observationsTypeEntityId is not null))
-                                    or
-                                    (f.form_type = 'ProgramEncounter' and
-                                     (entityId is null or observationsTypeEntityId is null))
-                                    or
-                                    (f.form_type = 'ProgramEncounterCancellation' and
-                                     (entityId is null or observationsTypeEntityId is null))
-                                    or
-                                    (f.form_type = 'Encounter' and
-                                     (entityId is not null or observationsTypeEntityId is null))
-                                    or
-                                    (f.form_type = 'IndividualEncounterCancellation' and
-                                     (entityId is not null or observationsTypeEntityId is null))
-                                )
+                        (
+                            (f.form_type = 'IndividualProfile' and
+                             (entityId is not null or observationsTypeEntityId is not null))
+                                or
+                            (f.form_type = 'ProgramEnrolment' and
+                             (entityId is null or observationsTypeEntityId is not null))
+                                or
+                            (f.form_type = 'ProgramExit' and
+                             (entityId is null or observationsTypeEntityId is not null))
+                                or
+                            (f.form_type = 'ProgramEncounter' and
+                             (entityId is null or observationsTypeEntityId is null))
+                                or
+                            (f.form_type = 'ProgramEncounterCancellation' and
+                             (entityId is null or observationsTypeEntityId is null))
+                                or
+                            (f.form_type = 'Encounter' and
+                             (entityId is not null or observationsTypeEntityId is null))
+                                or
+                            (f.form_type = 'IndividualEncounterCancellation' and
+                             (entityId is not null or observationsTypeEntityId is null))
+                            )
                             and formId = f.id)) then
         raise 'Wrong form type for form id: %', formId;
     end if;
@@ -403,3 +420,125 @@ begin
     return true;
 end
 $$;
+
+-- SYNC DISABLED CHECKS
+create or replace function assert_subject_with_same_sync_disabled(syncDisabled bool, subjectId bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    raise notice 'Checking sync disabled value: %, for subject id: %', syncDisabled, subjectId;
+    if exists(select id from public.individual subject where subject.sync_disabled <> syncDisabled and subjectId = subject.id) then
+        raise 'Sync disabled value cannot be different from individual. For individual id: %, sync disabled: %',
+            subjectId, syncDisabled;
+    end if;
+    return true;
+end
+$$;
+
+create or replace function assert_one_of_subjects_with_sync_disabled(syncDisabled bool, subjectId1 bigint, subjectId2 bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    raise notice 'Checking sync disabled value: %, for subject ids: %, %', syncDisabled, subjectId1, subjectId2;
+    if (select count(id) from public.individual subject where ((syncDisabled = false and subject.sync_disabled = false) or syncDisabled)
+                                                          and subject.id in (subjectId1, subjectId2)) < 2 then
+        raise 'Sync can be enabled only if both the subjects have sync enabled. Subject ids: %, %. Sync disabled: %',
+            subjectId1, subjectId2, syncDisabled;
+    end if;
+    return true;
+end
+$$;
+
+create or replace function checklist_sync_disabled_same_as_individual(syncDisabled bool, programEnrolmentId bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    if exists(select subject.id
+              from public.individual subject
+                       join program_enrolment pe on pe.individual_id = subject.id
+              where subject.sync_disabled <> syncDisabled
+                and pe.id = programEnrolmentId) then
+        raise 'Sync disabled value cannot be different from individual. For program enrolment id: %, sync disabled: %',
+            programEnrolmentId, syncDisabled;
+    end if;
+
+    return true;
+end
+$$;
+
+create or replace function checklist_item_sync_disabled_same_as_individual(syncDisabled bool, checklistId bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    if exists(select subject.id
+              from public.individual subject
+                       join program_enrolment pe on pe.individual_id = subject.id
+                       join checklist c on c.program_enrolment_id = pe.id
+              where subject.sync_disabled <> syncDisabled
+                and c.id = checklistId)
+    then
+        raise 'Sync disabled value cannot be different from individual. For checklist id: %, sync disabled: %',
+            checklistId, syncDisabled;
+    end if;
+
+    return true;
+end
+$$;
+
+create or replace function comment_thread_sync_disabled_same_as_individual(syncDisabled bool, commentThreadId bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    if exists(select subject.id
+              from public.individual subject
+                       join comment c on c.subject_id = subject.id
+                       join comment_thread ct on ct.id = c.comment_thread_id
+              where subject.sync_disabled <> syncDisabled
+                and ct.id = commentThreadId)
+    then
+        raise 'Sync disabled value cannot be different from individual. For comment thread id: %, sync disabled: %',
+            commentThreadId, syncDisabled;
+    end if;
+
+    return true;
+end
+$$;
+
+create or replace function program_encounter_sync_disabled_same_as_individual(syncDisabled bool, programEnrolmentId bigint)
+    returns boolean
+    language plpgsql
+as
+$$
+declare
+begin
+    if exists(select subject.id
+              from public.individual subject
+                       join program_enrolment pe on pe.individual_id = subject.id
+                       join program_encounter penc on penc.program_enrolment_id = pe.id
+              where subject.sync_disabled <> syncDisabled
+                and pe.id = programEnrolmentId)
+    then
+        raise 'Sync disabled value cannot be different from individual. For program enrolment id: %, sync disabled: %',
+            programEnrolmentId, syncDisabled;
+    end if;
+
+    return true;
+end
+$$;
+
+-- added line to change checksum

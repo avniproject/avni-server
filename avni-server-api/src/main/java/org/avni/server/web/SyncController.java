@@ -421,7 +421,8 @@ public class SyncController {
         }
 
         if (scopeAwareService != null) {
-            return scopeAwareService.isScopeEntityChanged(loadedSince, entitySyncStatusContract.getEntityTypeUuid());
+            boolean scopeEntityChanged = scopeAwareService.isScopeEntityChanged(loadedSince, entitySyncStatusContract.getEntityTypeUuid());
+            return scopeEntityChanged;
         }
 
         return false;

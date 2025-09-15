@@ -15,7 +15,8 @@
     "dataType": "Coded",
     "answers": [
       {
-        "uuid": "3648a650-2f3e-4c2c-a899-c0a8212aace1"
+        "uuid": "3648a650-2f3e-4c2c-a899-c0a8212aace1",
+        "name": "SS"
       }
     ]
   },
@@ -25,10 +26,12 @@
     "dataType": "Coded",
     "answers": [
       {
-        "uuid": "d78edcbb-2034-4220-ace2-20b445a1e0ad"
+        "uuid": "d78edcbb-2034-4220-ace2-20b445a1e0ad",
+        "name": "Hb Electrophoresis"
       },
       {
-        "uuid": "60f284a6-0240-4de8-a6a1-8839bc9cc219"
+        "uuid": "60f284a6-0240-4de8-a6a1-8839bc9cc219",
+        "name": "Blood Sugar"
       }
     ]
   }

@@ -6,7 +6,6 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.SyncTelemetry;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.SyncTelemetryRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +46,7 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setAndroidVersion(request.getAndroidVersion());
         syncTelemetry.setDeviceName(request.getDeviceName());
         syncTelemetry.setDeviceInfo(request.getDeviceInfo());
+        syncTelemetry.setAppInfo(request.getAppInfo());
         syncTelemetry.setSyncSource(request.getSyncSource());
         syncTelemetryRepository.save(syncTelemetry);
     }

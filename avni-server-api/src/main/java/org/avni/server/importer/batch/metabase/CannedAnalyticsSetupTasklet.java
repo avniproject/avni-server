@@ -1,15 +1,10 @@
 package org.avni.server.importer.batch.metabase;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityManager;
-
-import org.springframework.http.*;
-import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
-import org.avni.server.framework.security.AuthService;
+import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
 import org.avni.server.service.GroupsService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.metabase.DatabaseService;
@@ -24,6 +19,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -32,34 +28,27 @@ import org.springframework.web.client.HttpServerErrorException;
 public class CannedAnalyticsSetupTasklet implements Tasklet {
     private static final Logger logger = LoggerFactory.getLogger(CannedAnalyticsSetupTasklet.class);
 
-    private final AuthService authService;
     private final OrganisationRepository organisationRepository;
     private final GroupsService groupsService;
     private final MetabaseService metabaseService;
     private final DatabaseService databaseService;
-    private final EntityManager entityManager;
     private final OrganisationConfigService organisationConfigService;
+    private final AvniSpringBatchJobHelper avniSpringBatchJobHelper;
     @Value("#{jobParameters['userId']}")
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
     @Autowired
-    public CannedAnalyticsSetupTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, GroupsService groupsService, MetabaseService metabaseService, DatabaseService databaseService, EntityManager entityManager) {
-        this.authService = authService;
+    public CannedAnalyticsSetupTasklet(OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository,
+                                       GroupsService groupsService, MetabaseService metabaseService, DatabaseService databaseService,
+                                       AvniSpringBatchJobHelper avniSpringBatchJobHelper) {
         this.organisationConfigService = organisationConfigService;
         this.organisationRepository = organisationRepository;
         this.groupsService = groupsService;
         this.metabaseService = metabaseService;
         this.databaseService = databaseService;
-        this.entityManager = entityManager;
-    }
-
-    @PostConstruct
-    public void authenticateUser() {
-        DbRoleRepository.setDbRoleNone(entityManager);
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        this.avniSpringBatchJobHelper = avniSpringBatchJobHelper;
     }
 
     private void setup(Organisation organisation) throws InterruptedException {
@@ -67,8 +56,6 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
-        metabaseService.syncDatabase();
-        metabaseService.waitForManualSchemaSyncToComplete(organisation);
         metabaseService.fixDatabaseSyncSchedule();
         databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
@@ -78,6 +65,7 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        avniSpringBatchJobHelper.authenticate(userId, organisationUUID);
         Organisation organisation = organisationRepository.findByUuid(organisationUUID);
         logger.info("Setting up canned analytics for organisation {}", organisation.getName());
         try {

@@ -125,8 +125,16 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         return programEncountersContract;
     }
 
+    private void validateProgramEnrolmentSave(ProgramEnrolmentRequest request, ProgramEnrolment programEnrolment, Program program) throws ValidationException {
+        boolean isUndoExit = programEnrolment.getProgramExitDateTime() != null && request.getProgramExitDateTime() == null;
+        if (isUndoExit) {
+            if (alreadyEnrolled(programEnrolment.getIndividual(), program) && !program.isAllowMultipleEnrolments()) {
+                throw new ValidationException("alreadyEnrolledInProgram");
+            }
+        }
+    }
     @Messageable(EntityType.ProgramEnrolment)
-    public ProgramEnrolment programEnrolmentSave(ProgramEnrolmentRequest request) throws ValidationException {
+    public ProgramEnrolment programEnrolmentSave(ProgramEnrolmentRequest request, boolean validate) throws ValidationException {
         logger.info(String.format("Saving programEnrolment with uuid %s", request.getUuid()));
         Program program;
         if (request.getProgramUUID() == null) {
@@ -137,6 +145,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         Decisions decisions = request.getDecisions();
         observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEnrolmentDecisions() : null, formMappingService.find(program, FormType.ProgramEnrolment));
         ProgramEnrolment programEnrolment = EntityHelper.newOrExistingEntity(programEnrolmentRepository, request, new ProgramEnrolment());
+        if (validate) validateProgramEnrolmentSave(request, programEnrolment, program);
         programEnrolment.setProgram(program);
         programEnrolment.setEnrolmentDateTime(request.getEnrolmentDateTime());
         programEnrolment.setProgramExitDateTime(request.getProgramExitDateTime());
@@ -275,5 +284,10 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     public FormMapping getFormMapping(ProgramEnrolment programEnrolment) {
         FormType formType = programEnrolment.isExited() ? FormType.ProgramExit : FormType.ProgramEnrolment;
         return formMappingService.findBy(programEnrolment.getIndividual().getSubjectType(), programEnrolment.getProgram(), null, formType);
+    }
+
+    public boolean alreadyEnrolled(Individual individual, Program program) {
+        List<ProgramEnrolment> existingEnrolments = programEnrolmentRepository.findByIndividualAndProgram(individual, program);
+        return existingEnrolments.stream().anyMatch(ProgramEnrolment::isActive);
     }
 }

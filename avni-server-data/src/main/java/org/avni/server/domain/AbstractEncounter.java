@@ -72,6 +72,8 @@ public class AbstractEncounter extends SyncAttributeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "last_modified_by_id")
     private User lastModifiedBy;
+    @Column(updatable = false)
+    private boolean syncDisabled;
 
     public EncounterType getEncounterType() {
         return encounterType;
@@ -232,5 +234,11 @@ public class AbstractEncounter extends SyncAttributeEntity {
 
     public void setLastModifiedBy(User lastModifiedBy) {
         this.lastModifiedBy = lastModifiedBy;
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaLocalDateConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
@@ -54,10 +55,10 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     private Set<IndividualRelationship> relationshipsFromOthersToSelf = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "groupSubject")
-    private Set<GroupSubject> groupSubjects  = new HashSet<>();
+    private Set<GroupSubject> groupSubjects = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "memberSubject")
-    private Set<GroupSubject> memberGroupSubjects  = new HashSet<>();
+    private Set<GroupSubject> memberGroupSubjects = new HashSet<>();
 
     @NotNull
     @Column(name = ColumnNames.RegistrationDate)
@@ -90,6 +91,9 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "subject")
     private Set<UserSubject> userSubjects;
+
+    @Column(updatable = false)
+    private boolean syncDisabled;
 
     public static Individual create(String firstName, String lastName, String profilePicture, LocalDate dateOfBirth, boolean dateOfBirthVerified, Gender gender, AddressLevel address, LocalDate registrationDate) {
         Individual individual = new Individual();
@@ -156,6 +160,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     public void setEncounters(Set<Encounter> encounters) {
         this.encounters = encounters;
     }
+
     public Set<UserSubjectAssignment> getUserSubjectAssignments() {
         return userSubjectAssignments;
     }
@@ -345,9 +350,9 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     @JsonIgnore
     public String getFullName() {
         String fullName = firstName;
-        if(middleName != null)
+        if (middleName != null)
             fullName += " " + middleName;
-        if(lastName != null)
+        if (lastName != null)
             fullName += " " + lastName;
 
         return fullName;
@@ -355,5 +360,13 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     public void addObservations(ObservationCollection observations) {
         this.observations.putAll(observations);
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
     }
 }

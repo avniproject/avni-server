@@ -1,8 +1,9 @@
 package org.avni.server.web;
 
 import jakarta.transaction.Transactional;
+import org.avni.server.backgroundJob.StorageManagementJob;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.GeneralRepository;
+import org.avni.server.dao.StorageManagementConfigRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -26,10 +27,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertFalse;
@@ -67,8 +70,11 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestDataSetupService testDataSetupService;
     @Autowired
     private UserSubjectAssignmentService userSubjectAssignmentService;
+
     @Autowired
-    private GeneralRepository generalRepository;
+    private StorageManagementJob storageManagementJob;
+    @Autowired
+    private StorageManagementConfigRepository storageManagementConfigRepository;
 
     private TestDataSetupService.TestOrganisationData organisationData;
     private TestDataSetupService.TestCatchmentData catchmentData;
@@ -87,6 +93,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private SubjectType subjectTypeForDirectAssignment;
     private SubjectType groupSubjectTypeForDirectAssignment;
     private Program programForDirectAssignment;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Before
     public void setup() {
@@ -355,6 +363,136 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertFalse(hasEntity(assigned, subjects));
         enrolments = testSyncService.getEnrolments(programForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(enrolmentAssigned, enrolments));
+    }
+
+    private void saveStorageManagementConfig(String query) {
+        StorageManagementConfig storageManagementConfig = new StorageManagementConfig();
+        storageManagementConfig.setSqlQuery(query);
+        storageManagementConfig.setUuid(UUID.randomUUID().toString());
+        storageManagementConfigRepository.save(storageManagementConfig);
+    }
+
+    @Test
+    @Transactional
+    public void doNotSyncDisabledEntities() throws Exception {
+        // Catchment tx entities
+        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentInTheCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithCatchmentBasedSync).setIndividual(inTheCatchment).build());
+        Individual groupInCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        GroupSubject groupSubjectInCatchment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithCatchmentBasedSync).withMember(inTheCatchment).withGroup(groupInCatchment).build());
+
+        // Outside catchment tx entities
+        Individual outsideCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel2()).build());
+        ProgramEnrolment enrolmentOutsideCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithCatchmentBasedSync).setIndividual(outsideCatchment).build());
+        Individual noAccessToSubjectType = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithNoAccess).withLocation(catchmentData.getAddressLevel1()).build());
+        testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithNoAccess).setIndividual(noAccessToSubjectType).build());
+
+        // Sync attributes tx entities
+        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build());
+        ProgramEnrolment enrolmentHasMatchingObs = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(hasMatchingObs).build());
+        Individual obsNotMatching = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 2").getUuid())).build());
+        ProgramEnrolment enrolmentObsNotMatching = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(obsNotMatching).build());
+        Individual obsNotPresent = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentObsNotPresent = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(obsNotPresent).build());
+
+        // Direct assignment tx entities
+        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForDirectAssignment).setIndividual(assigned).build());
+        Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForDirectAssignment).setIndividual(notAssigned).build());
+
+        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(organisationData.getUser()).build());
+
+        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(subjectTypeWithSyncAttributeBasedSync.getUuid()).setSyncConcept1(conceptForAttributeBasedSync.getUuid()).setSyncConcept1Values(Collections.singletonList(conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build();
+        userRepository.save(new UserBuilder(organisationData.getUser()).withCatchment(catchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
+
+        setUser(organisationData.getUser().getUsername());
+
+        // Disable syncs
+        saveStorageManagementConfig("select id from public.individual");
+        storageManagementJob.manage();
+
+        List syncDetails = testSyncService.getSyncDetails();
+
+        // Check catchment based sync strategy
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithNoAccess.getUuid())));
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithCatchmentBasedSync.getUuid())));
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.GroupSubject.name(), groupSubjectTypeForCatchmentBasedSync.getUuid())));
+        List<Individual> subjects = testSyncService.getSubjects(subjectTypeWithCatchmentBasedSync);
+        assertFalse(hasEntity(inTheCatchment, subjects));
+        assertFalse(hasEntity(outsideCatchment, subjects));
+        List<ProgramEnrolment> enrolments = testSyncService.getEnrolments(programWithCatchmentBasedSync);
+        assertFalse(hasEntity(enrolmentInTheCatchment, enrolments));
+        assertFalse(hasEntity(enrolmentOutsideCatchment, enrolments));
+        List<GroupSubject> groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync);
+        assertFalse(hasEntity(groupSubjectInCatchment, groupSubjects));
+
+        // Check for no access
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), programWithNoAccess.getUuid())));
+        // we by-pass in program enrolment
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), programWithCatchmentBasedSync.getUuid())));
+
+        // CHECK FOR SYNC ATTRIBUTES BASED SYNC STRATEGY
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithSyncAttributeBasedSync.getUuid())));
+        subjects = testSyncService.getSubjects(subjectTypeWithSyncAttributeBasedSync);
+        assertFalse(hasEntity(hasMatchingObs, subjects));
+        assertFalse(hasEntity(obsNotMatching, subjects));
+        assertFalse(hasEntity(obsNotPresent, subjects));
+        enrolments = testSyncService.getEnrolments(programForSyncAttributeBasedSync);
+        assertFalse(hasEntity(enrolmentHasMatchingObs, enrolments));
+        assertFalse(hasEntity(enrolmentObsNotMatching, enrolments));
+        assertFalse(hasEntity(enrolmentObsNotPresent, enrolments));
+
+        // Group Subject
+        jdbcTemplate.execute("update individual set sync_disabled = false where 1 = 1");
+        Individual groupHasMatchingObs = testSubjectService.save(
+                new SubjectBuilder()
+                        .withMandatoryFieldsForNewEntity()
+                        .withSubjectType(groupSubjectTypeWithSyncAttributeBasedSync)
+                        .withLocation(catchmentData.getAddressLevel1())
+                        .withObservations(ObservationCollectionBuilder
+                                .withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid()))
+                        .build());
+        GroupSubject groupSubjectInObsMatching = testGroupSubjectService.save(
+                new TestGroupSubjectBuilder()
+                        .withGroupRole(groupRoleForGroupSubjectTypeWithSyncAttributeBasedSync)
+                        .withMember(hasMatchingObs)
+                        .withGroup(groupHasMatchingObs)
+                        .build());
+
+        storageManagementJob.manage();
+        userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(groupSubjectTypeWithSyncAttributeBasedSync.getUuid()).setSyncConcept1(conceptForAttributeBasedSync.getUuid()).setSyncConcept1Values(Collections.singletonList(conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build();
+        User user = userRepository.save(new UserBuilder(organisationData.getUser()).withSubjectTypeSyncSettings(userSyncSettings).build());
+        setUser(user.getUsername());
+        groupSubjects = getGroupSubjects(groupSubjectTypeWithSyncAttributeBasedSync);
+        assertFalse(hasEntity(groupSubjectInObsMatching, groupSubjects));
+
+        // CHECK FOR DIRECT ASSIGNMENT BASED SYNC STRATEGY
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeForDirectAssignment.getUuid())));
+        subjects = testSyncService.getSubjects(subjectTypeForDirectAssignment);
+        assertFalse(hasEntity(assigned, subjects));
+        assertFalse(hasEntity(notAssigned, subjects));
+        enrolments = testSyncService.getEnrolments(programForDirectAssignment);
+        assertFalse(hasEntity(enrolmentAssigned, enrolments));
+        assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
+
+        // Standalone Subject
+        enableSyncOnAll();
+        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(organisationData.getUser()).build());
+        storageManagementJob.manage();
+
+        Thread.sleep(1);
+        Individual assignedNow = notAssigned;
+        subjects = testSyncService.getSubjects(subjectTypeForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
+        assertFalse(hasEntity(assignedNow, subjects));
+        ProgramEnrolment enrolmentAssignedNow = enrolmentNotAssigned;
+        enrolments = testSyncService.getEnrolments(programForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
+        assertFalse(hasEntity(enrolmentAssignedNow, enrolments));
+    }
+
+    private void enableSyncOnAll() {
+        jdbcTemplate.execute("update individual set sync_disabled = false, sync_disabled_date_time = null where 1 = 1");
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {

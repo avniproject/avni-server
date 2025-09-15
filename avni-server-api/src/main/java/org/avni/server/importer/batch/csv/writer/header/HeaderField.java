@@ -30,6 +30,10 @@ public class HeaderField {
         return header;
     }
 
+    public boolean isMandatory() {
+        return mandatory;
+    }
+
     private String formatForCsv(String input) {
         if (input == null) {
             return "";
@@ -77,4 +81,13 @@ public class HeaderField {
         }
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("header='").append(header).append('\'');
+        sb.append(", mandatory=").append(mandatory);
+        sb.append(", allowedValues='").append(allowedValues).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

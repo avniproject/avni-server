@@ -115,6 +115,8 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
     @Column
     private String programEligibilityCheckRule;
+    @Column
+    private String memberAdditionEligibilityCheckRule;
 
     @Column(name = "program_eligibility_check_declarative_rule")
     @Type(value = DeclarativeRuleUserType.class)
@@ -352,6 +354,14 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
     public DeclarativeRule getProgramEligibilityCheckDeclarativeRule() {
         return programEligibilityCheckDeclarativeRule;
+    }
+
+    public String getMemberAdditionEligibilityCheckRule() {
+        return memberAdditionEligibilityCheckRule;
+    }
+
+    public void setMemberAdditionEligibilityCheckRule(String memberAdditionEligibilityCheckRule) {
+        this.memberAdditionEligibilityCheckRule = memberAdditionEligibilityCheckRule;
     }
 
     public void setProgramEligibilityCheckDeclarativeRule(DeclarativeRule programEligibilityCheckDeclarativeRule) {

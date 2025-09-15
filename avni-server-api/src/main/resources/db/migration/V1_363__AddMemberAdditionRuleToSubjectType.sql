@@ -1,0 +1,1 @@
+alter table subject_type add column member_addition_eligibility_check_rule text null;

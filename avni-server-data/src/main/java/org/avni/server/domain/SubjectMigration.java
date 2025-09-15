@@ -2,15 +2,20 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
+
+import java.util.Date;
 
 @Entity
 @Table(name = "subject_migration")
 @JsonIgnoreProperties({"individual", "oldAddressLevel", "newAddressLevel", "subjectType"})
 @DynamicInsert
 @BatchSize(size = 100)
-public class SubjectMigration extends OrganisationAwareEntity {
+public class SubjectMigration extends OrganisationAwareEntity implements SubjectLinkedSyncEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
@@ -39,6 +44,12 @@ public class SubjectMigration extends OrganisationAwareEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_type_id")
     private SubjectType subjectType;
+
+    @Column(updatable = false)
+    private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     public Individual getIndividual() {
         return individual;
@@ -102,5 +113,33 @@ public class SubjectMigration extends OrganisationAwareEntity {
 
     public void setSubjectType(SubjectType subjectType) {
         this.subjectType = subjectType;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
+    }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return this.syncDisabledDateTime;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
     }
 }

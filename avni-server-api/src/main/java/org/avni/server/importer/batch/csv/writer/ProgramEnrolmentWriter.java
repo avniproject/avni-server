@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -9,7 +10,9 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.domain.ValidationException;
-import org.avni.server.importer.batch.csv.creator.*;
+import org.avni.server.importer.batch.csv.creator.LocationCreator;
+import org.avni.server.importer.batch.csv.creator.ObservationCreator;
+import org.avni.server.importer.batch.csv.creator.SubjectCreator;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.OrganisationConfigService;
@@ -20,17 +23,16 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Component
 public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final SubjectCreator subjectCreator;
-    private final DateCreator dateCreator;
     private final FormMappingRepository formMappingRepository;
     private final ObservationCreator observationCreator;
     private final ProgramEnrolmentService programEnrolmentService;
@@ -51,40 +53,51 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         this.formMappingRepository = formMappingRepository;
         this.observationCreator = observationCreator;
         this.programEnrolmentService = programEnrolmentService;
-        this.dateCreator = new DateCreator();
         this.programEnrolmentHeadersCreator = programEnrolmentHeadersCreator;
         this.programRepository = programRepository;
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws ValidationException {
+    public void write(Chunk<? extends Row> chunk) throws ValidationException, InvalidConfigurationException {
         for (Row row : chunk.getItems()) write(row);
     }
 
-    private void write(Row row) throws ValidationException {
+    private void write(Row row) throws ValidationException, InvalidConfigurationException {
         List<String> allErrorMsgs = new ArrayList<>();
+        String id = row.get(ProgramEnrolmentHeadersCreator.id);
+        if (id != null && !id.trim().isEmpty()) {
+            ProgramEnrolment existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
+            if (existingEnrolment != null) {
+                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
+            }
+        }
         String providedSubjectId = row.get(ProgramEnrolmentHeadersCreator.subjectId);
-        Individual individual = subjectCreator.getSubject(providedSubjectId, allErrorMsgs, ProgramEnrolmentHeadersCreator.subjectId);
+        Individual individual = subjectCreator.getSubject(providedSubjectId, ProgramEnrolmentHeadersCreator.subjectId, allErrorMsgs);
         String programNameProvided = row.get(ProgramEnrolmentHeadersCreator.programHeader);
         Program program = programRepository.findByName(programNameProvided);
         if (program == null) {
             ValidationUtil.fieldMissing("Program", programNameProvided, allErrorMsgs);
         }
+        if (individual == null) {
+            ValidationUtil.fieldMissing("Subject ID", providedSubjectId, allErrorMsgs);
+        }
         ValidationUtil.handleErrors(allErrorMsgs);
+
+        if (!program.isAllowMultipleEnrolments() && programEnrolmentService.alreadyEnrolled(individual, program)) {
+            allErrorMsgs.add(String.format("Subject '%s' is already enrolled in program '%s' and the program doesn't allow for multiple enrolments", providedSubjectId, program.getName()));
+            ValidationUtil.handleErrors(allErrorMsgs);
+        }
 
         FormMapping formMapping = formMappingRepository.getProgramEnrolmentFormMapping(individual.getSubjectType(), program);
         if (formMapping == null) {
             allErrorMsgs.add(String.format("No form found for the subject type '%s' and program '%s'", individual.getSubjectType().getName(), program.getName()));
         }
-        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, programEnrolmentHeadersCreator);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, programEnrolmentHeadersCreator, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
 
         ProgramEnrolment programEnrolment = getOrCreateProgramEnrolment(row);
         programEnrolment.setIndividual(individual);
-        LocalDate enrolmentDate = dateCreator.getDate(
-                row,
-                ProgramEnrolmentHeadersCreator.enrolmentDate,
-                allErrorMsgs, String.format("%s is mandatory", ProgramEnrolmentHeadersCreator.enrolmentDate)
-        );
+        LocalDate enrolmentDate = row.ensureDateIsPresentAndNotInFuture(ProgramEnrolmentHeadersCreator.enrolmentDate, allErrorMsgs);
         if (enrolmentDate != null) programEnrolment.setEnrolmentDateTime(enrolmentDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();
@@ -92,21 +105,20 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         programEnrolment.setProgram(program);
 
         programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations(), formMapping));
+        ValidationUtil.handleErrors(allErrorMsgs);
         programEnrolmentService.save(programEnrolment);
     }
 
     private ProgramEnrolment getOrCreateProgramEnrolment(Row row) {
         String id = row.get(ProgramEnrolmentHeadersCreator.id);
-        ProgramEnrolment existingEnrolment = null;
-        if (id != null && !id.isEmpty()) {
-            existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
-        }
-        return existingEnrolment == null ? createNewEnrolment(id) : existingEnrolment;
+        return createNewEnrolment(id);
     }
 
     private ProgramEnrolment createNewEnrolment(String externalId) {
         ProgramEnrolment programEnrolment = new ProgramEnrolment();
+        if (StringUtils.hasText(externalId)) {
         programEnrolment.setLegacyId(externalId);
+        }
         programEnrolment.setVoided(false);
         programEnrolment.assignUUIDIfRequired();
         return programEnrolment;

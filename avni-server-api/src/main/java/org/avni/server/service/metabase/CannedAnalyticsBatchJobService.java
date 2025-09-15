@@ -2,8 +2,6 @@ package org.avni.server.service.metabase;
 
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
-import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.importer.batch.JobService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -31,7 +29,7 @@ public class CannedAnalyticsBatchJobService {
     private final static Logger logger = LoggerFactory.getLogger(CannedAnalyticsBatchJobService.class);
 
     @Autowired
-    public CannedAnalyticsBatchJobService(JobService jobService, JobLauncher bgJobLauncher, @Qualifier("cannedAnalyticsSetupJob") Job cannedAnalyticsSetupJob, @Qualifier("cannedAnalyticsCreateQuestionOnlyJob") Job cannedAnalyticsCreateQuestionOnlyJob, @Qualifier("cannedAnalyticsTearDownJob") Job cannedAnalyticsTearDownJob) {
+    public CannedAnalyticsBatchJobService(JobLauncher bgJobLauncher, @Qualifier("cannedAnalyticsSetupJob") Job cannedAnalyticsSetupJob, @Qualifier("cannedAnalyticsCreateQuestionOnlyJob") Job cannedAnalyticsCreateQuestionOnlyJob, @Qualifier("cannedAnalyticsTearDownJob") Job cannedAnalyticsTearDownJob) {
         this.bgJobLauncher = bgJobLauncher;
         this.cannedAnalyticsSetupJob = cannedAnalyticsSetupJob;
         this.cannedAnalyticsCreateQuestionOnlyJob = cannedAnalyticsCreateQuestionOnlyJob;

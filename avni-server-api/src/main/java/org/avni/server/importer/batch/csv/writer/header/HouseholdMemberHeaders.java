@@ -18,12 +18,12 @@ public class HouseholdMemberHeaders extends GroupMemberHeaders implements Header
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
+    public String[] getAllHeaders(FormMapping formMapping, Object mode) {
         return getAllHeaders();
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
+    public String[] getAllDescriptions(FormMapping formMapping, Object mode) {
         return new String[0];
     }
 }

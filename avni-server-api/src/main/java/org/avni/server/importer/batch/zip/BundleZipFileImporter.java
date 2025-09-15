@@ -2,17 +2,17 @@ package org.avni.server.importer.batch.zip;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
-import org.avni.server.dao.CustomQueryRepository;
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
 import org.avni.server.importer.batch.model.BundleFile;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.importer.batch.model.BundleZip;
@@ -28,7 +28,6 @@ import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
-import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
@@ -82,13 +81,14 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final TaskTypeService taskTypeService;
     private final TaskStatusService taskStatusService;
     private final MenuItemService menuItemService;
-    private final EntityTypeRetrieverService entityTypeRetrieverService;
     private final MessagingService messagingService;
     private final RuleDependencyService ruleDependencyService;
     private final TranslationService translationService;
     private final RuleService ruleService;
     private final GroupDashboardService groupDashboardService;
     private final CustomQueryService customQueryService;
+    private final ConceptRepository conceptRepository;
+    private final AvniSpringBatchJobHelper avniSpringBatchJobHelper;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -137,6 +137,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add(BundleFolder.OLD_RULES.getFolderName());
         add(BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         add(BundleFolder.REPORT_CARD_ICONS.getFolderName());
+        add(BundleFolder.CONCEPT_MEDIA.getFolderName());
         add("customQueries.json");
     }};
 
@@ -168,11 +169,11 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  TaskTypeService taskTypeService,
                                  TaskStatusService taskStatusService,
                                  MenuItemService menuItemService,
-                                 EntityTypeRetrieverService entityTypeRetrieverService,
                                  MessagingService messagingService,
                                  RuleDependencyService ruleDependencyService,
                                  TranslationService translationService,
-                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryRepository customQueryRepository, CustomQueryService customQueryService) {
+                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryService customQueryService, ConceptRepository conceptRepository,
+                                 AvniSpringBatchJobHelper avniSpringBatchJobHelper) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -200,23 +201,20 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.taskTypeService = taskTypeService;
         this.taskStatusService = taskStatusService;
         this.menuItemService = menuItemService;
-        this.entityTypeRetrieverService = entityTypeRetrieverService;
         this.messagingService = messagingService;
         this.ruleDependencyService = ruleDependencyService;
         this.translationService = translationService;
         this.ruleService = ruleService;
         this.groupDashboardService = groupDashboardService;
         this.customQueryService = customQueryService;
+        this.conceptRepository = conceptRepository;
+        this.avniSpringBatchJobHelper = avniSpringBatchJobHelper;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
-    }
-
-    @PostConstruct
-    public void authenticateUser() {
-        authService.authenticateByUserId(userId, organisationUUID);
     }
 
     @Override
     public void write(Chunk<? extends BundleFile> chunk) throws Exception {
+        authService.authenticateByUserId(userId, organisationUUID);
         List<? extends BundleFile> bundleFiles = chunk.getItems();
         BundleZip bundleZip = new BundleZip(bundleFiles.stream().collect(Collectors.toMap(BundleFile::getName, BundleFile::getContent)));
         for (String filename : fileSequence) {
@@ -233,13 +231,12 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private String uploadIcon(String iconFileName, byte[] iconFileData) throws IOException {
-        String folderName = MediaFolder.ICONS.label;
-        logger.info("uploading icon {}", iconFileName);
-        String[] splitFileName = iconFileName.split("\\.");
+    private String uploadMedia(String folderName, String mediaFileName, byte[] mediaFileData) throws IOException {
+        logger.info("uploading media {}", mediaFileName);
+        String[] splitFileName = mediaFileName.split("\\.");
         String entityUUID = splitFileName[0];
         String extension = splitFileName[1];
-        return s3Service.uploadByteArray(entityUUID, extension, folderName, iconFileData);
+        return s3Service.uploadByteArray(entityUUID, extension, folderName, mediaFileData);
     }
 
     private void deployFileIfDataExists(String filename, BundleZip bundleZip) throws IOException {
@@ -266,7 +263,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "addressLevelTypes.json":
                 AddressLevelTypeContract[] addressLevelTypeContracts = convertString(fileData, AddressLevelTypeContract[].class);
-                locationService.createAddressLevelTypes(addressLevelTypeContracts);
+                locationService.createAddressLevelTypes(organisation, addressLevelTypeContracts);
                 break;
             case "locations.json":
                 LocationContract[] locationContracts = convertString(fileData, LocationContract[].class);
@@ -306,7 +303,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "concepts.json":
                 ConceptContract[] conceptContracts = convertString(fileData, ConceptContract[].class);
-                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts));
+                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts), ConceptContract.RequestType.Bundle);
                 break;
             case "formMappings.json":
                 FormMappingContract[] formMappingContracts = convertString(fileData, FormMappingContract[].class);
@@ -323,8 +320,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 individualRelationshipTypeService.saveRelationshipTypes(individualRelationshipTypeContracts);
                 break;
             case "identifierSource.json":
-                IdentifierSourceContractWeb[] identifierSourceContractWebs = convertString(fileData, IdentifierSourceContractWeb[].class);
-                identifierSourceService.saveIdSources(identifierSourceContractWebs);
+                IdentifierSourceContract[] identifierSourceContracts = convertString(fileData, IdentifierSourceContract[].class);
+                identifierSourceService.saveIdSources(identifierSourceContracts);
                 break;
             case "checklist.json":
                 ChecklistDetailRequest[] checklistDetailRequests = convertString(fileData, ChecklistDetailRequest[].class);
@@ -408,18 +405,26 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 ruleService.createOrUpdate(ruleRequest, organisation);
                 break;
             case SUBJECT_TYPE_ICONS:
-                String stS3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
+                String stS3ObjectKey = uploadMedia(MediaFolder.ICONS.label, fileData.getKey(), fileData.getValue());
                 String subjectTypeUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
                 subjectType.setIconFileS3Key(stS3ObjectKey);
                 subjectTypeRepository.save(subjectType);
                 break;
             case REPORT_CARD_ICONS:
-                String cs3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
+                String cs3ObjectKey = uploadMedia(MediaFolder.ICONS.label, fileData.getKey(), fileData.getValue());
                 String reportCardUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 ReportCard card = cardRepository.findByUuid(reportCardUUID);
                 card.setIconFileS3Key(cs3ObjectKey);
                 cardRepository.save(card);
+                break;
+            case CONCEPT_MEDIA:
+                String medias3ObjectKey = uploadMedia(MediaFolder.MetaData.label, fileData.getKey(), fileData.getValue());
+                String conceptUuid = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
+                Concept concept = conceptRepository.findByUuid(conceptUuid);
+                concept.setMediaUrl(medias3ObjectKey);
+                concept.setMediaType(Concept.MediaType.Image);
+                conceptRepository.save(concept);
                 break;
         }
     }

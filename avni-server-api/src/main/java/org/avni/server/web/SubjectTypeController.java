@@ -143,7 +143,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                         String.format("%s Registration", subjectType.getName()),
                         FormType.IndividualProfile), request.isEnableRegistrationApproval());
 
-        organisationConfigService.saveCustomRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
+        organisationConfigService.saveRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
         FormMapping formMapping = formMappingService.find(subjectType);
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
@@ -162,6 +162,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         subjectType.setType(Subject.valueOf(request.getType()));
         subjectType.setSubjectSummaryRule(request.getSubjectSummaryRule());
         subjectType.setProgramEligibilityCheckRule(request.getProgramEligibilityCheckRule());
+        subjectType.setMemberAdditionEligibilityCheckRule(request.getMemberAdditionEligibilityCheckRule());
         subjectType.setAllowMiddleName(request.isAllowMiddleName());
         subjectType.setValidFirstNameFormat(request.getValidFirstNameFormat());
         subjectType.setValidMiddleNameFormat(request.getValidMiddleNameFormat());
@@ -232,7 +233,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                 formService.getOrCreateForm(request.getRegistrationFormUuid(),
                         String.format("%s Registration", subjectType.getName()), FormType.IndividualProfile), request.isEnableRegistrationApproval());
 
-        organisationConfigService.saveCustomRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
+        organisationConfigService.saveRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
     }
 
     @DeleteMapping(value = "/web/subjectType/{id}")

@@ -6,12 +6,16 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.Program;
+import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
+import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import java.util.Date;
+
 @Entity(name = "subject_program_eligibility")
-public class SubjectProgramEligibility extends OrganisationAwareEntity {
+public class SubjectProgramEligibility extends OrganisationAwareEntity implements SubjectLinkedSyncEntity {
     @ManyToOne(targetEntity = Individual.class, fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_id")
     @NotNull
@@ -27,6 +31,12 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
 
     @Column
     private DateTime checkDate;
+
+    @Column(updatable = false)
+    private boolean syncDisabled;
+
+    @NotNull
+    private Date syncDisabledDateTime;
 
     @Column
     @Type(value = ObservationCollectionUserType.class)
@@ -70,5 +80,34 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
 
     public void setObservations(ObservationCollection observations) {
         this.observations = observations;
+    }
+
+    public boolean isSyncDisabled() {
+        return syncDisabled;
+    }
+
+    @PrePersist
+    public void beforeSave() {
+        SyncDisabledEntityHelper.handleSave(this, this.getSubject());
+    }
+
+    @PreUpdate
+    public void beforeUpdate() {
+        SyncDisabledEntityHelper.handleSave(this, this.getSubject());
+    }
+
+    @Override
+    public void setSyncDisabledDateTime(Date syncDisabledDateTime) {
+        this.syncDisabledDateTime = syncDisabledDateTime;
+    }
+
+    @Override
+    public void setSyncDisabled(boolean syncDisabled) {
+        this.syncDisabled = syncDisabled;
+    }
+
+    @Override
+    public Date getSyncDisabledDateTime() {
+        return null;
     }
 }

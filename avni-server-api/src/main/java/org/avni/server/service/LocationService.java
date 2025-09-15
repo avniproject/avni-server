@@ -7,10 +7,9 @@ import org.avni.server.application.KeyType;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
-import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
-import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
 import org.avni.server.util.ValidationUtil;
@@ -28,9 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,15 +39,17 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     private final LocationRepository locationRepository;
     private final LocationMappingRepository locationMappingRepository;
     private final ResetSyncService resetSyncService;
+    private final OrganisationConfigService organisationConfigService;
     private final Logger logger;
 
     @Autowired
-    public LocationService(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationRepository organisationRepository, LocationMappingRepository locationMappingRepository, ResetSyncService resetSyncService) {
+    public LocationService(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationRepository organisationRepository, LocationMappingRepository locationMappingRepository, ResetSyncService resetSyncService, OrganisationConfigService organisationConfigService) {
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationRepository = organisationRepository;
         this.locationMappingRepository = locationMappingRepository;
         this.resetSyncService = resetSyncService;
+        this.organisationConfigService = organisationConfigService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -223,7 +222,17 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
                 || (!location.isTopLevel() && parent != null && !parent.containsSubLocationExcept(title, type, location));
     }
 
-    public AddressLevelType createAddressLevelType(AddressLevelTypeContract contract) {
+    public AddressLevelType findAddressLevelTypeByName(String name, String excludeUuid) {
+        AddressLevelType existingType = addressLevelTypeRepository.findByNameIgnoreCaseAndIsVoidedFalse(name);
+        if (existingType != null && (excludeUuid == null || !existingType.getUuid().equals(excludeUuid))) {
+            return existingType;
+        }
+        return null;
+    }
+
+    public AddressLevelType createAddressLevelType(Organisation organisation, AddressLevelTypeContract contract) {
+        // Validate name uniqueness - moved to controller to provide better error messages for API consumers
+
         AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
         if (addressLevelType == null) {
             addressLevelType = new AddressLevelType();
@@ -240,6 +249,9 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         }
         addressLevelType.setLevel(contract.getLevel());
         addressLevelType.setVoided(contract.isVoided());
+        // Clean up references in custom registration locations
+        organisationConfigService.removeVoidedAddressLevelTypeFromCustomRegistrationLocations(organisation, addressLevelType.getUuid());
+
         AddressLevelType parent = null;
         if (contract.getParent() != null && StringUtils.hasText(contract.getParent().getName())) {
             parent = addressLevelTypeRepository.findByName(contract.getParent().getName());
@@ -307,13 +319,28 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
                 locationRepository.getParents(uuid) : locationRepository.getParentsWithMaxLevelTypeId(uuid, maxLevelTypeId);
     }
 
-    public void createAddressLevelTypes(AddressLevelTypeContract[] addressLevelTypeContracts) {
-        for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
-            try {
-                this.createAddressLevelType(addressLevelTypeContract);
-            } catch (Exception e) {
-                throw new BulkItemSaveException(addressLevelTypeContract, e);
+    public void createAddressLevelTypes(Organisation organisation, AddressLevelTypeContract[] addressLevelTypeContracts) {
+        // First, validate for case-insensitive duplicate names across all contracts
+        Map<String, AddressLevelTypeContract> nameToContractMap = new HashMap<>();
+        for (AddressLevelTypeContract contract : addressLevelTypeContracts) {
+            String name = contract.getName();
+            if (name != null) {
+                // Check for duplicates within the batch
+                if (nameToContractMap.containsKey(name.toLowerCase())) {
+                    throw new ValidationException(String.format("Duplicate location type name '%s' found in the request", name));
+                }
+                // Check for existing duplicates in the database (excluding the contract's own UUID if it's an update)
+                AddressLevelType existingType = findAddressLevelTypeByName(name, contract.getUuid());
+                if (existingType != null) {
+                    throw new ValidationException(String.format("Location type with name '%s' already exists", name));
+                }
+                nameToContractMap.put(name.toLowerCase(), contract);
             }
+        }
+
+        // Once validated, process all contracts
+        for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
+            this.createAddressLevelType(organisation, addressLevelTypeContract);
         }
     }
 }

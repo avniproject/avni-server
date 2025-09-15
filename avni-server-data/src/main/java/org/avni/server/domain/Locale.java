@@ -16,7 +16,8 @@ public enum Locale {
     pu_IN("Punjabi"),
     sa_IN("Sanskrit"),
     ur_IN("Urdu"),
-    as_IN("ASSAMESE");
+    as_IN("ASSAMESE"),
+    brx_IN("BODO");
 
     private final String name;
 

@@ -1,0 +1,1 @@
+ALTER TABLE archival_config RENAME TO storage_management_config;

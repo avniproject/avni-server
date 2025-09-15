@@ -1,25 +1,33 @@
 package org.avni.server.service.metabase;
 
+import org.avni.server.config.SelfServiceBatchConfig;
+import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.metabase.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
+import org.avni.server.util.SyncTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.avni.server.domain.Group.METABASE_USERS;
 
 @Service
 public class MetabaseService {
     private static final String DB_ENGINE = "postgres";
+    private final MetabaseDatabaseRepository metabaseDatabaseRepository;
+    private final SelfServiceBatchConfig selfServiceBatchConfig;
 
     @Value("${avni.default.org.user.db.password}")
-    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
+    private String avniDefaultOrgUserDbPassword;
 
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
@@ -30,10 +38,9 @@ public class MetabaseService {
     private final MetabaseDashboardRepository metabaseDashboardRepository;
     private final MetabaseGroupRepository metabaseGroupRepository;
     private final MetabaseUserRepository metabaseUserRepository;
+    private final UserRepository userRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
-
-    private static final long MAX_WAIT_TIME_IN_SECONDS = 300;
     private static final long EACH_SLEEP_DURATION = 3;
 
     @Autowired
@@ -45,7 +52,8 @@ public class MetabaseService {
                            CollectionRepository collectionRepository,
                            MetabaseDashboardRepository metabaseDashboardRepository,
                            MetabaseGroupRepository metabaseGroupRepository,
-                           MetabaseUserRepository metabaseUserRepository) {
+                           MetabaseUserRepository metabaseUserRepository, MetabaseDatabaseRepository metabaseDatabaseRepository,
+                           SelfServiceBatchConfig selfServiceBatchConfig, UserRepository userRepository) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
@@ -55,18 +63,20 @@ public class MetabaseService {
         this.metabaseDashboardRepository = metabaseDashboardRepository;
         this.metabaseGroupRepository = metabaseGroupRepository;
         this.metabaseUserRepository = metabaseUserRepository;
+        this.metabaseDatabaseRepository = metabaseDatabaseRepository;
+        this.selfServiceBatchConfig = selfServiceBatchConfig;
+        this.userRepository = userRepository;
     }
 
     private boolean setupDatabase() {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
-        if (database == null) {
-            database = Database.forDatabasePayload(organisation.getName(),
-                    DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
-            databaseRepository.save(database);
-            return true;
-        }
-        return false;
+        if (database != null) return false;
+
+        database = Database.forDatabasePayload(organisation.getName(),
+                DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), avniDefaultOrgUserDbPassword));
+        databaseRepository.save(database);
+        return true;
     }
 
     private void tearDownDatabase() {
@@ -127,10 +137,14 @@ public class MetabaseService {
     public void setupMetabase() throws InterruptedException {
         Organisation organisation = organisationService.getCurrentOrganisation();
         logger.info("[{}] Setting up database", organisation.getName());
-        boolean newDatabaseCreated = setupDatabase();
-        if (newDatabaseCreated) {
-            this.waitForInitialSyncToComplete(organisation);
+        boolean databaseSetup = setupDatabase();
+        if (!databaseSetup) {
+            logger.info("[{}] Database previously setup so possible ETL has new schema entities", organisation.getName());
+            this.syncDatabase();
         }
+
+        Database database = databaseRepository.getDatabase(organisation);
+        this.waitForDatabaseSyncToComplete(organisation, database);
         logger.info("[{}] Setting up collection", organisation.getName());
         setupCollection();
         logger.info("[{}] Setting up group", organisation.getName());
@@ -152,27 +166,41 @@ public class MetabaseService {
         return collectionRepository.getCollection(organisation);
     }
 
-    public void upsertUsersOnMetabase(List<UserGroup> usersToBeAdded) {
+    public void upsertUsersOnMetabase(List<UserGroup> userGroups) {
         Group group = metabaseGroupRepository.findGroup(UserContextHolder.getOrganisation().getName());
+        List<UserGroup> changesToMetabaseUsersGroup = userGroups.stream().filter(ug -> ug.getGroupName().equals(METABASE_USERS)).toList();
         if (group != null) {
-            List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.getUserGroupMemberships();
-            for (UserGroup value : usersToBeAdded) {
-                if (value.getGroupName().contains(org.avni.server.domain.Group.METABASE_USERS)
-                        && !metabaseUserRepository.emailExists(value.getUser().getEmail())) {
-                    String[] nameParts = value.getUser().getName().split(" ", 2);
-                    String firstName = nameParts[0];
-                    String lastName = (nameParts.length > 1) ? nameParts[1] : null;
-                    metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, value.getUser().getEmail(), userGroupMemberships));
-                } else {
-                    if (!metabaseUserRepository.activeUserExists(value.getUser().getEmail())) {
-                        metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
+            for (UserGroup value : changesToMetabaseUsersGroup) {
+                boolean usersSharingEmailAddress = userRepository.findAllByEmailIgnoreCaseAndIsVoidedFalse(value.getUser().getEmail()).size() > 1;
+                MetabaseUserData metabaseUser = metabaseUserRepository.getUserFromEmail(value.getUser().getEmail());
+                if (value.isVoided()) {
+                    // Email uniquely identifies a user on metabase but on avni.
+                    // Remove the user from the org group on metabase only if the email id used is unique on avni as well.
+                    if (!usersSharingEmailAddress) {
+                        if (metabaseUser != null && metabaseUser.getGroupIds().contains(group.getId())) {
+                            removeUserFromMetabaseGroup(group.getId(), metabaseUser.getId());
+                        }
                     }
-                    if (!metabaseUserRepository.userExistsInCurrentOrgGroup((value.getUser().getEmail()))) {
-                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(value.getUser().getEmail()).getId(), group.getId()));
+                } else {
+                    if (metabaseUser == null) {
+                        String[] nameParts = value.getUser().getName().split(" ", 2);
+                        String firstName = nameParts[0];
+                        String lastName = (nameParts.length > 1) ? nameParts[1] : null;
+                        List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.buildDefaultUserGroupMemberships(group);
+                        metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, value.getUser().getEmail(), userGroupMemberships));
+                    } else {
+                        if (!metabaseUser.getGroupIds().contains(group.getId())) {
+                            metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUser.getId(), group.getId()));
+                        }
                     }
                 }
             }
         }
+    }
+
+    public void removeUserFromMetabaseGroup(Integer groupId, Integer userId) {
+        metabaseUserRepository.getAllMemberships().get(String.valueOf(userId)).stream().filter(metabaseGroupMembership -> metabaseGroupMembership.groupId().equals(groupId) && metabaseGroupMembership.userId().equals(userId))
+                .findFirst().ifPresent(metabaseUserRepository::deleteMembership);
     }
 
     public void fixDatabaseSyncSchedule() {
@@ -181,44 +209,23 @@ public class MetabaseService {
         databaseRepository.moveDatabaseScanningToFarFuture(database);
     }
 
-    public void waitForInitialSyncToComplete(Organisation organisation) throws InterruptedException {
-        long startTime = System.currentTimeMillis();
+    public void waitForDatabaseSyncToComplete(Organisation organisation, Database database) throws InterruptedException {
+        SyncTimer timer = SyncTimer.fromMinutes(selfServiceBatchConfig.getAvniReportingMetabaseDbSyncMaxTimeoutInMinutes());
         logger.info("Waiting for initial metabase database sync {}", organisation.getName());
+        timer.start();
         while (true) {
-            long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
-            if (!(timeLeft < 0)) {
-                logger.info("Initial metabase database sync timed out after {} seconds", timeSpent / 1000);
+            long timeLeft = timer.getTimeLeft();
+            if (timeLeft < 0) {
+                logger.info("Metabase database sync timed out. {}", timer);
                 break;
             }
             SyncStatus syncStatus = this.getInitialSyncStatus();
-            if (syncStatus != SyncStatus.COMPLETE) {
+            boolean syncRunning = metabaseDatabaseRepository.isSyncRunning(database);
+            if (syncStatus != SyncStatus.COMPLETE || syncRunning) {
                 Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent / 1000, organisation.getName());
+                logger.info("{} Metabase database sync not complete in allotted time. {}", organisation.getName(), timer);
             } else {
-                break;
-            }
-        }
-    }
-
-    public void waitForManualSchemaSyncToComplete(Organisation organisation) throws InterruptedException {
-        long startTime = System.currentTimeMillis();
-        logger.info("Waiting for manual metabase database sync {}", organisation.getName());
-        Database database = this.databaseRepository.getDatabase(organisation);
-        boolean syncRunning = false;
-        while (true) {
-            long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
-            if (!(timeLeft < 0)) {
-                logger.info("Manual metabase database sync timed out after {} seconds", timeSpent / 1000);
-                break;
-            }
-
-            syncRunning = this.databaseRepository.isSyncRunning(database);
-            if (syncRunning) {
-                Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for manual metabase database sync {}", timeSpent / 1000, organisation.getName());
-            } else {
+                logger.info("Metabase database sync completed. {}", timer);
                 break;
             }
         }
@@ -232,9 +239,28 @@ public class MetabaseService {
         return SyncStatus.fromString(status);
     }
 
-    public void syncDatabase() {
+    public Database syncDatabase() {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
         databaseRepository.reSyncSchema(database);
+        return database;
+    }
+
+    public List<String> getResourcesPresent() {
+        List<String> metabaseResources = new ArrayList<>();
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        Group group = metabaseGroupRepository.findGroup(currentOrganisation);
+        if (group != null) {
+            metabaseResources.add(MetabaseResource.UserGroup.name());
+        }
+        CollectionInfoResponse collection = collectionRepository.getCollection(currentOrganisation);
+        if (collection != null)
+            metabaseResources.add(MetabaseResource.Collection.name());
+        Database database = databaseRepository.getDatabase(currentOrganisation);
+        if (database != null) {
+            DatabaseDetails details = database.getDetails();
+            metabaseResources.add(String.format("%s - %s - %s", MetabaseResource.Database, details.getHost(), details.getDbname()));
+        }
+        return metabaseResources;
     }
 }

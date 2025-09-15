@@ -3,7 +3,8 @@ package org.avni.server.service.media;
 public enum MediaFolder {
     NEWS("news"),
     PROFILE_PICS("profile-pics"),
-    ICONS("icons");
+    ICONS("icons"),
+    MetaData("metadata");
     public final String label;
 
     MediaFolder(String label) {

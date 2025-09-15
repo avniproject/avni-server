@@ -18,7 +18,7 @@ public class SubjectTypeCreator {
     public SubjectType getSubjectType(String subjectTypeValue, String header) {
         OperationalSubjectType operationalSubjectType = operationalSubjectTypeRepository.findByNameIgnoreCase(subjectTypeValue);
         if (operationalSubjectType == null) {
-            throw new RuntimeException(String.format("'%s' '%s' not found", header, subjectTypeValue));
+            return null;
         }
         return operationalSubjectType.getSubjectType();
     }

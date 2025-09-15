@@ -16,30 +16,16 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
     @Value("${static.path}")
     private String staticPath;
 
-    @Value("${analytics.path}")
-    private String analyticsPath;
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         if (staticPath != null) {
             registry
-                    .addResourceHandler("/static/**")
-                    .addResourceLocations("file:" + staticPath + "static/")
+                    .addResourceHandler("/assets/**")
+                    .addResourceLocations("file:" + staticPath + "assets/")
                     .setCacheControl(CacheControl.maxAge(365, TimeUnit.DAYS));
-            //this is to serve user review html page in the web app.
-            registry.addResourceHandler("/userReview")
-                    .addResourceLocations("file:" + staticPath + "userReview/");
             registry
                     .addResourceHandler("/**")
                     .addResourceLocations("file:" + staticPath);
-        }
-        if(analyticsPath != null){
-            registry
-                    .addResourceHandler("/analytics/static/**")
-                    .addResourceLocations("file:" + analyticsPath + "static/");
-            registry
-                    .addResourceHandler("/analytics/**")
-                    .addResourceLocations("file:" + analyticsPath);
         }
     }
 

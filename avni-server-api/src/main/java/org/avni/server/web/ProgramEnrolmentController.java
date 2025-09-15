@@ -65,7 +65,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public AvniEntityResponse save(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
-        ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
+        ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request, false);
         return new AvniEntityResponse(programEnrolment);
     }
 
@@ -74,7 +74,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @Transactional
     public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
         try {
-            ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
+            ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request, true);
             txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
 
             //Assuming that EnrollmentDetails will not be edited when exited
@@ -84,6 +84,8 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             return new AvniEntityResponse(programEnrolment);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
+        } catch (ValidationException e) {
             return AvniEntityResponse.error(e.getMessage());
         }
     }

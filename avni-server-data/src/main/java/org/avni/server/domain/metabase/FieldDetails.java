@@ -3,6 +3,8 @@ package org.avni.server.domain.metabase;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FieldDetails {
     public FieldDetails() {
@@ -53,5 +55,21 @@ public class FieldDetails {
 
     public String getSemanticType() {
         return semanticType;
+    }
+
+    public static String toString(List<FieldDetails> fieldDetails) {
+        return fieldDetails.stream()
+                .map(FieldDetails::toString)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

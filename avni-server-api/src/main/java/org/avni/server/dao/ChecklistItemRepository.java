@@ -42,6 +42,7 @@ public interface ChecklistItemRepository extends TransactionalDataRepository<Che
     default boolean isEntityChanged(SyncParameters syncParameters){
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 

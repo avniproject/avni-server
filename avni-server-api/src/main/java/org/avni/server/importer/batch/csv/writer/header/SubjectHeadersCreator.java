@@ -1,19 +1,16 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.KeyType;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.AddressLevelTypeRepository;
+import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.SubjectType;
-import org.avni.server.service.OrganisationConfigService;
-import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.service.AddressLevelService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,25 +30,25 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String dobVerified = "Date Of Birth Verified";
     public final static String gender = "Gender";
 
-    private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final AddressLevelService addressLevelService;
 
     public SubjectHeadersCreator(
-            OrganisationConfigService organisationConfigService,
-            AddressLevelTypeRepository addressLevelTypeRepository) {
-        this.organisationConfigService = organisationConfigService;
+            AddressLevelTypeRepository addressLevelTypeRepository,
+            AddressLevelService addressLevelService) {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.addressLevelService = addressLevelService;
     }
 
     @Override
-    protected List<HeaderField> buildFields(FormMapping formMapping, Mode mode) {
+    protected List<HeaderField> buildFields(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         SubjectType subjectType = formMapping.getSubjectType();
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
-        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
+        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, true));
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
-        fields.add(new HeaderField(registrationLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
+        fields.add(new HeaderField(registrationLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 
         if (subjectType.isPerson()) {
             fields.add(new HeaderField(firstName, "", true, null, null, null));
@@ -61,7 +58,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
             fields.add(new HeaderField(lastName, "", true, null, null, null));
             if (subjectType.isAllowProfilePicture())
                 fields.add(new HeaderField(profilePicture, "", false, null, null, null));
-            fields.add(new HeaderField(dateOfBirth, "", false, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
+            fields.add(new HeaderField(dateOfBirth, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
             fields.add(new HeaderField(dobVerified, "Default value: false", false, "Allowed values: {true, false}", null, null));
             fields.add(new HeaderField(gender, "", true, "Allowed values: {Female, Male, Other}", null, null));
         } else if (subjectType.isHousehold()) {
@@ -74,52 +71,23 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         }
 
         fields.addAll(generateAddressFields(formMapping));
-        fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
 
         return fields;
     }
 
-    private List<HeaderField> generateAddressFields(FormMapping formMapping) {
-        List<String> headers = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()).equals(Collections.emptyList())
-                ? fromCustomLocations(formMapping).getHeaders()
-                : addressLevelTypeRepository.getAllNames();
-        return headers.stream()
-                .map(header -> new HeaderField(header, "", false, null, null, null, false))
-                .collect(Collectors.toList());
-    }
-
-    private AddressConfig fromCustomLocations(FormMapping formMapping) {
-        List<String> headers = new ArrayList<>();
-        ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-        try {
-            JsonNode customRegistrationLocations = mapper.valueToTree(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()));
-            boolean hasCustomLocations = false;
-            for (JsonNode location : customRegistrationLocations) {
-                String subjectTypeUUID = location.get("subjectTypeUUID").asText();
-                if (formMapping.getSubjectType().getUuid().equals(subjectTypeUUID)) {
-                    JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
-                    List<String> locationTypeUUIDs = mapper.convertValue(locationTypeUUIDsNode,
-                            mapper.getTypeFactory().constructCollectionType(List.class, String.class));
-                    Set<String> uniqueHeaders = locationTypeUUIDs.stream()
-                            .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
-                            .collect(Collectors.toSet());
-                    headers.addAll(uniqueHeaders);
-                    hasCustomLocations = true;
-                    break;
-                }
-            }
-            if (!hasCustomLocations) {
-                return defaultConfig();
-            }
-        } catch (Exception e) {
-            return defaultConfig();
+    public List<HeaderField> generateAddressFields(FormMapping formMapping) throws InvalidConfigurationException {
+        AddressLevelType registrationLocationType = addressLevelService.getRegistrationLocationType(formMapping.getSubjectType());
+        if (registrationLocationType == null) {
+            registrationLocationType = addressLevelService.getImpliedRegistrationLocationType();
+            if (registrationLocationType == null)
+                throw new InvalidConfigurationException("There is no lowest location type in the system.");
         }
-        return new AddressConfig(headers, headers.size());
-    }
-
-    private AddressConfig defaultConfig() {
-        List<String> headers = addressLevelTypeRepository.getAllNames();
-        return new AddressConfig(headers, headers.size());
+        List<String> listOfParentNameList = new ArrayList<>(addressLevelTypeRepository.getAllParentNames(registrationLocationType.getUuid()));
+        Collections.reverse(listOfParentNameList);
+        return listOfParentNameList.stream()
+                .map(header -> new HeaderField(header, "", true, null, null, null, true))
+                .collect(Collectors.toList());
     }
 }

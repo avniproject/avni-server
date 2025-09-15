@@ -25,7 +25,7 @@ public class SubjectTypeSetting implements Serializable {
     }
 
     public AddressLevelTypes getAddressLevelTypes(AddressLevelTypes addressLevelTypes) {
-        List<AddressLevelType> matching = addressLevelTypes.stream().filter(locationType -> locationTypeUUIDs.contains(locationType.getUuid())).collect(Collectors.toList());
+        List<AddressLevelType> matching = addressLevelTypes.stream().filter(locationType -> !locationType.isVoided() && locationTypeUUIDs.contains(locationType.getUuid())).collect(Collectors.toList());
         return new AddressLevelTypes(matching);
     }
 }

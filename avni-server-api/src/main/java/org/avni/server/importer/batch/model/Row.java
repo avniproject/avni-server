@@ -1,6 +1,9 @@
 package org.avni.server.importer.batch.model;
 
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.S;
+import org.joda.time.LocalDate;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,13 +46,13 @@ public class Row extends HashMap<String, String> {
     @Override
     public String get(Object key) {
         String k = nullSafeTrim((String) key);
-        String s = super.get(k);
+        String s = super.getOrDefault(S.doubleQuote(k), super.get(k));
         return this.nullSafeTrim(s);
     }
 
     public String getObservation(Object key) {
         String k = nullSafeTrim((String) key);
-        String s = super.get(S.doubleQuote(k));
+        String s = super.getOrDefault(S.doubleQuote(k), super.get(k));
         return this.nullSafeTrim(s);
     }
 
@@ -73,6 +76,25 @@ public class Row extends HashMap<String, String> {
             return true;
         } else if (FALSE_VALUE.matcher(String.valueOf(get(header))).matches()) {
             return false;
+        }
+        return null;
+    }
+
+    public LocalDate ensureDateIsPresentAndNotInFuture(String headerColumnName, List<String> errorMsgs) {
+        try {
+            String rowValue = this.get(headerColumnName);
+            if (!StringUtils.hasText(rowValue)) {
+                errorMsgs.add(String.format("Value required for mandatory field: '%s'", headerColumnName));
+                return null;
+            }
+            LocalDate date = DateTimeUtil.parseFlexibleDate(rowValue);
+            if (date.isAfter(LocalDate.now())) {
+                errorMsgs.add(String.format("'%s' %s cannot be in future", headerColumnName, rowValue));
+                return null;
+            }
+            return date;
+        } catch (IllegalArgumentException ex) {
+            errorMsgs.add(String.format("Invalid '%s'", headerColumnName));
         }
         return null;
     }

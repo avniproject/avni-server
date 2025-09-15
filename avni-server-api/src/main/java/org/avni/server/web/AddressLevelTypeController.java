@@ -6,11 +6,13 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.util.EntityUtil;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.LocationService;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
-import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.AddressLevelTypeContract;
+import org.avni.server.web.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +34,15 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     private final LocationService locationService;
     private final ProjectionFactory projectionFactory;
     private final AccessControlService accessControlService;
+    private final OrganisationConfigService organisationConfigService;
 
     @Autowired
-    public AddressLevelTypeController(AddressLevelTypeRepository addressLevelTypeRepository, LocationService locationService, ProjectionFactory projectionFactory, AccessControlService accessControlService) {
+    public AddressLevelTypeController(AddressLevelTypeRepository addressLevelTypeRepository, LocationService locationService, ProjectionFactory projectionFactory, AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationService = locationService;
         this.projectionFactory = projectionFactory;
         this.accessControlService = accessControlService;
+        this.organisationConfigService = organisationConfigService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -66,47 +70,71 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     @Transactional
     public ResponseEntity<?> createAddressLevelType(@RequestBody AddressLevelTypeContract contract) {
         accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
-        //Do not allow to create location type when there is already another location type with the same name
-        if (addressLevelTypeRepository.findByName(contract.getName()) != null)
-            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
+        try {
+            //Check if a location type with the same name already exists before creating (case-insensitive check)
+            AddressLevelType existingType = locationService.findAddressLevelTypeByName(contract.getName(), null);
+            if (existingType != null) {
+                return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
+            }
 
-        AddressLevelType addressLevelType = locationService.createAddressLevelType(contract);
-        return new ResponseEntity<>(addressLevelType, HttpStatus.CREATED);
+            AddressLevelType addressLevelType = locationService.createAddressLevelType(UserContextHolder.getOrganisation(), contract);
+            return new ResponseEntity<>(addressLevelType, HttpStatus.CREATED);
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
+        }
     }
 
     @PostMapping(value = "/addressLevelTypes")
     @Transactional
     public ResponseEntity<?> save(@RequestBody List<AddressLevelTypeContract> addressLevelTypeContracts) {
         accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
-        for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
-            logger.info(String.format("Processing addressLevelType request: %s", addressLevelTypeContract.getUuid()));
-            locationService.createAddressLevelType(addressLevelTypeContract);
+        try {
+            // Check for duplicate names first before processing any contracts
+            for (AddressLevelTypeContract contract : addressLevelTypeContracts) {
+                AddressLevelType existingType = locationService.findAddressLevelTypeByName(contract.getName(), contract.getUuid());
+                if (existingType != null) {
+                    return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
+                }
+            }
+
+            // If no duplicates found, process all contracts
+            for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
+                logger.info(String.format("Processing addressLevelType request: %s", addressLevelTypeContract.getUuid()));
+                locationService.createAddressLevelType(UserContextHolder.getOrganisation(), addressLevelTypeContract);
+            }
+            return ResponseEntity.ok(null);
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
         }
-        return ResponseEntity.ok(null);
     }
 
     @PutMapping(value = "/addressLevelType/{id}")
     @Transactional
     public ResponseEntity<?> updateAddressLevelType(@PathVariable("id") Long id, @RequestBody AddressLevelTypeContract contract) {
         accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
-        AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
-        AddressLevelType addressLevelTypeWithSameName = addressLevelTypeRepository.findByName(contract.getName());
-        //Do not allow to change location type name when there is already another location type with the same name
-        if (addressLevelTypeWithSameName != null && addressLevelTypeWithSameName.getUuid() != addressLevelType.getUuid())
-            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
+        try {
+            AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
+            if (addressLevelType == null) {
+                return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError("No location type found with the provided UUID"));
+            }
 
-        if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(contract.getName(), ValidationUtil.COMMON_INVALID_CHARS_PATTERN)) {
-            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Invalid Location Type name %s", contract.getName())));
+            // Case-insensitive check for duplicate names, excluding the current type being updated
+            AddressLevelType addressLevelTypeWithSameName = locationService.findAddressLevelTypeByName(contract.getName(), contract.getUuid());
+            if (addressLevelTypeWithSameName != null) {
+                return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
+            }
+
+            // Use the service method for update
+            AddressLevelType updatedAddressLevelType = locationService.createAddressLevelType(UserContextHolder.getOrganisation(), contract);
+
+            // Update audit for all associated address levels
+            Set<AddressLevel> addressLevels = updatedAddressLevelType.getAddressLevels();
+            addressLevels.forEach(addressLevel -> addressLevel.updateAudit());
+
+            return new ResponseEntity<>(updatedAddressLevelType, HttpStatus.CREATED);
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
         }
-        addressLevelType.setName(contract.getName());
-        if (ValidationUtil.checkNull(contract.getLevel())) {
-            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Invalid Location Type level %s", contract.getLevel())));
-        }
-        addressLevelType.setLevel(contract.getLevel());
-        Set<AddressLevel> addressLevels = addressLevelType.getAddressLevels();
-        addressLevels.forEach(addressLevel -> addressLevel.updateAudit());
-        addressLevelTypeRepository.save(addressLevelType);
-        return new ResponseEntity<>(addressLevelType, HttpStatus.CREATED);
     }
 
     @DeleteMapping(value = "/addressLevelType/{id}")
@@ -123,6 +151,9 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
         }
         addressLevelType.setName(EntityUtil.getVoidedName(addressLevelType.getName(), addressLevelType.getId()));
         addressLevelType.setVoided(true);
+
+        // Clean up references in custom registration locations
+        organisationConfigService.removeVoidedAddressLevelTypeFromCustomRegistrationLocations(UserContextHolder.getOrganisation(), addressLevelType.getUuid());
         return new ResponseEntity<>(addressLevelType, HttpStatus.OK);
     }
 }

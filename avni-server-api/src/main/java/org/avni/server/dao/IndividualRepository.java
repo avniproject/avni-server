@@ -38,6 +38,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         return count(audit
                 .and(subjectType)
                 .and(location_AndDirectAssignment_AndSyncAttributes)
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 
@@ -212,4 +213,6 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     default void voidSubjectItemsAt(AddressLevel address) {
         this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
+
+    int countBySyncDisabled(boolean syncDisabled);
 }

@@ -35,6 +35,8 @@ public interface AddressLevelTypeRepository extends ReferenceDataRepository<Addr
 
     List<AddressLevelType> findByIsVoidedFalseAndNameIgnoreCaseContains(String name);
 
+    AddressLevelType findByNameIgnoreCaseAndIsVoidedFalse(String name);
+
     default List<String> getAllParentNames(String uuid) {
         List<AddressLevelType> allAddressLevelTypes = getAllAddressLevelTypes();
         List<String> parentNames = new ArrayList<>();

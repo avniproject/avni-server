@@ -2,15 +2,16 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.KeyValues;
 import org.avni.server.application.ValueType;
-import org.avni.server.dao.*;
+import org.avni.server.dao.AnswerConceptMigrationRepository;
+import org.avni.server.dao.ConceptAnswerRepository;
+import org.avni.server.dao.ConceptRepository;
+import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.*;
-import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.*;
 import org.avni.server.web.api.ApiRequestContextHolder;
 import org.avni.server.web.request.ConceptContract;
@@ -18,7 +19,6 @@ import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
 import org.avni.server.web.request.application.FormUsageContract;
 import org.avni.server.web.response.Response;
-import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,20 +46,18 @@ public class ConceptService implements NonScopeAwareService {
     private final Logger logger;
     private final ConceptRepository conceptRepository;
     private final ConceptAnswerRepository conceptAnswerRepository;
-    private final OrganisationRepository organisationRepository;
     private final FormElementRepository formElementRepository;
     private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
     private final LocationRepository locationRepository;
 
     @Autowired
-    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, OrganisationRepository organisationRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
+    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
         this.formElementRepository = formElementRepository;
         this.answerConceptMigrationRepository = answerConceptMigrationRepository;
         this.locationRepository = locationRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.conceptRepository = conceptRepository;
         this.conceptAnswerRepository = conceptAnswerRepository;
-        this.organisationRepository = organisationRepository;
     }
 
     private static Map<String, String> readMap(String concepts) throws IOException {
@@ -72,8 +70,26 @@ public class ConceptService implements NonScopeAwareService {
         return jsonMap;
     }
 
-    private Concept fetchOrCreateConcept(String uuid) {
+    private Concept fetchOrCreateConcept(ConceptContract conceptRequest, boolean ignoreAnswerConceptUUIDAbsence) {
+        if (conceptRequest == null) {
+            throw new BadRequestError("Concept request cannot be null");
+        }
+        conceptRequest.validate();
+        assertNotDuplicate(conceptRequest);
+        String uuid = conceptRequest.getUuid();
+        String name = conceptRequest.getName();
         Concept concept = conceptRepository.findByUuid(uuid);
+
+        if (concept == null && StringUtils.hasText(name)) {
+            Concept existingConceptWithSameName = conceptRepository.findByName(name.trim());
+            if (existingConceptWithSameName != null &&
+                    (ignoreAnswerConceptUUIDAbsence ? StringUtils.hasText(uuid) : !existingConceptWithSameName.getUuid().equals(uuid))) {
+                throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
+                        name.trim(), existingConceptWithSameName.getUuid()));
+            }
+            concept = existingConceptWithSameName;
+        }
+
         if (concept == null) {
             concept = createConcept(uuid);
         }
@@ -82,7 +98,8 @@ public class ConceptService implements NonScopeAwareService {
 
     private Concept createConcept(String uuid) {
         Concept concept = new Concept();
-        concept.setUuid(uuid);
+        concept.assignUUID(uuid);
+        concept.setActive(true);
         return concept;
     }
 
@@ -91,37 +108,24 @@ public class ConceptService implements NonScopeAwareService {
         return concept != null && !concept.getUuid().equals(conceptRequest.getUuid());
     }
 
-    private ConceptAnswer fetchOrCreateConceptAnswer(Concept concept, ConceptContract answerConceptRequest, double answerOrder) throws AnswerConceptNotFoundException {
-        if (StringUtils.isEmpty(answerConceptRequest.getUuid())) {
-            throw new ValidationException("UUID missing for answer");
-        }
-        ConceptAnswer conceptAnswer = concept.findConceptAnswerByConceptUUID(answerConceptRequest.getUuid());
-        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+    private ConceptAnswer fetchOrCreateConceptAnswer(Concept concept, ConceptContract answerConceptRequest, double answerOrder) {
+        ConceptAnswer conceptAnswer = concept.findConceptAnswerByConceptUUIDOrName(answerConceptRequest.getUuid(), answerConceptRequest.getName());
         if (conceptAnswer == null) {
             conceptAnswer = new ConceptAnswer();
             conceptAnswer.assignUUID();
         }
-        Concept answerConcept = conceptRepository.findByUuid(answerConceptRequest.getUuid());
-        if (answerConcept == null) {
-            String message = String.format("Answer concept not found for UUID:%s", answerConceptRequest.getUuid());
-            logger.error(message);
-            throw new AnswerConceptNotFoundException(message);
-        }
-        updateOrganisationIfNeeded(conceptAnswer, answerConceptRequest);
-        if (!conceptAnswer.editableBy(organisation.getId())) {
-            return conceptAnswer;
-        }
+        Concept answerConcept = conceptRepository.findByUuidOrName(answerConceptRequest.getUuid(), answerConceptRequest.getName());
         conceptAnswer.setAnswerConcept(answerConcept);
-//        conceptAnswer.setAnswerConcept(map(answerConceptRequest));
-        conceptAnswer.setVoided(answerConceptRequest.isVoided());
         Double providedOrder = answerConceptRequest.getOrder();
         conceptAnswer.setOrder(providedOrder == null ? answerOrder : providedOrder);
         conceptAnswer.setAbnormal(answerConceptRequest.isAbnormal());
         conceptAnswer.setUnique(answerConceptRequest.isUnique());
+        conceptAnswer.setVoided(answerConceptRequest.isVoided());
         return conceptAnswer;
     }
 
-    private void createCodedConcept(Concept concept, ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
+    private void createCodedConcept(Concept concept, ConceptContract conceptRequest) {
+        Set<ConceptAnswer> existingAnswers = concept.getConceptAnswers();
         List<ConceptContract> answers = (List<ConceptContract>) O.coalesce(conceptRequest.getAnswers(), new ArrayList<>());
         AtomicInteger index = new AtomicInteger(0);
         List<ConceptAnswer> conceptAnswers = new ArrayList<>();
@@ -130,68 +134,31 @@ public class ConceptService implements NonScopeAwareService {
             conceptAnswers.add(conceptAnswer);
         }
         concept.addAll(conceptAnswers);
+        // clone existing answers to new list
+        List<ConceptAnswer> existingAnswersList = new ArrayList<>(existingAnswers);
+        existingAnswersList.forEach(existingAnswer -> {
+            if (!conceptAnswers.contains(existingAnswer)) {
+                ConceptAnswer removedAnswer = getAnswer(concept.getUuid(), existingAnswer.getAnswerConcept().getUuid());
+                removedAnswer.setVoided(true);
+                conceptAnswerRepository.save(removedAnswer);
+                concept.removeAnswer(existingAnswer);
+            }
+        });
     }
 
-    private Concept createNumericConcept(Concept concept, ConceptContract conceptRequest) {
+    private void setRangeValues(Concept concept, ConceptContract conceptRequest) {
         concept.setHighAbsolute(conceptRequest.getHighAbsolute());
         concept.setLowAbsolute(conceptRequest.getLowAbsolute());
         concept.setHighNormal(conceptRequest.getHighNormal());
         concept.setLowNormal(conceptRequest.getLowNormal());
         concept.setUnit(conceptRequest.getUnit());
-        return concept;
     }
 
-    private String getImpliedDataType(ConceptContract conceptContract, Concept concept) {
+    private String getDataType(ConceptContract conceptContract, Concept concept) {
         if (conceptContract.getDataType() == null) {
             return concept.isNew() ? ConceptDataType.NA.toString() : concept.getDataType();
         }
         return conceptContract.getDataType();
-    }
-
-    private Concept map(@NotNull ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
-        Concept concept = fetchOrCreateConcept(conceptRequest.getUuid());
-
-        concept.setName(conceptRequest.getName() != null ? conceptRequest.getName() : concept.getName());
-        String impliedDataType = getImpliedDataType(conceptRequest, concept);
-        concept.setDataType(impliedDataType);
-        concept.setVoided(conceptRequest.isVoided());
-        concept.setActive(conceptRequest.getActive());
-        concept.setKeyValues(conceptRequest.getKeyValues());
-        updateOrganisationIfNeeded(concept, conceptRequest);
-        concept.updateAudit();
-        switch (ConceptDataType.valueOf(impliedDataType)) {
-            case Coded:
-                createCodedConcept(concept, conceptRequest);
-                break;
-            case Numeric:
-                createNumericConcept(concept, conceptRequest);
-                break;
-        }
-        return concept;
-    }
-
-    private <OAE extends OrganisationAwareEntity> OAE updateOrganisationIfNeeded(@NotNull OAE entity, @NotNull ConceptContract conceptRequest) {
-        String organisationUuid = conceptRequest.getOrganisationUUID();
-        Organisation organisation = organisationRepository.findByUuid(organisationUuid);
-        if (organisationUuid != null && organisation == null) {
-            throw new RuntimeException(String.format("Organisation not found with uuid :'%s'", organisationUuid));
-        }
-        if (organisation != null) {
-            entity.setOrganisationId(organisation.getId());
-        }
-        return entity;
-    }
-
-    private Concept saveOrUpdate(ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
-        if (conceptRequest == null) return null;
-        if (conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
-            throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
-        }
-        logger.info(String.format("Creating concept: %s", conceptRequest));
-
-        addToMigrationIfRequired(conceptRequest);
-        Concept concept = map(conceptRequest);
-        return conceptRepository.save(concept);
     }
 
     private void addToMigrationIfRequired(ConceptContract conceptRequest) {
@@ -211,33 +178,77 @@ public class ConceptService implements NonScopeAwareService {
         }
     }
 
-    public void saveOrUpdateConcepts(List<ConceptContract> conceptRequests) {
-        List<ConceptContract> failedDueToAnswerConceptNotFound = new ArrayList<>();
-        for (ConceptContract conceptRequest : conceptRequests) {
-            try {
-                saveOrUpdate(conceptRequest);
-            } catch (AnswerConceptNotFoundException answerConceptNotFoundException) {
-                failedDueToAnswerConceptNotFound.add(conceptRequest);
+    private static void updateMediaInfo(ConceptContract conceptRequest, Concept concept, boolean ignoreConceptRequestMediaAbsence) {
+        if (StringUtils.hasText(conceptRequest.getMediaUrl())) {
+            concept.setMediaType(Concept.MediaType.Image);
+            concept.setMediaUrl(conceptRequest.getMediaUrl());
+        } else {
+            if (ignoreConceptRequestMediaAbsence && StringUtils.hasText(concept.getMediaUrl())) {
+                return; // Ignore if no media URL is provided, and we should not remove the existing media info
+            } else {
+                concept.setMediaType(null);
+                concept.setMediaUrl(null);
             }
         }
+    }
 
-        //Retry
-        for (ConceptContract conceptRequest : failedDueToAnswerConceptNotFound) {
-            List<ConceptContract> requestAnswers = conceptRequest.getAnswers();
-            try {
-                for (ConceptContract requestAnswer : requestAnswers) {
-                    Optional<ConceptContract> answerConcept = failedDueToAnswerConceptNotFound.stream()
-                            .filter(conceptContract -> conceptContract.getUuid().equals(requestAnswer.getUuid()))
-                            .findFirst();
-                    if (answerConcept.isPresent()) {
-                        saveOrUpdate(answerConcept.get());
-                    }
-                }
-                saveOrUpdate(conceptRequest);
-            } catch (AnswerConceptNotFoundException answerConceptNotFoundException) {
-                throw new ValidationException(answerConceptNotFoundException.getMessage(), answerConceptNotFoundException);
+    public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests, ConceptContract.RequestType requestType) {
+        ArrayList<Concept> concepts = new ArrayList<>();
+        for (ConceptContract conceptRequest : conceptRequests) {
+            logger.info("Processing concept: {} {}", conceptRequest.getName(), conceptRequest.getUuid());
+            List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequest);
+            for (ConceptContract answerConceptRequest : answerConcepts) {
+                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, !requestType.equals(ConceptContract.RequestType.Bundle));
+                String dataType = getDataType(answerConceptRequest, answerConcept);
+                answerConcept.setName(answerConceptRequest.getName());
+                answerConcept.setDataType(dataType);
+                updateMediaInfo(answerConceptRequest, answerConcept, true);
+                answerConcept.updateAudit();
+                conceptRepository.save(answerConcept);
+                addToMigrationIfRequired(answerConceptRequest);
             }
+
+            Concept concept = fetchOrCreateConcept(conceptRequest, false);
+            String dataType = getDataType(conceptRequest, concept);
+            concept.setName(conceptRequest.getName());
+            concept.setDataType(dataType);
+
+            concept.setVoided(conceptRequest.isVoided());
+            concept.setActive(conceptRequest.getActive());
+            concept.setKeyValues(conceptRequest.getKeyValues());
+            updateMediaInfo(conceptRequest, concept, false);
+            concept.updateAudit();
+
+            switch (ConceptDataType.valueOf(dataType)) {
+                case Coded:
+                    createCodedConcept(concept, conceptRequest);
+                    break;
+                case Numeric:
+                    setRangeValues(concept, conceptRequest);
+                    break;
+            }
+
+            concepts.add(conceptRepository.save(concept));
+            addToMigrationIfRequired(conceptRequest);
         }
+        return concepts.stream()
+                .map(Concept::getUuid)
+                .collect(Collectors.toList());
+    }
+
+    private void assertNotDuplicate(ConceptContract conceptRequest) {
+        if (StringUtils.hasText(conceptRequest.getName()) && StringUtils.hasText(conceptRequest.getUuid()) && conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
+            Concept existingConcept = conceptRepository.findByName(conceptRequest.getName().trim());
+            throw new BadRequestError(String.format("Concept with name '%s' already exists with different UUID: %s",
+                    conceptRequest.getName(), existingConcept.getUuid()));
+        }
+    }
+
+    private static List<ConceptContract> getAnswerConcepts(ConceptContract conceptRequest) {
+        if (conceptRequest.getAnswers() != null) {
+            return conceptRequest.getAnswers().stream().filter(ConceptContract::hasNameOrUUID).toList();
+        }
+        return List.of();
     }
 
     public Concept get(String uuid) {
@@ -259,7 +270,7 @@ public class ConceptService implements NonScopeAwareService {
      */
     public Object getObservationValue(Concept questionConcept, Object value) {
         if (questionConcept.getDataType().equals(ConceptDataType.Date.toString())) {
-            return ApiRequestContextHolder.isVersionGreaterThan(1)?  DateTimeUtil.toDateString((String) value): value;
+            return ApiRequestContextHolder.isVersionGreaterThan(1) ? DateTimeUtil.toDateString((String) value) : value;
         }
 
         if (Arrays.asList(ConceptDataType.Audio, ConceptDataType.Id, ConceptDataType.Encounter, ConceptDataType.DateTime,
@@ -386,20 +397,28 @@ public class ConceptService implements NonScopeAwareService {
 
     public String getAllowedValuesForSyncConcept(Concept concept) {
         switch (ConceptDataType.valueOf(concept.getDataType())) {
-            case Numeric: return STRING_CONSTANT_ANY_NUMBER;
-            case Text: return STRING_CONSTANT_ANY_TEXT;
-            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
-                    .collect(Collectors.joining(STRING_CONSTANT_DELIMITER, STRING_CONSTANT_PREFIX, STRING_CONSTANT_SUFFIX));
-            default: return String.format("Appropriate value for a %s type concept", concept.getDataType());
+            case Numeric:
+                return STRING_CONSTANT_ANY_NUMBER;
+            case Text:
+                return STRING_CONSTANT_ANY_TEXT;
+            case Coded:
+                return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
+                        .collect(Collectors.joining(STRING_CONSTANT_DELIMITER, STRING_CONSTANT_PREFIX, STRING_CONSTANT_SUFFIX));
+            default:
+                return String.format("Appropriate value for a %s type concept", concept.getDataType());
         }
     }
 
     public String getExampleValuesForSyncConcept(Concept concept) {
         switch (ConceptDataType.valueOf(concept.getDataType())) {
-            case Numeric: return STRING_CONSTANT_EXAMPLE_NUMBER;
-            case Text: return STRING_CONSTANT_EXAMPLE_TEXT;
-            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName()).findAny().get();
-            default: return EMPTY_STRING;
+            case Numeric:
+                return STRING_CONSTANT_EXAMPLE_NUMBER;
+            case Text:
+                return STRING_CONSTANT_EXAMPLE_TEXT;
+            case Coded:
+                return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName()).findAny().get();
+            default:
+                return EMPTY_STRING;
         }
     }
 }

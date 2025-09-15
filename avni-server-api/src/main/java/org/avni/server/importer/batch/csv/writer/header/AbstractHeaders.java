@@ -3,33 +3,34 @@ package org.avni.server.importer.batch.csv.writer.header;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
+import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements HeaderCreator {
+    private static final Map<String, Supplier<FieldDescriptor>> STRATEGY_MAP = new HashMap<>();
+
+    static {
+        STRATEGY_MAP.put(ConceptDataType.Coded.name(), CodedFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Date.name(), DateFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Text.name(), TextFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Numeric.name(), NumericFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.PhoneNumber.name(), PhoneNumberDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Subject.name(), SubjectConceptDescriptor::new);
+    }
+
     private static FieldDescriptor getStrategy(String dataType) {
-        if (dataType.equals(ConceptDataType.Coded.name())) {
-            return new CodedFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.Date.name())) {
-            return new DateFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.Text.name())) {
-            return new TextFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.Numeric.name())) {
-            return new NumericFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.PhoneNumber.name())) {
-            return new PhoneNumberDescriptor();
-        } else if (dataType.equals(ConceptDataType.Subject.name())) {
-            return new SubjectConceptDescriptor();
-        } else {
-            return new DefaultFieldDescriptor();
-        }
+        return STRATEGY_MAP.getOrDefault(dataType, DefaultFieldDescriptor::new).get();
     }
 
     @Override
@@ -37,8 +38,14 @@ public abstract class AbstractHeaders implements HeaderCreator {
         throw new UnsupportedOperationException("Use getAllHeaders(formMapping, Mode) with runtime data instead");
     }
 
+    public String[] getAllMandatoryHeaders(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
+        return buildFields(formMapping, mode).stream()
+                .filter(HeaderField::isMandatory).map(HeaderField::getHeader)
+                .toArray(String[]::new);
+    }
+
     @Override
-    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
+    public String[] getAllHeaders(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
@@ -47,7 +54,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
     @Override
     public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         List<HeaderField> fields = new ArrayList<>();
-        fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
         return fields.stream()
                 .map(HeaderField::getHeader)
@@ -55,18 +62,18 @@ public abstract class AbstractHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
+    public String[] getAllDescriptions(FormMapping formMapping, Object mode) throws InvalidConfigurationException {
         return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getDescription)
                 .toArray(String[]::new);
     }
 
-    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Mode mode);
+    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Object mode) throws InvalidConfigurationException;
 
-    protected static List<HeaderField> generateConceptFields(FormMapping formMapping) {
+    protected static List<HeaderField> generateConceptFields(FormMapping formMapping, boolean mandatoryCheckApplied) {
         return formMapping.getForm().getApplicableFormElements().stream()
                 .filter(fe -> !ConceptDataType.isQuestionGroup(fe.getConcept().getDataType()))
-                .map(AbstractHeaders::mapFormElementToField)
+                .map((FormElement fe1) -> mapFormElementToField(fe1, mandatoryCheckApplied))
                 .collect(Collectors.toList());
     }
 
@@ -80,7 +87,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
         return new HeaderField("\"" + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);
     }
 
-    private static HeaderField mapFormElementToField(FormElement fe) {
+    private static HeaderField mapFormElementToField(FormElement fe, boolean mandatoryCheckApplied) {
         Concept concept = fe.getConcept();
         String header = ImportService.getHeaderName(fe);
         FieldDescriptor strategy = getStrategy(concept.getDataType());
@@ -88,6 +95,6 @@ public abstract class AbstractHeaders implements HeaderCreator {
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
 
-        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, false);
+        return new HeaderField(header, "", mandatoryCheckApplied && fe.isMandatory(), allowedValues, format, null, mandatoryCheckApplied);
     }
 }

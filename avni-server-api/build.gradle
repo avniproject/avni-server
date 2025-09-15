@@ -109,6 +109,9 @@ dependencies {
     testImplementation 'org.slf4j:slf4j-reload4j:2.0.6'
     implementation 'com.google.guava:guava:33.2.1-jre'
     implementation 'org.codehaus.jettison:jettison:1.5.4'
+    implementation('org.apache.tika:tika-core:2.7.0') {
+        exclude group: 'org.apache.tika', module: 'tika-parsers'
+    }
 }
 
 bootRun {

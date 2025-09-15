@@ -1,12 +1,9 @@
 package org.avni.server.importer.batch.metabase;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityManager;
-import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
-import org.avni.server.framework.security.AuthService;
+import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.metabase.MetabaseService;
 import org.slf4j.Logger;
@@ -19,19 +16,17 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpServerErrorException;
-
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Component
 @JobScope
 public class CannedAnalyticsTearDownTasklet implements Tasklet {
     private static final Logger logger = LoggerFactory.getLogger(CannedAnalyticsTearDownTasklet.class);
 
-    private final AuthService authService;
     private final OrganisationRepository organisationRepository;
     private final MetabaseService metabaseService;
-    private final EntityManager entityManager;
+    private final AvniSpringBatchJobHelper avniSpringBatchJobHelper;
     private final OrganisationConfigService organisationConfigService;
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -39,23 +34,16 @@ public class CannedAnalyticsTearDownTasklet implements Tasklet {
     private String organisationUUID;
 
     @Autowired
-    public CannedAnalyticsTearDownTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, MetabaseService metabaseService, EntityManager entityManager) {
-        this.authService = authService;
+    public CannedAnalyticsTearDownTasklet(OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, MetabaseService metabaseService, AvniSpringBatchJobHelper avniSpringBatchJobHelper) {
         this.organisationConfigService = organisationConfigService;
         this.organisationRepository = organisationRepository;
         this.metabaseService = metabaseService;
-        this.entityManager = entityManager;
-    }
-
-    @PostConstruct
-    public void authenticateUser() {
-        DbRoleRepository.setDbRoleNone(entityManager);
-        authService.authenticateByUserId(userId, organisationUUID);
-        DbRoleRepository.setDbRoleFromContext(entityManager);
+        this.avniSpringBatchJobHelper = avniSpringBatchJobHelper;
     }
 
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        avniSpringBatchJobHelper.authenticate(userId, organisationUUID);
         Organisation organisation = organisationRepository.findByUuid(organisationUUID);
         logger.info("Tearing down canned analytics for organisation {}", organisation.getName());
         try {

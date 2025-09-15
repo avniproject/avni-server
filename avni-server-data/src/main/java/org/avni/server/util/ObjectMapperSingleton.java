@@ -24,4 +24,12 @@ public final class ObjectMapperSingleton {
     public static ObjectMapper getObjectMapper() {
         return objectMapper;
     }
+
+    public static String writeValueAsStringSafe(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception ignored) {
+        }
+        return "Couldn't write object to JSON. This is not actual error.";
+    }
 }

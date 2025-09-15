@@ -34,6 +34,13 @@ public class Concept extends OrganisationAwareEntity {
     @Type(value = KeyValuesUserType.class)
     private KeyValues keyValues;
 
+    @Column
+    private String mediaUrl;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private MediaType mediaType;
+
     private Boolean active;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept")
@@ -117,6 +124,14 @@ public class Concept extends OrganisationAwareEntity {
         return conceptAnswers;
     }
 
+    @JsonIgnore
+    public ConceptAnswer getConceptAnswer(String answerConceptUUID) {
+        return this.getConceptAnswers().stream()
+                .filter(x -> !x.isVoided() && !x.getAnswerConcept().isVoided() && x.getAnswerConcept().getUuid().equals(answerConceptUUID))
+                .findAny()
+                .orElse(null);
+    }
+
     public void setConceptAnswers(Set<ConceptAnswer> conceptAnswers) {
         this.conceptAnswers = conceptAnswers;
     }
@@ -144,6 +159,14 @@ public class Concept extends OrganisationAwareEntity {
                 .orElse(null);
     }
 
+    public ConceptAnswer findConceptAnswerByConceptUUIDOrName(String answerConceptUUID, String name) {
+        return this.getConceptAnswers().stream()
+                .filter(x -> x.getAnswerConcept().getUuid().equals(answerConceptUUID) ||
+                        x.getAnswerConcept().getName().equals(name))
+                .findAny()
+                .orElse(null);
+    }
+
     public void addAnswer(ConceptAnswer conceptAnswer) {
         conceptAnswer.setConcept(this);
         this.getConceptAnswers().add(conceptAnswer);
@@ -156,10 +179,6 @@ public class Concept extends OrganisationAwareEntity {
         ).collect(Collectors.toList());
         this.getConceptAnswers().addAll(nonRepeatingNewOnes);
         nonRepeatingNewOnes.forEach(conceptAnswer -> conceptAnswer.setConcept(this));
-    }
-
-    public void voidOrphanedConceptAnswers(List<String> answerConceptUUIDs) {
-        this.getConceptAnswers().forEach(conceptAnswer -> conceptAnswer.setVoided(!answerConceptUUIDs.contains(conceptAnswer.getAnswerConcept().getUuid())));
     }
 
     public String getUnit() {
@@ -235,5 +254,29 @@ public class Concept extends OrganisationAwareEntity {
         ConceptAnswer conceptAnswer = this.conceptAnswers.stream().filter(x -> x.getAnswerConcept().getName().equals(answerConceptName)).findAny().orElse(null);
         if (conceptAnswer == null) return null;
         return conceptAnswer.getAnswerConcept();
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public MediaType getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(MediaType mediaType) {
+        this.mediaType = mediaType;
+    }
+
+    public void removeAnswer(ConceptAnswer conceptAnswer) {
+        this.conceptAnswers.remove(conceptAnswer);
+    }
+
+    public static enum MediaType {
+        Image
     }
 }

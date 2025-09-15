@@ -45,7 +45,7 @@ public class MessageReceiverService {
     }
 
     public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, String receiverId) {
-        if (receiverType != ReceiverType.Group) return saveReceiverIfRequired(receiverType, new Long(receiverId));
+        if (receiverType != ReceiverType.Group) return saveReceiverIfRequired(receiverType, Long.parseLong(receiverId));
         Optional<MessageReceiver> messageReceiverOptional = messageReceiverRepository.findByReceiverTypeAndExternalId(receiverType, receiverId);
         return messageReceiverOptional.orElseGet(() -> {
             MessageReceiver messageReceiver = new MessageReceiver(receiverType, receiverId);

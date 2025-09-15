@@ -82,6 +82,7 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
     default boolean isEntityChanged(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
+                .and(syncDisabledSpecification())
         ) > 0;
     }
 

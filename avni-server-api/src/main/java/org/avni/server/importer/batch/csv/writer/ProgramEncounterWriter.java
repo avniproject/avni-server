@@ -1,75 +1,30 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
-import org.avni.server.dao.IndividualRepository;
-import org.avni.server.dao.ProgramEncounterRepository;
-import org.avni.server.dao.ProgramEnrolmentRepository;
-import org.avni.server.dao.ProgramRepository;
-import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.*;
-import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
-import org.avni.server.importer.batch.csv.creator.*;
-import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
-import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
+import org.avni.server.importer.batch.csv.creator.ProgramEncounterCreator;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
-import org.avni.server.service.ProgramEncounterService;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
-
+@StepScope
 @Component
 public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
-    private final ProgramEncounterRepository programEncounterRepository;
-    private ProgramEnrolmentCreator programEnrolmentCreator;
-    private BasicEncounterCreator basicEncounterCreator;
-    private FormMappingRepository formMappingRepository;
-    private RuleServerInvoker ruleServerInvoker;
-    private ObservationService observationService;
-    private VisitCreator visitCreator;
-    private DecisionCreator decisionCreator;
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    private ObservationCreator observationCreator;
-    private ProgramEncounterService programEncounterService;
-    private EntityApprovalStatusWriter entityApprovalStatusWriter;
-    private EncounterHeaderStrategyFactory strategyFactory;
+    private final ProgramEncounterCreator programEncounterCreator;
+    private final String encounterUploadMode;
 
     @Autowired
-    public ProgramEncounterWriter(ProgramEncounterRepository programEncounterRepository,
-                                  ProgramEnrolmentCreator programEnrolmentCreator,
-                                  BasicEncounterCreator basicEncounterCreator,
-                                  FormMappingRepository formMappingRepository,
-                                  RuleServerInvoker ruleServerInvoker,
-                                  ObservationService observationService,
-                                  VisitCreator visitCreator,
-                                  DecisionCreator decisionCreator,
-                                  ProgramEnrolmentRepository programEnrolmentRepository,
-                                  ObservationCreator observationCreator,
-                                  ProgramEncounterService programEncounterService,
-                                  EntityApprovalStatusWriter entityApprovalStatusWriter,
-                                  OrganisationConfigService organisationConfigService, EncounterHeaderStrategyFactory strategyFactory) {
+    public ProgramEncounterWriter(ProgramEncounterCreator programEncounterCreator,
+                                  OrganisationConfigService organisationConfigService,
+                                  @Value("#{jobParameters['encounterUploadMode']}") String encounterUploadMode) {
         super(organisationConfigService);
-        this.programEncounterRepository = programEncounterRepository;
-        this.programEnrolmentCreator = programEnrolmentCreator;
-        this.basicEncounterCreator = basicEncounterCreator;
-        this.formMappingRepository = formMappingRepository;
-        this.ruleServerInvoker = ruleServerInvoker;
-        this.observationService = observationService;
-        this.visitCreator = visitCreator;
-        this.decisionCreator = decisionCreator;
-        this.programEnrolmentRepository = programEnrolmentRepository;
-        this.observationCreator = observationCreator;
-        this.programEncounterService = programEncounterService;
-        this.entityApprovalStatusWriter = entityApprovalStatusWriter;
-        this.strategyFactory = strategyFactory;
+        this.programEncounterCreator = programEncounterCreator;
+        this.encounterUploadMode = encounterUploadMode;
     }
 
     @Override
@@ -78,48 +33,6 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
     }
 
     private void write(Row row) throws Exception {
-        ProgramEncounter programEncounter = getOrCreateProgramEncounter(row);
-        List<String> allErrorMsgs = new ArrayList<>();
-        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID), EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
-        SubjectType subjectType = programEnrolment.getIndividual().getSubjectType();
-        programEncounter.setProgramEnrolment(programEnrolment);
-        basicEncounterCreator.updateEncounter(row, programEncounter, allErrorMsgs);
-
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(subjectType.getUuid(), programEnrolment.getProgram().getUuid(), programEncounter.getEncounterType().getUuid(), FormType.ProgramEncounter);
-        if (formMapping == null) {
-            throw new Exception(String.format("No form found for the encounter type %s", programEncounter.getEncounterType().getName()));
-        }
-        ProgramEncounter savedEncounter;
-        if (skipRuleExecution()) {
-            EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-            programEncounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations(), formMapping));
-            savedEncounter = programEncounterService.save(programEncounter);
-        } else {
-            UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEncounter, allErrorMsgs);
-            programEncounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
-            decisionCreator.addEncounterDecisions(programEncounter.getObservations(), ruleResponse.getDecisions());
-            decisionCreator.addEnrolmentDecisions(programEnrolment.getObservations(), ruleResponse.getDecisions());
-            savedEncounter = programEncounterService.save(programEncounter);
-            programEnrolmentRepository.save(programEnrolment);
-            visitCreator.saveScheduledVisits(formMapping.getType(), null, programEnrolment.getUuid(), ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
-        }
-        entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.ProgramEncounter, savedEncounter.getEncounterType().getUuid());
-    }
-
-    private ProgramEncounter getOrCreateProgramEncounter(Row row) {
-        String id = row.get(EncounterHeadersCreator.ID);
-        ProgramEncounter existingEncounter = null;
-        if (id != null && !id.isEmpty()) {
-            existingEncounter = programEncounterRepository.findByLegacyIdOrUuid(id);
-        }
-        return existingEncounter == null ? createNewEncounter(id) : existingEncounter;
-    }
-
-    private ProgramEncounter createNewEncounter(String externalId) {
-        ProgramEncounter programEncounter = new ProgramEncounter();
-        programEncounter.setLegacyId(externalId);
-        programEncounter.setVoided(false);
-        programEncounter.assignUUIDIfRequired();
-        return programEncounter;
+        programEncounterCreator.create(row, encounterUploadMode);
     }
 }

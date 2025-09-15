@@ -68,7 +68,7 @@ public class JobService {
         }
     }
 
-    public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode, String locationHierarchy) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+    public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode, String locationHierarchy, String encounterUploadMode) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder()
                 .addString("organisationUUID", organisationUUID)
                 .addString("uuid", uuid)
@@ -77,10 +77,15 @@ public class JobService {
                 .addLong("noOfLines", s3FileInfo.getNoOfLines(), false)
                 .addLong("userId", userId, false)
                 .addString("type", type, false)
-                .addString("autoApprove", String.valueOf(autoApprove))
-                .addString("locationUploadMode", locationUploadMode);
+                .addString("autoApprove", String.valueOf(autoApprove));
+        if (Objects.nonNull(locationUploadMode)) {
+            jobParametersBuilder.addString("locationUploadMode", locationUploadMode);
+        }
         if (Objects.nonNull(locationHierarchy)) {
             jobParametersBuilder.addString("locationHierarchy", locationHierarchy);
+        }
+        if (Objects.nonNull(encounterUploadMode)) {
+            jobParametersBuilder.addString("encounterUploadMode", encounterUploadMode);
         }
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         logger.info(format("Bulk upload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));

@@ -39,7 +39,6 @@ import org.avni.server.web.request.application.menu.MenuItemContract;
 import org.avni.server.web.request.webapp.CatchmentExport;
 import org.avni.server.web.request.webapp.CatchmentsExport;
 import org.avni.server.web.request.webapp.ConceptExport;
-import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
@@ -169,6 +168,7 @@ public class OrganisationService {
     private final DashboardMapper dashboardMapper;
     private final GroupDashboardService groupDashboardService;
     private final CustomQueryService customQueryService;
+    private final StorageManagementConfigRepository storageManagementConfigRepository;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -265,7 +265,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService) {
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -364,6 +364,7 @@ public class OrganisationService {
         this.jdbcTemplate = jdbcTemplate;
         this.dashboardService = dashboardService;
         this.customQueryService = customQueryService;
+        this.storageManagementConfigRepository = storageManagementConfigRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -429,6 +430,7 @@ public class OrganisationService {
                 formElementGroupRepository,
                 formMappingRepository,
                 formRepository,
+                answerConceptMigrationRepository,
                 conceptAnswerRepository,
                 conceptRepository,
                 operationalEncounterTypeRepository,
@@ -445,7 +447,6 @@ public class OrganisationService {
                 groupDashboardRepository,
                 dashboardFilterRepository,
                 dashboardRepository,
-                answerConceptMigrationRepository,
                 documentationItemRepository,
                 documentationRepository,
                 menuItemRepository,
@@ -476,6 +477,7 @@ public class OrganisationService {
                 locationMappingRepository,
                 locationRepository,
                 addressLevelTypeRepository,
+                storageManagementConfigRepository,
                 organisationConfigRepository,
         };
         return adminConfigRepositories;
@@ -518,15 +520,8 @@ public class OrganisationService {
 
     public void addIdentifierSourceJson(ZipOutputStream zos, boolean includeLocations) throws IOException {
         List<IdentifierSource> identifierSources = identifierSourceRepository.findAll();
-        List<IdentifierSourceContractWeb> identifierSourceContractWeb = identifierSources.stream().map(IdentifierSourceContractWeb::fromIdentifierSource)
-                .peek(id -> {
-                    if (id.getCatchmentId() == null) {
-                        id.setCatchmentUUID(null);
-                    } else {
-                        id.setCatchmentUUID(catchmentRepository.findOne(id.getCatchmentId()).getUuid());
-                    }
-                })
-                .filter(idSource -> includeLocations || idSource.getCatchmentId() == null)
+        List<IdentifierSourceContract> identifierSourceContractWeb = identifierSources.stream().map(IdentifierSourceContract::fromIdentifierSource)
+                .filter(idSource -> includeLocations || idSource.getCatchmentUUID() == null)
                 .collect(Collectors.toList());
         if (!identifierSourceContractWeb.isEmpty()) {
             addFileToZip(zos, "identifierSource.json", identifierSourceContractWeb);
@@ -717,7 +712,7 @@ public class OrganisationService {
         for (SubjectType subjectType : subjectTypes) {
             InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
             String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.SUBJECT_TYPE_ICONS.getFolderName(), subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.SUBJECT_TYPE_ICONS.getFolderName(), subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -731,7 +726,20 @@ public class OrganisationService {
             if (StringUtils.isEmpty(reportCard.getIconFileS3Key())) continue;
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+        }
+    }
+
+    public void addConceptMedia(ZipOutputStream zos) throws IOException {
+        List<Concept> conceptsWithMedia = conceptRepository.findAllByMediaUrlNotNull().stream()
+                .filter(concept -> StringUtils.hasText(concept.getMediaUrl())).toList();
+        if (!conceptsWithMedia.isEmpty()) {
+            addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
+        }
+        for (Concept concept : conceptsWithMedia) {
+            InputStream objectContent = s3Service.getObjectContentFromUrl(concept.getMediaUrl());
+            String extension = S.getLastStringAfter(concept.getMediaUrl(), ".");
+            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -828,7 +836,7 @@ public class OrganisationService {
         zos.closeEntry();
     }
 
-    private void addIconToZip(ZipOutputStream zos, String fileName, byte[] bytes) throws IOException {
+    private void addMediaToZip(ZipOutputStream zos, String fileName, byte[] bytes) throws IOException {
         ZipEntry entry = new ZipEntry(fileName);
         zos.putNextEntry(entry);
         if (bytes != null) {

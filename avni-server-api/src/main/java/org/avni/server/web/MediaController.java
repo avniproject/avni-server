@@ -33,7 +33,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -129,6 +132,25 @@ public class MediaController {
         }
     }
 
+    @RequestMapping(value = "/media/signedUrls", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public ResponseEntity generateDownloadUrls(@RequestBody List<String> urls) {
+        try {
+            Map<String, String> signedUrls = urls.stream()
+                .collect(Collectors.toMap(
+                    url -> url,
+                    url -> s3Service.generateMediaDownloadUrl(url).toString()
+                ));
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(signedUrls);
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
+    }
+
     //unprotected endpoint
     @RequestMapping(value = "/web/media", method = RequestMethod.GET)
     public void downloadFile(@RequestParam String url, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
@@ -170,20 +192,28 @@ public class MediaController {
         File tempSourceFile;
         try {
             tempSourceFile = AvniFiles.convertMultiPartToFile(file, "");
-            AvniFiles.ImageType imageType = AvniFiles.guessImageTypeFromStream(tempSourceFile);
+            AvniFiles.ImageType imageType = AvniFiles.guessImageType(tempSourceFile);
             if (AvniFiles.ImageType.Unknown.equals(imageType)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use .bmp, .jpg, .jpeg, .png, .gif file.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. File type: %s. Use .bmp, .jpg, .jpeg, .png, .gif file.", imageType));
             }
             if (folder.equals(MediaFolder.ICONS) && isInvalidDimension(tempSourceFile, imageType)) {
                 accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
                     PrivilegeType.EditSubjectType,
                     PrivilegeType.EditOfflineDashboardAndReportCard
                 ));
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 75 X 75 or smaller.");
+                Dimension imageDimension = AvniFiles.getImageDimension(tempSourceFile, imageType);
+                String dimension = imageDimension.getWidth() + " X " + imageDimension.getHeight();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. Image size: %s. Use image of size 75 X 75 or smaller.", dimension));
             }
             if (folder.equals(MediaFolder.NEWS) && isInvalidImageSize(file)) {
+                double sizeInKB = AvniFiles.getSizeInKB(file);
                 accessControlService.checkPrivilege(PrivilegeType.EditNews);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 500KB or smaller.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. File size: %s. Use image of size 500KB or smaller.", sizeInKB));
             }
             if (folder.equals(MediaFolder.PROFILE_PICS)) {
                 // not checking privileges for specific subject type here as that will be checked while saving the entity
