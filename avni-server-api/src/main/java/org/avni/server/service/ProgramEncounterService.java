@@ -136,10 +136,11 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         programEncounter.setVoided(false);
         programEncounter.setObservations(new ObservationCollection());
         programEncounter.setCancelObservations(new ObservationCollection());
-        programEncounter.setFilledBy(null);
-        programEncounter.setCreatedBy(null);
-        programEncounter.setLastModifiedBy(null);
-        return programEncounter;
+        final User currentUser = userService.getCurrentUser();  
+        programEncounter.setFilledBy(null);  
+        programEncounter.setCreatedBy(currentUser);  
+        programEncounter.setLastModifiedBy(currentUser);  
+        return programEncounter;  
     }
 
     @Messageable(EntityType.ProgramEncounter)
@@ -173,9 +174,11 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         encounter.setMaxVisitDateTime(request.getMaxVisitDateTime());
         encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
-        encounter.setFilledBy(userService.getCurrentUser());
-        encounter.setCreatedBy(userService.getCurrentUser());
-        encounter.setLastModifiedBy(userService.getCurrentUser());
+        final User currentUser = userService.getCurrentUser();  
++        if (encounter.getCreatedBy() == null) {  
++            encounter.setCreatedBy(currentUser);  
++        }  
++        encounter.setLastModifiedBy(currentUser);  
 
         PointRequest encounterLocation = request.getEncounterLocation();
         if (encounterLocation != null)
@@ -234,9 +237,11 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         Individual individual = programEnrolment.getIndividual();
         programEncounter.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
         programEncounter.setIndividual(individual);
-        programEncounter.setCreatedBy(userService.getCurrentUser());
-        programEncounter.setLastModifiedBy(userService.getCurrentUser());
-        programEncounter.setFilledBy(userService.getCurrentUser());
+        final User currentUser = userService.getCurrentUser();  
+        if (programEncounter.getCreatedBy() == null) {  
+            programEncounter.setCreatedBy(currentUser);  
+        }  
+        programEncounter.setLastModifiedBy(currentUser); 
         if (individual.getAddressLevel() != null) {
             programEncounter.setAddressId(individual.getAddressLevel().getId());
         }
