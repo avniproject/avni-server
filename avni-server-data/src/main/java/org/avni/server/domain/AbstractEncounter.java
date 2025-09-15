@@ -218,23 +218,25 @@ public class AbstractEncounter extends SyncAttributeEntity {
         this.filledBy = filledBy;
     }
 
-    @JsonIgnore
-    public User getCreatedBy() {
-        return createdBy;
-    }
+    @JsonIgnore  
+    public User getCreatedBy() {  
+        return createdBy;  
+    }  
 
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
+    public void setCreatedBy(User createdBy) {  
+        this.createdBy = createdBy;  
+    }  
 
-    @JsonIgnore
-    public User getLastModifiedBy() {
-        return lastModifiedBy;
-    }
+    @JsonIgnore  
+    public User getLastModifiedBy() {  
+        return lastModifiedBy;  
+    }  
 
-    public void setLastModifiedBy(User lastModifiedBy) {
-        this.lastModifiedBy = lastModifiedBy;
-    public boolean isSyncDisabled() {
+    public void setLastModifiedBy(User lastModifiedBy) {  
+        this.lastModifiedBy = lastModifiedBy;  
+    }  
+
+    public boolean isSyncDisabled() {  
         return syncDisabled;
     }
 
