@@ -14,6 +14,7 @@ import org.avni.server.service.SubjectMigrationService;
 import org.avni.server.service.builder.*;
 import org.avni.server.web.SubjectMigrationController;
 import org.avni.server.web.SyncController;
+import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -212,6 +214,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         AddressLevel voidedAddressLevel = new AddressLevelBuilder().withDefaultValuesForNewEntity().type(catchmentData.getAddressLevelType()).voided(true).build();
         testLocationService.save(voidedAddressLevel);
         testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        testGroupService.giveMultiTxEntityTypeUpdatePrivilegeTo(organisationData.getGroup());
         Map<String, String> destinationAddressLevels = new HashMap<>();
         destinationAddressLevels.put(String.valueOf(i.getAddressLevel().getId()), String.valueOf(voidedAddressLevel.getId()));
         Map<String, String> failures = subjectMigrationService.bulkMigrateByAddress(Collections.singletonList(i.getId()), destinationAddressLevels);
@@ -224,6 +227,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         Map<String, String> destinationAddressLevels = new HashMap<>();
         destinationAddressLevels.put(i.getAddressLevel().getId().toString(), catchmentData.getAddressLevel2().getId().toString());
         testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        testGroupService.giveMultiTxEntityTypeUpdatePrivilegeTo(organisationData.getGroup());
         Map<String, String> failures = subjectMigrationService.bulkMigrateByAddress(Collections.singletonList(i.getId()), destinationAddressLevels);
         assertTrue(failures.isEmpty());
         i = testSubjectService.reload(i);
@@ -242,6 +246,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         destinationAddressLevels.put(catchmentData.getAddressLevel1().getId().toString(), voidedAddressLevel.getId().toString());
         destinationAddressLevels.put(catchmentData.getAddressLevel2().getId().toString(), catchmentData.getAddressLevel1().getId().toString());
         testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        testGroupService.giveMultiTxEntityTypeUpdatePrivilegeTo(organisationData.getGroup());
         Map<String, String> failures = subjectMigrationService.bulkMigrateByAddress(Arrays.asList(i1.getId(), i2.getId()), destinationAddressLevels);
         assertEquals(failures.size(), 1);
         i1 = testSubjectService.reload(i1);
@@ -258,6 +263,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         Map<String, String> destinationSyncConcepts = new HashMap<>();
         destinationSyncConcepts.put(subjectType.getSyncRegistrationConcept1(), concept1.getAnswerConcept("Answer 12").getUuid());
         testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        testGroupService.giveMultiTxEntityTypeUpdatePrivilegeTo(organisationData.getGroup());
         Map<String, String> failures = subjectMigrationService.bulkMigrateBySyncConcept(Collections.singletonList(i.getId()), destinationSyncConcepts);
         assertEquals(failures.size(), 0);
         i = testSubjectService.reload(i);
