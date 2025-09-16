@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.sync.attributes.bulkmigration;
 
 import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.service.SubjectMigrationService;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class BulkSubjectMigrationTasklet implements Tasklet {
     String mode;
 
     @Value("#{jobParameters['bulkSubjectMigrationParameters']}")
-    BulkSubjectMigrationRequest bulkSubjectMigrationParameters;
+    String bulkSubjectMigrationParametersJson;
 
     @Autowired
     public BulkSubjectMigrationTasklet(SubjectMigrationService subjectMigrationService, BulkUploadS3Service s3Service) {
@@ -38,6 +39,14 @@ public class BulkSubjectMigrationTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+        BulkSubjectMigrationRequest bulkSubjectMigrationParameters;
+        try {
+            bulkSubjectMigrationParameters = ObjectMapperSingleton.getObjectMapper()
+                    .readValue(bulkSubjectMigrationParametersJson, BulkSubjectMigrationRequest.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize bulk subject migration parameters", e);
+        }
+        
         Map<String, String> failedMigrations = subjectMigrationService.bulkMigrate(SubjectMigrationService.BulkSubjectMigrationModes.valueOf(mode), bulkSubjectMigrationParameters);
         chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext().put("failedMigrations", failedMigrations);
         return RepeatStatus.FINISHED;

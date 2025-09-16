@@ -44,7 +44,7 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
     private String fileName;
 
     @Value("#{jobParameters['bulkSubjectMigrationParameters']}")
-    private BulkSubjectMigrationRequest bulkSubjectMigrationParameters;
+    private String bulkSubjectMigrationParametersJson;
 
     @Autowired
     public BulkSubjectMigrationJobListener(AuthService authService, BulkUploadS3Service s3Service) {
@@ -54,6 +54,14 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
+        BulkSubjectMigrationRequest bulkSubjectMigrationParameters;
+        try {
+            bulkSubjectMigrationParameters = ObjectMapperSingleton.getObjectMapper()
+                    .readValue(bulkSubjectMigrationParametersJson, BulkSubjectMigrationRequest.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize bulk subject migration parameters in job listener", e);
+        }
+        
         logger.info("Starting Bulk Subject Migration Job {} mode: {}. Migrating {} subjects", uuid, mode, bulkSubjectMigrationParameters.getSubjectIds().size());
         authService.authenticateByUserId(userId, organisationUUID);
     }

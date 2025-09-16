@@ -59,4 +59,8 @@ public class TestGroupService {
             this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).setProgram(program).build(), PrivilegeType.ViewEnrolmentDetails);
         });
     }
+
+    public void giveMultiTxEntityTypeUpdatePrivilegeTo(Group group) {
+        this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().build(), PrivilegeType.MultiTxEntityTypeUpdate);
+    }
 }

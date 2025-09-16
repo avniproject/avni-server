@@ -92,11 +92,28 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.SubjectMigration);
     }
 
-    /* Setting of old and new sync concept value conditionally based on oldObsValueForSyncConcept and newObsValueForSyncConcept being different creates a problem.
-    This means that new and old values are set to null when address is changed but obs values haven't changed. Now these entries get picked by anyone who has the same address but may not have same sync concept values in user settings.
-    This can be fixed by picking up actual obs value from individual and putting in old and new values where-ever it is null. Once this optimisation is done we can remove adding of "is null" condition as predicate in subject migration strategy for sync attributes.
-    This problem is illustrated in this test - org.avni.server.dao.SubjectMigrationIntegrationTest.migrations_created_by_one_user_is_returned_for_another_user_even_when_concept_attributes_dont_match
-    At this moment the performance of this seems small as other filters help in reducing the number of records. Functionally this is not an issue because mobile app does the checks before applying subject migration. */
+    /**
+     * IMPORTANT: 
+     * Creates a subject migration record and updates sync attributes on related entities when address or sync concept values change.
+     * 
+     * <p>This method intentionally retrieves the individual from the database to get the current state,
+     * which may include updates made in the same transaction. When oldAddressLevel is null (typical for external API calls),
+     * it gets set to the individual's current address level, causing the migration condition to fail if the address
+     * was already updated in the same transaction. This is by design to limit migration scope for external API calls
+     * while allowing full migration for internal bulk operations.</p>
+     * 
+     * <p>Known limitation: Setting old and new sync concept values conditionally creates issues when address changes
+     * but observation values haven't changed. Values are set to null, allowing entries to be picked up by users
+     * with the same address but different sync concept values. This is illustrated in the test:
+     * {@code SubjectMigrationIntegrationTest.migrations_created_by_one_user_is_returned_for_another_user_even_when_concept_attributes_dont_match}</p>
+     * 
+     * @param individualUuid UUID of the individual subject
+     * @param oldAddressLevel Previous address level (null for external API calls)
+     * @param newAddressLevel New address level to migrate to
+     * @param oldObservations Previous observation collection (null to use current observations)
+     * @param newObservations New observation collection
+     * @param executingInBulk Whether this is part of a bulk migration operation
+     */
     @Transactional
     public void markSubjectMigrationIfRequired(String individualUuid, AddressLevel oldAddressLevel, AddressLevel newAddressLevel, ObservationCollection oldObservations, ObservationCollection newObservations, boolean executingInBulk) {
         Individual individual = individualRepository.findByUuid(individualUuid);

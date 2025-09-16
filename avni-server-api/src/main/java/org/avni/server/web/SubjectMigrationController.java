@@ -5,12 +5,12 @@ import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.importer.batch.model.CustomJobParameter;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.SubjectMigrationService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
@@ -136,6 +136,14 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         Organisation organisation = userContext.getOrganisation();
         String jobUUID = UUID.randomUUID().toString();
         String fileName = format("%s-%s-%s.%s", jobUUID, mode, user.getUsername(), "json");
+        
+        String serializedRequest;
+        try {
+            serializedRequest = ObjectMapperSingleton.getObjectMapper().writeValueAsString(bulkSubjectMigrationRequest);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize bulk subject migration request", e);
+        }
+        
         JobParameters jobParameters =
                 new JobParametersBuilder()
                         .addString("uuid", jobUUID)
@@ -143,7 +151,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
                         .addLong("userId", user.getId(), false)
                         .addString("mode", String.valueOf(mode))
                         .addString("fileName", fileName)
-                        .addJobParameter("bulkSubjectMigrationParameters", new CustomJobParameter<>(bulkSubjectMigrationRequest))
+                        .addString("bulkSubjectMigrationParameters", serializedRequest)
                         .toJobParameters();
 
         try {
