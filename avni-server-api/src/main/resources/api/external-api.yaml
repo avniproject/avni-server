@@ -572,7 +572,7 @@ paths:
           explode: true
           schema:
             type: string
-        - name: encounter type
+        - name: encounterType
           in: query
           description: program encounter type name
           required: false
@@ -792,7 +792,7 @@ paths:
           explode: true
           schema:
             type: string
-        - name: encounter type
+        - name: encounterTypee
           in: query
           description: subject encounter type name
           required: false
