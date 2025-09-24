@@ -83,7 +83,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
         if (existingProgram != null || existingOperationalProgram != null)
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Program %s already exists", request.getName())));
         Program program = new Program();
-        program.assignUUIDIfRequired();
+        program.assignUUID(request.getUuid());
         program = programService.updateAndSaveProgram(program, request);
         OperationalProgram operationalProgram = new OperationalProgram();
         operationalProgram.assignUUIDIfRequired();
