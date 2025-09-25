@@ -34,7 +34,7 @@ paths:
           explode: true
           schema:
             type: string
-        - name: subjectTypeName
+        - name: subjectType
           in: query
           description: subject type
           required: false
@@ -792,7 +792,7 @@ paths:
           explode: true
           schema:
             type: string
-        - name: encounterTypee
+        - name: encounterType
           in: query
           description: subject encounter type name
           required: false
