@@ -129,7 +129,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             );
         }
         SubjectType subjectType = new SubjectType();
-        subjectType.assignUUID();
+        subjectType.assignUUID(request.getUUID());
         buildSubjectType(request, subjectType);
         OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
         operationalSubjectType.assignUUID();

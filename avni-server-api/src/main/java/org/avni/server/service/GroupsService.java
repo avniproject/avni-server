@@ -42,6 +42,8 @@ public class GroupsService implements NonScopeAwareService {
         
         if (group == null) {
             group = createNewGroup(groupContract, organisation);
+        } else if (!isDefaultGroup) {
+            group.setName(groupContract.getName());
         }
         
         group.setVoided(groupContract.isVoided());

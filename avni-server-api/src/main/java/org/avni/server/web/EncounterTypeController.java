@@ -134,7 +134,7 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
                     ReactAdminUtil.generateJsonError(String.format("EncounterType %s already exists", request.getName()))
             );
         EncounterType encounterType = new EncounterType();
-        encounterType.assignUUID();
+        encounterType.assignUUID(request.getUUID());
         buildEncounter(encounterType, request);
         encounterTypeRepository.save(encounterType);
         OperationalEncounterType operationalEncounterType = new OperationalEncounterType();
