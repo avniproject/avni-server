@@ -1,6 +1,7 @@
 package org.avni.server.web.util;
 
 import org.avni.server.util.ObjectMapperSingleton;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -15,6 +16,12 @@ import java.util.List;
 @ConfigurationProperties(prefix = "avni")
 public class Configuration {
     private List<ReportingSystem> reportingSystems;
+
+    @Value("${avni.copilot.token}")
+    private String copilotToken;
+
+    @Value("${avni.copilot.enabled}")
+    private boolean copilotEnabled;
 
     public List<ReportingSystem> getReportingSystems() {
         return reportingSystems;
@@ -33,5 +40,13 @@ public class Configuration {
         messageConverters.add(jsonMessageConverter);
         restTemplate.setMessageConverters(messageConverters);
         return restTemplate;
+    }
+
+    public CopilotConfig createCopilotConfig() {
+        if ("dummy".equals(copilotToken)) {
+            return new CopilotConfig(null, copilotEnabled);
+        }
+        
+        return new CopilotConfig(copilotToken, copilotEnabled);
     }
 }
