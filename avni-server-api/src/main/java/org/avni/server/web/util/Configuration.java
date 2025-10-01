@@ -23,6 +23,9 @@ public class Configuration {
     @Value("${avni.copilot.enabled}")
     private boolean copilotEnabled;
 
+    @Value("${avni.base.url}")
+    private String baseUrl;
+
     public List<ReportingSystem> getReportingSystems() {
         return reportingSystems;
     }
@@ -44,9 +47,9 @@ public class Configuration {
 
     public CopilotConfig createCopilotConfig() {
         if ("dummy".equals(copilotToken)) {
-            return new CopilotConfig(null, copilotEnabled);
+            return new CopilotConfig(null, copilotEnabled, baseUrl);
         }
         
-        return new CopilotConfig(copilotToken, copilotEnabled);
+        return new CopilotConfig(copilotToken, copilotEnabled, baseUrl);
     }
 }

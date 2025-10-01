@@ -10,12 +10,16 @@ public class CopilotConfig {
     @JsonProperty("avni_copilot_enabled")
     private Boolean avniCopilotEnabled;
 
+    @JsonProperty("base_url")
+    private String baseUrl;
+
     public CopilotConfig() {
     }
 
-    public CopilotConfig(String avniCopilotToken, Boolean avniCopilotEnabled) {
+    public CopilotConfig(String avniCopilotToken, Boolean avniCopilotEnabled, String baseUrl) {
         this.avniCopilotToken = avniCopilotToken;
         this.avniCopilotEnabled = avniCopilotEnabled;
+        this.baseUrl = baseUrl;
     }
 
     public String getAvniCopilotToken() {
@@ -32,5 +36,13 @@ public class CopilotConfig {
 
     public void setAvniCopilotEnabled(Boolean avniCopilotEnabled) {
         this.avniCopilotEnabled = avniCopilotEnabled;
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
     }
 }
