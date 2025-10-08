@@ -22,9 +22,18 @@ public class S {
         /* For multi-select answers, expected input format would be:
            1. Answer 1, Answer 2, ...
            2. Answer 1, "Answer2, has, commas", Answer 3, ...
+           3. "Single answer, with commas" or “Single answer, with commas” // smart quotes or straight quotes
            ... etc.
         */
-        return Stream.of(answerValue.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"))
+        String normalized = answerValue.replace('“', '"').replace('”', '"');
+
+        // treat as single value if the value starts and ends with double quotes and does not contain any other double quotes
+        if (normalized.startsWith("\"") && normalized.endsWith("\"") 
+                && normalized.length() > 1 
+                && normalized.substring(1, normalized.length() - 1).indexOf('"') == -1) {
+            return new String[]{normalized.substring(1, normalized.length() - 1)};
+        }
+        return Stream.of(normalized.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"))
                 .map(value -> value.trim().replaceAll("\"", ""))
                 .toArray(String[]::new);
     }
