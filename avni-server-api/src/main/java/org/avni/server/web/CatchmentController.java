@@ -1,7 +1,6 @@
 package org.avni.server.web;
 
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.LocationRepository;
@@ -97,7 +96,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
 
     @PostMapping(value = "/catchment")
     @Transactional
-    ResponseEntity<?> createSingleCatchment(@RequestBody @Valid CatchmentContract catchmentContract) throws Exception {
+    ResponseEntity<?> createSingleCatchment(@RequestBody CatchmentContract catchmentContract) throws Exception {
         accessControlService.checkPrivilege(PrivilegeType.EditCatchment);
         if (catchmentRepository.findByName(catchmentContract.getName()) != null)
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Catchment with name %s already exists", catchmentContract.getName())));

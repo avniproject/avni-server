@@ -1,9 +1,11 @@
 package org.avni.server.web;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.ImplementationRepository;
-import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
@@ -29,9 +31,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -66,7 +65,7 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     @PostMapping("/extension/upload")
     @Transactional
     public ResponseEntity<?> uploadExtensions(@RequestPart(value = "file") MultipartFile file,
-                                              @RequestPart(value = "extensionSettings") @Valid List<ExtensionRequest> extensionSettings) {
+                                              @RequestPart(value = "extensionSettings") List<ExtensionRequest> extensionSettings) {
         accessControlService.checkPrivilege(PrivilegeType.EditExtension);
         organisationConfigService.updateSettings(OrganisationConfig.Extension.EXTENSION_DIR, extensionSettings);
         try {
