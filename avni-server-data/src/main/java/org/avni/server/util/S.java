@@ -22,10 +22,15 @@ public class S {
         /* For multi-select answers, expected input format would be:
            1. Answer 1, Answer 2, ...
            2. Answer 1, "Answer2, has, commas", Answer 3, ...
-           3. "Single answer, with commas" or “Single answer, with commas” // smart quotes or straight quotes
+           3. "Single answer, with commas" or "Single answer, with commas"
+           4. CSV-style escaped quotes: """Answer, with, commas"""
            ... etc.
         */
-        String normalized = answerValue.replace('“', '"').replace('”', '"');
+        // First normalize smart quotes to straight quotes and handle CSV-style double quotes
+        String normalized = answerValue
+                .replace('“', '"')
+                .replace('”', '"')
+                .replaceAll("\"\"\"", "\""); // Convert """ to "
 
         // treat as single value if the value starts and ends with double quotes and does not contain any other double quotes
         if (normalized.startsWith("\"") && normalized.endsWith("\"") 
