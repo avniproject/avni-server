@@ -233,6 +233,33 @@ public class MediaController {
         }
     }
 
+    @PostMapping("/media/saveVideo")
+    public ResponseEntity<?> saveVideo(@RequestParam MultipartFile file, @RequestParam String folderName) {
+        MediaFolder folder = MediaFolder.valueOfLabel(folderName);
+        if (folder == null || folder != MediaFolder.MetaData) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(String.format("Unsupported folderName %s", folderName));
+        }
+
+        File tempSourceFile;
+        try {
+            String mimeType = AvniFiles.detectMimeType(file);
+            if (mimeType == null || !mimeType.startsWith("video/")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN)
+                        .body(String.format("Unsupported file. File type: %s. Use video file.", mimeType));
+            }
+            tempSourceFile = AvniFiles.convertMultiPartToFile(file, "");
+
+            String uuid = UUID.randomUUID().toString();
+            String targetFilePath = AvniFiles.buildVideoTargetFilePath(folderName, mimeType, uuid);
+            URL s3FileUrl = s3Service.uploadImageFile(tempSourceFile, targetFilePath);
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3FileUrl.toString());
+        } catch (Exception e) {
+            User user = UserContextHolder.getUserContext().getUser();
+            logger.error(format("Video upload failed. folderName: '%s' file:'%s', user:'%s'", folderName, file.getOriginalFilename(), user.getUsername()), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(format("Unable to save Video. %s", e.getMessage())));
+        }
+    }
+
     private boolean isInvalidImageSize(MultipartFile file) {
         return AvniFiles.getSizeInKB(file) > 500;
     }

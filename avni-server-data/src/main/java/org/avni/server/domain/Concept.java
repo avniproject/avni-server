@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.KeyValues;
+import org.avni.server.framework.hibernate.ConceptMediaListUserType;
 import org.avni.server.framework.hibernate.KeyValuesUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -34,12 +35,9 @@ public class Concept extends OrganisationAwareEntity {
     @Type(value = KeyValuesUserType.class)
     private KeyValues keyValues;
 
-    @Column
-    private String mediaUrl;
-
-    @Column
-    @Enumerated(EnumType.STRING)
-    private MediaType mediaType;
+    @Column(columnDefinition = "jsonb")
+    @Type(ConceptMediaListUserType.class)
+    private List<ConceptMedia> media = new ArrayList<>();
 
     private Boolean active;
 
@@ -256,27 +254,32 @@ public class Concept extends OrganisationAwareEntity {
         return conceptAnswer.getAnswerConcept();
     }
 
+    // for backward compatibility in sync apis from older clients
     public String getMediaUrl() {
-        return mediaUrl;
+        return media != null ? media.stream()
+                .filter(cm -> cm.getType() == ConceptMedia.MediaType.Image)
+                .findFirst()
+                .map(ConceptMedia::getUrl)
+                .orElse(null) : null;
     }
 
-    public void setMediaUrl(String mediaUrl) {
-        this.mediaUrl = mediaUrl;
+    // for backward compatibility in sync apis from older clients
+    public ConceptMedia.MediaType getMediaType() {
+        return getMediaUrl() != null ? ConceptMedia.MediaType.Image : null;
     }
 
-    public MediaType getMediaType() {
-        return mediaType;
+    public List<ConceptMedia> getMedia() {
+        if (media == null) {
+            media = new ArrayList<>();
+        }
+        return media;
     }
 
-    public void setMediaType(MediaType mediaType) {
-        this.mediaType = mediaType;
+    public void setMedia(List<ConceptMedia> media) {
+        this.media = media;
     }
 
     public void removeAnswer(ConceptAnswer conceptAnswer) {
         this.conceptAnswers.remove(conceptAnswer);
-    }
-
-    public static enum MediaType {
-        Image
     }
 }

@@ -179,16 +179,13 @@ public class ConceptService implements NonScopeAwareService {
     }
 
     private static void updateMediaInfo(ConceptContract conceptRequest, Concept concept, boolean ignoreConceptRequestMediaAbsence) {
-        if (StringUtils.hasText(conceptRequest.getMediaUrl())) {
-            concept.setMediaType(Concept.MediaType.Image);
-            concept.setMediaUrl(conceptRequest.getMediaUrl());
+        if (conceptRequest.getMedia() != null) {
+            concept.setMedia(conceptRequest.getMedia());
         } else {
-            if (ignoreConceptRequestMediaAbsence && StringUtils.hasText(concept.getMediaUrl())) {
-                return; // Ignore if no media URL is provided, and we should not remove the existing media info
-            } else {
-                concept.setMediaType(null);
-                concept.setMediaUrl(null);
+            if (!ignoreConceptRequestMediaAbsence) {
+                concept.setMedia(null);
             }
+            // Ignore if no media is provided, and we should not remove the existing media info
         }
     }
 

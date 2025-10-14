@@ -7,6 +7,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.ConceptMedia;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
@@ -185,7 +186,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         initialConcept.setUuid(uuid);
         initialConcept.setName("Initial Name");
         initialConcept.setDataType("Coded");
-        initialConcept.setMediaUrl("original-media-url");
+        initialConcept.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
 
         conceptService.saveOrUpdateConcepts(List.of(initialConcept), ConceptContract.RequestType.Full);
         Concept initialConceptEntity = conceptRepository.findByUuid(uuid);
@@ -196,7 +197,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         updatedConcept.setUuid(uuid); // Same UUID
         updatedConcept.setName("Updated Name");
         updatedConcept.setDataType("Coded");
-        updatedConcept.setMediaUrl(null); // Clear media URL
+        updatedConcept.setMedia(null); // Clear media URL
 
         String answerUuid = UUID.randomUUID().toString();
         ConceptContract answerContract = new ConceptContract();
@@ -229,7 +230,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptContract.setUuid(uuid);
         conceptContract.setName("Test Coded Concept");
         conceptContract.setDataType("Coded");
-        conceptContract.setMediaUrl("original-media-url");
+        conceptContract.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
 
         String firstAnswerUUID = UUID.randomUUID().toString();
         ConceptContract firstAnswer = new ConceptContract();
@@ -237,7 +238,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         firstAnswer.setName("Answer 1");
         firstAnswer.setDataType("NA");
         firstAnswer.setUnique(true);
-        firstAnswer.setMediaUrl("foo");
+        firstAnswer.setMedia(List.of(new ConceptMedia("foo", ConceptMedia.MediaType.Image)));
 
         String secondAnswerUUID = UUID.randomUUID().toString();
         ConceptContract secondAnswer = new ConceptContract();
@@ -258,12 +259,12 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
 
         // Act
-        conceptContract.setMediaUrl("new-media-url");
+        conceptContract.setMedia(List.of(new ConceptMedia("new-media-url", ConceptMedia.MediaType.Image)));
         firstAnswer.setUnique(false);
         firstAnswer.setAbnormal(true);
         secondAnswer.setUnique(true);
         secondAnswer.setAbnormal(false);
-        secondAnswer.setMediaUrl("bar");
+        secondAnswer.setMedia(List.of(new ConceptMedia("bar", ConceptMedia.MediaType.Image)));
         thirdAnswer.setVoided(true);
 
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
@@ -293,7 +294,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         firstAnswer.setName("Answer 1");
         firstAnswer.setDataType("NA");
         firstAnswer.setUnique(true);
-        firstAnswer.setMediaUrl("foo");
+        firstAnswer.setMedia(List.of(new ConceptMedia("foo", ConceptMedia.MediaType.Image)));
         KeyValues keyValues = new KeyValues();
         keyValues.add(new KeyValue(TrueValue, "Value1"));
         firstAnswer.setKeyValues(keyValues);
@@ -323,19 +324,19 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         conceptContract.setUuid(uuid);
         conceptContract.setName("Test Coded Concept");
         conceptContract.setDataType("Coded");
-        conceptContract.setMediaUrl("original-media-url");
+        conceptContract.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
 
         // Set up the concept with answers
         conceptContract.setAnswers(List.of(firstAnswer, secondAnswer, thirdAnswer));
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
 
         // Act
-        conceptContract.setMediaUrl("new-media-url");
+        conceptContract.setMedia(List.of(new ConceptMedia("new-media-url", ConceptMedia.MediaType.Image)));
         firstAnswer.setUnique(false);
         firstAnswer.setAbnormal(true);
         secondAnswer.setUnique(true);
         secondAnswer.setAbnormal(false);
-        secondAnswer.setMediaUrl("bar");
+        secondAnswer.setMedia(List.of(new ConceptMedia("bar", ConceptMedia.MediaType.Image)));
         thirdAnswer.setVoided(true);
         conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
 
@@ -780,7 +781,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         naConceptContract.setUuid(naConceptUUID);
         naConceptContract.setName("NA Concept with Media");
         naConceptContract.setDataType("NA");
-        naConceptContract.setMediaUrl("original-media-url");
+        naConceptContract.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
 
         conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Full);
 
@@ -817,7 +818,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         naConceptContract.setUuid(naConceptUUID);
         naConceptContract.setName("NA Concept with Media");
         naConceptContract.setDataType("NA");
-        naConceptContract.setMediaUrl("original-media-url");
+        naConceptContract.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
 
         conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Bundle);
 
@@ -854,7 +855,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         naConceptContract.setUuid(naConceptUUID);
         naConceptContract.setName("NA Concept with Media");
         naConceptContract.setDataType("NA");
-        naConceptContract.setMediaUrl("original-media-url");
+        naConceptContract.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
 
         conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Full);
 
@@ -869,7 +870,7 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         ConceptContract answerContract = new ConceptContract();
         answerContract.setUuid(EMPTY_STRING);
         answerContract.setName("NA Concept with Media");
-        answerContract.setMediaUrl("new-media-url");
+        answerContract.setMedia(List.of(new ConceptMedia("new-media-url", ConceptMedia.MediaType.Image)));
 
         codedConceptContract.setAnswers(List.of(answerContract));
         conceptService.saveOrUpdateConcepts(List.of(codedConceptContract), ConceptContract.RequestType.Full);

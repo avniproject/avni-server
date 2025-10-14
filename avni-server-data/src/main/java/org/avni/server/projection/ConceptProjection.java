@@ -11,6 +11,7 @@ import org.avni.server.domain.ConceptAnswer;
 import org.joda.time.DateTime;
 import org.springframework.data.rest.core.config.Projection;
 
+import java.util.List;
 import java.util.Set;
 
 @Projection(name = "ConceptProjection", types = {Concept.class})
@@ -49,6 +50,7 @@ public interface ConceptProjection extends BaseProjection {
     @JsonInclude(Include.NON_EMPTY)
     Set<ConceptAnswer.ConceptAnswerProjection> getConceptAnswers();
 
-    @JsonProperty("mediaUrl")
-    String getMediaUrl();
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("media")
+    List<ConceptMediaProjection> getMedia();
 }

@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.avni.server.application.KeyValues;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptAnswer;
-import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
 import org.springframework.util.StringUtils;
 
@@ -29,8 +27,7 @@ public class ConceptContract extends ReferenceDataContract {
     private boolean unique = false;
     private Double order;
     private KeyValues keyValues;
-    private String mediaUrl;
-    private Concept.MediaType mediaType;
+    private List<ConceptMedia> media;
 
     public static enum RequestType {
         Inline, Full, Bundle
@@ -48,6 +45,7 @@ public class ConceptContract extends ReferenceDataContract {
         conceptContract.setLowNormal(concept.getLowNormal());
         conceptContract.setHighAbsolute(concept.getHighAbsolute());
         conceptContract.setHighNormal(concept.getHighNormal());
+        conceptContract.setMedia(concept.getMedia());
         List<ConceptContract> answerConceptContracts = concept.getConceptAnswers().stream()
                 .map((ConceptAnswer answer) -> {
                     Concept answerConcept = answer.getAnswerConcept();
@@ -188,20 +186,13 @@ public class ConceptContract extends ReferenceDataContract {
         this.active = active;
     }
 
-    public String getMediaUrl() {
-        return mediaUrl;
+
+    public List<ConceptMedia> getMedia() {
+        return media;
     }
 
-    public void setMediaUrl(String mediaUrl) {
-        this.mediaUrl = mediaUrl;
-    }
-
-    public Concept.MediaType getMediaType() {
-        return mediaType;
-    }
-
-    public void setMediaType(Concept.MediaType mediaType) {
-        this.mediaType = mediaType;
+    public void setMedia(List<ConceptMedia> media) {
+        this.media = media;
     }
 
     public boolean hasNameOrUUID() {

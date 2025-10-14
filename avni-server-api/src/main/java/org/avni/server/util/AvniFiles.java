@@ -276,7 +276,7 @@ public class AvniFiles {
         }
     }
 
-    private static String detectMimeType(MultipartFile file) throws IOException {
+    public static String detectMimeType(MultipartFile file) throws IOException {
         TikaConfig tika = TikaConfig.getDefaultConfig();
         Metadata metadata = new Metadata();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getOriginalFilename());
@@ -297,5 +297,17 @@ public class AvniFiles {
                     format("Unable to create temp file %s. Error: %s", file.getOriginalFilename(), e.getMessage()));
         }
         return tempFile;
+    }
+
+    public static String buildVideoTargetFilePath(String folderName, String mimeType, String uuid) {
+        String fileExtension = switch (mimeType) {
+            case "video/mp4" -> ".mp4";
+            case "video/webm" -> ".webm";
+            case "video/quicktime" -> ".mov";
+            case "video/x-msvideo" -> ".avi";
+            case "video/mpeg" -> ".mpeg";
+            default -> ".mp4"; // default fallback
+        };
+        return format("%s/%s%s", folderName, uuid, fileExtension);
     }
 }

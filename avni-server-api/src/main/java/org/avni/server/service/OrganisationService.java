@@ -731,16 +731,17 @@ public class OrganisationService {
     }
 
     public void addConceptMedia(ZipOutputStream zos) throws IOException {
-        List<Concept> conceptsWithMedia = conceptRepository.findAllByMediaUrlNotNull().stream()
-                .filter(concept -> StringUtils.hasText(concept.getMediaUrl())).toList();
-        if (!conceptsWithMedia.isEmpty()) {
-            addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
-        }
-        for (Concept concept : conceptsWithMedia) {
-            InputStream objectContent = s3Service.getObjectContentFromUrl(concept.getMediaUrl());
-            String extension = S.getLastStringAfter(concept.getMediaUrl(), ".");
-            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), extension), IOUtils.toByteArray(objectContent));
-        }
+        //TODO add logic to handle multiple concept media
+//        List<Concept> conceptsWithMedia = conceptRepository.findAllByMediaUrlNotNull().stream()
+//                .filter(concept -> StringUtils.hasText(concept.getMediaUrl())).toList();
+//        if (!conceptsWithMedia.isEmpty()) {
+//            addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
+//        }
+//        for (Concept concept : conceptsWithMedia) {
+//            InputStream objectContent = s3Service.getObjectContentFromUrl(concept.getMediaUrl());
+//            String extension = S.getLastStringAfter(concept.getMediaUrl(), ".");
+//            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), extension), IOUtils.toByteArray(objectContent));
+//        }
     }
 
     public void addReportCards(ZipOutputStream zos) throws IOException {

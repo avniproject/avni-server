@@ -139,7 +139,7 @@ public class ConceptExport {
         export.setVoided(concept.isVoided());
         export.setActive(concept.getActive());
         export.setKeyValues(concept.getKeyValues());
-        if (concept.getMediaType() != null) export.setMediaType(String.valueOf(concept.getMediaType()));
+        //TODO handle media
         List<ConceptAnswer> conceptAnswersSortedByOrder = concept.getConceptAnswers()
                 .stream()
                 .sorted(Comparator.comparing(ConceptAnswer::getOrder))
