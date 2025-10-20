@@ -16,10 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.avni.server.application.KeyType.TrueValue;
 import static org.junit.Assert.*;
@@ -938,5 +936,71 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
         // The answer concept itself should not be voided
         Concept secondAnswerConcept = conceptRepository.findByUuid(secondAnswerUUID);
         assertFalse(secondAnswerConcept.isVoided());
+    }
+
+    @Test
+    @Transactional
+    public void shouldHandleMultipleMediaItemsForConcept() {
+        String uuid = UUID.randomUUID().toString();
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Concept with multiple media");
+        conceptContract.setDataType("NA");
+        
+        ConceptMedia image1 = new ConceptMedia("image1.jpg", ConceptMedia.MediaType.Image);
+        ConceptMedia video1 = new ConceptMedia("video1.mp4", ConceptMedia.MediaType.Video);
+        conceptContract.setMedia(Arrays.asList(image1, video1));
+
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+        
+        Concept savedConcept = conceptRepository.findByUuid(uuid);
+        assertNotNull(savedConcept);
+        
+        List<ConceptMedia> mediaList = savedConcept.getMedia();
+        assertEquals(2, mediaList.size());
+        
+        Map<String, ConceptMedia.MediaType> mediaMap = mediaList.stream()
+            .collect(Collectors.toMap(ConceptMedia::getUrl, ConceptMedia::getType));
+            
+        assertTrue(mediaMap.containsKey("image1.jpg"));
+        assertEquals(ConceptMedia.MediaType.Image, mediaMap.get("image1.jpg"));
+        
+        assertTrue(mediaMap.containsKey("video1.mp4"));
+        assertEquals(ConceptMedia.MediaType.Video, mediaMap.get("video1.mp4"));
+    }
+    
+    @Test
+    @Transactional
+    public void shouldUpdateMediaItemsForConcept() {
+        String uuid = UUID.randomUUID().toString();
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName("Updatable media concept");
+        conceptContract.setDataType("NA");
+        conceptContract.setMedia(List.of(
+            new ConceptMedia("old1.jpg", ConceptMedia.MediaType.Image),
+            new ConceptMedia("old2.jpg", ConceptMedia.MediaType.Image)
+        ));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        conceptContract.setMedia(List.of(
+            new ConceptMedia("new1.jpg", ConceptMedia.MediaType.Image),
+            new ConceptMedia("video1.mp4", ConceptMedia.MediaType.Video)
+        ));
+        conceptService.saveOrUpdateConcepts(List.of(conceptContract), ConceptContract.RequestType.Full);
+
+        Concept updatedConcept = conceptRepository.findByUuid(uuid);
+        List<ConceptMedia> mediaList = updatedConcept.getMedia();
+        
+        assertEquals(2, mediaList.size());
+
+        Map<String, ConceptMedia.MediaType> mediaMap = mediaList.stream()
+                .collect(Collectors.toMap(ConceptMedia::getUrl, ConceptMedia::getType));
+
+        assertTrue(mediaMap.containsKey("new1.jpg"));
+        assertEquals(ConceptMedia.MediaType.Image, mediaMap.get("new1.jpg"));
+
+        assertTrue(mediaMap.containsKey("video1.mp4"));
+        assertEquals(ConceptMedia.MediaType.Video, mediaMap.get("video1.mp4"));
     }
 }
