@@ -6,6 +6,8 @@ import java.io.Serializable;
 
 public class ConceptMedia implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR = "--";
     private String url;
     private MediaType type;
 

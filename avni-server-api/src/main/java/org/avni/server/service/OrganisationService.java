@@ -731,17 +731,21 @@ public class OrganisationService {
     }
 
     public void addConceptMedia(ZipOutputStream zos) throws IOException {
-        //TODO add logic to handle multiple concept media
-//        List<Concept> conceptsWithMedia = conceptRepository.findAllByMediaUrlNotNull().stream()
-//                .filter(concept -> StringUtils.hasText(concept.getMediaUrl())).toList();
-//        if (!conceptsWithMedia.isEmpty()) {
-//            addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
-//        }
-//        for (Concept concept : conceptsWithMedia) {
-//            InputStream objectContent = s3Service.getObjectContentFromUrl(concept.getMediaUrl());
-//            String extension = S.getLastStringAfter(concept.getMediaUrl(), ".");
-//            addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), extension), IOUtils.toByteArray(objectContent));
-//        }
+        List<Concept> conceptsWithMedia = conceptRepository.findAllByMediaNotNull();
+
+        if (!conceptsWithMedia.isEmpty()) {
+            addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
+        }
+        for (Concept concept : conceptsWithMedia) {
+            for (ConceptMedia media: concept.getMedia()) {
+                InputStream objectContent = s3Service.getObjectContentFromUrl(media.getUrl());
+                String fileName = S.getLastStringAfter(media.getUrl(), "/");
+                // conceptMedia/<conceptUuid>--<mediaType>--<fileName>
+                // conceptMedia/1f51e69f-5425-4c46-adcc-8968a47cd264--Image--659e7ee1-ad4b-4f4d-8fbe-73d8d2f9c482.jpg
+                String format = "%s/%s" + ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR + "%s" + ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR + "%s";
+                addMediaToZip(zos, String.format(format, BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), media.getType(), fileName), IOUtils.toByteArray(objectContent));
+            }
+        }
     }
 
     public void addReportCards(ZipOutputStream zos) throws IOException {

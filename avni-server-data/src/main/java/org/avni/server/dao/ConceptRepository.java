@@ -54,6 +54,7 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     List<Concept> findByIsVoidedFalseAndActiveTrueAndNameIgnoreCaseContains(String name);
     List<Concept> findByIsVoidedFalseAndActiveTrueAndDataTypeAndNameIgnoreCaseContains(String dataType, String name);
 
+    List<Concept> findAllByMediaNotNull();
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
     @Query("select c from Concept c where c.uuid = ?1 and c.organisationId IN ?2")
     Concept findByUuidAndOrganisationId(String uuid, List<Long> organisationIds);

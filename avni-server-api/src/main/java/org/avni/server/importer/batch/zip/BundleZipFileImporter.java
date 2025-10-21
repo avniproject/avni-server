@@ -419,12 +419,20 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 cardRepository.save(card);
                 break;
             case CONCEPT_MEDIA:
-                String medias3ObjectKey = uploadMedia(MediaFolder.MetaData.label, fileData.getKey(), fileData.getValue());
-                String conceptUuid = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
+                String[] keyParts = fileData.getKey().split(ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR, 3);
+                String conceptUuid = keyParts[0];
+                String mediaType = keyParts[1];
+                String fileName = keyParts[2];
+                
+                String medias3ObjectKey = uploadMedia(MediaFolder.MetaData.label, fileName, fileData.getValue());
                 Concept concept = conceptRepository.findByUuid(conceptUuid);
-                //TODO handle multiple concept media
-//                concept.setMediaUrl(medias3ObjectKey);
-//                concept.setMediaType(Concept.MediaType.Image);
+                ConceptMedia conceptMedia = new ConceptMedia(medias3ObjectKey, ConceptMedia.MediaType.valueOf(mediaType));
+                
+                List<ConceptMedia> media = concept.getMedia() != null ?
+                    new ArrayList<>(concept.getMedia()) : new ArrayList<>();
+                media.add(conceptMedia);
+                concept.setMedia(media);
+                
                 conceptRepository.save(concept);
                 break;
         }
