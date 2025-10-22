@@ -121,7 +121,11 @@ public class UserController {
             }
             accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
             userService.addToDefaultUserGroup(savedUser);
-            userService.associateUserToGroups(savedUser, userContract.getGroupIds());
+            List<UserGroup> userGroups = userService.associateUserToGroups(savedUser, userContract.getGroupIds());
+            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+                    userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS)) ) {
+                metabaseService.upsertUsersOnMetabase(userGroups);
+            }
             logger.info(String.format("Saved new user '%s', UUID '%s'", userContract.getUsername(), savedUser.getUuid()));
             return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
         } catch (ValidationException | UsernameExistsException ex) {
@@ -164,7 +168,8 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
-            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+                    associatedUserGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
                 metabaseService.upsertUsersOnMetabase(associatedUserGroups);
             }
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
