@@ -137,11 +137,13 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         operationalSubjectType.setSubjectType(subjectType);
         operationalSubjectTypeRepository.save(operationalSubjectType);
 
-        formMappingService.saveFormMapping(
-                new FormMappingParameterObject(subjectType.getUuid(), null, null),
-                formService.getOrCreateForm(request.getRegistrationFormUuid(),
-                        String.format("%s Registration", subjectType.getName()),
-                        FormType.IndividualProfile), request.isEnableRegistrationApproval());
+        if (!subjectType.getType().equals(Subject.User)) {
+            formMappingService.saveFormMapping(
+                    new FormMappingParameterObject(subjectType.getUuid(), null, null),
+                    formService.getOrCreateForm(request.getRegistrationFormUuid(),
+                            String.format("%s Registration", subjectType.getName()),
+                            FormType.IndividualProfile), request.isEnableRegistrationApproval());
+        }
 
         organisationConfigService.saveRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
         FormMapping formMapping = formMappingService.find(subjectType);

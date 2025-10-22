@@ -16,12 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,20 +100,22 @@ public class FormMappingService implements NonScopeAwareService {
         accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
         formMapping.setForm(form);
 
+        if (StringUtils.hasText(formMappingRequest.getSubjectTypeUUID())) {
+            SubjectType subjectType = subjectTypeRepository.findByUuid(formMappingRequest.getSubjectTypeUUID());
+            if (form.getFormType().equals(FormType.IndividualProfile) && subjectType != null && subjectType.getType().equals(Subject.User)) {
+                throw new RuntimeException("Cannot associate Registration form with User subject type. " + formMappingRequest);
+            }
+            formMapping.setSubjectType(subjectType);
+        } else {
+            formMapping.setSubjectType(subjectTypeRepository.individualSubjectType());
+        }
+
         if (StringUtils.hasText(formMappingRequest.getProgramUUID())) {
             formMapping.setProgram(programRepository.findByUuid(formMappingRequest.getProgramUUID()));
         }
 
         if (StringUtils.hasText(formMappingRequest.getEncounterTypeUUID())) {
             formMapping.setEncounterType(encounterTypeRepository.findByUuid(formMappingRequest.getEncounterTypeUUID()));
-        }
-
-        if (StringUtils.hasText(formMappingRequest.getSubjectTypeUUID())) {
-            formMapping.setSubjectType(
-                    subjectTypeRepository.findByUuid(
-                            formMappingRequest.getSubjectTypeUUID()));
-        } else {
-            formMapping.setSubjectType(subjectTypeRepository.individualSubjectType());
         }
 
         if (StringUtils.hasText(formMappingRequest.getTaskTypeUUID())) {
