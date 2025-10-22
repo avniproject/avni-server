@@ -88,7 +88,7 @@ public class ImportController {
                                     @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
                                     @RequestParam(value = "encounterUploadMode", required = false) String encounterUploadMode,
                                     HttpServletResponse response) throws IOException, InvalidConfigurationException {
-        response.setContentType("text/csv");
+        response.setContentType("text/csv; charset=UTF-8");
         importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, EncounterUploadMode.fromString(encounterUploadMode), response);
     }
 
