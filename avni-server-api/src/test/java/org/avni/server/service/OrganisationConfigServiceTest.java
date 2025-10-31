@@ -28,7 +28,7 @@ public class OrganisationConfigServiceTest {
         JsonObject settings = new JsonObject().with(OrganisationConfigSettingKey.customRegistrationLocations.name(), true);
         organisationConfig.setSettings(settings);
         when(organisationRepository.findByOrganisationId(25l)).thenReturn(organisationConfig);
-        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationRepository, null, null, null);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationRepository, null, null, null, null);
 
         Organisation organisation = new Organisation();
         organisation.setId(25l);
@@ -56,7 +56,7 @@ public class OrganisationConfigServiceTest {
         JsonObject settings = new JsonObject().with(OrganisationConfigSettingKey.enableMessaging.name(), true);
         organisationConfigWithMessagingEnabled.setSettings(settings);
         when(organisationConfigRepository.findByOrganisationId(organisationId)).thenReturn(organisationConfigWithoutMessagingEnabled).thenReturn(organisationConfigWithMessagingEnabled);
-        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null, null);
 
         assertThat(organisationConfigService.isMessagingEnabled(), is(false));
         assertThat(organisationConfigService.isMessagingEnabled(), is(true));
@@ -66,7 +66,7 @@ public class OrganisationConfigServiceTest {
     public void shouldRemoveVoidedAddressLevelTypeFromCustomRegistrationLocations() {
         // Setup
         OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
-        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null, null);
 
         // Create test data
         Organisation organisation = new Organisation();
@@ -111,7 +111,7 @@ public class OrganisationConfigServiceTest {
     public void shouldRemoveEntireSettingWhenAllLocationTypesVoided() {
         // Setup
         OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
-        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null, null);
 
         // Create test data
         Organisation organisation = new Organisation();
