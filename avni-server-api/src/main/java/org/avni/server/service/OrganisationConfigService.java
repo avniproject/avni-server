@@ -6,6 +6,7 @@ import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.OrganisationConfigRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.ConceptProjection;
@@ -40,17 +41,20 @@ public class OrganisationConfigService implements NonScopeAwareService {
     private final ProjectionFactory projectionFactory;
     private final ConceptRepository conceptRepository;
     private final LocationHierarchyService locationHierarchyService;
+    private final SubjectTypeRepository subjectTypeRepository;
     private final ObjectMapper objectMapper;
 
     @Autowired
     public OrganisationConfigService(OrganisationConfigRepository organisationConfigRepository,
                                      ProjectionFactory projectionFactory,
                                      ConceptRepository conceptRepository,
-                                     @Lazy LocationHierarchyService locationHierarchyService) {
+                                     @Lazy LocationHierarchyService locationHierarchyService,
+                                     SubjectTypeRepository subjectTypeRepository) {
         this.organisationConfigRepository = organisationConfigRepository;
         this.projectionFactory = projectionFactory;
         this.conceptRepository = conceptRepository;
         this.locationHierarchyService = locationHierarchyService;
+        this.subjectTypeRepository = subjectTypeRepository;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -118,6 +122,7 @@ public class OrganisationConfigService implements NonScopeAwareService {
                 .collect(Collectors.toList());
         organisationSettingsConceptListMap.put("organisationConfig", settings);
         organisationSettingsConceptListMap.put("conceptList", conceptList);
+        organisationSettingsConceptListMap.put("isNewImplementation", subjectTypeRepository.findAllOperational().isEmpty());
         return organisationSettingsConceptListMap;
     }
 
