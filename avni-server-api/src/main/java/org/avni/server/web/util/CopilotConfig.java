@@ -16,14 +16,18 @@ public class CopilotConfig {
     @JsonProperty("mcp_server_url")
     private String mcpServerUrl;
 
+    @JsonProperty("show_templates")
+    private Boolean showTemplates;
+
     public CopilotConfig() {
     }
 
-    public CopilotConfig(String avniCopilotToken, Boolean avniCopilotEnabled, String baseUrl, String mcpServerUrl) {
+    public CopilotConfig(String avniCopilotToken, Boolean avniCopilotEnabled, String baseUrl, String mcpServerUrl, Boolean showTemplates) {
         this.avniCopilotToken = avniCopilotToken;
         this.avniCopilotEnabled = avniCopilotEnabled;
         this.baseUrl = baseUrl;
         this.mcpServerUrl = mcpServerUrl;
+        this.showTemplates = showTemplates;
     }
 
     public String getAvniCopilotToken() {
@@ -56,5 +60,13 @@ public class CopilotConfig {
 
     public void setMcpServerUrl(String mcpServerUrl) {
         this.mcpServerUrl = mcpServerUrl;
+    }
+
+    public Boolean getShowTemplates() {
+        return showTemplates;
+    }
+
+    public void setShowTemplates(Boolean showTemplates) {
+        this.showTemplates = showTemplates;
     }
 }

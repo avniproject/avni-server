@@ -29,6 +29,9 @@ public class Configuration {
     @Value("${avni.mcp.server.url}")
     private String mcpServerUrl;
 
+    @Value("${avni.showTemplates}")
+    private boolean showTemplates;
+
     public List<ReportingSystem> getReportingSystems() {
         return reportingSystems;
     }
@@ -50,9 +53,9 @@ public class Configuration {
 
     public CopilotConfig createCopilotConfig() {
         if ("dummy".equals(copilotToken)) {
-            return new CopilotConfig(null, copilotEnabled, baseUrl, mcpServerUrl);
+            return new CopilotConfig(null, copilotEnabled, baseUrl, mcpServerUrl, showTemplates);
         }
         
-        return new CopilotConfig(copilotToken, copilotEnabled, baseUrl, mcpServerUrl);
+        return new CopilotConfig(copilotToken, copilotEnabled, baseUrl, mcpServerUrl, showTemplates);
     }
 }

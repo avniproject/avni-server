@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.config.CognitoConfig;
 import org.avni.server.config.IdpType;
@@ -32,6 +33,9 @@ public class AuthDetailsController {
     @Value("${avni.copilot.enabled}")
     private boolean copilotEnabled;
 
+    @Value("${avni.showTemplates}")
+    private boolean showTemplates;
+
     @Autowired
     public AuthDetailsController(AvniKeycloakConfig avniKeycloakConfig, AdapterConfig adapterConfig, CognitoConfig cognitoConfig) {
         this.avniKeycloakConfig = avniKeycloakConfig;
@@ -54,7 +58,7 @@ public class AuthDetailsController {
         String cognitoConfigClientId = cognitoConfig.getClientId();
         return new AuthDetailsController.CompositeIDPDetails( keycloakAuthServerUrl, keycloakClientId,
                 keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId,
-                cognitoConfigClientId, idpType, webAppTimeoutInMinutes, avniEnvironment, avniMcpServerUrl, copilotEnabled);
+                cognitoConfigClientId, idpType, webAppTimeoutInMinutes, avniEnvironment, avniMcpServerUrl, copilotEnabled, showTemplates);
     }
 
     public static class CompositeIDPDetails {
@@ -64,11 +68,11 @@ public class AuthDetailsController {
         private final Cognito cognito;
 
         public CompositeIDPDetails( String authServerUrl, String keycloakClientId, String grantType, String scope, String keycloakRealm,
-                                    String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes, String avniEnvironment, String avniMcpServerUrl, boolean copilotEnabled) {
+                                    String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes, String avniEnvironment, String avniMcpServerUrl, boolean copilotEnabled, boolean showTemplates) {
             this.idpType = idpType;
             this.keycloak = new Keycloak(authServerUrl, keycloakClientId, grantType, scope, keycloakRealm);
             this.cognito = new Cognito(poolId, clientId);
-            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes, avniEnvironment, avniMcpServerUrl, copilotEnabled);
+            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes, avniEnvironment, avniMcpServerUrl, copilotEnabled, showTemplates);
         }
 
         public Keycloak getKeycloak() {
@@ -146,12 +150,14 @@ public class AuthDetailsController {
             private final String avniEnvironment;
             private final String avniMcpServerUrl;
             private final boolean copilotEnabled;
+            private final boolean showTemplates;
 
-            public GenericConfig(int webAppTimeoutInMinutes, String avniEnvironment, String avniMcpServerUrl, boolean copilotEnabled) {
+            public GenericConfig(int webAppTimeoutInMinutes, String avniEnvironment, String avniMcpServerUrl, boolean copilotEnabled, boolean showTemplates) {
                 this.webAppTimeoutInMinutes = webAppTimeoutInMinutes;
                 this.avniEnvironment = avniEnvironment;
                 this.avniMcpServerUrl = avniMcpServerUrl;
                 this.copilotEnabled = copilotEnabled;
+                this.showTemplates = showTemplates;
             }
 
             public int getWebAppTimeoutInMinutes() {
@@ -168,6 +174,11 @@ public class AuthDetailsController {
 
             public boolean isCopilotEnabled() {
                 return copilotEnabled;
+            }
+
+            @JsonProperty("show_templates")
+            public boolean isShowTemplates() {
+                return showTemplates;
             }
         }
     }
