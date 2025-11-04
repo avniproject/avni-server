@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.avni.server.util.S3Utils;
 
 import java.io.IOException;
 import java.util.*;
@@ -50,14 +49,12 @@ public class ConceptService implements NonScopeAwareService {
     private final FormElementRepository formElementRepository;
     private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
     private final LocationRepository locationRepository;
-    private final S3Service s3Service;
 
     @Autowired
-    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository, S3Service s3Service) {
+    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
         this.formElementRepository = formElementRepository;
         this.answerConceptMigrationRepository = answerConceptMigrationRepository;
         this.locationRepository = locationRepository;
-        this.s3Service = s3Service;
         logger = LoggerFactory.getLogger(this.getClass());
         this.conceptRepository = conceptRepository;
         this.conceptAnswerRepository = conceptAnswerRepository;
@@ -182,10 +179,6 @@ public class ConceptService implements NonScopeAwareService {
     }
 
     private void updateMediaInfo(ConceptContract conceptRequest, Concept concept, boolean ignoreConceptRequestMediaAbsence) {
-        List<String> urlsToDelete = S3Utils.getUrlsToDelete(concept, conceptRequest, ignoreConceptRequestMediaAbsence);
-        for (String urlToDelete : urlsToDelete) {
-            deleteMediaFromS3(urlToDelete);
-        }
         if (conceptRequest.getMedia() != null) {
             concept.setMedia(conceptRequest.getMedia());
         } else {
@@ -193,17 +186,6 @@ public class ConceptService implements NonScopeAwareService {
                 concept.setMedia(null);
             }
             // Ignore if no media is provided, and we should not remove the existing media info
-        }
-    }
-    
-    private void deleteMediaFromS3(String mediaUrl) {
-        try {
-            String fileName = S3Utils.extractFileNameFromUrl(mediaUrl);
-            if (fileName != null) {
-                s3Service.deleteObject(fileName);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
     }
 
