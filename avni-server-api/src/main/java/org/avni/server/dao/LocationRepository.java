@@ -10,6 +10,7 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
@@ -271,4 +272,19 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     AddressLevel findByTitleAndTypeAndIsVoidedFalse(String title, AddressLevelType addressLevelType);
 
     List<AddressLevel> findAllByIdIn(List<Long> addressIds);
+
+    @Override
+    default void deleteAll() {
+        throw new UnsupportedOperationException();
+    }
+
+    /*
+    For some reason, deleteAllInBatch() is trying to delete mapped tables. catchment_address_mapping does not have RLS,
+    which makes deleteAll a dangerous operation. This is limiting the capability of this delete.
+     */
+    @Override
+    @RestResource(exported = false)
+    @Modifying
+    @Query(value = "delete from address_level", nativeQuery = true)
+    void deleteAllInBatch();
 }

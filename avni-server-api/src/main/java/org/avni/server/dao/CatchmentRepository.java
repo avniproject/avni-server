@@ -3,9 +3,11 @@ package org.avni.server.dao;
 import org.avni.server.domain.Catchment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +21,14 @@ public interface CatchmentRepository extends ReferenceDataRepository<Catchment>,
     List<String> getAllNames();
 
     Page<Catchment> findByIsVoidedFalseAndNameIgnoreCaseStartingWithOrderByNameAsc(String name, Pageable pageable);
+
+    /*
+    For some reason, deleteAllInBatch() is trying to delete mapped tables. catchment_address_mapping does not have RLS,
+    which makes deleteAll a dangerous operation. This is limiting the capability of this delete.
+     */
+    @Override
+    @Modifying
+    @RestResource(exported = false)
+    @Query (value = "delete from catchment", nativeQuery = true)
+    void deleteAllInBatch();
 }
