@@ -35,7 +35,9 @@ public class TransactionalResourceInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response, Object object) throws Exception {
         if (request.getMethod().equals(RequestMethod.GET.name())) {
-            ((MutableRequestWrapper) request).addParameter("now", getNowMinus10Seconds().toString(ISODateTimeFormat.dateTime()));
+            if (request.getParameter("now") == null || request.getParameter("now").equals("null")) {
+                ((MutableRequestWrapper) request).addParameter("now", getNowMinus10Seconds().toString(ISODateTimeFormat.dateTime()));
+            }
             User user = UserContextHolder.getUser();
             if (user == null) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "User not available from UserContext. Check for Auth errors");
