@@ -1,9 +1,9 @@
 package org.avni.server.web;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.config.CognitoConfig;
 import org.avni.server.config.IdpType;
+import org.avni.server.web.util.AvniAiConfig;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +28,16 @@ public class AuthDetailsController {
     private String avniEnvironment;
 
     @Value("${avni.mcp.server.url}")
-    private String avniMcpServerUrl;
+    private String mcpServerUrl;
+
+    @Value("${avni.copilot.token}")
+    private String copilotToken;
 
     @Value("${avni.copilot.enabled}")
     private boolean copilotEnabled;
+
+    @Value("${avni.base.url}")
+    private String baseUrl;
 
     @Value("${avni.showTemplates}")
     private boolean showTemplates;
@@ -56,9 +62,10 @@ public class AuthDetailsController {
         String keycloakAuthServerUrl = adapterConfig.getAuthServerUrl();
         String cognitoConfigPoolId = cognitoConfig.getPoolId();
         String cognitoConfigClientId = cognitoConfig.getClientId();
+        AvniAiConfig avniAiConfig = AvniAiConfig.create(copilotToken, copilotEnabled, baseUrl, mcpServerUrl, showTemplates);
         return new AuthDetailsController.CompositeIDPDetails( keycloakAuthServerUrl, keycloakClientId,
                 keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId,
-                cognitoConfigClientId, idpType, webAppTimeoutInMinutes, avniEnvironment, avniMcpServerUrl, copilotEnabled, showTemplates);
+                cognitoConfigClientId, idpType, webAppTimeoutInMinutes, avniEnvironment, avniAiConfig);
     }
 
     public static class CompositeIDPDetails {
@@ -68,11 +75,11 @@ public class AuthDetailsController {
         private final Cognito cognito;
 
         public CompositeIDPDetails( String authServerUrl, String keycloakClientId, String grantType, String scope, String keycloakRealm,
-                                    String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes, String avniEnvironment, String avniMcpServerUrl, boolean copilotEnabled, boolean showTemplates) {
+                                    String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes, String avniEnvironment, AvniAiConfig avniAiConfig) {
             this.idpType = idpType;
             this.keycloak = new Keycloak(authServerUrl, keycloakClientId, grantType, scope, keycloakRealm);
             this.cognito = new Cognito(poolId, clientId);
-            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes, avniEnvironment, avniMcpServerUrl, copilotEnabled, showTemplates);
+            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes, avniEnvironment, avniAiConfig);
         }
 
         public Keycloak getKeycloak() {
@@ -148,16 +155,12 @@ public class AuthDetailsController {
         public static class GenericConfig {
             private final int webAppTimeoutInMinutes;
             private final String avniEnvironment;
-            private final String avniMcpServerUrl;
-            private final boolean copilotEnabled;
-            private final boolean showTemplates;
+            private final AvniAiConfig avniAi;
 
-            public GenericConfig(int webAppTimeoutInMinutes, String avniEnvironment, String avniMcpServerUrl, boolean copilotEnabled, boolean showTemplates) {
+            public GenericConfig(int webAppTimeoutInMinutes, String avniEnvironment, AvniAiConfig avniAi) {
                 this.webAppTimeoutInMinutes = webAppTimeoutInMinutes;
                 this.avniEnvironment = avniEnvironment;
-                this.avniMcpServerUrl = avniMcpServerUrl;
-                this.copilotEnabled = copilotEnabled;
-                this.showTemplates = showTemplates;
+                this.avniAi = avniAi;
             }
 
             public int getWebAppTimeoutInMinutes() {
@@ -168,17 +171,8 @@ public class AuthDetailsController {
                 return avniEnvironment;
             }
 
-            public String getAvniMcpServerUrl() {
-                return avniMcpServerUrl;
-            }
-
-            public boolean isCopilotEnabled() {
-                return copilotEnabled;
-            }
-
-            @JsonProperty("show_templates")
-            public boolean isShowTemplates() {
-                return showTemplates;
+            public AvniAiConfig getAvniAi() {
+                return avniAi;
             }
         }
     }

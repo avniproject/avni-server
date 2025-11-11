@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 public class ConfigurationResponse {
     private List<ReportingSystem> reportingSystems;
-    private CopilotConfig copilotConfig;
 
     public List<ReportingSystem> getReportingSystems() {
         return reportingSystems;
@@ -16,11 +15,4 @@ public class ConfigurationResponse {
         this.reportingSystems = filteredReportingSystems;
     }
 
-    public CopilotConfig getCopilotConfig() {
-        return copilotConfig;
-    }
-
-    public void setCopilotConfig(CopilotConfig copilotConfig) {
-        this.copilotConfig = copilotConfig;
-    }
 }

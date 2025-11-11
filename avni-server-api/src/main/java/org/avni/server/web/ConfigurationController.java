@@ -1,6 +1,5 @@
 package org.avni.server.web;
 
-import org.avni.server.web.util.CopilotConfig;
 import org.avni.server.web.util.Configuration;
 import org.avni.server.web.util.ConfigurationResponse;
 import org.avni.server.web.util.ReportingSystem;
@@ -25,10 +24,6 @@ public class ConfigurationController {
         ConfigurationResponse configurationResponse = new ConfigurationResponse();
         List<ReportingSystem> reportingSystems = configuration.getReportingSystems();
         configurationResponse.setReportingSystems(reportingSystems);
-
-        CopilotConfig copilotConfig = configuration.createCopilotConfig();
-        configurationResponse.setCopilotConfig(copilotConfig);
-        
         return ResponseEntity.ok(configurationResponse);
     }
 }
