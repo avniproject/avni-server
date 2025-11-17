@@ -33,6 +33,8 @@ import org.avni.server.util.S3File;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
+import org.avni.server.service.LocationService;
+import org.avni.server.service.CatchmentService;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
@@ -169,6 +171,8 @@ public class OrganisationService {
     private final GroupDashboardService groupDashboardService;
     private final CustomQueryService customQueryService;
     private final StorageManagementConfigRepository storageManagementConfigRepository;
+    private final LocationService locationService;
+    private final CatchmentService catchmentService;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -265,7 +269,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository) {
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -365,6 +369,8 @@ public class OrganisationService {
         this.dashboardService = dashboardService;
         this.customQueryService = customQueryService;
         this.storageManagementConfigRepository = storageManagementConfigRepository;
+        this.locationService = locationService;
+        this.catchmentService = catchmentService;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -991,6 +997,22 @@ public class OrganisationService {
         addDefaultGroupIfNotPresent(organisation.getId(), Group.Administrators);
         Dashboard defaultDashboard = dashboardService.createDefaultDashboard(organisation);
         groupDashboardService.createDefaultGroupDashboardForOrg(organisation, everyoneGroup, defaultDashboard);
+    }
+
+    public void setupSampleOrganisationData(Organisation organisation) {
+        setupSampleOrganisationMetadata(organisation);
+    }
+
+    private void setupSampleOrganisationMetadata(Organisation organisation) {
+        AddressLevelType stateType = locationService.createAddressLevelType(organisation, new AddressLevelTypeContract("Sample State", 3.0, null));
+        AddressLevelType districtType = locationService.createAddressLevelType(organisation, new AddressLevelTypeContract("Sample District", 2.0, stateType.getId()));
+        AddressLevelType villageType = locationService.createAddressLevelType(organisation, new AddressLevelTypeContract("Sample Village", 1.0, districtType.getId()));
+
+        AddressLevel karnataka = locationService.save(new LocationContract("Karnataka", stateType.getUuid(), null));
+        AddressLevel bengaluru = locationService.save(new LocationContract("Bengaluru", districtType.getUuid(), karnataka.getUuid()));
+        locationService.save(new LocationContract("Nallur", villageType.getUuid(), bengaluru.getUuid()));
+
+        catchmentService.createOrUpdate("Karnataka", karnataka);
     }
 
     public Organisation getCurrentOrganisation() {

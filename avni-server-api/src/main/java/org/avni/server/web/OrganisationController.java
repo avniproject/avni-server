@@ -46,7 +46,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
 
     @RequestMapping(value = "/organisation", method = RequestMethod.POST)
     @Transactional
-    public ResponseEntity save(@RequestBody OrganisationContract request) {
+    public ResponseEntity save(@RequestBody OrganisationContract request, @RequestParam(value = "sample", defaultValue = "false") boolean sample) {
         accessControlService.assertIsSuperAdmin();
         Organisation org = organisationRepository.findByUuid(request.getUuid());
         implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
@@ -64,6 +64,9 @@ public class OrganisationController implements RestControllerResourceProcessor<O
 
         organisationRepository.save(org);
         organisationService.setupBaseOrganisationData(org);
+        if (sample) {
+            organisationService.setupSampleOrganisationData(org);
+        }
         return new ResponseEntity<>(org, HttpStatus.CREATED);
     }
 

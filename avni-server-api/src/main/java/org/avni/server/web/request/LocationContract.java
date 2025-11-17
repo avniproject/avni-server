@@ -27,6 +27,16 @@ public class LocationContract extends ReferenceDataContract {
         setUuid(uuid);
     }
 
+    public LocationContract(String title, String typeUuid, String parentUuid) {
+        this.setName(title);
+        this.addressLevelTypeUUID = typeUuid;
+        if (parentUuid != null) {
+            ReferenceDataContract parentContract = new ReferenceDataContract();
+            parentContract.setUuid(parentUuid);
+            this.parent = parentContract;
+        }
+    }
+
     public Double getLevel() {
         return level;
     }

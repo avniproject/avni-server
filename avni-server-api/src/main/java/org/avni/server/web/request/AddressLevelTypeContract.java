@@ -7,6 +7,15 @@ public class AddressLevelTypeContract extends ReferenceDataContract {
     private ReferenceDataContract parent;
     private Long parentId;
 
+    public AddressLevelTypeContract() {
+    }
+
+    public AddressLevelTypeContract(String name, Double level, Long parentId) {
+        this.setName(name);
+        this.level = level;
+        this.parentId = parentId;
+    }
+
     public Double getLevel() {
         return level;
     }
