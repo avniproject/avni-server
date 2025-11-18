@@ -26,4 +26,11 @@ public class DbRoleRepository {
         Query resetRoleQuery = entityManager.createNativeQuery("reset role;");
         resetRoleQuery.executeUpdate();
     }
+
+    protected static void setDbRole(EntityManager entityManager, String dbRole) {
+        logger.info("Setting role to other user: " + dbRole);
+        String setRoleQuery = "set role \"" + dbRole + "\"";
+        Query setRoleBackToOtherUser = entityManager.createNativeQuery(setRoleQuery);
+        setRoleBackToOtherUser.executeUpdate();
+    }
 }

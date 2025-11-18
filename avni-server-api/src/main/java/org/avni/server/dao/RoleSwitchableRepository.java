@@ -18,4 +18,9 @@ public abstract class RoleSwitchableRepository {
     protected void setRoleToNone() {
         DbRoleRepository.setDbRoleNone(entityManager);
     }
+
+
+    protected void setRoleToOtherUser(String dbRole) {
+        DbRoleRepository.setDbRole(entityManager, dbRole);
+    }
 }

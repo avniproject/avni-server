@@ -3,6 +3,7 @@ package org.avni.server.web.controller;
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.TemplateOrganisationRepository;
 import org.avni.server.domain.TemplateOrganisation;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.TemplateOrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.TemplateOrganisationContract;
@@ -104,5 +105,26 @@ public class TemplateOrganisationController {
         template.setActive(!template.isActive());
         templateOrganisationRepository.save(template);
         return new ResponseEntity<>(TemplateOrganisationContract.fromEntity(template), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/web/templateOrganisations/{id}/apply", method = RequestMethod.POST)
+    @Transactional
+    public ResponseEntity<?> applyTemplate(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        Optional<TemplateOrganisation> templateOrganisation = templateOrganisationRepository.findById(id);
+        if (templateOrganisation.isEmpty()) {
+            return new ResponseEntity<>("Template not found.", HttpStatus.NOT_FOUND);
+        }
+        TemplateOrganisation template = templateOrganisation.get();
+        if (!template.isActive()) {
+            return new ResponseEntity<>("Template not active.", HttpStatus.BAD_REQUEST);
+        }
+        String jobUuid;
+        try {
+            jobUuid = templateOrganisationService.applyTemplate(template);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return new ResponseEntity<>(jobUuid, HttpStatus.CREATED);
     }
 }

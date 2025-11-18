@@ -495,11 +495,15 @@ public class OrganisationService {
         if (organisationConfig != null) {
             addFileToZip(zos, "organisationConfig.json", OrganisationConfigRequest.fromOrganisationConfig(organisationConfig));
             addDirectoryToZip(zos, "extensions");
-            List<S3ExtensionFile> s3ExtensionFiles = s3Service.listExtensionFiles(Optional.empty());
-            for (S3ExtensionFile s3ExtensionFile : s3ExtensionFiles) {
-                S3File s3File = s3ExtensionFile.getS3File();
-                File file = s3Service.downloadFile(s3File);
-                addFileToZip(zos, s3File.getExtensionFilePathRelativeToOrganisation(), file);
+            try {
+                List<S3ExtensionFile> s3ExtensionFiles = s3Service.listExtensionFiles(Optional.empty());
+                for (S3ExtensionFile s3ExtensionFile : s3ExtensionFiles) {
+                    S3File s3File = s3ExtensionFile.getS3File();
+                    File file = s3Service.downloadFile(s3File);
+                    addFileToZip(zos, s3File.getExtensionFilePathRelativeToOrganisation(), file);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to add extension files for {}", orgId, e);
             }
         }
     }

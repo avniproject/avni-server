@@ -1,5 +1,9 @@
 package org.avni.server.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import org.avni.server.dao.OrganisationRepository;
+import org.avni.server.dao.RoleSwitchableRepository;
 import org.avni.server.domain.Organisation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,12 +13,15 @@ import java.io.IOException;
 import java.util.zip.ZipOutputStream;
 
 @Component
-public class BundleService {
+public class BundleService extends RoleSwitchableRepository {
     private final OrganisationService organisationService;
+    private final OrganisationRepository organisationRepository;
 
     @Autowired
-    public BundleService(OrganisationService organisationService) {
+    public BundleService(EntityManager entityManager, OrganisationService organisationService, OrganisationRepository organisationRepository) {
+        super(entityManager);
         this.organisationService = organisationService;
+        this.organisationRepository = organisationRepository;
     }
 
     public ByteArrayOutputStream createBundle(Organisation organisation, boolean includeLocations) throws IOException {
@@ -71,5 +78,17 @@ public class BundleService {
             organisationService.addCustomQueries(orgId,zos);
         }
         return baos;
+    }
+
+    @Transactional
+    public ByteArrayOutputStream generateBundleForOrg(Long organisationId) throws IOException {
+        try {
+            setRoleToNone();
+            Organisation org = organisationRepository.findOne(organisationId);
+            setRoleToOtherUser(org.getDbUser());
+            return createBundle(org, true);
+        } finally {
+            setRoleBackToUser();
+        }
     }
 }
