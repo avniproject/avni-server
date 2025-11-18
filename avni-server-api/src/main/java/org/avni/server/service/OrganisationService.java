@@ -61,6 +61,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -1012,7 +1013,11 @@ public class OrganisationService {
         AddressLevel bengaluru = locationService.save(new LocationContract("Bengaluru", districtType.getUuid(), karnataka.getUuid()));
         locationService.save(new LocationContract("Nallur", villageType.getUuid(), bengaluru.getUuid()));
 
-        catchmentService.createOrUpdate("Karnataka", karnataka);
+        Catchment catchment = new Catchment();
+        catchment.assignUUID();
+        catchment.setName("Karnataka");
+        catchment.addAddressLevel(karnataka);
+        catchmentRepository.save(catchment);
     }
 
     public Organisation getCurrentOrganisation() {
