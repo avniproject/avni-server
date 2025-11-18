@@ -65,7 +65,12 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         organisationRepository.save(org);
         organisationService.setupBaseOrganisationData(org);
         if (sample) {
-            organisationService.setupSampleOrganisationData(org);
+            UserContextHolder.getUserContext().setOrganisation(org);
+            try {
+                organisationService.setupSampleOrganisationData(org);
+            } finally {
+                UserContextHolder.getUserContext().setOrganisation(null);
+            }
         }
         return new ResponseEntity<>(org, HttpStatus.CREATED);
     }
