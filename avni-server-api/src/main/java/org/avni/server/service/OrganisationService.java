@@ -33,8 +33,6 @@ import org.avni.server.util.S3File;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
-import org.avni.server.service.LocationService;
-import org.avni.server.service.CatchmentService;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
@@ -61,7 +59,6 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -495,15 +492,11 @@ public class OrganisationService {
         if (organisationConfig != null) {
             addFileToZip(zos, "organisationConfig.json", OrganisationConfigRequest.fromOrganisationConfig(organisationConfig));
             addDirectoryToZip(zos, "extensions");
-            try {
-                List<S3ExtensionFile> s3ExtensionFiles = s3Service.listExtensionFiles(Optional.empty());
-                for (S3ExtensionFile s3ExtensionFile : s3ExtensionFiles) {
-                    S3File s3File = s3ExtensionFile.getS3File();
-                    File file = s3Service.downloadFile(s3File);
-                    addFileToZip(zos, s3File.getExtensionFilePathRelativeToOrganisation(), file);
-                }
-            } catch (Exception e) {
-                logger.error("Failed to add extension files for {}", orgId, e);
+            List<S3ExtensionFile> s3ExtensionFiles = s3Service.listExtensionFiles(Optional.empty());
+            for (S3ExtensionFile s3ExtensionFile : s3ExtensionFiles) {
+                S3File s3File = s3ExtensionFile.getS3File();
+                File file = s3Service.downloadFile(s3File);
+                addFileToZip(zos, s3File.getExtensionFilePathRelativeToOrganisation(), file);
             }
         }
     }

@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.RoleSwitchableRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -82,13 +83,16 @@ public class BundleService extends RoleSwitchableRepository {
 
     @Transactional
     public ByteArrayOutputStream generateBundleForOrg(Long organisationId) throws IOException {
+        Organisation currentContextOrg = UserContextHolder.getOrganisation();
         try {
             setRoleToNone();
             Organisation org = organisationRepository.findOne(organisationId);
+            UserContextHolder.getUserContext().setOrganisation(org);
             setRoleToOtherUser(org.getDbUser());
             return createBundle(org, true);
         } finally {
             setRoleBackToUser();
+            UserContextHolder.getUserContext().setOrganisation(currentContextOrg);
         }
     }
 }

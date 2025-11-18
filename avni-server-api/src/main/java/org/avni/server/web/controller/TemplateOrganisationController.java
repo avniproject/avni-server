@@ -94,7 +94,6 @@ public class TemplateOrganisationController {
 //    }
 
     @RequestMapping(value = "/web/templateOrganisations/{id}/toggleActive", method = RequestMethod.PUT)
-    @Transactional
     public ResponseEntity<?> toggleActive(@PathVariable("id") Long id) {
         accessControlService.assertIsSuperAdmin();
         Optional<TemplateOrganisation> templateOrganisation = templateOrganisationRepository.findById(id);
@@ -108,7 +107,6 @@ public class TemplateOrganisationController {
     }
 
     @RequestMapping(value = "/web/templateOrganisations/{id}/apply", method = RequestMethod.POST)
-    @Transactional
     public ResponseEntity<?> applyTemplate(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         Optional<TemplateOrganisation> templateOrganisation = templateOrganisationRepository.findById(id);
