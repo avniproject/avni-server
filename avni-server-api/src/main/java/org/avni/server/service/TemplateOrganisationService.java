@@ -5,9 +5,13 @@ import org.avni.server.dao.TemplateOrganisationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.TemplateOrganisation;
 import org.avni.server.domain.User;
+import org.avni.server.domain.batch.BatchJobStatus;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.batch.BatchJobService;
 import org.avni.server.web.request.TemplateOrganisationContract;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -24,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,16 +40,19 @@ public class TemplateOrganisationService {
     private final BulkUploadS3Service bulkUploadS3Service;
     private final Job applyTemplateJob;
     private final JobLauncher bgJobLauncher;
+    private static final Logger logger = LoggerFactory.getLogger(TemplateOrganisationService.class);
+    private final BatchJobService batchJobService;
 
     @Autowired
     public TemplateOrganisationService(TemplateOrganisationRepository templateOrganisationRepository,
-                                       OrganisationRepository organisationRepository, BundleService bundleService, BulkUploadS3Service bulkUploadS3Service, Job applyTemplateJob, JobLauncher bgJobLauncher) {
+                                       OrganisationRepository organisationRepository, BundleService bundleService, BulkUploadS3Service bulkUploadS3Service, Job applyTemplateJob, JobLauncher bgJobLauncher, BatchJobService batchJobService) {
         this.templateOrganisationRepository = templateOrganisationRepository;
         this.organisationRepository = organisationRepository;
         this.bundleService = bundleService;
         this.bulkUploadS3Service = bulkUploadS3Service;
         this.applyTemplateJob = applyTemplateJob;
         this.bgJobLauncher = bgJobLauncher;
+        this.batchJobService = batchJobService;
     }
 
     @Transactional
@@ -98,18 +106,21 @@ public class TemplateOrganisationService {
         User user = UserContextHolder.getUserContext().getUser();
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         ObjectInfo storedFileInfo = bulkUploadS3Service.uploadZip(file, uuid);
-        JobParameters jobParameters = getJobParameters(organisation, user, storedFileInfo);
-        bgJobLauncher.run(applyTemplateJob, jobParameters);
-        return String.format("Applying template %s to organisation: %s", templateOrganisation.getName(), organisation.getName());
+        bgJobLauncher.run(applyTemplateJob, getJobParameters(organisation, user, storedFileInfo, uuid));
+        logger.debug("Triggered job to apply template {} to organisation: {}", templateOrganisation.getName(), organisation.getName());
+        return uuid;
     }
 
-    private static JobParameters getJobParameters(Organisation organisation, User user, ObjectInfo storedFileInfo) {
-        String uuid = UUID.randomUUID().toString();
+    private static JobParameters getJobParameters(Organisation organisation, User user, ObjectInfo storedFileInfo, String uuid) {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder()
                 .addString("organisationUUID", organisation.getUuid())
                 .addString("uuid", uuid)
                 .addString("s3Key", storedFileInfo.getKey(), false)
                 .addLong("userId", user.getId(), false);
         return jobParametersBuilder.toJobParameters();
+    }
+
+    public Map<String, BatchJobStatus> getApplyTemplateJobStatus(Organisation organisation) {
+        return batchJobService.getApplyTemplateJobStatus(organisation);
     }
 }

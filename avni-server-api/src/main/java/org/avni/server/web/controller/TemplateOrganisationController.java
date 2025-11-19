@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import org.avni.server.dao.TemplateOrganisationRepository;
 import org.avni.server.domain.TemplateOrganisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.batch.BatchJobStatus;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.TemplateOrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.TemplateOrganisationContract;
@@ -14,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -108,7 +111,10 @@ public class TemplateOrganisationController {
 
     @RequestMapping(value = "/web/templateOrganisations/{id}/apply", method = RequestMethod.POST)
     public ResponseEntity<?> applyTemplate(@PathVariable("id") Long id) {
+        accessControlService.assertIsNotSuperAdmin();
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         Optional<TemplateOrganisation> templateOrganisation = templateOrganisationRepository.findById(id);
         if (templateOrganisation.isEmpty()) {
             return new ResponseEntity<>("Template not found.", HttpStatus.NOT_FOUND);
@@ -123,6 +129,12 @@ public class TemplateOrganisationController {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return new ResponseEntity<>(jobUuid, HttpStatus.CREATED);
+        return new ResponseEntity<>(jobUuid, HttpStatus.ACCEPTED);
+    }
+
+    @RequestMapping(value = "/web/templateOrganisations/apply/status", method = RequestMethod.GET)
+    public Map<String, BatchJobStatus> applyTemplateJobStatus() {
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        return templateOrganisationService.getApplyTemplateJobStatus(UserContextHolder.getOrganisation());
     }
 }

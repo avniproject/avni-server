@@ -31,4 +31,10 @@ public class BatchJobService {
         cannedAnalyticsJobStatuses.put("TearDown", this.jobRepository.getJobStatus("cannedAnalyticsTearDownJob", "organisationUUID", organisation.getUuid()));
         return cannedAnalyticsJobStatuses;
     }
+
+    public Map<String, BatchJobStatus> getApplyTemplateJobStatus(Organisation organisation) {
+        Map<String, BatchJobStatus> applyTemplateJobStatus = new HashMap<>();
+        applyTemplateJobStatus.put("applyTemplateJob", this.jobRepository.getJobStatus("applyTemplateJob", "organisationUUID", organisation.getUuid()));
+        return applyTemplateJobStatus;
+    }
 }

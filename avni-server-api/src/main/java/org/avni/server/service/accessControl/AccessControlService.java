@@ -226,6 +226,11 @@ public class AccessControlService {
             throw AvniAccessException.createForNotAdmin(user);
     }
 
+    public void assertIsNotSuperAdmin() {
+        User user = UserContextHolder.getUser();
+        if (userService.isAdmin(user))
+            throw AvniAccessException.createForAdmin(user);
+    }
     public void checkApprovePrivilegeOnEntityApprovalStatus(String entityType, String entityTypeUuid) {
         switch (EntityApprovalStatus.EntityType.valueOf(entityType)) {
             case Subject:
