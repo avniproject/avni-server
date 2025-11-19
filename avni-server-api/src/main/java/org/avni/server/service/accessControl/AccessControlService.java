@@ -68,6 +68,22 @@ public class AccessControlService {
         this.checkHasAnyOfSpecificPrivileges(UserContextHolder.getUser(), privilegeTypes);
     }
 
+    public void checkHasAllOfSpecificPrivileges(List<PrivilegeType> privilegeTypes) {
+        this.checkHasAllOfSpecificPrivileges(UserContextHolder.getUser(), privilegeTypes);
+    }
+
+    public void checkHasAllOfSpecificPrivileges(User contextUser, List<PrivilegeType> privilegeTypes) {
+        if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && privilegeTypes.stream().allMatch(privilegeRepository::isAllowedForAdmin))) return;
+
+        List<PrivilegeType> missingPrivileges = privilegeTypes.stream()
+                .filter(privilegeType -> !userRepository.hasPrivilege(privilegeType.name(), contextUser.getId()))
+                .collect(Collectors.toList());
+
+        if (!missingPrivileges.isEmpty()) {
+            throw AvniAccessException.createNoPrivilegeException(missingPrivileges);
+        }
+    }
+
     public void checkHasAnyOfSpecificPrivileges(User contextUser, List<PrivilegeType> privilegeTypes) {
         if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && privilegeRepository.isAnyOfSpecificAllowedForAdmin(privilegeTypes))) return;
 

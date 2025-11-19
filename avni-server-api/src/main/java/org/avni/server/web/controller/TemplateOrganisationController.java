@@ -112,9 +112,9 @@ public class TemplateOrganisationController {
     @RequestMapping(value = "/web/templateOrganisations/{id}/apply", method = RequestMethod.POST)
     public ResponseEntity<?> applyTemplate(@PathVariable("id") Long id) {
         accessControlService.assertIsNotSuperAdmin();
-        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-        accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkHasAllOfSpecificPrivileges(List.of(PrivilegeType.UploadMetadataAndData,
+                PrivilegeType.DeleteOrganisationConfiguration,
+                PrivilegeType.EditOrganisationConfiguration));
         Optional<TemplateOrganisation> templateOrganisation = templateOrganisationRepository.findById(id);
         if (templateOrganisation.isEmpty()) {
             return new ResponseEntity<>("Template not found.", HttpStatus.NOT_FOUND);
