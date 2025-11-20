@@ -2,13 +2,16 @@ package org.avni.server.web.controller;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.TemplateOrganisationRepository;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.TemplateOrganisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.batch.BatchJobStatus;
+import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.TemplateOrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.TemplateOrganisationContract;
+import org.avni.server.web.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -115,6 +118,10 @@ public class TemplateOrganisationController {
         accessControlService.checkHasAllOfSpecificPrivileges(List.of(PrivilegeType.UploadMetadataAndData,
                 PrivilegeType.DeleteOrganisationConfiguration,
                 PrivilegeType.EditOrganisationConfiguration));
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        if (OrganisationCategory.Production.equals(organisation.getCategory().getName()) || OrganisationCategory.UAT.equals(organisation.getCategory().getName())) {
+            throw new ValidationException("Cannot apply template to Production or UAT organisation");
+        }
         Optional<TemplateOrganisation> templateOrganisation = templateOrganisationRepository.findById(id);
         if (templateOrganisation.isEmpty()) {
             return new ResponseEntity<>("Template not found.", HttpStatus.NOT_FOUND);
