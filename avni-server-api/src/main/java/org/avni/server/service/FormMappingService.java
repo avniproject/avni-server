@@ -11,6 +11,7 @@ import org.avni.server.domain.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.FormMappingContract;
+import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,8 +103,8 @@ public class FormMappingService implements NonScopeAwareService {
 
         if (StringUtils.hasText(formMappingRequest.getSubjectTypeUUID())) {
             SubjectType subjectType = subjectTypeRepository.findByUuid(formMappingRequest.getSubjectTypeUUID());
-            if (form.getFormType().equals(FormType.IndividualProfile) && subjectType != null && subjectType.getType().equals(Subject.User)) {
-                throw new RuntimeException("Cannot associate Registration form with User subject type. " + formMappingRequest);
+            if (!formMappingRequest.isVoided() && form.getFormType().equals(FormType.IndividualProfile) && subjectType != null && subjectType.getType().equals(Subject.User)) {
+                throw new ValidationException("Cannot associate Registration form with User subject type.");
             }
             formMapping.setSubjectType(subjectType);
         } else {
