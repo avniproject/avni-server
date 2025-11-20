@@ -6,6 +6,7 @@ import org.avni.server.domain.CHSEntity;
 @Entity
 public class OrganisationCategory extends CHSEntity {
     public static final String Production = "Production";
+    public static final String UAT = "UAT";
     private String name;
 
     public String getName() {

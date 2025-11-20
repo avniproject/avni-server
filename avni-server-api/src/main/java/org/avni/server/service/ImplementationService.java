@@ -33,8 +33,8 @@ public class ImplementationService {
         }
 
         Organisation organisation = organisationService.getCurrentOrganisation();
-        if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
-            throw new ValidationException("Production organisation's data cannot be deleted");
+        if (OrganisationCategory.Production.equals(organisation.getCategory().getName()) || OrganisationCategory.UAT.equals(organisation.getCategory().getName())) {
+            throw new ValidationException("Production or UAT organisation's data cannot be deleted");
         }
 
         if (deleteAdminConfig && !deleteMetadata) {
