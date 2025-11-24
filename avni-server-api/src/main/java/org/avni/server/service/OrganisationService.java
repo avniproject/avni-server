@@ -377,8 +377,8 @@ public class OrganisationService {
         CrudRepository[] txCrudRepositories = {
                 exportJobParametersRepository,
                 manualMessageRepository,
-                messageReceiverRepository,
                 messageRequestQueueRepository,
+                messageReceiverRepository,
                 ruleFailureLogRepository,
         };
         return txCrudRepositories;
