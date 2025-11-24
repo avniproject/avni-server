@@ -35,7 +35,7 @@ public class TemplateJobTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
         authService.authenticateByUserId(userId, organisationUUID);
-        implementationService.deleteImplementationData(true, true);
+//        implementationService.deleteImplementationData(true, true);
         return RepeatStatus.FINISHED;
     }
 }
