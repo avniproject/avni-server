@@ -91,8 +91,8 @@ public class BundleService extends RoleSwitchableRepository {
             setRoleToOtherUser(org.getDbUser());
             return createBundle(org, true);
         } finally {
-            setRoleBackToUser();
             UserContextHolder.getUserContext().setOrganisation(currentContextOrg);
+            setRoleToOtherUser(currentContextOrg.getDbUser());
         }
     }
 }
