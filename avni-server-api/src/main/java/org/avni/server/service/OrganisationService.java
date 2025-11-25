@@ -993,6 +993,7 @@ public class OrganisationService {
     }
     public void deleteDataFromPublicTableForOrg(String tableName, Organisation organisation) {
         String query = String.format("delete from public.%s where organisation_id = %d and organisation_id > 1", tableName, organisation.getId());
+        logger.info("Executing query: " + query);
         jdbcTemplate.execute(query);
     }
 
