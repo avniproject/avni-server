@@ -384,6 +384,16 @@ public class OrganisationService {
         return txCrudRepositories;
     }
 
+    private List<String> getTxCrudTableList() {
+        return Arrays.asList(
+                "export_job_parameters",
+                "manual_message",
+                "message_request_queue",
+                "message_receiver",
+                "rule_failure_log"
+        );
+    }
+
     private JpaRepository[] getTxJpaRepositories() {
         JpaRepository[] transactionalRepositories = {
                 newsRepository,
@@ -413,12 +423,47 @@ public class OrganisationService {
         return transactionalRepositories;
     }
 
+    private List<String> getTxJpaTableList() {
+        return Arrays.asList(
+                "news",
+                "comment",
+                "comment_thread",
+                "entity_approval_status",
+                "rule_failure_telemetry",
+                "identifier_assignment",
+                "sync_telemetry",
+                "video_telemetric",
+                "group_subject",
+                "individual_relationship",
+                "checklist_item",
+                "checklist",
+                "program_encounter",
+                "program_enrolment",
+                "encounter",
+                "subject_migration",
+                "user_subject_assignment",
+                "subject_program_eligibility",
+                "task_unassignment",
+                "task",
+                "user_subject",
+                "individual",
+                "reset_sync"
+        );
+    }
+
     private CrudRepository[] getMetadataCrudRepositories() {
         CrudRepository[] metadataCrudRepositories = {
                 messageRuleRepository,
                 customQueryRepository,
         };
         return metadataCrudRepositories;
+    }
+
+    private List<String> getMetadataCrudTableList() {
+        return Arrays.asList(
+                "message_rule",
+                "custom_query"
+        );
     }
 
     private JpaRepository[] getMetadataJpaRepositories() {
@@ -443,7 +488,6 @@ public class OrganisationService {
                 programRepository,
                 operationalSubjectTypeRepository,
                 subjectTypeRepository,
-                translationRepository,
                 videoRepository,
                 dashboardSectionCardMappingRepository,
                 cardRepository,
@@ -464,11 +508,56 @@ public class OrganisationService {
         return metadataRepositories;
     }
 
+    private List<String> getMetadataJpaTableList() {
+        return Arrays.asList(
+                "group_privilege",
+                "group_role",
+                "checklist_item_detail",
+                "checklist_detail",
+                "individual_relation_gender_mapping",
+                "individual_relationship_type",
+                "individual_relation",
+                "form_element",
+                "form_element_group",
+                "form_mapping",
+                "form",
+                "answer_concept_migration",
+                "concept_answer",
+                "concept",
+                "operational_encounter_type",
+                "encounter_type",
+                "operational_program",
+                "program",
+                "operational_subject_type",
+                "subject_type",
+                "video",
+                "dashboard_section_card_mapping",
+                "report_card",
+                "dashboard_section",
+                "group_dashboard",
+                "dashboard_filter",
+                "dashboard",
+                "documentation_item",
+                "documentation",
+                "menu_item",
+                "rule",
+                "rule_dependency",
+                "task_type",
+                "task_status",
+                "translation",
+                "user_subject_assignment"
+        );
+    }
+
     private CrudRepository[] getAdminConfigCrudRepositories() {
         CrudRepository[] adminConfigCrudRepositories = {
                 externalSystemConfigRepository,
         };
         return adminConfigCrudRepositories;
+    }
+
+    private List<String> getAdminConfigCrudTableList() {
+        return List.of("external_system_config");
     }
 
     private JpaRepository[] getAdminConfigJPARepositories() {
@@ -485,6 +574,21 @@ public class OrganisationService {
                 organisationConfigRepository,
         };
         return adminConfigRepositories;
+    }
+
+    public List<String> getAdminConfigJPATableList() {
+        return Arrays.asList(
+                "msg91_config",
+                "identifier_user_assignment",
+                "identifier_source",
+                "gender",
+                "catchment",
+                "location_location_mapping",
+                "address_level",
+                "address_level_type",
+                "storage_management_config",
+                "organisation_config"
+        );
     }
 
     public void addOrganisationConfig(Long orgId, ZipOutputStream zos) throws IOException {
@@ -862,20 +966,35 @@ public class OrganisationService {
 
     public void deleteTransactionalData(Organisation organisation) {
         deleteNonRepositoryTransactionalData(organisation);
-        Arrays.asList(getTxCrudRepositories()).forEach(this::deleteAll);
-        Arrays.asList(getTxJpaRepositories()).forEach(this::deleteAll);
+        if (organisation.getParentOrganisationId() != null) {
+            Arrays.asList(getTxCrudRepositories()).forEach(this::deleteAll);
+            Arrays.asList(getTxJpaRepositories()).forEach(this::deleteAll);
+        } else {
+            getTxCrudTableList().forEach(tableName -> deleteDataFromPublicTableForOrg(tableName, organisation));
+            getTxJpaTableList().forEach(tableName -> deleteDataFromPublicTableForOrg(tableName, organisation));
+        }
     }
 
     public void deleteMetadata(Organisation organisation) {
         deleteNonRepositoryMetadata(organisation);
-        Arrays.asList(getMetadataJpaRepositories()).forEach(this::deleteAll);
-        Arrays.asList(getMetadataCrudRepositories()).forEach(this::deleteAll);
+        if (organisation.getParentOrganisationId() != null) {
+            Arrays.asList(getMetadataJpaRepositories()).forEach(this::deleteAll);
+            Arrays.asList(getMetadataCrudRepositories()).forEach(this::deleteAll);
+        } else {
+            getMetadataJpaTableList().forEach(tableName -> deleteDataFromPublicTableForOrg(tableName, organisation));
+            getMetadataCrudTableList().forEach(tableName -> deleteDataFromPublicTableForOrg(tableName, organisation));
+        }
         userRepository.findAllByOrganisationId(organisation.getId()).stream().forEach(user -> user.setSyncSettings(new JsonObject()));
     }
 
     public void deleteNonRepositoryTransactionalData(Organisation organisation) {
         String individualRelativeDeletionQuery = "delete from individual_relative where organisation_id = %d and organisation_id > 1";
         jdbcTemplate.execute(String.format(individualRelativeDeletionQuery, organisation.getId()));
+    }
+    public void deleteDataFromPublicTableForOrg(String tableName, Organisation organisation) {
+        String query = String.format("delete from public.%s where organisation_id = %d and organisation_id > 1", tableName, organisation.getId());
+        logger.info("Executing query: " + query);
+        jdbcTemplate.execute(query);
     }
 
     public void deleteNonRepositoryMetadata(Organisation organisation) {
@@ -891,8 +1010,13 @@ public class OrganisationService {
         removeCatchmentAssignmentAndDeleteNonAdminUsers(organisation);
         deleteNonDefaultGroupsAndTheirMappings();
         deleteNonRepositoryAdminConfigData(organisation);
-        Arrays.asList(getAdminConfigCrudRepositories()).forEach(this::deleteAll);
-        Arrays.asList(getAdminConfigJPARepositories()).forEach(this::deleteAll);
+        if (organisation.getParentOrganisationId() != null) {
+            Arrays.asList(getAdminConfigCrudRepositories()).forEach(this::deleteAll);
+            Arrays.asList(getAdminConfigJPARepositories()).forEach(this::deleteAll);
+        } else {
+            getAdminConfigCrudTableList().forEach(tableName -> deleteDataFromPublicTableForOrg(tableName, organisation));
+            getAdminConfigJPATableList().forEach(tableName -> deleteDataFromPublicTableForOrg(tableName, organisation));
+        }
     }
 
     private void deleteNonDefaultGroupsAndTheirMappings() {
