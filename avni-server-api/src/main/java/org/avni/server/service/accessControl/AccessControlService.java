@@ -279,6 +279,10 @@ public class AccessControlService {
         SubjectType subjectType = subject.getSubjectType();
         SubjectPartitionData applicablePartitionData = firstTimeCreation ? SubjectPartitionData.create(subject) : previousPartitionState;
 
+        if(currentUser.getCatchment() == null) {
+            return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NoCatchmentAssignedToThisUser);
+        }
+
         if (subjectType.isShouldSyncByLocation() && !catchmentService.hasLocation(applicablePartitionData.getAddressLevel(), currentUser.getCatchment())) {
             return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotInThisUsersCatchment);
         }

@@ -5,6 +5,7 @@ public class SubjectPartitionCheckStatus {
     public static final String NotInThisUsersCatchment = "notInThisUsersCatchment";
     public static final String UserSyncAttributeNotConfigured = "userSyncAttributeNotConfigured";
     public static final String SyncAttributeForUserNotValidForUpdate = "syncAttributeForUserNotValidForUpdate";
+    public static final String NoCatchmentAssignedToThisUser = "noCatchmentAssignedToThisUser";
 
     private final boolean passed;
     private final String message;
