@@ -42,6 +42,9 @@ public class AuthDetailsController {
     @Value("${avni.showTemplates}")
     private boolean showTemplates;
 
+    @Value("${avni.copilot.form.validation.api.key}")
+    private String copilotFormValidationApiKey;
+
     @Autowired
     public AuthDetailsController(AvniKeycloakConfig avniKeycloakConfig, AdapterConfig adapterConfig, CognitoConfig cognitoConfig) {
         this.avniKeycloakConfig = avniKeycloakConfig;
@@ -62,7 +65,7 @@ public class AuthDetailsController {
         String keycloakAuthServerUrl = adapterConfig.getAuthServerUrl();
         String cognitoConfigPoolId = cognitoConfig.getPoolId();
         String cognitoConfigClientId = cognitoConfig.getClientId();
-        AvniAiConfig avniAiConfig = AvniAiConfig.create(copilotToken, copilotEnabled, baseUrl, mcpServerUrl, showTemplates);
+        AvniAiConfig avniAiConfig = AvniAiConfig.create(copilotToken, copilotEnabled, baseUrl, mcpServerUrl, showTemplates, copilotFormValidationApiKey);
         return new AuthDetailsController.CompositeIDPDetails( keycloakAuthServerUrl, keycloakClientId,
                 keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId,
                 cognitoConfigClientId, idpType, webAppTimeoutInMinutes, avniEnvironment, avniAiConfig);

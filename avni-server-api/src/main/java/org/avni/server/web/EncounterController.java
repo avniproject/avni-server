@@ -44,7 +44,7 @@ import static org.avni.server.web.resourceProcessors.ResourceProcessor.addUserFi
 
 @RestController
 public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter> {
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterController.class);
     private final IndividualRepository individualRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final EncounterRepository encounterRepository;

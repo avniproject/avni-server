@@ -1,9 +1,9 @@
 package org.avni.server.web.util;
 
 public class AvniAiConfig {
-    
+
     private String token;
-    
+
     private Boolean enabled;
 
     private String baseUrl;
@@ -12,15 +12,18 @@ public class AvniAiConfig {
 
     private Boolean showTemplates;
 
+    private String copilotFormValidationApiKey;
+
     public AvniAiConfig() {
     }
 
-    public AvniAiConfig(String token, Boolean enabled, String baseUrl, String mcpServerUrl, Boolean showTemplates) {
+    public AvniAiConfig(String token, Boolean enabled, String baseUrl, String mcpServerUrl, Boolean showTemplates, String copilotFormValidationApiKey) {
         this.token = token;
         this.enabled = enabled;
         this.baseUrl = baseUrl;
         this.mcpServerUrl = mcpServerUrl;
         this.showTemplates = showTemplates;
+        this.copilotFormValidationApiKey = copilotFormValidationApiKey;
     }
 
     public String getToken() {
@@ -63,11 +66,18 @@ public class AvniAiConfig {
         this.showTemplates = showTemplates;
     }
 
-    public static AvniAiConfig create(String copilotToken, Boolean copilotEnabled, String baseUrl, String mcpServerUrl, Boolean showTemplates) {
-        if ("dummy".equals(copilotToken)) {
-            return new AvniAiConfig(null, copilotEnabled, baseUrl, mcpServerUrl, showTemplates);
-        }
-        
-        return new AvniAiConfig(copilotToken, copilotEnabled, baseUrl, mcpServerUrl, showTemplates);
+    public static AvniAiConfig create(String copilotToken, Boolean copilotEnabled, String baseUrl, String mcpServerUrl, Boolean showTemplates, String copilotFormValidationApiKey) {
+        String token = copilotToken != null && !copilotToken.isEmpty() ? copilotToken : null;
+        String formValidationApiKey = (copilotFormValidationApiKey != null && !copilotFormValidationApiKey.isEmpty()) ? copilotFormValidationApiKey : null;
+        return new AvniAiConfig(token, copilotEnabled, baseUrl, mcpServerUrl, showTemplates, formValidationApiKey);
     }
+
+    public String getCopilotFormValidationApiKey() {
+        return copilotFormValidationApiKey;
+    }
+
+    public void setCopilotFormValidationApiKey(String copilotFormValidationApiKey) {
+        this.copilotFormValidationApiKey = copilotFormValidationApiKey;
+    }
+
 }
