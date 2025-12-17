@@ -10,7 +10,10 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class UserSyncSettings implements Serializable {
@@ -58,13 +61,14 @@ public class UserSyncSettings implements Serializable {
 
     public static JsonObject toWebResponse(JsonObject syncSettings, SubjectTypeRepository subjectTypeRepository) {
         JsonObject response = new JsonObject();
-        if (!syncSettings.containsKey(User.SyncSettingKeys.subjectTypeSyncSettings.name())) {
+        if (syncSettings == null || !syncSettings.containsKey(User.SyncSettingKeys.subjectTypeSyncSettings.name())) {
             return response;
         }
         ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
         List<UserSyncSettings> userSyncSettings = objectMapper.convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {});
         userSyncSettings.forEach(userSyncSetting -> {
             SubjectType subjectType = subjectTypeRepository.findByUuid(userSyncSetting.getSubjectTypeUUID());
+            if (subjectType == null) return;
             JsonObject subjectTypeSyncSettings = new JsonObject();
             if (userSyncSetting.getSyncConcept1() != null) {
                 subjectTypeSyncSettings.with(User.SyncSettingKeys.syncAttribute1.name(), userSyncSetting.getSyncConcept1())

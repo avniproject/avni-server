@@ -28,9 +28,10 @@ public class JsonObjectUtil {
     }
 
     public static List<UserSyncSettings> getUserSyncSettings(JsonObject syncSettings) {
-        if (syncSettings.containsKey(SyncSettingKeys.subjectTypeSyncSettings.name())) {
+        if (syncSettings != null && syncSettings.containsKey(SyncSettingKeys.subjectTypeSyncSettings.name())) {
             ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
-            return objectMapper.convertValue(syncSettings.get(SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {});
+            return objectMapper.convertValue(syncSettings.get(SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {
+            });
         }
         return Collections.emptyList();
     }
