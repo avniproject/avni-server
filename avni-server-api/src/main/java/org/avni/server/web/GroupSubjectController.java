@@ -119,6 +119,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             groupSubjectService.save(existingOrNewGroupSubject);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -139,6 +140,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             }
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new RuntimeException(e.getMessage());
         }
     }
 

@@ -81,6 +81,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
             individualRelationshipRepository.save(individualRelationship);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -156,6 +157,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
             }
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw new RuntimeException(e.getMessage());
         }
     }
 }
