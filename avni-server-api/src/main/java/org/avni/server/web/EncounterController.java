@@ -117,13 +117,17 @@ public class EncounterController extends AbstractController<Encounter> implement
     public AvniEntityResponse saveForWeb(@RequestBody EncounterRequest request) throws ValidationException {
         try {
             logger.info("Saving encounter with uuid {}}", request.getUuid());
+            Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
+            if (individual == null) {
+                return AvniEntityResponse.error(String.format("Individual not found with UUID '%s'", request.getIndividualUUID()));
+            }
+            txDataControllerHelper.checkSubjectAccess(individual);
             Encounter encounter = createEncounter(request);
-            if (encounter != null) // create encounter method needs fixing. it should not return null in any case
-                txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
             addEntityApprovalStatusIfRequired(encounter);
             logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
             return new AvniEntityResponse(encounter);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return AvniEntityResponse.error(e.getMessage());
         }
     }

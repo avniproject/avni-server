@@ -4,6 +4,7 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
+import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -40,6 +41,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final EncounterTypeRepository encounterTypeRepository;
     private final ProgramEncounterRepository programEncounterRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final UserService userService;
     private final ProgramEncounterService programEncounterService;
     private final ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService;
@@ -49,9 +51,10 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
+    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterRepository = programEncounterRepository;
+        this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
         this.programEncounterService = programEncounterService;
         this.scopeBasedSyncService = scopeBasedSyncService;
@@ -87,8 +90,12 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse saveForWeb(@RequestBody ProgramEncounterRequest request) throws ValidationException {
         try {
+            ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(request.getProgramEnrolmentUUID());
+            if (programEnrolment == null) {
+                return AvniEntityResponse.error(String.format("ProgramEnrolment not found with UUID '%s'", request.getProgramEnrolmentUUID()));
+            }
+            txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
             ProgramEncounter programEncounter = programEncounterService.saveProgramEncounter(request);
-            txDataControllerHelper.checkSubjectAccess(programEncounter.getProgramEnrolment().getIndividual());
             if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
                 programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
             }

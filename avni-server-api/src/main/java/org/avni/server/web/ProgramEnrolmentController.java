@@ -3,6 +3,7 @@ package org.avni.server.web;
 import jakarta.transaction.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.domain.*;
@@ -38,6 +39,7 @@ import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditF
 @RestController
 public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment> {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private final IndividualRepository individualRepository;
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final UserService userService;
     private final ProjectionFactory projectionFactory;
@@ -49,7 +51,8 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
+    public ProgramEnrolmentController(IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
+        this.individualRepository = individualRepository;
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
         this.projectionFactory = projectionFactory;
@@ -74,8 +77,12 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @Transactional
     public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
         try {
+            Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
+            if (individual == null) {
+                return AvniEntityResponse.error(String.format("Individual not found with UUID '%s'", request.getIndividualUUID()));
+            }
+            txDataControllerHelper.checkSubjectAccess(individual);
             ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request, true);
-            txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
 
             //Assuming that EnrollmentDetails will not be edited when exited
             FormMapping formMapping = programEnrolmentService.getFormMapping(programEnrolment);
