@@ -27,6 +27,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -43,9 +44,10 @@ public class IndividualRelationshipController extends AbstractController<Individ
     private final UserService userService;
     private final ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService;
     private final AccessControlService accessControlService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public IndividualRelationshipController(IndividualRelationshipRepository individualRelationshipRepository, IndividualRepository individualRepository, IndividualRelationshipTypeRepository individualRelationshipTypeRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService, AccessControlService accessControlService) {
+    public IndividualRelationshipController(IndividualRelationshipRepository individualRelationshipRepository, IndividualRepository individualRepository, IndividualRelationshipTypeRepository individualRelationshipTypeRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService, AccessControlService accessControlService, TxDataControllerHelper txDataControllerHelper) {
         this.individualRelationshipRepository = individualRelationshipRepository;
         this.individualRepository = individualRepository;
         this.individualRelationshipTypeRepository = individualRelationshipTypeRepository;
@@ -53,25 +55,33 @@ public class IndividualRelationshipController extends AbstractController<Individ
         this.userService = userService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.accessControlService = accessControlService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @RequestMapping(value = "/individualRelationships", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public void save(@RequestBody IndividualRelationshipRequest request) {
-        IndividualRelationshipType relationshipType = individualRelationshipTypeRepository.findByUuid(request.getRelationshipTypeUUID());
-        Individual individualA = individualRepository.findByUuid(request.getIndividualAUUID());
-        Individual individualB = individualRepository.findByUuid(request.getIndividualBUUID());
+        try {
+            IndividualRelationshipType relationshipType = individualRelationshipTypeRepository.findByUuid(request.getRelationshipTypeUUID());
+            Individual individualA = individualRepository.findByUuid(request.getIndividualAUUID());
+            Individual individualB = individualRepository.findByUuid(request.getIndividualBUUID());
 
-        IndividualRelationship individualRelationship = newOrExistingEntity(individualRelationshipRepository, request, new IndividualRelationship());
-        individualRelationship.setIndividuala(individualA);
-        individualRelationship.setRelationship(relationshipType);
-        individualRelationship.setIndividualB(individualB);
-        individualRelationship.setEnterDateTime(request.getEnterDateTime());
-        individualRelationship.setExitDateTime(request.getExitDateTime());
-        individualRelationship.setVoided(request.isVoided());
+            txDataControllerHelper.checkSubjectAccess(individualA);
+            txDataControllerHelper.checkSubjectAccess(individualB);
+                
+            IndividualRelationship individualRelationship = newOrExistingEntity(individualRelationshipRepository, request, new IndividualRelationship());
+            individualRelationship.setIndividuala(individualA);
+            individualRelationship.setRelationship(relationshipType);
+            individualRelationship.setIndividualB(individualB);
+            individualRelationship.setEnterDateTime(request.getEnterDateTime());
+            individualRelationship.setExitDateTime(request.getExitDateTime());
+            individualRelationship.setVoided(request.isVoided());
 
-        individualRelationshipRepository.save(individualRelationship);
+            individualRelationshipRepository.save(individualRelationship);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
     }
 
     @RequestMapping(value = "/individualRelationship/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
@@ -135,12 +145,17 @@ public class IndividualRelationshipController extends AbstractController<Individ
     @ResponseBody
     @Transactional
     public void deleteIndividualRelationShip(@PathVariable Long id) {
-        Optional<IndividualRelationship> relationShip = individualRelationshipRepository.findById(id);
-        if (relationShip.isPresent()) {
-            IndividualRelationship individualRelationShip = relationShip.get();
-            accessControlService.checkSubjectPrivileges(PrivilegeType.VoidSubject, individualRelationShip.getIndividuala(), individualRelationShip.getIndividualB());
-            individualRelationShip.setVoided(true);
-            individualRelationshipRepository.save(individualRelationShip);
+        try {
+            Optional<IndividualRelationship> relationShip = individualRelationshipRepository.findById(id);
+            if (relationShip.isPresent()) {
+                IndividualRelationship individualRelationShip = relationShip.get();
+                txDataControllerHelper.checkSubjectAccess(individualRelationShip.getIndividuala());
+                accessControlService.checkSubjectPrivileges(PrivilegeType.VoidSubject, individualRelationShip.getIndividuala(), individualRelationShip.getIndividualB());
+                individualRelationShip.setVoided(true);
+                individualRelationshipRepository.save(individualRelationShip);
+            }
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
     }
 }

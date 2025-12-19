@@ -5,10 +5,10 @@ import org.avni.server.dao.CommentRepository;
 import org.avni.server.dao.CommentThreadRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.domain.Individual;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
-import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.CommentService;
 import org.avni.server.service.ScopeBasedSyncService;
@@ -27,6 +27,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -46,6 +47,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     private final UserService userService;
     private final CommentThreadRepository commentThreadRepository;
     private final ScopeBasedSyncService<Comment> scopeBasedSyncService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
     public CommentController(CommentRepository commentRepository,
@@ -53,7 +55,9 @@ public class CommentController extends AbstractController<Comment> implements Re
                              CommentService commentService,
                              SubjectTypeRepository subjectTypeRepository,
                              UserService userService,
-                             CommentThreadRepository commentThreadRepository, ScopeBasedSyncService<Comment> scopeBasedSyncService) {
+                             CommentThreadRepository commentThreadRepository,
+                             ScopeBasedSyncService<Comment> scopeBasedSyncService,
+                             TxDataControllerHelper txDataControllerHelper) {
         this.commentRepository = commentRepository;
         this.individualRepository = individualRepository;
         this.commentService = commentService;
@@ -61,6 +65,7 @@ public class CommentController extends AbstractController<Comment> implements Re
         this.userService = userService;
         this.commentThreadRepository = commentThreadRepository;
         this.scopeBasedSyncService = scopeBasedSyncService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @GetMapping(value = "/web/comment")
@@ -76,7 +81,17 @@ public class CommentController extends AbstractController<Comment> implements Re
     @ResponseBody
     @Transactional
     public ResponseEntity<Comment> createComment(@RequestBody CommentContract commentContract) {
-        return ResponseEntity.ok(commentService.saveComment(commentContract));
+        try {
+            Individual individual = individualRepository.findByUuid(commentContract.getSubjectUUID());
+            if (individual == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            txDataControllerHelper.checkSubjectAccess(individual);
+            return ResponseEntity.ok(commentService.saveComment(commentContract));
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.status(403).build();
+        }
     }
 
     @PutMapping(value = "/web/comment/{id}")
@@ -84,11 +99,17 @@ public class CommentController extends AbstractController<Comment> implements Re
     @ResponseBody
     @Transactional
     public ResponseEntity<Comment> editComment(@PathVariable Long id, @RequestBody CommentContract commentContract) {
-        Optional<Comment> comment = commentRepository.findById(id);
-        if (!comment.isPresent()) {
-            return ResponseEntity.notFound().build();
+        try {
+            Optional<Comment> comment = commentRepository.findById(id);
+            if (!comment.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            txDataControllerHelper.checkSubjectAccess(comment.get().getSubject());
+            return ResponseEntity.ok(commentService.editComment(commentContract, comment.get()));
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.status(403).build();
         }
-        return ResponseEntity.ok(commentService.editComment(commentContract, comment.get()));
     }
 
     @DeleteMapping(value = "/web/comment/{id}")
@@ -96,11 +117,17 @@ public class CommentController extends AbstractController<Comment> implements Re
     @ResponseBody
     @Transactional
     public ResponseEntity<Comment> deleteComment(@PathVariable Long id) {
-        Optional<Comment> comment = commentRepository.findById(id);
-        if (!comment.isPresent()) {
-            return ResponseEntity.notFound().build();
+        try {
+            Optional<Comment> comment = commentRepository.findById(id);
+            if (!comment.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            txDataControllerHelper.checkSubjectAccess(comment.get().getSubject());
+            return ResponseEntity.ok(commentService.deleteComment(comment.get()));
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.status(403).build();
         }
-        return ResponseEntity.ok(commentService.deleteComment(comment.get()));
     }
 
     @RequestMapping(value = "/comments", method = RequestMethod.POST)

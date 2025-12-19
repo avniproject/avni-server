@@ -25,6 +25,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -41,20 +42,24 @@ public class CommentThreadController extends AbstractController<CommentThread> i
     private final UserService userService;
     private final IndividualRepository individualRepository;
     private final CommentThreadService commentThreadService;
-    private ScopeBasedSyncService<CommentThread> scopeBasedSyncService;
+    private final ScopeBasedSyncService<CommentThread> scopeBasedSyncService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
     public CommentThreadController(CommentThreadRepository commentThreadRepository,
                                    SubjectTypeRepository subjectTypeRepository,
                                    UserService userService,
                                    IndividualRepository individualRepository,
-                                   CommentThreadService commentThreadService, ScopeBasedSyncService<CommentThread> scopeBasedSyncService) {
+                                   CommentThreadService commentThreadService,
+                                   ScopeBasedSyncService<CommentThread> scopeBasedSyncService,
+                                   TxDataControllerHelper txDataControllerHelper) {
         this.commentThreadRepository = commentThreadRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.userService = userService;
         this.individualRepository = individualRepository;
         this.commentThreadService = commentThreadService;
         this.scopeBasedSyncService = scopeBasedSyncService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @GetMapping(value = {"/commentThread/v2"})
@@ -112,19 +117,42 @@ public class CommentThreadController extends AbstractController<CommentThread> i
     @RequestMapping(value = "/web/commentThread", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<CommentThreadResponse> saveThread(@RequestBody CommentThreadContract threadContract) {
-        CommentThread savedThread = commentThreadService.createNewThread(threadContract);
-        return ResponseEntity.ok(CommentThreadResponse.fromEntity(savedThread));
+        try {
+            if (threadContract.getComments().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            String subjectUUID = threadContract.getComments().iterator().next().getSubjectUUID();
+            Individual individual = individualRepository.findByUuid(subjectUUID);
+            if (individual == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            txDataControllerHelper.checkSubjectAccess(individual);
+            CommentThread savedThread = commentThreadService.createNewThread(threadContract);
+            return ResponseEntity.ok(CommentThreadResponse.fromEntity(savedThread));
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.status(403).build();
+        }
     }
 
     @RequestMapping(value = "/web/commentThread/{id}/resolve", method = RequestMethod.PUT)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<CommentThreadResponse> editThread(@PathVariable Long id) {
-        Optional<CommentThread> commentThread = commentThreadRepository.findById(id);
-        if (!commentThread.isPresent()) {
-            return ResponseEntity.notFound().build();
+        try {
+            Optional<CommentThread> commentThread = commentThreadRepository.findById(id);
+            if (!commentThread.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            CommentThread thread = commentThread.get();
+            if (!thread.getComments().isEmpty()) {
+                txDataControllerHelper.checkSubjectAccess(thread.getComments().iterator().next().getSubject());
+            }
+            CommentThread resolvedCommentThread = commentThreadService.resolveThread(thread);
+            return ResponseEntity.ok(CommentThreadResponse.fromEntity(resolvedCommentThread));
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return ResponseEntity.status(403).build();
         }
-        CommentThread resolvedCommentThread = commentThreadService.resolveThread(commentThread.get());
-        return ResponseEntity.ok(CommentThreadResponse.fromEntity(resolvedCommentThread));
     }
 
 }
