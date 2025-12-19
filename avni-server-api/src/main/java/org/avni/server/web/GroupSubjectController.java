@@ -30,6 +30,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -51,9 +52,10 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     private final ScopeBasedSyncService<GroupSubject> scopeBasedSyncService;
     private final GroupSubjectService groupSubjectService;
     private final AccessControlService accessControlService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService, GroupSubjectService groupSubjectService, AccessControlService accessControlService) {
+    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService, GroupSubjectService groupSubjectService, AccessControlService accessControlService, TxDataControllerHelper txDataControllerHelper) {
         this.groupSubjectRepository = groupSubjectRepository;
         this.userService = userService;
         this.individualRepository = individualRepository;
@@ -63,6 +65,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.groupSubjectService = groupSubjectService;
         this.accessControlService = accessControlService;
+        this.txDataControllerHelper = txDataControllerHelper;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -98,31 +101,44 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody GroupSubjectContract request) throws ValidationException {
-        Individual groupSubject = individualRepository.findByUuid(request.getGroupSubjectUUID());
-        Individual memberSubject = individualRepository.findByUuid(request.getMemberSubjectUUID());
-        GroupRole groupRole = groupRoleRepository.findByUuid(request.getGroupRoleUUID());
+        try {
+            Individual groupSubject = individualRepository.findByUuid(request.getGroupSubjectUUID());
+            Individual memberSubject = individualRepository.findByUuid(request.getMemberSubjectUUID());
+            GroupRole groupRole = groupRoleRepository.findByUuid(request.getGroupRoleUUID());
 
-        GroupSubject existingOrNewGroupSubject = newOrExistingEntity(groupSubjectRepository, request, new GroupSubject());
-        existingOrNewGroupSubject.setGroupSubject(groupSubject);
-        existingOrNewGroupSubject.setMemberSubject(memberSubject);
-        existingOrNewGroupSubject.setGroupRole(groupRole);
-        existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate() != null ? request.getMembershipStartDate() : new DateTime());
-        existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
-        existingOrNewGroupSubject.setVoided(request.isVoided());
-        groupSubjectService.save(existingOrNewGroupSubject);
+            txDataControllerHelper.checkSubjectAccess(groupSubject);
+            txDataControllerHelper.checkSubjectAccess(memberSubject);
+
+            GroupSubject existingOrNewGroupSubject = newOrExistingEntity(groupSubjectRepository, request, new GroupSubject());
+            existingOrNewGroupSubject.setGroupSubject(groupSubject);
+            existingOrNewGroupSubject.setMemberSubject(memberSubject);
+            existingOrNewGroupSubject.setGroupRole(groupRole);
+            existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate() != null ? request.getMembershipStartDate() : new DateTime());
+            existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
+            existingOrNewGroupSubject.setVoided(request.isVoided());
+            groupSubjectService.save(existingOrNewGroupSubject);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
     }
 
     @RequestMapping(value = "/groupSubjects/{groupSubjectUuid}", method = RequestMethod.DELETE)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void delete(@PathVariable String groupSubjectUuid) {
-        GroupSubject groupSubject = groupSubjectRepository.findByUuid(groupSubjectUuid);
-        if (groupSubject != null) {
-            accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, groupSubject);
-            groupSubject.setVoided(true);
-            groupSubjectRepository.save(groupSubject);
-        } else {
-            throw new BadRequestError("Invalid GroupSubject Uuid");
+        try {
+            GroupSubject groupSubject = groupSubjectRepository.findByUuid(groupSubjectUuid);
+            if (groupSubject != null) {
+                txDataControllerHelper.checkSubjectAccess(groupSubject.getGroupSubject());
+                txDataControllerHelper.checkSubjectAccess(groupSubject.getMemberSubject());
+                accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, groupSubject);
+                groupSubject.setVoided(true);
+                groupSubjectRepository.save(groupSubject);
+            } else {
+                throw new BadRequestError("Invalid GroupSubject Uuid");
+            }
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
     }
 
