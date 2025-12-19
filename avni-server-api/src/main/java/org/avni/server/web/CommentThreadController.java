@@ -116,6 +116,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @RequestMapping(value = "/web/commentThread", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
     public ResponseEntity<CommentThreadResponse> saveThread(@RequestBody CommentThreadContract threadContract) {
         try {
             if (threadContract.getComments().isEmpty()) {
@@ -137,6 +138,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @RequestMapping(value = "/web/commentThread/{id}/resolve", method = RequestMethod.PUT)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
     public ResponseEntity<CommentThreadResponse> editThread(@PathVariable Long id) {
         try {
             Optional<CommentThread> commentThread = commentThreadRepository.findById(id);
