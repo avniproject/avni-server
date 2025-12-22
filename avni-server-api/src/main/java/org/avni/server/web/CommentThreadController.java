@@ -117,7 +117,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
     @RequestMapping(value = "/web/commentThread", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public ResponseEntity<CommentThreadResponse> saveThread(@RequestBody CommentThreadContract threadContract) {
+    public ResponseEntity<?> saveThread(@RequestBody CommentThreadContract threadContract) {
         try {
             if (threadContract.getComments().isEmpty()) {
                 return ResponseEntity.badRequest().build();
@@ -132,14 +132,14 @@ public class CommentThreadController extends AbstractController<CommentThread> i
             return ResponseEntity.ok(CommentThreadResponse.fromEntity(savedThread));
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
     @RequestMapping(value = "/web/commentThread/{id}/resolve", method = RequestMethod.PUT)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public ResponseEntity<CommentThreadResponse> editThread(@PathVariable Long id) {
+    public ResponseEntity<?> editThread(@PathVariable Long id) {
         try {
             Optional<CommentThread> commentThread = commentThreadRepository.findById(id);
             if (!commentThread.isPresent()) {
@@ -153,7 +153,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
             return ResponseEntity.ok(CommentThreadResponse.fromEntity(resolvedCommentThread));
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
