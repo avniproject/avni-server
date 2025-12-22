@@ -80,7 +80,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<Comment> createComment(@RequestBody CommentContract commentContract) {
+    public ResponseEntity<?> createComment(@RequestBody CommentContract commentContract) {
         try {
             Individual individual = individualRepository.findByUuid(commentContract.getSubjectUUID());
             if (individual == null) {
@@ -90,7 +90,7 @@ public class CommentController extends AbstractController<Comment> implements Re
             return ResponseEntity.ok(commentService.saveComment(commentContract));
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
@@ -98,7 +98,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<Comment> editComment(@PathVariable Long id, @RequestBody CommentContract commentContract) {
+    public ResponseEntity<?> editComment(@PathVariable Long id, @RequestBody CommentContract commentContract) {
         try {
             Optional<Comment> comment = commentRepository.findById(id);
             if (!comment.isPresent()) {
@@ -108,7 +108,7 @@ public class CommentController extends AbstractController<Comment> implements Re
             return ResponseEntity.ok(commentService.editComment(commentContract, comment.get()));
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
@@ -116,7 +116,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<Comment> deleteComment(@PathVariable Long id) {
+    public ResponseEntity<?> deleteComment(@PathVariable Long id) {
         try {
             Optional<Comment> comment = commentRepository.findById(id);
             if (!comment.isPresent()) {
@@ -126,7 +126,7 @@ public class CommentController extends AbstractController<Comment> implements Re
             return ResponseEntity.ok(commentService.deleteComment(comment.get()));
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 
