@@ -191,8 +191,10 @@ public class ConceptService implements NonScopeAwareService {
 
     public List<String> saveOrUpdateConcepts(List<ConceptContract> conceptRequests, ConceptContract.RequestType requestType) {
         ArrayList<Concept> concepts = new ArrayList<>();
-        for (ConceptContract conceptRequest : conceptRequests) {
-            logger.info("Processing concept: {} {}", conceptRequest.getName(), conceptRequest.getUuid());
+        int size = conceptRequests.size();
+        for (int i = 0; i < conceptRequests.size(); i++) {
+            ConceptContract conceptRequest = conceptRequests.get(i);
+            logger.info("Processing concept {}/{}: {} {}", i + 1, size, conceptRequest.getName(), conceptRequest.getUuid());
             List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequest);
             for (ConceptContract answerConceptRequest : answerConcepts) {
                 Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, !requestType.equals(ConceptContract.RequestType.Bundle));

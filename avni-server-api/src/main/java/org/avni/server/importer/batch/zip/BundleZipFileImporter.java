@@ -8,8 +8,9 @@ import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
+import org.avni.server.domain.Locale;
+import org.avni.server.domain.metadata.ObjectCollectionChangeReport;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
@@ -28,6 +29,7 @@ import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
+import org.avni.server.web.request.webapp.ConceptExport;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
@@ -303,7 +305,22 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "concepts.json":
                 ConceptContract[] conceptContracts = convertString(fileData, ConceptContract[].class);
-                conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts), ConceptContract.RequestType.Bundle);
+                List<ConceptContract> incomingConcepts = Arrays.asList(conceptContracts);
+
+                List<Concept> existingConcepts = conceptRepository.findAll();
+                if (!existingConcepts.isEmpty()) {
+                    List<ConceptContract> changedConcepts = findChangedConcepts(incomingConcepts, existingConcepts);
+
+                    if (!changedConcepts.isEmpty()) {
+                        logger.info("Processing {} changed concepts out of {} in bundle", changedConcepts.size(), incomingConcepts.size());
+                        conceptService.saveOrUpdateConcepts(changedConcepts, ConceptContract.RequestType.Bundle);
+                    } else {
+                        logger.info("No changes detected in concepts, skipping import");
+                    }
+                } else {
+                    logger.info("Processing all concepts. No diff check done.");
+                    conceptService.saveOrUpdateConcepts(incomingConcepts, ConceptContract.RequestType.Bundle);
+                }
                 break;
             case "formMappings.json":
                 FormMappingContract[] formMappingContracts = convertString(fileData, FormMappingContract[].class);
@@ -382,6 +399,45 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 customQueryService.processCustomQueries(customQueries);
                 break;
         }
+    }
+
+    private List<ConceptContract> findChangedConcepts(List<ConceptContract> incomingConcepts, List<Concept> existingConcepts) {
+        Map<String, ConceptContract> incomingConceptMap = incomingConcepts.stream()
+                .collect(Collectors.toMap(ConceptContract::getUuid, concept -> concept));
+        Map<String, Concept> existingConceptsMap = existingConcepts.stream()
+                .collect(Collectors.toMap(Concept::getUuid, concept -> concept));
+
+        Map<String, ConceptExport> existingConceptContracts = new HashMap<>();
+        for (Map.Entry<String, Concept> entry : existingConceptsMap.entrySet()) {
+            existingConceptContracts.put(entry.getKey(), ConceptExport.fromConcept(entry.getValue()));
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> incomingMaps = new HashMap<>();
+        for (Map.Entry<String, ConceptContract> entry : incomingConceptMap.entrySet()) {
+            incomingMaps.put(entry.getKey(), objectMapper.convertValue(entry.getValue(), Map.class));
+        }
+
+        Map<String, Object> existingMaps = new HashMap<>();
+        for (Map.Entry<String, ConceptExport> entry : existingConceptContracts.entrySet()) {
+            existingMaps.put(entry.getKey(), objectMapper.convertValue(entry.getValue(), Map.class));
+        }
+
+        MetadataDiffChecker diffChecker = new MetadataDiffChecker();
+        ObjectCollectionChangeReport diffReport = diffChecker.findCollectionDifference(
+                incomingMaps,
+                existingMaps
+        );
+
+        List<ConceptContract> changedConcepts = new ArrayList<>();
+        for (String uuid : incomingConceptMap.keySet()) {
+            if (diffReport.hasChangeIn(uuid)) {
+                ConceptContract incomingConcept = incomingConceptMap.get(uuid);
+                changedConcepts.add(incomingConcept);
+            }
+        }
+
+        return changedConcepts;
     }
 
     private void deployFolder(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData) throws IOException, FormBuilderException {
