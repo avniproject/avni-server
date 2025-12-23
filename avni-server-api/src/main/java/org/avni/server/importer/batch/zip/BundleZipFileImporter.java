@@ -486,8 +486,13 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 
                 List<ConceptMedia> media = concept.getMedia() != null ?
                     new ArrayList<>(concept.getMedia()) : new ArrayList<>();
-                media.add(conceptMedia);
-                concept.setMedia(media);
+
+                boolean mediaExists = media.stream()
+                    .anyMatch(m -> m.getUrl().equals(conceptMedia.getUrl()));
+                if (!mediaExists) {
+                    media.add(conceptMedia);
+                    concept.setMedia(media);
+                }
                 
                 conceptRepository.save(concept);
                 break;
