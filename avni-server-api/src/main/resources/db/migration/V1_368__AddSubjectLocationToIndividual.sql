@@ -1,0 +1,1 @@
+ALTER TABLE individual ADD COLUMN subject_location jsonb;

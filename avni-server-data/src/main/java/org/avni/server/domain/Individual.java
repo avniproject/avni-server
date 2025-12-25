@@ -12,6 +12,7 @@ import org.avni.server.framework.hibernate.JodaLocalDateConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
 import org.avni.server.geo.PointType;
+import org.avni.server.framework.hibernate.SubjectLocationUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.LocalDate;
@@ -88,6 +89,10 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     @Type(value = PointType.class)
     @Column
     private Point registrationLocation;
+
+    @Type(value = SubjectLocationUserType.class)
+    @Column
+    private SubjectLocation subjectLocation;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "subject")
     private Set<UserSubject> userSubjects;
@@ -227,6 +232,14 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     public void setRegistrationLocation(Point registrationLocation) {
         this.registrationLocation = registrationLocation;
+    }
+
+    public SubjectLocation getSubjectLocation() {
+        return subjectLocation;
+    }
+
+    public void setSubjectLocation(SubjectLocation subjectLocation) {
+        this.subjectLocation = subjectLocation;
     }
 
     public SubjectType getSubjectType() {
