@@ -201,7 +201,7 @@ public class ConceptService implements NonScopeAwareService {
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 answerConcept.setName(answerConceptRequest.getName());
                 answerConcept.setDataType(dataType);
-                updateMediaInfo(answerConceptRequest, answerConcept, true);
+                updateMediaInfo(answerConceptRequest, answerConcept, requestType.equals(ConceptContract.RequestType.Full));
                 answerConcept.updateAudit();
                 conceptRepository.save(answerConcept);
                 addToMigrationIfRequired(answerConceptRequest);

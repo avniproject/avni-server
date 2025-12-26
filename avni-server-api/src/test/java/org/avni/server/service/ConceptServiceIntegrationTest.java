@@ -809,43 +809,6 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
     }
 
     @Test
-    public void shouldRetainMediaContentWhenAddingNAConceptAsAnswerWithoutMediaContentBundle() {
-        // Arrange - First create a NA concept with mediaUrl
-        String naConceptUUID = UUID.randomUUID().toString();
-        ConceptContract naConceptContract = new ConceptContract();
-        naConceptContract.setUuid(naConceptUUID);
-        naConceptContract.setName("NA Concept with Media");
-        naConceptContract.setDataType("NA");
-        naConceptContract.setMedia(List.of(new ConceptMedia("original-media-url", ConceptMedia.MediaType.Image)));
-
-        conceptService.saveOrUpdateConcepts(List.of(naConceptContract), ConceptContract.RequestType.Bundle);
-
-        // Create a Coded concept
-        String codedConceptUUID = UUID.randomUUID().toString();
-        ConceptContract codedConceptContract = new ConceptContract();
-        codedConceptContract.setUuid(codedConceptUUID);
-        codedConceptContract.setName("Coded Concept");
-        codedConceptContract.setDataType("Coded");
-
-        // Act - Add the NA concept as an answer without specifying media content
-        ConceptContract answerContract = new ConceptContract();
-        answerContract.setUuid(naConceptUUID);
-        answerContract.setName("NA Concept with Media");
-        // Note: Not setting mediaUrl here to test retention
-
-        codedConceptContract.setAnswers(List.of(answerContract));
-        conceptService.saveOrUpdateConcepts(List.of(codedConceptContract), ConceptContract.RequestType.Bundle);
-
-        // Assert - Media content should be retained
-        Concept codedConcept = conceptRepository.findByUuid(codedConceptUUID);
-        Concept naAnswerConcept = conceptRepository.findByUuid(naConceptUUID);
-
-        assertNotNull(codedConcept.getConceptAnswer(naConceptUUID));
-        assertEquals("original-media-url", naAnswerConcept.getMediaUrl());
-        assertEquals("original-media-url", codedConcept.getAnswerConcept("NA Concept with Media").getMediaUrl());
-    }
-
-    @Test
     public void shouldUpdateMediaContentWhenAddingNAConceptAsAnswerWithPreviousMediaContent() {
         // Arrange - First create a NA concept with mediaUrl
         String naConceptUUID = UUID.randomUUID().toString();
