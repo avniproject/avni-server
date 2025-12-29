@@ -1,6 +1,5 @@
 package org.avni.server.web.request.common;
 
-import org.avni.server.web.request.SubjectLocationRequest;
 import org.joda.time.LocalDate;
 import org.avni.server.web.request.CHSRequest;
 import org.avni.server.web.request.PeriodRequest;
@@ -32,7 +31,6 @@ public class CommonIndividualRequest extends CHSRequest {
     private String catchmentUUID;
     private LocalDate registrationDate;
     private PointRequest registrationLocation;
-    private SubjectLocationRequest subjectLocation;
     private String addressLevelLineage;
 
     public String getFirstName() {
@@ -155,14 +153,6 @@ public class CommonIndividualRequest extends CHSRequest {
 
     public void setRegistrationLocation(PointRequest registrationLocation) {
         this.registrationLocation = registrationLocation;
-    }
-
-    public SubjectLocationRequest getSubjectLocation() {
-        return subjectLocation;
-    }
-
-    public void setSubjectLocation(SubjectLocationRequest subjectLocation) {
-        this.subjectLocation = subjectLocation;
     }
 
     public String getSubjectTypeUUID() {
