@@ -143,7 +143,9 @@ endif
 		--exclude-table-data=audit \
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
-		--exclude-table-data='batch_*'
+		--exclude-table-data='batch_*' \
+		--exclude-table-data='scheduled_job_run' \
+		--exclude-table-data='qrtz_*'
 
 dump-multiple-schemas:
 ifndef hosting
@@ -160,6 +162,8 @@ endif
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
 		--exclude-table-data='batch_*' \
+		--exclude-table-data='scheduled_job_run' \
+		--exclude-table-data='qrtz_*'
 		--exclude-table='public.individual_copy' \
 		--exclude-table='public.program_enrolment_copy' \
 		--exclude-table='public.encounter_copy' \
@@ -187,8 +191,9 @@ endif
 		--exclude-table-data=audit \
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
-		--exclude-table='qrtz_*' \
 		--exclude-table-data='batch_*' \
+		--exclude-table-data='scheduled_job_run' \
+		--exclude-table-data='qrtz_*'
 		--exclude-table='public.individual_copy' \
 		--exclude-table='public.program_enrolment_copy' \
 		--exclude-table='public.encounter_copy' \
@@ -200,8 +205,7 @@ endif
 		--exclude-table='public.individual_copy_ihmp' \
 		--exclude-table='public.program_enrolment_ihmp' \
 		--exclude-table='public.individual_02_24' \
-		--exclude-table='public.program_enrolment_02_24' \
-		--exclude-table='public.scheduled_job_run*'
+		--exclude-table='public.program_enrolment_02_24'
 
 dump-metabase-prod:
 	pg_dump -h localhost -p 5433 \
