@@ -436,54 +436,17 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 changedConcepts.add(incomingConcept);
             }
         }
-
-        List<ConceptContract> mediaChangedConcepts = findConceptsWithMediaChanges(incomingConcepts, existingConcepts);
-        for (ConceptContract mediaChangedConcept : mediaChangedConcepts) {
-            if (changedConcepts.stream().noneMatch(c -> c.getUuid().equals(mediaChangedConcept.getUuid()))) {
-                changedConcepts.add(mediaChangedConcept);
+        
+        for (String uuid : incomingConceptMap.keySet()) {
+            Concept existingConcept = existingConceptsMap.get(uuid);
+            if (existingConcept != null && existingConcept.getMedia() != null && !existingConcept.getMedia().isEmpty()) {
+                if (changedConcepts.stream().noneMatch(c -> c.getUuid().equals(uuid))) {
+                    changedConcepts.add(incomingConceptMap.get(uuid));
+                }
             }
         }
 
         return changedConcepts;
-    }
-
-    private List<ConceptContract> findConceptsWithMediaChanges(List<ConceptContract> incomingConcepts, List<Concept> existingConcepts) {
-        Map<String, ConceptContract> incomingConceptMap = incomingConcepts.stream()
-                .collect(Collectors.toMap(ConceptContract::getUuid, concept -> concept));
-        Map<String, Concept> existingConceptsMap = existingConcepts.stream()
-                .collect(Collectors.toMap(Concept::getUuid, concept -> concept));
-
-        List<ConceptContract> mediaChangedConcepts = new ArrayList<>();
-        
-        for (String uuid : incomingConceptMap.keySet()) {
-            ConceptContract incomingConcept = incomingConceptMap.get(uuid);
-            Concept existingConcept = existingConceptsMap.get(uuid);
-            
-            if (existingConcept != null) {
-                if (hasMediaChanged(incomingConcept.getMedia(), existingConcept.getMedia())) {
-                    mediaChangedConcepts.add(incomingConcept);
-                }
-            }
-        }
-        
-        return mediaChangedConcepts;
-    }
-
-    private boolean hasMediaChanged(List<ConceptMedia> incomingMedia, List<ConceptMedia> existingMedia) {
-        if (incomingMedia == null || existingMedia == null) {
-            return incomingMedia != existingMedia;
-        }
-        if (incomingMedia.size() != existingMedia.size()) {
-            return true;
-        }
-        Set<String> incomingMediaKeys = incomingMedia.stream()
-                .map(m -> m.getUrl() + "|" + m.getType())
-                .collect(Collectors.toSet());
-        Set<String> existingMediaKeys = existingMedia.stream()
-                .map(m -> m.getUrl() + "|" + m.getType())
-                .collect(Collectors.toSet());
-        
-        return !incomingMediaKeys.equals(existingMediaKeys);
     }
 
     private void deployFolder(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData) throws IOException, FormBuilderException {
