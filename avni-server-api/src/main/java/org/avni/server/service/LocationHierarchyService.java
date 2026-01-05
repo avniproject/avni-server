@@ -3,10 +3,13 @@ package org.avni.server.service;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.SubjectTypeSetting;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -25,13 +28,15 @@ public class LocationHierarchyService implements NonScopeAwareService {
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final LocationRepository locationRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
     private final Logger logger;
 
     @Autowired
-    public LocationHierarchyService(OrganisationConfigService organisationConfigService, AddressLevelTypeRepository addressLevelTypeRepository, LocationRepository locationRepository) {
+    public LocationHierarchyService(OrganisationConfigService organisationConfigService, AddressLevelTypeRepository addressLevelTypeRepository, LocationRepository locationRepository, SubjectTypeRepository subjectTypeRepository) {
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -131,4 +136,53 @@ public class LocationHierarchyService implements NonScopeAwareService {
         }
         return false;
     }
+
+    public Map<String, Object> determineAddressHierarchiesForAllSubjectTypes() {
+        Map<String, Object> result = new HashMap<>();
+        List<SubjectType> allSubjectTypes = subjectTypeRepository.findAllByIsVoidedFalse();
+
+        allSubjectTypes.forEach(subjectType -> {
+            Map<String, String> availableHierarchies = getAvailableHierarchiesForSubjectType(subjectType);
+            
+            Map<String, Object> subjectInfo = new HashMap<>();
+            subjectInfo.put("availableHierarchies", availableHierarchies);
+            
+            result.put(subjectType.getName(), subjectInfo);
+        });
+
+        return result;
+    }
+
+    private Map<String, String> getAvailableHierarchiesForSubjectType(SubjectType subjectType) {
+        List<SubjectTypeSetting> customRegistrationLocations = organisationConfigService.getCurrentOrganisationConfig().getCustomRegistrationLocations();
+        Optional<SubjectTypeSetting> setting = customRegistrationLocations.stream()
+                .filter(s -> s.getSubjectTypeUUID().equals(subjectType.getUuid()))
+                .findFirst();
+        
+        if (setting.isEmpty()) {
+            return determineAddressHierarchiesForAllAddressLevelTypesInOrg();
+        }
+        
+        List<String> locationTypeUUIDs = setting.get().getLocationTypeUUIDs();
+        if (locationTypeUUIDs == null || locationTypeUUIDs.isEmpty()) {
+            return determineAddressHierarchiesForAllAddressLevelTypesInOrg();
+        }
+        
+        List<AddressLevelType> lowestLocationTypes = addressLevelTypeRepository.findByUuidIn(locationTypeUUIDs)
+                .stream()
+                .filter(alt -> !alt.isVoided())
+                .collect(Collectors.toList());
+
+        TreeSet<String> hierarchyKeys = buildHierarchyForAddressLevelTypes(lowestLocationTypes);
+        Map<String, String> result = new HashMap<>();
+        for (String key : hierarchyKeys) {
+            String displayName = Arrays.stream(key.split("\\."))
+                    .map(id -> addressLevelTypeRepository.findOne(Long.parseLong(id)).getName())
+                    .collect(Collectors.joining(" -> "));
+            result.put(key, displayName);
+        }
+        return result;
+    }
+
+    
 }

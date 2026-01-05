@@ -222,4 +222,15 @@ public class ImportController {
             return null;
         }
     }
+
+    @GetMapping(value = "/web/allSubjectsLocationHierarchies")
+    @ResponseBody
+    public Map<String, Object> allSubjectsLocationHierarchies() {
+        try {
+            return locationHierarchyService.determineAddressHierarchiesForAllSubjectTypes();
+        } catch (Exception exception) {
+            logger.error("Error getting all subjects location hierarchies", exception);
+            return Collections.emptyMap();
+        }
+    }
 }

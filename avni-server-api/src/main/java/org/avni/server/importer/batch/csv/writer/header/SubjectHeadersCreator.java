@@ -9,7 +9,8 @@ import org.avni.server.service.AddressLevelService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,24 +71,29 @@ public class SubjectHeadersCreator extends AbstractHeaders {
             fields.add(new HeaderField(profilePicture, "", false, null, null, null));
         }
 
-        fields.addAll(generateAddressFields(formMapping));
+        fields.addAll(generateAddressFields(mode));
         fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
 
         return fields;
     }
 
-    public List<HeaderField> generateAddressFields(FormMapping formMapping) throws InvalidConfigurationException {
-        AddressLevelType registrationLocationType = addressLevelService.getRegistrationLocationType(formMapping.getSubjectType());
-        if (registrationLocationType == null) {
-            registrationLocationType = addressLevelService.getImpliedRegistrationLocationType();
-            if (registrationLocationType == null)
-                throw new InvalidConfigurationException("There is no lowest location type in the system.");
-        }
-        List<String> listOfParentNameList = new ArrayList<>(addressLevelTypeRepository.getAllParentNames(registrationLocationType.getUuid()));
-        Collections.reverse(listOfParentNameList);
-        return listOfParentNameList.stream()
-                .map(header -> new HeaderField(header, "", true, null, null, null, true))
+    public List<HeaderField> generateAddressFields(Object mode) {
+        String locationHierarchy = (String) mode;
+
+        List<Long> hierarchyIds = Arrays.stream(locationHierarchy.split("\\."))
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByIdIn(hierarchyIds);
+
+        List<String> orderedNames = addressLevelTypes.stream()
+                .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
+                .map(AddressLevelType::getName)
+                .toList();
+
+        return orderedNames.stream()
+                .map(name -> new HeaderField(name, "", true, null, null, null, true))
                 .collect(Collectors.toList());
     }
 }

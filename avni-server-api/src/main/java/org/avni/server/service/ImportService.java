@@ -196,6 +196,16 @@ public class ImportService implements ImportLocationsConstants {
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
                 response.getWriter().write(sampleFile);
             }
+        } else if (uploadType.startsWith("Subject---")) {
+            if (!StringUtils.hasText(locationHierarchy)) {
+                throw new RuntimeException(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
+            }
+            String[] uploadSpec = uploadType.split("---");
+            String sampleFile = subjectImportService.generateSampleFile(uploadSpec, locationHierarchy);
+            if (response != null) {
+                response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
+                response.getWriter().write(sampleFile);
+            }
         } else {
             String sampleFile = getSampleFile(uploadType);
             if (response != null) {
