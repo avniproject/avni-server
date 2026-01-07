@@ -11,6 +11,7 @@ import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.model.Row;
+import org.avni.server.service.LocationHierarchyService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.builder.*;
 import org.joda.time.LocalDate;
@@ -19,7 +20,7 @@ import org.junit.Test;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
-
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +55,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private OrganisationConfigService organisationConfigService;
     @Autowired
     private TestSubjectService testSubjectService;
+    @Autowired
+    private LocationHierarchyService locationHierarchyService;
     private AddressLevelType district;
     private SubjectType subjectType;
 
@@ -351,6 +354,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void missingMandatoryCoreValues() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         String[] dataRow = dataRow("ABCD",
                 "SubjectType1",
                 "",
@@ -378,6 +382,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void headerWithWrongFields() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         failure(header("Id from previou system",
                         "Subject Type",
                         "Date Of Registratio",
@@ -407,6 +412,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void allowHeaderWithSpaces() throws Exception {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
         String[] headers = header(" Id from previous system ",
                 "Subject Type",
                 "Date Of Registration ",
@@ -431,7 +437,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
         );
         String[] dataRow = validDataRow();
-        subjectWriter.write(Chunk.of(new Row(headers, dataRow)), "Subject---SubjectType1");
+        subjectWriter.write(Chunk.of(new Row(headers, dataRow)), "Subject---SubjectType1", getLocationHierarchy());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(1990, subject.getDateOfBirth().getYear());
         assertEquals(2020, subject.getRegistrationDate().getYear());
@@ -516,24 +522,29 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] header = validHeader();
         String[] dataRow = validDataRow();
 
-        subjectWriter.write(Chunk.of(new Row(header, dataRow)), "Subject---SubjectType1");
+        subjectWriter.write(Chunk.of(new Row(header, dataRow)), "Subject---SubjectType1", getLocationHierarchy());
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(9, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
 
         // disallow edit
         try {
-            subjectWriter.write(Chunk.of(new Row(header, dataRow)), "SubjectType1");
+            subjectWriter.write(Chunk.of(new Row(header, dataRow)), "SubjectType1", getLocationHierarchy());
             fail("Should not allow edit");
         } catch (ValidationException e) {
             e.getMessage().contains("Entry with id from previous system, ABCD already present in Avni");
         }
     }
 
+    private String getLocationHierarchy() {
+        Map<String, String> availableHierarchies = locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType);
+        return availableHierarchies.keySet().iterator().next();
+    }
+
     private void success(String[] headers, String[] values) {
         try {
             long previousCount = individualRepository.count();
-            subjectWriter.write(Chunk.of(new Row(headers, values)), "Subject---SubjectType1");
+            subjectWriter.write(Chunk.of(new Row(headers, values)), "Subject---SubjectType1", getLocationHierarchy());
             assertEquals(previousCount + 1, individualRepository.count());
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -701,7 +712,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] missingHeaders = {""};
         String[] dataRow = validDataRowWithoutLegacyId();
         Exception exception = assertThrows(ValidationException.class, () -> {
-            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1");
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1", getLocationHierarchy());
         });
         assertTrue(exception.getMessage().contains("Invalid or missing 'Subject Type'"));
     }
@@ -712,7 +723,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] missingHeaders = missingHeaders();
         String[] dataRow = validDataRowWithoutLegacyId();
         Exception exception = assertThrows(ValidationException.class, () -> {
-            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1");
+            subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1", getLocationHierarchy());
         });
         assertTrue(exception.getMessage().contains("Mandatory columns are missing in header from uploaded file"));
     }
@@ -720,7 +731,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {
-            subjectWriter.write(Chunk.of(new Row(headers, cells)), "Subject---SubjectType1");
+            subjectWriter.write(Chunk.of(new Row(headers, cells)), "Subject---SubjectType1", getLocationHierarchy());
             fail();
         } catch (Exception e) {
             e.printStackTrace();

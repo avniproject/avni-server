@@ -18,6 +18,9 @@ public class SubjectWriterWrapper implements ItemWriter<Row>, Serializable {
     @Value("#{jobParameters['type']}")
     private String type;
 
+    @Value("#{jobParameters['locationHierarchy']}")
+    private String locationHierarchy;
+
     @Autowired
     public SubjectWriterWrapper(SubjectWriter subjectWriter) {
         this.subjectWriter = subjectWriter;
@@ -25,6 +28,6 @@ public class SubjectWriterWrapper implements ItemWriter<Row>, Serializable {
 
     @Override
     public void write(Chunk<? extends Row> chunk) throws Exception {
-        this.subjectWriter.write(chunk, type);
+        this.subjectWriter.write(chunk, type, locationHierarchy);
     }
 }

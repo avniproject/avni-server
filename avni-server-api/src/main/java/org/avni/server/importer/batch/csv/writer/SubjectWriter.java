@@ -62,14 +62,14 @@ public class SubjectWriter extends EntityWriter {
         this.subjectHeadersCreator = subjectHeadersCreator;
     }
 
-    public void write(Chunk<? extends Row> chunk, String type) throws Exception {
+    public void write(Chunk<? extends Row> chunk, String type, String locationHierarchy) throws Exception {
         List<? extends Row> rows = chunk.getItems();
         if (!CollectionUtils.isEmpty(rows)) {
-            for (Row row : rows) write(row, type);
+            for (Row row : rows) write(row, type, locationHierarchy);
         }
     }
 
-    private void write(Row row, String type) throws Exception {
+    private void write(Row row, String type, String locationHierarchy) throws Exception {
         List<String> allErrorMsgs = new ArrayList<>();
         String id = row.get(SubjectHeadersCreator.id);
         if (!(id == null || id.trim().isEmpty())) {
@@ -89,7 +89,7 @@ public class SubjectWriter extends EntityWriter {
         if (formMapping == null) {
             throw new RuntimeException(String.format("No form found for the subject type %s", subjectType.getName()));
         }
-        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, subjectHeadersCreator, allErrorMsgs);
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, subjectHeadersCreator, locationHierarchy, allErrorMsgs);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         setFirstName(row, individual, allErrorMsgs);
