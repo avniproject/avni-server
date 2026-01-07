@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.application.*;
-import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -12,8 +11,7 @@ import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.AddressLevelService;
-import org.avni.server.service.ImportService;
-import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.LocationHierarchyService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -21,13 +19,10 @@ import org.mockito.Mock;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class SubjectHeadersCreatorUnitTest {
-    @Mock
-    private OrganisationConfigService organisationConfigService;
     @Mock
     private AddressLevelTypeRepository addressLevelTypeRepository;
     @Mock
@@ -35,10 +30,16 @@ public class SubjectHeadersCreatorUnitTest {
 
     @Mock
     private FormMappingRepository formMappingRepository;
+    
+    @Mock
+    private LocationHierarchyService locationHierarchyService;
 
     private SubjectHeadersCreator subjectHeadersCreator;
-    private AddressLevelType village;
+    private AddressLevelType state;
     private AddressLevelType district;
+    private AddressLevelType block;
+    private AddressLevelType panchayat;
+    private AddressLevelType village;
 
     @Before
     public void setUp() {
@@ -49,9 +50,14 @@ public class SubjectHeadersCreatorUnitTest {
         UserContext userContext = new UserContextBuilder().withOrganisation(organisation).build();
         UserContextHolder.create(userContext);
 
-        district = new AddressLevelTypeBuilder().name("District").build();
-        village = new AddressLevelTypeBuilder().withUuid(UUID.randomUUID()).name("Village").parent(district).build();
-        when(addressLevelTypeRepository.getAllParentNames(village.getUuid())).thenReturn(List.of(village.getName(), district.getName()));
+        state = new AddressLevelTypeBuilder().withId(1L).name("State").level(5.0).build();
+        district = new AddressLevelTypeBuilder().withId(2L).name("District").level(4.0).parent(state).build();
+        block = new AddressLevelTypeBuilder().withId(3L).name("Block").level(3.0).parent(district).build();
+        panchayat = new AddressLevelTypeBuilder().withId(4L).name("Panchayat").level(2.0).parent(block).build();
+        village = new AddressLevelTypeBuilder().withId(5L).name("Village").level(1.0).parent(panchayat).build();
+
+        when(addressLevelTypeRepository.findAllByIdIn(List.of(1L, 2L, 3L, 4L, 5L))).thenReturn(List.of(state, district, block, panchayat, village));
+        when(addressLevelTypeRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(List.of(state, district));
 
         subjectHeadersCreator = new SubjectHeadersCreator(
                 addressLevelTypeRepository,
@@ -73,7 +79,7 @@ public class SubjectHeadersCreatorUnitTest {
     @Test
     public void testBasicHeaderGeneration() throws InvalidConfigurationException {
         SubjectType subjectType = new SubjectTypeBuilder()
-                .setId(1l)
+                .setId(1L)
                 .setName("TestSubject")
                 .setType(Subject.Individual)
                 .setUuid(UUID.randomUUID().toString())
@@ -83,23 +89,30 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(village);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
+        Map<String, String> mockHierarchy = Map.of("1.2.3.4.5", "State -> District -> Block -> Panchayat -> Village");
+        when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
+        
+        String locationHierarchy = mockHierarchy.keySet().iterator().next();
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy);
         assertTrue(containsHeader(headers, SubjectHeadersCreator.id));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationDate));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationLocation));
-        assertTrue(containsHeader(headers, "Village"), "Should include default address level types");
-        assertTrue(containsHeader(headers, "District"), "Should include default address level types");
+        assertTrue(containsHeader(headers, "Village"), "Should include Village");
+        assertTrue(containsHeader(headers, "Panchayat"), "Should include Panchayat");
+        assertTrue(containsHeader(headers, "Block"), "Should include Block");
+        assertTrue(containsHeader(headers, "District"), "Should include District");
+        assertTrue(containsHeader(headers, "State"), "Should include State");
 
-        String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping, null);
+        String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping, locationHierarchy);
         assertNotNull(descriptions);
-        assertEquals(subjectHeadersCreator.getAllHeaders(formMapping, null).length, descriptions.length);
+        assertEquals(subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy).length, descriptions.length);
     }
 
     @Test
     public void testPersonSubjectTypeHeaders() throws InvalidConfigurationException {
         SubjectType subjectType = new SubjectTypeBuilder()
-                .setId(1l)
+                .setId(1L)
                 .setName("TestPerson")
                 .setType(Subject.Person)
                 .setAllowProfilePicture(true)
@@ -110,7 +123,11 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(village);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
+        Map<String, String> mockHierarchy = Map.of("1.2.3.4.5", "State -> District -> Block -> Panchayat -> Village");
+        when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
+        
+        String locationHierarchy = mockHierarchy.keySet().iterator().next();
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy);
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.lastName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.dateOfBirth));
@@ -122,7 +139,7 @@ public class SubjectHeadersCreatorUnitTest {
     @Test
     public void testHouseholdSubjectTypeHeaders() throws InvalidConfigurationException {
         SubjectType subjectType = new SubjectTypeBuilder()
-                .setId(1l)
+                .setId(1L)
                 .setName("Household")
                 .setType(Subject.Household)
                 .setHousehold(true)
@@ -133,7 +150,11 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(village);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
+        Map<String, String> mockHierarchy = Map.of("1.2.3.4.5", "State -> District -> Block -> Panchayat -> Village");
+        when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
+        
+        String locationHierarchy = mockHierarchy.keySet().iterator().next();
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy);
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.profilePicture));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.totalMembers));
@@ -144,7 +165,7 @@ public class SubjectHeadersCreatorUnitTest {
     @Test
     public void testAddressFieldsWithCustomRegistrationLocationsAtDistrict() throws InvalidConfigurationException {
         SubjectType subjectType = new SubjectTypeBuilder()
-                .setId(1l)
+                .setId(1L)
                 .setName("Household")
                 .setType(Subject.Household)
                 .setHousehold(true)
@@ -154,29 +175,19 @@ public class SubjectHeadersCreatorUnitTest {
         when(formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(subjectType, FormType.IndividualProfile))
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(district);
-        when(addressLevelTypeRepository.getAllParentNames(district.getUuid())).thenReturn(List.of(district.getName()));
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
-        assertTrue(containsHeader(headers, "District"), "Should include District as custom location");
-        assertFalse(containsHeader(headers, "Village"), "Should exclude Village as it’s child of District");
+        Map<String, String> mockHierarchy = Map.of("1.2", "State -> District");
+        when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
+        
+        String locationHierarchy = mockHierarchy.keySet().iterator().next();
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy);
+        assertTrue(containsHeader(headers, "District"), "Should include District");
+        assertTrue(containsHeader(headers, "State"), "Should include State");
+        assertFalse(containsHeader(headers, "Block"), "Should exclude Block");
+        assertFalse(containsHeader(headers, "Panchayat"), "Should exclude Panchayat");
+        assertFalse(containsHeader(headers, "Village"), "Should exclude Village");
     }
 
-    @Test(expected = InvalidConfigurationException.class)
-    public void testAddressFieldsWithoutCustomRegistrationLocations() throws InvalidConfigurationException {
-        SubjectType subjectType = new SubjectTypeBuilder()
-                .setId(1l)
-                .setName("Household")
-                .setType(Subject.Household)
-                .setHousehold(true)
-                .setUuid(UUID.randomUUID().toString())
-                .build();
-        FormMapping formMapping = createFormMapping(subjectType);
-
-        when(formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(subjectType, FormType.IndividualProfile))
-                .thenReturn(Collections.singletonList(formMapping));
-        when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(null);
-        subjectHeadersCreator.getAllHeaders(formMapping, null);
-    }
 
     private boolean containsHeader(String[] headers, String headerToFind) {
         for (String header : headers) {

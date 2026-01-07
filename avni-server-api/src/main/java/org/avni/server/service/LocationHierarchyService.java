@@ -153,7 +153,7 @@ public class LocationHierarchyService implements NonScopeAwareService {
         return result;
     }
 
-    private Map<String, String> getAvailableHierarchiesForSubjectType(SubjectType subjectType) {
+    public Map<String, String> getAvailableHierarchiesForSubjectType(SubjectType subjectType) {
         List<SubjectTypeSetting> customRegistrationLocations = organisationConfigService.getCurrentOrganisationConfig().getCustomRegistrationLocations();
         Optional<SubjectTypeSetting> setting = customRegistrationLocations.stream()
                 .filter(s -> s.getSubjectTypeUUID().equals(subjectType.getUuid()))

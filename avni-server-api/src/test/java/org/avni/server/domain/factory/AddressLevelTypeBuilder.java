@@ -27,6 +27,11 @@ public class AddressLevelTypeBuilder {
         return this;
     }
 
+    public AddressLevelTypeBuilder withId(Long id) {
+        addressLevelType.setId(id);
+        return this;
+    }
+
     public AddressLevelTypeBuilder withDefaultValuesForNewEntity() {
         String placeholder = UUID.randomUUID().toString();
         return withUuid(placeholder).name(placeholder).level(3d);
