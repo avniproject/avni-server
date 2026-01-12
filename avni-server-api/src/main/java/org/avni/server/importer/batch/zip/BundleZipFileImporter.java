@@ -436,6 +436,15 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 changedConcepts.add(incomingConcept);
             }
         }
+        
+        for (String uuid : incomingConceptMap.keySet()) {
+            Concept existingConcept = existingConceptsMap.get(uuid);
+            if (existingConcept != null && existingConcept.getMedia() != null && !existingConcept.getMedia().isEmpty()) {
+                if (changedConcepts.stream().noneMatch(c -> c.getUuid().equals(uuid))) {
+                    changedConcepts.add(incomingConceptMap.get(uuid));
+                }
+            }
+        }
 
         return changedConcepts;
     }

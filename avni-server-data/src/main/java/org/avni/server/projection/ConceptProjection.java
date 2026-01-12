@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @Projection(name = "ConceptProjection", types = {Concept.class})
-@JsonPropertyOrder({"id", "uuid", "name", "dataType", "lowAbsolute", "highAbsolute", "lowNormal", "highNormal", "conceptAnswers", "KeyValues"})
+@JsonPropertyOrder({"id", "uuid", "name", "dataType", "lowAbsolute", "highAbsolute", "lowNormal", "highNormal", "conceptAnswers", "KeyValues", "organisationId"})
 public interface ConceptProjection extends BaseProjection {
     String getName();
 
@@ -53,4 +53,6 @@ public interface ConceptProjection extends BaseProjection {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("media")
     List<ConceptMediaProjection> getMedia();
+
+    Long getOrganisationId();
 }
