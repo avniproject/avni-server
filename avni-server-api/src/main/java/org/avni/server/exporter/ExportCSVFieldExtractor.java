@@ -241,6 +241,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
             row.add(individual.getDateOfBirth());
             row.add(individual.getRegistrationDate());
             row.add(individual.getRegistrationLocation());
+            row.add(individual.getSubjectLocation());
             row.add(gender == null ? "" : gender.getName());
             addAddressLevels(row, addressLevel);
             if (subjectType.isGroup()) {

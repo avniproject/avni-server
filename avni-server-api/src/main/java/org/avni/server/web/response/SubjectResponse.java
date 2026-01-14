@@ -28,6 +28,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
         subjectResponse.put("External ID", subject.getLegacyId());
         subjectResponse.put("Voided", subject.isVoided());
         Response.putIfPresent(subjectResponse, "Registration location", subject.getRegistrationLocation());
+        Response.putIfPresent(subjectResponse, "Subject location", subject.getSubjectLocation());
         subjectResponse.put("Registration date", subject.getRegistrationDate());
         putLocation(subject, subjectResponse);
         putRelatives(subject, subjectResponse);

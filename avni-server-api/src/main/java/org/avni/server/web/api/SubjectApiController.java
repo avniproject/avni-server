@@ -244,6 +244,7 @@ public class SubjectApiController {
         }
         subject.setObservations(observations);
         subject.setRegistrationLocation(request.getRegistrationLocation());
+        subject.setSubjectLocation(request.getSubjectLocation());
         subject.setVoided(request.isVoided());
 
         subject.validate();
@@ -341,6 +342,11 @@ public class SubjectApiController {
         if (request.containsKey(REGISTRATION_LOCATION)) {
             Point registrationPoint = Point.fromMap((Map<String, Double>) request.get(REGISTRATION_LOCATION));
             subject.setRegistrationLocation(registrationPoint);
+        }
+
+        if (request.containsKey(SUBJECT_LOCATION)) {
+            SubjectLocation subjectLocation = SubjectLocation.fromMap((Map<String, Object>) request.get(SUBJECT_LOCATION));
+            subject.setSubjectLocation(subjectLocation);
         }
 
         if (request.containsKey(CommonFieldNames.VOIDED))

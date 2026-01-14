@@ -1,6 +1,7 @@
 package org.avni.server.web.request.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.avni.server.domain.SubjectLocation;
 import org.avni.server.geo.Point;
 import org.avni.server.web.api.CommonFieldNames;
 import org.joda.time.LocalDate;
@@ -20,6 +21,7 @@ public class ApiSubjectRequest {
     public static final String LAST_NAME = "Last name";
     public static final String PROFILE_PICTURE = "Profile picture";
     public static final String REGISTRATION_LOCATION = "Registration location";
+    public static final String SUBJECT_LOCATION = "Subject location";
     public static final String OBSERVATIONS = "observations";
 
     @JsonProperty(CommonFieldNames.EXTERNAL_ID)
@@ -57,6 +59,9 @@ public class ApiSubjectRequest {
 
     @JsonProperty(REGISTRATION_LOCATION)
     private Point registrationLocation;
+
+    @JsonProperty(SUBJECT_LOCATION)
+    private SubjectLocation subjectLocation;
 
     @JsonProperty(OBSERVATIONS)
     private LinkedHashMap<String, Object> observations;
@@ -150,6 +155,14 @@ public class ApiSubjectRequest {
 
     public void setRegistrationLocation(Point registrationLocation) {
         this.registrationLocation = registrationLocation;
+    }
+
+    public SubjectLocation getSubjectLocation() {
+        return subjectLocation;
+    }
+
+    public void setSubjectLocation(SubjectLocation subjectLocation) {
+        this.subjectLocation = subjectLocation;
     }
 
     public LinkedHashMap<String, Object> getObservations() {

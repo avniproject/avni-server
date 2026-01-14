@@ -22,6 +22,7 @@ public interface LongitudinalExportRequestFieldNameConstants {
     String ENCOUNTER_DATE_TIME = "encounterDateTime";
     String CANCEL_DATE_TIME = "cancelDateTime";
     String REGISTRATION_LOCATION = "registrationLocation";
+    String SUBJECT_LOCATION = "subjectLocation";
     String ENROLMENT_LOCATION = "enrolmentLocation";
     String EXIT_LOCATION = "exitLocation";
     String ENCOUNTER_LOCATION = "encounterLocation";

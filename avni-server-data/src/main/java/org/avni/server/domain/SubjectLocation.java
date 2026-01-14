@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import org.avni.server.geo.Point;
 import java.io.Serializable;
+import java.util.Map;
 
 public class SubjectLocation implements Serializable {
     private Point location;
@@ -13,6 +14,18 @@ public class SubjectLocation implements Serializable {
     public SubjectLocation(Point location, Double accuracy) {
         this.location = location;
         this.accuracy = accuracy;
+    }
+
+    public static SubjectLocation fromMap(Map<String, Object> subjectLocationMap) {
+        if (subjectLocationMap == null) {
+            return null;
+        }
+        
+        Map<String, Double> coordinates = (Map<String, Double>) subjectLocationMap.get("coordinates");
+        Point location = Point.fromMap(coordinates);
+        Double accuracy = (Double) subjectLocationMap.get("accuracy");
+        
+        return new SubjectLocation(location, accuracy);
     }
 
     public Point getLocation() {

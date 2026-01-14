@@ -32,6 +32,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(LAST_MODIFIED_BY, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_BY, (Individual individual) -> individual.getLastModifiedBy().getName()));
         put(LAST_MODIFIED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_DATE_TIME, Individual::getLastModifiedDateTime));
         put(REGISTRATION_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_REGISTRATION_LOCATION, Individual::getRegistrationLocation));
+        put(SUBJECT_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_SUBJECT_LOCATION, Individual::getSubjectLocation));
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
 
