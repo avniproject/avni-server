@@ -169,6 +169,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationDate));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationLocation));
+        assertTrue(containsHeader(headers, SubjectHeadersCreator.subjectLocation));
         assertTrue(containsHeader(headers, "Village"), "Should include Village");
         assertTrue(containsHeader(headers, "Panchayat"), "Should include Panchayat");
         assertTrue(containsHeader(headers, "Block"), "Should include Block");
@@ -275,20 +276,21 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         assertEquals("Mandatory. SubjectType1.", descriptions[1]);
         assertEquals("Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.", descriptions[2]);
         assertEquals("\"Optional. Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172).\"", descriptions[3]);
-        assertEquals("Mandatory", descriptions[4]);
+        assertEquals("\"Optional. Format: latitude,longitude,accuracy in decimal degrees (e.g., 19.8188,83.9172,5.0).\"", descriptions[4]);
         assertEquals("Mandatory", descriptions[5]);
-        assertEquals("Optional", descriptions[6]);
-        assertEquals("Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.", descriptions[7]);
-        assertEquals("\"Optional. Default value: false. Allowed values: {true, false}.\"", descriptions[8]);
-        assertEquals("\"Mandatory. Allowed values: {Female, Male, Other}.\"", descriptions[9]);
-        assertEquals("Mandatory", descriptions[10]);
+        assertEquals("Mandatory", descriptions[6]);
+        assertEquals("Optional", descriptions[7]);
+        assertEquals("Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.", descriptions[8]);
+        assertEquals("\"Optional. Default value: false. Allowed values: {true, false}.\"", descriptions[9]);
+        assertEquals("\"Mandatory. Allowed values: {Female, Male, Other}.\"", descriptions[10]);
         assertEquals("Mandatory", descriptions[11]);
         assertEquals("Mandatory", descriptions[12]);
         assertEquals("Mandatory", descriptions[13]);
         assertEquals("Mandatory", descriptions[14]);
-        assertEquals("Optional. Allowed values: Any number.", descriptions[15]);
+        assertEquals("Mandatory", descriptions[15]);
         assertEquals("Optional. Allowed values: Any number.", descriptions[16]);
-        assertEquals("\"Optional. Allowed values: {MSDC Answer 1, MSDC Answer 2, MSDC Answer 3, MSDC Answer 4} Format: May allow single value or multiple values separated a comma. Please check with developer..\"", descriptions[17]);
+        assertEquals("Optional. Allowed values: Any number.", descriptions[17]);
+        assertEquals("\"Optional. Allowed values: {MSDC Answer 1, MSDC Answer 2, MSDC Answer 3, MSDC Answer 4} Format: May allow single value or multiple values separated a comma. Please check with developer..\"", descriptions[18]);
 
         assertNotNull(descriptions);
         assertEquals(subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy).length, descriptions.length,
