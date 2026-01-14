@@ -7,6 +7,7 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
+import org.avni.server.domain.SubjectLocation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.accessControl.SubjectPartitionData;
 import org.avni.server.framework.security.UserContextHolder;
@@ -18,6 +19,7 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.IndividualRequest;
 import org.avni.server.web.request.PointRequest;
+import org.avni.server.web.request.SubjectLocationRequest;
 import org.avni.server.web.request.SubjectSearchContract;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
 import org.avni.server.web.request.rules.RulesContractWrapper.IndividualContract;
@@ -416,6 +418,17 @@ public class IndividualController extends AbstractController<Individual> impleme
         PointRequest pointRequest = individualRequest.getRegistrationLocation();
         if (pointRequest != null)
             individual.setRegistrationLocation(new Point(pointRequest.getX(), pointRequest.getY()));
+        
+        SubjectLocationRequest subjectLocationRequest = individualRequest.getSubjectLocation();
+        if (subjectLocationRequest != null) {
+            PointRequest coordinates = subjectLocationRequest.getCoordinates();
+            if (coordinates != null) {
+                Point location = new Point(coordinates.getX(), coordinates.getY());
+                SubjectLocation subjectLocation = new SubjectLocation(location, subjectLocationRequest.getAccuracy());
+                individual.setSubjectLocation(subjectLocation);
+            }
+        }
+        
         return individual;
     }
 
