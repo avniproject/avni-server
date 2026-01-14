@@ -78,6 +78,8 @@ ON CONFLICT (uuid) DO NOTHING;
 
 insert into organisation_config (uuid, organisation_id, settings, version, is_voided, worklist_updation_rule, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 values ('5bd9c67e-c949-4872-9763-daeab7b48b1b', 1, '{"enableMessaging": true}', 0, false, '', 1, 1, now(), now());
+insert into organisation_config (uuid, organisation_id, settings, version, is_voided, worklist_updation_rule, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+values ('6bd9c67e-c949-4872-9763-daeab7b48b2c', 2, '{"enableMessaging": true}', 0, false, '', 2, 2, now(), now());
 
 select create_db_user('a_demo', 'password');
 
@@ -92,6 +94,8 @@ INSERT INTO users (id, username, uuid, organisation_id, operating_individual_sco
 VALUES (2, 'demo-admin', '0e53a72c-a109-49f2-918c-9599b266a585', 2, 'None', true, 'demo-admin');
 INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)
 VALUES (3, 'a-demo-admin', 'd84df3cf-cdb4-4309-ad91-e0402f6e326a', 3, 'None', true, 'a-demo-admin');
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name, catchment_id)
+VALUES (10, 'demouser@demo', 'e0a6d8b2-2e3c-4567-8901-234567890def', 2, 'None', false, 'Demo User', 2);
 
 INSERT INTO catchment (id, name, uuid, version, organisation_id, type, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES
@@ -115,14 +119,18 @@ VALUES (3, 'Other', '188ad77e-fe46-4328-b0e2-98f3a05c554c', 1, 1, 1, 1, now(), n
 insert into groups (id, uuid, name, is_voided, version, organisation_id, has_all_privileges, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 values (1, uuid_generate_v4(), 'All Privileges Group', false, 1, 2, true, 1, 1, now(), now());
 insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-select uuid_generate_v4(), id, 1, false, 1, 2, 1, 1, now(), now() from users;
+select uuid_generate_v4(), id, 1, false, 1, 2, 1, 1, now(), now() from users where id != 10;
 
 INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id, name)
 VALUES (6, 'user-no-access', '07a9641b-e848-4efb-96a4-aea35ddb7ef0', 2, 'ByCatchment', false, 1, 'user-no-access');
 insert into groups (id, uuid, name, is_voided, version, organisation_id, has_all_privileges, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 values (2, uuid_generate_v4(), 'No Access', false, 1, 2, false, 1, 1, now(), now());
+insert into groups (id, uuid, name, is_voided, version, organisation_id, has_all_privileges, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+values (3, uuid_generate_v4(), 'Everyone', false, 1, 2, false, 1, 1, now(), now());
 insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 values (uuid_generate_v4(), 6, 2, false, 1, 2, 1, 1, now(), now());
+insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+values (uuid_generate_v4(), 10, 2, false, 1, 2, 1, 1, now(), now());
 
 INSERT INTO concept (id, name, data_type, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES
