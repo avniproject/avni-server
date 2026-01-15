@@ -8,15 +8,9 @@ import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.application.FormElementGroupRepository;
-import org.avni.server.dao.application.FormElementRepository;
-import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
 import org.avni.server.domain.metadata.ObjectCollectionChangeReport;
-import org.avni.server.application.Form;
-import org.avni.server.application.FormElement;
-import org.avni.server.application.FormElementGroup;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.AvniSpringBatchJobHelper;
@@ -33,8 +27,6 @@ import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
-import org.avni.server.web.request.application.FormElementContract;
-import org.avni.server.web.request.application.FormElementGroupContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.webapp.ConceptExport;
@@ -82,9 +74,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final GroupRoleService groupRoleService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final CardRepository cardRepository;
-    private final FormElementGroupRepository formElementGroupRepository;
-    private final FormElementRepository formElementRepository;
-    private final FormRepository formRepository;
     private final GroupPrivilegeService groupPrivilegeService;
     private final VideoService videoService;
     private final CardService cardService;
@@ -174,9 +163,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  GroupRoleService groupRoleService,
                                  SubjectTypeRepository subjectTypeRepository,
                                  CardRepository cardRepository,
-                                 FormElementGroupRepository formElementGroupRepository,
-                                 FormElementRepository formElementRepository,
-                                 FormRepository formRepository,
                                  GroupPrivilegeService groupPrivilegeService,
                                  VideoService videoService,
                                  CardService cardService,
@@ -208,9 +194,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.groupRoleService = groupRoleService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.cardRepository = cardRepository;
-        this.formElementGroupRepository = formElementGroupRepository;
-        this.formElementRepository = formElementRepository;
-        this.formRepository = formRepository;
         this.groupPrivilegeService = groupPrivilegeService;
         this.videoService = videoService;
         this.cardService = cardService;
@@ -466,145 +449,12 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         return changedConcepts;
     }
 
-    private void validateDisplayOrderConstraints(FormContract formContract) {
-        validateFormElementGroupDisplayOrders(formContract);
-        validateFormElementDisplayOrders(formContract);
-        validateAgainstExistingData(formContract);
-    }
-    
-    private void validateFormElementGroupDisplayOrders(FormContract formContract) {
-        Map<Double, List<FormElementGroupContract>> groupDisplayOrderMap = formContract.getFormElementGroups().stream()
-            .filter(group -> !group.isVoided())
-            .collect(Collectors.groupingBy(FormElementGroupContract::getDisplayOrder));
-        
-        for (Map.Entry<Double, List<FormElementGroupContract>> entry : groupDisplayOrderMap.entrySet()) {
-            if (entry.getValue().size() > 1) {
-                String errorMsg = String.format("Duplicate displayOrder %.1f found in form element groups: %s", 
-                    entry.getKey(), 
-                    entry.getValue().stream().map(g -> g.getName() + " (" + g.getUuid() + ")").collect(Collectors.joining(", ")));
-                logger.error("DisplayOrder validation failed: {}", errorMsg);
-                throw new RuntimeException(errorMsg);
-            }
-        }
-    }
-    
-    private void validateFormElementDisplayOrders(FormContract formContract) {
-        for (FormElementGroupContract group : formContract.getFormElementGroups()) {
-            if (group.getFormElements() != null) {
-                Map<Double, List<FormElementContract>> elementDisplayOrderMap = group.getFormElements().stream()
-                    .filter(element -> !element.isVoided())
-                    .collect(Collectors.groupingBy(FormElementContract::getDisplayOrder));
-                
-                for (Map.Entry<Double, List<FormElementContract>> entry : elementDisplayOrderMap.entrySet()) {
-                    if (entry.getValue().size() > 1) {
-                        String errorMsg = String.format("Duplicate displayOrder %.1f found in form elements of group '%s': %s", 
-                            entry.getKey(),
-                            group.getName(),
-                            entry.getValue().stream().map(e -> e.getName() + " (" + e.getUuid() + ")").collect(Collectors.joining(", ")));
-                        logger.error("DisplayOrder validation failed: {}", errorMsg);
-                        throw new RuntimeException(errorMsg);
-                    }
-                }
-            }
-        }
-    }
-    
-    private void validateAgainstExistingData(FormContract formContract) {
-        Form existingForm = formRepository.findByUuid(formContract.getUuid());
-        if (existingForm != null) {
-            Long currentOrganisationId = getCurrentOrganisationId();
-            List<FormElementGroup> existingGroups = getExistingFormElementGroups(existingForm, currentOrganisationId);
-            
-            validateGroupConflicts(formContract, existingGroups, currentOrganisationId);
-            validateElementConflicts(formContract, existingGroups, currentOrganisationId);
-        }
-    }
-    
-    private Long getCurrentOrganisationId() {
-        return UserContextHolder.getUserContext().getOrganisation().getId();
-    }
-    
-    private List<FormElementGroup> getExistingFormElementGroups(Form existingForm, Long organisationId) {
-        return formElementGroupRepository.findAll().stream()
-            .filter(feg -> 
-                feg.getForm().getId().equals(existingForm.getId()) && 
-                !feg.isVoided() &&
-                feg.getOrganisationId().equals(organisationId))
-            .collect(Collectors.toList());
-    }
-    
-    private void validateGroupConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
-        for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
-            if (!incomingGroup.isVoided()) {
-                boolean hasConflict = existingGroups.stream()
-                    .anyMatch(existingGroup -> 
-                        !existingGroup.getUuid().equals(incomingGroup.getUuid()) &&
-                        existingGroup.getDisplayOrder().equals(incomingGroup.getDisplayOrder()));
-                
-                if (hasConflict) {
-                    String errorMsg = String.format("DisplayOrder %.1f conflicts with existing form element group in organisation %d: %s", 
-                        incomingGroup.getDisplayOrder(), organisationId, incomingGroup.getName());
-                    logger.error("DisplayOrder validation failed: {}", errorMsg);
-                    throw new RuntimeException(errorMsg);
-                }
-            }
-        }
-    }
-    
-    private void validateElementConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
-        for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
-            if (!incomingGroup.isVoided()) {
-                FormElementGroup matchingExistingGroup = findMatchingExistingGroup(existingGroups, incomingGroup);
-                
-                if (matchingExistingGroup != null && incomingGroup.getFormElements() != null) {
-                    List<FormElement> existingElements = getExistingFormElements(matchingExistingGroup, organisationId);
-                    checkElementConflicts(incomingGroup, existingElements, organisationId);
-                }
-            }
-        }
-    }
-    
-    private FormElementGroup findMatchingExistingGroup(List<FormElementGroup> existingGroups, FormElementGroupContract incomingGroup) {
-        return existingGroups.stream()
-            .filter(g -> g.getUuid().equals(incomingGroup.getUuid()))
-            .findFirst()
-            .orElse(null);
-    }
-    
-    private List<FormElement> getExistingFormElements(FormElementGroup group, Long organisationId) {
-        return formElementRepository.findAll().stream()
-            .filter(fe -> 
-                fe.getFormElementGroup().getId().equals(group.getId()) && 
-                !fe.isVoided() &&
-                fe.getOrganisationId().equals(organisationId))
-            .collect(Collectors.toList());
-    }
-    
-    private void checkElementConflicts(FormElementGroupContract incomingGroup, List<FormElement> existingElements, Long organisationId) {
-        for (FormElementContract incomingElement : incomingGroup.getFormElements()) {
-            if (!incomingElement.isVoided()) {
-                boolean elementHasConflict = existingElements.stream()
-                    .anyMatch(existingElement -> 
-                        !existingElement.getUuid().equals(incomingElement.getUuid()) &&
-                        existingElement.getDisplayOrder().equals(incomingElement.getDisplayOrder()));
-                
-                if (elementHasConflict) {
-                    String errorMsg = String.format("Form element displayOrder %.1f conflicts with existing element in group '%s' (organisation %d): %s", 
-                        incomingElement.getDisplayOrder(), incomingGroup.getName(), organisationId, incomingElement.getName());
-                    logger.error("DisplayOrder validation failed: {}", errorMsg);
-                    throw new RuntimeException(errorMsg);
-                }
-            }
-        }
-    }
-
     private void deployFolder(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData) throws IOException, FormBuilderException {
         logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData.getKey());
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (bundleFolder) {
             case FORMS:
                 FormContract formContract = convertString(fileData.getValue(), FormContract.class);
-                validateDisplayOrderConstraints(formContract);
                 formService.validateForm(formContract);
                 formService.saveForm(formContract);
                 break;
