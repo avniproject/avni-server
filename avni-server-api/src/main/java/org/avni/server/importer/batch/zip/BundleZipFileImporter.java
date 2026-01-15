@@ -467,9 +467,12 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     private void validateDisplayOrderConstraints(FormContract formContract) {
-        logger.info("Validating displayOrder constraints for form: {}", formContract.getName());
-        
-        // Check FormElementGroup displayOrder duplicates in contract
+        validateFormElementGroupDisplayOrders(formContract);
+        validateFormElementDisplayOrders(formContract);
+        validateAgainstExistingData(formContract);
+    }
+    
+    private void validateFormElementGroupDisplayOrders(FormContract formContract) {
         Map<Double, List<FormElementGroupContract>> groupDisplayOrderMap = formContract.getFormElementGroups().stream()
             .filter(group -> !group.isVoided())
             .collect(Collectors.groupingBy(FormElementGroupContract::getDisplayOrder));
@@ -483,8 +486,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 throw new RuntimeException(errorMsg);
             }
         }
-        
-        // Check FormElement displayOrder duplicates within each group in contract
+    }
+    
+    private void validateFormElementDisplayOrders(FormContract formContract) {
         for (FormElementGroupContract group : formContract.getFormElementGroups()) {
             if (group.getFormElements() != null) {
                 Map<Double, List<FormElementContract>> elementDisplayOrderMap = group.getFormElements().stream()
@@ -503,77 +507,95 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 }
             }
         }
-        
-        // Check for displayOrder conflicts with existing data in database
+    }
+    
+    private void validateAgainstExistingData(FormContract formContract) {
         Form existingForm = formRepository.findByUuid(formContract.getUuid());
         if (existingForm != null) {
-            logger.info("Checking for displayOrder conflicts with existing data in database");
+            Long currentOrganisationId = getCurrentOrganisationId();
+            List<FormElementGroup> existingGroups = getExistingFormElementGroups(existingForm, currentOrganisationId);
             
-            // Get current organisation ID
-            Long currentOrganisationId = UserContextHolder.getUserContext().getOrganisation().getId();
-            
-            // Get all existing form element groups for this form and organisation
-            List<FormElementGroup> existingGroups = formElementGroupRepository.findAll().stream()
-                .filter(feg -> 
-                    feg.getForm().getId().equals(existingForm.getId()) && 
-                    !feg.isVoided() &&
-                    feg.getOrganisationId().equals(currentOrganisationId))
-                .collect(Collectors.toList());
-            
-            // Check each incoming group for conflicts with existing groups
-            for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
-                if (!incomingGroup.isVoided()) {
-                    // Check if displayOrder conflicts with existing groups (excluding same UUID update)
-                    boolean hasConflict = existingGroups.stream()
-                        .anyMatch(existingGroup -> 
-                            !existingGroup.getUuid().equals(incomingGroup.getUuid()) &&
-                            existingGroup.getDisplayOrder().equals(incomingGroup.getDisplayOrder()));
-                    
-                    if (hasConflict) {
-                        String errorMsg = String.format("DisplayOrder %.1f conflicts with existing form element group in organisation %d: %s", 
-                            incomingGroup.getDisplayOrder(), currentOrganisationId, incomingGroup.getName());
-                        logger.error("DisplayOrder validation failed: {}", errorMsg);
-                        throw new RuntimeException(errorMsg);
-                    }
-                    
-                    // Find the matching existing group to check form elements
-                    FormElementGroup matchingExistingGroup = existingGroups.stream()
-                        .filter(g -> g.getUuid().equals(incomingGroup.getUuid()))
-                        .findFirst()
-                        .orElse(null);
-                    
-                    if (matchingExistingGroup != null && incomingGroup.getFormElements() != null) {
-                        // Get existing form elements for this group
-                        List<FormElement> existingElements = formElementRepository.findAll().stream()
-                            .filter(fe -> 
-                                fe.getFormElementGroup().getId().equals(matchingExistingGroup.getId()) && 
-                                !fe.isVoided() &&
-                                fe.getOrganisationId().equals(currentOrganisationId))
-                            .collect(Collectors.toList());
-                        
-                        // Check each incoming form element for conflicts
-                        for (FormElementContract incomingElement : incomingGroup.getFormElements()) {
-                            if (!incomingElement.isVoided()) {
-                                // Check if displayOrder conflicts with existing elements (excluding same UUID update)
-                                boolean elementHasConflict = existingElements.stream()
-                                    .anyMatch(existingElement -> 
-                                        !existingElement.getUuid().equals(incomingElement.getUuid()) &&
-                                        existingElement.getDisplayOrder().equals(incomingElement.getDisplayOrder()));
-                                
-                                if (elementHasConflict) {
-                                    String errorMsg = String.format("Form element displayOrder %.1f conflicts with existing element in group '%s' (organisation %d): %s", 
-                                        incomingElement.getDisplayOrder(), incomingGroup.getName(), currentOrganisationId, incomingElement.getName());
-                                    logger.error("DisplayOrder validation failed: {}", errorMsg);
-                                    throw new RuntimeException(errorMsg);
-                                }
-                            }
-                        }
-                    }
+            validateGroupConflicts(formContract, existingGroups, currentOrganisationId);
+            validateElementConflicts(formContract, existingGroups, currentOrganisationId);
+        }
+    }
+    
+    private Long getCurrentOrganisationId() {
+        return UserContextHolder.getUserContext().getOrganisation().getId();
+    }
+    
+    private List<FormElementGroup> getExistingFormElementGroups(Form existingForm, Long organisationId) {
+        return formElementGroupRepository.findAll().stream()
+            .filter(feg -> 
+                feg.getForm().getId().equals(existingForm.getId()) && 
+                !feg.isVoided() &&
+                feg.getOrganisationId().equals(organisationId))
+            .collect(Collectors.toList());
+    }
+    
+    private void validateGroupConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
+        for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
+            if (!incomingGroup.isVoided()) {
+                boolean hasConflict = existingGroups.stream()
+                    .anyMatch(existingGroup -> 
+                        !existingGroup.getUuid().equals(incomingGroup.getUuid()) &&
+                        existingGroup.getDisplayOrder().equals(incomingGroup.getDisplayOrder()));
+                
+                if (hasConflict) {
+                    String errorMsg = String.format("DisplayOrder %.1f conflicts with existing form element group in organisation %d: %s", 
+                        incomingGroup.getDisplayOrder(), organisationId, incomingGroup.getName());
+                    logger.error("DisplayOrder validation failed: {}", errorMsg);
+                    throw new RuntimeException(errorMsg);
                 }
             }
         }
-        
-        logger.info("DisplayOrder validation passed for form: {}", formContract.getName());
+    }
+    
+    private void validateElementConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
+        for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
+            if (!incomingGroup.isVoided()) {
+                FormElementGroup matchingExistingGroup = findMatchingExistingGroup(existingGroups, incomingGroup);
+                
+                if (matchingExistingGroup != null && incomingGroup.getFormElements() != null) {
+                    List<FormElement> existingElements = getExistingFormElements(matchingExistingGroup, organisationId);
+                    checkElementConflicts(incomingGroup, existingElements, organisationId);
+                }
+            }
+        }
+    }
+    
+    private FormElementGroup findMatchingExistingGroup(List<FormElementGroup> existingGroups, FormElementGroupContract incomingGroup) {
+        return existingGroups.stream()
+            .filter(g -> g.getUuid().equals(incomingGroup.getUuid()))
+            .findFirst()
+            .orElse(null);
+    }
+    
+    private List<FormElement> getExistingFormElements(FormElementGroup group, Long organisationId) {
+        return formElementRepository.findAll().stream()
+            .filter(fe -> 
+                fe.getFormElementGroup().getId().equals(group.getId()) && 
+                !fe.isVoided() &&
+                fe.getOrganisationId().equals(organisationId))
+            .collect(Collectors.toList());
+    }
+    
+    private void checkElementConflicts(FormElementGroupContract incomingGroup, List<FormElement> existingElements, Long organisationId) {
+        for (FormElementContract incomingElement : incomingGroup.getFormElements()) {
+            if (!incomingElement.isVoided()) {
+                boolean elementHasConflict = existingElements.stream()
+                    .anyMatch(existingElement -> 
+                        !existingElement.getUuid().equals(incomingElement.getUuid()) &&
+                        existingElement.getDisplayOrder().equals(incomingElement.getDisplayOrder()));
+                
+                if (elementHasConflict) {
+                    String errorMsg = String.format("Form element displayOrder %.1f conflicts with existing element in group '%s' (organisation %d): %s", 
+                        incomingElement.getDisplayOrder(), incomingGroup.getName(), organisationId, incomingElement.getName());
+                    logger.error("DisplayOrder validation failed: {}", errorMsg);
+                    throw new RuntimeException(errorMsg);
+                }
+            }
+        }
     }
 
     private void deployFolder(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData) throws IOException, FormBuilderException {
