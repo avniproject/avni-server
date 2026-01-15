@@ -151,7 +151,7 @@ public class EnhancedValidationService {
         if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
             return;
         }
-        
+
         ConceptDataType dataType = ConceptDataType.valueOf(question.getDataType());
         switch (dataType) {
             case Coded:
@@ -182,8 +182,7 @@ public class EnhancedValidationService {
             case PhoneNumber:
                 validatePhoneNumberValue(question, value, errorMessages);
                 break;
-            case Image:
-            case ImageV2:
+            case Image, ImageV2, Signature:
                 validateImageValue(question, value, errorMessages);
                 break;
             default:
@@ -193,7 +192,7 @@ public class EnhancedValidationService {
 
     private void validateCodedValue(Concept question, Object value, List<String> errorMessages) {
         if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(value))) {
-            errorMessages.add(String.format("Concept answer '%s' not found in Concept '%s' (%s)", 
+            errorMessages.add(String.format("Concept answer '%s' not found in Concept '%s' (%s)",
                 value, question.getName(), question.getUuid()));
         }
     }
@@ -257,9 +256,9 @@ public class EnhancedValidationService {
             if (keyValues != null && keyValues.containsKey(KeyType.subjectTypeUUID)) {
                 KeyValue keyValue = keyValues.get(KeyType.subjectTypeUUID);
                 String subjectTypeUuid = keyValue.getValue().toString();
-                
+
                 SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
-                
+
                 if (subjectType != null && individualRepository.findByLegacyIdOrUuidAndSubjectType((String) value, subjectType) == null) {
                     errorMessages.add(formatErrorMessage(question, value));
                 }
@@ -278,33 +277,33 @@ public class EnhancedValidationService {
             if (keyValues != null && keyValues.containsKey(KeyType.lowestAddressLevelTypeUUIDs)) {
                 KeyValue keyValue = keyValues.get(KeyType.lowestAddressLevelTypeUUIDs);
                 Object keyValueObj = keyValue.getValue();
-                
+
                 if (keyValueObj instanceof List<?>) {
                     // Safe cast with instanceof check
                     @SuppressWarnings("unchecked")
                     List<String> lowestLevelUuids = (List<String>) keyValueObj;
-                    
+
                     List<AddressLevelType> lowestLevels = lowestLevelUuids.stream()
                             .map(addressLevelTypeRepository::findByUuid)
                             .filter(Objects::nonNull)
                             .toList();
-                    
+
                     boolean isValid = lowestLevels.stream()
                             .map(AddressLevelType::getAddressLevels)
                             .flatMap(Collection::stream)
                             .map(AddressLevel::getUuid)
                             .toList()
                             .contains(value);
-                            
+
                     if (!isValid) {
                         errorMessages.add(formatErrorMessage(question, value));
                     }
                 } else {
-                    errorMessages.add(String.format("Invalid lowest address level type for concept '%s'", 
+                    errorMessages.add(String.format("Invalid lowest address level type for concept '%s'",
                         question.getName()));
                 }
             } else {
-                errorMessages.add(String.format("Missing lowest address level type for concept '%s'", 
+                errorMessages.add(String.format("Missing lowest address level type for concept '%s'",
                     question.getName()));
             }
         } catch (Exception e) {
@@ -330,8 +329,8 @@ public class EnhancedValidationService {
             URL dummyUrl = s3Service.generateMediaUploadUrl("dummy.jpg", HttpMethod.PUT);
             // Use non-deprecated constructor for URL
             URL imageUrl = new URI(value.toString()).toURL();
-            
-            if (!Objects.equals(dummyUrl.getProtocol(), imageUrl.getProtocol()) || 
+
+            if (!Objects.equals(dummyUrl.getProtocol(), imageUrl.getProtocol()) ||
                 !Objects.equals(dummyUrl.getHost(), imageUrl.getHost())) {
                 errorMessages.add(formatErrorMessage(question, value));
             }
@@ -362,7 +361,7 @@ public class EnhancedValidationService {
             validateCollectionItem(formElement, qGroupValue, formMapping, errorMessages);
         }
     }
-    
+
     private void validateChildObservation(FormElement questionGroupFormElement, Map<String, Object> qGroupValueInstance, FormMapping formMapping, List<String> errorMessages) {
         LinkedHashMap<String, FormElement> formElements = formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(questionGroupFormElement, formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
         List<ObservationRequest> observationRequests = qGroupValueInstance.entrySet().stream().map(this::createObservationRequest).collect(Collectors.toList());
@@ -379,14 +378,14 @@ public class EnhancedValidationService {
 
         validateConceptValuesAreOfRequiredType(observationRequests, formElements, formMapping, errorMessages);
     }
-    
+
     private void validateCollectionItem(FormElement formElement, Object item, FormMapping formMapping, List<String> errorMessages) {
         if (item instanceof Map) {
             @SuppressWarnings("unchecked")
             Map<String, Object> valueMap = (Map<String, Object>) item;
             validateChildObservation(formElement, valueMap, formMapping, errorMessages);
         } else {
-            errorMessages.add(String.format("Invalid question group value type for concept '%s'", 
+            errorMessages.add(String.format("Invalid question group value type for concept '%s'",
                 formElement.getConcept().getName()));
         }
     }
