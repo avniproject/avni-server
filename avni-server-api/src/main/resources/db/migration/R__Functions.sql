@@ -370,7 +370,19 @@ create or replace function check_form_mapping_uniqueness(organisationId int, sub
 as
 $$
 declare
+    isCurrentMappingVoided boolean;
 begin
+    -- Check if the current mapping is voided
+    select fm.is_voided into isCurrentMappingVoided
+    from form_mapping fm
+    where fm.id = formMappingId;
+    
+    -- Skip validation for voided mappings
+    if isCurrentMappingVoided = true then
+        return true;
+    end if;
+    
+    -- Validate form type combinations based on business rules
     if exists(select *
               from public.form f
               where (
@@ -412,6 +424,7 @@ begin
                      (form_mapping.task_type_id is null and taskTypeId is null))
                 and form_mapping.impl_version = 1
                 and implVersion = 1
+                and form_mapping.is_voided = false
                 and form.form_type = (select public.form.form_type from form where id = formId)
                 and form_mapping.id <> formMappingId) then
         raise 'Duplicate form mapping exists for: organisation_id: %, subject_type_id: %, entity_id: %, observations_type_entity_id: %, task_type_id: %. Using formId: %, formMappingId: %.', organisationId, subjectTypeId, entityId, observationsTypeEntityId, taskTypeId, formId, formMappingId;
