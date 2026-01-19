@@ -202,20 +202,32 @@ public class FormService implements NonScopeAwareService {
         validateAgainstExistingData(formContract);
     }
     
+    private List<String> createErrorList() {
+        return new ArrayList<>();
+    }
+    
+    private void throwValidationErrorsIfAny(List<String> errorList) {
+        if (!errorList.isEmpty()) {
+            String combinedErrors = String.join("\n", errorList);
+            throw new RuntimeException(combinedErrors);
+        }
+    }
+    
     private void validateFormElementGroupDisplayOrders(FormContract formContract) {
         Map<Double, List<FormElementGroupContract>> groupDisplayOrderMap = formContract.getFormElementGroups().stream()
             .filter(group -> !group.isVoided())
             .collect(Collectors.groupingBy(FormElementGroupContract::getDisplayOrder));
-        
+        List<String> errorList = createErrorList();
         for (Map.Entry<Double, List<FormElementGroupContract>> entry : groupDisplayOrderMap.entrySet()) {
             if (entry.getValue().size() > 1) {
                 String errorMsg = String.format("Duplicate displayOrder %.1f found in form element groups: %s", 
                     entry.getKey(), 
                     entry.getValue().stream().map(g -> g.getName() + " (" + g.getUuid() + ")").collect(Collectors.joining(", ")));
                 logger.error("DisplayOrder validation failed: {}", errorMsg);
-                throw new RuntimeException(errorMsg);
+                errorList.add(errorMsg);
             }
         }
+        throwValidationErrorsIfAny(errorList);
     }
     
     private void validateFormElementDisplayOrders(FormContract formContract) {
@@ -224,7 +236,7 @@ public class FormService implements NonScopeAwareService {
                 Map<Double, List<FormElementContract>> elementDisplayOrderMap = group.getFormElements().stream()
                     .filter(element -> !element.isVoided())
                     .collect(Collectors.groupingBy(FormElementContract::getDisplayOrder));
-                
+                List<String> errorList = createErrorList(); 
                 for (Map.Entry<Double, List<FormElementContract>> entry : elementDisplayOrderMap.entrySet()) {
                     if (entry.getValue().size() > 1) {
                         String errorMsg = String.format("Duplicate displayOrder %.1f found in form elements of group '%s': %s", 
@@ -232,9 +244,10 @@ public class FormService implements NonScopeAwareService {
                             group.getName(),
                             entry.getValue().stream().map(e -> e.getName() + " (" + e.getUuid() + ")").collect(Collectors.joining(", ")));
                         logger.error("DisplayOrder validation failed: {}", errorMsg);
-                        throw new RuntimeException(errorMsg);
+                        errorList.add(errorMsg);
                     }
                 }
+                throwValidationErrorsIfAny(errorList);
             }
         }
     }
@@ -267,33 +280,32 @@ public class FormService implements NonScopeAwareService {
         List<FormElementGroupContract> incomingGroups = formContract.getFormElementGroups();
         
         // Keep nonVoided existing groups and map displayOrder for existing group UUIDs
-        Map<String, Double> existingUuidToDisplayOrderMap = existingGroups.stream()
+        Map<String, Double> uuidToDisplayOrderMap = existingGroups.stream()
             .filter(group -> !group.isVoided())
             .collect(Collectors.toMap(
                 FormElementGroup::getUuid,
                 FormElementGroup::getDisplayOrder
             ));
         
-        // Create a working map that starts with existing groups
-        Map<String, Double> uuidTodisplayOrderMap = new HashMap<>(existingUuidToDisplayOrderMap);
-        
         // Process incoming groups
         for (FormElementGroupContract incomingGroup : incomingGroups) {
             if (incomingGroup.isVoided()) {
                 // Remove voided incoming groups from mapping
-                uuidTodisplayOrderMap.remove(incomingGroup.getUuid());
+                uuidToDisplayOrderMap.remove(incomingGroup.getUuid());
             } else {
                 // update incoming group displayOrder in mapping
-                uuidTodisplayOrderMap.put(incomingGroup.getUuid(), incomingGroup.getDisplayOrder());
+                uuidToDisplayOrderMap.put(incomingGroup.getUuid(), incomingGroup.getDisplayOrder());
             }
         }
 
         //check for duplicate displayOrder across all uuids
-        Map<Double, List<String>> displayOrderToUuidsMap = uuidTodisplayOrderMap.entrySet().stream()
+        Map<Double, List<String>> displayOrderToUuidsMap = uuidToDisplayOrderMap.entrySet().stream()
             .collect(Collectors.groupingBy(
                 Map.Entry::getValue,
                 Collectors.mapping(Map.Entry::getKey, Collectors.toList())
             ));
+        
+        List<String> errorList = createErrorList();
         
         for (Map.Entry<Double, List<String>> entry : displayOrderToUuidsMap.entrySet()) {
             if (entry.getValue().size() > 1) {
@@ -301,9 +313,11 @@ public class FormService implements NonScopeAwareService {
                     "DisplayOrder %.1f is used by multiple form element groups in organisation %d: UUIDs %s", 
                     entry.getKey(), organisationId, String.join(", ", entry.getValue()));
                 logger.error("DisplayOrder validation failed: {}", errorMsg);
-                throw new RuntimeException(errorMsg);
+                errorList.add(errorMsg);
             }
         }
+
+        throwValidationErrorsIfAny(errorList);
     }
     
     private void validateElementConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
@@ -338,43 +352,42 @@ public class FormService implements NonScopeAwareService {
     private void checkElementConflicts(FormElementGroupContract incomingGroup, List<FormElement> existingElements, Long organisationId) {
         List<FormElementContract> incomingElements = incomingGroup.getFormElements();
         
-        // Keep nonVoided existing elements and map displayOrder for existing element UUIDs
-        Map<String, Double> existingUuidToDisplayOrderMap = existingElements.stream()
+        Map<String, Double> uuidToDisplayOrderMap = existingElements.stream()
             .filter(element -> !element.isVoided())
             .collect(Collectors.toMap(
                 FormElement::getUuid,
                 FormElement::getDisplayOrder
             ));
         
-        // Create a working map that starts with existing elements
-        Map<String, Double> uuidTodisplayOrderMap = new HashMap<>(existingUuidToDisplayOrderMap);
-        
         // Process incoming elements
         for (FormElementContract incomingElement : incomingElements) {
             if (incomingElement.isVoided()) {
                 // Remove voided incoming elements from mapping
-                uuidTodisplayOrderMap.remove(incomingElement.getUuid());
+                uuidToDisplayOrderMap.remove(incomingElement.getUuid());
             } else {
                 // update incoming element displayOrder in mapping
-                uuidTodisplayOrderMap.put(incomingElement.getUuid(), incomingElement.getDisplayOrder());
+                uuidToDisplayOrderMap.put(incomingElement.getUuid(), incomingElement.getDisplayOrder());
             }
         }
 
         //check for duplicate displayOrder across all uuids
-        Map<Double, List<String>> displayOrderToUuidsMap = uuidTodisplayOrderMap.entrySet().stream()
+        Map<Double, List<String>> displayOrderToUuidsMap = uuidToDisplayOrderMap.entrySet().stream()
             .collect(Collectors.groupingBy(
                 Map.Entry::getValue,
                 Collectors.mapping(Map.Entry::getKey, Collectors.toList())
             ));
         
+        List<String> errorList = createErrorList();
         for (Map.Entry<Double, List<String>> entry : displayOrderToUuidsMap.entrySet()) {
             if (entry.getValue().size() > 1) {
                 String errorMsg = String.format(
                     "Form element displayOrder %.1f is used by multiple elements in group (organisation %d): UUIDs %s", 
                     entry.getKey(), organisationId, String.join(", ", entry.getValue()));
                 logger.error("DisplayOrder validation failed: {}", errorMsg);
-                throw new RuntimeException(errorMsg);
+                errorList.add(errorMsg);
             }
         }
+
+        throwValidationErrorsIfAny(errorList);
     }
 }
