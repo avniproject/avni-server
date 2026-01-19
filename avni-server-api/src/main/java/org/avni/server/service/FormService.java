@@ -264,19 +264,44 @@ public class FormService implements NonScopeAwareService {
     }
     
     private void validateGroupConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
-        for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
-            if (!incomingGroup.isVoided()) {
-                boolean hasConflict = existingGroups.stream()
-                    .anyMatch(existingGroup -> 
-                        !existingGroup.getUuid().equals(incomingGroup.getUuid()) &&
-                        existingGroup.getDisplayOrder().equals(incomingGroup.getDisplayOrder()));
-                
-                if (hasConflict) {
-                    String errorMsg = String.format("DisplayOrder %.1f conflicts with existing form element group in organisation %d: %s", 
-                        incomingGroup.getDisplayOrder(), organisationId, incomingGroup.getName());
-                    logger.error("DisplayOrder validation failed: {}", errorMsg);
-                    throw new RuntimeException(errorMsg);
-                }
+        List<FormElementGroupContract> incomingGroups = formContract.getFormElementGroups();
+        
+        // Keep nonVoided existing groups and map displayOrder for existing group UUIDs
+        Map<String, Double> existingUuidToDisplayOrderMap = existingGroups.stream()
+            .filter(group -> !group.isVoided())
+            .collect(Collectors.toMap(
+                FormElementGroup::getUuid,
+                FormElementGroup::getDisplayOrder
+            ));
+        
+        // Create a working map that starts with existing groups
+        Map<String, Double> uuidTodisplayOrderMap = new HashMap<>(existingUuidToDisplayOrderMap);
+        
+        // Process incoming groups
+        for (FormElementGroupContract incomingGroup : incomingGroups) {
+            if (incomingGroup.isVoided()) {
+                // Remove voided incoming groups from mapping
+                uuidTodisplayOrderMap.remove(incomingGroup.getUuid());
+            } else {
+                // update incoming group displayOrder in mapping
+                uuidTodisplayOrderMap.put(incomingGroup.getUuid(), incomingGroup.getDisplayOrder());
+            }
+        }
+
+        //check for duplicate displayOrder across all uuids
+        Map<Double, List<String>> displayOrderToUuidsMap = uuidTodisplayOrderMap.entrySet().stream()
+            .collect(Collectors.groupingBy(
+                Map.Entry::getValue,
+                Collectors.mapping(Map.Entry::getKey, Collectors.toList())
+            ));
+        
+        for (Map.Entry<Double, List<String>> entry : displayOrderToUuidsMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                String errorMsg = String.format(
+                    "DisplayOrder %.1f is used by multiple form element groups in organisation %d: UUIDs %s", 
+                    entry.getKey(), organisationId, String.join(", ", entry.getValue()));
+                logger.error("DisplayOrder validation failed: {}", errorMsg);
+                throw new RuntimeException(errorMsg);
             }
         }
     }
@@ -311,19 +336,44 @@ public class FormService implements NonScopeAwareService {
     }
     
     private void checkElementConflicts(FormElementGroupContract incomingGroup, List<FormElement> existingElements, Long organisationId) {
-        for (FormElementContract incomingElement : incomingGroup.getFormElements()) {
-            if (!incomingElement.isVoided()) {
-                boolean elementHasConflict = existingElements.stream()
-                    .anyMatch(existingElement -> 
-                        !existingElement.getUuid().equals(incomingElement.getUuid()) &&
-                        existingElement.getDisplayOrder().equals(incomingElement.getDisplayOrder()));
-                
-                if (elementHasConflict) {
-                    String errorMsg = String.format("Form element displayOrder %.1f conflicts with existing element in group '%s' (organisation %d): %s", 
-                        incomingElement.getDisplayOrder(), incomingGroup.getName(), organisationId, incomingElement.getName());
-                    logger.error("DisplayOrder validation failed: {}", errorMsg);
-                    throw new RuntimeException(errorMsg);
-                }
+        List<FormElementContract> incomingElements = incomingGroup.getFormElements();
+        
+        // Keep nonVoided existing elements and map displayOrder for existing element UUIDs
+        Map<String, Double> existingUuidToDisplayOrderMap = existingElements.stream()
+            .filter(element -> !element.isVoided())
+            .collect(Collectors.toMap(
+                FormElement::getUuid,
+                FormElement::getDisplayOrder
+            ));
+        
+        // Create a working map that starts with existing elements
+        Map<String, Double> uuidTodisplayOrderMap = new HashMap<>(existingUuidToDisplayOrderMap);
+        
+        // Process incoming elements
+        for (FormElementContract incomingElement : incomingElements) {
+            if (incomingElement.isVoided()) {
+                // Remove voided incoming elements from mapping
+                uuidTodisplayOrderMap.remove(incomingElement.getUuid());
+            } else {
+                // update incoming element displayOrder in mapping
+                uuidTodisplayOrderMap.put(incomingElement.getUuid(), incomingElement.getDisplayOrder());
+            }
+        }
+
+        //check for duplicate displayOrder across all uuids
+        Map<Double, List<String>> displayOrderToUuidsMap = uuidTodisplayOrderMap.entrySet().stream()
+            .collect(Collectors.groupingBy(
+                Map.Entry::getValue,
+                Collectors.mapping(Map.Entry::getKey, Collectors.toList())
+            ));
+        
+        for (Map.Entry<Double, List<String>> entry : displayOrderToUuidsMap.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                String errorMsg = String.format(
+                    "Form element displayOrder %.1f is used by multiple elements in group (organisation %d): UUIDs %s", 
+                    entry.getKey(), organisationId, String.join(", ", entry.getValue()));
+                logger.error("DisplayOrder validation failed: {}", errorMsg);
+                throw new RuntimeException(errorMsg);
             }
         }
     }
