@@ -174,9 +174,9 @@ public class FormService implements NonScopeAwareService {
                 if (!formElement.isVoided() && formElement.isChildFormElement() &&
                         !uniqueConcepts.add(formElement.getParentFormElementUuid()+"#"+conceptUuid)) {
                     throw new InvalidObjectException(String.format(
-                            "Cannot use same concept twice. Form{uuid='%s',..} , QuestionGroup{uuid='%s',..},uses Concept{name='%s',..} twice",
+                            "Cannot use same concept twice. Form{uuid='%s',..} , QuestionGroup{name='%s',..},uses Concept{name='%s',..} twice",
                             formContract.getUuid(),
-                            formElement.getParentFormElementUuid(),
+                            formElement.getName(),
                             conceptName));
                 }
                 String conceptDataType = formElement.getConcept().getDataType();
