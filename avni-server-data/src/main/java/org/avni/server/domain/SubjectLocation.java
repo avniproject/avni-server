@@ -5,14 +5,14 @@ import java.io.Serializable;
 import java.util.Map;
 
 public class SubjectLocation implements Serializable {
-    private Point location;
+    private Point coordinates;
     private Double accuracy;
 
     public SubjectLocation() {
     }
 
-    public SubjectLocation(Point location, Double accuracy) {
-        this.location = location;
+    public SubjectLocation(Point coordinates, Double accuracy) {
+        this.coordinates = coordinates;
         this.accuracy = accuracy;
     }
 
@@ -20,20 +20,20 @@ public class SubjectLocation implements Serializable {
         if (subjectLocationMap == null) {
             return null;
         }
-        
-        Map<String, Double> coordinates = (Map<String, Double>) subjectLocationMap.get("coordinates");
-        Point location = Point.fromMap(coordinates);
+
+        Map<String, Double> location = (Map<String, Double>) subjectLocationMap.get("coordinates");
+        Point coordinates = Point.fromMap(location);
         Double accuracy = (Double) subjectLocationMap.get("accuracy");
-        
-        return new SubjectLocation(location, accuracy);
+
+        return new SubjectLocation(coordinates, accuracy);
     }
 
-    public Point getLocation() {
-        return location;
+    public Point getCoordinates() {
+        return coordinates;
     }
 
-    public void setLocation(Point location) {
-        this.location = location;
+    public void setCoordinates(Point coordinates) {
+        this.coordinates = coordinates;
     }
 
     public Double getAccuracy() {
