@@ -279,6 +279,7 @@ public class FormService implements NonScopeAwareService {
         return formElementGroupRepository.findAll().stream()
             .filter(feg -> 
                 feg.getForm().getId().equals(existingForm.getId()) && 
+                !feg.isVoided() &&
                 feg.getOrganisationId().equals(organisationId))
             .collect(Collectors.toList());
     }
@@ -288,6 +289,7 @@ public class FormService implements NonScopeAwareService {
         
         // Keep nonVoided existing groups and map displayOrder for existing group UUIDs
         Map<String, Double> uuidToDisplayOrderMap = existingGroups.stream()
+            .filter(group -> !group.isVoided())
             .collect(Collectors.toMap(
                 FormElementGroup::getUuid,
                 FormElementGroup::getDisplayOrder
@@ -295,8 +297,13 @@ public class FormService implements NonScopeAwareService {
         
         // Process incoming groups
         for (FormElementGroupContract incomingGroup : incomingGroups) {
-            // update incoming group displayOrder in mapping
-            uuidToDisplayOrderMap.put(incomingGroup.getUuid(), incomingGroup.getDisplayOrder());
+            if (incomingGroup.isVoided()) {
+                // Remove voided incoming groups from mapping
+                uuidToDisplayOrderMap.remove(incomingGroup.getUuid());
+            } else {
+                // update incoming group displayOrder in mapping
+                uuidToDisplayOrderMap.put(incomingGroup.getUuid(), incomingGroup.getDisplayOrder());
+            }
         }
 
         //check for duplicate displayOrder across all uuids
@@ -323,11 +330,13 @@ public class FormService implements NonScopeAwareService {
     
     private void validateElementConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
         for (FormElementGroupContract incomingGroup : formContract.getFormElementGroups()) {
-            FormElementGroup matchingExistingGroup = findMatchingExistingGroup(existingGroups, incomingGroup);
-            
-            if (matchingExistingGroup != null && incomingGroup.getFormElements() != null) {
-                List<FormElement> existingElements = getExistingFormElements(matchingExistingGroup, organisationId);
-                checkElementConflicts(incomingGroup, existingElements, organisationId);
+            if (!incomingGroup.isVoided()) {
+                FormElementGroup matchingExistingGroup = findMatchingExistingGroup(existingGroups, incomingGroup);
+                
+                if (matchingExistingGroup != null && incomingGroup.getFormElements() != null) {
+                    List<FormElement> existingElements = getExistingFormElements(matchingExistingGroup, organisationId);
+                    checkElementConflicts(incomingGroup, existingElements, organisationId);
+                }
             }
         }
     }
@@ -343,6 +352,7 @@ public class FormService implements NonScopeAwareService {
         return formElementRepository.findAll().stream()
             .filter(fe -> 
                 fe.getFormElementGroup().getId().equals(group.getId()) && 
+                !fe.isVoided() &&
                 fe.getOrganisationId().equals(organisationId))
             .collect(Collectors.toList());
     }
@@ -351,6 +361,7 @@ public class FormService implements NonScopeAwareService {
         List<FormElementContract> incomingElements = incomingGroup.getFormElements();
         
         Map<String, Double> uuidToDisplayOrderMap = existingElements.stream()
+            .filter(element -> !element.isVoided())
             .collect(Collectors.toMap(
                 FormElement::getUuid,
                 FormElement::getDisplayOrder
@@ -358,8 +369,13 @@ public class FormService implements NonScopeAwareService {
         
         // Process incoming elements
         for (FormElementContract incomingElement : incomingElements) {
-            // update incoming element displayOrder in mapping
-            uuidToDisplayOrderMap.put(incomingElement.getUuid(), incomingElement.getDisplayOrder());
+            if (incomingElement.isVoided()) {
+                // Remove voided incoming elements from mapping
+                uuidToDisplayOrderMap.remove(incomingElement.getUuid());
+            } else {
+                // update incoming element displayOrder in mapping
+                uuidToDisplayOrderMap.put(incomingElement.getUuid(), incomingElement.getDisplayOrder());
+            }
         }
 
         //check for duplicate displayOrder across all uuids
