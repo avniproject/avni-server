@@ -119,9 +119,6 @@ public class FormMappingService implements NonScopeAwareService {
             formMapping.setEncounterType(encounterTypeRepository.findByUuid(formMappingRequest.getEncounterTypeUUID()));
         }
 
-        // Consolidated validation for form type consistency
-        validateFormMappingConsistency(form, formMappingRequest);
-
         if (StringUtils.hasText(formMappingRequest.getTaskTypeUUID())) {
             formMapping.setTaskType(taskTypeRepository.findByUuid(formMappingRequest.getTaskTypeUUID()));
         }
@@ -154,11 +151,6 @@ public class FormMappingService implements NonScopeAwareService {
             formMapping.setEncounterType(encounterTypeRepository.findByUuid(formMappingRequest.getEncounterTypeUUID()));
         } else {
             formMapping.setEncounterType(null);
-        }
-
-        // Consolidated validation for form type consistency
-        if (form != null) {
-            validateFormMappingConsistency(form, formMappingRequest);
         }
 
         if (formMappingRequest.getSubjectTypeUUID() != null) {
@@ -310,133 +302,5 @@ public class FormMappingService implements NonScopeAwareService {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAllByUuidIn(subjectTypeUuids);
         List<Program> programs = programRepository.findAllByUuidIn(programUuids);
         return getUniqueEncounterTypes(formMappingRepository.getAllProgramEncounterTypeFormMapping(subjectTypes, programs), FormType.ProgramEncounter);
-    }
-
-    private void validateFormMappingConsistency(Form form, FormMappingContract formMappingRequest) {
-        if (formMappingRequest.isVoided()) {
-            return; // Skip validation for voided mappings
-        }
-        
-        FormType formType = form.getFormType();
-        boolean hasProgram = StringUtils.hasText(formMappingRequest.getProgramUUID());
-        boolean hasEncounterType = StringUtils.hasText(formMappingRequest.getEncounterTypeUUID());
-        
-        // IndividualProfile: should NOT have program or encounter type
-        if (formType == FormType.IndividualProfile && (hasProgram || hasEncounterType)) {
-            throw new ValidationException(
-                String.format("Cannot map IndividualProfile form '%s' with program '%s' or encounter type '%s'. " +
-                    "IndividualProfile forms cannot be associated with programs or encounter types.", 
-                    form.getName(), formMappingRequest.getProgramUUID(), formMappingRequest.getEncounterTypeUUID())
-            );
-        }
-        
-        // ProgramEnrolment: MUST have program and should NOT have encounter type
-        if (formType == FormType.ProgramEnrolment) {
-            if (!hasProgram) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramEnrolment form '%s' without a program. " +
-                        "ProgramEnrolment forms must be associated with a program.", 
-                        form.getName())
-                );
-            }
-            if (hasEncounterType) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramEnrolment form '%s' with encounter type '%s'. " +
-                        "ProgramEnrolment forms cannot have encounter types.", 
-                        form.getName(), formMappingRequest.getEncounterTypeUUID())
-                );
-            }
-        }
-        
-        // ProgramExit: MUST have program and should NOT have encounter type
-        if (formType == FormType.ProgramExit) {
-            if (!hasProgram) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramExit form '%s' without a program. " +
-                        "ProgramExit forms must be associated with a program.", 
-                        form.getName())
-                );
-            }
-            if (hasEncounterType) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramExit form '%s' with encounter type '%s'. " +
-                        "ProgramExit forms cannot have encounter types.", 
-                        form.getName(), formMappingRequest.getEncounterTypeUUID())
-                );
-            }
-        }
-        
-        // ProgramEncounter: MUST have both program and encounter type
-        if (formType == FormType.ProgramEncounter) {
-            if (!hasProgram) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramEncounter form '%s' without a program. " +
-                        "ProgramEncounter forms must be associated with a program.", 
-                        form.getName())
-                );
-            }
-            if (!hasEncounterType) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramEncounter form '%s' without an encounter type. " +
-                        "ProgramEncounter forms must have an encounter type.", 
-                        form.getName())
-                );
-            }
-        }
-        
-        // ProgramEncounterCancellation: MUST have both program and encounter type
-        if (formType == FormType.ProgramEncounterCancellation) {
-            if (!hasProgram) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramEncounterCancellation form '%s' without a program. " +
-                        "ProgramEncounterCancellation forms must be associated with a program.", 
-                        form.getName())
-                );
-            }
-            if (!hasEncounterType) {
-                throw new ValidationException(
-                    String.format("Cannot map ProgramEncounterCancellation form '%s' without an encounter type. " +
-                        "ProgramEncounterCancellation forms must have an encounter type.", 
-                        form.getName())
-                );
-            }
-        }
-        
-        // Encounter: should NOT have program and MUST have encounter type
-        if (formType == FormType.Encounter) {
-            if (hasProgram) {
-                throw new ValidationException(
-                    String.format("Cannot map Encounter form '%s' with program '%s'. " +
-                        "Encounter forms cannot be associated with programs. " +
-                        "Use ProgramEncounter form type for program-based encounters.", 
-                        form.getName(), formMappingRequest.getProgramUUID())
-                );
-            }
-            if (!hasEncounterType) {
-                throw new ValidationException(
-                    String.format("Cannot map Encounter form '%s' without an encounter type. " +
-                        "Encounter forms must have an encounter type.", 
-                        form.getName())
-                );
-            }
-        }
-        
-        // IndividualEncounterCancellation: should NOT have program and MUST have encounter type
-        if (formType == FormType.IndividualEncounterCancellation) {
-            if (hasProgram) {
-                throw new ValidationException(
-                    String.format("Cannot map IndividualEncounterCancellation form '%s' with program '%s'. " +
-                        "IndividualEncounterCancellation forms cannot be associated with programs.", 
-                        form.getName(), formMappingRequest.getProgramUUID())
-                );
-            }
-            if (!hasEncounterType) {
-                throw new ValidationException(
-                    String.format("Cannot map IndividualEncounterCancellation form '%s' without an encounter type. " +
-                        "IndividualEncounterCancellation forms must have an encounter type.", 
-                        form.getName())
-                );
-            }
-        }
     }
 }
