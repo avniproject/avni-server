@@ -171,14 +171,6 @@ public class FormService implements NonScopeAwareService {
                             formContract.getUuid(),
                             conceptName));
                 }
-                if (!formElement.isVoided() && formElement.isChildFormElement() &&
-                        !uniqueConcepts.add(formElement.getParentFormElementUuid()+"#"+conceptUuid)) {
-                    throw new InvalidObjectException(String.format(
-                            "Cannot use same concept twice. Form{uuid='%s',..} , QuestionGroup{uuid='%s',..},uses Concept{name='%s',..} twice",
-                            formContract.getUuid(),
-                            formElement.getParentFormElementUuid(),
-                            conceptName));
-                }
                 String conceptDataType = formElement.getConcept().getDataType();
                 if (conceptDataType != null && multiSelectTypes.contains(ConceptDataType.valueOf(conceptDataType))) {
                     FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
