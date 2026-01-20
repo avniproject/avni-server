@@ -567,4 +567,41 @@ begin
 end
 $$;
 
+-- DISPLAY ORDER VALIDATION FUNCTIONS
+-- Trigger function for form_element display order uniqueness
+CREATE OR REPLACE FUNCTION check_form_element_display_order_uniqueness() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM form_element 
+        WHERE form_element_group_id = NEW.form_element_group_id 
+          AND display_order = NEW.display_order 
+          AND organisation_id = NEW.organisation_id 
+          AND is_voided = NEW.is_voided
+          AND id != NEW.id
+    ) THEN
+        RAISE EXCEPTION 'Duplicate display_order % found for form element in form element group % for organisation % with is_voided=%', 
+            NEW.display_order, NEW.form_element_group_id, NEW.organisation_id, NEW.is_voided;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger function for form_element_group display order uniqueness
+CREATE OR REPLACE FUNCTION check_form_element_group_display_order_uniqueness() RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM form_element_group 
+        WHERE form_id = NEW.form_id 
+          AND display_order = NEW.display_order 
+          AND organisation_id = NEW.organisation_id 
+          AND is_voided = NEW.is_voided
+          AND id != NEW.id
+    ) THEN
+        RAISE EXCEPTION 'Duplicate display_order % found for form element group in form % for organisation % with is_voided=%', 
+            NEW.display_order, NEW.form_id, NEW.organisation_id, NEW.is_voided;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- added line to change checksum
