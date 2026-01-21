@@ -223,7 +223,6 @@ public class FormService implements NonScopeAwareService {
     
     private void validateFormElementGroupDisplayOrders(FormContract formContract) {
         Map<Double, List<FormElementGroupContract>> groupDisplayOrderMap = formContract.getFormElementGroups().stream()
-            .filter(group -> !group.isVoided())
             .collect(Collectors.groupingBy(FormElementGroupContract::getDisplayOrder));
         List<String> errorList = createErrorList();
         for (Map.Entry<Double, List<FormElementGroupContract>> entry : groupDisplayOrderMap.entrySet()) {
@@ -242,7 +241,6 @@ public class FormService implements NonScopeAwareService {
         for (FormElementGroupContract group : formContract.getFormElementGroups()) {
             if (group.getFormElements() != null) {
                 Map<Double, List<FormElementContract>> elementDisplayOrderMap = group.getFormElements().stream()
-                    .filter(element -> !element.isVoided())
                     .collect(Collectors.groupingBy(FormElementContract::getDisplayOrder));
                 List<String> errorList = createErrorList(); 
                 for (Map.Entry<Double, List<FormElementContract>> entry : elementDisplayOrderMap.entrySet()) {
