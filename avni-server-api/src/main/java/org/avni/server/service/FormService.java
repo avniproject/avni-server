@@ -289,6 +289,16 @@ public class FormService implements NonScopeAwareService {
     private void validateGroupConflicts(FormContract formContract, List<FormElementGroup> existingGroups, Long organisationId) {
         List<FormElementGroupContract> incomingGroups = formContract.getFormElementGroups();
         
+        // Create UUID to name map for better error messages
+        Map<String, String> uuidToNameMap = incomingGroups.stream()
+            .collect(Collectors.toMap(
+                FormElementGroupContract::getUuid,
+                FormElementGroupContract::getName
+            ));
+        
+        // Add existing groups to the map
+        existingGroups.forEach(group -> uuidToNameMap.put(group.getUuid(), group.getName()));
+        
         // Keep nonVoided existing groups and map displayOrder for existing group UUIDs
         Map<String, String> uuidToDisplayOrderMap = existingGroups.stream()
             .collect(Collectors.toMap(
@@ -313,9 +323,17 @@ public class FormService implements NonScopeAwareService {
         
         for (Map.Entry<String, List<String>> entry : displayOrderToUuidsMap.entrySet()) {
             if (entry.getValue().size() > 1) {
+                double displayOrder = Double.parseDouble(entry.getKey().split("#")[0]);
+                String isVoided = entry.getKey().split("#")[1];
+                
+                // Convert UUIDs to names for better error message
+                String groupNames = entry.getValue().stream()
+                    .map(uuid -> String.format("'%s' (uuid: %s)", uuidToNameMap.get(uuid), uuid))
+                    .collect(Collectors.joining(", "));
+                
                 String errorMsg = String.format(
-                    "DisplayOrder %.1f with is Voided %s is used by multiple form element groups in organisation %d: UUIDs %s", 
-                    Double.parseDouble(entry.getKey().split("#")[0]), entry.getKey().split("#")[1], organisationId, String.join(", ", entry.getValue()));
+                    "Pages with displayOrder %.1f and isVoided %s have duplicates: %s", 
+                    displayOrder, isVoided, groupNames);
                 logger.error("DisplayOrder validation failed: {}", errorMsg);
                 errorList.add(errorMsg);
             }
@@ -353,6 +371,16 @@ public class FormService implements NonScopeAwareService {
     private void checkElementConflicts(FormElementGroupContract incomingGroup, List<FormElement> existingElements, Long organisationId) {
         List<FormElementContract> incomingElements = incomingGroup.getFormElements();
         
+        // Create UUID to name map for better error messages
+        Map<String, String> uuidToNameMap = incomingElements.stream()
+            .collect(Collectors.toMap(
+                FormElementContract::getUuid,
+                FormElementContract::getName
+            ));
+        
+        // Add existing elements to the map
+        existingElements.forEach(element -> uuidToNameMap.put(element.getUuid(), element.getName()));
+        
         Map<String, String> uuidToDisplayOrderMap = existingElements.stream()
             .collect(Collectors.toMap(
                 FormElement::getUuid,
@@ -375,9 +403,17 @@ public class FormService implements NonScopeAwareService {
         List<String> errorList = createErrorList();
         for (Map.Entry<String, List<String>> entry : displayOrderToUuidsMap.entrySet()) {
             if (entry.getValue().size() > 1) {
+                double displayOrder = Double.parseDouble(entry.getKey().split("#")[0]);
+                String isVoided = entry.getKey().split("#")[1];
+                
+                // Convert UUIDs to names for better error message
+                String elementNames = entry.getValue().stream()
+                    .map(uuid -> String.format("'%s' (uuid: %s)", uuidToNameMap.get(uuid), uuid))
+                    .collect(Collectors.joining(", "));
+                
                 String errorMsg = String.format(
-                    "Form element displayOrder %.1f with isVoided %s is used by multiple elements in group (organisation %d): UUIDs %s", 
-                    Double.parseDouble(entry.getKey().split("#")[0]), entry.getKey().split("#")[1], organisationId, String.join(", ", entry.getValue()));
+                    "Questions in group '%s' with displayOrder %.1f and isVoided %s have duplicates: %s", 
+                    incomingGroup.getName(), displayOrder, isVoided, elementNames);
                 logger.error("DisplayOrder validation failed: {}", errorMsg);
                 errorList.add(errorMsg);
             }
