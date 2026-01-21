@@ -227,9 +227,12 @@ public class FormService implements NonScopeAwareService {
         List<String> errorList = createErrorList();
         for (Map.Entry<Double, List<FormElementGroupContract>> entry : groupDisplayOrderMap.entrySet()) {
             if (entry.getValue().size() > 1) {
-                String errorMsg = String.format("Duplicate displayOrder %.1f found in form element groups: %s", 
-                    entry.getKey(), 
-                    entry.getValue().stream().map(g -> g.getName() + " (" + g.getUuid() + ")").collect(Collectors.joining(", ")));
+                List<FormElementGroupContract> duplicateGroups = entry.getValue();
+                String groupNames = duplicateGroups.stream()
+                    .map(g -> String.format("'%s' (uuid: %s)", g.getName(), g.getUuid()))
+                    .collect(Collectors.joining(", "));
+                String errorMsg = String.format("Pages with displayOrder %.1f have duplicates: %s", 
+                    entry.getKey(), groupNames);
                 logger.error("DisplayOrder validation failed: {}", errorMsg);
                 errorList.add(errorMsg);
             }
@@ -245,10 +248,12 @@ public class FormService implements NonScopeAwareService {
                 List<String> errorList = createErrorList(); 
                 for (Map.Entry<Double, List<FormElementContract>> entry : elementDisplayOrderMap.entrySet()) {
                     if (entry.getValue().size() > 1) {
-                        String errorMsg = String.format("Duplicate displayOrder %.1f found in form elements of group '%s': %s", 
-                            entry.getKey(),
-                            group.getName(),
-                            entry.getValue().stream().map(e -> e.getName() + " (" + e.getUuid() + ")").collect(Collectors.joining(", ")));
+                        List<FormElementContract> duplicateElements = entry.getValue();
+                        String elementNames = duplicateElements.stream()
+                            .map(e -> String.format("'%s' (uuid: %s)", e.getName(), e.getUuid()))
+                            .collect(Collectors.joining(", "));
+                        String errorMsg = String.format("Questions in group '%s' with displayOrder %.1f have duplicates: %s", 
+                            group.getName(), entry.getKey(), elementNames);
                         logger.error("DisplayOrder validation failed: {}", errorMsg);
                         errorList.add(errorMsg);
                     }
