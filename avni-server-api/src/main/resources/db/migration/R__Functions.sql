@@ -407,9 +407,8 @@ begin
     ) into mapping_exists;
     
     if mapping_exists then
-        raise EXCEPTION 'Invalid form mapping: Form "%" (id: %, uuid: %) is of type "%" but cannot be mapped % %.',
-               (select f.form_type from form f where f.id = formId), 
-               formId, 
+        raise EXCEPTION 'Invalid form mapping(uuid: %): Form(uuid: %) is of type % and hence cannot be mapped % and %.',
+               (select fm.uuid from form_mapping fm where fm.id = formMappingId),
                (select f.uuid from form f where f.id = formId),
                (select f.form_type from form f where f.id = formId),
                case when entityId is not null then 'with program' else 'without program' end,
