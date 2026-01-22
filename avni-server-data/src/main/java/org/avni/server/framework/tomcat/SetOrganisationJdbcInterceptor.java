@@ -65,17 +65,14 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
             return super.invoke(proxy, method, args);
 
         Connection connection = (Connection) proxy;
-        logger.trace("Invoked operation {} on Connection: {}", method.getName(), connection.getMetaData().getConnection().hashCode());
+        logger.info("Invoked operation {} on Connection: {}", method.getName(), connection.getMetaData().getConnection().hashCode());
         if ("close".equals(method.getName())) {
 
             if (!connection.getAutoCommit()) {
-                logger.warn("Connection being returned to pool with active transaction. ConnectionId: {}, Rolling back.", connection.hashCode());
-                connection.rollback();
-                connection.setAutoCommit(true);
+                logger.info("Connection being returned to pool with active transaction. ConnectionId: {}", connection.getMetaData().getConnection().hashCode());
             }
             if (connection.getTransactionIsolation() != Connection.TRANSACTION_READ_COMMITTED) {
-                logger.debug("Resetting transaction isolation level. ConnectionId: {}", connection.hashCode());
-                connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+                logger.info("Transaction isolation level: {} ConnectionId: {}", connection.getTransactionIsolation(),connection.getMetaData().getConnection().hashCode());
             }
             
             Statement statement = connection.createStatement();
