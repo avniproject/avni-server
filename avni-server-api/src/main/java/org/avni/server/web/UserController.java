@@ -122,8 +122,9 @@ public class UserController {
             accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
             userService.addToDefaultUserGroup(savedUser);
             List<UserGroup> userGroups = userService.associateUserToGroups(savedUser, userContract.getGroupIds());
-            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                    userGroups != null && userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS)) ) {
+            if (savedUser.getOrganisationId() != null &&
+                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+                    userGroups != null && userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
                 metabaseService.upsertUsersOnMetabase(userGroups);
             }
             logger.info(String.format("Saved new user '%s', UUID '%s'", userContract.getUsername(), savedUser.getUuid()));
