@@ -121,6 +121,7 @@ public class ImportController {
                                         @RequestParam String locationHierarchy,
                                         @RequestParam String encounterUploadMode) throws IOException {
 
+        accessControlService.assertIsNotSuperAdmin();
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         try {
             assertTrue(!StringUtils.isEmpty(type), "File type not provided");
