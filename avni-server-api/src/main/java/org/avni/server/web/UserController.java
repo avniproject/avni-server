@@ -169,7 +169,8 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
-            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+            if (user.getOrganisationId() != null &&
+                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                     associatedUserGroups != null && associatedUserGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
                 metabaseService.upsertUsersOnMetabase(associatedUserGroups);
             }
