@@ -20,7 +20,6 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String subjectTypeHeader = "Subject Type";
     public final static String registrationDate = "Date Of Registration";
     public final static String registrationLocation = "Registration Location";
-    public final static String subjectLocation = "Subject Location";
     public final static String firstName = "First Name";
 
     public final static String middleName = "Middle Name";
@@ -51,7 +50,6 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, true));
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
-        fields.add(new HeaderField(subjectLocation, "", false, null, "Format: latitude,longitude,accuracy in decimal degrees (e.g., 19.8188,83.9172,5.0)", null));
 
         if (subjectType.isPerson()) {
             fields.add(new HeaderField(firstName, "", true, null, null, null));
