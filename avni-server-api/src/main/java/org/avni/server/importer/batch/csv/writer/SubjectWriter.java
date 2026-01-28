@@ -105,7 +105,6 @@ public class SubjectWriter extends EntityWriter {
 
         LocationCreator locationCreator = new LocationCreator();
         individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
-        individual.setSubjectLocation(locationCreator.getSubjectLocation(row, SubjectHeadersCreator.subjectLocation, allErrorMsgs));
 
         AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
         setAddressLevel(row, individual, registrationLocationTypes, allErrorMsgs);
