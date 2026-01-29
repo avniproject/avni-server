@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.util.S3File;
 import org.joda.time.DateTime;
+import org.springframework.hateoas.server.core.Relation;
 
+@Relation(collectionRelation = "extensions")
 public class S3ExtensionFile {
     private final S3File s3File;
     private final DateTime lastModifiedDateTime;
