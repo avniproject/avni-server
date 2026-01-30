@@ -17,7 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
@@ -45,9 +47,23 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @GetMapping(value = "/web/identifierUserAssignment")
     @ResponseBody
     public CollectionModel<EntityModel<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
-        Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageable);
+        Sort mappedSort = mapSort(pageable.getSort());
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), mappedSort);
+        Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageRequest);
         Page<IdentifierUserAssignmentContractWeb> response = nonVoided.map(IdentifierUserAssignmentContractWeb::fromIdentifierUserAssignment);
         return wrap(response);
+    }
+
+    private Sort mapSort(Sort sort) {
+        return Sort.by(sort.stream().map(order -> {
+            String property = order.getProperty();
+            if ("userName".equals(property)) {
+                property = "assignedTo.name";
+            } else if ("name".equals(property)) {
+                property = "identifierSource.name";
+            }
+            return new Sort.Order(order.getDirection(), property);
+        }).toList());
     }
 
     @GetMapping(value = "/web/identifierUserAssignment/{id}")
