@@ -402,10 +402,10 @@ public class ImportService implements ImportLocationsConstants {
     }
 
     public static String getHeaderName(FormElement formElement) {
-        String conceptName = formElement.getConcept().getName();
+        String conceptName = formElement.getConcept().getName().replace("\"", "\"\"");
         if (formElement.getGroup() != null) {
             FormElement parentFormElement = formElement.getGroup();
-            String parentChildName = parentFormElement.getConcept().getName() + "|" + conceptName;
+            String parentChildName = parentFormElement.getConcept().getName().replace("\"", "\"\"") + "|" + conceptName;
             return parentFormElement.isRepeatable() ? String.format("\"%s|1\"", parentChildName) : String.format("\"%s\"", parentChildName);
         }
         return "\"" + conceptName + "\"";

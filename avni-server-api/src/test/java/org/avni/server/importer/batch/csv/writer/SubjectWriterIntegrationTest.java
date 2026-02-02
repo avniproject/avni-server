@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.*;
 import org.avni.server.config.InvalidConfigurationException;
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -57,6 +58,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private TestSubjectService testSubjectService;
     @Autowired
     private LocationHierarchyService locationHierarchyService;
+    @Autowired
+    private ConceptRepository conceptRepository;
     private AddressLevelType district;
     private SubjectType subjectType;
 
@@ -467,6 +470,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         singleSelectConcepts.add(testConceptService.createConcept("Text Concept", ConceptDataType.Text));
         singleSelectConcepts.add(testConceptService.createNumericConceptWithAbsolutes("Numeric Concept", 1.0, 200.0));
         singleSelectConcepts.add(testConceptService.createConcept("Notes Concept", ConceptDataType.Notes));
+        singleSelectConcepts.add(testConceptService.createConcept("Concept \"With\" Quotes", ConceptDataType.Text));
 
         subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
@@ -726,6 +730,107 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
             subjectWriter.write(Chunk.of(new Row(missingHeaders, dataRow)), "Subject---SubjectType1", getLocationHierarchy());
         });
         assertTrue(exception.getMessage().contains("Mandatory columns are missing in header from uploaded file"));
+    }
+
+    @Test
+    public void shouldHandleConceptWithQuotesInName() throws Exception {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] headers = header(
+                "Id from previous system",
+                "Subject Type",
+                "Date Of Registration",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Gender",
+                "State",
+                "District",
+                "\"Concept \"With\" Quotes\""
+        );
+        String[] data = dataRow(
+                "QUOTED_ID",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "Jane",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Female",
+                "Bihar",
+                "District1",
+                "some value with quotes test"
+        );
+        subjectWriter.write(Chunk.of(new Row(headers, data)), "Subject---SubjectType1", getLocationHierarchy());
+        Individual subject = individualRepository.findByLegacyId("QUOTED_ID");
+        assertEquals("Jane", subject.getFirstName());
+        ObservationCollection observations = subject.getObservations();
+        Concept quotedConcept = conceptRepository.findByName("Concept \"With\" Quotes");
+        assertEquals("some value with quotes test", observations.get(quotedConcept.getUuid()));
+    }
+
+    @Test
+    public void shouldHandleConceptWithQuotesInNameAlongsideRegularConcepts() throws Exception {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] headers = header(
+                "Id from previous system",
+                "Subject Type",
+                "Date Of Registration",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Gender",
+                "Profile Picture",
+                "State",
+                "District",
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Date Concept\"",
+                "\"Text Concept\"",
+                "\"Numeric Concept\"",
+                "\"Notes Concept\"",
+                "\"Concept \"With\" Quotes\"",
+                "\"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\"",
+                "Repeatable QuestionGroup Concept|RQG Numeric Concept|1"
+        );
+        String[] data = dataRow(
+                "QUOTED_FULL_ID",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "123",
+                "some notes",
+                "quoted concept value",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456",
+                "789"
+        );
+        subjectWriter.write(Chunk.of(new Row(headers, data)), "Subject---SubjectType1", getLocationHierarchy());
+        Individual subject = individualRepository.findByLegacyId("QUOTED_FULL_ID");
+        assertEquals("John", subject.getFirstName());
+        ObservationCollection observations = subject.getObservations();
+        Concept quotedConcept = conceptRepository.findByName("Concept \"With\" Quotes");
+        assertEquals(10, observations.size());
+        assertEquals("quoted concept value", observations.get(quotedConcept.getUuid()));
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {

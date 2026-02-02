@@ -77,4 +77,11 @@ public class HeaderFieldTest  {
         assertEquals("QuoteTest", field.getHeader());
         assertEquals("\"Optional. Contains \"\"quotes\"\".\"", field.getDescription());
     }
+
+    @Test
+    public void testHeaderWithQuotes() {
+        HeaderField field = new HeaderField("Header \"Quote\" Test", "Contains \"quotes\"", false, null, null, null, false);
+        assertEquals("Header \"Quote\" Test", field.getHeader());
+        assertEquals("\"Optional. Contains \"\"quotes\"\".\"", field.getDescription());
+    }
 }

@@ -94,11 +94,15 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         List<Concept> childQGConcepts = new ArrayList<>();
         childQGConcepts.add(testConceptService.createConcept("QG Numeric Concept", ConceptDataType.Numeric));
 
+        testConceptService.createConcept("Concept \"With\" Quotes", ConceptDataType.Text);
+
         Concept repeatableQuestionGroupConcept = testConceptService.createConcept("Repeatable QuestionGroup Concept", ConceptDataType.QuestionGroup);
         List<Concept> childRQGConcepts = new ArrayList<>();
         childRQGConcepts.add(testConceptService.createConcept("RQG Numeric Concept", ConceptDataType.Numeric));
+        List<String> singleSelectConceptNames = new ArrayList<>();
+        singleSelectConceptNames.add("Concept \"With\" Quotes");
         formMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
-                new ArrayList<>(),
+                singleSelectConceptNames,
                 new ArrayList<>(),
                 questionGroupConcept,
                 childQGConcepts,
@@ -286,13 +290,26 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         assertEquals("Mandatory", descriptions[12]);
         assertEquals("Mandatory", descriptions[13]);
         assertEquals("Mandatory", descriptions[14]);
-        assertEquals("Optional. Allowed values: Any number.", descriptions[15]);
+        assertEquals("Optional. Any Text.", descriptions[15]);
         assertEquals("Optional. Allowed values: Any number.", descriptions[16]);
-        assertEquals("\"Optional. Allowed values: {MSDC Answer 1, MSDC Answer 2, MSDC Answer 3, MSDC Answer 4} Format: May allow single value or multiple values separated a comma. Please check with developer..\"", descriptions[17]);
+        assertEquals("Optional. Allowed values: Any number.", descriptions[17]);
+        assertEquals("\"Optional. Allowed values: {MSDC Answer 1, MSDC Answer 2, MSDC Answer 3, MSDC Answer 4} Format: May allow single value or multiple values separated a comma. Please check with developer..\"", descriptions[18]);
 
         assertNotNull(descriptions);
         assertEquals(subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy).length, descriptions.length,
                 "Descriptions array should match headers array length");
+    }
+
+    @Test
+    public void testHeaderGenerationForConceptWithQuotesInName() throws InvalidConfigurationException {
+        organisationConfigService.saveRegistrationLocation(village, subjectType);
+        Map<String, String> availableHierarchies = locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType);
+        String locationHierarchy = availableHierarchies.keySet().iterator().next();
+
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, locationHierarchy);
+
+        assertTrue(containsHeader(headers, "\"Concept \"\"With\"\" Quotes\""),
+                "Header for concept with quotes should have internal quotes escaped as double-double-quotes");
     }
 
     private boolean containsHeader(String[] headers, String headerToFind) {

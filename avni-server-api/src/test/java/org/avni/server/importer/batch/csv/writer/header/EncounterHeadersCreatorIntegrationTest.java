@@ -118,4 +118,27 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
             TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS, new ArrayList<>());
         });
     }
+
+    @Test
+    public void testAllowsHeadersWithQuotesInBetween() {
+        Concept codedConcept = testConceptService.createCodedConcept("Multi \"Select\" Coded", "SSC Answer 1", "SSC Answer 2");
+        java.util.List<String> multiSelectConcept = java.util.Collections.singletonList(codedConcept.getName());
+        encounterType = new EncounterTypeBuilder()
+                .withName("Encounter Type")
+                .withUuid(java.util.UUID.randomUUID().toString())
+                .build();
+        String formName = "Test Encounter Form " + java.util.UUID.randomUUID();
+        formMapping = testFormService.createEncounterForm(subjectType, encounterType, formName, Collections.emptyList(), multiSelectConcept);
+
+        String[] headers = {
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.VISIT_DATE,
+                EncounterHeadersCreator.SUBJECT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                "\"Multi \"Select\" Coded\""
+        };
+        assertDoesNotThrow(() -> {
+            TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS, new ArrayList<>());
+        });
+    }
 }
