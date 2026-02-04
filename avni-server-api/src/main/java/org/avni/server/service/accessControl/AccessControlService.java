@@ -293,6 +293,9 @@ public class AccessControlService {
 
         if (!currentUser.isIgnoreSyncSettingsInDEA() && subjectType.isAnySyncRegistrationConceptUsable()) {
             List<UserSyncSettings> syncSettingsList = getSyncSettingsList(currentUser.getSyncSettings());
+            if (syncSettingsList == null) {
+                return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.UserSyncAttributeNotConfigured);
+            }
             UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
             if (userSyncSettingsForSubjectType == null) {
                 return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.UserSyncAttributeNotConfigured);
