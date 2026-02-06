@@ -35,4 +35,16 @@ public class AccountAdminService {
             accountAdminRepository.save(accountAdmin);
         });
     }
+
+    public void syncAccountAdmins(User user, List<Long> accountIds) {
+        createAccountAdmins(user, accountIds);
+
+        List<AccountAdmin> existingAccountAdmins = accountAdminRepository.findByUser_Id(user.getId());
+        existingAccountAdmins.stream()
+                .filter(accountAdmin -> !accountIds.contains(accountAdmin.getAccount().getId()))
+                .forEach(accountAdmin -> {
+                    logger.info("Deleting account admin {} for account {}", user.getName(), accountAdmin.getAccount().getId());
+                    accountAdminRepository.delete(accountAdmin);
+                });
+    }
 }

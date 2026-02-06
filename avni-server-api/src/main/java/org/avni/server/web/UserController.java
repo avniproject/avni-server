@@ -167,7 +167,7 @@ public class UserController {
 
             idpServiceFactory.getIdpService(user, userService.isAdmin(user)).updateUser(user);
             userService.save(user);
-            accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
+            accountAdminService.syncAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
             if (user.getOrganisationId() != null &&
                     organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
