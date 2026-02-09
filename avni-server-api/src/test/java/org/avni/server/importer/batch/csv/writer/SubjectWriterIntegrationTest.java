@@ -471,6 +471,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         singleSelectConcepts.add(testConceptService.createNumericConceptWithAbsolutes("Numeric Concept", 1.0, 200.0));
         singleSelectConcepts.add(testConceptService.createConcept("Notes Concept", ConceptDataType.Notes));
         singleSelectConcepts.add(testConceptService.createConcept("Concept \"With\" Quotes", ConceptDataType.Text));
+        singleSelectConcepts.add(testConceptService.createConcept("\"Fully Quoted\"", ConceptDataType.Text));
 
         subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
@@ -769,6 +770,49 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         ObservationCollection observations = subject.getObservations();
         Concept quotedConcept = conceptRepository.findByName("Concept \"With\" Quotes");
         assertEquals("some value with quotes test", observations.get(quotedConcept.getUuid()));
+    }
+
+    @Test
+    public void shouldHandleConceptNameFullyWrappedInQuotes() throws Exception {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        // For concept named "Fully Quoted" (with quotes as part of the name),
+        // the raw CSV header would be """Fully Quoted""" (escaped quotes)
+        // After CSV parsing (DelimitedLineTokenizer), it becomes "Fully Quoted"
+        // The header() method simulates this by applying unDoubleQuote
+        String[] headers = header(
+                "Id from previous system",
+                "Subject Type",
+                "Date Of Registration",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Gender",
+                "State",
+                "District",
+                "\"\"\"Fully Quoted\"\"\""  // Raw CSV escaped value for concept "Fully Quoted"
+        );
+        String[] data = dataRow(
+                "FULLY_QUOTED_ID",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "Alice",
+                "Smith",
+                "1992-05-15",
+                "true",
+                "Female",
+                "Bihar",
+                "District1",
+                "value for fully quoted concept"
+        );
+        subjectWriter.write(Chunk.of(new Row(headers, data)), "Subject---SubjectType1", getLocationHierarchy());
+        Individual subject = individualRepository.findByLegacyId("FULLY_QUOTED_ID");
+        assertEquals("Alice", subject.getFirstName());
+        ObservationCollection observations = subject.getObservations();
+        Concept fullyQuotedConcept = conceptRepository.findByName("\"Fully Quoted\"");
+        assertEquals("value for fully quoted concept", observations.get(fullyQuotedConcept.getUuid()));
     }
 
     @Test

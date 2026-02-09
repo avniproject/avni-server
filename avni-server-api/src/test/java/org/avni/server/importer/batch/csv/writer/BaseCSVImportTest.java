@@ -1,10 +1,17 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.util.S;
+
+import java.util.Arrays;
 
 public abstract class BaseCSVImportTest extends AbstractControllerIntegrationTest {
     protected String[] header(String... cells) {
-        return cells;
+        // Apply trim and unDoubleQuote to simulate what DelimitedLineTokenizer does in production
+        return Arrays.stream(cells)
+                .map(String::trim)
+                .map(S::unDoubleQuote)
+                .toArray(String[]::new);
     }
 
     protected String[] dataRow(String... cells) {

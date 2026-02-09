@@ -111,7 +111,7 @@ public class ProgramEncounterHeadersCreatorIntegrationTest extends AbstractContr
                 EncounterHeadersCreator.VISIT_DATE,
                 EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
                 EncounterHeadersCreator.ENCOUNTER_TYPE,
-                "\"Single Select Coded\""
+                "Single Select Coded"
         };
         assertDoesNotThrow(() -> {
             TxnDataHeaderValidator.validateHeaders(headers, formMapping, encounterHeadersCreator, EncounterUploadMode.UPLOAD_VISIT_DETAILS, new ArrayList<>()

@@ -17,7 +17,6 @@ public class TxnDataHeaderValidator {
         List<String> headerList = Arrays.stream(headers)
                 .map(String::trim)
                 .map(String::toLowerCase)
-                .map(S::unDoubleQuote)
                 .toList();
         List<String> providedIntendedHeaders = new ArrayList<>(headerList);
 
