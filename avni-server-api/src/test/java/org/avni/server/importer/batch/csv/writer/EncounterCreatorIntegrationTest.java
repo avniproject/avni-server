@@ -68,7 +68,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 EncounterHeadersCreator.SUBJECT_ID,
                 EncounterHeadersCreator.ENCOUNTER_TYPE,
                 EncounterHeadersCreator.VISIT_DATE,
-                EncounterHeadersCreator.ENCOUNTER_LOCATION,
+                EncounterHeadersCreator.ENCOUNTER_COORDINATES,
                 "\"Single Select Coded\"",
                 "\"Multi Select Coded\"",
                 "\"Numeric Concept\""

@@ -172,7 +172,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         assertTrue(containsHeader(headers, SubjectHeadersCreator.id));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationDate));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
-        assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationLocation));
+        assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationCoordinates));
         assertTrue(containsHeader(headers, "Village"), "Should include Village");
         assertTrue(containsHeader(headers, "Panchayat"), "Should include Panchayat");
         assertTrue(containsHeader(headers, "Block"), "Should include Block");

@@ -27,7 +27,7 @@ public class EncounterResponse extends LinkedHashMap<String, Object> {
         encounterResponse.put(VOIDED, encounter.isVoided());
         encounterResponse.put("External ID", encounter.getLegacyId());
         encounterResponse.put("Encounter type", encounter.getEncounterType().getName());
-        Response.putIfPresent(encounterResponse, "Encounter location", encounter.getEncounterLocation());
+        Response.putIfPresent(encounterResponse, "Encounter Coordinates", encounter.getEncounterLocation());
         encounterResponse.put("Encounter date time", encounter.getEncounterDateTime());
         encounterResponse.put("Earliest scheduled date", encounter.getEarliestVisitDateTime());
         encounterResponse.put("Max scheduled date", encounter.getMaxVisitDateTime());

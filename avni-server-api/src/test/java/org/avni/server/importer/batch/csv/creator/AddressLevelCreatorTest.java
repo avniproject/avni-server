@@ -54,14 +54,11 @@ public class AddressLevelCreatorTest {
         verify(locationRepository).findByTitleIgnoreCaseAndType(eq("gp1"), eq(child), any());
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void ifNoAddressFound() {
         Row row = new Row(new String[]{"GP"}, new String[]{"non-existentAddress"});
-        AddressLevel gp1AddressLevel = new AddressLevelBuilder().title("gp1").type(child).build();
-
-        when(locationRepository.findByTitleIgnoreCaseAndType(eq("gp1"), eq(child), any())).thenReturn(Collections.singletonList(gp1AddressLevel));
-        AddressLevel addressLevel = addressLevelCreator.findAddressLevel(row, new AddressLevelTypes(child, parent));
-        assertThat(addressLevel).isNull();
+        when(locationRepository.findByTitleIgnoreCaseAndType(eq("non-existentAddress"), eq(child), any())).thenReturn(Collections.emptyList());
+        addressLevelCreator.findAddressLevel(row, new AddressLevelTypes(child, parent));
     }
 
     @Test

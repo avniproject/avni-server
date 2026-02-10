@@ -73,7 +73,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         return header("Id from previous system",
                 "Subject Type",
                 "Date Of Registration",
-                "Registration Location",
+                "Registration Coordinates",
                 "First Name",
                 "Last Name",
                 "Date Of Birth",
@@ -124,7 +124,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         return header("Id from previous system",
                 "Subject Type",
                 "Date Of Registration",
-                "Registration Location",
+                "Registration Coordinates",
                 "First Name",
                 "Last Name",
                 "Date Of Birth",
@@ -153,7 +153,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         return header("Id from previous system",
                 "Subject Type",
                 "Date Of Registration",
-                "Registration Location",
+                "Registration Coordinates",
                 "First Name",
                 "Last Name",
                 "Date Of Birth",
@@ -380,7 +380,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "qg text",
                 "456",
                 "789");
-        failure(validHeader(), dataRow, "subject registration location provided not found., value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender'");
+        failure(validHeader(), dataRow, "None of the expected address levels provided. Expected one of: [District], value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender'");
     }
 
     @Test
@@ -389,7 +389,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         failure(header("Id from previou system",
                         "Subject Type",
                         "Date Of Registratio",
-                        "Registration Location",
+                        "Registration Coordinates",
                         "First Name",
                         "Last Name",
                         "Date Of Birt",
@@ -419,7 +419,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         String[] headers = header(" Id from previous system ",
                 "Subject Type",
                 "Date Of Registration ",
-                "Registration Location ",
+                "Registration Coordinates ",
                 " First Name",
                 "Last Name",
                 "Date Of Birth",
@@ -623,7 +623,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         String[] dataRow = dataRowWithNoValueForObs();
         dataRow[11] = "District3"; //location is not found
-        failure(validHeader(), dataRow, "Subject registration location provided not found.");
+        failure(validHeader(), dataRow, "The District 'District3' is not set up in Avni within 'State'");
     }
 
     @Test
@@ -740,7 +740,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Id from previous system",
                 "Subject Type",
                 "Date Of Registration",
-                "Registration Location",
+                "Registration Coordinates",
                 "First Name",
                 "Last Name",
                 "Date Of Birth",
@@ -783,7 +783,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Id from previous system",
                 "Subject Type",
                 "Date Of Registration",
-                "Registration Location",
+                "Registration Coordinates",
                 "First Name",
                 "Last Name",
                 "Date Of Birth",
@@ -822,7 +822,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "Id from previous system",
                 "Subject Type",
                 "Date Of Registration",
-                "Registration Location",
+                "Registration Coordinates",
                 "First Name",
                 "Last Name",
                 "Date Of Birth",

@@ -33,16 +33,37 @@ public class AddressLevelCreator {
                 .findFirst()
                 .orElse(null);
         if (firstMatch == null) {
-            return null;
+            String availableTypes = orderedLocationTypes.stream()
+                    .map(AddressLevelType::getName)
+                    .reduce((a, b) -> a + ", " + b)
+                    .orElse("");
+            
+            String errorMessage = availableTypes.isEmpty()
+                    ? "No address levels setup in the organisation"
+                    : String.format("None of the expected address levels provided. Expected one of: [%s]", availableTypes);
+            
+            throw new RuntimeException(errorMessage);
         }
 
         String title = row.get(firstMatch.getName());
         List<AddressLevel> matchingAddressLevels = locationRepository.findByTitleIgnoreCaseAndType(title, firstMatch, PageRequest.of(0, 2));
         switch (matchingAddressLevels.size()) {
             case 0:
-                return null;
+                List<String> parentLineage = new ArrayList<>();
+                AddressLevelType currentParent = firstMatch.getParent();
+                while (currentParent != null) {
+                    parentLineage.add(currentParent.getName());
+                    currentParent = currentParent.getParent();
+                }
+                
+                String errorMessage = parentLineage.isEmpty() 
+                    ? String.format("The %s '%s' is not set up in Avni", firstMatch.getName(), title)
+                    : String.format("The %s '%s' is not set up in Avni within '%s'", 
+                        firstMatch.getName(), title, String.join(" , ", parentLineage));
+                
+                throw new RuntimeException(errorMessage);
             case 1:
-                return matchingAddressLevels.get(0);
+                return matchingAddressLevels.getFirst();
             default:
                 return getAddressLevelByLineage(row, new AddressLevelTypes(addressLevelTypeRepository.getAllAddressLevelTypes()));
         }

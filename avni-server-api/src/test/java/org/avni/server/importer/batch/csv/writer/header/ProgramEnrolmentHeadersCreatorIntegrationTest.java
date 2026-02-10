@@ -82,7 +82,7 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
 
         Arrays.sort(headers);
         Arrays.sort(description);
-        assertEquals("Enrolment Date,Enrolment Location,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
+        assertEquals("Enrolment Coordinates,Enrolment Date,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
         assertEquals("\"Optional. Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172).\",Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.,Mandatory. Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file).,Mandatory. TestProgram.,Optional. Can be used to later identify the entry.", String.join(",", description));
     }
 
@@ -149,7 +149,7 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
         // sort headers
         Arrays.sort(headers);
         Arrays.sort(description);
-        assertEquals("\"Coded Concept Multi Select\",\"Coded Concept Single Select\",\"Date Concept\",\"Notes Concept\",\"Numeric Concept\",\"Text Concept (This should remain a single cell , not a different cell)\",\"Text,Concept\",Enrolment Date,Enrolment Location,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
+        assertEquals("\"Coded Concept Multi Select\",\"Coded Concept Single Select\",\"Date Concept\",\"Notes Concept\",\"Numeric Concept\",\"Text Concept (This should remain a single cell , not a different cell)\",\"Text,Concept\",Enrolment Coordinates,Enrolment Date,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
         assertEquals("\"Optional. Allowed values: {Ans 1, Ans 2} Format: Separate multiple values by a comma.\",\"Optional. Allowed values: {Answer 1, Answer 2} Only single value allowed.\",\"Optional. Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172).\",Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.,Mandatory. Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file).,Mandatory. TestProgram.,Optional,Optional. Any Text.,Optional. Any Text.,Optional. Can be used to later identify the entry.,Optional. Format: DD-MM-YYYY.,Optional. Min value allowed: 2.0 Max value allowed: 5.0.", String.join(",", description));
     }
 

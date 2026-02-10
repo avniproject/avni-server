@@ -16,7 +16,7 @@ public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCr
     public static final String VISIT_DATE = "Visit Date";
     public static final String EARLIEST_VISIT_DATE = "Earliest Visit Date";
     public static final String MAX_VISIT_DATE = "Max Visit Date";
-    public static final String ENCOUNTER_LOCATION = "Encounter Location";
+    public static final String ENCOUNTER_COORDINATES = "Encounter Coordinates";
     public static final String CANCEL_LOCATION = "Cancel Location";
 
     private final EncounterHeaderStrategyFactory strategyFactory;

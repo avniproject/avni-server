@@ -101,7 +101,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         if (enrolmentDate != null) programEnrolment.setEnrolmentDateTime(enrolmentDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();
-        programEnrolment.setEnrolmentLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeadersCreator.enrolmentLocation, allErrorMsgs));
+        programEnrolment.setEnrolmentLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeadersCreator.enrolmentCoordinates, allErrorMsgs));
         programEnrolment.setProgram(program);
 
         programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations(), formMapping));

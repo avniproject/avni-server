@@ -20,7 +20,7 @@ public class ApiSubjectRequest {
     public static final String MIDDLE_NAME = "Middle name";
     public static final String LAST_NAME = "Last name";
     public static final String PROFILE_PICTURE = "Profile picture";
-    public static final String REGISTRATION_LOCATION = "Registration location";
+    public static final String REGISTRATION_LOCATION = "Registration Coordinates";
     public static final String SUBJECT_LOCATION = "Subject location";
     public static final String OBSERVATIONS = "observations";
 

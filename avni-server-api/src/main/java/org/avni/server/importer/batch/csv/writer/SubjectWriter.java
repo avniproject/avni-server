@@ -104,7 +104,7 @@ public class SubjectWriter extends EntityWriter {
         setRegistrationDate(individual, row, allErrorMsgs);
 
         LocationCreator locationCreator = new LocationCreator();
-        individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
+        individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationCoordinates, allErrorMsgs));
 
         AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
         setAddressLevel(row, individual, registrationLocationTypes, allErrorMsgs);
@@ -123,12 +123,12 @@ public class SubjectWriter extends EntityWriter {
     }
 
     private void setAddressLevel(Row row, Individual individual, AddressLevelTypes registrationLocationTypes, List<String> allErrorMsgs) {
-        AddressLevel addressLevel = addressLevelCreator.findAddressLevel(row, registrationLocationTypes);
-        if (addressLevel == null) {
-            allErrorMsgs.add("Subject registration location provided not found.");
-            return;
+        try {
+            AddressLevel addressLevel = addressLevelCreator.findAddressLevel(row, registrationLocationTypes);
+            individual.setAddressLevel(addressLevel);
+        } catch (RuntimeException e) {
+            allErrorMsgs.add(e.getMessage());
         }
-        individual.setAddressLevel(addressLevel);
     }
 
     private static void setFirstName(Row row, Individual individual, List<String> allErrorMsgs) {

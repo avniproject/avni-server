@@ -12,7 +12,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
     public final static String subjectId = "Subject Id from previous system";
     public final static String programHeader = "Program";
     public final static String enrolmentDate = "Enrolment Date";
-    public final static String enrolmentLocation = "Enrolment Location";
+    public final static String enrolmentCoordinates = "Enrolment Coordinates";
 
     @Override
     protected List<HeaderField> buildFields(FormMapping formMapping, Object mode) {
@@ -22,7 +22,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
         fields.add(new HeaderField(subjectId, "Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file)", true, null, null, null));
         fields.add(new HeaderField(programHeader, formMapping.getProgram().getName(), true, null, null, null, true));
         fields.add(new HeaderField(enrolmentDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
-        fields.add(new HeaderField(enrolmentLocation, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
+        fields.add(new HeaderField(enrolmentCoordinates, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
 
         fields.addAll(generateConceptFields(formMapping, false));
         fields.addAll(generateDecisionConceptFields(formMapping.getForm()));

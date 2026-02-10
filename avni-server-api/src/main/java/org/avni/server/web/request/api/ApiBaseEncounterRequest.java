@@ -11,7 +11,7 @@ import static org.avni.server.web.api.CommonFieldNames.VOIDED;
 public abstract class ApiBaseEncounterRequest {
     public static final String EXTERNAL_ID = "External ID";
     public static final String ENCOUNTER_TYPE = "Encounter type";
-    public static final String ENCOUNTER_LOCATION = "Encounter location";
+    public static final String ENCOUNTER_LOCATION = "Encounter Coordinates";
     public static final String CANCEL_LOCATION = "Cancel location";
     public static final String ENCOUNTER_DATE_TIME = "Encounter date time";
     public static final String EARLIEST_SCHEDULED_DATE = "Earliest scheduled date";
