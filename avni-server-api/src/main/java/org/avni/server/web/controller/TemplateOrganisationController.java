@@ -141,6 +141,7 @@ public class TemplateOrganisationController {
 
     @RequestMapping(value = "/web/templateOrganisations/apply/status", method = RequestMethod.GET)
     public Map<String, BatchJobStatus> applyTemplateJobStatus() {
+        accessControlService.assertIsNotSuperAdmin();
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         return templateOrganisationService.getApplyTemplateJobStatus(UserContextHolder.getOrganisation());
     }
