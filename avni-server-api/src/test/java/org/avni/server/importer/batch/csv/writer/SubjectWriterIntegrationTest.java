@@ -623,7 +623,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
         String[] dataRow = dataRowWithNoValueForObs();
         dataRow[11] = "District3"; //location is not found
-        failure(validHeader(), dataRow, "The District 'District3' is not set up in Avni within 'State'");
+        failure(validHeader(), dataRow, "The District 'District3' is not set up in Avni within 'Bihar'");
     }
 
     @Test
