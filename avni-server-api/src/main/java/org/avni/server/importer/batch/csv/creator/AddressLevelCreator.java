@@ -52,7 +52,7 @@ public class AddressLevelCreator {
                 List<String> parentLineage = new ArrayList<>();
                 AddressLevelType currentParent = firstMatch.getParent();
                 while (currentParent != null) {
-                    parentLineage.add(currentParent.getName());
+                    parentLineage.add(row.get(currentParent.getName()));
                     currentParent = currentParent.getParent();
                 }
                 
