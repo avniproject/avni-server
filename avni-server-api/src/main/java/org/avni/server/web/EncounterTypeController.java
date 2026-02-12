@@ -2,10 +2,15 @@ package org.avni.server.web;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.application.Form;
+import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
+import org.avni.server.dao.ProgramRepository;
+import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.EncounterType;
+import org.avni.server.domain.Program;
 import org.avni.server.domain.OperationalEncounterType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.util.EntityUtil;
@@ -40,6 +45,9 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     private final EncounterTypeRepository encounterTypeRepository;
     private final FormService formService;
     private final FormMappingService formMappingService;
+    private final FormRepository formRepository;
+    private final FormMappingRepository formMappingRepository;
+    private final ProgramRepository programRepository;
     private final AccessControlService accessControlService;
 
     @Autowired
@@ -47,12 +55,19 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
                                    OperationalEncounterTypeRepository operationalEncounterTypeRepository,
                                    EncounterTypeService encounterTypeService,
                                    FormService formService,
-                                   FormMappingService formMappingSevice, AccessControlService accessControlService) {
+                                   FormMappingService formMappingSevice,
+                                   FormRepository formRepository,
+                                   FormMappingRepository formMappingRepository,
+                                   ProgramRepository programRepository,
+                                   AccessControlService accessControlService) {
         this.encounterTypeRepository = encounterTypeRepository;
         this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
         this.encounterTypeService = encounterTypeService;
         this.formService = formService;
         this.formMappingService = formMappingSevice;
+        this.formRepository = formRepository;
+        this.formMappingRepository = formMappingRepository;
+        this.programRepository = programRepository;
         this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
@@ -164,11 +179,40 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
                     .body(ReactAdminUtil.generateJsonError(String.format("Subject Type with id '%d' not found", id)));
 
         EncounterType encounterType = operationalEncounterType.getEncounterType();
+
+        FormMapping existingPEMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
+        FormMapping existingPCMapping = formMappingService.find(encounterType, FormType.ProgramEncounterCancellation);
+        boolean isProgramRemoval = (existingPEMapping != null || existingPCMapping != null) && request.getProgramUuid() == null;
+
+        FormMapping existingGEMapping = formMappingService.find(encounterType, FormType.Encounter);
+        FormMapping existingECMapping = formMappingService.find(encounterType, FormType.IndividualEncounterCancellation);
+        boolean isProgramAddition = (existingGEMapping != null || existingECMapping != null) && request.getProgramUuid() != null;
+
+        if (isProgramRemoval) {
+            ResponseEntity validationError = validateFormTransition(request, existingPEMapping, existingPCMapping,
+                    "The program cannot be removed because %s associated with more than one encounter type.");
+            if (validationError != null) return validationError;
+        }
+
+        if (isProgramAddition) {
+            ResponseEntity validationError = validateFormTransition(request, existingGEMapping, existingECMapping,
+                    "A program cannot be added because %s associated with more than one encounter type.");
+            if (validationError != null) return validationError;
+        }
+
         buildEncounter(encounterType, request);
         encounterTypeRepository.save(encounterType);
 
         operationalEncounterType.setName(request.getName());
         operationalEncounterTypeRepository.save(operationalEncounterType);
+
+        if (isProgramRemoval) {
+            handleFormTransition(request, existingPEMapping, existingPCMapping, FormType.Encounter, FormType.IndividualEncounterCancellation, null);
+        }
+
+        if (isProgramAddition) {
+            handleFormTransition(request, existingGEMapping, existingECMapping, FormType.ProgramEncounter, FormType.ProgramEncounterCancellation, programRepository.findByUuid(request.getProgramUuid()));
+        }
 
         saveFormsAndMapping(request, encounterType);
 
@@ -219,5 +263,71 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
         formMappingService.voidExistingFormMappings(new FormMappingParameterObject(null, null, encounterType.getUuid()), null);
 
         return ResponseEntity.ok(null);
+    }
+
+    private ResponseEntity validateFormTransition(EncounterTypeContractWeb request,
+                                                  FormMapping existingEncounterMapping,
+                                                  FormMapping existingECancellationMapping,
+                                                  String errorMessageTemplate) {
+        List<String> sharedFormNames = new java.util.ArrayList<>();
+        if (existingEncounterMapping != null && isSharedForm(existingEncounterMapping, request.getProgramEncounterFormUuid())) {
+            sharedFormNames.add(existingEncounterMapping.getForm().getName());
+        }
+        if (existingECancellationMapping != null && isSharedForm(existingECancellationMapping, request.getProgramEncounterCancelFormUuid())) {
+            sharedFormNames.add(existingECancellationMapping.getForm().getName());
+        }
+        if (!sharedFormNames.isEmpty()) {
+            String formsText;
+            if (sharedFormNames.size() == 1) {
+                formsText = String.format("the form \"%s\" is", sharedFormNames.get(0));
+            } else {
+                formsText = String.format("the forms \"%s\" and \"%s\" are", sharedFormNames.get(0), sharedFormNames.get(1));
+            }
+            return ResponseEntity.badRequest().body(
+                    ReactAdminUtil.generateJsonError(String.format(errorMessageTemplate, formsText)));
+        }
+        return null;
+    }
+
+    private boolean isSharedForm(FormMapping existingMapping, String newFormUuid) {
+        Form existingForm = existingMapping.getForm();
+        if (newFormUuid == null || !newFormUuid.equals(existingForm.getUuid())) {
+            return false;
+        }
+        List<FormMapping> nonVoidedMappings = formMappingRepository.findByFormIdAndIsVoidedFalse(existingForm.getId());
+        return nonVoidedMappings.size() > 1;
+    }
+
+    private void handleFormTransition(EncounterTypeContractWeb request,
+                                      FormMapping existingEncounterMapping,
+                                      FormMapping existingCancellationMapping,
+                                      FormType targetEncounterFormType,
+                                      FormType targetCancellationFormType,
+                                      Program program) {
+        if (existingEncounterMapping != null) {
+            convertFormAndUpdateMapping(existingEncounterMapping, request.getProgramEncounterFormUuid(), targetEncounterFormType, program);
+            if (request.getProgramEncounterFormUuid() == null) {
+                request.setProgramEncounterFormUuid(existingEncounterMapping.getForm().getUuid());
+            }
+        }
+        if (existingCancellationMapping != null) {
+            convertFormAndUpdateMapping(existingCancellationMapping, request.getProgramEncounterCancelFormUuid(), targetCancellationFormType, program);
+            if (request.getProgramEncounterCancelFormUuid() == null) {
+                request.setProgramEncounterCancelFormUuid(existingCancellationMapping.getForm().getUuid());
+            }
+        }
+    }
+
+    private void convertFormAndUpdateMapping(FormMapping existingMapping, String newFormUuid, FormType targetFormType, Program program) {
+        Form existingForm = existingMapping.getForm();
+        boolean isSameForm = newFormUuid != null && newFormUuid.equals(existingForm.getUuid());
+        if (isSameForm) {
+            existingForm.setFormType(targetFormType);
+            formRepository.saveAndFlush(existingForm);
+            existingMapping.setProgram(program);
+        } else {
+            existingMapping.setVoided(true);
+        }
+        formMappingRepository.saveFormMapping(existingMapping);
     }
 }
