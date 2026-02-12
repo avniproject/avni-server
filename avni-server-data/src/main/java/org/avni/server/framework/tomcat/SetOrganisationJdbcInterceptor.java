@@ -67,22 +67,10 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
         Connection connection = (Connection) proxy;
         logger.trace("Invoked operation {} on Connection: {}", method.getName(), connection.getMetaData().getConnection().hashCode());
         if ("close".equals(method.getName())) {
-
-            if (!connection.getAutoCommit()) {
-                logger.warn("Connection being returned to pool with active transaction. ConnectionId: {}, Rolling back.", connection.hashCode());
-                connection.rollback();
-                connection.setAutoCommit(true);
-            }
-            if (connection.getTransactionIsolation() != Connection.TRANSACTION_READ_COMMITTED) {
-                logger.debug("Resetting transaction isolation level. ConnectionId: {}", connection.hashCode());
-                connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-            }
-            
             Statement statement = connection.createStatement();
             statement.execute("RESET ROLE");
             statement.close();
             logger.trace("Role Reset Done");
-
         }
         return super.invoke(proxy, method, args);
     }
