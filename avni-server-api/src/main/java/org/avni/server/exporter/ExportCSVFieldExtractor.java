@@ -181,6 +181,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         headers.append(",").append("ind.date_of_birth");
         headers.append(",").append("ind.registration_date");
         headers.append(",").append("ind.registration_location");
+        headers.append(",").append("ind.subject_location");
         headers.append(",").append("ind.gender");
         addAddressLevelColumns(headers);
         if(subjectType.isGroup()) {
