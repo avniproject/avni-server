@@ -221,9 +221,7 @@ public class ObservationCreator {
                 return handleDateValue(answerValue, errorMsgs, concept);
             case DateTime:
                 return handleDateTimeValue(answerValue, errorMsgs, concept);
-            case Image:
-            case ImageV2:
-            case Video:
+            case Image, ImageV2, Video, Signature:
                 return handleMediaValue(formElement, answerValue, errorMsgs, oldValue);
             case Subject:
                 return individualService.getObservationValueForUpload(formElement, answerValue);
