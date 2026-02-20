@@ -808,7 +808,7 @@ public class OrganisationService {
         }
         for (Form form : forms) {
             FormContract formContract = FormContract.fromForm(form);
-            addFileToZip(zos, String.format("forms/%s.json", form.getName().replaceAll("/", "_")), formContract);
+            addFileToZip(zos, String.format("forms/%s_%s.json", form.getName().replaceAll("/", "_"), form.getUuid()), formContract);
         }
     }
 

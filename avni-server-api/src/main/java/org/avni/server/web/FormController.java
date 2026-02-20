@@ -154,7 +154,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @PostMapping(value = "/web/forms")
     @Transactional
     public ResponseEntity createWeb(@RequestBody CreateUpdateFormRequest request) {
-        validateCreate(request);
         FormBuilder formBuilder = new FormBuilder(null);
         Form form = formBuilder
                 .withName(request.getName())
@@ -188,12 +187,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         return ResponseEntity.ok(null);
     }
 
-    private void validateCreate(CreateUpdateFormRequest request) {
-        if (formRepository.findByNameIgnoreCase(request.getName()) != null) {
-            throw new BadRequestError("Form with name %s already exists", request.getName());
-        }
-    }
-
     @PutMapping(value = "web/forms/{formUUID}/metadata")
     @Transactional
     public ResponseEntity updateMetadata(@RequestBody CreateUpdateFormRequest request, @PathVariable String formUUID) {
@@ -223,10 +216,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         Form byUuid = formRepository.findByUuid(requestUUID);
         if (byUuid == null) {
             throw new BadRequestError("Form with uuid %s does not exist", requestUUID);
-        }
-        Form byName = formRepository.findByNameIgnoreCase(request.getName());
-        if (byName != null && !byName.getUuid().equals(requestUUID)) {
-            throw new BadRequestError("Can not update form name to %s because form by that name already exists", request.getName());
         }
         return byUuid;
     }
