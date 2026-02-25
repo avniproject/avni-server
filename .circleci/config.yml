@@ -306,7 +306,6 @@ workflows:
         filters:
           branches:
             ignore:
-              - master
               - java-upgrade
               - 11-tc-1
     - PRERELEASE_deploy:
@@ -328,7 +327,6 @@ workflows:
         filters:
           branches:
             ignore:
-              - master
               - java-upgrade
               - 11-tc-1
     - PROD_deploy:
