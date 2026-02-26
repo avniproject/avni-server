@@ -1,6 +1,8 @@
 package org.avni.messaging.service;
 
+import org.avni.messaging.contract.StartFlowForContactRequest;
 import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.messaging.repository.ManualMessageRepository;
@@ -27,6 +29,7 @@ import org.mockito.Mock;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -64,6 +67,9 @@ public class MessagingServiceTest {
     @Mock
     private EntityTypeRetrieverService entityTypeRetrieverService;
 
+    @Mock
+    private FlowRequestQueueService flowRequestQueueService;
+
     @Captor
     ArgumentCaptor<MessageReceiver> messageReceiver;
 
@@ -77,7 +83,7 @@ public class MessagingServiceTest {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
                 messageRequestService, messageRequestQueueRepository,
-                manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null, entityTypeRetrieverService);
+                manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null, entityTypeRetrieverService, flowRequestQueueService);
         scheduledSinceDays = "4";
     }
 
@@ -232,5 +238,49 @@ public class MessagingServiceTest {
         verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.User), eq(userId));
         verify(ruleService).executeScheduleRuleForEntityTypeUser(eq(userId), eq(scheduleRule));
         verify(messageRequestService).createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, userId, scheduledDateTime);
+    }
+
+    @Test
+    public void shouldSaveFlowRequestOnSuccessfulStartFlow() throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException, GlificException {
+        String receiverId = "1";
+        String flowId = "test-flow-id";
+        MessageReceiver receiver = new MessageReceiver(ReceiverType.Subject, 1L);
+
+        StartFlowForContactRequest request = new StartFlowForContactRequest();
+        request.setReceiverId(receiverId);
+        request.setReceiverType(ReceiverType.Subject);
+        request.setFlowId(flowId);
+
+        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, 1L)).thenReturn(receiver);
+
+        messagingService.sendStartFlowForContactSynchronously(request);
+
+        verify(individualMessagingService).invokeStartFlowForContact(receiver, flowId);
+        verify(flowRequestQueueService).saveFlowRequest(receiver, flowId);
+    }
+
+    @Test
+    public void shouldNotSaveFlowRequestWhenStartFlowFails() throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException, GlificException {
+        String receiverId = "1";
+        String flowId = "test-flow-id";
+        MessageReceiver receiver = new MessageReceiver(ReceiverType.Subject, 1L);
+
+        StartFlowForContactRequest request = new StartFlowForContactRequest();
+        request.setReceiverId(receiverId);
+        request.setReceiverType(ReceiverType.Subject);
+        request.setFlowId(flowId);
+
+        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, 1L)).thenReturn(receiver);
+        doThrow(new PhoneNumberNotAvailableOrIncorrectException("No phone number"))
+                .when(individualMessagingService).invokeStartFlowForContact(receiver, flowId);
+
+        try {
+            messagingService.sendStartFlowForContactSynchronously(request);
+            fail("Expected PhoneNumberNotAvailableOrIncorrectException");
+        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
+            // expected
+        }
+
+        verify(flowRequestQueueService, never()).saveFlowRequest(any(), any());
     }
 }

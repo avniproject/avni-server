@@ -46,6 +46,7 @@ public class MessagingService {
 
     private final IndividualMessagingService individualMessagingService;
     private final EntityTypeRetrieverService entityTypeRetrieverService;
+    private final FlowRequestQueueService flowRequestQueueService;
 
     @Autowired
     public MessagingService(MessageRuleRepository messageRuleRepository, MessageReceiverService messageReceiverService,
@@ -53,7 +54,8 @@ public class MessagingService {
                             MessageRequestQueueRepository messageRequestQueueRepository,
                             ManualMessageRepository manualMessageRepository,
                             RuleService ruleService, GroupMessagingService groupMessagingService,
-                            IndividualMessagingService individualMessagingService, Bugsnag bugsnag, EntityTypeRetrieverService entityTypeRetrieverService) {
+                            IndividualMessagingService individualMessagingService, Bugsnag bugsnag,
+                            EntityTypeRetrieverService entityTypeRetrieverService, FlowRequestQueueService flowRequestQueueService) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
@@ -64,6 +66,7 @@ public class MessagingService {
         this.bugsnag = bugsnag;
         this.individualMessagingService = individualMessagingService;
         this.entityTypeRetrieverService = entityTypeRetrieverService;
+        this.flowRequestQueueService = flowRequestQueueService;
     }
 
     public MessageRule find(Long id) {
@@ -214,5 +217,6 @@ public class MessagingService {
         MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(startFlowForContactRequest.getReceiverType(),
                 Long.parseLong(startFlowForContactRequest.getReceiverId()));
         individualMessagingService.invokeStartFlowForContact(messageReceiver, startFlowForContactRequest.getFlowId());
+        flowRequestQueueService.saveFlowRequest(messageReceiver, startFlowForContactRequest.getFlowId());
     }
 }
