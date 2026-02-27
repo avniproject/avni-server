@@ -283,7 +283,15 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
 
     private Object processDateObs(Object val) {
         if (val == null) return "";
-        return DateTimeUtil.getDateForTimeZone(new DateTime(String.valueOf(val)), timeZone);
+        DateTime dateTime;
+        // handle old data where dates were stored as arrays [year, month, day] by bulk upload
+        if (val instanceof List) {
+            List<Integer> dateArray = (List<Integer>) val;
+            dateTime = new DateTime(dateArray.get(0), dateArray.get(1), dateArray.get(2), 0, 0);
+        } else {
+            dateTime = new DateTime(String.valueOf(val));
+        }
+        return DateTimeUtil.getDateForTimeZone(dateTime, timeZone);
     }
 
     private List<Object> processCodedObs(String formType, Object val, FormElement formElement) {

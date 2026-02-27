@@ -1,7 +1,7 @@
 package org.avni.server.framework.hibernate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 public abstract class AbstractJsonbUserType<T> extends AbstractUserType<T> implements UserType<T> {
-    public final static ObjectMapper mapper = new ObjectMapper().registerModule(new JodaModule());
+    public final static ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
 
     @Override
     public int getSqlType() {
