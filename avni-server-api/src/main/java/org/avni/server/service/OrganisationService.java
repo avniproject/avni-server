@@ -389,6 +389,7 @@ public class OrganisationService {
                 "export_job_parameters",
                 "manual_message",
                 "message_request_queue",
+                "flow_request_queue",
                 "message_receiver",
                 "rule_failure_log"
         );
