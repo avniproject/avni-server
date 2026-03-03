@@ -29,7 +29,6 @@ import org.mockito.Mock;
 import java.util.ArrayList;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -241,7 +240,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSaveFlowRequestOnSuccessfulStartFlow() throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException, GlificException {
+    public void shouldSaveFlowRequestOnCreateFlowRequest() {
         String receiverId = "1";
         String flowId = "test-flow-id";
         MessageReceiver receiver = new MessageReceiver(ReceiverType.Subject, 1L);
@@ -253,34 +252,19 @@ public class MessagingServiceTest {
 
         when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, 1L)).thenReturn(receiver);
 
-        messagingService.sendStartFlowForContactSynchronously(request);
+        messagingService.createFlowRequest(request);
 
-        verify(individualMessagingService).invokeStartFlowForContact(receiver, flowId);
         verify(flowRequestQueueService).saveFlowRequest(receiver, flowId);
     }
 
     @Test
-    public void shouldNotSaveFlowRequestWhenStartFlowFails() throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException, GlificException {
-        String receiverId = "1";
-        String flowId = "test-flow-id";
+    public void shouldInvokeStartFlowForContact() throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException, GlificException {
         MessageReceiver receiver = new MessageReceiver(ReceiverType.Subject, 1L);
+        String flowId = "test-flow-id";
+        FlowRequest flowRequest = new FlowRequest(receiver, flowId, DateTime.now());
 
-        StartFlowForContactRequest request = new StartFlowForContactRequest();
-        request.setReceiverId(receiverId);
-        request.setReceiverType(ReceiverType.Subject);
-        request.setFlowId(flowId);
+        messagingService.invokeStartFlowForContact(flowRequest);
 
-        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, 1L)).thenReturn(receiver);
-        doThrow(new PhoneNumberNotAvailableOrIncorrectException("No phone number"))
-                .when(individualMessagingService).invokeStartFlowForContact(receiver, flowId);
-
-        try {
-            messagingService.sendStartFlowForContactSynchronously(request);
-            fail("Expected PhoneNumberNotAvailableOrIncorrectException");
-        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
-            // expected
-        }
-
-        verify(flowRequestQueueService, never()).saveFlowRequest(any(), any());
+        verify(individualMessagingService).invokeStartFlowForContact(receiver, flowId);
     }
 }
