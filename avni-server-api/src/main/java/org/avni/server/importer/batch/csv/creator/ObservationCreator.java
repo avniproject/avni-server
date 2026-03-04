@@ -293,7 +293,9 @@ public class ObservationCreator {
     private Object handleDateValue(String answerValue, List<String> errorMsgs, Concept concept) {
                 try {
                     String trimmed = answerValue.trim();
-                    return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed);
+                    // From mobile and webapp we store Timestamp (even dates have time)
+                    // However from bulk uploads we were storing an array (Joda LocalDate), this had to be made consistent
+                    return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed).toDateTimeAtStartOfDay(DateTimeUtil.IST).toString("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
                 } catch (IllegalArgumentException e) {
                     errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
                     return null;
