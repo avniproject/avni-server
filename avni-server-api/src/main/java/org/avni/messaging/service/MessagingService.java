@@ -211,14 +211,12 @@ public class MessagingService {
         }
     }
 
-    @Transactional
     public FlowRequest createFlowRequest(StartFlowForContactRequest startFlowForContactRequest) {
         MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(startFlowForContactRequest.getReceiverType(),
                 Long.parseLong(startFlowForContactRequest.getReceiverId()));
         return flowRequestQueueService.saveFlowRequest(messageReceiver, startFlowForContactRequest.getFlowId());
     }
 
-    @Transactional
     public void invokeStartFlowForContact(FlowRequest flowRequest)
             throws GlificNotConfiguredException, PhoneNumberNotAvailableOrIncorrectException, GlificException {
         individualMessagingService.invokeStartFlowForContact(flowRequest.getMessageReceiver(), flowRequest.getFlowId());
