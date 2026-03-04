@@ -9,6 +9,8 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.UserService;
+import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,10 +57,6 @@ public class MessageReceiverService {
     }
 
     public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
-        if (messageReceiver.getExternalId() != null) {
-            return messageReceiver;
-        }
-
         String phoneNumber = null, fullName = null;
         if (messageReceiver.getReceiverType() == ReceiverType.Subject) {
             Individual individual = individualService.findById(messageReceiver.getReceiverId());
@@ -68,6 +66,14 @@ public class MessageReceiverService {
             User user = userService.findById(messageReceiver.getReceiverId()).get();
             phoneNumber = user.getPhoneNumber();
             fullName = user.getName();
+        }
+
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion())) {
+            throw new PhoneNumberNotAvailableOrIncorrectException();
+        }
+
+        if (messageReceiver.getExternalId() != null) {
+            return messageReceiver;
         }
 
         String externalId = glificContactRepository.getOrCreateContact(phoneNumber, fullName);
