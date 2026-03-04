@@ -403,15 +403,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
 
     private Object processDateObs(Object val) {
         if(val == null) return "";
-        DateTime dateTime;
-        // handle old data where a were stored as arrays [year, month, day] by bulk upload
-        if (val instanceof List) {
-            List<Integer> dateArray = (List<Integer>) val;
-            dateTime = new DateTime(dateArray.get(0), dateArray.get(1), dateArray.get(2), 0, 0);
-        } else {
-            dateTime = new DateTime(String.valueOf(val));
-        }
-        return getDateForTimeZone(dateTime);
+        return getDateForTimeZone(new DateTime(String.valueOf(val)));
     }
 
     private DateTime getDateForTimeZone(DateTime dateTime) {

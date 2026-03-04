@@ -412,6 +412,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             existingConceptContracts.put(entry.getKey(), ConceptExport.fromConcept(entry.getValue()));
         }
 
+        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> incomingMaps = new HashMap<>();
         for (Map.Entry<String, ConceptContract> entry : incomingConceptMap.entrySet()) {
             incomingMaps.put(entry.getKey(), objectMapper.convertValue(entry.getValue(), Map.class));
