@@ -1,5 +1,6 @@
 package org.avni.messaging.service;
 
+import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
@@ -68,8 +69,11 @@ public class MessageReceiverService {
             fullName = user.getName();
         }
 
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            throw new PhoneNumberNotAvailableOrIncorrectException("Phone number not available for " + fullName, MessageDeliveryStatus.NotSentNoPhoneNumberInAvni);
+        }
         if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion())) {
-            throw new PhoneNumberNotAvailableOrIncorrectException();
+            throw new PhoneNumberNotAvailableOrIncorrectException("Invalid phone number for " + fullName, MessageDeliveryStatus.NotSentInvalidPhoneNumberInAvni);
         }
 
         if (messageReceiver.getExternalId() != null) {

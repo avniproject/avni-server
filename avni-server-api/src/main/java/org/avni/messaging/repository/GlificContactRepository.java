@@ -6,6 +6,7 @@ import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.external.GlificRestClient;
+import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
@@ -64,7 +65,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
 
     public String getOrCreateContact(String phoneNumber, String fullName) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion())) {
-            throw new PhoneNumberNotAvailableOrIncorrectException();
+            throw new PhoneNumberNotAvailableOrIncorrectException("Invalid phone number", MessageDeliveryStatus.NotSentInvalidPhoneNumberInAvni);
         }
 
         GlificGetContactsResponse glificContacts = getContact(phoneNumber);

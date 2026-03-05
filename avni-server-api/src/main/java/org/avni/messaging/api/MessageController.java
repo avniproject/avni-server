@@ -84,7 +84,7 @@ public class MessageController {
         try {
             messagingService.sendMessageSynchronously(manualMessageContract);
         } catch (PhoneNumberNotAvailableOrIncorrectException e) {
-            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
+            return ResponseEntity.badRequest().body(new SendMessageResponse(e.getDeliveryStatus(), e.getMessage()));
         } catch (GlificNotConfiguredException e) {
             return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
         } catch (Exception e) {
@@ -105,8 +105,8 @@ public class MessageController {
             flowRequestQueueService.markComplete(flowRequest);
             return ResponseEntity.ok(new SendMessageResponse(MessageDeliveryStatus.Sent, "Success"));
         } catch (PhoneNumberNotAvailableOrIncorrectException e) {
-            flowRequestQueueService.markFailed(flowRequest, MessageDeliveryStatus.NotSentNoPhoneNumberInAvni);
-            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
+            flowRequestQueueService.markFailed(flowRequest, e.getDeliveryStatus());
+            return ResponseEntity.badRequest().body(new SendMessageResponse(e.getDeliveryStatus(), e.getMessage()));
         } catch (GlificNotConfiguredException | GlificException e) {
             flowRequestQueueService.markFailed(flowRequest, MessageDeliveryStatus.NotSent);
             return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
