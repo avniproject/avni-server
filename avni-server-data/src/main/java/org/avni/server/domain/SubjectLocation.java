@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import org.avni.server.geo.Point;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 
 public class SubjectLocation implements Serializable {
     private Point coordinates;
@@ -42,5 +43,18 @@ public class SubjectLocation implements Serializable {
 
     public void setAccuracy(Double accuracy) {
         this.accuracy = accuracy;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SubjectLocation that = (SubjectLocation) o;
+        return Objects.equals(coordinates, that.coordinates) && Objects.equals(accuracy, that.accuracy);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(coordinates, accuracy);
     }
 }
