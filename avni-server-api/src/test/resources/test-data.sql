@@ -279,9 +279,10 @@ INSERT INTO users (id, username, uuid, organisation_id, operating_individual_sco
 VALUES (8, 'user-reset-sync-test2@demo', '8924b997-70c9-431c-9f40-be5c9700018f', 2, 'ByCatchment', false, 4, 'user-reset-sync-test2');
 
 INSERT INTO individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, gender_id, organisation_id,
-                        subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+                        subject_type_id, observations, subject_location, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES ('4378dce3-247e-4393-8dd5-032c6eb0a655', 1, 1, current_timestamp, FALSE, 'Prabhu', 'Kumar', 2, 2,
-        (select id from subject_type where name = 'Individual'), '{"7c39cb04-4f02-4c49-8f94-a5b697d40365": "9282738493"}'::jsonb, 1, 1, now(), now());
+        (select id from subject_type where name = 'Individual'), '{"7c39cb04-4f02-4c49-8f94-a5b697d40365": "9282738493"}'::jsonb,
+        '{"coordinates": {"x": 18.5, "y": 73.8}, "accuracy": 10.5}'::jsonb, 1, 1, now(), now());
 
 INSERT INTO individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, gender_id, organisation_id,
                         subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -376,6 +377,16 @@ VALUES ('Paracheck', 3, TRUE, 19, 1, 'b6edbb87-22d8-4265-9231-aad499475d0c', 1, 
 INSERT INTO form_mapping (form_id, entity_id, uuid, version, subject_type_id, created_by_id, last_modified_by_id,
                           created_date_time, last_modified_date_time, observations_type_entity_id)
 VALUES (1, 1, '741cbb1f-f1bf-42f2-87f7-f5258aa91647', 0, 1, 1, 1, now(), now(), 1);
+
+INSERT INTO form (NAME, form_type, uuid, version, created_by_id, last_modified_by_id, created_date_time,
+                  last_modified_date_time)
+VALUES ('enrolment_form', 'ProgramEnrolment', 'c2d3e4f5-1234-5678-abcd-ef0123456789', 1, 1, 1, now(), now());
+
+INSERT INTO form_mapping (form_id, entity_id, uuid, version, subject_type_id, created_by_id, last_modified_by_id,
+                          created_date_time, last_modified_date_time, observations_type_entity_id)
+VALUES ((select id from form where uuid = 'c2d3e4f5-1234-5678-abcd-ef0123456789'),
+        (select id from program where name = 'Diabetes'),
+        'a1b2c3d4-5678-9abc-def0-123456789abc', 0, 1, 1, 1, now(), now(), null);
 
 INSERT INTO external_system_config (organisation_id, version, created_by_id, last_modified_by_id, created_date_time,
                                     last_modified_date_time, system_name, config)
