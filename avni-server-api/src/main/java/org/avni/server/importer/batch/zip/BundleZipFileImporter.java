@@ -8,8 +8,8 @@ import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.*;
 import org.avni.server.domain.metadata.ObjectCollectionChangeReport;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
@@ -412,7 +412,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             existingConceptContracts.put(entry.getKey(), ConceptExport.fromConcept(entry.getValue()));
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, Object> incomingMaps = new HashMap<>();
         for (Map.Entry<String, ConceptContract> entry : incomingConceptMap.entrySet()) {
             incomingMaps.put(entry.getKey(), objectMapper.convertValue(entry.getValue(), Map.class));
@@ -436,7 +435,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 changedConcepts.add(incomingConcept);
             }
         }
-        
+
         for (String uuid : incomingConceptMap.keySet()) {
             Concept existingConcept = existingConceptsMap.get(uuid);
             if (existingConcept != null && existingConcept.getMedia() != null && !existingConcept.getMedia().isEmpty()) {
@@ -488,11 +487,11 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 String conceptUuid = keyParts[0];
                 String mediaType = keyParts[1];
                 String fileName = keyParts[2];
-                
+
                 String medias3ObjectKey = uploadMedia(MediaFolder.MetaData.label, fileName, fileData.getValue());
                 Concept concept = conceptRepository.findByUuid(conceptUuid);
                 ConceptMedia conceptMedia = new ConceptMedia(medias3ObjectKey, ConceptMedia.MediaType.valueOf(mediaType));
-                
+
                 List<ConceptMedia> media = concept.getMedia() != null ?
                     new ArrayList<>(concept.getMedia()) : new ArrayList<>();
 
@@ -502,7 +501,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                     media.add(conceptMedia);
                     concept.setMedia(media);
                 }
-                
+
                 conceptRepository.save(concept);
                 break;
         }
