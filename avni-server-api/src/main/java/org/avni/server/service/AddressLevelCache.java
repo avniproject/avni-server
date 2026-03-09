@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.RoleSwitchableRepository;
@@ -26,7 +26,7 @@ public class AddressLevelCache extends RoleSwitchableRepository {
     }
 
     @Cacheable(value = ADDRESSES_PER_CATCHMENT)
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CatchmentAddressProjection> getAddressLevelsForCatchment(Catchment catchment) {
         try {
             setRoleToNone();
@@ -37,7 +37,7 @@ public class AddressLevelCache extends RoleSwitchableRepository {
     }
 
     @Cacheable(cacheNames = ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS,  key="T(java.lang.String).valueOf(#catchment?.id + '_' + T(org.springframework.util.StringUtils).collectionToCommaDelimitedString(#matchingAddressLevelTypeIds)).intern()")
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CatchmentAddressProjection> getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(Catchment catchment, List<Long> matchingAddressLevelTypeIds) {
         try {
             setRoleToNone();

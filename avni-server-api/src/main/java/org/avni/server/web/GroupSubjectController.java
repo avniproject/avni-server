@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.IndividualRepository;
@@ -71,6 +71,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/groupSubject/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<GroupSubject>> getGroupSubjectsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -85,6 +86,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/groupSubject", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<GroupSubject>> getGroupSubjectsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -98,7 +100,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     }
 
     @RequestMapping(value = "/groupSubjects", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody GroupSubjectContract request) throws ValidationException {
         try {
@@ -118,7 +120,6 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             existingOrNewGroupSubject.setVoided(request.isVoided());
             groupSubjectService.save(existingOrNewGroupSubject);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -146,6 +147,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/web/groupSubjects/{groupUuid}/members", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public List<GroupSubjectContractWeb> getGroupMembers(@PathVariable String groupUuid) {
         Individual group = individualRepository.findByUuid(groupUuid);
         if (group != null) {
@@ -163,6 +165,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/web/groupSubjects/{groupUuid}/roles", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public List<GroupRoleContract> getGroupRoles(@PathVariable String groupUuid) {
         Individual group = individualRepository.findByUuid(groupUuid);
         if (group != null) {

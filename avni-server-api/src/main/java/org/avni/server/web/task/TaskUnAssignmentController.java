@@ -1,6 +1,6 @@
 package org.avni.server.web.task;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.task.TaskUnAssignmentRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.User;
@@ -33,7 +33,7 @@ public class TaskUnAssignmentController extends AbstractController<TaskUnAssignm
     }
 
     @RequestMapping(value = "/taskUnAssignments", method = RequestMethod.GET)
-    @Transactional
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<TaskUnAssignment>> getTasks(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -43,7 +43,7 @@ public class TaskUnAssignmentController extends AbstractController<TaskUnAssignm
     }
 
     @RequestMapping(value = "/taskUnAssignments/v2", method = RequestMethod.GET)
-    @Transactional
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<TaskUnAssignment>> getTasksAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

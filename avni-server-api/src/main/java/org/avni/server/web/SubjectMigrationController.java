@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.*;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
@@ -74,6 +75,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigrations/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<SubjectMigration>> getMigrationsByCatchmentAndLastModifiedAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -88,6 +90,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigrations", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<SubjectMigration>> getMigrationsByCatchmentAndLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -166,6 +169,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/api/subjectMigration/bulk/status/{jobUuid}", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponseEntity migrationStatus(@PathVariable("jobUuid") String jobUuid) {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         JobStatus jobStatus = subjectMigrationService.getBulkSubjectMigrationJobStatus(jobUuid);

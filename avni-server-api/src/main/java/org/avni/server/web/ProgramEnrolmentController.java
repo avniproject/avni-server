@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.IndividualRepository;
@@ -66,7 +66,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @RequestMapping(value = "/programEnrolments", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AvniEntityResponse save(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
         ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request, false);
         return new AvniEntityResponse(programEnrolment);
@@ -75,7 +75,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @RequestMapping(value = "/web/programEnrolments", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
+    public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) {
         try {
             Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
             if (individual == null) {
@@ -99,6 +99,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @GetMapping(value = {"/programEnrolment/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -117,6 +118,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @GetMapping(value = {"/programEnrolment", /* Deprecated -> */ "/programEnrolment/search/lastModified", "/programEnrolment/search/byIndividualsOfCatchmentAndLastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -136,6 +138,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @GetMapping("/web/programEnrolment/{uuid}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ProgramEnrolmentProjection getOneForWeb(@PathVariable String uuid) {
         return projectionFactory.createProjection(ProgramEnrolmentProjection.class, programEnrolmentRepository.findByUuid(uuid));
     }
@@ -143,6 +146,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @GetMapping("/web/programEnrolments/{uuid}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<EnrolmentContract> getProgramEnrolmentByUuid(@PathVariable String uuid) {
         EnrolmentContract enrolmentContract = programEnrolmentService.constructEnrolments(uuid);
         if (enrolmentContract == null) {
@@ -154,6 +158,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @GetMapping("/web/programEnrolment/{uuid}/completed")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<ProgramEncounterContract> getAllCompletedEncounters(
             @PathVariable String uuid,
             @RequestParam(value = "encounterDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime encounterDateTime,

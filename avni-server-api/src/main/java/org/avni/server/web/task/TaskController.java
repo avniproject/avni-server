@@ -1,6 +1,6 @@
 package org.avni.server.web.task;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.User;
@@ -44,7 +44,7 @@ public class TaskController extends AbstractController<Task> implements RestCont
 
     @RequestMapping(value = "/task", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<Task>> getTasks(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -55,7 +55,7 @@ public class TaskController extends AbstractController<Task> implements RestCont
 
     @RequestMapping(value = "/task/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<Task>> getTasksAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

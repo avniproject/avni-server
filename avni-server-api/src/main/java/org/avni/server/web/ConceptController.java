@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ConceptAnswerRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
@@ -76,12 +76,14 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concept/{uuid}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ConceptProjection getOneForWeb(@PathVariable String uuid) {
         return projectionFactory.createProjection(ConceptProjection.class, conceptService.get(uuid));
     }
 
     @GetMapping(value = "/web/concept")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<ConceptProjection> getOneForWebByName(@RequestParam String name) {
         Concept concept = conceptRepository.findByName(HtmlUtils.htmlUnescape(name));
@@ -91,6 +93,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concepts")
+    @Transactional(readOnly = true)
     @ResponseBody
     public CollectionModel<EntityModel<Concept>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         Sort sortWithId = pageable.getSort().and(Sort.by("id"));
@@ -103,6 +106,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concept/usage/{uuid}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<ConceptUsageContract> getConceptUsage(@PathVariable String uuid) {
         ConceptUsageContract conceptUsageContract = new ConceptUsageContract();
@@ -118,6 +122,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/codedConcepts")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<CodedConceptProjection> getAllCodedConcepts() {
         return conceptRepository.findAllByDataType("Coded")
@@ -127,6 +132,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/concept/dataTypes")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<String> getDataTypes() {
         return Stream.of(ConceptDataType.values())
@@ -151,6 +157,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = {"/concept/answerConcepts",  "/concept/answerConcepts/search/find"})
+    @Transactional(readOnly = true)
     public Page<ConceptSyncAttributeContract> getAnswerConcept(@RequestParam(value = "conceptUUID", required = false) String conceptUUID, Pageable pageable) {
         if(S.isEmpty(conceptUUID)) {
             return new PageImpl<>(Collections.emptyList());
@@ -161,18 +168,21 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/concept/answerConcepts/search/findAllById")
+    @Transactional(readOnly = true)
     @ResponseBody
     public Page<ConceptSyncAttributeContract> findByIds(@Param("ids") String[] ids, Pageable pageable) {
         return this.conceptRepository.findByUuidIn(ids, pageable).map(ConceptSyncAttributeContract::fromConcept);
     }
 
     @RequestMapping(value = "/web/concept/dashboardFilter/search", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<ConceptContract> dashboardFilterSearch(@RequestParam String namePart) {
         List<Concept> dashboardFilterConcepts = conceptRepository.findDashboardFilterConcepts(namePart);
         return dashboardFilterConcepts.stream().map(ConceptContract::createForSearchResult).collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/web/concept/media", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<ConceptContract> getMediaConcepts() {
         List<String> mediaDataTypesNames = ConceptDataType.mediaDataTypes.stream().map(Enum::name).collect(Collectors.toList());
         List<Concept> concepts = conceptRepository.findAllByDataTypeInAndIsVoidedFalse(mediaDataTypesNames);

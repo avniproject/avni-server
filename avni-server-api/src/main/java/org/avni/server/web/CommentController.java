@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.CommentRepository;
 import org.avni.server.dao.CommentThreadRepository;
 import org.avni.server.dao.IndividualRepository;
@@ -71,7 +71,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     @GetMapping(value = "/web/comment")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Comment> getCommentsForSubject(@RequestParam(value = "commentThreadId") Long threadId) {
         return commentRepository.findByIsVoidedFalseAndCommentThreadIdOrderByLastModifiedDateTimeAscIdAsc(threadId);
     }
@@ -148,6 +148,7 @@ public class CommentController extends AbstractController<Comment> implements Re
 
     @GetMapping(value = {"/comment/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<Comment>> getCommentsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -162,6 +163,7 @@ public class CommentController extends AbstractController<Comment> implements Re
 
     @GetMapping(value = {"/comment"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<Comment>> getCommentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

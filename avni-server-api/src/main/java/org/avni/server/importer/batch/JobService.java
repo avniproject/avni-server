@@ -1,6 +1,6 @@
 package org.avni.server.importer.batch;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.JobStatus;
@@ -93,7 +93,7 @@ public class JobService {
         return type.equals("metadataZip") ? bgJobLauncher.run(importZipJob, jobParameters) : bgJobLauncher.run(importJob, jobParameters);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<JobStatus> getAll(@NotNull Pageable pageable) {
         String jobFilterCondition = " and subjectTypeUUID = '' ";
         return avniJobRepository.getJobStatuses(UserContextHolder.getUser(), jobFilterCondition, pageable);

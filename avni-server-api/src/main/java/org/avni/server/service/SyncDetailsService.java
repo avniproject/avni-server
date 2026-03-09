@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.ChecklistDetailRepository;
@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class SyncDetailsService {
     private final OperationalSubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
@@ -38,7 +38,7 @@ public class SyncDetailsService {
         this.groupPrivilegeService = groupPrivilegeService;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Set<SyncableItem> getAllSyncableItems(boolean scopeAwareEAS, boolean includeUserSubjectType) {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll()
                 .stream()

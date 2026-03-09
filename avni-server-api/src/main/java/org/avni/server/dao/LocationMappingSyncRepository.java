@@ -1,7 +1,7 @@
 package org.avni.server.dao;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.domain.ParentLocationMapping;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
@@ -33,7 +33,7 @@ public class LocationMappingSyncRepository extends RoleSwitchableRepository impl
 
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ParentLocationMapping> getSyncResults(SyncParameters syncParameters) {
         try {
             setRoleToNone();

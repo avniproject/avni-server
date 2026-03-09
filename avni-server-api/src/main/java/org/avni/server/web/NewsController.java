@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.NewsRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.News;
@@ -44,7 +44,7 @@ public class NewsController extends AbstractController<News> implements RestCont
 
     @GetMapping(value = "/web/news")
     @ResponseBody
-    @Transactional
+    @Transactional(readOnly = true)
     public List<NewsContract> getAll() {
         return newsRepository.findAllByIsVoidedFalse()
                 .stream().map(NewsContract::fromEntity)
@@ -53,7 +53,7 @@ public class NewsController extends AbstractController<News> implements RestCont
 
     @GetMapping(value = "/web/publishedNews")
     @ResponseBody
-    @Transactional
+    @Transactional(readOnly = true)
     public List<NewsContract> getAllPublishedNews() {
         return newsRepository.findByPublishedDateNotNullAndIsVoidedFalse()
                 .stream().map(NewsContract::fromEntity)
@@ -66,7 +66,7 @@ public class NewsController extends AbstractController<News> implements RestCont
 
     @GetMapping(value = "/web/news/{id}")
     @ResponseBody
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<NewsContract> getById(@PathVariable Long id) {
         Optional<News> news = newsRepository.findById(id);
         return news.map(n -> ResponseEntity.ok(NewsContract.fromEntity(n)))
@@ -105,7 +105,7 @@ public class NewsController extends AbstractController<News> implements RestCont
     }
 
     @RequestMapping(value = "/news/v2", method = RequestMethod.GET)
-    @Transactional
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<News>> getNewsAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -114,7 +114,7 @@ public class NewsController extends AbstractController<News> implements RestCont
     }
 
     @RequestMapping(value = "/news", method = RequestMethod.GET)
-    @Transactional
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<News>> getNews(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

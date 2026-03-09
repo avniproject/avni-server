@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.LocationMappingSyncRepository;
 import org.avni.server.domain.sync.SyncEntityName;
@@ -35,7 +35,7 @@ public class LocationMappingController implements RestControllerResourceProcesso
     }
 
     @RequestMapping(value = {"/locationMapping/search/lastModified", "/locationMapping/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
-    @Transactional
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

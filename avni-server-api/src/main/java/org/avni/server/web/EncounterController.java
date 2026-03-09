@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 import com.bugsnag.Bugsnag;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
@@ -83,6 +83,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     @GetMapping(value = "/web/encounter/{uuid}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<EncounterContract> getEncounterByUuid(@PathVariable("uuid") String uuid) {
         EncounterContract encounterContract = encounterService.getEncounterByUuid(uuid);
         if (encounterContract == null)
@@ -101,7 +102,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     }
 
     @RequestMapping(value = "/encounters", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody EncounterRequest request) throws ValidationException {
         logger.info(String.format("Saving encounter with uuid %s", request.getUuid()));
@@ -112,7 +113,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     }
 
     @RequestMapping(value = "/web/encounters", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse saveForWeb(@RequestBody EncounterRequest request) throws ValidationException {
         try {
@@ -206,6 +207,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<Encounter>> getEncountersByCatchmentAndLastModified(
         @RequestParam("catchmentId") long catchmentId,
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
@@ -216,6 +218,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<Encounter>> getEncountersByLastModified(
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -225,6 +228,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<Encounter>> getEncountersByOperatingIndividualScopeAsSlice(
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -241,6 +245,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<Encounter>> getEncountersByOperatingIndividualScope(
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

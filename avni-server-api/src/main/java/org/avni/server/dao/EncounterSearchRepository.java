@@ -2,7 +2,7 @@ package org.avni.server.dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.search.EncounterSearchQueryBuilder;
 import org.avni.server.dao.search.SqlQuery;
 import org.avni.server.domain.Encounter;
@@ -17,7 +17,7 @@ public class EncounterSearchRepository extends RoleSwitchableRepository {
         super(entityManager);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Encounter> search(EncounterSearchRequest searchRequest) {
         try {
             setRoleToNone();
@@ -33,7 +33,7 @@ public class EncounterSearchRepository extends RoleSwitchableRepository {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public long getCount(EncounterSearchRequest searchRequest) {
         try {
             setRoleToNone();

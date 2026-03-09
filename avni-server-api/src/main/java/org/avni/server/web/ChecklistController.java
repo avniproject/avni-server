@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.ChecklistRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -64,6 +64,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
 
     }
 
+    @Transactional(readOnly = true)
     @RequestMapping(value = "/txNewChecklistEntity/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public CollectionModel<EntityModel<Checklist>> getByIndividualsOfCatchmentAndLastModified(
@@ -75,6 +76,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
     }
 
 
+    @Transactional(readOnly = true)
     @RequestMapping(value = "/txNewChecklistEntity/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public SlicedResources<EntityModel<Checklist>> getChecklistsByOperatingIndividualScopeAsSlice(
@@ -90,6 +92,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(checklistRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable, checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncEntityName.Checklist));
     }
 
+    @Transactional(readOnly = true)
     @RequestMapping(value = "/txNewChecklistEntity", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public CollectionModel<EntityModel<Checklist>> getChecklistsByOperatingIndividualScope(

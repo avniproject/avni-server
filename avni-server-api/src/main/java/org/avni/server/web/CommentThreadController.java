@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.CommentThreadRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -64,6 +64,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @GetMapping(value = {"/commentThread/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<CommentThread>> getCommentThreadsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -78,6 +79,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @GetMapping(value = {"/commentThread"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<CommentThread>> getCommentThreadsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -106,6 +108,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @RequestMapping(value = "/web/commentThreads", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public List<CommentThreadResponse> getAllThreads(@RequestParam(value = "subjectUUID") String subjectUUID) {
         Individual subject = individualRepository.findByUuid(subjectUUID);
         return commentThreadRepository.findDistinctByIsVoidedFalseAndCommentsIsVoidedFalseAndComments_SubjectOrderByOpenDateTimeDescIdDesc(subject)

@@ -2,7 +2,7 @@ package org.avni.server.exporter;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.ExportJobParametersRepository;
@@ -64,7 +64,7 @@ public class ExportJobService {
         this.exportVisitJob = exportVisitJob;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<JobStatus> getAll(@NotNull Pageable pageable) {
         User user = UserContextHolder.getUserContext().getUser();
         String jobFilterCondition = " and subjectTypeUUID <> '' ";

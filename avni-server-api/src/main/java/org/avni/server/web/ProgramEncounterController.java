@@ -30,7 +30,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
@@ -66,6 +66,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @GetMapping(value = "/web/programEncounter/{uuid}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<ProgramEncounterContract> getProgramEncounterByUuid(@PathVariable("uuid") String uuid) {
         ProgramEncounterContract programEncounterContract = programEncounterService.getProgramEncounterByUuid(uuid);
@@ -76,7 +77,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     }
 
     @RequestMapping(value = "/programEncounters", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody ProgramEncounterRequest request) throws ValidationException {
         programEncounterService.saveProgramEncounter(request);
@@ -86,7 +87,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     }
 
     @RequestMapping(value = "/web/programEncounters", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse saveForWeb(@RequestBody ProgramEncounterRequest request) throws ValidationException {
         try {
@@ -111,6 +112,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     @Deprecated()
     public PagedModel<EntityModel<ProgramEncounter>> getByIndividualsOfCatchmentAndLastModified(
             @RequestParam("catchmentId") long catchmentId,
@@ -122,6 +124,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<ProgramEncounter>> getByLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -131,6 +134,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<ProgramEncounter>> getProgramEncountersByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -148,6 +152,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

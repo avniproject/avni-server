@@ -3,7 +3,7 @@ package org.avni.server.dao;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.search.SearchBuilder;
 import org.avni.server.dao.search.SqlQuery;
 import org.avni.server.domain.SubjectType;
@@ -31,7 +31,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
         this.subjectTypeRepository = subjectTypeRepository;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> search(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
         SubjectType subjectType = StringUtils.isEmpty(searchRequest.getSubjectType()) ? null : subjectTypeRepository.findByUuid(searchRequest.getSubjectType());
         SqlQuery query = searchBuilder.getSQLResultQuery(searchRequest, subjectType);
@@ -51,7 +51,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Long getTotalCount(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
         SubjectType subjectType = StringUtils.isEmpty(searchRequest.getSubjectType()) ? null : subjectTypeRepository.findByUuid(searchRequest.getSubjectType());
         SqlQuery query = searchBuilder.getSQLCountQuery(searchRequest, subjectType);

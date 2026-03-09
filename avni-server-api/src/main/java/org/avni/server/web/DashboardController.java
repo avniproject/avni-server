@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.domain.CHSEntity;
@@ -49,6 +49,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
         this.organisationRepository = organisationRepository;
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "/web/dashboard")
     @ResponseBody
     public List<DashboardWebResponse> getAll() {
@@ -57,6 +58,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "/web/dashboard/{id}")
     @ResponseBody
     public DashboardWebResponse getById(@PathVariable Long id) {
@@ -115,6 +117,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     }
 
     //This is here because dashboardCardMapping used to get synced earlier which is no longer required now
+    @Transactional(readOnly = true)
     @Deprecated
     @RequestMapping(value = "/dashboardCardMapping/search/lastModified", method = RequestMethod.GET)
     public CollectionModel<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
@@ -122,6 +125,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
         return wrap(new PageImpl<>(Collections.emptyList()));
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "/v2/dashboard/search/lastModified")
     public CollectionModel<EntityModel<Dashboard>> getDashboards(@RequestParam("lastModifiedDateTime")
                                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,

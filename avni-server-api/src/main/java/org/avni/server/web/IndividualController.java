@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 import com.bugsnag.Bugsnag;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
@@ -113,7 +113,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     // used in offline mode hence no access check
     @RequestMapping(value = "/individuals", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse save(@RequestBody IndividualRequest individualRequest) throws ValidationException {
         logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
@@ -155,6 +155,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = {"/individual/v2", "/individual/search/lastModified/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<Individual>> getIndividualsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -168,6 +169,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = {"/individual", /*-->Both are Deprecated */ "/individual/search/byCatchmentAndLastModified", "/individual/search/lastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<Individual>> getIndividualsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -182,6 +184,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = "/individual/search")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<IndividualWebProjection> search(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "subjectTypeUUID", required = false) String subjectTypeUUID,
@@ -204,6 +207,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = "/web/individual/{uuid}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public IndividualWebProjection getOneForWeb(@PathVariable String uuid) {
         IndividualWebProjection projection = projectionFactory.createProjection(IndividualWebProjection.class, individualRepository.findByUuid(uuid));
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, projection.getSubjectType().getUuid());
@@ -213,6 +217,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = "/web/individual")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<IndividualWebProjection> getByUUIDs(@RequestParam(value = "uuids") List<String> uuids) {
         List<IndividualWebProjection> projections = individualRepository.findAllIndividualWebProjectionByUuidIn(uuids);
         List<String> subjectTypeUUIDs = projections.stream().map(individualWebProjection -> individualWebProjection.getSubjectType().getUuid()).distinct().collect(Collectors.toList());
@@ -222,6 +227,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = "/web/subjectProfile")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectProfile(@RequestParam("uuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualContract = individualService.getSubjectInfo(uuid);
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individualContract.getSubjectType().getUuid());
@@ -231,6 +237,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = "/web/subject/{subjectUuid}/programs")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectProgramEnrollment(@PathVariable("subjectUuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualEnrolmentContract = individualService.getSubjectProgramEnrollment(uuid);
         if (individualEnrolmentContract == null) {
@@ -242,6 +249,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = "/web/subject/{uuid}/encounters")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectEncounters(@PathVariable("uuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualEncounterContract = individualService.getSubjectEncounters(uuid);
         if (individualEncounterContract == null) {
@@ -253,6 +261,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping("/web/subject/{uuid}/completed")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<EncounterContract> getAllCompletedEncounters(
             @PathVariable String uuid,
             @RequestParam(value = "encounterDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime encounterDateTime,
@@ -283,6 +292,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping("/subject/search")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<IndividualContract> getAllSubjects(@RequestParam String addressLevelUUID,
                                                    @RequestParam String subjectTypeName) {
         AddressLevel addressLevel = locationRepository.findByUuid(addressLevelUUID);
@@ -295,6 +305,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = {"/subjects", "/subjects/search/find"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<?> searchByName(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         if (name == null || name.isEmpty()) {
             return new PageImpl<>(Collections.emptyList());
@@ -306,6 +317,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = "/subjects/search/findAllById")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<SubjectSearchContract> findByIds(@Param("ids") Long[] ids, Pageable pageable) {
         return this.individualRepository.findByIdIn(ids, pageable).map(SubjectSearchContract::fromSubject);
     }
@@ -313,6 +325,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @GetMapping(value = "/web/individual/byMetadata")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<IndividualWebProjection> findByMetadata(
             @Param(value = "subjectTypeName") String subjectTypeName,
             @Param(value = "programName") String programName,

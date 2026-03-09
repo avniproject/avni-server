@@ -6,7 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -137,6 +137,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public UserContract getUser(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
@@ -315,6 +316,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/search/find")
+    @Transactional(readOnly = true)
     @ResponseBody
     public Page<User> find(@RequestParam(value = "username", required = false) String username,
                            @RequestParam(value = "name", required = false) String name,
@@ -346,6 +348,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/accountOrgAdmin/search/find")
+    @Transactional(readOnly = true)
     @ResponseBody
     public Page<UserContract> findOrgAdmin(@RequestParam(value = "username", required = false) String username,
                                            @RequestParam(value = "name", required = false) String name,
@@ -362,6 +365,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/accountOrgAdmin/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public UserContract getOne(@PathVariable("id") Long id) {
         accessControlService.assertIsSuperAdmin();
@@ -375,6 +379,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/search/findAll")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<UserWebProjection> getAll() {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
@@ -399,6 +404,7 @@ public class UserController {
     }
 
     @GetMapping("/user/search/findByOrganisation")
+    @Transactional(readOnly = true)
     @ResponseBody
     public Page<User> getUsersByOrganisation(@RequestParam("organisationId") Long organisationId, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
@@ -406,6 +412,7 @@ public class UserController {
     }
 
     @GetMapping(path = "/user/search/findAllById")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<User> findByIdIn(@RequestParam Long[] ids) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);

@@ -1,6 +1,6 @@
     package org.avni.server.web;
 
-    import jakarta.transaction.Transactional;
+    import org.springframework.transaction.annotation.Transactional;
     import org.avni.server.dao.CatchmentRepository;
     import org.avni.server.dao.OrganisationRepository;
     import org.avni.server.dao.UserRepository;
@@ -67,6 +67,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/userInfo", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<UserInfoContract> getUserInfo() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -89,11 +90,13 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
      */
     @Deprecated
     @RequestMapping(value = "/me", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<UserInfoContract> getMyProfileOld() {
         return getUserInfo();
     }
 
     @RequestMapping(value = "/v2/me", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<UserInfoContract>> getMyProfile() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -103,6 +106,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/me/v3", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<UserInfoContract>> getMyProfileAsSlice() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();

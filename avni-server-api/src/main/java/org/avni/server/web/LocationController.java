@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.LocationRepository;
@@ -80,12 +80,14 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "/locations")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<AddressLevelContractWeb> getAll(Pageable pageable) {
         return addressLevelService.addTitleLineageToLocation(locationRepository.findNonVoidedLocations(pageable));
     }
 
     @GetMapping(value = "locations/search/find")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<AddressLevelContractWeb> find(
             @RequestParam(value = "title", defaultValue = "") String title,
             @RequestParam(value = "typeId", required = false) Integer typeId,
@@ -96,6 +98,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "locations/search/findAsList")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<AddressLevelContractWeb> findAsList(
         @RequestParam(value = "title", defaultValue = "") String title,
         @RequestParam(value = "typeId", required = false) Integer typeId) {
@@ -104,6 +107,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "/locations/search/findAllById")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<AddressLevelContractWeb> findByIdIn(@Param("ids") Long[] ids) {
         if (ids == null || ids.length == 0) {
             return new ArrayList<>();
@@ -113,6 +117,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @RequestMapping(value = {"/locations/search/lastModified", "/locations/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
     @ResponseBody
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<AddressLevel>> getAddressLevelsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -159,6 +164,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "/locations/search/typeId/{typeId}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<AddressLevelContractWeb> getLocationsByTypeId(@PathVariable("typeId") Long typeId) {
         //TODO API does not appear to be in use. Remove.
         accessControlService.checkPrivilege(PrivilegeType.EditLocation);
@@ -167,6 +173,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "locations/parents/{uuid}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<AddressLevelContractWeb> getParents(@PathVariable("uuid") String uuid,
                                                     @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {
         return addressLevelService.addTitleLineageToLocation(locationService.getParents(uuid, maxLevelTypeId));
@@ -175,6 +182,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "/locations/web")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<AddressLevelContractWeb> getLocationByParam(@RequestParam("uuid") String uuid) {
         LocationProjection addressLevel = locationRepository.findNonVoidedLocationsByUuid(uuid);
         if (addressLevel == null) {

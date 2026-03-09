@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.LocationRepository;
@@ -65,6 +65,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
                 ErrorBodyBuilder.createForTest());
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "catchment")
     public CollectionModel<EntityModel<CatchmentContract>> get(Pageable pageable) {
         Page<Catchment> all = catchmentRepository.findPageByIsVoidedFalse(pageable);
@@ -72,6 +73,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
         return wrap(catchmentContracts);
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "catchment/{id}")
     public EntityModel<CatchmentContract> getById(@PathVariable Long id) {
         Catchment catchment = catchmentRepository.findOne(id);
@@ -81,12 +83,14 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
         return EntityModel.of(catchmentContract);
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "catchment/search/findAllById")
     public List<CatchmentContract> getById(@Param("ids") Long[] ids) {
         List<Catchment> catchments = catchmentRepository.findByIdIn(ids);
         return catchments.stream().map(CatchmentContract::fromEntity).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @GetMapping(value = "catchment/search/find")
     public CollectionModel<EntityModel<CatchmentContract>> find(@RequestParam(value = "name") String name, Pageable pageable) {
         Page<Catchment> catchments = catchmentRepository.findByIsVoidedFalseAndNameIgnoreCaseStartingWithOrderByNameAsc(name, pageable);
@@ -95,7 +99,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @PostMapping(value = "/catchment")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     ResponseEntity<?> createSingleCatchment(@RequestBody CatchmentContract catchmentContract) throws Exception {
         accessControlService.checkPrivilege(PrivilegeType.EditCatchment);
         if (catchmentRepository.findByName(catchmentContract.getName()) != null)
@@ -114,7 +118,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @PutMapping(value ="/catchment/{id}")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> updateCatchment(@PathVariable("id") Long id, @RequestBody CatchmentContract catchmentContract) throws Exception {
         accessControlService.checkPrivilege(PrivilegeType.EditCatchment);
         Catchment catchment = catchmentRepository.findOne(id);

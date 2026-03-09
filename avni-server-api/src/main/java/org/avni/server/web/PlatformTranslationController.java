@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 public class PlatformTranslationController implements RestControllerResourceProcessor<PlatformTranslation> {
@@ -53,6 +53,7 @@ public class PlatformTranslationController implements RestControllerResourceProc
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
+    @Transactional(readOnly = true)
     @RequestMapping(value = "/platformTranslation/search/lastModified", method = RequestMethod.GET)
     public CollectionModel<EntityModel<PlatformTranslation>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
