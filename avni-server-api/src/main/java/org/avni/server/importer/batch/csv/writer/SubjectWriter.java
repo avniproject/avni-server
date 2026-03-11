@@ -212,8 +212,8 @@ public class SubjectWriter extends EntityWriter {
     private static void setLastName(Row row, Individual individual, List<String> allErrorMsgs) {
         String lastName = row.get(SubjectHeadersCreator.lastName);
         if (!StringUtils.hasText(lastName)) {
-        allErrorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.lastName));
-        return;
+            allErrorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.lastName));
+            return;
         }
         individual.setLastName(lastName);
     }
