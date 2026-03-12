@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.messaging.domain.EntityType;
+import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementType;
@@ -418,7 +419,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (StringUtils.hasText(phoneNumber)) {
             return phoneNumber;
         } else {
-            throw new PhoneNumberNotAvailableOrIncorrectException();
+            throw new PhoneNumberNotAvailableOrIncorrectException("Phone number not available", MessageDeliveryStatus.NotSentNoPhoneNumberInAvni);
         }
     }
 

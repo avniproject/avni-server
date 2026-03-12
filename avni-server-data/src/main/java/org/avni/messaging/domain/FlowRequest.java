@@ -22,6 +22,11 @@ public class FlowRequest extends OrganisationAwareEntity {
     @NotNull
     private DateTime requestDateTime;
 
+    @Column
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private MessageDeliveryStatus deliveryStatus = MessageDeliveryStatus.NotSent;
+
     public FlowRequest() {
     }
 
@@ -29,6 +34,7 @@ public class FlowRequest extends OrganisationAwareEntity {
         this.messageReceiver = messageReceiver;
         this.flowId = flowId;
         this.requestDateTime = requestDateTime;
+        this.deliveryStatus = MessageDeliveryStatus.NotSent;
     }
 
     public MessageReceiver getMessageReceiver() {
@@ -53,5 +59,21 @@ public class FlowRequest extends OrganisationAwareEntity {
 
     public void setRequestDateTime(DateTime requestDateTime) {
         this.requestDateTime = requestDateTime;
+    }
+
+    public MessageDeliveryStatus getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(MessageDeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
+    public void markFailed(MessageDeliveryStatus messageDeliveryStatus) {
+        this.deliveryStatus = messageDeliveryStatus;
+    }
+
+    public void markComplete() {
+        this.deliveryStatus = MessageDeliveryStatus.Sent;
     }
 }
