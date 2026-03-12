@@ -82,6 +82,7 @@ where 1 = 1;
 DELETE FROM external_system_config where 1 = 1;
 DELETE FROM organisation_config where 1 = 1;
 delete from message_request_queue where 1 = 1;
+delete from flow_request_queue where 1 = 1;
 delete from message_receiver where 1 = 1;
 delete from message_rule where 1 = 1;
 delete from identifier_user_assignment where 1 = 1;
