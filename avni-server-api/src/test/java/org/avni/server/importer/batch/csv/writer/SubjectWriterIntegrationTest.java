@@ -380,7 +380,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "qg text",
                 "456",
                 "789");
-        failure(validHeader(), dataRow, "None of the expected address levels provided. Expected one of: [District], value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender'");
+        failure(validHeader(), dataRow, "None of the expected address levels provided. Expected one of: [District], value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender', value required for mandatory field: 'last name'");
     }
 
     @Test
