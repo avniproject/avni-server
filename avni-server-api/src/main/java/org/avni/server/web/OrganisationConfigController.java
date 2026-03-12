@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @RepositoryRestController
 public class OrganisationConfigController implements RestControllerResourceProcessor<OrganisationConfig> {
@@ -65,6 +65,7 @@ public class OrganisationConfigController implements RestControllerResourceProce
     }
 
     @RequestMapping(value = "/organisationConfig/exportSettings", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public JsonObject getExportSettings() {
         return organisationConfigService.getExportSettings();
     }

@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.builder.VideoBuilder;
 import org.avni.server.dao.VideoRepository;
 import org.avni.server.domain.Video;
@@ -38,11 +38,13 @@ public class VideoController {
     }
 
     @RequestMapping(value = "/web/video", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<VideoContract> getAll() {
         return videoService.getAllVideos();
     }
 
     @RequestMapping(value = "/web/video/{id}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<VideoContract> getById(@PathVariable Long id) {
         return videoRepository.findById(id)
                 .map(video -> ResponseEntity.ok(VideoContract.fromEntity(video)))

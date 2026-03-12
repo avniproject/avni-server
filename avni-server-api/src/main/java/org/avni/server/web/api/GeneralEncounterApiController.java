@@ -29,7 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -68,6 +68,7 @@ public class GeneralEncounterApiController {
 
     @RequestMapping(value = "/api/encounters", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponsePage getEncounters(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                       @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                       @RequestParam(value = "encounterType", required = false) String encounterType,
@@ -92,6 +93,7 @@ public class GeneralEncounterApiController {
 
     @GetMapping(value = "/api/encounter/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<EncounterResponse> get(@PathVariable("id") String legacyIdOrUuid) {
         Encounter encounter = encounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
@@ -104,7 +106,7 @@ public class GeneralEncounterApiController {
 
     @PostMapping(value = "/api/encounter")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiEncounterRequest request) throws IOException {
         accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
@@ -134,7 +136,7 @@ public class GeneralEncounterApiController {
 
     @PutMapping(value = "/api/encounter/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity put(@PathVariable String id, @RequestBody ApiEncounterRequest request) throws IOException {
         accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
@@ -155,7 +157,7 @@ public class GeneralEncounterApiController {
 
     @PatchMapping(value = "/api/encounter/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity patch(@PathVariable String id, @RequestBody Map<String, Object> request) throws IOException {
         accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, (String) request.get(ENCOUNTER_TYPE));

@@ -1,6 +1,6 @@
 package org.avni.server.web.task;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -48,6 +48,7 @@ public class TaskWebController {
     }
 
     @RequestMapping(value = "/web/taskMetadata", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public JsonObject getTaskMetadataForSearch() {
         accessControlService.checkPrivilege(PrivilegeType.EditTask);
         return taskService.getTaskMetaData();

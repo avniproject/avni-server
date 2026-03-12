@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.SyncTelemetryRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.SyncTelemetry;
@@ -52,6 +52,7 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
     }
 
     @RequestMapping(value = "/report/syncTelemetry", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public CollectionModel<EntityModel<SyncTelemetry>> getAll(@RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) DateTime startDate,
                                                           @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) DateTime endDate,

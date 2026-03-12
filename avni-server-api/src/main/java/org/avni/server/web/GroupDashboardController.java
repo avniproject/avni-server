@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.GroupDashboardRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.GroupDashboard;
@@ -42,6 +42,7 @@ public class GroupDashboardController implements RestControllerResourceProcessor
 
     @GetMapping(value = "/web/groupDashboard")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<GroupDashboardContract> getAll() {
         return groupDashboardRepository.findAllByIsVoidedFalse()
                 .stream().map(GroupDashboardContract::fromEntity)
@@ -50,6 +51,7 @@ public class GroupDashboardController implements RestControllerResourceProcessor
 
     @GetMapping(value = "/web/groupDashboard/{id}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<GroupDashboardContract> getById(@PathVariable Long id) {
         Optional<GroupDashboard> groupDashboard = groupDashboardRepository.findById(id);
         return groupDashboard.map(d -> ResponseEntity.ok(GroupDashboardContract.fromEntity(d)))
@@ -92,6 +94,7 @@ public class GroupDashboardController implements RestControllerResourceProcessor
     }
 
     @RequestMapping(value = "/groups/{id}/dashboards", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<GroupDashboardContract> getDashboardsByGroupId(@PathVariable("id") Long id) {
         return groupDashboardRepository.findByGroup_IdAndIsVoidedFalseOrderByDashboardName(id).stream()
                 .map(GroupDashboardContract::fromEntity)
@@ -99,6 +102,7 @@ public class GroupDashboardController implements RestControllerResourceProcessor
     }
 
     @GetMapping(value = "/v2/groupDashboard/search/lastModified")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<GroupDashboard>> getDashboardFilters(@RequestParam("lastModifiedDateTime")
                                                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                          @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

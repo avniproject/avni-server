@@ -1,6 +1,6 @@
 package org.avni.server.web.controller;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.TemplateOrganisationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.TemplateOrganisation;
@@ -54,6 +54,7 @@ public class TemplateOrganisationController {
     }
 
     @RequestMapping(value = "/web/templateOrganisations", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<?> getAll() {
@@ -65,6 +66,7 @@ public class TemplateOrganisationController {
     }
 
     @RequestMapping(value = "/web/templateOrganisations/all", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<?> getAllIncludingInactive() {
         accessControlService.assertIsSuperAdmin();
@@ -76,6 +78,7 @@ public class TemplateOrganisationController {
     }
 
     @RequestMapping(value = "/web/templateOrganisations/{id}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<?> getOne(@PathVariable("id") Long id) {
@@ -140,6 +143,7 @@ public class TemplateOrganisationController {
     }
 
     @RequestMapping(value = "/web/templateOrganisations/apply/status", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Map<String, BatchJobStatus> applyTemplateJobStatus() {
         accessControlService.assertIsNotSuperAdmin();
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);

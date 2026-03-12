@@ -1,6 +1,6 @@
 package org.avni.server.web.rules;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.RuleFailureTelemetryRepository;
 import org.avni.server.domain.RuleFailureTelemetry;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -33,6 +33,7 @@ public class RuleFailureTelemetryWebController implements RestControllerResource
     }
 
     @RequestMapping(value = "/web/ruleFailureTelemetry", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<RuleFailureTelemetry>> getByStatus(@RequestParam(value = "isClosed", required = false) Boolean isClosed,
                                                   Pageable pageable) {
         Page<RuleFailureTelemetry> ruleFailureTelemetries = isClosed != null

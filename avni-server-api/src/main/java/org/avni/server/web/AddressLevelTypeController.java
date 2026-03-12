@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -47,12 +47,14 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @GetMapping(value = "/addressLevelType")
+    @Transactional(readOnly = true)
     @ResponseBody
     public Page<AddressLevelType> getAllNonVoidedAddressLevelType(Pageable pageable) {
         return addressLevelTypeRepository.findPageByIsVoidedFalse(pageable);
     }
 
     @GetMapping(value = "/web/addressLevelType")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<AddressLevelType.AddressLevelTypeProjection> findAll() {
         return addressLevelTypeRepository.findAllByIsVoidedFalse()
@@ -62,6 +64,7 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @GetMapping(value = "/addressLevelType/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getSingle(@PathVariable Long id) {
         return new ResponseEntity<>(addressLevelTypeRepository.findOne(id), HttpStatus.OK);
     }

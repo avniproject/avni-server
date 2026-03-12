@@ -1,6 +1,6 @@
 package org.avni.server.web.rules;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.RuleFailureTelemetryRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.RuleFailureTelemetry;
@@ -29,6 +29,7 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
 
     @RequestMapping(value = "ruleFailureTelemetry", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<RuleFailureTelemetry>> getEmpty(Pageable pageable) {
         return empty(pageable);
     }

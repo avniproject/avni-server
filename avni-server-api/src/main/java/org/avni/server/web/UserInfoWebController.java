@@ -15,12 +15,14 @@ import org.avni.server.web.response.UserInfoWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
+@Transactional(readOnly = true)
 public class UserInfoWebController {
     private final GroupPrivilegeService groupPrivilegeService;
     private final UserRepository userRepository;

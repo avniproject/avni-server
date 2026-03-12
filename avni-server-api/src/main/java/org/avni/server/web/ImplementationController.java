@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
@@ -34,6 +35,7 @@ public class ImplementationController implements RestControllerResourceProcessor
     }
 
     @RequestMapping(value = "/implementation/export/{includeLocations}", method = RequestMethod.GET)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ResponseEntity<ByteArrayResource> export(@PathVariable boolean includeLocations) throws Exception {
         accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();

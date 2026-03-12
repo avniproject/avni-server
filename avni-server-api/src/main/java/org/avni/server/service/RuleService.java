@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.messaging.domain.EntityType;
 import org.avni.server.application.Form;
 import org.avni.server.application.RuleType;

@@ -1,7 +1,8 @@
 package org.avni.server.identifier;
 
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.avni.server.dao.IdentifierAssignmentRepository;
 import org.avni.server.dao.IdentifierUserAssignmentRepository;
 import org.avni.server.domain.IdentifierAssignment;
@@ -109,7 +110,7 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
         }
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void saveIdentifierAssignments(List<IdentifierUserAssignment> identifierUserAssignments, List<IdentifierAssignment> generatedIdentifiers) {
         saveAssignments(identifierUserAssignments, generatedIdentifiers);
     }
@@ -255,7 +256,7 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
         return identifierAssignment;
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void saveAssignments(List<IdentifierUserAssignment> userAssignments, List<IdentifierAssignment> identifierAssignments) {
         try {
             identifierUserAssignmentRepository.saveAll(userAssignments);

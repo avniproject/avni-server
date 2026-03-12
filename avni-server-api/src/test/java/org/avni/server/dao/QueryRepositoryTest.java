@@ -1,7 +1,7 @@
 package org.avni.server.dao;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.CustomQuery;
 import org.avni.server.domain.Organisation;

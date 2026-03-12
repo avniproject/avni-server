@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.ReportCard;
@@ -46,6 +46,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     }
 
     @GetMapping(value = "/web/reportCard")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<ReportCardWebResponse> getAll() {
         return cardRepository.findAllByIsVoidedFalseOrderByName()
@@ -54,6 +55,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     }
 
     @GetMapping(value = "/web/reportCard/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<ReportCardWebResponse> getById(@PathVariable Long id) {
         Optional<ReportCard> card = cardRepository.findById(id);
@@ -96,6 +98,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     }
 
     @GetMapping(value = "/v2/card/search/lastModified")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<ReportCard>> getReportCards(@RequestParam("lastModifiedDateTime")
                                                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

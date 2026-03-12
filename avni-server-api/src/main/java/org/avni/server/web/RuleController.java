@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -116,6 +117,7 @@ public class RuleController {
 
     @RequestMapping(value = "/web/programSummaryRule", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     ResponseEntity<?> programSummaryRule(@RequestParam String programEnrolmentUUID) {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(programEnrolmentUUID);
         try {
@@ -134,6 +136,7 @@ public class RuleController {
 
     @RequestMapping(value = "/web/subjectSummaryRule", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     ResponseEntity<?> subjectSummaryRule(@RequestParam String subjectUUID) {
         try {
             Individual individual = individualRepository.findByUuid(subjectUUID);
@@ -152,6 +155,7 @@ public class RuleController {
 
     @RequestMapping(value = "/web/eligibleGeneralEncounters", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     ResponseEntity<?> getEligibleGeneralEncounters(@RequestParam String subjectUUID) {
         try {
             Individual individual = individualRepository.findByUuid(subjectUUID);
@@ -176,6 +180,7 @@ public class RuleController {
 
     @RequestMapping(value = "/web/eligibleProgramEncounters", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     ResponseEntity<?> getEligibleProgramEncounters(@RequestParam String enrolmentUUID) {
         try {
             ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(enrolmentUUID);

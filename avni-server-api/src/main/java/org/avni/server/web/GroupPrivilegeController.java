@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.*;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.SubjectType;
@@ -44,6 +44,7 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
     }
 
     @RequestMapping(value = "/groups/{id}/privileges", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<GroupPrivilegeContract> getById(@PathVariable("id") Long id) {
         List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllGroupPrivileges(id);
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByGroup_IdAndImplVersion(id, GroupPrivilege.IMPL_VERSION);

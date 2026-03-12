@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.criteria.Predicate;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,6 +76,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<OrganisationContract> findAll() {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
@@ -84,6 +85,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     }
 
     @RequestMapping(value = "/organisation/{id}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public OrganisationContract findById(@PathVariable Long id) {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
@@ -92,13 +94,14 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     }
 
     @RequestMapping(value = "/organisation/current", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public OrganisationContract findCurrent() {
         long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         return OrganisationContract.fromEntity(organisationRepository.findOne(organisationId));
     }
 
     @RequestMapping(value = "/organisation/{id}", method = RequestMethod.PUT)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Organisation updateOrganisation(@PathVariable Long id, @RequestBody OrganisationContract request) throws Exception {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
@@ -113,6 +116,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     }
 
     @RequestMapping(value = "/organisation/search/find", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     @ResponseBody
     public Page<OrganisationContract> find(@RequestParam(value = "name", required = false) String name,
                                            @RequestParam(value = "dbUser", required = false) String dbUser,
@@ -137,6 +141,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     }
 
     @RequestMapping(value = "organisation/search/findAllById", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Page<Organisation> findAllById(@Param("ids") Long[] ids, Pageable pageable) {
         accessControlService.assertIsSuperAdmin();
         return organisationRepository.findAllByIdInAndIsVoidedFalse(ids, pageable);

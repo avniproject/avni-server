@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.ChecklistDetailService;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -36,7 +36,7 @@ public class ChecklistDetailController {
     }
 
     @RequestMapping(value = "/web/checklistDetails", method = RequestMethod.GET)
-    @Transactional
+    @Transactional(readOnly = true)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<ChecklistDetailRequest> getChecklistDetails() {
         return checklistDetailService.getAllChecklistDetail();

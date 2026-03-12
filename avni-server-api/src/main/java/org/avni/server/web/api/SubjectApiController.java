@@ -82,6 +82,7 @@ public class SubjectApiController {
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponsePage getSubjects(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                     @RequestParam(value = "now", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                     @RequestParam(value = "subjectType", required = false) String subjectTypeName,
@@ -103,6 +104,7 @@ public class SubjectApiController {
 
     @GetMapping(value = "/api/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<SubjectResponse> get(@PathVariable("id") String legacyIdOrUuid,
                                                @RequestParam(value = "includeCatchments", required = false) Boolean includeCatchments) {

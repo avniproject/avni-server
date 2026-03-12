@@ -12,6 +12,7 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +33,7 @@ public class MetabaseController {
     }
 
     @GetMapping("/status")
+    @Transactional(readOnly = true)
     public CannedAnalyticsStatus getStatus() {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();

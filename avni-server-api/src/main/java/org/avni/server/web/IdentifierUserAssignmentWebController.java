@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.dao.IdentifierUserAssignmentRepository;
 import org.avni.server.dao.UserRepository;
@@ -45,6 +45,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     }
 
     @GetMapping(value = "/web/identifierUserAssignment")
+    @Transactional(readOnly = true)
     @ResponseBody
     public CollectionModel<EntityModel<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
         Sort mappedSort = mapSort(pageable.getSort());
@@ -67,6 +68,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     }
 
     @GetMapping(value = "/web/identifierUserAssignment/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);

@@ -46,7 +46,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.criteria.Predicate;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.io.InvalidObjectException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,6 +100,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/forms")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<BasicFormDetails>> getAllFormsWeb(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "includeVoided", required = false) boolean includeVoided,
@@ -253,6 +254,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @RequestMapping(value = "/forms/export", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public FormContract export(@RequestParam String formUUID) {
         Form form = formRepository.findByUuid(formUUID);
 
@@ -364,6 +366,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
      * </ol>
      */
     @RequestMapping(value = "/forms/program/{programId}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<BasicFormDetails> getForms(@PathVariable("programId") Long programId, Pageable pageable) {
         Program program = programRepository.findOne(programId);
         if (program == null) {
@@ -407,6 +410,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
      * @return list of program/forms
      */
     @RequestMapping(value = "/forms", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> getForms(Pageable pageable) {
 
         Iterable<OperationalProgram> programItr = operationalProgramRepository.findAllByIsVoidedFalse();
@@ -427,6 +431,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/form/{uuid}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public FormWebProjection getFormForWeb(@PathVariable String uuid) {
         return projectionFactory.createProjection(FormWebProjection.class, formRepository.findByUuid(uuid));

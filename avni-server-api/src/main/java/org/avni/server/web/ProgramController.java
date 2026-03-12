@@ -31,7 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -164,6 +164,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "/web/program")
+    @Transactional(readOnly = true)
     @ResponseBody
     public CollectionModel<EntityModel<ProgramContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalProgramRepository
@@ -172,6 +173,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "/web/program/v2")
+    @Transactional(readOnly = true)
     public List<ProgramContract> getAllPrograms(@RequestParam(required = false, name = "subjectType") List<String> subjectTypeUuids) {
         List<Program> allPrograms;
         if (CollectionUtils.isEmpty(subjectTypeUuids)) {
@@ -189,6 +191,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "web/eligiblePrograms")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<ProgramContractWeb> getEligiblePrograms(@RequestParam String subjectUuid) {
         Individual individual = individualRepository.findByUuid(subjectUuid);
@@ -205,12 +208,14 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "/web/programs")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<OperationalProgram> getAllPrograms() {
         return operationalProgramRepository.findAll();
     }
 
     @GetMapping(value = "/web/program/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         OperationalProgram operationalProgram = operationalProgramRepository.findOne(id);

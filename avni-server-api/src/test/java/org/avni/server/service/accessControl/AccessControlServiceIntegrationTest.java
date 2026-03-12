@@ -1,6 +1,6 @@
 package org.avni.server.service.accessControl;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.SubjectPartitionCheckStatus;

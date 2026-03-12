@@ -14,7 +14,7 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @RestController
@@ -34,6 +34,7 @@ public class GenderController {
 
     @GetMapping("/web/gender")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Page<GenderProjection> getAll(Pageable pageable) {
         return genderRepository.findAll(pageable).map(g -> projectionFactory.createProjection(GenderProjection.class, g));
     }

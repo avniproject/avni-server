@@ -2,7 +2,7 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;

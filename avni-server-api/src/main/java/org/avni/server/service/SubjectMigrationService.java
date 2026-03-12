@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.*;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.domain.sync.SyncEntityName;

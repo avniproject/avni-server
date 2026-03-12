@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.GroupRole;

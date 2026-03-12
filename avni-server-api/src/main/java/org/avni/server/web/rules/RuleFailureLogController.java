@@ -1,6 +1,6 @@
 package org.avni.server.web.rules;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.service.RuleFailureLogService;
 import org.avni.server.web.request.RuleFailureLogRequest;
 import org.springframework.beans.factory.annotation.Autowired;

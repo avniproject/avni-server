@@ -2,7 +2,7 @@ package org.avni.server.web.api;
 
 import com.amazonaws.services.cognitoidp.model.NotAuthorizedException;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
@@ -73,7 +73,7 @@ public class UserApiController {
     }
 
     @RequestMapping(value = "/api/user", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<String> createInactiveUser(@RequestBody CreateUserRequest createUserRequest) throws IDPException {
         this.accessControlService.assertIsSuperAdmin();
 

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -65,6 +66,7 @@ public class Msg91ConfigController extends AbstractController<Msg91Config> imple
     }
 
     @RequestMapping(value = "/web/msg91Config", method = RequestMethod.GET)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ResponseEntity<Msg91ConfigContract> getConfiguration() throws GeneralSecurityException {
         Long orgId = UserContextHolder.getUserContext().getOrganisation().getId();
         Msg91Config msg91Config = msg91ConfigRepository.findByOrganisationIdAndIsVoidedFalse(orgId);

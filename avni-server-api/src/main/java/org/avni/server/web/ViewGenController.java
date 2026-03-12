@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -75,6 +75,7 @@ public class ViewGenController {
     }
 
     @GetMapping(value = "/viewsInDb")
+    @Transactional(readOnly = true)
     public List<ReportingViewResponse> getAllViews() {
         Organisation organisation = UserContextHolder.getOrganisation();
         SubjectTypes subjectTypes = metaDataService.getSubjectTypes();

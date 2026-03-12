@@ -33,6 +33,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -83,6 +84,7 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public void getSampleImportFile(@RequestParam String uploadType,
                                     @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                     @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
@@ -93,6 +95,7 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importSampleDownloadable", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<ImportSampleCheckResponse> checkSampleImportFileIsDownloadable(@RequestParam String uploadType,
                                                                                          @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                                                                          @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
@@ -109,6 +112,7 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity getImportTypes() {
         return ResponseEntity.ok(importService.getImportTypes());
     }
@@ -153,6 +157,7 @@ public class ImportController {
     }
 
     @GetMapping("/import/status")
+    @Transactional(readOnly = true)
     public Page<JobStatus> getUploadStats(Pageable pageable) {
         return jobService.getAll(pageable);
     }
@@ -160,6 +165,7 @@ public class ImportController {
     @GetMapping(value = "/import/errorfile",
             produces = TEXT_PLAIN_VALUE,
             consumes = APPLICATION_OCTET_STREAM_VALUE)
+    @Transactional(readOnly = true)
     public ResponseEntity<InputStreamResource> getDocument(@RequestParam String jobUuid) {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
@@ -173,6 +179,7 @@ public class ImportController {
     @GetMapping(value = "/import/inputFile",
             produces = TEXT_PLAIN_VALUE,
             consumes = APPLICATION_OCTET_STREAM_VALUE)
+    @Transactional(readOnly = true)
     public ResponseEntity<InputStreamResource> getInputDocument(@RequestParam String filePath) {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         InputStream file = bulkUploadS3Service.downloadInputFile(filePath);
@@ -184,6 +191,7 @@ public class ImportController {
     }
 
     @GetMapping("/upload/media")
+    @Transactional(readOnly = true)
     public JsonObject uploadMedia(@RequestParam("url") String url,
                                   @RequestParam("oldValue") String oldValue) {
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
@@ -199,6 +207,7 @@ public class ImportController {
     }
 
     @GetMapping("/upload")
+    @Transactional(readOnly = true)
     public JsonObject getSubjectOrLocationObsValue(@RequestParam("type") String type,
                                                    @RequestParam("ids") String ids,
                                                    @RequestParam("formElementUuid") String formElementUuid) {
@@ -215,6 +224,7 @@ public class ImportController {
 
     @GetMapping(value = "/web/locationHierarchies")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Map<String, String> getAllAddressLevelTypeHierarchies() {
         try {
             return locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg();
@@ -226,6 +236,7 @@ public class ImportController {
 
     @GetMapping(value = "/web/allSubjectsLocationHierarchies")
     @ResponseBody
+    @Transactional(readOnly = true)
     public Map<String, Object> allSubjectsLocationHierarchies() {
         try {
             return locationHierarchyService.determineAddressHierarchiesForAllSubjectTypes();

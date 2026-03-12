@@ -9,6 +9,7 @@ import org.avni.server.web.contract.StorageManagementConfigContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +38,7 @@ public class StorageManagementConfigController {
     }
 
     @GetMapping(value = "/web/storageManagementConfig")
+    @Transactional(readOnly = true)
     public ResponseEntity<StorageManagementConfigContract> getStorageManagementConfig() {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         StorageManagementConfig storageManagementConfig = storageManagementConfigService.getStorageManagementConfig();

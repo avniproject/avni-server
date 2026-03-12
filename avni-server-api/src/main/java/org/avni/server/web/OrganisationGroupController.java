@@ -22,7 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,7 +50,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     }
 
     @RequestMapping(value = "/organisationGroup", method = RequestMethod.POST)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity save(@RequestBody OrganisationGroupContract request) throws Exception {
         accessControlService.assertIsSuperAdmin();
         if (organisationGroupRepository.findByName(request.getName()) != null) {
@@ -65,7 +65,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     }
 
     @RequestMapping(value = "/organisationGroup/{id}", method = RequestMethod.PUT)
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> updateOrganisationGroup(@PathVariable("id") Long id, @RequestBody OrganisationGroupContract request) throws Exception {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
@@ -76,6 +76,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     }
 
     @RequestMapping(value = "/organisationGroup", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Page<OrganisationGroupContract> get(Pageable pageable) {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
@@ -84,6 +85,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     }
 
     @RequestMapping(value = "/organisationGroup/{id}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public OrganisationGroupContract getById(@PathVariable Long id) {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();

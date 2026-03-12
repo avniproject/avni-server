@@ -2,7 +2,7 @@ package org.avni.messaging.repository;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.messaging.contract.glific.GlificAuth;
 import org.avni.messaging.contract.glific.GlificMessageTemplateResponse;
 import org.avni.messaging.contract.glific.GlificResponse;

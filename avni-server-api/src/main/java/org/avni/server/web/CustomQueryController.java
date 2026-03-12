@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.QueryRepository;
 import org.avni.server.web.request.CustomQueryRequest;
 import org.springframework.beans.factory.annotation.Autowired;

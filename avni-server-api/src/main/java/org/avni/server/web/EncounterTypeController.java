@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
@@ -82,6 +82,7 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterType")
+    @Transactional(readOnly = true)
     @ResponseBody
     public CollectionModel<EntityModel<EncounterTypeContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalEncounterTypeRepository
@@ -90,6 +91,7 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterType/v2")
+    @Transactional(readOnly = true)
     public List<EncounterTypeContract> getAllEncounterTypes(@RequestParam(required = false, name = "subjectType") List<String> subjectTypeUuids,
                                                       @RequestParam(required = false, name = "program") List<String> programUuids) {
         List<EncounterType> allEncounterTypes;
@@ -110,12 +112,14 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterTypes")
+    @Transactional(readOnly = true)
     @ResponseBody
     public List<OperationalEncounterType> encounterTypes() {
         return operationalEncounterTypeRepository.findAll();
     }
 
     @GetMapping(value = "/web/encounterType/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         OperationalEncounterType operationalEncounterType = operationalEncounterTypeRepository.findOne(id);
@@ -126,6 +130,7 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterTypeDetails/{uuid}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("uuid") String uuid) {
         EncounterType encounterType = encounterTypeRepository.findByUuid(uuid);

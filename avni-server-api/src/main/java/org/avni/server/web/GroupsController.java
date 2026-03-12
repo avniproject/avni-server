@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Group;
@@ -39,6 +39,7 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
     }
 
     @GetMapping(value = "group")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<GroupContract>> get(Pageable pageable) {
         Page<Group> all = groupRepository.findPageByIsVoidedFalse(pageable);
         Page<GroupContract> groupContracts = all.map(GroupContract::fromEntity);
@@ -47,12 +48,14 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
 
     @GetMapping(value = "/group/search/findAllById")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<GroupContract> findAllById(@Param("ids") Long[] ids) {
         return groupRepository.findByIdInAndIsVoidedFalse(ids).stream()
                 .map(GroupContract::fromEntity).collect(Collectors.toList());
     }
 
     @GetMapping(value = "/group/search/find")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<GroupContract>> find(
             @RequestParam(value = "isNotEveryoneGroup", defaultValue = "true") Boolean isNotEveryoneGroup,
             Pageable pageable) {
@@ -67,6 +70,7 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
 
     @GetMapping(value = "/web/groups")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<Group> getAll() {
         // since this is security related information added check for get also
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
