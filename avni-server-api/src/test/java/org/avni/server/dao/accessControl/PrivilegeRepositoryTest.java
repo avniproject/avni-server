@@ -1,6 +1,6 @@
 package org.avni.server.dao.accessControl;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.domain.accessControl.Privilege;

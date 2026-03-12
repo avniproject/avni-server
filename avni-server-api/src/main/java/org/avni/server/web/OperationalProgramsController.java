@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;

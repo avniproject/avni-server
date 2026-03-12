@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -32,6 +32,7 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
     }
 
     @GetMapping(value = "/web/identifierSource/search/findAllById")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         Long[] id = {ids};
@@ -40,12 +41,14 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
 
     @GetMapping(value = "/web/identifierSource")
     @ResponseBody
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
         return wrap(identifierSourceRepository.findPageByIsVoidedFalse(pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
 
     @GetMapping(value = "/web/identifierSource/{id}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierSource identifierSource = identifierSourceRepository.findOne(id);
         if (identifierSource.isVoided())

@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
+@Transactional(readOnly = true)
 public class LocationHierarchyController implements RestControllerResourceProcessor<AddressLevel> {
 
     private final LocationRepository locationRepository;

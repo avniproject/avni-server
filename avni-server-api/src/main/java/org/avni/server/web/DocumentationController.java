@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.projections.DocumentationProjection;
 import org.avni.server.dao.DocumentationRepository;
 import org.avni.server.domain.Documentation;
@@ -32,6 +32,7 @@ public class DocumentationController extends AbstractController<Documentation> i
 
     @GetMapping(value = "/web/documentation")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<DocumentationContract> getAllDocumentNodes() {
         return documentationService.getAllNonVoided();
     }
@@ -46,6 +47,7 @@ public class DocumentationController extends AbstractController<Documentation> i
     }
 
     @RequestMapping(value = "/search/documentation", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Page<DocumentationProjection> searchDocumentation(@RequestParam String name, Pageable pageable) {
         return documentationRepository.findByIsVoidedFalseAndNameIgnoreCaseContains(name, pageable);
     }

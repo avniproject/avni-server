@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.avni.server.application.Subject;
 import org.avni.server.application.SubjectTypeSettingKey;
 import org.avni.server.common.BulkItemSaveException;
@@ -202,7 +203,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         }
     }
 
-    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void
     launchUserSubjectTypeJob(SubjectType subjectType) {
         String jobUUID = UUID.randomUUID().toString();

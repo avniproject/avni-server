@@ -25,6 +25,7 @@ import org.avni.server.web.request.application.FormContractWeb;
 import org.avni.server.web.request.webapp.IndividualRelationContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,6 +35,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
+@Transactional(readOnly = true)
 public class OperationalModulesController {
     private final EncounterTypeRepository encounterTypeRepository;
     private final SubjectTypeRepository subjectTypeRepository;

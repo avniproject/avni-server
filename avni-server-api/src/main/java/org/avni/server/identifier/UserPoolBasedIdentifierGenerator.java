@@ -1,6 +1,6 @@
 package org.avni.server.identifier;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.domain.IdentifierAssignment;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;

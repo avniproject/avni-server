@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.Platform;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormElementGroupRepository;
@@ -116,6 +116,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
     }
 
     @RequestMapping(value = "/translation", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<?> downloadTranslations(
             @RequestParam(value = "platform") String platform,
             @RequestParam(value = "emptyValue", defaultValue = "") String valueForEmptyKey,

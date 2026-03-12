@@ -4,9 +4,11 @@ import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.domain.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Transactional(readOnly = true)
 public class JWKSController {
     private final AvniKeycloakConfig avniKeycloakConfig;
 

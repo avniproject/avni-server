@@ -1,6 +1,7 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -87,7 +88,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
         updateLocationProperties(row, allErrorMsgs, location);
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void write(List<? extends Row> rows) throws ValidationException {
         List<String> allErrorMsgs = new ArrayList<>();
         validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);

@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
@@ -51,6 +51,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     }
 
     @RequestMapping(value = "/myGroups/search/lastModified", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<UserGroup>> get(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                    @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                    Pageable pageable) {
@@ -59,6 +60,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     }
 
     @RequestMapping(value = "/groups/{id}/users", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<UserGroupContract> getById(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         return userGroupRepository.findByGroup_IdAndIsVoidedFalse(id).stream()
@@ -67,6 +69,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     }
 
     @RequestMapping(value = "/userGroups", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public List<UserGroupContract> getByOrganisationId() {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         return userGroupRepository.findByOrganisationId(UserContextHolder.getUserContext().getOrganisationId()).stream()

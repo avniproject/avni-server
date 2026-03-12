@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
@@ -27,6 +27,7 @@ public class IndividualRelationshipTypeController {
 
     @GetMapping(value = "/web/relationshipType")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<IndividualRelationshipTypeContract> getAllIndividualRelationshipTypes() {
         return individualRelationshipTypeService.getAllRelationshipTypes(false);
     }

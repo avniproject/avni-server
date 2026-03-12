@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
 @RestController
+@Transactional(readOnly = true)
 public class DashboardFilterController implements RestControllerResourceProcessor<DashboardFilter> {
     private final DashboardFilterRepository dashboardFilterRepository;
 

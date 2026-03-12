@@ -1,6 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.*;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;

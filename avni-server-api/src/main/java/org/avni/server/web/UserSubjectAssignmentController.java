@@ -44,7 +44,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
 
     @RequestMapping(value = "/userSubjectAssignment", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<UserSubjectAssignment>> getTasks(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -55,7 +55,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
 
     @RequestMapping(value = "/userSubjectAssignment/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(readOnly = true)
     public SlicedResources<EntityModel<UserSubjectAssignment>> getTasksAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -66,6 +66,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
 
 
     @RequestMapping(value = "/web/subjectAssignmentMetadata", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public JsonObject getSubjectAssignmentMetadataForSearch() {
         accessControlService.checkPrivilege(PrivilegeType.AssignSubject);
         return userSubjectAssignmentService.getUserSubjectAssignmentMetadata();

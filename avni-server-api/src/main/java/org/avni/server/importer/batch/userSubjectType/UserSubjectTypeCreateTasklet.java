@@ -1,6 +1,6 @@
 package org.avni.server.importer.batch.userSubjectType;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.UserService;

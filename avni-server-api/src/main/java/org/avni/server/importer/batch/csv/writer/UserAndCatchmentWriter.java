@@ -1,7 +1,8 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.Locale;
@@ -76,7 +77,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         this.compoundHeaderPattern = Pattern.compile("^(?<subjectTypeName>.*?)->(?<conceptName>.*)$");
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public void write(Chunk<? extends Row> chunk) throws IDPException {
         List<? extends Row> rows = chunk.getItems();

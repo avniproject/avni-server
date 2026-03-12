@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Before;
 import org.junit.Test;

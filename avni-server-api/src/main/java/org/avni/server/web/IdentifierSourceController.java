@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.CHSEntity;
@@ -40,6 +40,7 @@ public class IdentifierSourceController extends AbstractController<IdentifierSou
     }
 
     @RequestMapping(value = "/identifierSource/search/lastModified", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<IdentifierSource>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,

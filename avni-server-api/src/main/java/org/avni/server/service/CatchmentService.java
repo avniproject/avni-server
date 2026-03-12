@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.LocationRepository;
@@ -117,7 +117,7 @@ public class CatchmentService extends RoleSwitchableRepository {
         return catchment != null && !catchment.getUuid().equals(catchmentRequest.getUuid());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean hasLocation(AddressLevel addressLevel, Catchment catchment) {
         try {
             setRoleToNone();

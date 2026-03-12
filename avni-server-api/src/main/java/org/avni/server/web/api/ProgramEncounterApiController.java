@@ -30,7 +30,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -63,6 +63,7 @@ public class ProgramEncounterApiController {
 
     @RequestMapping(value = "/api/programEncounters", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponsePage getEncounters(@RequestParam(name = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                       @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                       @RequestParam(value = "encounterType", required = false) String encounterType,
@@ -100,6 +101,7 @@ public class ProgramEncounterApiController {
 
     @GetMapping(value = "/api/programEncounter/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<EncounterResponse> get(@PathVariable("id") String legacyIdOrUuid) {
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
@@ -112,7 +114,7 @@ public class ProgramEncounterApiController {
 
     @PostMapping(value = "/api/programEncounter")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiProgramEncounterRequest request) throws IOException {
         accessControlService.checkProgramEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
@@ -143,7 +145,7 @@ public class ProgramEncounterApiController {
 
     @PutMapping(value = "/api/programEncounter/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity put(@PathVariable String id, @RequestBody ApiProgramEncounterRequest request) throws IOException {
         accessControlService.checkProgramEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());

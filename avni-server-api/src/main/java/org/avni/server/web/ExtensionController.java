@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
@@ -83,11 +83,13 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     }
 
     @GetMapping(value = "/extensions")
+    @Transactional(readOnly = true)
     public CollectionModel<EntityModel<S3ExtensionFile>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
         return wrap(new PageImpl<>(s3Service.listExtensionFiles(lastModifiedDateTime)));
     }
 
     @RequestMapping(value = "/extension/{basePath}/**", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<?> serveExtensionFile(@CookieValue(name = "IMPLEMENTATION-NAME", required = false) String implementationName, @PathVariable String basePath, HttpServletRequest request) {
         Organisation organisation = UserContextHolder.getOrganisation();
         if (organisation == null) {
@@ -115,6 +117,7 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
 
 
     @RequestMapping(value = "/extension/serve/{basePath}/**", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public ResponseEntity<?> serveCustomPrintFile(@CookieValue(name = "IMPLEMENTATION-NAME") String implementationName, @PathVariable String basePath, HttpServletRequest request) {
         Organisation organisation = implementationRepository.findByName(implementationName);
         if (organisation == null) {

@@ -23,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,6 +58,7 @@ public class MediaController {
 
     @RequestMapping(value = "/media/uploadUrl/{fileName:.+}", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponseEntity<String> generateUploadUrl(@PathVariable String fileName) {
         logger.info("getting media upload url");
         return getFileUrlResponse(fileName, HttpMethod.PUT);
@@ -78,6 +80,7 @@ public class MediaController {
 
     @RequestMapping(value = "/media/mobileDatabaseBackupUrl/upload", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponseEntity<String> generateMobileDatabaseBackupUploadUrl() {
         logger.info("getting mobile database backup upload url");
         try {
@@ -98,6 +101,7 @@ public class MediaController {
 
     @RequestMapping(value = "/media/mobileDatabaseBackupUrl/download", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponseEntity<String> generateMobileDatabaseBackupDownloadUrl() {
         logger.info("getting mobile database backup download url");
         try {
@@ -109,6 +113,7 @@ public class MediaController {
 
     @RequestMapping(value = "/media/mobileDatabaseBackupUrl/exists", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponseEntity<String> mobileDatabaseBackupExists() {
         logger.info("checking whether mobile database backup url exists");
         try {
@@ -120,6 +125,7 @@ public class MediaController {
 
     @RequestMapping(value = "/media/signedUrl", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public ResponseEntity<String> generateDownloadUrl(@RequestParam String url) {
         try {
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3Service.generateMediaDownloadUrl(url).toString());
@@ -153,6 +159,7 @@ public class MediaController {
 
     //unprotected endpoint
     @RequestMapping(value = "/web/media", method = RequestMethod.GET)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public void downloadFile(@RequestParam String url, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
         User user = UserContextHolder.getUser();
         if (user == null) {
@@ -270,6 +277,7 @@ public class MediaController {
     }
 
     @GetMapping("/web/media/downloadStream")
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ResponseEntity<InputStreamResource> downloadFile(@RequestParam String s3Url, @RequestParam String fileName) throws IOException {
         InputStreamResource resource = new InputStreamResource(s3Service.getObjectContentFromUrl(s3Url));
 

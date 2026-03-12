@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.ConceptRepository;

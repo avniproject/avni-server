@@ -1,7 +1,8 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
@@ -135,7 +136,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         }
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void write(List<? extends Row> rows, String idBasedLocationHierarchy) throws ValidationException {
         try {
             List<String> allErrorMsgs = new ArrayList<>();

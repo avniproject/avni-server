@@ -11,9 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.util.*;
 
 @RestController
@@ -29,7 +29,8 @@ public class WebTranslationController {
     }
 
     @RequestMapping(value = "/web/translations", method = RequestMethod.GET)
-    public ResponseEntity<?> translationInfo(@RequestParam(value = "locale", required = false) String locale) throws IOException {
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> translationInfo(@RequestParam(value = "locale", required = false) String locale) {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         if (organisation == null) {
             return ResponseEntity.ok().body(new HashMap<>());

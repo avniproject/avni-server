@@ -8,11 +8,13 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Transactional(readOnly = true)
 public class AuthDetailsController {
     private final AvniKeycloakConfig avniKeycloakConfig;
     private final AdapterConfig adapterConfig;

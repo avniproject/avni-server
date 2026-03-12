@@ -1,6 +1,6 @@
 package org.avni.server.dao.application;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.application.FormElementRepository;
 import org.joda.time.DateTime;

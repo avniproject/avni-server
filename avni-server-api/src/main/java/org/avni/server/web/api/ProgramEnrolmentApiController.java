@@ -1,6 +1,6 @@
 package org.avni.server.web.api;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -58,7 +58,7 @@ public class ProgramEnrolmentApiController {
 
     @PostMapping(value = "/api/programEnrolment")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiProgramEnrolmentRequest request) throws IOException {
         accessControlService.checkProgramPrivilege(PrivilegeType.EnrolSubject, request.getProgram());
@@ -76,7 +76,7 @@ public class ProgramEnrolmentApiController {
 
     @PutMapping(value = "/api/programEnrolment/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @ResponseBody
     public ResponseEntity<ProgramEnrolmentResponse> put(@PathVariable String id, @RequestBody ApiProgramEnrolmentRequest request) throws IOException {
         accessControlService.checkProgramPrivilege(PrivilegeType.EnrolSubject, request.getProgram());
@@ -114,6 +114,7 @@ public class ProgramEnrolmentApiController {
 
     @RequestMapping(value = "/api/programEnrolments", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public Object getEnrolments(@RequestParam(name = "lastModifiedDateTime", required = false)
                                     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                 @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -138,6 +139,7 @@ public class ProgramEnrolmentApiController {
 
     @GetMapping(value = "/api/programEnrolment/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity<ProgramEnrolmentResponse> get(@PathVariable("id") String legacyIdOrUuid) {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(legacyIdOrUuid);

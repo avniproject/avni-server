@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.RoleSwitchableRepository;
 import org.avni.server.domain.Organisation;
@@ -81,7 +81,7 @@ public class BundleService extends RoleSwitchableRepository {
         return baos;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ByteArrayOutputStream generateBundleForOrg(Long organisationId) throws IOException {
         Organisation currentContextOrg = UserContextHolder.getOrganisation();
         try {

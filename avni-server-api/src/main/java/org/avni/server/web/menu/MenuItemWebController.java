@@ -1,6 +1,6 @@
 package org.avni.server.web.menu;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.menu.MenuItem;
 import org.avni.server.dao.application.MenuItemRepository;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -59,6 +59,7 @@ public class MenuItemWebController extends AbstractController<MenuItem> implemen
 
     @RequestMapping(value = "/web/menuItem/{id}", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public MenuItemContract getOne(@PathVariable("id") Long id) {
         MenuItem entity = menuItemService.find(id);
         return new MenuItemWebResponse(entity);
@@ -66,6 +67,7 @@ public class MenuItemWebController extends AbstractController<MenuItem> implemen
 
     @RequestMapping(value = "/web/menuItem", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
     public CollectionModel<MenuItemWebResponse> getAll() {
         return wrapListAsPage(menuItemRepository.findAllByIsVoidedFalse().stream().map(MenuItemWebResponse::new).collect(Collectors.toList()));
     }

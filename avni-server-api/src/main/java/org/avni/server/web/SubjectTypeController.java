@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
@@ -82,6 +82,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @GetMapping(value = "/web/subjectType")
+    @Transactional(readOnly = true)
     @ResponseBody
     public CollectionModel<EntityModel<SubjectTypeContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalSubjectTypeRepository
@@ -93,6 +94,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @GetMapping(value = "/web/subjectType/{id}")
+    @Transactional(readOnly = true)
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         OperationalSubjectType operationalSubjectType = operationalSubjectTypeRepository.findOne(id);
@@ -266,6 +268,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @GetMapping(value = "/subjectType/syncAttributesData")
+    @Transactional(readOnly = true)
     public UserSyncAttributeAssignmentRequest getAllConceptSyncAttributes() {
         return subjectTypeService.getSyncAttributeData();
     }

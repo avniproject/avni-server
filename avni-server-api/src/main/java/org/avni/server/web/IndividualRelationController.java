@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
@@ -30,12 +30,14 @@ public class IndividualRelationController {
 
     @GetMapping(value = "/web/relation")
     @ResponseBody
+    @Transactional(readOnly = true)
     public List<IndividualRelationContract> getAllIndividualRelations() {
         return individualRelationService.getAll();
     }
 
     @GetMapping(value = "/web/relation/{id}")
     @ResponseBody
+    @Transactional(readOnly = true)
     public ResponseEntity<IndividualRelationContract> getIndividualRelation(@PathVariable Long id) {
         Optional<IndividualRelation> relation = individualRelationRepository.findById(id);
         return relation.map(individualRelation ->

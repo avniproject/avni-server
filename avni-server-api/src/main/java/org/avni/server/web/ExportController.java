@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -83,12 +84,14 @@ public class ExportController {
     }
 
     @RequestMapping(value = "/export/status", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Page<JobStatus> getUploadStatus(Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return exportJobService.getAll(pageable);
     }
 
     @RequestMapping(value = "/export/download", method = RequestMethod.GET)
+    @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ResponseEntity<?> downloadFile(@RequestParam String fileName) throws IOException {
         InputStream inputStream = exportS3Service.downloadFile(fileName);
         byte[] bytes = IOUtils.toByteArray(inputStream);

@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.AccountRepository;
 import org.avni.server.domain.Account;
 import org.avni.server.domain.AccountAdmin;
@@ -59,6 +59,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
     }
 
     @RequestMapping(value = {"/account/search/findAll", "/account", "/account/search/find"}, method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Page<Account> get(@Param("name") String name, Pageable pageable) {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
@@ -70,6 +71,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
     }
 
     @RequestMapping(value = "/account/{id}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
     public Account getById(@PathVariable Long id) {
         accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
