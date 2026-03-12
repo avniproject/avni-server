@@ -30,6 +30,7 @@ DELETE FROM user_group;
 DELETE FROM external_system_config;
 DELETE FROM organisation_config;
 DELETE from message_request_queue;
+DELETE from flow_request_queue;
 DELETE from message_receiver;
 DELETE from message_rule;
 DELETE FROM reset_sync;

@@ -5,11 +5,13 @@ import org.avni.messaging.contract.SendMessageResponse;
 import org.avni.messaging.contract.StartFlowForContactRequest;
 import org.avni.messaging.contract.glific.GlificMessageTemplate;
 import org.avni.messaging.contract.web.MessageRequestResponse;
+import org.avni.messaging.domain.FlowRequest;
 import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
+import org.avni.messaging.service.FlowRequestQueueService;
 import org.avni.messaging.service.MessageRequestService;
 import org.avni.messaging.service.MessageTemplateService;
 import org.avni.messaging.service.MessagingService;
@@ -37,16 +39,18 @@ public class MessageController {
     private final UserRepository userRepository;
     private final IndividualService individualService;
     private final MessageTemplateService messageTemplateService;
+    private final FlowRequestQueueService flowRequestQueueService;
 
     @Autowired
     public MessageController(AccessControlService accessControlService, MessageRequestService messageRequestService, MessagingService messagingService, UserRepository userRepository,
-                             IndividualService individualService, MessageTemplateService messageTemplateService) {
+                             IndividualService individualService, MessageTemplateService messageTemplateService, FlowRequestQueueService flowRequestQueueService) {
         this.accessControlService = accessControlService;
         this.messageRequestService = messageRequestService;
         this.messagingService = messagingService;
         this.userRepository = userRepository;
         this.individualService = individualService;
         this.messageTemplateService = messageTemplateService;
+        this.flowRequestQueueService = flowRequestQueueService;
     }
 
     @RequestMapping(value = MessageEndpoint + "/subject/{id}/msgsNotYetSent", method = RequestMethod.GET)
@@ -80,7 +84,7 @@ public class MessageController {
         try {
             messagingService.sendMessageSynchronously(manualMessageContract);
         } catch (PhoneNumberNotAvailableOrIncorrectException e) {
-            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
+            return ResponseEntity.badRequest().body(new SendMessageResponse(e.getDeliveryStatus(), e.getMessage()));
         } catch (GlificNotConfiguredException e) {
             return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
         } catch (Exception e) {
@@ -95,18 +99,21 @@ public class MessageController {
     public ResponseEntity<SendMessageResponse> startFlowForContact(@RequestBody StartFlowForContactRequest startFlowForContactRequest) {
         accessControlService.checkPrivilege(PrivilegeType.Messaging);
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+        FlowRequest flowRequest = messagingService.createFlowRequest(startFlowForContactRequest);
         try {
-            messagingService.sendStartFlowForContactSynchronously(startFlowForContactRequest);
+            messagingService.invokeStartFlowForContact(flowRequest);
+            flowRequestQueueService.markComplete(flowRequest);
+            return ResponseEntity.ok(new SendMessageResponse(MessageDeliveryStatus.Sent, "Success"));
         } catch (PhoneNumberNotAvailableOrIncorrectException e) {
-            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
-        } catch (GlificNotConfiguredException e) {
-            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
-        } catch (GlificException e) {
+            flowRequestQueueService.markFailed(flowRequest, e.getDeliveryStatus());
+            return ResponseEntity.badRequest().body(new SendMessageResponse(e.getDeliveryStatus(), e.getMessage()));
+        } catch (GlificNotConfiguredException | GlificException e) {
+            flowRequestQueueService.markFailed(flowRequest, MessageDeliveryStatus.NotSent);
             return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
         } catch (Exception e) {
+            flowRequestQueueService.markFailed(flowRequest, MessageDeliveryStatus.Failed);
             return ResponseEntity.internalServerError().body(new SendMessageResponse(MessageDeliveryStatus.Failed, e.getMessage()));
         }
-        return ResponseEntity.ok(new SendMessageResponse(MessageDeliveryStatus.Sent, "Success"));
     }
 
     @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)

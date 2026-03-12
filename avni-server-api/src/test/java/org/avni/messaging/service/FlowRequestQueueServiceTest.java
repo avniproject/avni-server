@@ -1,8 +1,10 @@
 package org.avni.messaging.service;
 
 import org.avni.messaging.domain.FlowRequest;
+import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.ReceiverType;
+import org.joda.time.DateTime;
 import org.avni.messaging.repository.FlowRequestQueueRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,5 +45,26 @@ public class FlowRequestQueueServiceTest {
         assertThat(savedFlowRequest.getFlowId()).isEqualTo(flowId);
         assertThat(savedFlowRequest.getRequestDateTime()).isNotNull();
         assertThat(savedFlowRequest.getUuid()).isNotNull();
+        assertThat(savedFlowRequest.getDeliveryStatus()).isEqualTo(MessageDeliveryStatus.NotSent);
+    }
+
+    @Test
+    public void shouldMarkFlowRequestAsFailed() {
+        FlowRequest flowRequest = new FlowRequest(new MessageReceiver(ReceiverType.Subject, 1L), "flow-id", DateTime.now());
+
+        flowRequestQueueService.markFailed(flowRequest, MessageDeliveryStatus.Failed);
+
+        verify(flowRequestQueueRepository).save(flowRequestCaptor.capture());
+        assertThat(flowRequestCaptor.getValue().getDeliveryStatus()).isEqualTo(MessageDeliveryStatus.Failed);
+    }
+
+    @Test
+    public void shouldMarkFlowRequestAsComplete() {
+        FlowRequest flowRequest = new FlowRequest(new MessageReceiver(ReceiverType.Subject, 1L), "flow-id", DateTime.now());
+
+        flowRequestQueueService.markComplete(flowRequest);
+
+        verify(flowRequestQueueRepository).save(flowRequestCaptor.capture());
+        assertThat(flowRequestCaptor.getValue().getDeliveryStatus()).isEqualTo(MessageDeliveryStatus.Sent);
     }
 }
