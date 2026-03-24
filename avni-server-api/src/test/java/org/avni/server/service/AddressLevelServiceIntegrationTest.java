@@ -51,6 +51,20 @@ public class AddressLevelServiceIntegrationTest extends AbstractControllerIntegr
     }
 
     @Test
+    public void getTitleLineage() {
+        testDataSetupService.setupOrganisation();
+        AddressLevelType village = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withUuid("village").name("village").level(1d).build());
+        AddressLevelType city = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withUuid("city2").name("city").level(2d).child(village).build());
+        AddressLevelType state = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withUuid("state2").name("state").level(3d).child(city).build());
+
+        AddressLevel karnataka = testLocationService.save(new AddressLevelBuilder().withUuid("karnataka2").title("Karnataka").type(state).build());
+        AddressLevel mysuru = testLocationService.save(new AddressLevelBuilder().withUuid("mysuru").title("Mysuru").type(city).parent(karnataka).build());
+        AddressLevel hd_kote = testLocationService.save(new AddressLevelBuilder().withUuid("hd_kote").title("HD Kote").type(village).parent(mysuru).build());
+
+        assertEquals("Karnataka, Mysuru, HD Kote", addressLevelService.getTitleLineage(hd_kote));
+    }
+
+    @Test
     public void findByAddressMap() {
         testDataSetupService.setupOrganisation();
         AddressLevelType grandParent = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withUuid("GP").name("GP").level(3d).build());
