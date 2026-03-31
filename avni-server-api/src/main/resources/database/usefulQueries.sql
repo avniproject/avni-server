@@ -683,7 +683,7 @@ where status in ('STARTING', 'STARTED')
 
 -- Find out bundle uploads for an org
 
-select * from batch_job_execution bje
+select *from batch_job_execution bje
 inner join batch_job_instance bji on bje.job_instance_id = bji.job_instance_id
   inner join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
     and bjep.parameter_name = 'organisationUUID'
@@ -692,20 +692,66 @@ where bji.job_name = 'importZipJob';
 
 -- Commands to forcefully terminate a Spring-Batch job
 
-select * from batch_step_execution
-where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+select *
+from batch_step_execution
+where job_execution_id = 12345; -- <Replace 12345 with correct job execution id>
 
 update batch_step_execution
-set status='FAILED', exit_code='FAILED',
+set status='FAILED',
+    exit_code='FAILED',
     exit_message = 'terminated forcefully',
-    version=version+1, end_time=now() , last_updated = now()
-where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+    version=version + 1,
+    end_time=now(),
+    last_updated = now()
+where job_execution_id = 12345; -- <Replace 12345 with correct job execution id>
 
-select * from batch_job_execution
-where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+select *
+from batch_job_execution
+where job_execution_id = 12345; -- <Replace 12345 with correct job execution id>
 
-update batch_job_execution set status='FAILED', exit_code='FAILED', version=version+1, end_time=now()
-where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+update batch_job_execution
+set status='FAILED',
+    exit_code='FAILED',
+    version=version + 1,
+    end_time=now()
+where job_execution_id = 12345;
+-- <Replace 12345 with correct job execution id>
+
+-- Commands to forcefully terminate a Spring-Batch job by uuid (use when you have uuid from the job status query)
+
+select bje.job_execution_id
+from batch_job_execution bje
+         inner join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+where bjep.parameter_name = 'uuid'
+  and bjep.parameter_value = '<uuid>'; -- <Replace <uuid> with the job uuid>
+
+update batch_step_execution
+set status='FAILED',
+    exit_code='FAILED',
+    exit_message = 'terminated forcefully',
+    version=version + 1,
+    end_time=now(),
+    last_updated = now()
+where job_execution_id in (
+    select bje.job_execution_id
+    from batch_job_execution bje
+             inner join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+    where bjep.parameter_name = 'uuid'
+      and bjep.parameter_value = '<uuid>' -- <Replace <uuid> with the job uuid>
+);
+
+update batch_job_execution
+set status='FAILED',
+    exit_code='FAILED',
+    version=version + 1,
+    end_time=now()
+where job_execution_id in (
+    select bje.job_execution_id
+    from batch_job_execution bje
+             inner join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+    where bjep.parameter_name = 'uuid'
+      and bjep.parameter_value = '<uuid>' -- <Replace <uuid> with the job uuid>
+);
 
 -- To create db trigger on users table to set sync settings for a particular organisation
 CREATE OR REPLACE FUNCTION insert_sync_settings_for_rwb2023_users()
