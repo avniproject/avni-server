@@ -366,6 +366,12 @@ public class User implements IdHolder {
     }
 
     public void setSettings(JsonObject settings) {
+        if (settings == null) {
+            settings = new JsonObject();
+        }
+        if (!settings.containsKey(UserSettings.DISABLE_AUTO_SYNC)) {
+            settings.put(UserSettings.DISABLE_AUTO_SYNC, true);
+        }
         this.settings = settings;
     }
 
