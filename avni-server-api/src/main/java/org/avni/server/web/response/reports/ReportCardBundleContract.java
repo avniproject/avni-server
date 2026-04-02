@@ -11,6 +11,9 @@ public class ReportCardBundleContract extends ReportCardContract {
     private List<String> standardReportCardInputPrograms = new ArrayList<>();
     private List<String> standardReportCardInputEncounterTypes = new ArrayList<>();
     private String standardReportCardInputRecentDuration = null;
+    private String action;
+    private String actionEncounterTypeUUID;
+    private String onActionCompletion;
 
     public String getStandardReportCardType() {
         return standardReportCardType;
@@ -50,5 +53,29 @@ public class ReportCardBundleContract extends ReportCardContract {
 
     public void setStandardReportCardInputRecentDuration(String standardReportCardInputRecentDuration) {
         this.standardReportCardInputRecentDuration = standardReportCardInputRecentDuration;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public String getActionEncounterTypeUUID() {
+        return actionEncounterTypeUUID;
+    }
+
+    public void setActionEncounterTypeUUID(String actionEncounterTypeUUID) {
+        this.actionEncounterTypeUUID = actionEncounterTypeUUID;
+    }
+
+    public String getOnActionCompletion() {
+        return onActionCompletion;
+    }
+
+    public void setOnActionCompletion(String onActionCompletion) {
+        this.onActionCompletion = onActionCompletion;
     }
 }

@@ -42,6 +42,20 @@ public class ReportCard extends OrganisationAwareEntity {
     @Type(value = JSONObjectUserType.class)
     private JsonObject standardReportCardInput = new JsonObject(new HashMap<>());
 
+    @Column
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private ReportCardAction action = ReportCardAction.ShowSubject;
+
+    @Column
+    @Type(value = JSONObjectUserType.class)
+    private JsonObject actionDetail;
+
+    @Column
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private ReportCardOnActionCompletion onActionCompletion = ReportCardOnActionCompletion.SubjectProfile;
+
     public String getName() {
         return name;
     }
@@ -154,5 +168,42 @@ public class ReportCard extends OrganisationAwareEntity {
 
     public void resetStandardReportCardInput() {
         standardReportCardInput = new JsonObject(new HashMap<>());
+    }
+
+    public ReportCardAction getAction() {
+        return action;
+    }
+
+    public void setAction(ReportCardAction action) {
+        this.action = action;
+    }
+
+    public JsonObject getActionDetail() {
+        return actionDetail;
+    }
+
+    public void setActionDetail(JsonObject actionDetail) {
+        this.actionDetail = actionDetail;
+    }
+
+    public String getActionDetailEncounterTypeUUID() {
+        return actionDetail != null ? actionDetail.getString("encounterTypeUUID") : null;
+    }
+
+    public void setActionDetailEncounterTypeUUID(String encounterTypeUUID) {
+        if (encounterTypeUUID == null) {
+            this.actionDetail = null;
+        } else {
+            this.actionDetail = new JsonObject(new HashMap<>());
+            this.actionDetail.with("encounterTypeUUID", encounterTypeUUID);
+        }
+    }
+
+    public ReportCardOnActionCompletion getOnActionCompletion() {
+        return onActionCompletion;
+    }
+
+    public void setOnActionCompletion(ReportCardOnActionCompletion onActionCompletion) {
+        this.onActionCompletion = onActionCompletion;
     }
 }

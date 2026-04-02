@@ -48,6 +48,7 @@ public class CardService implements NonScopeAwareService {
         card.assignUUID();
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
+        buildActionFields(reportCardRequest.getAction(), reportCardRequest.getActionEncounterTypeUUID(), reportCardRequest.getOnActionCompletion(), card);
         cardRepository.save(card);
         return card;
     }
@@ -60,6 +61,7 @@ public class CardService implements NonScopeAwareService {
         }
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
+        buildActionFields(reportCardRequest.getAction(), reportCardRequest.getActionEncounterTypeUUID(), reportCardRequest.getOnActionCompletion(), card);
         cardRepository.save(card);
     }
 
@@ -68,6 +70,7 @@ public class CardService implements NonScopeAwareService {
         assertNewNameIsUnique(request.getName(), existingCard.getName());
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
+        buildActionFields(request.getAction(), request.getActionEncounterTypeUUID(), request.getOnActionCompletion(), existingCard);
         return cardRepository.save(existingCard);
     }
 
@@ -154,6 +157,26 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
+    }
+
+    private void buildActionFields(String action, String actionEncounterTypeUUID, String onActionCompletion, ReportCard card) {
+        ReportCardAction resolvedAction = action != null ? ReportCardAction.valueOf(action) : ReportCardAction.ShowSubject;
+        card.setAction(resolvedAction);
+        if (ReportCardAction.PerformVisit == resolvedAction) {
+            if (!StringUtils.hasText(actionEncounterTypeUUID)) {
+                throw new BadRequestError("Encounter type is required when action is PerformVisit");
+            }
+            EncounterType encounterType = encounterTypeRepository.findByUuid(actionEncounterTypeUUID);
+            if (encounterType == null) {
+                throw new BadRequestError(String.format("EncounterType with uuid %s doesn't exist", actionEncounterTypeUUID));
+            }
+            card.setActionDetailEncounterTypeUUID(actionEncounterTypeUUID);
+            ReportCardOnActionCompletion resolvedOnActionCompletion = onActionCompletion != null ? ReportCardOnActionCompletion.valueOf(onActionCompletion) : ReportCardOnActionCompletion.SubjectProfile;
+            card.setOnActionCompletion(resolvedOnActionCompletion);
+        } else {
+            card.setActionDetailEncounterTypeUUID(null);
+            card.setOnActionCompletion(ReportCardOnActionCompletion.SubjectProfile);
+        }
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {

@@ -17,6 +17,9 @@ public class ReportCardWebResponse extends ReportCardContract {
     private List<ProgramContract> standardReportCardInputPrograms = new ArrayList<>();
     private List<EncounterTypeContract> standardReportCardInputEncounterTypes = new ArrayList<>();
     private ValueUnit standardReportCardInputRecentDuration = null;
+    private String action;
+    private String actionEncounterTypeUUID;
+    private String onActionCompletion;
 
     public List<SubjectTypeContract> getStandardReportCardInputSubjectTypes() {
         return standardReportCardInputSubjectTypes;
@@ -56,5 +59,29 @@ public class ReportCardWebResponse extends ReportCardContract {
 
     public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
         this.standardReportCardInputRecentDuration = standardReportCardInputRecentDuration;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public String getActionEncounterTypeUUID() {
+        return actionEncounterTypeUUID;
+    }
+
+    public void setActionEncounterTypeUUID(String actionEncounterTypeUUID) {
+        this.actionEncounterTypeUUID = actionEncounterTypeUUID;
+    }
+
+    public String getOnActionCompletion() {
+        return onActionCompletion;
+    }
+
+    public void setOnActionCompletion(String onActionCompletion) {
+        this.onActionCompletion = onActionCompletion;
     }
 }
