@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ public class CardService implements NonScopeAwareService {
         card.assignUUID();
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
+        buildAction(reportCardRequest.getAction(), card);
         cardRepository.save(card);
         return card;
     }
@@ -60,6 +62,7 @@ public class CardService implements NonScopeAwareService {
         }
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
+        buildAction(reportCardRequest.getAction(), card);
         cardRepository.save(card);
     }
 
@@ -68,6 +71,7 @@ public class CardService implements NonScopeAwareService {
         assertNewNameIsUnique(request.getName(), existingCard.getName());
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
+        buildAction(request.getAction(), existingCard);
         return cardRepository.save(existingCard);
     }
 
@@ -154,6 +158,18 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
+    }
+
+    private void buildAction(String action, ReportCard card) {
+        if (action == null) {
+            card.setAction(null);
+            return;
+        }
+        try {
+            card.setAction(ReportCardAction.valueOf(action));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestError(String.format("Invalid action '%s'. Allowed values: %s", action, Arrays.toString(ReportCardAction.values())));
+        }
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {

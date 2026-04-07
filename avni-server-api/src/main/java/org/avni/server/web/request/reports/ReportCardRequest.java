@@ -10,6 +10,7 @@ public abstract class ReportCardRequest extends ReportCardContract {
     private List<String> standardReportCardInputPrograms;
     private List<String> standardReportCardInputEncounterTypes;
     private ValueUnit standardReportCardInputRecentDuration;
+    private String action;
 
     public List<String> getStandardReportCardInputSubjectTypes() {
         return standardReportCardInputSubjectTypes;
@@ -41,5 +42,13 @@ public abstract class ReportCardRequest extends ReportCardContract {
 
     public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
         this.standardReportCardInputRecentDuration = standardReportCardInputRecentDuration;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
     }
 }
