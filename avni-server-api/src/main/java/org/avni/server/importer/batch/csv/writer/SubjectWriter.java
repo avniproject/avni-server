@@ -209,6 +209,7 @@ public class SubjectWriter extends EntityWriter {
         }
         individual.setGender(gender);
     }
+    
     private static void setLastName(Row row, Individual individual, List<String> allErrorMsgs) {
         String lastName = row.get(SubjectHeadersCreator.lastName);
         if (!StringUtils.hasText(lastName)) {
