@@ -50,6 +50,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
         cardRepository.save(card);
         return card;
     }
@@ -63,6 +64,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
         cardRepository.save(card);
     }
 
@@ -72,6 +74,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
+        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType());
         return cardRepository.save(existingCard);
     }
 
@@ -170,6 +173,24 @@ public class CardService implements NonScopeAwareService {
         } catch (IllegalArgumentException e) {
             throw new BadRequestError(String.format("Invalid action '%s'. Allowed values: %s", action, Arrays.toString(ReportCardAction.values())));
         }
+    }
+
+    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
+        if (card.getAction() != ReportCardAction.DoVisit) {
+            card.setActionDetail(null);
+            return;
+        }
+        if (!StringUtils.hasText(encounterTypeUUID)) {
+            throw new BadRequestError("Encounter type is required when action is DoVisit");
+        }
+        if (!StringUtils.hasText(visitType)) {
+            throw new BadRequestError("Visit type is required when action is DoVisit");
+        }
+        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
+        if (encounterType == null) {
+            throw new BadRequestError(String.format("EncounterType with uuid %s doesn't exist", encounterTypeUUID));
+        }
+        card.setActionDetailFields(subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {

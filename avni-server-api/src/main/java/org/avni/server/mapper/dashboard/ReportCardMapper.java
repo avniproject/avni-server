@@ -35,6 +35,10 @@ public class ReportCardMapper {
         response.setStandardReportCardInputEncounterTypes(reportCardService.getStandardReportCardInputEncounterTypes(card).stream().map(EncounterTypeContract::createBasic).collect(Collectors.toList()));
         response.setStandardReportCardInputRecentDuration(reportCardService.buildDurationForRecentTypeCards(card.getStandardReportCardInputRecentDuration()));
         response.setAction(card.getAction() != null ? card.getAction().name() : null);
+        response.setActionDetailSubjectTypeUUID(card.getActionDetailSubjectTypeUUID());
+        response.setActionDetailProgramUUID(card.getActionDetailProgramUUID());
+        response.setActionDetailEncounterTypeUUID(card.getActionDetailEncounterTypeUUID());
+        response.setActionDetailVisitType(card.getActionDetailVisitType());
         return response;
     }
 
@@ -63,6 +67,10 @@ public class ReportCardMapper {
             response.setStandardReportCardInputRecentDuration(reportCard.getStandardReportCardInputRecentDuration());
         }
         response.setAction(reportCard.getAction() != null ? reportCard.getAction().name() : null);
+        response.setActionDetailSubjectTypeUUID(reportCard.getActionDetailSubjectTypeUUID());
+        response.setActionDetailProgramUUID(reportCard.getActionDetailProgramUUID());
+        response.setActionDetailEncounterTypeUUID(reportCard.getActionDetailEncounterTypeUUID());
+        response.setActionDetailVisitType(reportCard.getActionDetailVisitType());
         return response;
     }
 }

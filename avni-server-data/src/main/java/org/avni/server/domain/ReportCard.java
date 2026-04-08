@@ -46,6 +46,9 @@ public class ReportCard extends OrganisationAwareEntity {
     @Enumerated(EnumType.STRING)
     private ReportCardAction action;
 
+    @Type(value = JSONObjectUserType.class)
+    private JsonObject actionDetail;
+
     public String getName() {
         return name;
     }
@@ -166,5 +169,37 @@ public class ReportCard extends OrganisationAwareEntity {
 
     public void setAction(ReportCardAction action) {
         this.action = action;
+    }
+
+    public JsonObject getActionDetail() {
+        return actionDetail;
+    }
+
+    public void setActionDetail(JsonObject actionDetail) {
+        this.actionDetail = actionDetail;
+    }
+
+    public String getActionDetailSubjectTypeUUID() {
+        return actionDetail != null ? actionDetail.getString("subjectTypeUUID") : null;
+    }
+
+    public String getActionDetailProgramUUID() {
+        return actionDetail != null ? actionDetail.getString("programUUID") : null;
+    }
+
+    public String getActionDetailEncounterTypeUUID() {
+        return actionDetail != null ? actionDetail.getString("encounterTypeUUID") : null;
+    }
+
+    public String getActionDetailVisitType() {
+        return actionDetail != null ? actionDetail.getString("visitType") : null;
+    }
+
+    public void setActionDetailFields(String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
+        this.actionDetail = new JsonObject(new HashMap<>());
+        this.actionDetail.with("subjectTypeUUID", subjectTypeUUID);
+        this.actionDetail.with("programUUID", programUUID);
+        this.actionDetail.with("encounterTypeUUID", encounterTypeUUID);
+        this.actionDetail.with("visitType", visitType);
     }
 }
