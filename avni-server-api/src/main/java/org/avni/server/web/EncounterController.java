@@ -57,6 +57,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final TxDataControllerHelper txDataControllerHelper;
+    private final SubjectMigrationService subjectMigrationService;
 
     @Autowired
     public EncounterController(IndividualRepository individualRepository,
@@ -65,7 +66,7 @@ public class EncounterController extends AbstractController<Encounter> implement
                                ObservationService observationService,
                                UserService userService,
                                Bugsnag bugsnag,
-                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
+                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper, SubjectMigrationService subjectMigrationService) {
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
@@ -78,6 +79,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
         this.txDataControllerHelper = txDataControllerHelper;
+        this.subjectMigrationService = subjectMigrationService;
     }
 
     @GetMapping(value = "/web/encounter/{uuid}")
@@ -194,7 +196,7 @@ public class EncounterController extends AbstractController<Encounter> implement
             List<Decision> registrationDecisions = decisions.getRegistrationDecisions();
             if (registrationDecisions != null) {
                 ObservationCollection registrationObservations = observationService.createObservationsFromDecisions(registrationDecisions);
-                encounter.getIndividual().addObservations(registrationObservations);
+                subjectMigrationService.applyRegistrationDecisionsAndPropagate(encounter.getIndividual(), registrationObservations);
             }
         }
         this.encounterService.save(encounter);

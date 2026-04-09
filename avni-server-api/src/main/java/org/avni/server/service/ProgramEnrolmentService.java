@@ -50,6 +50,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     private final AccessControlService accessControlService;
     private final Bugsnag bugsnag;
     private final FormMappingService formMappingService;
+    private final SubjectMigrationService subjectMigrationService;
 
     @Autowired
     public ProgramEnrolmentService(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -65,7 +66,8 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
                                    IdentifierAssignmentRepository identifierAssignmentRepository,
                                    AccessControlService accessControlService,
                                    FormMappingService formMappingService,
-                                   Bugsnag bugsnag) {
+                                   Bugsnag bugsnag,
+                                   SubjectMigrationService subjectMigrationService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.programEncounterService = programEncounterService;
         this.programEncounterRepository = programEncounterRepository;
@@ -80,6 +82,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
         this.bugsnag = bugsnag;
+        this.subjectMigrationService = subjectMigrationService;
     }
 
     public EnrolmentContract constructEnrolments(String uuid) {
@@ -189,7 +192,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
             List<Decision> registrationDecisions = decisions.getRegistrationDecisions();
             if (registrationDecisions != null) {
                 ObservationCollection registrationObservations = observationService.createObservationsFromDecisions(registrationDecisions);
-                individual.addObservations(registrationObservations);
+                subjectMigrationService.applyRegistrationDecisionsAndPropagate(individual, registrationObservations);
             }
         }
 

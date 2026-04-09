@@ -163,6 +163,13 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     }
 
     @Transactional
+    public void applyRegistrationDecisionsAndPropagate(Individual individual, ObservationCollection registrationObservations) {
+        ObservationCollection oldObservations = new ObservationCollection(individual.getObservations());
+        individual.addObservations(registrationObservations);
+        markSubjectMigrationIfRequired(individual.getUuid(), individual.getAddressLevel(), individual.getAddressLevel(), oldObservations, individual.getObservations(), false);
+    }
+
+    @Transactional
     public void changeSubjectAddressLevel(Individual subject, AddressLevel destAddressLevel) {
         logger.info(String.format("Migrating subject : %s, address: %s -> %s", subject.getUuid(), subject.getAddressLevel().getId(), destAddressLevel.getId()));
         this.markSubjectMigrationIfRequired(subject.getUuid(), null, destAddressLevel, null, subject.getObservations(), true);
