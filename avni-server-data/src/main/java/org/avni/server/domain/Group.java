@@ -15,6 +15,8 @@ public class Group extends OrganisationAwareEntity {
     public static final String Administrators = "Administrators";
     public static final String Everyone = "Everyone";
     public static final String METABASE_USERS = "Metabase Users";
+    public static final String SQLITE_MIGRATION = "SQLite Migration";
+    public static final String SQLITE_MIGRATION_UUID = "e6e5e4e3-e2e1-4f00-8000-d0d1d2d3d4d5";
 
     @Column
     private String name;
@@ -55,6 +57,7 @@ public class Group extends OrganisationAwareEntity {
     }
 
     public boolean isOneOfTheDefaultGroups() {
-        return Administrators.equals(name) || Everyone.equals(name) || METABASE_USERS.equals(name);
+        return Administrators.equals(name) || Everyone.equals(name)
+                || METABASE_USERS.equals(name) || SQLITE_MIGRATION.equals(name);
     }
 }
