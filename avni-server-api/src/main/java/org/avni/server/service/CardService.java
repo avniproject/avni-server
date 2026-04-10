@@ -180,15 +180,23 @@ public class CardService implements NonScopeAwareService {
             card.setActionDetail(null);
             return;
         }
+        if (!StringUtils.hasText(subjectTypeUUID)) {
+            throw new BadRequestError("Subject type is required when action is DoVisit");
+        }
+        if (subjectTypeRepository.findByUuid(subjectTypeUUID) == null) {
+            throw new BadRequestError(String.format("SubjectType with uuid %s doesn't exist", subjectTypeUUID));
+        }
+        if (StringUtils.hasText(programUUID) && programRepository.findByUuid(programUUID) == null) {
+            throw new BadRequestError(String.format("Program with uuid %s doesn't exist", programUUID));
+        }
         if (!StringUtils.hasText(encounterTypeUUID)) {
             throw new BadRequestError("Encounter type is required when action is DoVisit");
         }
+        if (encounterTypeRepository.findByUuid(encounterTypeUUID) == null) {
+            throw new BadRequestError(String.format("EncounterType with uuid %s doesn't exist", encounterTypeUUID));
+        }
         if (!StringUtils.hasText(visitType)) {
             throw new BadRequestError("Visit type is required when action is DoVisit");
-        }
-        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
-        if (encounterType == null) {
-            throw new BadRequestError(String.format("EncounterType with uuid %s doesn't exist", encounterTypeUUID));
         }
         card.setActionDetailFields(subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
     }
