@@ -4,6 +4,7 @@ import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.repository.MessageReceiverRepository;
+import org.avni.messaging.repository.WatiContactRepository;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.UserService;
 import org.junit.Before;
@@ -37,10 +38,16 @@ public class MessageReceiverServiceTest {
     @Mock
     private GlificContactRepository glificContactRepository;
 
+    @Mock
+    private WatiContactRepository watiContactRepository;
+
+    @Mock
+    private MessagingProviderResolver messagingProviderResolver;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        messageReceiverService = new MessageReceiverService(messageReceiverRepository, glificContactRepository, individualService, userService);
+        messageReceiverService = new MessageReceiverService(messageReceiverRepository, glificContactRepository, watiContactRepository, messagingProviderResolver, individualService, userService);
     }
 
     @Test
