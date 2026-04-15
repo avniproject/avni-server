@@ -6,6 +6,7 @@ import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.repository.MessageReceiverRepository;
+import org.avni.messaging.repository.WatiContactRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
 import org.avni.server.service.IndividualService;
@@ -23,17 +24,24 @@ import java.util.Optional;
 public class MessageReceiverService {
 
     private final MessageReceiverRepository messageReceiverRepository;
-
     private final GlificContactRepository glificContactRepository;
-
+    private final WatiContactRepository watiContactRepository;
+    private final MessagingProviderResolver messagingProviderResolver;
     private final IndividualService individualService;
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(MessageReceiverService.class);
 
     @Autowired
-    public MessageReceiverService(MessageReceiverRepository messageReceiverRepository, GlificContactRepository glificContactRepository, IndividualService individualService, UserService userService) {
+    public MessageReceiverService(MessageReceiverRepository messageReceiverRepository,
+                                  GlificContactRepository glificContactRepository,
+                                  WatiContactRepository watiContactRepository,
+                                  MessagingProviderResolver messagingProviderResolver,
+                                  IndividualService individualService,
+                                  UserService userService) {
         this.messageReceiverRepository = messageReceiverRepository;
         this.glificContactRepository = glificContactRepository;
+        this.watiContactRepository = watiContactRepository;
+        this.messagingProviderResolver = messagingProviderResolver;
         this.individualService = individualService;
         this.userService = userService;
     }
@@ -80,7 +88,11 @@ public class MessageReceiverService {
             return messageReceiver;
         }
 
-        String externalId = glificContactRepository.getOrCreateContact(phoneNumber, fullName);
+        // Branch on provider: Wati uses phone number directly as externalId (no contact registration needed).
+        // Glific requires creating/fetching a contact in its system to get a contact ID.
+        String externalId = messagingProviderResolver.isWatiConfigured()
+                ? watiContactRepository.getOrCreateContact(phoneNumber, fullName)
+                : glificContactRepository.getOrCreateContact(phoneNumber, fullName);
         messageReceiver.setExternalId(externalId);
         return messageReceiverRepository.save(messageReceiver);
     }

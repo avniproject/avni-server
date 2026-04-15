@@ -77,7 +77,6 @@ public class MessageController {
 
     @RequestMapping(value = MessageEndpoint + "/sendMsg", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
     public ResponseEntity<SendMessageResponse> sendMsgToContactUser(@RequestBody ManualMessageContract manualMessageContract) {
         accessControlService.checkPrivilege(PrivilegeType.Messaging);
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);

@@ -5,6 +5,7 @@ import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificMessageRepository;
+import org.avni.messaging.repository.WatiMessageRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.User;
@@ -23,6 +24,8 @@ public class IndividualMessagingService {
     public static final String NON_STATIC_NAME_PARAMETER = "@name";
     private final MessageReceiverService messageReceiverService;
     private final GlificMessageRepository glificMessageRepository;
+    private final WatiMessageRepository watiMessageRepository;
+    private final MessagingProviderResolver messagingProviderResolver;
     private final IndividualService individualService;
     private final UserService userService;
     private final RuleService ruleService;
@@ -30,11 +33,15 @@ public class IndividualMessagingService {
     @Autowired
     public IndividualMessagingService(MessageReceiverService messageReceiverService,
                                       GlificMessageRepository glificMessageRepository,
+                                      WatiMessageRepository watiMessageRepository,
+                                      MessagingProviderResolver messagingProviderResolver,
                                       IndividualService individualService,
                                       UserService userService, RuleService ruleService,
                                       Bugsnag bugsnag) {
         this.messageReceiverService = messageReceiverService;
         this.glificMessageRepository = glificMessageRepository;
+        this.watiMessageRepository = watiMessageRepository;
+        this.messagingProviderResolver = messagingProviderResolver;
         this.individualService = individualService;
         this.userService = userService;
         this.ruleService = ruleService;
@@ -42,7 +49,13 @@ public class IndividualMessagingService {
 
     private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         messageReceiverService.ensureExternalIdPresent(messageReceiver);
-        glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
+        // Wati: send template message directly using phone number as contact ID.
+        // Glific: send HSM message using Glific contact ID.
+        if (messagingProviderResolver.isWatiConfigured()) {
+            watiMessageRepository.sendTemplateMessage(templateId, messageReceiver.getExternalId(), parameters);
+        } else {
+            glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
+        }
     }
 
     private void ensureExternalIdPresenceAndStartFlow(MessageReceiver messageReceiver, String flowId) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
