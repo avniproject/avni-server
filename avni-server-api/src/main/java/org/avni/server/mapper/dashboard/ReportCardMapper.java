@@ -39,6 +39,9 @@ public class ReportCardMapper {
         response.setActionDetailProgramUUID(card.getActionDetailProgramUUID());
         response.setActionDetailEncounterTypeUUID(card.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(card.getActionDetailVisitType());
+        if (card.getCustomCardConfig() != null) {
+            response.setCustomCardConfigUUID(card.getCustomCardConfig().getUuid());
+        }
         return response;
     }
 
@@ -71,6 +74,9 @@ public class ReportCardMapper {
         response.setActionDetailProgramUUID(reportCard.getActionDetailProgramUUID());
         response.setActionDetailEncounterTypeUUID(reportCard.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(reportCard.getActionDetailVisitType());
+        if (reportCard.getCustomCardConfig() != null) {
+            response.setCustomCardConfigUUID(reportCard.getCustomCardConfig().getUuid());
+        }
         return response;
     }
 }

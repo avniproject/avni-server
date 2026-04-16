@@ -108,6 +108,7 @@ public class SyncController {
     private final UserSubjectAssignmentService userSubjectAssignmentService;
     private final ScopedEntityApprovalStatusService scopedEntityApprovalStatusService;
     private final DashboardFilterService dashboardFilterService;
+    private final CustomCardConfigService customCardConfigService;
 
     @Autowired
     public SyncController(Environment environment, IndividualService individualService, EncounterService encounterService,
@@ -140,7 +141,8 @@ public class SyncController {
                           DocumentationService documentationService, DocumentationItemService documentationItemService,
                           TaskService taskService, TaskTypeService taskTypeService, TaskStatusService taskStatusService,
                           TaskUnAssigmentService taskUnAssigmentService, SubjectProgramEligibilityService subjectProgramEligibilityService, MenuItemService menuItemService, UserSubjectAssignmentService userSubjectAssignmentService,
-                          ScopedEntityApprovalStatusService scopedEntityApprovalStatusService, DashboardFilterService dashboardFilterService) {
+                          ScopedEntityApprovalStatusService scopedEntityApprovalStatusService, DashboardFilterService dashboardFilterService,
+                          CustomCardConfigService customCardConfigService) {
         this.environment = environment;
         this.individualService = individualService;
         this.encounterService = encounterService;
@@ -207,6 +209,7 @@ public class SyncController {
         this.userSubjectAssignmentService = userSubjectAssignmentService;
         this.scopedEntityApprovalStatusService = scopedEntityApprovalStatusService;
         this.dashboardFilterService = dashboardFilterService;
+        this.customCardConfigService = customCardConfigService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -269,6 +272,7 @@ public class SyncController {
         nonScopeAwareServiceMap.put(GroupRole, groupRoleService);
         nonScopeAwareServiceMap.put(LocationHierarchy, locationHierarchyService);
         nonScopeAwareServiceMap.put(ReportCard, cardService);
+        nonScopeAwareServiceMap.put(CustomCardConfig, customCardConfigService);
         nonScopeAwareServiceMap.put(Dashboard, dashboardService);
         nonScopeAwareServiceMap.put(DashboardSection, dashboardSectionService);
         nonScopeAwareServiceMap.put(DashboardFilter, dashboardFilterService);

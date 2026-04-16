@@ -104,7 +104,7 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
         String filePath = null != arguments && !arguments.isEmpty() ? basePath + "/" + arguments : basePath;
         logger.info(format("Getting the content of extension file %s", filePath));
         try {
-            InputStream contentStream = s3Service.getExtensionContent(format("%s/%s", OrganisationConfig.Extension.EXTENSION_DIR, filePath), organisation);
+            InputStream contentStream = s3Service.getOrgScopedContent(format("%s/%s", OrganisationConfig.Extension.EXTENSION_DIR, filePath), organisation);
             return ResponseEntity.ok().body(new InputStreamResource(contentStream));
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage(), e);

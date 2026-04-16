@@ -114,6 +114,8 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
         StandardReportCardType standardReportCardType = entity.getStandardReportCardType();
         if (standardReportCardType != null)
             resource.add(Link.of(standardReportCardType.getUuid(), "standardReportCardUUID"));
+        if (entity.getCustomCardConfig() != null)
+            resource.add(Link.of(entity.getCustomCardConfig().getUuid(), "customCardConfigUUID"));
         addAuditFields(entity, resource);
         return resource;
     }

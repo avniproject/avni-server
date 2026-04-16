@@ -33,14 +33,16 @@ public class CardService implements NonScopeAwareService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
+    private final CustomCardConfigRepository customCardConfigRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
+        this.customCardConfigRepository = customCardConfigRepository;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
@@ -51,6 +53,7 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
         buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
+        buildCustomCardConfig(card, reportCardRequest.getCustomCardConfigUUID());
         cardRepository.save(card);
         return card;
     }
@@ -65,6 +68,7 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
         buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
+        buildCustomCardConfig(card, reportCardRequest.getCustomCardConfigUUID());
         cardRepository.save(card);
     }
 
@@ -75,6 +79,7 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
         buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType());
+        buildCustomCardConfig(existingCard, request.getCustomCardConfigUUID());
         return cardRepository.save(existingCard);
     }
 
@@ -173,6 +178,18 @@ public class CardService implements NonScopeAwareService {
         } catch (IllegalArgumentException e) {
             throw new BadRequestError(String.format("Invalid action '%s'. Allowed values: %s", action, Arrays.toString(ReportCardAction.values())));
         }
+    }
+
+    private void buildCustomCardConfig(ReportCard card, String customCardConfigUUID) {
+        if (!StringUtils.hasText(customCardConfigUUID)) {
+            card.setCustomCardConfig(null);
+            return;
+        }
+        CustomCardConfig config = customCardConfigRepository.findByUuid(customCardConfigUUID);
+        if (config == null) {
+            throw new BadRequestError(String.format("CustomCardConfig with uuid %s doesn't exist", customCardConfigUUID));
+        }
+        card.setCustomCardConfig(config);
     }
 
     private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {

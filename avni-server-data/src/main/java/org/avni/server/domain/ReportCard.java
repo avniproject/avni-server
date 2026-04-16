@@ -14,7 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "report_card")
 @BatchSize(size = 100)
-@JsonIgnoreProperties({"standardReportCardType"})
+@JsonIgnoreProperties({"standardReportCardType", "customCardConfig"})
 public class ReportCard extends OrganisationAwareEntity {
     public static final int INT_CONSTANT_DEFAULT_COUNT_OF_CARDS = 1;
     public static final int INT_CONSTANT_MAX_COUNT_OF_CARDS = 9;
@@ -48,6 +48,10 @@ public class ReportCard extends OrganisationAwareEntity {
 
     @Type(value = JSONObjectUserType.class)
     private JsonObject actionDetail;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "custom_card_config_id")
+    private CustomCardConfig customCardConfig;
 
     public String getName() {
         return name;
@@ -201,5 +205,13 @@ public class ReportCard extends OrganisationAwareEntity {
         this.actionDetail.with("programUUID", programUUID);
         this.actionDetail.with("encounterTypeUUID", encounterTypeUUID);
         this.actionDetail.with("visitType", visitType);
+    }
+
+    public CustomCardConfig getCustomCardConfig() {
+        return customCardConfig;
+    }
+
+    public void setCustomCardConfig(CustomCardConfig customCardConfig) {
+        this.customCardConfig = customCardConfig;
     }
 }

@@ -203,7 +203,7 @@ public abstract class StorageService implements S3Service {
     }
 
     @Override
-    public InputStream getExtensionContent(String fileName, Organisation organisation) {
+    public InputStream getOrgScopedContent(String fileName, Organisation organisation) {
         String objectKey = format("%s/%s", organisation.getMediaDirectory(), fileName);
         return getObjectContent(objectKey);
     }
