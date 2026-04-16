@@ -218,7 +218,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
 
-        if (subjectType.getType().equals(Subject.User))
+        if (subjectType.getType().equals(Subject.User) && !subjectType.isVoided())
             subjectTypeService.launchUserSubjectTypeJob(subjectType);
 
         return ResponseEntity.ok(subjectTypeContractWeb);

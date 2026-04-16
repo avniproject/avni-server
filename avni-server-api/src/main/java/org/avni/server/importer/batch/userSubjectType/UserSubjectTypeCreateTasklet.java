@@ -37,6 +37,9 @@ public class UserSubjectTypeCreateTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
         try {
             SubjectType subjectType = subjectTypeRepository.findOne(subjectTypeId);
+            if (subjectType == null || subjectType.isVoided()) {
+                return RepeatStatus.FINISHED;
+            }
             userService.ensureSubjectsForUserSubjectType(subjectType);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
