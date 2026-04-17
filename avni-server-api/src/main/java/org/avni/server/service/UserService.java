@@ -175,6 +175,9 @@ public class UserService implements NonScopeAwareService {
     }
 
     public void ensureSubjectForUser(User user, SubjectType subjectType) {
+        if (subjectType.isVoided())
+            return;
+
         if (!subjectType.getType().equals(Subject.User))
             throw new RuntimeException(String.format("Subject type: %s is not of User type", subjectType.getType()));
 

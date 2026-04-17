@@ -1,11 +1,16 @@
 package org.avni.server.service;
 
+import org.avni.server.application.Subject;
 import org.avni.server.dao.GroupRepository;
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.UserGroupRepository;
+import org.avni.server.dao.UserSubjectRepository;
 import org.avni.server.domain.Group;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.factory.UserBuilder;
+import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -26,6 +31,10 @@ public class UserServiceTest {
     private GroupRepository groupRepository;
     @Mock
     private IdpServiceFactory idpServiceFactory;
+    @Mock
+    private UserSubjectRepository userSubjectRepository;
+    @Mock
+    private IndividualRepository individualRepository;
 
     @Captor
     ArgumentCaptor<UserGroup> userGroupArgumentCaptor;
@@ -35,7 +44,7 @@ public class UserServiceTest {
     public void setup() {
         initMocks(this);
 
-        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null, idpServiceFactory, null);
+        userService = new UserService(null, groupRepository, userGroupRepository, userSubjectRepository, individualRepository, null, idpServiceFactory, null);
     }
 
     @Test
@@ -93,6 +102,21 @@ public class UserServiceTest {
         assertEquals(group1, allValues.get(0).getGroup());
         assertEquals(group2, allValues.get(1).getGroup());
         assertEquals(everyone, allValues.get(2).getGroup());
+    }
+
+    @Test
+    public void ensureSubjectForUser_shouldSkipWhenSubjectTypeIsVoided() {
+        SubjectType voidedSubjectType = new SubjectTypeBuilder()
+                .setMandatoryFieldsForNewEntity()
+                .setType(Subject.User)
+                .build();
+        voidedSubjectType.setVoided(true);
+        User user = new UserBuilder().organisationId(1L).build();
+
+        userService.ensureSubjectForUser(user, voidedSubjectType);
+
+        verifyNoInteractions(userSubjectRepository);
+        verifyNoInteractions(individualRepository);
     }
 
     @Test
