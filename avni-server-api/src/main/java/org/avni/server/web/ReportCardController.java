@@ -3,17 +3,22 @@ package org.avni.server.web;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.domain.StandardReportCardType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
+import org.avni.server.service.CustomCardConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.DateTimeUtil;
+import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -32,15 +37,18 @@ import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditF
 
 @RestController
 public class ReportCardController implements RestControllerResourceProcessor<ReportCard> {
+    private static final Logger logger = LoggerFactory.getLogger(ReportCardController.class);
     private final CardRepository cardRepository;
     private final CardService cardService;
+    private final CustomCardConfigService customCardConfigService;
     private final AccessControlService accessControlService;
     private final ReportCardMapper reportCardMapper;
 
     @Autowired
-    public ReportCardController(CardRepository cardRepository, CardService cardService, AccessControlService accessControlService, ReportCardMapper reportCardMapper) {
+    public ReportCardController(CardRepository cardRepository, CardService cardService, CustomCardConfigService customCardConfigService, AccessControlService accessControlService, ReportCardMapper reportCardMapper) {
         this.cardRepository = cardRepository;
         this.cardService = cardService;
+        this.customCardConfigService = customCardConfigService;
         this.accessControlService = accessControlService;
         this.reportCardMapper = reportCardMapper;
     }
@@ -69,6 +77,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     public ResponseEntity<?> newCard(@RequestBody ReportCardWebRequest cardRequest) {
         try {
             accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
+            upsertInlineCustomCardConfig(cardRequest);
             ReportCard card = cardService.saveCard(cardRequest);
             return ResponseEntity.ok(reportCardMapper.toWebResponse(card));
         } catch (BadRequestError e) {
@@ -85,8 +94,16 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
         if (!card.isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        upsertInlineCustomCardConfig(request);
         ReportCard savedCard = cardService.editCard(request, id);
         return ResponseEntity.ok(reportCardMapper.toWebResponse(savedCard));
+    }
+
+    private void upsertInlineCustomCardConfig(ReportCardWebRequest request) {
+        CustomCardConfigRequest configRequest = request.getCustomCardConfig();
+        if (configRequest == null) return;
+        CustomCardConfig config = customCardConfigService.createOrUpdateCustomCardConfig(configRequest);
+        request.setCustomCardConfigUUID(config.getUuid());
     }
 
     @DeleteMapping(value = "/web/reportCard/{id}")

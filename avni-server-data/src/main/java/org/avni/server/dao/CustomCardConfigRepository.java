@@ -3,7 +3,6 @@ package org.avni.server.dao;
 import org.avni.server.domain.CustomCardConfig;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -13,9 +12,6 @@ import java.util.List;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "customCardConfig", path = "customCardConfig")
 public interface CustomCardConfigRepository extends ReferenceDataRepository<CustomCardConfig> {
-
-    @Query("select c.name from CustomCardConfig c where c.isVoided = false")
-    List<String> getAllNames();
 
     List<CustomCardConfig> findAllByIsVoidedFalseOrderByName();
 

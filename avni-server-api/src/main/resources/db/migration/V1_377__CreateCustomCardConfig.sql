@@ -20,7 +20,7 @@ alter table custom_card_config
 create unique index custom_card_config_org_name_unique
     on custom_card_config (organisation_id, name) where is_voided = false;
 
-select enable_rls_on_tx_table('custom_card_config');
+select enable_rls_on_ref_table('custom_card_config');
 
 SELECT grant_all_on_table(a.rolname, 'custom_card_config')
 FROM pg_roles a
@@ -33,7 +33,9 @@ create index idx_report_card_custom_card_config_id
     on report_card (custom_card_config_id);
 
 alter table report_card drop constraint report_card_optional_standard_report_card_type;
-alter table report_card add constraint report_card_optional_standard_report_card_type
-    check (standard_report_card_type_id is not null
-        OR query is not null
-        OR custom_card_config_id is not null);
+alter table report_card add constraint report_card_exactly_one_type
+    check (
+        ((standard_report_card_type_id is not null)::int +
+         (query is not null)::int +
+         (custom_card_config_id is not null)::int) = 1
+    );

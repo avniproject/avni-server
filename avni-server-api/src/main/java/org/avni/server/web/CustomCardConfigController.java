@@ -13,6 +13,8 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.response.CustomCardConfigResponse;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +37,7 @@ import static java.lang.String.format;
 
 @RestController
 public class CustomCardConfigController implements RestControllerResourceProcessor<CustomCardConfig> {
+    private static final Logger logger = LoggerFactory.getLogger(CustomCardConfigController.class);
     private final CustomCardConfigRepository customCardConfigRepository;
     private final CustomCardConfigService customCardConfigService;
     private final AccessControlService accessControlService;
@@ -134,8 +137,10 @@ public class CustomCardConfigController implements RestControllerResourceProcess
             InputStream contentStream = s3Service.getOrgScopedContent(s3Path, organisation);
             return ResponseEntity.ok().body(new InputStreamResource(contentStream));
         } catch (AccessDeniedException e) {
+            logger.error(format("Access denied serving custom card config file %s: %s", fileName, e.getMessage()), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
+            logger.error(format("Error serving custom card config file %s: %s", fileName, e.getMessage()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Error serving %s", fileName));
         }
     }

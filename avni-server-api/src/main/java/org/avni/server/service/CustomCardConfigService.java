@@ -39,7 +39,8 @@ public class CustomCardConfigService implements NonScopeAwareService {
     }
 
     public CustomCardConfig createOrUpdateCustomCardConfig(CustomCardConfigRequest request) {
-        if (!StringUtils.hasText(request.getName())) {
+        String name = request.getName() == null ? "" : request.getName().trim();
+        if (!StringUtils.hasText(name)) {
             throw new BadRequestError("Name is required");
         }
 
@@ -54,9 +55,9 @@ public class CustomCardConfigService implements NonScopeAwareService {
                 config.assignUUID();
             }
         }
-        assertNameIsUnique(request.getName(), config);
+        assertNameIsUnique(name, config);
 
-        config.setName(request.getName().trim());
+        config.setName(name);
         config.setDataRule(request.getDataRule());
         if (StringUtils.hasText(request.getHtmlFileS3Key())) {
             config.setHtmlFileS3Key(request.getHtmlFileS3Key());
