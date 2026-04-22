@@ -32,6 +32,9 @@ alter table report_card
 create index idx_report_card_custom_card_config_id
     on report_card (custom_card_config_id);
 
+update report_card set query = null
+where standard_report_card_type_id is not null and query is not null;
+
 alter table report_card drop constraint report_card_optional_standard_report_card_type;
 alter table report_card add constraint report_card_exactly_one_type
     check (

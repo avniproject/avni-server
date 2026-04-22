@@ -156,7 +156,7 @@ public class CardService implements NonScopeAwareService {
         card.setName(reportCardRequest.getName());
         card.setColour(reportCardRequest.getColor());
         card.setDescription(reportCardRequest.getDescription());
-        card.setQuery(reportCardRequest.getQuery());
+        card.setQuery(StringUtils.hasText(reportCardRequest.getQuery()) ? reportCardRequest.getQuery() : null);
         card.setVoided(reportCardRequest.isVoided());
         card.setIconFileS3Key(reportCardRequest.getIconFileS3Key());
 
