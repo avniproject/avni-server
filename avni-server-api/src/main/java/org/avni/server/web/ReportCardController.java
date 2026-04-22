@@ -11,7 +11,6 @@ import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.CustomCardConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.BadRequestError;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
@@ -25,7 +24,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,15 +72,11 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     @PostMapping(value = "/web/reportCard")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> newCard(@RequestBody ReportCardWebRequest cardRequest) {
-        try {
-            accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
-            upsertInlineCustomCardConfig(cardRequest);
-            ReportCard card = cardService.saveCard(cardRequest);
-            return ResponseEntity.ok(reportCardMapper.toWebResponse(card));
-        } catch (BadRequestError e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+    public ResponseEntity<ReportCardWebResponse> newCard(@RequestBody ReportCardWebRequest cardRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
+        upsertInlineCustomCardConfig(cardRequest);
+        ReportCard card = cardService.saveCard(cardRequest);
+        return ResponseEntity.ok(reportCardMapper.toWebResponse(card));
     }
 
     @PutMapping(value = "/web/reportCard/{id}")
