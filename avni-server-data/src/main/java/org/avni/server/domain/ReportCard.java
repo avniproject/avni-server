@@ -53,6 +53,10 @@ public class ReportCard extends OrganisationAwareEntity {
     @JoinColumn(name = "custom_card_config_id")
     private CustomCardConfig customCardConfig;
 
+    @Column(name = "on_action_completion")
+    @Enumerated(EnumType.STRING)
+    private ReportCardActionCompletion onActionCompletion;
+
     public String getName() {
         return name;
     }
@@ -213,5 +217,13 @@ public class ReportCard extends OrganisationAwareEntity {
 
     public void setCustomCardConfig(CustomCardConfig customCardConfig) {
         this.customCardConfig = customCardConfig;
+    }
+
+    public ReportCardActionCompletion getOnActionCompletion() {
+        return onActionCompletion;
+    }
+
+    public void setOnActionCompletion(ReportCardActionCompletion onActionCompletion) {
+        this.onActionCompletion = onActionCompletion;
     }
 }

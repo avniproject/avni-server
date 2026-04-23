@@ -166,6 +166,7 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
+        buildOnActionCompletion(reportCardRequest.getOnActionCompletion(), card);
     }
 
     private void buildAction(String action, ReportCard card) {
@@ -177,6 +178,18 @@ public class CardService implements NonScopeAwareService {
             card.setAction(ReportCardAction.valueOf(action));
         } catch (IllegalArgumentException e) {
             throw new BadRequestError(String.format("Invalid action '%s'. Allowed values: %s", action, Arrays.toString(ReportCardAction.values())));
+        }
+    }
+
+    private void buildOnActionCompletion(String onActionCompletion, ReportCard card) {
+        if (onActionCompletion == null) {
+            card.setOnActionCompletion(null);
+            return;
+        }
+        try {
+            card.setOnActionCompletion(ReportCardActionCompletion.valueOf(onActionCompletion));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestError(String.format("Invalid onActionCompletion '%s'. Allowed values: %s", onActionCompletion, Arrays.toString(ReportCardActionCompletion.values())));
         }
     }
 

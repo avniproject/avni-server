@@ -66,4 +66,14 @@ public class ReportCardContract extends CHSRequest {
     public void setCount(int count) {
         this.count = count;
     }
+
+    private String onActionCompletion;
+
+    public String getOnActionCompletion() {
+        return onActionCompletion;
+    }
+
+    public void setOnActionCompletion(String onActionCompletion) {
+        this.onActionCompletion = onActionCompletion;
+    }
 }
