@@ -16,6 +16,9 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
     @Value("${static.path}")
     private String staticPath;
 
+    @Value("${avni.open.redirect.url}")
+    private String openRedirectUrl;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         if (staticPath != null) {
@@ -47,6 +50,8 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
                 .setViewName("forward:/userReview/index.html");
         registry.addViewController("/")
                 .setViewName("forward:/index.html");
+        registry.addViewController("/open")
+                .setViewName("redirect:" + openRedirectUrl);
     }
 
 }
