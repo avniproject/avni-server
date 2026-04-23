@@ -1,6 +1,7 @@
 package org.avni.server.web.request.reports;
 
 import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.request.CustomCardConfigRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ public class ReportCardBundleRequest extends ReportCardContract {
     private String actionDetailProgramUUID;
     private String actionDetailEncounterTypeUUID;
     private String actionDetailVisitType;
-    private String customCardConfigUUID;
+    private CustomCardConfigRequest customCardConfig;
 
     public String getStandardReportCardType() {
         return standardReportCardType;
@@ -98,11 +99,11 @@ public class ReportCardBundleRequest extends ReportCardContract {
         this.actionDetailVisitType = actionDetailVisitType;
     }
 
-    public String getCustomCardConfigUUID() {
-        return customCardConfigUUID;
+    public CustomCardConfigRequest getCustomCardConfig() {
+        return customCardConfig;
     }
 
-    public void setCustomCardConfigUUID(String customCardConfigUUID) {
-        this.customCardConfigUUID = customCardConfigUUID;
+    public void setCustomCardConfig(CustomCardConfigRequest customCardConfig) {
+        this.customCardConfig = customCardConfig;
     }
 }

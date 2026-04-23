@@ -1,11 +1,13 @@
 package org.avni.server.mapper.dashboard;
 
 import org.avni.server.domain.CHSBaseEntity;
+import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.service.CardService;
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.response.reports.ReportCardBundleContract;
@@ -76,8 +78,15 @@ public class ReportCardMapper {
         response.setActionDetailEncounterTypeUUID(reportCard.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(reportCard.getActionDetailVisitType());
         response.setOnActionCompletion(reportCard.getOnActionCompletion() != null ? reportCard.getOnActionCompletion().name() : null);
-        if (reportCard.getCustomCardConfig() != null) {
-            response.setCustomCardConfigUUID(reportCard.getCustomCardConfig().getUuid());
+        CustomCardConfig config = reportCard.getCustomCardConfig();
+        if (config != null) {
+            CustomCardConfigRequest configRequest = new CustomCardConfigRequest();
+            configRequest.setUuid(config.getUuid());
+            configRequest.setName(config.getName());
+            configRequest.setDataRule(config.getDataRule());
+            configRequest.setHtmlFileS3Key(config.getHtmlFileS3Key());
+            configRequest.setVoided(config.isVoided());
+            response.setCustomCardConfig(configRequest);
         }
         return response;
     }

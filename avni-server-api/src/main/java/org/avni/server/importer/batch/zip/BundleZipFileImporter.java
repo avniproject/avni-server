@@ -18,6 +18,7 @@ import org.avni.server.importer.batch.model.BundleFile;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.importer.batch.model.BundleZip;
 import org.avni.server.service.*;
+import org.avni.server.service.CustomCardConfigService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.service.media.MediaFolder;
@@ -139,6 +140,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add(BundleFolder.OLD_RULES.getFolderName());
         add(BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         add(BundleFolder.REPORT_CARD_ICONS.getFolderName());
+        add(BundleFolder.CUSTOM_CARD_HTML_FILES.getFolderName());
         add(BundleFolder.CONCEPT_MEDIA.getFolderName());
         add("customQueries.json");
     }};
@@ -481,6 +483,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 ReportCard card = cardRepository.findByUuid(reportCardUUID);
                 card.setIconFileS3Key(cs3ObjectKey);
                 cardRepository.save(card);
+                break;
+            case CUSTOM_CARD_HTML_FILES:
+                uploadMedia(CustomCardConfigService.CUSTOM_CARD_CONFIGS_SUBDIR, fileData.getKey(), (byte[]) fileData.getValue());
                 break;
             case CONCEPT_MEDIA:
                 String[] keyParts = fileData.getKey().split(ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR, 3);

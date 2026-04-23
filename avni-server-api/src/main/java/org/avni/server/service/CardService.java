@@ -9,6 +9,7 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.domain.ValueUnit;
+import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.joda.time.DateTime;
@@ -34,15 +35,17 @@ public class CardService implements NonScopeAwareService {
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final CustomCardConfigRepository customCardConfigRepository;
+    private final CustomCardConfigService customCardConfigService;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.customCardConfigRepository = customCardConfigRepository;
+        this.customCardConfigService = customCardConfigService;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
@@ -68,7 +71,7 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
         buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
-        buildCustomCardConfig(card, reportCardRequest.getCustomCardConfigUUID());
+        upsertAndLinkCustomCardConfig(card, reportCardRequest.getCustomCardConfig());
         cardRepository.save(card);
     }
 
@@ -265,6 +268,15 @@ public class CardService implements NonScopeAwareService {
 
     public List<EncounterType> getStandardReportCardInputEncounterTypes(ReportCard card) {
         return encounterTypeRepository.findAllByUuidIn(card.getStandardReportCardInputEncounterTypes());
+    }
+
+    private void upsertAndLinkCustomCardConfig(ReportCard card, CustomCardConfigRequest configRequest) {
+        if (configRequest == null) {
+            card.setCustomCardConfig(null);
+            return;
+        }
+        CustomCardConfig config = customCardConfigService.createOrUpdateCustomCardConfig(configRequest);
+        card.setCustomCardConfig(config);
     }
 
     @Override

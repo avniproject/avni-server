@@ -63,6 +63,7 @@ public class BundleService extends RoleSwitchableRepository {
             organisationService.addGroupPrivilegeJson(zos);
             organisationService.addVideoJson(zos);
             organisationService.addReportCards(zos);
+            organisationService.addCustomCardHtmlFiles(organisation, zos);
             organisationService.addReportDashboard(zos);
             organisationService.addGroupDashboardJson(zos);
             organisationService.addDocumentation(zos);
