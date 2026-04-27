@@ -1103,6 +1103,10 @@ public class OrganisationService {
     }
 
     private Group addDefaultGroupIfNotPresent(Long organisationId, String groupType) {
+        return addDefaultGroupIfNotPresent(organisationId, groupType, null);
+    }
+
+    private Group addDefaultGroupIfNotPresent(Long organisationId, String groupType, String fixedUuid) {
         Group existingGroup = groupRepository.findByNameAndOrganisationId(groupType, organisationId);
         if (Objects.nonNull(existingGroup)) {
             return existingGroup;
@@ -1110,7 +1114,7 @@ public class OrganisationService {
         Group group = new Group();
         group.setName(groupType);
         group.setOrganisationId(organisationId);
-        group.setUuid(UUID.randomUUID().toString());
+        group.setUuid(fixedUuid != null ? fixedUuid : UUID.randomUUID().toString());
         group.setHasAllPrivileges(group.isAdministrator());
         group.setVersion(0);
         return groupRepository.save(group);
@@ -1135,6 +1139,7 @@ public class OrganisationService {
         createDefaultGenders(organisation);
         Group everyoneGroup = addDefaultGroupIfNotPresent(organisation.getId(), Group.Everyone);
         addDefaultGroupIfNotPresent(organisation.getId(), Group.Administrators);
+        addDefaultGroupIfNotPresent(organisation.getId(), Group.SQLITE_MIGRATION, Group.SQLITE_MIGRATION_UUID);
         Dashboard defaultDashboard = dashboardService.createDefaultDashboard(organisation);
         groupDashboardService.createDefaultGroupDashboardForOrg(organisation, everyoneGroup, defaultDashboard);
     }
