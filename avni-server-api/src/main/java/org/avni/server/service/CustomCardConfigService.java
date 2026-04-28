@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.CustomCardConfigRepository;
 import org.avni.server.domain.CustomCardConfig;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.BadRequestError;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import static java.lang.String.format;
 
@@ -63,7 +65,23 @@ public class CustomCardConfigService implements NonScopeAwareService {
             config.setHtmlFileS3Key(request.getHtmlFileS3Key());
         }
         config.setVoided(request.isVoided());
+        applyTranslations(config, request.getTranslations());
         return customCardConfigRepository.save(config);
+    }
+
+    private void applyTranslations(CustomCardConfig config, Map<String, String> requested) {
+        if (requested == null) {
+            return;
+        }
+        JsonObject normalized = new JsonObject();
+        for (Map.Entry<String, String> entry : requested.entrySet()) {
+            String key = entry.getKey() == null ? "" : entry.getKey().trim();
+            if (key.isEmpty() || normalized.containsKey(key)) {
+                continue;
+            }
+            normalized.put(key, entry.getValue() == null ? "" : entry.getValue());
+        }
+        config.setTranslations(normalized.isEmpty() ? null : normalized);
     }
 
     public void deleteConfig(String uuid) {

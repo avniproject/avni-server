@@ -191,11 +191,12 @@ public abstract class StorageService implements S3Service {
     @Override
     public InputStream getObjectContent(String s3Key) {
         if (isDev && !s3InDev) {
+            String localFilePath = format("%s/%s", System.getProperty("java.io.tmpdir"), s3Key);
             try {
-                logger.info(format("[dev] Get file locally. '%s'", s3Key));
-                return new FileInputStream(s3Key);
+                logger.info(format("[dev] Get file locally. '%s'", localFilePath));
+                return new FileInputStream(localFilePath);
             } catch (FileNotFoundException e) {
-                logger.error(format("[dev] File not found. Assume empty. '%s'", s3Key), e);
+                logger.error(format("[dev] File not found. Assume empty. '%s'", localFilePath), e);
                 return new ByteArrayInputStream(new byte[]{});
             }
         }
@@ -345,8 +346,15 @@ public abstract class StorageService implements S3Service {
     @Override
     public String putObject(String objectKey, File tempFile) {
         if (isDev && !s3InDev) {
-            logger.info(format("[dev] Save file locally. '%s'", objectKey));
-            return tempFile.getAbsolutePath();
+            try {
+                File destination = new File(format("%s/%s", System.getProperty("java.io.tmpdir"), objectKey));
+                FileUtils.forceMkdirParent(destination);
+                FileUtils.copyFile(tempFile, destination);
+                logger.info(format("[dev] Saved file locally at '%s'", destination.getAbsolutePath()));
+                return destination.getAbsolutePath();
+            } catch (IOException e) {
+                throw new RuntimeException(format("[dev] Failed to save file locally for key '%s'", objectKey), e);
+            }
         }
         String mimeType = URLConnection.guessContentTypeFromName(objectKey);
         ObjectMetadata objectMetadata = new ObjectMetadata();

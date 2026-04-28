@@ -1,6 +1,7 @@
 package org.avni.server.mapper.dashboard;
 
 import org.avni.server.domain.CustomCardConfig;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.service.CardService;
 import org.avni.server.web.request.CustomCardConfigRequest;
@@ -10,6 +11,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
@@ -35,6 +37,10 @@ public class ReportCardMapperTest {
         config.setName("My Custom Card");
         config.setDataRule("some rule");
         config.setHtmlFileS3Key("config-uuid-1.html");
+        JsonObject translations = new JsonObject();
+        translations.put("card.widow.primary", "Widow count");
+        translations.put("card.widow.helper", "Widows in this village");
+        config.setTranslations(translations);
 
         ReportCard card = new ReportCard();
         card.setUuid("card-uuid-1");
@@ -49,6 +55,26 @@ public class ReportCardMapperTest {
         assertEquals("My Custom Card", inlined.getName());
         assertEquals("some rule", inlined.getDataRule());
         assertEquals("config-uuid-1.html", inlined.getHtmlFileS3Key());
+        Map<String, String> bundled = inlined.getTranslations();
+        assertEquals("Widow count", bundled.get("card.widow.primary"));
+        assertEquals("Widows in this village", bundled.get("card.widow.helper"));
+    }
+
+    @Test
+    public void toBundleEmitsEmptyTranslationsWhenAbsent() {
+        CustomCardConfig config = new CustomCardConfig();
+        config.setUuid("config-uuid-3");
+        config.setName("No Keys");
+
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-3");
+        card.setName("Card");
+        card.setCustomCardConfig(config);
+
+        ReportCardBundleContract result = mapper.toBundle(card);
+
+        assertNotNull(result.getCustomCardConfig());
+        assertTrue(result.getCustomCardConfig().getTranslations().isEmpty());
     }
 
     @Test

@@ -1,6 +1,9 @@
 package org.avni.server.web.response;
 
 import org.avni.server.domain.CustomCardConfig;
+import org.avni.server.util.JsonObjectUtil;
+
+import java.util.Map;
 
 public class CustomCardConfigResponse {
     private String uuid;
@@ -8,6 +11,7 @@ public class CustomCardConfigResponse {
     private String htmlFileS3Key;
     private String dataRule;
     private boolean voided;
+    private Map<String, String> translations;
 
     public static CustomCardConfigResponse from(CustomCardConfig entity) {
         CustomCardConfigResponse response = new CustomCardConfigResponse();
@@ -16,6 +20,7 @@ public class CustomCardConfigResponse {
         response.htmlFileS3Key = entity.getHtmlFileS3Key();
         response.dataRule = entity.getDataRule();
         response.voided = entity.isVoided();
+        response.translations = JsonObjectUtil.toStringMap(entity.getTranslations());
         return response;
     }
 
@@ -37,5 +42,9 @@ public class CustomCardConfigResponse {
 
     public boolean isVoided() {
         return voided;
+    }
+
+    public Map<String, String> getTranslations() {
+        return translations;
     }
 }

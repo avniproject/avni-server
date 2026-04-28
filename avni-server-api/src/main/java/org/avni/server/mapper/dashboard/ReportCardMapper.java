@@ -4,6 +4,7 @@ import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.service.CardService;
+import org.avni.server.util.JsonObjectUtil;
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
@@ -86,6 +87,7 @@ public class ReportCardMapper {
             configRequest.setDataRule(config.getDataRule());
             configRequest.setHtmlFileS3Key(config.getHtmlFileS3Key());
             configRequest.setVoided(config.isVoided());
+            configRequest.setTranslations(JsonObjectUtil.toStringMap(config.getTranslations()));
             response.setCustomCardConfig(configRequest);
         }
         return response;

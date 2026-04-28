@@ -2,7 +2,9 @@ package org.avni.server.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Type;
 import org.springframework.util.StringUtils;
 
 @Entity
@@ -17,6 +19,10 @@ public class CustomCardConfig extends OrganisationAwareEntity {
 
     @Column(name = "data_rule")
     private String dataRule;
+
+    @Column
+    @Type(value = JSONObjectUserType.class)
+    private JsonObject translations;
 
     public String getName() {
         return name;
@@ -40,5 +46,13 @@ public class CustomCardConfig extends OrganisationAwareEntity {
 
     public void setDataRule(String dataRule) {
         this.dataRule = dataRule;
+    }
+
+    public JsonObject getTranslations() {
+        return translations;
+    }
+
+    public void setTranslations(JsonObject translations) {
+        this.translations = translations;
     }
 }
