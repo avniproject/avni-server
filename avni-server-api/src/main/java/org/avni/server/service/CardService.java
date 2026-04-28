@@ -56,7 +56,7 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
         buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
-        buildCustomCardConfig(card, reportCardRequest.getCustomCardConfigUUID());
+        linkCustomCardConfig(card, reportCardRequest);
         cardRepository.save(card);
         return card;
     }
@@ -82,7 +82,7 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
         buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType());
-        buildCustomCardConfig(existingCard, request.getCustomCardConfigUUID());
+        linkCustomCardConfig(existingCard, request);
         return cardRepository.save(existingCard);
     }
 
@@ -194,6 +194,15 @@ public class CardService implements NonScopeAwareService {
         } catch (IllegalArgumentException e) {
             throw new BadRequestError(String.format("Invalid onActionCompletion '%s'. Allowed values: %s", onActionCompletion, Arrays.toString(ReportCardActionCompletion.values())));
         }
+    }
+
+    private void linkCustomCardConfig(ReportCard card, ReportCardWebRequest request) {
+        CustomCardConfigRequest configRequest = request.getCustomCardConfig();
+        if (configRequest != null) {
+            upsertAndLinkCustomCardConfig(card, configRequest);
+            return;
+        }
+        buildCustomCardConfig(card, request.getCustomCardConfigUUID());
     }
 
     private void buildCustomCardConfig(ReportCard card, String customCardConfigUUID) {

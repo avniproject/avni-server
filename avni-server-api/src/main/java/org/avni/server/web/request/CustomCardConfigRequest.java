@@ -1,9 +1,12 @@
 package org.avni.server.web.request;
 
+import java.util.Map;
+
 public class CustomCardConfigRequest extends CHSRequest {
     private String name;
     private String htmlFileS3Key;
     private String dataRule;
+    private Map<String, String> translations;
 
     public String getName() {
         return name;
@@ -27,5 +30,13 @@ public class CustomCardConfigRequest extends CHSRequest {
 
     public void setDataRule(String dataRule) {
         this.dataRule = dataRule;
+    }
+
+    public Map<String, String> getTranslations() {
+        return translations;
+    }
+
+    public void setTranslations(Map<String, String> translations) {
+        this.translations = translations;
     }
 }

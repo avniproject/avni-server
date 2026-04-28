@@ -50,6 +50,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
     private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
     private final CardRepository cardRepository;
     private final DashboardRepository dashboardRepository;
+    private final CustomCardConfigRepository customCardConfigRepository;
     private final String REGISTRATION_PREFIX = "REG_DISPLAY-";
     private final String ENROLMENT_PREFIX = "REG_ENROL_DISPLAY-";
     private final AccessControlService accessControlService;
@@ -73,7 +74,9 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
                           AddressLevelTypeRepository addressLevelTypeRepository,
                           OperationalSubjectTypeRepository operationalSubjectTypeRepository,
                           CardRepository cardRepository,
-                          DashboardRepository dashboardRepository, AccessControlService accessControlService) {
+                          DashboardRepository dashboardRepository,
+                          CustomCardConfigRepository customCardConfigRepository,
+                          AccessControlService accessControlService) {
         this.translationRepository = translationRepository;
         this.formElementGroupRepository = formElementGroupRepository;
         this.formElementRepository = formElementRepository;
@@ -93,6 +96,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.cardRepository = cardRepository;
         this.dashboardRepository = dashboardRepository;
+        this.customCardConfigRepository = customCardConfigRepository;
         this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
@@ -140,6 +144,8 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
         Map<Locale, JsonObject> translationMap = translations.stream()
                 .collect(Collectors.toMap(Translation::getLanguage, Translation::getTranslationJson, (a, b) -> b));
 
+        Map<String, String> customCardDefaults = collectCustomCardTranslationDefaults();
+
         ((List<String>) organisationConfig.getSettings().get("languages"))
                 .forEach(language -> {
                     JsonObject existingTranslations = translationMap.get(Locale.valueOf(language));
@@ -148,6 +154,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
                     JsonObject jsonObject = new JsonObject(generateTranslationsWithValue(valueForEmptyKey, includeLocations));
                     jsonObject.putAll(addRegistrationAndEnrolmentStrings());
                     jsonObject.putAll(platformTranslations);
+                    jsonObject.putAll(customCardTranslationsFor(customCardDefaults, Locale.valueOf(language), valueForEmptyKey));
                     jsonObject.putAll(existingTranslations != null ? existingTranslations : Collections.emptyMap());
                     translation.setLanguage(Locale.valueOf(language));
                     translation.setTranslationJson(jsonObject);
@@ -209,6 +216,34 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
         JsonObject jsonObject = new JsonObject(emptyEnglishTranslation);
         jsonObject.putAll(platformTranslation.getTranslationJson());
         return jsonObject;
+    }
+
+    private Map<String, String> collectCustomCardTranslationDefaults() {
+        Map<String, String> result = new HashMap<>();
+        customCardConfigRepository.findAllByIsVoidedFalseOrderByName().forEach(config -> {
+            JsonObject translations = config.getTranslations();
+            if (translations == null) {
+                return;
+            }
+            translations.forEach((key, defaultValue) -> {
+                if (key != null) {
+                    result.put(key, defaultValue == null ? "" : defaultValue.toString());
+                }
+            });
+        });
+        return result;
+    }
+
+    private Map<String, String> customCardTranslationsFor(Map<String, String> defaults, Locale language, String valueForEmptyKey) {
+        if (defaults.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        if (Locale.en.equals(language)) {
+            return defaults;
+        }
+        Map<String, String> result = new HashMap<>(defaults.size());
+        defaults.keySet().forEach(key -> result.put(key, valueForEmptyKey));
+        return result;
     }
 
     private Map<String, String> addRegistrationAndEnrolmentStrings() {

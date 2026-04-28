@@ -7,9 +7,20 @@ import org.avni.server.domain.User.SyncSettingKeys;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JsonObjectUtil {
+
+    public static Map<String, String> toStringMap(JsonObject source) {
+        if (source == null || source.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> result = new LinkedHashMap<>();
+        source.forEach((k, v) -> result.put(k, v == null ? "" : v.toString()));
+        return result;
+    }
 
     public static List<String> getSyncAttributeValuesBySubjectTypeUUID(JsonObject syncSettings, String subjectTypeUUID, SyncSettingKeys syncAttribute) {
         List<UserSyncSettings> userSyncSettings =getUserSyncSettings(syncSettings);
