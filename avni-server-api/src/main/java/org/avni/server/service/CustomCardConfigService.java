@@ -2,8 +2,11 @@ package org.avni.server.service;
 
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.CustomCardConfigRepository;
+import org.avni.server.dao.TranslationRepository;
 import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.Locale;
+import org.avni.server.domain.Translation;
 import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.BadRequestError;
@@ -18,7 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static java.lang.String.format;
 
@@ -30,14 +35,17 @@ public class CustomCardConfigService implements NonScopeAwareService {
     private final CustomCardConfigRepository customCardConfigRepository;
     private final CardRepository cardRepository;
     private final S3Service s3Service;
+    private final TranslationRepository translationRepository;
 
     @Autowired
     public CustomCardConfigService(CustomCardConfigRepository customCardConfigRepository,
                                    CardRepository cardRepository,
-                                   S3Service s3Service) {
+                                   S3Service s3Service,
+                                   TranslationRepository translationRepository) {
         this.customCardConfigRepository = customCardConfigRepository;
         this.cardRepository = cardRepository;
         this.s3Service = s3Service;
+        this.translationRepository = translationRepository;
     }
 
     public CustomCardConfig createOrUpdateCustomCardConfig(CustomCardConfigRequest request) {
@@ -81,7 +89,58 @@ public class CustomCardConfigService implements NonScopeAwareService {
             }
             normalized.put(key, entry.getValue() == null ? "" : entry.getValue());
         }
+        rejectIfKeysClashWithOtherCards(config, normalized);
+        rejectIfDefaultsConflictWithExistingEnglishTranslations(normalized);
         config.setTranslations(normalized.isEmpty() ? null : normalized);
+    }
+
+    private void rejectIfKeysClashWithOtherCards(CustomCardConfig config, JsonObject normalized) {
+        if (normalized.isEmpty()) {
+            return;
+        }
+        List<CustomCardConfig> others = customCardConfigRepository.findAllByIsVoidedFalse();
+        for (CustomCardConfig other : others) {
+            if (Objects.equals(other.getUuid(), config.getUuid())) {
+                continue;
+            }
+            JsonObject otherTranslations = other.getTranslations();
+            if (otherTranslations == null || otherTranslations.isEmpty()) {
+                continue;
+            }
+            for (String key : normalized.keySet()) {
+                if (otherTranslations.containsKey(key)) {
+                    throw new BadRequestError("Translation key '%s' is already used by custom card '%s'", key, other.getName());
+                }
+            }
+        }
+    }
+
+    private void rejectIfDefaultsConflictWithExistingEnglishTranslations(JsonObject normalized) {
+        if (normalized.isEmpty()) {
+            return;
+        }
+        Translation englishTranslation = translationRepository.findByLanguage(Locale.en);
+        if (englishTranslation == null) {
+            return;
+        }
+        JsonObject englishJson = englishTranslation.getTranslationJson();
+        if (englishJson == null || englishJson.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : normalized.entrySet()) {
+            String key = entry.getKey();
+            if (!englishJson.containsKey(key)) {
+                continue;
+            }
+            Object existing = englishJson.get(key);
+            String existingValue = existing == null ? "" : existing.toString();
+            String newValue = entry.getValue() == null ? "" : entry.getValue().toString();
+            if (!Objects.equals(existingValue, newValue)) {
+                throw new BadRequestError(
+                        "Translation key '%s' already has value '%s' in the English translations table; either align the default or remove the existing entry",
+                        key, existingValue);
+            }
+        }
     }
 
     public void deleteConfig(String uuid) {
