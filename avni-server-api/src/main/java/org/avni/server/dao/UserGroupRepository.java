@@ -50,4 +50,6 @@ public interface UserGroupRepository extends ReferenceDataRepository<UserGroup> 
 
     List<UserGroup> findByUserAndGroupHasAllPrivilegesTrueAndIsVoidedFalse(User user);
 
+    List<UserGroup> findByUser_IdAndIsVoidedFalse(Long userId);
+
 }

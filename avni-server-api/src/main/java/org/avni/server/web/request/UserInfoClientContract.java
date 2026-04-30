@@ -1,6 +1,7 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.JsonObject;
+import org.avni.server.web.request.rules.RulesContractWrapper.MyUserGroupContract;
 import org.springframework.hateoas.server.core.Relation;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
 public class UserInfoClientContract extends UserInfoContract {
     private long lastSessionTime;
     private List<GroupPrivilegeContract> privileges;
+    private List<MyUserGroupContract> myUserGroups;
 
     public UserInfoClientContract() {
     }
@@ -32,5 +34,13 @@ public class UserInfoClientContract extends UserInfoContract {
 
     public void setLastSessionTime(long lastSessionTime) {
         this.lastSessionTime = lastSessionTime;
+    }
+
+    public List<MyUserGroupContract> getMyUserGroups() {
+        return myUserGroups;
+    }
+
+    public void setMyUserGroups(List<MyUserGroupContract> myUserGroups) {
+        this.myUserGroups = myUserGroups;
     }
 }
