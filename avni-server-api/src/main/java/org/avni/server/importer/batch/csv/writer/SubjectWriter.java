@@ -18,6 +18,7 @@ import org.avni.server.util.ValidationUtil;
 import org.joda.time.LocalDate;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -45,7 +46,7 @@ public class SubjectWriter extends EntityWriter {
                          SubjectTypeCreator subjectTypeCreator,
                          FormMappingRepository formMappingRepository,
                          ObservationCreator observationCreator, IndividualService individualService,
-                         S3Service s3Service,
+                         @Qualifier("BatchS3Service") S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
                          AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeadersCreator subjectHeadersCreator) {
         super(organisationConfigService);
