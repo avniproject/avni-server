@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import org.avni.server.domain.UserContext;
+import org.avni.server.service.media.MediaUrlResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.regex.Matcher;
 
 import static java.lang.String.format;
@@ -31,8 +33,9 @@ public class AWSS3Service extends StorageService {
     public AWSS3Service(@Value("${avni.bucketName}") String bucketName,
                         @Value("${aws.accessKeyId}") String accessKeyId,
                         @Value("${aws.secretAccessKey}") String secretAccessKey,
-                        @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev) {
-        super(bucketName, s3InDev, logger, isDev);
+                        @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev,
+                        List<MediaUrlResolver> mediaUrlResolvers) {
+        super(bucketName, s3InDev, logger, isDev, mediaUrlResolvers);
         s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(REGION)
                 .withPathStyleAccessEnabled(true)

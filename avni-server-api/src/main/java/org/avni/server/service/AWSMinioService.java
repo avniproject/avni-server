@@ -8,6 +8,7 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import org.avni.server.domain.UserContext;
+import org.avni.server.service.media.MediaUrlResolver;
 import org.avni.server.util.MinioUri;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.regex.Matcher;
 
 import static java.lang.String.format;
@@ -33,8 +35,9 @@ public class AWSMinioService extends StorageService {
                            @Value("${minio.url}") String minioUrl,
                            @Value("${minio.accessKey}") String minioAccessKey,
                            @Value("${minio.secretAccessKey}") String minioSecretAccessKey,
-                           @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev) {
-        super(bucketName, s3InDev, logger, isDev);
+                           @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev,
+                           List<MediaUrlResolver> mediaUrlResolvers) {
+        super(bucketName, s3InDev, logger, isDev, mediaUrlResolvers);
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setSignerOverride("AWSS3V4SignerType");
         s3Client = AmazonS3ClientBuilder.standard()
