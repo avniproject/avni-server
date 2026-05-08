@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.application.*;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementRepository;
@@ -223,10 +224,11 @@ public class ObservationCreator {
             case DateTime:
                 return handleDateTimeValue(answerValue, errorMsgs, concept);
             case Image:
-            case ImageV2:
             case Video:
             case File:
                 return handleMediaValue(formElement, answerValue, errorMsgs, oldValue);
+            case ImageV2:
+                return handleMediaV2Value(formElement, answerValue, errorMsgs);
             case Subject:
                 return individualService.getObservationValueForUpload(formElement, answerValue);
             case Location:
@@ -389,6 +391,24 @@ public class ObservationCreator {
                     .withSecondOfMinute(0);
         } catch (IllegalArgumentException ignored) {
             // Failed all attempts
+            return null;
+        }
+    }
+
+    private Object handleMediaV2Value(FormElement formElement, String answerValue, List<String> errorMsgs) {
+        List<Map<String, Object>> entries = Stream.of(S.splitMultiSelectAnswer(answerValue))
+                .map(url -> getMediaObservationValue(url, errorMsgs, null))
+                .filter(Objects::nonNull)
+                .map(uri -> {
+                    Map<String, Object> entry = new HashMap<>();
+                    entry.put("uri", uri);
+                    return entry;
+                })
+                .collect(Collectors.toList());
+        try {
+            return ObjectMapperSingleton.getObjectMapper().writeValueAsString(entries);
+        } catch (JsonProcessingException e) {
+            errorMsgs.add(format("Failed to serialise media value for '%s'", formElement.getConcept().getName()));
             return null;
         }
     }
