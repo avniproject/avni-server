@@ -32,6 +32,7 @@ public class ConceptContract extends ReferenceDataContract {
     public static enum RequestType {
         Inline, Full, Bundle
     }
+    public static final int MAX_NAME_LENGTH = 255;
 
     public static ConceptContract create(Concept concept) {
         ConceptContract conceptContract = new ConceptContract();
@@ -199,9 +200,17 @@ public class ConceptContract extends ReferenceDataContract {
         return StringUtils.hasText(this.getName()) || StringUtils.hasText(this.getUuid());
     }
 
+    public boolean isNameLengthExceeded() {
+        String name = this.getName();
+        return name != null && name.trim().length() > MAX_NAME_LENGTH;
+    }
+
     public void validate() {
         if (!hasNameOrUUID()) {
             throw new BadRequestError("Concept must have either uuid or name");
+        }
+        if (isNameLengthExceeded()) {
+            throw new BadRequestError(String.format("Concept name must not exceed %d characters", MAX_NAME_LENGTH));
         }
     }
 }

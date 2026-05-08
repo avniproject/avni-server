@@ -19,6 +19,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -44,7 +45,7 @@ public class ObservationCreator {
     public ObservationCreator(ConceptRepository conceptRepository,
                               FormRepository formRepository,
                               ObservationService observationService,
-                              S3Service s3Service,
+                              @Qualifier("BatchS3Service") S3Service s3Service,
                               IndividualService individualService,
                               LocationService locationService,
                               FormElementRepository formElementRepository,
@@ -224,6 +225,7 @@ public class ObservationCreator {
             case Image:
             case ImageV2:
             case Video:
+            case File:
                 return handleMediaValue(formElement, answerValue, errorMsgs, oldValue);
             case Subject:
                 return individualService.getObservationValueForUpload(formElement, answerValue);
