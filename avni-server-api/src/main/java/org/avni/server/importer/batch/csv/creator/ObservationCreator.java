@@ -225,6 +225,7 @@ public class ObservationCreator {
                 return handleDateTimeValue(answerValue, errorMsgs, concept);
             case Image:
             case Video:
+            case Audio:
             case File:
                 return handleMediaValue(formElement, answerValue, errorMsgs, oldValue);
             case ImageV2:
