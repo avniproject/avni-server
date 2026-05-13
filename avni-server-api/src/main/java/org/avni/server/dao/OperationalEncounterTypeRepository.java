@@ -26,6 +26,9 @@ public interface OperationalEncounterTypeRepository extends ImplReferenceDataRep
 
     OperationalEncounterType findByEncounterTypeAndOrganisationId(EncounterType encounterType, long organisationId);
 
+    @Query("select oet.encounterType.id from OperationalEncounterType oet where oet.organisationId = ?1 and oet.isVoided = false")
+    List<Long> findEncounterTypeIdsByOrganisationId(long organisationId);
+
     @Query("select o.name from OperationalEncounterType o where o.isVoided = false")
     List<String> getAllNames();
 }

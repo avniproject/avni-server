@@ -5,12 +5,14 @@ import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.util.EntityUtil;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.domain.ValueUnit;
 import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
+import org.avni.server.web.request.reports.ReportCardRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.avni.server.domain.StandardReportCardTypeType.OverdueVisits;
 import static org.avni.server.domain.StandardReportCardTypeType.ScheduledVisits;
@@ -36,9 +40,12 @@ public class CardService implements NonScopeAwareService {
     private final EncounterTypeRepository encounterTypeRepository;
     private final CustomCardConfigRepository customCardConfigRepository;
     private final CustomCardConfigService customCardConfigService;
+    private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
+    private final OperationalProgramRepository operationalProgramRepository;
+    private final OperationalEncounterTypeRepository operationalEncounterTypeRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService, OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -46,10 +53,14 @@ public class CardService implements NonScopeAwareService {
         this.encounterTypeRepository = encounterTypeRepository;
         this.customCardConfigRepository = customCardConfigRepository;
         this.customCardConfigService = customCardConfigService;
+        this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
+        this.operationalProgramRepository = operationalProgramRepository;
+        this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
         assertNoExistingCardWithName(reportCardRequest.getName());
+        validateOperationalMappingsForWebRequest(reportCardRequest);
         ReportCard card = new ReportCard();
         card.assignUUID();
         buildCard(reportCardRequest, card);
@@ -78,6 +89,7 @@ public class CardService implements NonScopeAwareService {
     public ReportCard editCard(ReportCardWebRequest request, Long cardId) {
         ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(request.getName(), existingCard.getName());
+        validateOperationalMappingsForWebRequest(request);
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
@@ -241,6 +253,43 @@ public class CardService implements NonScopeAwareService {
             throw new BadRequestError("Visit type is required when action is DoVisit");
         }
         card.setActionDetailFields(subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
+    }
+
+    private void validateOperationalMappingsForWebRequest(ReportCardRequest request) {
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        requireOperational(request.getStandardReportCardInputSubjectTypes(), organisationId, "SubjectType",
+                subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
+        requireOperational(request.getStandardReportCardInputPrograms(), organisationId, "Program",
+                programRepository::findByUuid, operationalProgramRepository::findByProgramAndOrganisationId, Program::getName);
+        requireOperational(request.getStandardReportCardInputEncounterTypes(), organisationId, "EncounterType",
+                encounterTypeRepository::findByUuid, operationalEncounterTypeRepository::findByEncounterTypeAndOrganisationId, EncounterType::getName);
+        if (ReportCardAction.DoVisit.name().equals(request.getAction())) {
+            requireOperational(List.of(request.getActionDetailSubjectTypeUUID()), organisationId, "SubjectType",
+                    subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
+            if (StringUtils.hasText(request.getActionDetailProgramUUID())) {
+                requireOperational(List.of(request.getActionDetailProgramUUID()), organisationId, "Program",
+                        programRepository::findByUuid, operationalProgramRepository::findByProgramAndOrganisationId, Program::getName);
+            }
+            requireOperational(List.of(request.getActionDetailEncounterTypeUUID()), organisationId, "EncounterType",
+                    encounterTypeRepository::findByUuid, operationalEncounterTypeRepository::findByEncounterTypeAndOrganisationId, EncounterType::getName);
+        }
+    }
+
+    private <T> void requireOperational(List<String> uuids, long organisationId, String entityTypeLabel,
+                                        Function<String, T> findByUuid,
+                                        BiFunction<T, Long, ?> findOperational,
+                                        Function<T, String> nameOf) {
+        if (uuids == null) return;
+        for (String uuid : uuids) {
+            if (!StringUtils.hasText(uuid)) continue;
+            T entity = findByUuid.apply(uuid);
+            if (entity == null) {
+                throw new BadRequestError("%s with uuid %s doesn't exist", entityTypeLabel, uuid);
+            }
+            if (findOperational.apply(entity, organisationId) == null) {
+                throw new BadRequestError("%s '%s' (%s) is not available in this organisation", entityTypeLabel, nameOf.apply(entity), uuid);
+            }
+        }
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
