@@ -320,11 +320,19 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         return isSyncRegistrationConcept1Usable;
     }
 
+    public Boolean getSyncRegistrationConcept1Usable() {
+        return isSyncRegistrationConcept1Usable;
+    }
+
     public void setSyncRegistrationConcept1Usable(Boolean syncRegistrationConcept1Usable) {
         isSyncRegistrationConcept1Usable = syncRegistrationConcept1Usable;
     }
 
     public Boolean isSyncRegistrationConcept2Usable() {
+        return isSyncRegistrationConcept2Usable;
+    }
+
+    public Boolean getSyncRegistrationConcept2Usable() {
         return isSyncRegistrationConcept2Usable;
     }
 
@@ -412,9 +420,9 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
         String getSyncRegistrationConcept2();
 
-        boolean isSyncRegistrationConcept1Usable();
+        Boolean getSyncRegistrationConcept1Usable();
 
-        boolean isSyncRegistrationConcept2Usable();
+        Boolean getSyncRegistrationConcept2Usable();
     }
 
     @Override
