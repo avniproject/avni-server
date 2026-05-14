@@ -1,6 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.OperationalSubjectType;
+import org.avni.server.domain.SubjectType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,6 @@ public interface OperationalSubjectTypeRepository extends ImplReferenceDataRepos
     List<String> getAllNames();
 
     OperationalSubjectType findByNameIgnoreCase(String name);
+
+    OperationalSubjectType findBySubjectTypeAndOrganisationId(SubjectType subjectType, long organisationId);
 }

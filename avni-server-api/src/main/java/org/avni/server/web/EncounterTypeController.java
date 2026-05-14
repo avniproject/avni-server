@@ -18,6 +18,7 @@ import org.avni.server.service.EncounterTypeService;
 import org.avni.server.service.FormMappingParameterObject;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.contract.EncounterTypeContract;
@@ -34,7 +35,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -102,6 +105,12 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
         } else {
             allEncounterTypes = formMappingService.getEncounterTypes(subjectTypeUuids, programUuids);
         }
+
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        Set<Long> operationalEncounterTypeIds = new HashSet<>(operationalEncounterTypeRepository.findEncounterTypeIdsByOrganisationId(organisationId));
+        allEncounterTypes = allEncounterTypes.stream()
+                .filter(et -> operationalEncounterTypeIds.contains(et.getId()))
+                .collect(Collectors.toList());
 
         return allEncounterTypes.stream().map(encounterType -> {
             EncounterTypeContract contract = new EncounterTypeContract();

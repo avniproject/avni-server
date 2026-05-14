@@ -46,7 +46,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InvalidObjectException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -71,6 +77,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     private final ConceptService conceptService;
     private final AccessControlService accessControlService;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final S3Service s3Service;
 
     @Autowired
     public FormController(FormRepository formRepository,
@@ -82,7 +89,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
                           FormMappingService formMappingService,
                           FormService formService,
                           UserService userService,
-                          IdentifierAssignmentService identifierAssignmentService, ConceptService conceptService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
+                          IdentifierAssignmentService identifierAssignmentService, ConceptService conceptService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder, S3Service s3Service) {
         this.formRepository = formRepository;
         this.programRepository = programRepository;
         this.formMappingRepository = formMappingRepository;
@@ -96,6 +103,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         this.conceptService = conceptService;
         this.accessControlService = accessControlService;
         this.errorBodyBuilder = errorBodyBuilder;
+        this.s3Service = s3Service;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -269,6 +277,9 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         formContract.setTaskScheduleRule(form.getTaskScheduleRule());
         formContract.setValidationRule(form.getValidationRule());
         formContract.setChecklistsRule(form.getChecklistsRule());
+        formContract.setShareRule(form.getShareRule());
+        formContract.setShareTemplateS3Key(form.getShareTemplateS3Key());
+        formContract.setShareTranslations(form.getShareTranslations());
         formContract.setOrganisationId(form.getOrganisationId());
         form.getDecisionConcepts().forEach(concept -> {
             ConceptContract conceptContract = new ConceptContract();
@@ -452,6 +463,36 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw e;
+        }
+    }
+
+    @PostMapping(value = "/web/form/{uuid}/uploadShareTemplate")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<?> uploadShareTemplate(@PathVariable String uuid, @RequestPart("file") MultipartFile file) {
+        try {
+            accessControlService.checkPrivilege(FormType.getPrivilegeType(formRepository.findByUuid(uuid)));
+            String s3Key = formService.uploadShareTemplate(uuid, file);
+            return ResponseEntity.ok(s3Key);
+        } catch (BadRequestError e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @RequestMapping(value = "/formShareTemplateFile/{fileName:.+}", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> serveFormShareTemplateFile(@PathVariable String fileName) {
+        Organisation organisation = UserContextHolder.getOrganisation();
+        if (organisation == null) return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        try {
+            String s3Path = format("%s/%s", FormService.FORM_SHARE_TEMPLATES_SUBDIR, fileName);
+            InputStream contentStream = s3Service.getOrgScopedContent(s3Path, organisation);
+            return ResponseEntity.ok().body(new InputStreamResource(contentStream));
+        } catch (Exception e) {
+            logger.error(format("Error serving form share template %s: %s", fileName, e.getMessage()), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Error serving %s", fileName));
         }
     }
 }
