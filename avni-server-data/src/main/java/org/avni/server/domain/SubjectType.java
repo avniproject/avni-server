@@ -407,6 +407,14 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         List<GroupRole.GroupRoleProjection> getGroupRoles();
 
         JsonObject getSettings();
+
+        String getSyncRegistrationConcept1();
+
+        String getSyncRegistrationConcept2();
+
+        boolean isSyncRegistrationConcept1Usable();
+
+        boolean isSyncRegistrationConcept2Usable();
     }
 
     @Override
