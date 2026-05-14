@@ -80,6 +80,22 @@ public class FormBuilder extends BaseBuilder<Form, FormBuilder> {
         return this;
     }
 
+    public FormBuilder withShareRule(String shareRule) {
+        this.get().setShareRule(shareRule);
+        return this;
+    }
+
+    public FormBuilder withShareTemplateS3Key(String shareTemplateS3Key) {
+        this.get().setShareTemplateS3Key(shareTemplateS3Key);
+        return this;
+    }
+
+    public FormBuilder withShareTranslations(org.avni.server.domain.JsonObject shareTranslations) {
+        this.get().setShareTranslations(shareTranslations);
+        return this;
+    }
+
+
     private FormElementGroup getExistingFormElementGroup(String uuid) {
         return this.get().findFormElementGroup(uuid);
     }

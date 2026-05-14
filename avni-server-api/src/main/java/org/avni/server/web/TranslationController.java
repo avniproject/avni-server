@@ -145,6 +145,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
                 .collect(Collectors.toMap(Translation::getLanguage, Translation::getTranslationJson, (a, b) -> b));
 
         Map<String, String> customCardDefaults = collectCustomCardTranslationDefaults();
+        Map<String, String> shareRuleDefaults = collectShareRuleTranslationDefaults();
 
         ((List<String>) organisationConfig.getSettings().get("languages"))
                 .forEach(language -> {
@@ -155,6 +156,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
                     jsonObject.putAll(addRegistrationAndEnrolmentStrings());
                     jsonObject.putAll(platformTranslations);
                     jsonObject.putAll(customCardTranslationsFor(customCardDefaults, Locale.valueOf(language), valueForEmptyKey));
+                    jsonObject.putAll(customCardTranslationsFor(shareRuleDefaults, Locale.valueOf(language), valueForEmptyKey));
                     jsonObject.putAll(existingTranslations != null ? existingTranslations : Collections.emptyMap());
                     translation.setLanguage(Locale.valueOf(language));
                     translation.setTranslationJson(jsonObject);
@@ -222,6 +224,22 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
         Map<String, String> result = new HashMap<>();
         customCardConfigRepository.findAllByIsVoidedFalseOrderByName().forEach(config -> {
             JsonObject translations = config.getTranslations();
+            if (translations == null) {
+                return;
+            }
+            translations.forEach((key, defaultValue) -> {
+                if (key != null) {
+                    result.put(key, defaultValue == null ? "" : defaultValue.toString());
+                }
+            });
+        });
+        return result;
+    }
+
+    private Map<String, String> collectShareRuleTranslationDefaults() {
+        Map<String, String> result = new HashMap<>();
+        formRepository.findAllByIsVoidedFalse().forEach(form -> {
+            JsonObject translations = form.getShareTranslations();
             if (translations == null) {
                 return;
             }

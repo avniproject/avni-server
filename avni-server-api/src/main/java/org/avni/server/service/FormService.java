@@ -11,6 +11,8 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.AvniFiles;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
@@ -18,10 +20,15 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_NAME;
 import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_UUID;
@@ -30,22 +37,44 @@ import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
 @Service
 public class FormService implements NonScopeAwareService {
+    public static final String FORM_SHARE_TEMPLATES_SUBDIR = "formsharetemplates";
     private static final Logger logger = LoggerFactory.getLogger(FormService.class);
-    
+
     private final FormRepository formRepository;
     private final OrganisationConfigService organisationConfigService;
     private final ConceptRepository conceptRepository;
     private final AccessControlService accessControlService;
     private final FormElementRepository formElementRepository;
     private final FormElementGroupRepository formElementGroupRepository;
+    private final S3Service s3Service;
 
-    public FormService(FormRepository formRepository, OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AccessControlService accessControlService, FormElementRepository formElementRepository, FormElementGroupRepository formElementGroupRepository) {
+    public FormService(FormRepository formRepository, OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AccessControlService accessControlService, FormElementRepository formElementRepository, FormElementGroupRepository formElementGroupRepository, S3Service s3Service) {
         this.formRepository = formRepository;
         this.organisationConfigService = organisationConfigService;
         this.conceptRepository = conceptRepository;
         this.accessControlService = accessControlService;
         this.formElementRepository = formElementRepository;
         this.formElementGroupRepository = formElementGroupRepository;
+        this.s3Service = s3Service;
+    }
+
+    public String uploadShareTemplate(String formUuid, MultipartFile file) throws IOException {
+        Form form = formRepository.findByUuid(formUuid);
+        if (form == null) {
+            throw new BadRequestError("Form with uuid '%s' not found", formUuid);
+        }
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestError("HTML file is required");
+        }
+        String fileName = format("%s.html", form.getUuid());
+        String targetPath = format("%s/%s", FORM_SHARE_TEMPLATES_SUBDIR, fileName);
+        logger.info(format("Form uploadShareTemplate: uuid=%s targetPath='%s' originalFileName='%s' size=%d",
+                formUuid, targetPath, file.getOriginalFilename(), file.getSize()));
+        File tempFile = AvniFiles.convertMultiPartToFile(file, ".html");
+        s3Service.uploadImageFile(tempFile, targetPath);
+        form.setShareTemplateS3Key(fileName);
+        formRepository.save(form);
+        return fileName;
     }
 
     public void saveForm(FormContract formRequest) throws FormBuilderException {
@@ -66,6 +95,9 @@ public class FormService implements NonScopeAwareService {
                 .withDecisionDeclarativeRule(formRequest.getDecisionDeclarativeRule())
                 .withVisitScheduleDeclarativeRule(formRequest.getVisitScheduleDeclarativeRule())
                 .withTaskScheduleDeclarativeRule(formRequest.getTaskScheduleDeclarativeRule())
+                .withShareRule(formRequest.getShareRule())
+                .withShareTemplateS3Key(formRequest.getShareTemplateS3Key())
+                .withShareTranslations(formRequest.getShareTranslations())
                 .build();
 
         mapDecisionConcepts(formRequest, form);
