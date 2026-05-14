@@ -320,11 +320,19 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         return isSyncRegistrationConcept1Usable;
     }
 
+    public Boolean getSyncRegistrationConcept1Usable() {
+        return isSyncRegistrationConcept1Usable;
+    }
+
     public void setSyncRegistrationConcept1Usable(Boolean syncRegistrationConcept1Usable) {
         isSyncRegistrationConcept1Usable = syncRegistrationConcept1Usable;
     }
 
     public Boolean isSyncRegistrationConcept2Usable() {
+        return isSyncRegistrationConcept2Usable;
+    }
+
+    public Boolean getSyncRegistrationConcept2Usable() {
         return isSyncRegistrationConcept2Usable;
     }
 
@@ -407,6 +415,14 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         List<GroupRole.GroupRoleProjection> getGroupRoles();
 
         JsonObject getSettings();
+
+        String getSyncRegistrationConcept1();
+
+        String getSyncRegistrationConcept2();
+
+        Boolean getSyncRegistrationConcept1Usable();
+
+        Boolean getSyncRegistrationConcept2Usable();
     }
 
     @Override
