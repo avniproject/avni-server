@@ -1,5 +1,5 @@
 INSERT INTO privilege(uuid, name, entity_type, type, description, last_modified_date_time, created_date_time, is_voided)
-VALUES (uuid_generate_v4(), 'Manage Calendars', 'Calendar', 'ManageCalendars',
+VALUES (uuid_generate_v4(), 'Manage Calendars', 'NonTransaction', 'ManageCalendars',
         'Ability to manage holiday calendars and date markers', now(), now(), false);
 
 insert into group_privilege (uuid, group_id, privilege_id, subject_type_id, program_id, program_encounter_type_id,
