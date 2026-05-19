@@ -432,4 +432,15 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
                 "uuid='" + this.getUuid() + '\'' +
                 '}';
     }
+
+    @Column(name = "attendance_enabled")
+    private boolean attendanceEnabled;
+
+    public boolean isAttendanceEnabled() {
+        return attendanceEnabled;
+    }
+
+    public void setAttendanceEnabled(boolean attendanceEnabled) {
+        this.attendanceEnabled = attendanceEnabled;
+    }
 }
