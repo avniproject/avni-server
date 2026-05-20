@@ -1,7 +1,9 @@
 package org.avni.server.service.attendance;
 
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.attendance.AttendanceRecord;
 import org.avni.server.domain.sync.SyncEntityName;
@@ -13,15 +15,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class AttendanceRecordService implements ScopeAwareService<AttendanceRecord> {
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
 
-    public AttendanceRecordService(AttendanceRecordRepository attendanceRecordRepository) {
+    public AttendanceRecordService(AttendanceRecordRepository attendanceRecordRepository,
+                                   SubjectTypeRepository subjectTypeRepository) {
         this.attendanceRecordRepository = attendanceRecordRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
     }
 
     @Override
-    public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID) {
+    public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String subjectTypeUuid) {
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        if (subjectType == null) return false;
         User user = UserContextHolder.getUserContext().getUser();
-        return isChangedByCatchment(user, lastModifiedDateTime, SyncEntityName.AttendanceRecord);
+        return isChangedByCatchmentAndSubjectType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.AttendanceRecord);
     }
 
     @Override

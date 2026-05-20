@@ -2,32 +2,49 @@ package org.avni.server.web.attendance;
 
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.SessionRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.attendance.AttendanceRecord;
 import org.avni.server.domain.attendance.Session;
+import org.avni.server.domain.sync.SyncEntityName;
+import org.avni.server.service.ScopeBasedSyncService;
+import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.attendance.AttendanceRecordService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.web.RestControllerResourceProcessor;
 import org.avni.server.web.request.attendance.AttendanceRecordContract;
+import org.avni.server.web.response.slice.SlicedResources;
+import org.joda.time.DateTime;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-public class AttendanceRecordController {
+public class AttendanceRecordController implements RestControllerResourceProcessor<AttendanceRecord> {
 
     private final AttendanceRecordService attendanceRecordService;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final SessionRepository sessionRepository;
     private final IndividualRepository individualRepository;
     private final ConceptRepository conceptRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final ScopeBasedSyncService<AttendanceRecord> scopeBasedSyncService;
+    private final UserService userService;
     private final AccessControlService accessControlService;
 
     public AttendanceRecordController(AttendanceRecordService attendanceRecordService,
@@ -35,13 +52,36 @@ public class AttendanceRecordController {
                                       SessionRepository sessionRepository,
                                       IndividualRepository individualRepository,
                                       ConceptRepository conceptRepository,
+                                      SubjectTypeRepository subjectTypeRepository,
+                                      ScopeBasedSyncService<AttendanceRecord> scopeBasedSyncService,
+                                      UserService userService,
                                       AccessControlService accessControlService) {
         this.attendanceRecordService = attendanceRecordService;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.sessionRepository = sessionRepository;
         this.individualRepository = individualRepository;
         this.conceptRepository = conceptRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
+        this.scopeBasedSyncService = scopeBasedSyncService;
+        this.userService = userService;
         this.accessControlService = accessControlService;
+    }
+
+    @GetMapping(value = {"/attendanceRecord/search/lastModified", "/attendanceRecord/search/lastModified/v2"})
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public SlicedResources<EntityModel<AttendanceRecord>> syncByLastModified(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
+            Pageable pageable) {
+        if (subjectTypeUuid == null || subjectTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
+        return wrap(scopeBasedSyncService.getSyncResultsByCatchmentAsSlice(
+                attendanceRecordRepository, userService.getCurrentUser(),
+                lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType,
+                SyncEntityName.AttendanceRecord));
     }
 
     @GetMapping(value = "/web/attendanceRecord")

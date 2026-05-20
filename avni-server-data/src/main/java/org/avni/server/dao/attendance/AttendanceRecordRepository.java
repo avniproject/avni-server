@@ -29,6 +29,7 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
     String ATTENDANCE_RECORD_SCOPE_CLAUSE = " inner join session s on ar.session_id = s.id" +
             " inner join individual gs on s.group_subject_id = gs.id" +
             " where ar.organisation_id = :organisationId" +
+            "  and gs.subject_type_id = :subjectTypeId" +
             "  and gs.address_id in (" + CatchmentSyncSql.CATCHMENT_ADDRESS_LEVEL_IDS_SUBQUERY + ") ";
 
     @Query(value = "select ar.* from attendance_record ar" + ATTENDANCE_RECORD_SCOPE_CLAUSE +
@@ -39,6 +40,7 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
             nativeQuery = true)
     Page<AttendanceRecord> getRecordSyncResults(@Param("catchmentId") long catchmentId,
                                                 @Param("organisationId") long organisationId,
+                                                @Param("subjectTypeId") long subjectTypeId,
                                                 @Param("lastModifiedDateTime") Date lastModifiedDateTime,
                                                 @Param("now") Date now,
                                                 Pageable pageable);
@@ -48,6 +50,7 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
             nativeQuery = true)
     Long getRecordChangedRowCount(@Param("catchmentId") long catchmentId,
                                   @Param("organisationId") long organisationId,
+                                  @Param("subjectTypeId") long subjectTypeId,
                                   @Param("lastModifiedDateTime") Date lastModifiedDateTime);
 
     @Override
@@ -55,6 +58,7 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
         return getRecordSyncResults(
                 syncParameters.getCatchment().getId(),
                 syncParameters.getCatchment().getOrganisationId(),
+                syncParameters.getTypeId(),
                 syncParameters.getLastModifiedDateTime().toDate(),
                 syncParameters.getNow().toDate(),
                 syncParameters.getPageable());
@@ -65,6 +69,7 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
         return getRecordChangedRowCount(
                 syncParameters.getCatchment().getId(),
                 syncParameters.getCatchment().getOrganisationId(),
+                syncParameters.getTypeId(),
                 syncParameters.getLastModifiedDateTime().toDate()) > 0;
     }
 }

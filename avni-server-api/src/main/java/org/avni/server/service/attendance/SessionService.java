@@ -3,11 +3,13 @@ package org.avni.server.service.attendance;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.dao.attendance.SessionRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.attendance.AttendanceRecord;
 import org.avni.server.domain.attendance.AttendanceType;
@@ -41,23 +43,28 @@ public class SessionService implements ScopeAwareService<Session> {
     private final IndividualRepository individualRepository;
     private final AttendanceTypeRepository attendanceTypeRepository;
     private final ConceptRepository conceptRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
 
     public SessionService(SessionRepository sessionRepository,
                           AttendanceRecordRepository attendanceRecordRepository,
                           IndividualRepository individualRepository,
                           AttendanceTypeRepository attendanceTypeRepository,
-                          ConceptRepository conceptRepository) {
+                          ConceptRepository conceptRepository,
+                          SubjectTypeRepository subjectTypeRepository) {
         this.sessionRepository = sessionRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.individualRepository = individualRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
         this.conceptRepository = conceptRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
     }
 
     @Override
-    public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID) {
+    public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String subjectTypeUuid) {
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        if (subjectType == null) return false;
         User user = UserContextHolder.getUserContext().getUser();
-        return isChangedByCatchment(user, lastModifiedDateTime, SyncEntityName.Session);
+        return isChangedByCatchmentAndSubjectType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.Session);
     }
 
     @Override

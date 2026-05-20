@@ -36,6 +36,10 @@ public class ScopeBasedSyncService<T extends CHSEntity> {
         return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 
+    public Page<T> getSyncResultsByCatchment(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
+        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+    }
+
     public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
         return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
@@ -48,5 +52,9 @@ public class ScopeBasedSyncService<T extends CHSEntity> {
 
     public Slice<T> getSyncResultsByCatchmentAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Pageable pageable, SyncEntityName syncEntityName) {
         return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+    }
+
+    public Slice<T> getSyncResultsByCatchmentAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
+        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 }
