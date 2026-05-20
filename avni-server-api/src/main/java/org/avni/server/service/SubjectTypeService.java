@@ -9,9 +9,15 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.attendance.AttendanceConfigIncompleteException;
+import org.avni.server.service.attendance.AttendanceTypeConfigKey;
+import org.avni.server.service.attendance.IncompleteAttendanceType;
 import org.avni.server.service.batch.BatchJobService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
@@ -38,6 +44,8 @@ import java.util.stream.Stream;
 
 @Service
 public class SubjectTypeService implements NonScopeAwareService {
+    private static final String DEFAULT_ATTENDANCE_TYPE_NAME = "Attendance";
+    private static final int DEFAULT_ATTENDANCE_TYPE_SORT_ORDER = 1;
     private final Logger logger;
     private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -52,6 +60,7 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final UserService userService;
     private final LocationHierarchyService locationHierarchyService;
     private final BatchJobService batchJobService;
+    private final AttendanceTypeRepository attendanceTypeRepository;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -63,7 +72,8 @@ public class SubjectTypeService implements NonScopeAwareService {
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService, OrganisationConfigService organisationConfigService,
                               AddressLevelTypeRepository addressLevelTypeRepository, UserService userService, LocationHierarchyService locationHierarchyService,
-                              BatchJobService batchJobService) {
+                              BatchJobService batchJobService,
+                              AttendanceTypeRepository attendanceTypeRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -76,6 +86,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationHierarchyService = locationHierarchyService;
         this.batchJobService = batchJobService;
+        this.attendanceTypeRepository = attendanceTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.userService = userService;
     }
@@ -84,9 +95,11 @@ public class SubjectTypeService implements NonScopeAwareService {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
+        boolean wasAttendanceEnabled = subjectType != null && subjectType.isAttendanceEnabled();
         if (isSubjectTypeNotPresentInDB) {
             subjectType = new SubjectType();
         }
+        validateAttendanceEligibilityAndConfig(subjectTypeRequest, subjectType);
         subjectType.setUuid(subjectTypeRequest.getUuid());
         subjectType.setVoided(subjectTypeRequest.isVoided());
         subjectType.setName(subjectTypeRequest.getName());
@@ -113,8 +126,55 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setSyncRegistrationConcept2Usable(subjectTypeRequest.getSyncRegistrationConcept2Usable());
         subjectType.setNameHelpText(subjectTypeRequest.getNameHelpText());
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
+        subjectType.setAttendanceEnabled(subjectTypeRequest.isAttendanceEnabled());
         subjectType = subjectTypeRepository.save(subjectType);
+        seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
         return new SubjectTypeUpsertResponse(isSubjectTypeNotPresentInDB, subjectType);
+    }
+
+    private void validateAttendanceEligibilityAndConfig(SubjectTypeContract request, SubjectType existing) {
+        if (!request.isAttendanceEnabled()) {
+            return;
+        }
+        if (!(request.isGroup() || request.isHousehold())) {
+            throw new BadRequestError("attendance_enabled requires a group or household subject type");
+        }
+        if (existing == null || existing.getId() == null) {
+            return;
+        }
+        List<AttendanceType> nonVoided = attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing);
+        List<IncompleteAttendanceType> incomplete = new ArrayList<>();
+        for (AttendanceType attendanceType : nonVoided) {
+            List<String> missing = new ArrayList<>();
+            JsonObject config = attendanceType.getConfig();
+            String sessionOutcome = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID);
+            String absenceReason = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT_UUID);
+            if (sessionOutcome == null) missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID);
+            if (absenceReason == null) missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT_UUID);
+            if (!missing.isEmpty()) {
+                incomplete.add(new IncompleteAttendanceType(attendanceType.getUuid(), attendanceType.getName(), missing));
+            }
+        }
+        if (!incomplete.isEmpty()) {
+            throw new AttendanceConfigIncompleteException(incomplete);
+        }
+    }
+
+    private void seedDefaultAttendanceTypeIfEnabling(SubjectType subjectType, boolean wasAttendanceEnabled) {
+        if (!subjectType.isAttendanceEnabled() || wasAttendanceEnabled) {
+            return;
+        }
+        List<AttendanceType> existing = attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(subjectType);
+        if (!existing.isEmpty()) {
+            return;
+        }
+        AttendanceType seed = new AttendanceType();
+        seed.assignUUIDIfRequired();
+        seed.setSubjectType(subjectType);
+        seed.setName(DEFAULT_ATTENDANCE_TYPE_NAME);
+        seed.setSortOrder(DEFAULT_ATTENDANCE_TYPE_SORT_ORDER);
+        seed.setConfig(new JsonObject());
+        attendanceTypeRepository.save(seed);
     }
 
     public void createOperationalSubjectType(OperationalSubjectTypeContract operationalSubjectTypeContract, Organisation organisation) {

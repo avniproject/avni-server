@@ -15,10 +15,13 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "calendar", path = "calendar")
 public interface CalendarRepository extends ReferenceDataRepository<Calendar>, FindByLastModifiedDateTime<Calendar>, OperatingIndividualScopeAwareRepository<Calendar> {
+
+    List<Calendar> findAllByOrganisationId(Long organisationId);
 
     String CALENDAR_SCOPE_CLAUSE = " where c.organisation_id = :organisationId" +
             "  and (c.address_level_id is null or c.address_level_id in (" + CatchmentSyncSql.CATCHMENT_ADDRESS_LEVEL_IDS_SUBQUERY + ")) ";

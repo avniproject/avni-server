@@ -148,6 +148,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         isGroup = group;
     }
 
+    public boolean isAttendanceEligible() {
+        return isGroup || isHousehold;
+    }
+
     public String getName() {
         return name;
     }

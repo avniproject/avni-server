@@ -13,6 +13,7 @@ import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.attendance.SessionSaveResult;
 import org.avni.server.service.attendance.SessionService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.RestControllerResourceProcessor;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.EntityModel;
+import org.avni.server.web.response.attendance.SessionSaveResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,18 +129,18 @@ public class SessionController implements RestControllerResourceProcessor<Sessio
     @PostMapping(value = "/web/session")
     @ResponseBody
     @Transactional
-    public ResponseEntity<SessionContract> create(@RequestBody SessionContract contract) {
+    public ResponseEntity<SessionSaveResponse> create(@RequestBody SessionContract contract) {
         Individual groupSubject = resolveGroupSubject(contract.getGroupSubjectUUID());
         accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, groupSubject);
         contract.setupUuidIfNeeded();
-        SessionService.SessionWithRoster result = sessionService.saveSessionWithRoster(contract);
-        return ResponseEntity.ok(SessionContract.fromEntity(result.session(), result.roster()));
+        SessionSaveResult result = sessionService.save(contract);
+        return ResponseEntity.ok(SessionSaveResponse.fromResult(result));
     }
 
     @PutMapping(value = "/web/session/{uuid}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<SessionContract> update(@PathVariable String uuid, @RequestBody SessionContract contract) {
+    public ResponseEntity<SessionSaveResponse> update(@PathVariable String uuid, @RequestBody SessionContract contract) {
         Session existing = sessionRepository.findByUuid(uuid);
         if (existing == null) {
             return ResponseEntity.notFound().build();
@@ -152,22 +154,21 @@ public class SessionController implements RestControllerResourceProcessor<Sessio
             accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, newGroupSubject);
         }
         contract.setUuid(uuid);
-        SessionService.SessionWithRoster result = sessionService.saveSessionWithRoster(contract);
-        return ResponseEntity.ok(SessionContract.fromEntity(result.session(), result.roster()));
+        SessionSaveResult result = sessionService.update(existing, contract);
+        return ResponseEntity.ok(SessionSaveResponse.fromResult(result));
     }
 
     @DeleteMapping(value = "/web/session/{uuid}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<Void> delete(@PathVariable String uuid) {
+    public ResponseEntity<SessionSaveResponse> delete(@PathVariable String uuid) {
         Session session = sessionRepository.findByUuid(uuid);
         if (session == null) {
             return ResponseEntity.notFound().build();
         }
         accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, session.getGroupSubject());
-        session.setVoided(true);
-        sessionRepository.save(session);
-        return ResponseEntity.ok().build();
+        SessionSaveResult result = sessionService.delete(session);
+        return ResponseEntity.ok(SessionSaveResponse.fromResult(result));
     }
 
     private Individual resolveGroupSubject(String uuid) {

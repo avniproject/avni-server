@@ -9,6 +9,7 @@ import org.avni.server.domain.calendar.Calendar;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.calendar.CalendarService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.CalendarWorkingPatternValidator;
 import org.avni.server.web.request.calendar.CalendarContract;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,8 +92,7 @@ public class CalendarController {
         if (calendar == null) {
             return ResponseEntity.notFound().build();
         }
-        calendar.setVoided(true);
-        calendarRepository.save(calendar);
+        calendarService.delete(calendar);
         return ResponseEntity.ok().build();
     }
 
@@ -111,7 +111,9 @@ public class CalendarController {
 
     private void applyContract(CalendarContract contract, Calendar calendar) {
         calendar.setName(contract.getName());
-        calendar.setWorkingPattern(contract.getWorkingPattern() == null ? defaultWorkingPattern() : new JsonObject(contract.getWorkingPattern()));
+        JsonObject workingPattern = contract.getWorkingPattern() == null ? defaultWorkingPattern() : new JsonObject(contract.getWorkingPattern());
+        CalendarWorkingPatternValidator.validate(workingPattern);
+        calendar.setWorkingPattern(workingPattern);
         if (contract.getAddressLevelUUID() != null) {
             AddressLevel addressLevel = locationRepository.findByUuid(contract.getAddressLevelUUID());
             if (addressLevel == null) {

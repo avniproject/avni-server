@@ -80,10 +80,15 @@ public class CalendarControllerTest {
     }
 
     @Test
-    public void createWithProvidedWorkingPatternUsesIt() {
+    public void createWithProvidedValidWorkingPatternUsesIt() {
         Map<String, Object> pattern = new LinkedHashMap<>();
-        pattern.put("mon", "morning");
-        pattern.put("tue", "afternoon");
+        pattern.put("mon", "all");
+        pattern.put("tue", "none");
+        pattern.put("wed", "all");
+        pattern.put("thu", "all");
+        pattern.put("fri", "all");
+        pattern.put("sat", "all");
+        pattern.put("sun", "none");
         CalendarContract contract = new CalendarContract();
         contract.setName("Custom");
         contract.setWorkingPattern(pattern);
@@ -93,8 +98,8 @@ public class CalendarControllerTest {
         ArgumentCaptor<Calendar> captor = ArgumentCaptor.forClass(Calendar.class);
         verify(calendarService).save(captor.capture());
         JsonObject saved = captor.getValue().getWorkingPattern();
-        assertEquals("morning", saved.get("mon"));
-        assertEquals("afternoon", saved.get("tue"));
-        assertEquals(2, saved.size());
+        assertEquals("all", saved.get("mon"));
+        assertEquals("none", saved.get("tue"));
+        assertEquals(7, saved.size());
     }
 }

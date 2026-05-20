@@ -22,11 +22,15 @@ import java.util.List;
 @RepositoryRestResource(collectionResourceRel = "calendarDateMarker", path = "calendarDateMarker")
 public interface CalendarDateMarkerRepository extends ReferenceDataRepository<CalendarDateMarker>, FindByLastModifiedDateTime<CalendarDateMarker>, OperatingIndividualScopeAwareRepository<CalendarDateMarker> {
 
+    List<CalendarDateMarker> findAllByOrganisationId(Long organisationId);
+
     List<CalendarDateMarker> findByCalendarAndIsVoidedFalse(Calendar calendar);
 
     List<CalendarDateMarker> findByCalendarAndMarkerDateBetweenAndIsVoidedFalse(Calendar calendar, LocalDate from, LocalDate to);
 
     List<CalendarDateMarker> findByMarkerDateBetweenAndIsVoidedFalse(LocalDate from, LocalDate to);
+
+    CalendarDateMarker findFirstByCalendarAndMarkerDateAndIsVoidedFalse(Calendar calendar, LocalDate markerDate);
 
     String MARKER_SCOPE_CLAUSE = " inner join calendar c on cdm.calendar_id = c.id" +
             " where cdm.organisation_id = :organisationId" +

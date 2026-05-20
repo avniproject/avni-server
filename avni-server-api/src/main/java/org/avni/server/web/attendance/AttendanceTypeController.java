@@ -100,7 +100,7 @@ public class AttendanceTypeController {
             return ResponseEntity.notFound().build();
         }
         attendanceType.setVoided(true);
-        attendanceTypeRepository.save(attendanceType);
+        attendanceTypeService.save(attendanceType);
         return ResponseEntity.ok().build();
     }
 

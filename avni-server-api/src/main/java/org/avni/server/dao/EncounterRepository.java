@@ -20,6 +20,9 @@ import java.util.Map;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "encounter", path = "encounter", exported = false)
 public interface EncounterRepository extends TransactionalDataRepository<Encounter>, OperatingIndividualScopeAwareRepository<Encounter>, SubjectTreeItemRepository {
+
+    List<Encounter> findAllByUuidIn(List<String> uuids);
+
     Page<Encounter> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             Date lastModifiedDateTime, Date now, Pageable pageable);
 

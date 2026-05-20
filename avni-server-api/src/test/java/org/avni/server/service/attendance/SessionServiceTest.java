@@ -1,12 +1,20 @@
 package org.avni.server.service.attendance;
 
 import org.avni.server.dao.ConceptRepository;
+import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.dao.attendance.SessionRepository;
+import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
+import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.Encounter;
+import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.attendance.AttendanceRecord;
@@ -15,6 +23,7 @@ import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.domain.attendance.Session;
 import org.avni.server.domain.attendance.SessionStatus;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.EncounterService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.attendance.AttendanceRecordContract;
 import org.avni.server.web.request.attendance.SessionContract;
@@ -29,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -52,6 +62,16 @@ public class SessionServiceTest {
     private AttendanceTypeRepository attendanceTypeRepository;
     @Mock
     private ConceptRepository conceptRepository;
+    @Mock
+    private CalendarRepository calendarRepository;
+    @Mock
+    private CalendarDateMarkerRepository calendarDateMarkerRepository;
+    @Mock
+    private EncounterTypeRepository encounterTypeRepository;
+    @Mock
+    private EncounterRepository encounterRepository;
+    @Mock
+    private EncounterService encounterService;
 
     private SessionService service;
 
@@ -61,7 +81,9 @@ public class SessionServiceTest {
     @Before
     public void setUp() {
         initMocks(this);
-        service = new SessionService(sessionRepository, attendanceRecordRepository, individualRepository, attendanceTypeRepository, conceptRepository);
+        service = new SessionService(sessionRepository, attendanceRecordRepository, individualRepository,
+                attendanceTypeRepository, conceptRepository, calendarRepository, calendarDateMarkerRepository,
+                encounterTypeRepository, encounterRepository, encounterService);
 
         User user = new User();
         user.setUuid("user-uuid");
@@ -76,6 +98,8 @@ public class SessionServiceTest {
 
         when(sessionRepository.save(any(Session.class))).thenAnswer(inv -> inv.getArgument(0));
         when(attendanceRecordRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(calendarRepository.findAllByIsVoidedFalse()).thenReturn(Collections.emptyList());
+        when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(any())).thenReturn(Collections.emptyList());
     }
 
     @After
@@ -98,7 +122,7 @@ public class SessionServiceTest {
                 rosterEntry("subj-1", AttendanceStatus.Present),
                 rosterEntry("subj-2", AttendanceStatus.Absent)));
 
-        SessionService.SessionWithRoster result = service.saveSessionWithRoster(contract);
+        SessionSaveResult result = service.save(contract);
 
         verify(sessionRepository, times(1)).save(any(Session.class));
         ArgumentCaptor<List<AttendanceRecord>> captor = ArgumentCaptor.forClass(List.class);
@@ -109,23 +133,27 @@ public class SessionServiceTest {
         assertEquals(AttendanceStatus.Present, persisted.get(0).getStatus());
         assertSame(subject2, persisted.get(1).getSubject());
         assertEquals(AttendanceStatus.Absent, persisted.get(1).getStatus());
-        assertEquals(SessionStatus.Held, result.session().getStatus());
-        assertEquals(2, result.roster().size());
+        assertEquals(SessionStatus.Held, result.getSession().getStatus());
+        assertEquals(2, result.getAttendanceRecords().size());
+        assertTrue(result.getAutoCreatedFollowUps().isEmpty());
     }
 
     @Test
     public void didntHappenSessionSkipsRosterPersist() {
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        Concept reason = conceptWithUuid("reason-uuid");
+        when(conceptRepository.findByUuid("reason-uuid")).thenReturn(reason);
 
         SessionContract contract = baseContract(SessionStatus.DidntHappen);
+        contract.setReasonConceptUUID("reason-uuid");
         contract.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Present)));
 
-        SessionService.SessionWithRoster result = service.saveSessionWithRoster(contract);
+        SessionSaveResult result = service.save(contract);
 
         verify(sessionRepository, times(1)).save(any(Session.class));
         verify(attendanceRecordRepository, never()).saveAll(anyList());
-        assertTrue(result.roster().isEmpty());
+        assertTrue(result.getAttendanceRecords().isEmpty());
     }
 
     @Test
@@ -133,7 +161,7 @@ public class SessionServiceTest {
         when(individualRepository.findByUuid("group-uuid")).thenReturn(null);
 
         try {
-            service.saveSessionWithRoster(baseContract(SessionStatus.Held));
+            service.save(baseContract(SessionStatus.Held));
             fail("Expected BadRequestError");
         } catch (BadRequestError e) {
             assertTrue(e.getMessage().contains("group-uuid"));
@@ -148,7 +176,7 @@ public class SessionServiceTest {
         when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(null);
 
         try {
-            service.saveSessionWithRoster(baseContract(SessionStatus.Held));
+            service.save(baseContract(SessionStatus.Held));
             fail("Expected BadRequestError");
         } catch (BadRequestError e) {
             assertTrue(e.getMessage().contains("att-type-uuid"));
@@ -171,7 +199,7 @@ public class SessionServiceTest {
                 rosterEntry("subj-bad", AttendanceStatus.Absent)));
 
         try {
-            service.saveSessionWithRoster(contract);
+            service.save(contract);
             fail("Expected BadRequestError");
         } catch (BadRequestError e) {
             assertTrue(e.getMessage().contains("subj-bad"));
@@ -184,8 +212,7 @@ public class SessionServiceTest {
     public void rosterReasonConceptsBatchLoadedOnce() {
         Individual subject1 = subjectWithUuid("subj-1");
         Individual subject2 = subjectWithUuid("subj-2");
-        Concept reason = new Concept();
-        reason.setUuid("reason-uuid");
+        Concept reason = conceptWithUuid("reason-uuid");
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
         when(individualRepository.findByUuid("subj-2")).thenReturn(subject2);
@@ -199,7 +226,7 @@ public class SessionServiceTest {
         r2.setReasonConceptUUID("reason-uuid");
         contract.setRoster(List.of(r1, r2));
 
-        service.saveSessionWithRoster(contract);
+        service.save(contract);
 
         verify(conceptRepository, times(1)).findAllByUuidIn(anyList());
         verify(conceptRepository, never()).findByUuid(any());
@@ -213,17 +240,324 @@ public class SessionServiceTest {
         SessionContract contract = baseContract(SessionStatus.Held);
         contract.setRoster(Collections.emptyList());
 
-        SessionService.SessionWithRoster result = service.saveSessionWithRoster(contract);
+        SessionSaveResult result = service.save(contract);
 
         verify(sessionRepository, times(1)).save(any(Session.class));
         verify(attendanceRecordRepository, never()).saveAll(anyList());
-        assertTrue(result.roster().isEmpty());
+        assertTrue(result.getAttendanceRecords().isEmpty());
+    }
+
+    @Test
+    public void rejectsFutureScheduledDate() {
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setScheduledDate(LocalDate.now().plusDays(1));
+
+        try {
+            service.save(contract);
+            fail("Expected BadRequestError");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().toLowerCase().contains("future"));
+        }
+        verify(sessionRepository, never()).save(any(Session.class));
+    }
+
+    @Test
+    public void didntHappenWithoutReasonThrowsReasonRequired() {
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+
+        SessionContract contract = baseContract(SessionStatus.DidntHappen);
+
+        try {
+            service.save(contract);
+            fail("Expected ReasonRequiredException");
+        } catch (ReasonRequiredException e) {
+            assertEquals(ReasonRequiredException.RequiredFor.DidntHappen, e.getRequiredFor());
+        }
+        verify(sessionRepository, never()).save(any(Session.class));
+    }
+
+    @Test
+    public void autoCreatesFollowUpForAbsentNoReasonWhenConfigured() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        EncounterType followUpType = new EncounterType();
+        followUpType.setUuid("followup-type-uuid");
+        followUpType.setName("Home Visit");
+        attendanceType.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "followup-type-uuid"));
+
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(encounterTypeRepository.findByUuid("followup-type-uuid")).thenReturn(followUpType);
+        when(encounterService.createEmptyEncounter(any(), any())).thenAnswer(inv -> {
+            Encounter encounter = new Encounter();
+            encounter.setIndividual(inv.getArgument(0));
+            encounter.setEncounterType(inv.getArgument(1));
+            return encounter;
+        });
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+
+        SessionSaveResult result = service.save(contract);
+
+        assertEquals(1, result.getAutoCreatedFollowUps().size());
+        assertEquals("Home Visit", result.getAutoCreatedFollowUps().get(0).getEncounterTypeName());
+        verify(encounterService, times(1)).save(any(Encounter.class));
+    }
+
+    @Test
+    public void doesNotDoubleCreateWhenClientPreCreatedUuidExists() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        EncounterType followUpType = new EncounterType();
+        followUpType.setUuid("followup-type-uuid");
+        followUpType.setName("Home Visit");
+        attendanceType.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "followup-type-uuid"));
+
+        Encounter preExisting = new Encounter();
+        preExisting.setUuid("client-uuid");
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(encounterTypeRepository.findByUuid("followup-type-uuid")).thenReturn(followUpType);
+        when(encounterRepository.findAllByUuidIn(List.of("client-uuid"))).thenReturn(List.of(preExisting));
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        AttendanceRecordContract record = rosterEntry("subj-1", AttendanceStatus.Absent);
+        record.setFollowUpEncounterUuid("client-uuid");
+        contract.setRoster(List.of(record));
+
+        SessionSaveResult result = service.save(contract);
+
+        verify(encounterService, never()).save(any(Encounter.class));
+        assertEquals(0, result.getAutoCreatedFollowUps().size());
+    }
+
+    @Test
+    public void doesNotDoubleCreateWhenExistingRecordCarriesFollowUpAndContractDoesNotEchoIt() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        EncounterType followUpType = new EncounterType();
+        followUpType.setUuid("followup-type-uuid");
+        followUpType.setName("Home Visit");
+        attendanceType.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "followup-type-uuid"));
+
+        AttendanceRecord previousRecord = new AttendanceRecord();
+        previousRecord.setUuid("record-uuid");
+        previousRecord.setSubject(subject1);
+        previousRecord.setStatus(AttendanceStatus.Absent);
+        previousRecord.setFollowUpEncounterUuid("enc-1");
+        Encounter existingEncounter = new Encounter();
+        existingEncounter.setUuid("enc-1");
+
+        Session existingSession = new Session();
+        existingSession.setUuid("session-uuid");
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(encounterTypeRepository.findByUuid("followup-type-uuid")).thenReturn(followUpType);
+        when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(any())).thenReturn(List.of(previousRecord));
+        when(encounterRepository.findAllByUuidIn(List.of("enc-1"))).thenReturn(List.of(existingEncounter));
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setUuid("session-uuid");
+        AttendanceRecordContract stillAbsent = rosterEntry("subj-1", AttendanceStatus.Absent);
+        stillAbsent.setUuid("record-uuid");
+        contract.setRoster(List.of(stillAbsent));
+
+        SessionSaveResult result = service.update(existingSession, contract);
+
+        verify(encounterService, never()).save(any(Encounter.class));
+        assertEquals(0, result.getAutoCreatedFollowUps().size());
+        assertEquals(0, result.getVoidedStaleFollowUps().size());
+    }
+
+    @Test
+    public void crossTypeStackingCreatesOneEncounterPerAttendanceType() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        EncounterType homeVisit = new EncounterType();
+        homeVisit.setUuid("home-visit-type");
+        homeVisit.setName("Home Visit");
+        EncounterType phoneCall = new EncounterType();
+        phoneCall.setUuid("phone-call-type");
+        phoneCall.setName("Phone Call");
+
+        AttendanceType prayerType = new AttendanceType();
+        prayerType.setUuid("prayer-type-uuid");
+        prayerType.setConfig(new JsonObject().with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "home-visit-type"));
+        AttendanceType sportsType = new AttendanceType();
+        sportsType.setUuid("sports-type-uuid");
+        sportsType.setConfig(new JsonObject().with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "phone-call-type"));
+
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("prayer-type-uuid")).thenReturn(prayerType);
+        when(attendanceTypeRepository.findByUuid("sports-type-uuid")).thenReturn(sportsType);
+        when(encounterTypeRepository.findByUuid("home-visit-type")).thenReturn(homeVisit);
+        when(encounterTypeRepository.findByUuid("phone-call-type")).thenReturn(phoneCall);
+        when(encounterService.createEmptyEncounter(any(), any())).thenAnswer(inv -> {
+            Encounter encounter = new Encounter();
+            encounter.setIndividual(inv.getArgument(0));
+            encounter.setEncounterType(inv.getArgument(1));
+            return encounter;
+        });
+
+        SessionContract prayerSession = baseContract(SessionStatus.Held);
+        prayerSession.setAttendanceTypeUUID("prayer-type-uuid");
+        prayerSession.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+        SessionContract sportsSession = baseContract(SessionStatus.Held);
+        sportsSession.setAttendanceTypeUUID("sports-type-uuid");
+        sportsSession.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+
+        SessionSaveResult prayerResult = service.save(prayerSession);
+        SessionSaveResult sportsResult = service.save(sportsSession);
+
+        assertEquals(1, prayerResult.getAutoCreatedFollowUps().size());
+        assertEquals("Home Visit", prayerResult.getAutoCreatedFollowUps().get(0).getEncounterTypeName());
+        assertEquals(1, sportsResult.getAutoCreatedFollowUps().size());
+        assertEquals("Phone Call", sportsResult.getAutoCreatedFollowUps().get(0).getEncounterTypeName());
+        verify(encounterService, times(2)).save(any(Encounter.class));
+    }
+
+    @Test
+    public void skipsFollowUpWhenEncounterTypeReferenceIsVoided() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        EncounterType voidedType = new EncounterType();
+        voidedType.setUuid("voided-type");
+        voidedType.setName("Stale");
+        voidedType.setVoided(true);
+        attendanceType.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "voided-type"));
+
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(encounterTypeRepository.findByUuid("voided-type")).thenReturn(voidedType);
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+
+        SessionSaveResult result = service.save(contract);
+
+        assertEquals(0, result.getAutoCreatedFollowUps().size());
+        assertEquals(1, result.getWarnings().size());
+        verify(encounterService, never()).save(any(Encounter.class));
+    }
+
+    @Test
+    public void voidsStaleFollowUpWhenTriggerNoLongerHolds() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        AttendanceRecord previousRecord = new AttendanceRecord();
+        previousRecord.setUuid("record-uuid");
+        previousRecord.setSubject(subject1);
+        previousRecord.setStatus(AttendanceStatus.Absent);
+        previousRecord.setFollowUpEncounterUuid("encounter-uuid");
+
+        Encounter encounter = new Encounter();
+        encounter.setUuid("encounter-uuid");
+        encounter.setObservations(new ObservationCollection());
+        EncounterType encounterType = new EncounterType();
+        encounterType.setName("Home Visit");
+        encounter.setEncounterType(encounterType);
+
+        Session existingSession = new Session();
+        existingSession.setUuid("session-uuid");
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(any())).thenReturn(List.of(previousRecord));
+        when(encounterRepository.findAllByUuidIn(List.of("encounter-uuid"))).thenReturn(List.of(encounter));
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setUuid("session-uuid");
+        AttendanceRecordContract updated = rosterEntry("subj-1", AttendanceStatus.Present);
+        updated.setUuid("record-uuid");
+        contract.setRoster(List.of(updated));
+
+        SessionSaveResult result = service.update(existingSession, contract);
+
+        assertEquals(1, result.getVoidedStaleFollowUps().size());
+        assertTrue(encounter.isVoided());
+    }
+
+    @Test
+    public void preservesFollowUpWhenStaleEncounterHasObservations() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        AttendanceRecord previousRecord = new AttendanceRecord();
+        previousRecord.setUuid("record-uuid");
+        previousRecord.setSubject(subject1);
+        previousRecord.setStatus(AttendanceStatus.Absent);
+        previousRecord.setFollowUpEncounterUuid("encounter-uuid");
+
+        Encounter encounter = new Encounter();
+        encounter.setUuid("encounter-uuid");
+        ObservationCollection observations = new ObservationCollection();
+        observations.put("any-concept-uuid", "value");
+        encounter.setObservations(observations);
+        EncounterType encounterType = new EncounterType();
+        encounterType.setName("Home Visit");
+        encounter.setEncounterType(encounterType);
+
+        Session existingSession = new Session();
+        existingSession.setUuid("session-uuid");
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(any())).thenReturn(List.of(previousRecord));
+        when(encounterRepository.findAllByUuidIn(List.of("encounter-uuid"))).thenReturn(List.of(encounter));
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setUuid("session-uuid");
+        AttendanceRecordContract updated = rosterEntry("subj-1", AttendanceStatus.Present);
+        updated.setUuid("record-uuid");
+        contract.setRoster(List.of(updated));
+
+        SessionSaveResult result = service.update(existingSession, contract);
+
+        assertEquals(0, result.getVoidedStaleFollowUps().size());
+        assertEquals(1, result.getSkippedAlreadyFilledFollowUps().size());
+        assertEquals(false, encounter.isVoided());
+    }
+
+    @Test
+    public void deleteCascadesToRosterAndEmptyFollowUps() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        AttendanceRecord record = new AttendanceRecord();
+        record.setSubject(subject1);
+        record.setFollowUpEncounterUuid("encounter-uuid");
+
+        Encounter encounter = new Encounter();
+        encounter.setUuid("encounter-uuid");
+        encounter.setObservations(new ObservationCollection());
+        EncounterType encounterType = new EncounterType();
+        encounterType.setName("Home Visit");
+        encounter.setEncounterType(encounterType);
+
+        Session session = new Session();
+        session.setUuid("session-uuid");
+        when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(session)).thenReturn(List.of(record));
+        when(encounterRepository.findAllByUuidIn(List.of("encounter-uuid"))).thenReturn(List.of(encounter));
+
+        SessionSaveResult result = service.delete(session);
+
+        assertTrue(session.isVoided());
+        assertTrue(record.isVoided());
+        assertTrue(encounter.isVoided());
+        assertEquals(1, result.getVoidedStaleFollowUps().size());
     }
 
     private Individual subjectWithUuid(String uuid) {
         Individual individual = new Individual();
         individual.setUuid(uuid);
         return individual;
+    }
+
+    private Concept conceptWithUuid(String uuid) {
+        Concept concept = new Concept();
+        concept.setUuid(uuid);
+        return concept;
     }
 
     private SessionContract baseContract(SessionStatus status) {

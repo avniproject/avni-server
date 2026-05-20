@@ -13,6 +13,8 @@ import java.util.List;
 @RepositoryRestResource(collectionResourceRel = "attendanceType", path = "attendanceType")
 public interface AttendanceTypeRepository extends ReferenceDataRepository<AttendanceType>, FindByLastModifiedDateTime<AttendanceType> {
 
+    List<AttendanceType> findAllByOrganisationId(Long organisationId);
+
     List<AttendanceType> findBySubjectTypeAndIsVoidedFalse(SubjectType subjectType);
 
     AttendanceType findBySubjectTypeAndNameIgnoreCaseAndIsVoidedFalse(SubjectType subjectType, String name);
