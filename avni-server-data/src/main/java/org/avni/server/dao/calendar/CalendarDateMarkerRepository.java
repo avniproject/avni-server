@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-@RepositoryRestResource(collectionResourceRel = "calendarDateMarker", path = "calendarDateMarker", exported = false)
+@RepositoryRestResource(collectionResourceRel = "calendarDateMarker", path = "calendarDateMarker")
 public interface CalendarDateMarkerRepository extends ReferenceDataRepository<CalendarDateMarker>, FindByLastModifiedDateTime<CalendarDateMarker>, OperatingIndividualScopeAwareRepository<CalendarDateMarker> {
 
     List<CalendarDateMarker> findByCalendarAndIsVoidedFalse(Calendar calendar);

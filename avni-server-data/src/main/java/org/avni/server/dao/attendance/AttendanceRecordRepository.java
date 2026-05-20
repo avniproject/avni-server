@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-@RepositoryRestResource(collectionResourceRel = "attendanceRecord", path = "attendanceRecord", exported = false)
+@RepositoryRestResource(collectionResourceRel = "attendanceRecord", path = "attendanceRecord")
 public interface AttendanceRecordRepository extends TransactionalDataRepository<AttendanceRecord>, FindByLastModifiedDateTime<AttendanceRecord>, OperatingIndividualScopeAwareRepository<AttendanceRecord> {
 
     List<AttendanceRecord> findBySessionAndIsVoidedFalse(Session session);

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Date;
 
 @Repository
-@RepositoryRestResource(collectionResourceRel = "calendar", path = "calendar", exported = false)
+@RepositoryRestResource(collectionResourceRel = "calendar", path = "calendar")
 public interface CalendarRepository extends ReferenceDataRepository<Calendar>, FindByLastModifiedDateTime<Calendar>, OperatingIndividualScopeAwareRepository<Calendar> {
 
     String CALENDAR_SCOPE_CLAUSE = " where c.organisation_id = :organisationId" +

@@ -19,7 +19,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-@RepositoryRestResource(collectionResourceRel = "session", path = "session", exported = false)
+@RepositoryRestResource(collectionResourceRel = "session", path = "session")
 public interface SessionRepository extends TransactionalDataRepository<Session>, FindByLastModifiedDateTime<Session>, OperatingIndividualScopeAwareRepository<Session> {
 
     List<Session> findByGroupSubjectAndScheduledDateBetweenAndIsVoidedFalseOrderByScheduledDateAsc(

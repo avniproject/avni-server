@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-@RepositoryRestResource(collectionResourceRel = "attendanceType", path = "attendanceType", exported = false)
+@RepositoryRestResource(collectionResourceRel = "attendanceType", path = "attendanceType")
 public interface AttendanceTypeRepository extends ReferenceDataRepository<AttendanceType>, FindByLastModifiedDateTime<AttendanceType> {
 
     List<AttendanceType> findBySubjectTypeAndIsVoidedFalse(SubjectType subjectType);
