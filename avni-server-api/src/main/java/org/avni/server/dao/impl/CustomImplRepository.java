@@ -25,4 +25,17 @@ public interface CustomImplRepository extends Repository<AddressLevel, Long> {
                AND is_voided = false
             """, nativeQuery = true)
     List<Long> findSubtreeAddressLevelIds(@Param("rootUuid") String rootUuid);
+
+    /**
+     * UUIDs of the AddressLevel identified by {@code rootUuid} and every
+     * non-voided descendant. Used when filtering encounters by an observation
+     * value that stores a leaf AddressLevel UUID (e.g. Tanuh's "Place of
+     * referral" location concept).
+     */
+    @Query(value = """
+            SELECT uuid FROM address_level
+             WHERE lineage <@ (SELECT lineage FROM address_level WHERE uuid = :rootUuid)
+               AND is_voided = false
+            """, nativeQuery = true)
+    List<String> findSubtreeAddressLevelUuids(@Param("rootUuid") String rootUuid);
 }

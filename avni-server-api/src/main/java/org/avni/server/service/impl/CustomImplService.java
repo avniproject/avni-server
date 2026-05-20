@@ -2,6 +2,7 @@ package org.avni.server.service.impl;
 
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
+import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.impl.CustomImplRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Catchment;
@@ -22,6 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,18 +38,26 @@ public class CustomImplService {
     private final EncounterRepository encounterRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final CustomImplRepository customImplRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public CustomImplService(EncounterRepository encounterRepository,
                              EncounterTypeRepository encounterTypeRepository,
-                             CustomImplRepository customImplRepository) {
+                             CustomImplRepository customImplRepository,
+                             UserRepository userRepository) {
         this.encounterRepository = encounterRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.customImplRepository = customImplRepository;
+        this.userRepository = userRepository;
     }
 
     public CatchmentLocationsResponse getCatchmentLocationsForCurrentUser() {
-        User user = UserContextHolder.getUserContext().getUser();
+        User contextUser = UserContextHolder.getUserContext().getUser();
+        if (contextUser == null) return new CatchmentLocationsResponse(List.of(), List.of());
+
+        // Re-fetch in the active transaction so the lazy
+        // Catchment.addressLevels collection can initialise.
+        User user = userRepository.findById(contextUser.getId()).orElse(null);
         if (user == null) return new CatchmentLocationsResponse(List.of(), List.of());
 
         Catchment catchment = user.getCatchment();
@@ -56,12 +68,17 @@ public class CustomImplService {
         Set<AddressLevel> visited = new LinkedHashSet<>();
         Set<String> rootUuids = new LinkedHashSet<>();
         for (AddressLevel leaf : catchment.getAddressLevels()) {
+            // Walk UP to capture ancestors (and the root for rootUuids).
             AddressLevel cursor = leaf;
             while (cursor != null) {
                 visited.add(cursor);
                 if (cursor.getParent() == null) rootUuids.add(cursor.getUuid());
                 cursor = cursor.getParent();
             }
+            // Walk DOWN to capture every non-voided descendant — this is what
+            // lets the LocationFilter cascade past a catchment-leaf node (e.g.
+            // into CHC / PHC / Sub-center below "district hospital").
+            collectDescendants(leaf, visited);
         }
 
         List<CatchmentLocationNode> nodes = visited.stream()
@@ -75,10 +92,21 @@ public class CustomImplService {
         return new CatchmentLocationsResponse(nodes, List.copyOf(rootUuids));
     }
 
+    private static void collectDescendants(AddressLevel node, Set<AddressLevel> visited) {
+        for (AddressLevel child : node.getSubLocations()) {
+            if (child.isVoided() || visited.contains(child)) continue;
+            visited.add(child);
+            collectDescendants(child, visited);
+        }
+    }
+
     public ResponsePage findEncountersWithLocation(
             String encounterTypeName,
             EncounterStatus status,
             String locationUuid,
+            String linkedEncounterTypeName,
+            String linkedObservationConceptUuid,
+            String linkedLocationUuid,
             Pageable pageable) {
 
         if (encounterTypeName == null || encounterTypeName.isBlank()) {
@@ -99,13 +127,43 @@ public class CustomImplService {
             }
         }
 
+        // Linked-observation filter: optional. All three params must be present together.
+        // When provided, narrows to encounters whose subject has a non-voided, completed
+        // encounter of `linkedEncounterTypeName` with observation `linkedObservationConceptUuid`
+        // pointing at an AddressLevel in the subtree rooted at `linkedLocationUuid`.
+        EncounterType linkedEncounterType = null;
+        List<String> linkedSubtreeUuids = null;
+        boolean anyLinkedParam = linkedEncounterTypeName != null
+                || linkedObservationConceptUuid != null
+                || linkedLocationUuid != null;
+        boolean allLinkedParams = linkedEncounterTypeName != null && !linkedEncounterTypeName.isBlank()
+                && linkedObservationConceptUuid != null && !linkedObservationConceptUuid.isBlank()
+                && linkedLocationUuid != null && !linkedLocationUuid.isBlank();
+        if (anyLinkedParam && !allLinkedParams) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "linkedEncounterType, linkedObservationConceptUuid and linkedLocationUuid must all be provided together");
+        }
+        if (allLinkedParams) {
+            linkedEncounterType = encounterTypeRepository.findByName(linkedEncounterTypeName);
+            if (linkedEncounterType == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Encounter type '" + linkedEncounterTypeName + "' not found");
+            }
+            linkedSubtreeUuids = customImplRepository.findSubtreeAddressLevelUuids(linkedLocationUuid);
+            if (linkedSubtreeUuids.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Linked location '" + linkedLocationUuid + "' not found");
+            }
+        }
+
         Pageable capped = capSize(pageable);
 
         Specification<Encounter> spec = Specification
                 .where(notVoided())
                 .and(withEncounterTypeId(encounterType.getId()))
                 .and(withStatus(status))
-                .and(withSubjectInLocations(descendantIds));
+                .and(withSubjectInLocations(descendantIds))
+                .and(withLinkedObservation(linkedEncounterType, linkedObservationConceptUuid, linkedSubtreeUuids));
 
         Page<Encounter> page = encounterRepository.findAll(spec, capped);
         List<EncounterWithLocationResponse> content = page.getContent().stream()
@@ -140,6 +198,38 @@ public class CustomImplService {
     private static Specification<Encounter> withSubjectInLocations(List<Long> ids) {
         if (ids == null) return (root, q, cb) -> cb.conjunction();
         return (root, q, cb) -> root.get("individual").get("addressLevel").get("id").in(ids);
+    }
+
+    /**
+     * EXISTS subquery: narrow to encounters whose subject also has at least one
+     * non-voided, completed encounter of {@code linkedType} whose observation under
+     * {@code observationConceptUuid} is an AddressLevel UUID in {@code subtreeUuids}.
+     * Designed for Tanuh's "filter Physician Review encounters by the Place of
+     * referral on the linked Oral Screening", but takes only data dimensions so
+     * other implementations can reuse it.
+     */
+    private static Specification<Encounter> withLinkedObservation(
+            EncounterType linkedType, String observationConceptUuid, List<String> subtreeUuids) {
+        if (linkedType == null || observationConceptUuid == null || subtreeUuids == null) {
+            return (root, q, cb) -> cb.conjunction();
+        }
+        return (root, q, cb) -> {
+            Subquery<Long> sub = q.subquery(Long.class);
+            Root<Encounter> linked = sub.from(Encounter.class);
+            sub.select(cb.literal(1L)).where(
+                    cb.equal(linked.get("individual"), root.get("individual")),
+                    cb.equal(linked.get("encounterType").get("id"), linkedType.getId()),
+                    cb.isFalse(linked.get("isVoided")),
+                    cb.isNotNull(linked.get("encounterDateTime")),
+                    cb.function(
+                            "jsonb_extract_path_text",
+                            String.class,
+                            linked.get("observations"),
+                            cb.literal(observationConceptUuid)
+                    ).in(subtreeUuids)
+            );
+            return cb.exists(sub);
+        };
     }
 
     private static Pageable capSize(Pageable in) {
