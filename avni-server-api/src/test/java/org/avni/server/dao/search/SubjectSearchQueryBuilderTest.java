@@ -8,6 +8,8 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.webapp.search.Concept;
 import org.avni.server.web.request.webapp.search.DateRange;
 import org.avni.server.web.request.webapp.search.IntegerRange;
+import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -145,5 +147,56 @@ public class SubjectSearchQueryBuilderTest {
         new SubjectSearchQueryBuilder()
                 .withSubjectTypeFilter(subjectType)
                 .forCount().build(subjectType);
+    }
+
+    @Test
+    public void shouldAddDateOfBirthFilter() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withSubjectTypeFilter(subjectType)
+                .withDateOfBirthFilter(new LocalDate(1990, 6, 15))
+                .build(subjectType);
+        assertThat(query.getSql()).contains("i.date_of_birth = cast(:dateOfBirth as date)");
+        assertThat(query.getParameters()).containsEntry("dateOfBirth", "1990-06-15");
+    }
+
+    @Test
+    public void shouldSkipDateOfBirthFilterWhenNull() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withSubjectTypeFilter(subjectType)
+                .withDateOfBirthFilter(null)
+                .build(subjectType);
+        assertThat(query.getSql()).doesNotContain("i.date_of_birth = cast(:dateOfBirth as date)");
+        assertThat(query.getParameters()).doesNotContainKey("dateOfBirth");
+    }
+
+    @Test
+    public void effectiveAgeShouldSuppressAgeWhenDateOfBirthIsSet() {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        request.setDateOfBirth(new LocalDate(1990, 6, 15));
+        request.setAge(new IntegerRange(35, null));
+
+        assertThat(SubjectSearchQueryBuilder.effectiveAge(request)).isNull();
+    }
+
+    @Test
+    public void effectiveAgeShouldReturnAgeWhenDateOfBirthIsNotSet() {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        request.setAge(new IntegerRange(35, null));
+
+        IntegerRange effective = SubjectSearchQueryBuilder.effectiveAge(request);
+        assertThat(effective).isNotNull();
+        assertThat(effective.getMinValue()).isEqualTo(35);
+    }
+
+    @Test
+    public void shouldNotApplyAgeFilterWhenAgeRangeIsNull() {
+        // Contract that the D3 precedence (in withSubjectSearchFilter) relies on:
+        // withAgeFilter(null) must not add an age predicate or bind an "age" parameter.
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withSubjectTypeFilter(subjectType)
+                .withAgeFilter(null)
+                .build(subjectType);
+        assertThat(query.getParameters()).doesNotContainKey("age");
+        assertThat(query.getSql()).doesNotContain(":age");
     }
 }
