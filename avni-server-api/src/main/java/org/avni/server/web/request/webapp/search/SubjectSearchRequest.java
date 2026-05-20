@@ -1,6 +1,7 @@
 package org.avni.server.web.request.webapp.search;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +10,7 @@ public class SubjectSearchRequest {
     private String subjectType;
     private String name;
     private IntegerRange age;
+    private LocalDate dateOfBirth;
     private Boolean includeVoided;
     private boolean includeDisplayCount;
     private List<Integer> addressIds = new ArrayList<>();
@@ -47,6 +49,14 @@ public class SubjectSearchRequest {
 
     public void setAge(IntegerRange age) {
         this.age = age;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public Boolean getIncludeVoided() {

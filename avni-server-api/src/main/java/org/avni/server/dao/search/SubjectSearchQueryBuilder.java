@@ -2,6 +2,7 @@ package org.avni.server.dao.search;
 
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.webapp.search.DateRange;
+import org.avni.server.web.request.webapp.search.IntegerRange;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.springframework.stereotype.Component;
 
@@ -43,7 +44,8 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 .withSearchAll(request.getSearchAll())
                 .withSubjectTypeFilter(subjectType)
                 .withGenderFilter(request.getGender())
-                .withAgeFilter(request.getAge())
+                .withDateOfBirthFilter(request.getDateOfBirth())
+                .withAgeFilter(effectiveAge(request))
                 .withRegistrationDateFilter(request.getRegistrationDate())
                 .withEncounterDateFilter(request.getEncounterDate())
                 .withProgramEnrolmentDateFilter(request.getProgramEnrolmentDate())
@@ -52,6 +54,15 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 .withIncludeVoidedFilter(request.getIncludeVoided())
                 .withPaginationFilters(request.getPageElement())
                 .withCustomFields(request.getSubjectType());
+    }
+
+    /**
+     * D3 precedence: DOB > Age. When both are set, only DOB is applied; Age is ignored.
+     * Returns null (which {@link #withAgeFilter} treats as a no-op) when DOB is present;
+     * otherwise returns the request's age range unchanged.
+     */
+    static IntegerRange effectiveAge(SubjectSearchRequest request) {
+        return request.getDateOfBirth() != null ? null : request.getAge();
     }
 
     public SubjectSearchQueryBuilder withSubjectTypeFilter(SubjectType subjectType) {
