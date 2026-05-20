@@ -48,8 +48,18 @@ public class CustomImplController {
 
     /**
      * Paged encounters joined with the subject's location hierarchy.
-     * Optionally filtered to encounters whose subject lives in the
-     * AddressLevel subtree rooted at {@code locationUuid}.
+     *
+     * Two independent location-style filters:
+     *
+     *  - {@code locationUuid}: narrow to encounters whose subject lives in the
+     *    AddressLevel subtree rooted at this uuid (patient-side filter).
+     *
+     *  - {@code linkedEncounterType} + {@code linkedObservationConceptUuid} +
+     *    {@code linkedLocationUuid}: narrow to encounters whose subject also has
+     *    a non-voided, completed encounter of the linked type with the given
+     *    observation pointing at an AddressLevel in the linked subtree. All
+     *    three params must be present together. Tanuh uses this to filter the
+     *    Physician Review list by "Place of referral" on the Oral Screening.
      */
     @GetMapping("/encountersWithLocation")
     @Transactional(readOnly = true)
@@ -58,6 +68,9 @@ public class CustomImplController {
             @RequestParam("encounterType") String encounterType,
             @RequestParam(value = "status", defaultValue = "all") String status,
             @RequestParam(value = "locationUuid", required = false) String locationUuid,
+            @RequestParam(value = "linkedEncounterType", required = false) String linkedEncounterType,
+            @RequestParam(value = "linkedObservationConceptUuid", required = false) String linkedObservationConceptUuid,
+            @RequestParam(value = "linkedLocationUuid", required = false) String linkedLocationUuid,
             @PageableDefault(size = 50) Pageable pageable) {
         EncounterStatus parsedStatus;
         try {
@@ -66,6 +79,13 @@ public class CustomImplController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         return ResponseEntity.ok(
-                service.findEncountersWithLocation(encounterType, parsedStatus, locationUuid, pageable));
+                service.findEncountersWithLocation(
+                        encounterType,
+                        parsedStatus,
+                        locationUuid,
+                        linkedEncounterType,
+                        linkedObservationConceptUuid,
+                        linkedLocationUuid,
+                        pageable));
     }
 }
