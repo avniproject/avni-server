@@ -4,6 +4,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.dao.attendance.SessionRepository;
@@ -72,6 +73,8 @@ public class SessionServiceTest {
     private EncounterRepository encounterRepository;
     @Mock
     private EncounterService encounterService;
+    @Mock
+    private SubjectTypeRepository subjectTypeRepository;
 
     private SessionService service;
 
@@ -83,7 +86,7 @@ public class SessionServiceTest {
         initMocks(this);
         service = new SessionService(sessionRepository, attendanceRecordRepository, individualRepository,
                 attendanceTypeRepository, conceptRepository, calendarRepository, calendarDateMarkerRepository,
-                encounterTypeRepository, encounterRepository, encounterService);
+                encounterTypeRepository, encounterRepository, encounterService, subjectTypeRepository);
 
         User user = new User();
         user.setUuid("user-uuid");
