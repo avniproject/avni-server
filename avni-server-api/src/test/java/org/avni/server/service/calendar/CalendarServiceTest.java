@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -125,20 +124,17 @@ public class CalendarServiceTest {
     }
 
     @Test
-    public void deleteBlockedWhenDefaultAndOnly() {
+    public void deleteAllowedWhenDefaultAndOnly() {
         Calendar target = newCalendar(null);
         target.setId(1L);
         target.setDefault(true);
         when(calendarRepository.findAllByIsVoidedFalse()).thenReturn(List.of(target));
+        when(calendarDateMarkerRepository.findByCalendarAndIsVoidedFalse(target)).thenReturn(Collections.emptyList());
 
-        try {
-            service.delete(target);
-            fail("Expected BadRequestError");
-        } catch (BadRequestError e) {
-            assertTrue(e.getMessage().toLowerCase().contains("only"));
-        }
-        assertFalse(target.isVoided());
-        verify(calendarDateMarkerRepository, never()).saveAll(anyList());
+        service.delete(target);
+
+        assertTrue(target.isVoided());
+        assertFalse(target.isDefault());
     }
 
     @Test
