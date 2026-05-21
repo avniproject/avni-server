@@ -13,6 +13,9 @@ import org.joda.time.DateTime;
 
 import java.time.LocalDate;
 
+// TODO tech-debt: rename Session -> GroupSession (table session -> group_session, SessionStatus,
+// SessionService/Controller/Contract/Repository, SyncEntityName.Session, REST paths, attendance_record.session_id).
+// "Session" is too generic; this is a group-attendance event. Deferred for scope/deadline; do as a dedicated rename PR.
 @Entity
 @Table(name = "session")
 @BatchSize(size = 100)
