@@ -87,7 +87,7 @@ public class CustomImplService {
                 .map(al -> new CatchmentLocationNode(
                         al.getUuid(),
                         al.getTitle(),
-                        al.getType().getName(),
+                        al.getType() == null ? null : al.getType().getName(),
                         al.getParent() == null ? null : al.getParent().getUuid()))
                 .collect(Collectors.toList());
         return new CatchmentLocationsResponse(nodes, List.copyOf(rootUuids));
