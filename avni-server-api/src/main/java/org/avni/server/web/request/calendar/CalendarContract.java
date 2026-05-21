@@ -1,5 +1,6 @@
 package org.avni.server.web.request.calendar;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.domain.calendar.Calendar;
 import org.avni.server.web.request.CHSRequest;
 import org.joda.time.DateTime;
@@ -52,10 +53,12 @@ public class CalendarContract extends CHSRequest {
         this.addressLevelUUID = addressLevelUUID;
     }
 
+    @JsonProperty("isDefault")
     public boolean isDefault() {
         return isDefault;
     }
 
+    @JsonProperty("isDefault")
     public void setDefault(boolean aDefault) {
         isDefault = aDefault;
     }

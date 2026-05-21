@@ -1,6 +1,7 @@
 package org.avni.server.domain.calendar;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.OrganisationAwareEntity;
@@ -57,10 +58,12 @@ public class CalendarDateMarker extends OrganisationAwareEntity {
         this.name = name;
     }
 
+    @JsonProperty("isWorking")
     public boolean isWorking() {
         return isWorking;
     }
 
+    @JsonProperty("isWorking")
     public void setWorking(boolean working) {
         isWorking = working;
     }

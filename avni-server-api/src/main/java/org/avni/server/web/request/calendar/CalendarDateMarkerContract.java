@@ -1,5 +1,6 @@
 package org.avni.server.web.request.calendar;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.domain.calendar.CalendarDateMarker;
 import org.avni.server.web.request.CHSRequest;
 import org.joda.time.DateTime;
@@ -52,10 +53,12 @@ public class CalendarDateMarkerContract extends CHSRequest {
         this.name = name;
     }
 
+    @JsonProperty("isWorking")
     public boolean isWorking() {
         return isWorking;
     }
 
+    @JsonProperty("isWorking")
     public void setWorking(boolean working) {
         isWorking = working;
     }

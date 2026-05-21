@@ -1,6 +1,7 @@
 package org.avni.server.domain.calendar;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.AddressLevel;
@@ -59,10 +60,12 @@ public class Calendar extends OrganisationAwareEntity {
         return addressLevel == null ? null : addressLevel.getUuid();
     }
 
+    @JsonProperty("isDefault")
     public boolean isDefault() {
         return isDefault;
     }
 
+    @JsonProperty("isDefault")
     public void setDefault(boolean aDefault) {
         isDefault = aDefault;
     }
