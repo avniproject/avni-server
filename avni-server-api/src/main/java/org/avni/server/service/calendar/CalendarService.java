@@ -75,9 +75,6 @@ public class CalendarService implements ScopeAwareService<Calendar> {
         }
         List<Calendar> otherNonVoided = otherNonVoidedCalendars(calendar);
         boolean wasDefault = calendar.isDefault();
-        if (wasDefault && otherNonVoided.isEmpty()) {
-            throw new BadRequestError("Cannot delete the only calendar; create another before deleting this one");
-        }
         calendar.setVoided(true);
         calendar.setDefault(false);
         Calendar saved = calendarRepository.save(calendar);
