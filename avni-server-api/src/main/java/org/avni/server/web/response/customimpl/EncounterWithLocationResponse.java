@@ -1,4 +1,4 @@
-package org.avni.server.web.response.impl;
+package org.avni.server.web.response.customimpl;
 
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Encounter;
@@ -16,31 +16,26 @@ public record EncounterWithLocationResponse(
         DateTime earliestScheduledDate,
         boolean voided,
         SubjectSummary subject,
-        // Display name of the user who last modified the encounter. For
-        // completed reviews this is effectively the reviewer (i.e. the user
-        // who flipped encounterDateTime from null). Null for scheduled rows
-        // that have never been touched.
-        String reviewedBy
+        String lastModifiedBy
 ) {
     public static EncounterWithLocationResponse from(Encounter encounter) {
         Individual subject = encounter.getIndividual();
         Map<String, String> location = new LinkedHashMap<>();
         AddressLevel cursor = subject.getAddressLevel();
         while (cursor != null) {
-            location.put(cursor.getType().getName(), cursor.getTitle());
+            String typeName = cursor.getType() == null ? null : cursor.getType().getName();
+            location.put(typeName, cursor.getTitle());
             cursor = cursor.getParent();
         }
         String first = subject.getFirstName() == null ? "" : subject.getFirstName();
         String last = subject.getLastName() == null ? "" : subject.getLastName();
         String displayName = (first + " " + last).trim();
-        String reviewerName = null;
-        if (encounter.getEncounterDateTime() != null) {
-            User reviewer = encounter.getLastModifiedBy();
-            if (reviewer != null) {
-                reviewerName = reviewer.getName() != null && !reviewer.getName().isBlank()
-                        ? reviewer.getName()
-                        : reviewer.getUsername();
-            }
+        User lastModifier = encounter.getLastModifiedBy();
+        String lastModifiedByName = null;
+        if (lastModifier != null) {
+            lastModifiedByName = lastModifier.getName() != null && !lastModifier.getName().isBlank()
+                    ? lastModifier.getName()
+                    : lastModifier.getUsername();
         }
         return new EncounterWithLocationResponse(
                 encounter.getUuid(),
@@ -49,7 +44,7 @@ public record EncounterWithLocationResponse(
                 encounter.getEarliestVisitDateTime(),
                 encounter.isVoided(),
                 new SubjectSummary(subject.getUuid(), subject.getLegacyId(), displayName, location),
-                reviewerName
+                lastModifiedByName
         );
     }
 }

@@ -1,4 +1,4 @@
-package org.avni.server.web.impl;
+package org.avni.server.web.customimpl;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Test;
@@ -8,17 +8,9 @@ import org.springframework.test.context.jdbc.Sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Happy-path smoke tests for /api/impl/*. Asserts the endpoints respond and
- * the basic contract holds against the existing test-data.sql fixture.
- *
- * TODO: expand to cover the case matrix in the plan
- *   (status filter, locationUuid subtree, pagination, 4xx error responses,
- *   multi-org RLS isolation, voided exclusion).
- *   Requires careful seeding of AddressLevels with lineage, Catchment, User,
- *   EncounterType, Individual, Encounter rows — defer until first manual
- *   smoke pass identifies real bugs worth pinning with tests.
- */
+// Happy-path smoke tests only. TODO: cover status filter, locationUuid subtree,
+// pagination, 4xx responses, multi-org RLS isolation, and voided exclusion once
+// AddressLevel/Catchment/Encounter fixtures are in place.
 @Sql(value = {"/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class CustomImplControllerIntegrationTest extends AbstractControllerIntegrationTest {
@@ -38,18 +30,18 @@ public class CustomImplControllerIntegrationTest extends AbstractControllerInteg
     }
 
     @Test
-    public void encountersWithLocationReturns404ForUnknownEncounterType() {
-        ResponseEntity<String> response = template.getForEntity(
-                base + "api/impl/encountersWithLocation?encounterType=DefinitelyDoesNotExist",
-                String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-    @Test
     public void encountersWithLocationReturns400ForInvalidStatus() {
         ResponseEntity<String> response = template.getForEntity(
                 base + "api/impl/encountersWithLocation?encounterType=Anything&status=garbage",
                 String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    public void encountersWithLocationReturns404ForUnknownEncounterType() {
+        ResponseEntity<String> response = template.getForEntity(
+                base + "api/impl/encountersWithLocation?encounterType=DefinitelyDoesNotExist",
+                String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

@@ -1,4 +1,4 @@
-package org.avni.server.web.response.impl;
+package org.avni.server.web.response.customimpl;
 
 import java.util.List;
 

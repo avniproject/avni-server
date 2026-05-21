@@ -1,19 +1,21 @@
-package org.avni.server.service.impl;
+package org.avni.server.service.customimpl;
 
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
+import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.impl.CustomImplRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.LocationService;
+import org.avni.server.web.request.customimpl.EncounterSearchRequest;
 import org.avni.server.web.response.ResponsePage;
-import org.avni.server.web.response.impl.CatchmentLocationNode;
-import org.avni.server.web.response.impl.CatchmentLocationsResponse;
-import org.avni.server.web.response.impl.EncounterWithLocationResponse;
+import org.avni.server.web.response.customimpl.CatchmentLocationNode;
+import org.avni.server.web.response.customimpl.CatchmentLocationsResponse;
+import org.avni.server.web.response.customimpl.EncounterWithLocationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.criteria.Root;
@@ -38,17 +41,20 @@ public class CustomImplService {
 
     private final EncounterRepository encounterRepository;
     private final EncounterTypeRepository encounterTypeRepository;
-    private final CustomImplRepository customImplRepository;
+    private final LocationService locationService;
+    private final LocationRepository locationRepository;
     private final UserRepository userRepository;
 
     @Autowired
     public CustomImplService(EncounterRepository encounterRepository,
                              EncounterTypeRepository encounterTypeRepository,
-                             CustomImplRepository customImplRepository,
+                             LocationService locationService,
+                             LocationRepository locationRepository,
                              UserRepository userRepository) {
         this.encounterRepository = encounterRepository;
         this.encounterTypeRepository = encounterTypeRepository;
-        this.customImplRepository = customImplRepository;
+        this.locationService = locationService;
+        this.locationRepository = locationRepository;
         this.userRepository = userRepository;
     }
 
@@ -56,8 +62,6 @@ public class CustomImplService {
         User contextUser = UserContextHolder.getUserContext().getUser();
         if (contextUser == null) return new CatchmentLocationsResponse(List.of(), List.of());
 
-        // Re-fetch in the active transaction so the lazy
-        // Catchment.addressLevels collection can initialise.
         User user = userRepository.findById(contextUser.getId()).orElse(null);
         if (user == null) return new CatchmentLocationsResponse(List.of(), List.of());
 
@@ -69,16 +73,14 @@ public class CustomImplService {
         Set<AddressLevel> visited = new LinkedHashSet<>();
         Set<String> rootUuids = new LinkedHashSet<>();
         for (AddressLevel leaf : catchment.getAddressLevels()) {
-            // Walk UP to capture ancestors (and the root for rootUuids).
             AddressLevel cursor = leaf;
             while (cursor != null) {
                 visited.add(cursor);
                 if (cursor.getParent() == null) rootUuids.add(cursor.getUuid());
                 cursor = cursor.getParent();
             }
-            // Walk DOWN to capture every non-voided descendant — this is what
-            // lets the LocationFilter cascade past a catchment-leaf node (e.g.
-            // into CHC / PHC / Sub-center below "district hospital").
+            // Descend past catchment leaves so the client-side LocationFilter
+            // can drill into sub-levels that aren't themselves catchment nodes.
             collectDescendants(leaf, visited);
         }
 
@@ -94,67 +96,50 @@ public class CustomImplService {
     }
 
     private static void collectDescendants(AddressLevel node, Set<AddressLevel> visited) {
-        for (AddressLevel child : node.getSubLocations()) {
-            if (child.isVoided() || visited.contains(child)) continue;
-            visited.add(child);
+        for (AddressLevel child : node.getNonVoidedSubLocations()) {
+            if (!visited.add(child)) continue;
             collectDescendants(child, visited);
         }
     }
 
-    public ResponsePage findEncountersWithLocation(
-            String encounterTypeName,
-            EncounterStatus status,
-            String locationUuid,
-            String linkedEncounterTypeName,
-            String linkedObservationConceptUuid,
-            String linkedLocationUuid,
-            Pageable pageable) {
+    public ResponsePage findEncountersWithLocation(EncounterSearchRequest request, Pageable pageable) {
+        EncounterStatus status = EncounterStatus.from(request.status());
 
-        if (encounterTypeName == null || encounterTypeName.isBlank()) {
+        if (!StringUtils.hasText(request.encounterType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "encounterType is required");
         }
-        EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
+        EncounterType encounterType = encounterTypeRepository.findByName(request.encounterType());
         if (encounterType == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Encounter type '" + encounterTypeName + "' not found");
+                    "Encounter type '" + request.encounterType() + "' not found");
         }
 
         List<Long> descendantIds = null;
-        if (locationUuid != null && !locationUuid.isBlank()) {
-            descendantIds = customImplRepository.findSubtreeAddressLevelIds(locationUuid);
-            if (descendantIds.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Location '" + locationUuid + "' not found");
-            }
+        if (StringUtils.hasText(request.locationUuid())) {
+            requireLocationExists(request.locationUuid());
+            descendantIds = locationService.getAllWithChildrenForUUIDs(List.of(request.locationUuid()));
         }
 
-        // Linked-observation filter: optional. All three params must be present together.
-        // When provided, narrows to encounters whose subject has a non-voided, completed
-        // encounter of `linkedEncounterTypeName` with observation `linkedObservationConceptUuid`
-        // pointing at an AddressLevel in the subtree rooted at `linkedLocationUuid`.
+        // All three linked-* params must be supplied together (or none).
         EncounterType linkedEncounterType = null;
         List<String> linkedSubtreeUuids = null;
-        boolean anyLinkedParam = linkedEncounterTypeName != null
-                || linkedObservationConceptUuid != null
-                || linkedLocationUuid != null;
-        boolean allLinkedParams = linkedEncounterTypeName != null && !linkedEncounterTypeName.isBlank()
-                && linkedObservationConceptUuid != null && !linkedObservationConceptUuid.isBlank()
-                && linkedLocationUuid != null && !linkedLocationUuid.isBlank();
+        boolean anyLinkedParam = request.linkedEncounterType() != null
+                || request.linkedObservationConceptUuid() != null
+                || request.linkedLocationUuid() != null;
+        boolean allLinkedParams = StringUtils.hasText(request.linkedEncounterType())
+                && StringUtils.hasText(request.linkedObservationConceptUuid())
+                && StringUtils.hasText(request.linkedLocationUuid());
         if (anyLinkedParam && !allLinkedParams) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "linkedEncounterType, linkedObservationConceptUuid and linkedLocationUuid must all be provided together");
         }
         if (allLinkedParams) {
-            linkedEncounterType = encounterTypeRepository.findByName(linkedEncounterTypeName);
+            linkedEncounterType = encounterTypeRepository.findByName(request.linkedEncounterType());
             if (linkedEncounterType == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Encounter type '" + linkedEncounterTypeName + "' not found");
+                        "Encounter type '" + request.linkedEncounterType() + "' not found");
             }
-            linkedSubtreeUuids = customImplRepository.findSubtreeAddressLevelUuids(linkedLocationUuid);
-            if (linkedSubtreeUuids.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Linked location '" + linkedLocationUuid + "' not found");
-            }
+            linkedSubtreeUuids = findSubtreeUuidsOrThrow(request.linkedLocationUuid(), "Linked location");
         }
 
         Pageable capped = capSizeAndSort(pageable, status);
@@ -164,7 +149,7 @@ public class CustomImplService {
                 .and(withEncounterTypeId(encounterType.getId()))
                 .and(withStatus(status))
                 .and(withSubjectInLocations(descendantIds))
-                .and(withLinkedObservation(linkedEncounterType, linkedObservationConceptUuid, linkedSubtreeUuids));
+                .and(withLinkedObservation(linkedEncounterType, request.linkedObservationConceptUuid(), linkedSubtreeUuids));
 
         Page<Encounter> page = encounterRepository.findAll(spec, capped);
         List<EncounterWithLocationResponse> content = page.getContent().stream()
@@ -174,6 +159,26 @@ public class CustomImplService {
                 (int) page.getTotalElements(),
                 page.getTotalPages(),
                 page.getSize());
+    }
+
+    private void requireLocationExists(String uuid) {
+        if (locationRepository.findByUuid(uuid) == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Location '" + uuid + "' not found");
+        }
+    }
+
+    private List<String> findSubtreeUuidsOrThrow(String rootUuid, String label) {
+        AddressLevel root = locationRepository.findByUuid(rootUuid);
+        if (root == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    label + " '" + rootUuid + "' not found");
+        }
+        String lquery = "*." + root.getLineage() + ".*";
+        return locationRepository.getAllChildLocations(lquery).stream()
+                .filter(al -> !al.isVoided())
+                .map(AddressLevel::getUuid)
+                .collect(Collectors.toList());
     }
 
     private static Specification<Encounter> notVoided() {
@@ -198,22 +203,16 @@ public class CustomImplService {
 
     private static Specification<Encounter> withSubjectInLocations(List<Long> ids) {
         if (ids == null) return (root, q, cb) -> cb.conjunction();
+        if (ids.isEmpty()) return (root, q, cb) -> cb.disjunction();
         return (root, q, cb) -> root.get("individual").get("addressLevel").get("id").in(ids);
     }
 
-    /**
-     * EXISTS subquery: narrow to encounters whose subject also has at least one
-     * non-voided, completed encounter of {@code linkedType} whose observation under
-     * {@code observationConceptUuid} is an AddressLevel UUID in {@code subtreeUuids}.
-     * Designed for Tanuh's "filter Physician Review encounters by the Place of
-     * referral on the linked Oral Screening", but takes only data dimensions so
-     * other implementations can reuse it.
-     */
     private static Specification<Encounter> withLinkedObservation(
             EncounterType linkedType, String observationConceptUuid, List<String> subtreeUuids) {
         if (linkedType == null || observationConceptUuid == null || subtreeUuids == null) {
             return (root, q, cb) -> cb.conjunction();
         }
+        if (subtreeUuids.isEmpty()) return (root, q, cb) -> cb.disjunction();
         return (root, q, cb) -> {
             Subquery<Long> sub = q.subquery(Long.class);
             Root<Encounter> linked = sub.from(Encounter.class);
@@ -233,15 +232,11 @@ public class CustomImplService {
         };
     }
 
-    /**
-     * Caps the page size at {@link #MAX_PAGE_SIZE} and, when the caller has
-     * not specified an explicit sort, applies a status-appropriate default:
-     * completed encounters by most-recent first (so the latest reviews surface
-     * at the top), scheduled by earliest visit date (so the soonest-due
-     * appear first). Callers can still override via their own Sort.
-     */
     private static Pageable capSizeAndSort(Pageable in, EncounterStatus status) {
-        Sort effectiveSort = in.getSort().isUnsorted() ? defaultSortFor(status) : in.getSort();
+        Sort base = in.getSort().isUnsorted() ? defaultSortFor(status) : in.getSort();
+        // Append id as a tiebreaker so pagination is deterministic under
+        // concurrent writes and on rows that tie on the primary sort column.
+        Sort effectiveSort = base.and(Sort.by(Sort.Direction.DESC, "id"));
         int size = Math.min(in.getPageSize(), MAX_PAGE_SIZE);
         return PageRequest.of(in.getPageNumber(), size, effectiveSort);
     }

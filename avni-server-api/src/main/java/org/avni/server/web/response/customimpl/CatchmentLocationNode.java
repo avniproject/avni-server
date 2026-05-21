@@ -1,4 +1,4 @@
-package org.avni.server.web.response.impl;
+package org.avni.server.web.response.customimpl;
 
 public record CatchmentLocationNode(
         String uuid,
