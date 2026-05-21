@@ -40,7 +40,26 @@ public class CalendarDateMarkerService implements ScopeAwareService<CalendarDate
 
     public CalendarDateMarker save(CalendarDateMarker marker) {
         marker.assignUUIDIfRequired();
+        validateNoDuplicateOnDate(marker);
         return markerRepository.save(marker);
+    }
+
+    // The DB partial-unique index on (calendar_id, marker_date) WHERE NOT is_voided
+    // catches duplicates, but the resulting DataIntegrityViolationException is
+    // surfaced by Spring as a bare HTTP 409 with no body. Catch it here instead so
+    // the webapp and Android client see a structured BadRequestError with a
+    // human-readable message.
+    private void validateNoDuplicateOnDate(CalendarDateMarker marker) {
+        if (marker.getCalendar() == null || marker.getMarkerDate() == null) return;
+        if (marker.isVoided()) return;
+        CalendarDateMarker existing = markerRepository.findFirstByCalendarAndMarkerDateAndIsVoidedFalse(
+                marker.getCalendar(), marker.getMarkerDate());
+        if (existing != null && !existing.getUuid().equals(marker.getUuid())) {
+            throw new BadRequestError(
+                    "A marker already exists for %s on %s.",
+                    marker.getCalendar().getName(),
+                    marker.getMarkerDate());
+        }
     }
 
     @Transactional
