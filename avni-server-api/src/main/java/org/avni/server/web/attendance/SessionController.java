@@ -20,10 +20,12 @@ import org.avni.server.web.RestControllerResourceProcessor;
 import org.avni.server.web.request.attendance.SessionContract;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.avni.server.web.response.attendance.SessionSaveResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -66,10 +68,27 @@ public class SessionController implements RestControllerResourceProcessor<Sessio
         this.accessControlService = accessControlService;
     }
 
-    @GetMapping(value = {"/session/search/lastModified", "/session/search/lastModified/v2"})
+    @GetMapping(value = {"/session", "/session/search/lastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public SlicedResources<EntityModel<Session>> syncByLastModified(
+    public PagedModel<EntityModel<Session>> syncByLastModified(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
+            Pageable pageable) {
+        if (subjectTypeUuid == null || subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        return wrap(scopeBasedSyncService.getSyncResultsByCatchment(
+                sessionRepository, userService.getCurrentUser(),
+                lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType,
+                SyncEntityName.Session));
+    }
+
+    @GetMapping(value = "/session/search/lastModified/v2")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public SlicedResources<EntityModel<Session>> syncByLastModifiedAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -124,6 +143,21 @@ public class SessionController implements RestControllerResourceProcessor<Sessio
         }
         List<AttendanceRecord> records = attendanceRecordRepository.findBySessionAndIsVoidedFalse(session);
         return ResponseEntity.ok(SessionContract.fromEntity(session, records));
+    }
+
+    @RequestMapping(value = "/session", method = RequestMethod.POST)
+    @Transactional(rollbackFor = Exception.class)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public void saveForSync(@RequestBody SessionContract contract) {
+        Individual groupSubject = resolveGroupSubject(contract.getGroupSubjectUUID());
+        accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, groupSubject);
+        contract.setupUuidIfNeeded();
+        Session existing = sessionRepository.findByUuid(contract.getUuid());
+        if (existing == null) {
+            sessionService.save(contract);
+        } else {
+            sessionService.update(existing, contract);
+        }
     }
 
     @PostMapping(value = "/web/session")

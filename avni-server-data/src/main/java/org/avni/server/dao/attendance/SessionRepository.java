@@ -9,6 +9,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.attendance.Session;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -60,6 +61,11 @@ public interface SessionRepository extends TransactionalDataRepository<Session>,
                 syncParameters.getLastModifiedDateTime().toDate(),
                 syncParameters.getNow().toDate(),
                 syncParameters.getPageable());
+    }
+
+    @Override
+    default Slice<Session> getSyncResultsAsSlice(SyncParameters syncParameters) {
+        return getSyncResults(syncParameters);
     }
 
     @Override

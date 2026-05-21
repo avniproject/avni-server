@@ -131,4 +131,8 @@ public class Session extends OrganisationAwareEntity {
     public void setMarkedAt(DateTime markedAt) {
         this.markedAt = markedAt;
     }
+
+    public String getMarkedByUserName() {
+        return markedByUser == null ? null : markedByUser.getName();
+    }
 }
