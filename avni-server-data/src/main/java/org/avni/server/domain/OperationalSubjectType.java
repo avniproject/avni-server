@@ -138,4 +138,8 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
     public JsonObject getSettings() {
         return subjectType.getSettings();
     }
+
+    public boolean isAttendanceEnabled() {
+        return subjectType.isAttendanceEnabled();
+    }
 }
