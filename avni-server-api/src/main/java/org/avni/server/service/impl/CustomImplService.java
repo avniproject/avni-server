@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -156,7 +157,7 @@ public class CustomImplService {
             }
         }
 
-        Pageable capped = capSize(pageable);
+        Pageable capped = capSizeAndSort(pageable, status);
 
         Specification<Encounter> spec = Specification
                 .where(notVoided())
@@ -232,8 +233,24 @@ public class CustomImplService {
         };
     }
 
-    private static Pageable capSize(Pageable in) {
-        if (in.getPageSize() <= MAX_PAGE_SIZE) return in;
-        return PageRequest.of(in.getPageNumber(), MAX_PAGE_SIZE, in.getSort());
+    /**
+     * Caps the page size at {@link #MAX_PAGE_SIZE} and, when the caller has
+     * not specified an explicit sort, applies a status-appropriate default:
+     * completed encounters by most-recent first (so the latest reviews surface
+     * at the top), scheduled by earliest visit date (so the soonest-due
+     * appear first). Callers can still override via their own Sort.
+     */
+    private static Pageable capSizeAndSort(Pageable in, EncounterStatus status) {
+        Sort effectiveSort = in.getSort().isUnsorted() ? defaultSortFor(status) : in.getSort();
+        int size = Math.min(in.getPageSize(), MAX_PAGE_SIZE);
+        return PageRequest.of(in.getPageNumber(), size, effectiveSort);
+    }
+
+    private static Sort defaultSortFor(EncounterStatus status) {
+        return switch (status) {
+            case COMPLETED -> Sort.by("encounterDateTime").descending();
+            case SCHEDULED -> Sort.by("earliestVisitDateTime").ascending();
+            case ALL -> Sort.unsorted();
+        };
     }
 }
