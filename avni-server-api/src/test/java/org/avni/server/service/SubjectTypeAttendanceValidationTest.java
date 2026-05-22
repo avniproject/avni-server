@@ -149,7 +149,7 @@ public class SubjectTypeAttendanceValidationTest {
         AttendanceType incomplete = new AttendanceType();
         incomplete.setUuid("type-uuid");
         incomplete.setName("Morning Prayer");
-        incomplete.setConfig(new JsonObject().with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID, "concept-uuid"));
+        incomplete.setConfig(new JsonObject().with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "concept-uuid"));
         when(subjectTypeRepository.findByUuid(request.getUuid())).thenReturn(existing);
         when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing)).thenReturn(List.of(incomplete));
 
@@ -158,7 +158,7 @@ public class SubjectTypeAttendanceValidationTest {
             fail("Expected AttendanceConfigIncompleteException");
         } catch (AttendanceConfigIncompleteException e) {
             assertEquals(1, e.getIncompleteTypes().size());
-            assertEquals(List.of(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT_UUID),
+            assertEquals(List.of(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT),
                     e.getIncompleteTypes().get(0).getMissingFields());
         }
     }
@@ -257,8 +257,8 @@ public class SubjectTypeAttendanceValidationTest {
         AttendanceType type = new AttendanceType();
         type.setUuid("complete-type");
         type.setConfig(new JsonObject()
-                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID, "session-outcome-uuid")
-                .with(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT_UUID, "absence-reason-uuid"));
+                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "session-outcome-uuid")
+                .with(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT, "absence-reason-uuid"));
         return type;
     }
 }

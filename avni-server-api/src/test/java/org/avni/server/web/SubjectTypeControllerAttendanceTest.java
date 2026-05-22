@@ -5,15 +5,19 @@ import org.avni.server.application.Subject;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.SubjectTypeService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.attendance.AttendanceTypeService;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.avni.server.web.request.webapp.SubjectTypeContractWeb;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +55,10 @@ public class SubjectTypeControllerAttendanceTest {
     private OrganisationConfigService organisationConfigService;
     @Mock
     private AccessControlService accessControlService;
+    @Mock
+    private AttendanceTypeRepository attendanceTypeRepository;
+    @Mock
+    private AttendanceTypeService attendanceTypeService;
 
     private SubjectTypeController controller;
 
@@ -59,7 +67,7 @@ public class SubjectTypeControllerAttendanceTest {
         initMocks(this);
         controller = new SubjectTypeController(subjectTypeRepository, operationalSubjectTypeRepository,
                 subjectTypeService, groupRoleRepository, resetSyncService, formService, formMappingService,
-                organisationConfigService, accessControlService);
+                organisationConfigService, accessControlService, attendanceTypeRepository, attendanceTypeService);
         User auditUser = new User();
         auditUser.setUsername("audit");
         when(subjectTypeRepository.save(any(SubjectType.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -70,6 +78,9 @@ public class SubjectTypeControllerAttendanceTest {
             return o;
         });
         when(formMappingService.find(any(SubjectType.class))).thenReturn(null);
+        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(any(SubjectType.class)))
+                .thenReturn(java.util.Collections.emptyList());
+        when(attendanceTypeService.save(any(AttendanceType.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
     @Test
@@ -276,6 +287,69 @@ public class SubjectTypeControllerAttendanceTest {
         SubjectTypeContractWeb result = SubjectTypeContractWeb.fromOperationalSubjectType(op, (FormMapping) null);
 
         assertTrue(result.isAttendanceEnabled());
+    }
+
+    @Test
+    public void savePersistsInlineAttendanceTypesAndReturnsThem() {
+        SubjectTypeContractWeb request = baseGroupRequest();
+        request.setAttendanceEnabled(true);
+        AttendanceTypeContract inline = new AttendanceTypeContract();
+        inline.setUuid("inline-at-uuid");
+        inline.setName("Attendance");
+        inline.setSortOrder(1);
+        request.setAttendanceTypes(java.util.List.of(inline));
+
+        AttendanceType persisted = new AttendanceType();
+        persisted.setUuid("inline-at-uuid");
+        persisted.setName("Attendance");
+        persisted.setSortOrder(1);
+        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(any(SubjectType.class)))
+                .thenReturn(java.util.List.of(persisted));
+
+        org.springframework.http.ResponseEntity response = controller.saveSubjectTypeForWeb(request);
+
+        verify(attendanceTypeService).save(any(AttendanceType.class));
+        SubjectTypeContractWeb body = (SubjectTypeContractWeb) response.getBody();
+        assertTrue(body.getAttendanceTypes() != null && body.getAttendanceTypes().size() == 1);
+        assertTrue("Attendance".equals(body.getAttendanceTypes().get(0).getName()));
+    }
+
+    @Test
+    public void getOneReturnsAttendanceTypesFromRepository() {
+        SubjectType existingSubjectType = new SubjectType();
+        existingSubjectType.setId(90L);
+        existingSubjectType.setUuid("get-uuid");
+        existingSubjectType.setName("Group90");
+        existingSubjectType.setType(Subject.Group);
+        existingSubjectType.setGroup(true);
+        existingSubjectType.setAttendanceEnabled(true);
+
+        OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
+        operationalSubjectType.setId(91L);
+        operationalSubjectType.setUuid("op-get-uuid");
+        operationalSubjectType.setName("Group90");
+        operationalSubjectType.setSubjectType(existingSubjectType);
+        User auditUser = new User();
+        auditUser.setUsername("audit");
+        operationalSubjectType.setCreatedBy(auditUser);
+        operationalSubjectType.setLastModifiedBy(auditUser);
+        when(operationalSubjectTypeRepository.findOne(91L)).thenReturn(operationalSubjectType);
+        org.avni.server.domain.OrganisationConfig orgConfig = new org.avni.server.domain.OrganisationConfig();
+        orgConfig.setSettings(new org.avni.server.domain.JsonObject());
+        when(organisationConfigService.getCurrentOrganisationConfig()).thenReturn(orgConfig);
+
+        AttendanceType existingAt = new AttendanceType();
+        existingAt.setUuid("at-uuid-90");
+        existingAt.setName("Attendance");
+        existingAt.setSortOrder(1);
+        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existingSubjectType))
+                .thenReturn(java.util.List.of(existingAt));
+
+        org.springframework.http.ResponseEntity response = controller.getOne(91L);
+
+        SubjectTypeContractWeb body = (SubjectTypeContractWeb) response.getBody();
+        assertTrue(body.getAttendanceTypes() != null && body.getAttendanceTypes().size() == 1);
+        assertTrue("at-uuid-90".equals(body.getAttendanceTypes().get(0).getUuid()));
     }
 
     private SubjectTypeContractWeb baseGroupRequest() {

@@ -230,14 +230,14 @@ public class SessionService implements ScopeAwareService<Session> {
         if (config == null) {
             return null;
         }
-        String followUpUuid = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID);
+        String followUpUuid = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE);
         if (followUpUuid == null) {
             return null;
         }
         EncounterType encounterType = encounterTypeRepository.findByUuid(followUpUuid);
         if (encounterType == null || encounterType.isVoided()) {
             warnings.add(new DanglingRefWarning(attendanceType.getUuid(), attendanceType.getName(),
-                    AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, followUpUuid,
+                    AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, followUpUuid,
                     encounterType == null ? "EncounterType not found" : "EncounterType is voided"));
             return null;
         }

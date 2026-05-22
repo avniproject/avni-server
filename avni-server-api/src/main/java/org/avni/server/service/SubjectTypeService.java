@@ -151,10 +151,10 @@ public class SubjectTypeService implements NonScopeAwareService {
         for (AttendanceType attendanceType : nonVoided) {
             List<String> missing = new ArrayList<>();
             JsonObject config = attendanceType.getConfig();
-            String sessionOutcome = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID);
-            String absenceReason = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT_UUID);
-            if (sessionOutcome == null) missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID);
-            if (absenceReason == null) missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT_UUID);
+            String sessionOutcome = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
+            String absenceReason = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
+            if (sessionOutcome == null) missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
+            if (absenceReason == null) missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
             if (!missing.isEmpty()) {
                 incomplete.add(new IncompleteAttendanceType(attendanceType.getUuid(), attendanceType.getName(), missing));
             }

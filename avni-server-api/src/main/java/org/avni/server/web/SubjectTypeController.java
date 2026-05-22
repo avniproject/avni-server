@@ -7,6 +7,11 @@ import org.avni.server.application.Subject;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.attendance.AttendanceType;
+import org.avni.server.service.attendance.AttendanceTypeService;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.OrganisationConfig;
@@ -48,6 +53,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     private final FormMappingService formMappingService;
     private final OrganisationConfigService organisationConfigService;
     private final AccessControlService accessControlService;
+    private final AttendanceTypeRepository attendanceTypeRepository;
+    private final AttendanceTypeService attendanceTypeService;
 
     @Autowired
     public SubjectTypeController(SubjectTypeRepository subjectTypeRepository,
@@ -56,7 +63,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                                  GroupRoleRepository groupRoleRepository,
                                  ResetSyncService resetSyncService, FormService formService, FormMappingService formMappingService,
                                  OrganisationConfigService organisationConfigService,
-                                 AccessControlService accessControlService) {
+                                 AccessControlService accessControlService,
+                                 AttendanceTypeRepository attendanceTypeRepository,
+                                 AttendanceTypeService attendanceTypeService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.subjectTypeService = subjectTypeService;
@@ -66,6 +75,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         this.formMappingService = formMappingService;
         this.organisationConfigService = organisationConfigService;
         this.accessControlService = accessControlService;
+        this.attendanceTypeRepository = attendanceTypeRepository;
+        this.attendanceTypeService = attendanceTypeService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -89,7 +100,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                 .findPageByIsVoidedFalse(pageable)
                 .map((OperationalSubjectType operationalSubjectType) -> {
                     FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
-                    return SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
+                    SubjectTypeContractWeb contract = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
+                    populateAttendanceTypes(contract, operationalSubjectType.getSubjectType());
+                    return contract;
                 }));
     }
 
@@ -102,6 +115,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             return ResponseEntity.notFound().build();
         FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
+        populateAttendanceTypes(subjectTypeContractWeb, operationalSubjectType.getSubjectType());
         OrganisationConfig organisationConfig = organisationConfigService.getCurrentOrganisationConfig();
         List<SubjectTypeSetting> customRegistrationLocations = organisationConfig.getCustomRegistrationLocations();
         Optional<List<String>> locationUUIDs = customRegistrationLocations
@@ -137,6 +151,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         SubjectType subjectType = new SubjectType();
         subjectType.assignUUID(request.getUUID());
         buildSubjectType(request, subjectType);
+        applyInlineAttendanceTypes(subjectType, request.getAttendanceTypes());
         subjectTypeService.seedDefaultAttendanceTypeIfEnabling(subjectType, false);
         OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
         operationalSubjectType.assignUUID();
@@ -156,6 +171,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         FormMapping formMapping = formMappingService.find(subjectType);
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
+        populateAttendanceTypes(subjectTypeContractWeb, subjectType);
 
         if (subjectType.getType().equals(Subject.User))
             subjectTypeService.launchUserSubjectTypeJob(subjectType);
@@ -232,11 +248,13 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             subjectType.setSyncRegistrationConcept2Usable(false);
         resetSyncService.recordSyncAttributeChange(operationalSubjectType.getSubjectType(), request);
         updateSubjectType(request, operationalSubjectType);
+        applyInlineAttendanceTypes(subjectType, request.getAttendanceTypes());
         subjectTypeService.seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
         subjectTypeService.updateSyncAttributesIfRequired(subjectType);
         FormMapping formMapping = formMappingService.find(subjectType);
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
+        populateAttendanceTypes(subjectTypeContractWeb, subjectType);
 
         if (subjectType.getType().equals(Subject.User) && !subjectType.isVoided())
             subjectTypeService.launchUserSubjectTypeJob(subjectType);
@@ -320,5 +338,32 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         groupRole.setMinimumNumberOfMembers(groupRoleContract.getMinimumNumberOfMembers());
         groupRole.setMaximumNumberOfMembers(groupRoleContract.getMaximumNumberOfMembers());
         return groupRole;
+    }
+
+    private void populateAttendanceTypes(SubjectTypeContractWeb contract, SubjectType subjectType) {
+        List<AttendanceType> attendanceTypes = attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(subjectType);
+        contract.setAttendanceTypes(attendanceTypes.stream()
+                .map(AttendanceTypeContract::fromEntity)
+                .collect(Collectors.toList()));
+    }
+
+    private void applyInlineAttendanceTypes(SubjectType subjectType, List<AttendanceTypeContract> contracts) {
+        if (contracts == null) return;
+        for (AttendanceTypeContract contract : contracts) {
+            AttendanceType attendanceType = contract.getUuid() != null
+                    ? attendanceTypeRepository.findByUuid(contract.getUuid())
+                    : null;
+            if (attendanceType == null) {
+                attendanceType = new AttendanceType();
+                contract.setupUuidIfNeeded();
+                attendanceType.assignUUID(contract.getUuid());
+            }
+            attendanceType.setSubjectType(subjectType);
+            attendanceType.setName(contract.getName());
+            attendanceType.setSortOrder(contract.getSortOrder());
+            attendanceType.setConfig(contract.getConfig() == null ? new JsonObject() : new JsonObject(contract.getConfig()));
+            attendanceType.setVoided(contract.isVoided());
+            attendanceTypeService.save(attendanceType);
+        }
     }
 }

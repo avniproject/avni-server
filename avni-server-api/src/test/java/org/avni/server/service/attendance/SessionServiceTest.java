@@ -287,7 +287,7 @@ public class SessionServiceTest {
         followUpType.setUuid("followup-type-uuid");
         followUpType.setName("Home Visit");
         attendanceType.setConfig(new JsonObject()
-                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "followup-type-uuid"));
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "followup-type-uuid"));
 
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
@@ -317,7 +317,7 @@ public class SessionServiceTest {
         followUpType.setUuid("followup-type-uuid");
         followUpType.setName("Home Visit");
         attendanceType.setConfig(new JsonObject()
-                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "followup-type-uuid"));
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "followup-type-uuid"));
 
         Encounter preExisting = new Encounter();
         preExisting.setUuid("client-uuid");
@@ -345,7 +345,7 @@ public class SessionServiceTest {
         followUpType.setUuid("followup-type-uuid");
         followUpType.setName("Home Visit");
         attendanceType.setConfig(new JsonObject()
-                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "followup-type-uuid"));
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "followup-type-uuid"));
 
         AttendanceRecord previousRecord = new AttendanceRecord();
         previousRecord.setUuid("record-uuid");
@@ -389,10 +389,10 @@ public class SessionServiceTest {
 
         AttendanceType prayerType = new AttendanceType();
         prayerType.setUuid("prayer-type-uuid");
-        prayerType.setConfig(new JsonObject().with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "home-visit-type"));
+        prayerType.setConfig(new JsonObject().with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "home-visit-type"));
         AttendanceType sportsType = new AttendanceType();
         sportsType.setUuid("sports-type-uuid");
-        sportsType.setConfig(new JsonObject().with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "phone-call-type"));
+        sportsType.setConfig(new JsonObject().with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "phone-call-type"));
 
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
@@ -432,7 +432,7 @@ public class SessionServiceTest {
         voidedType.setName("Stale");
         voidedType.setVoided(true);
         attendanceType.setConfig(new JsonObject()
-                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "voided-type"));
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "voided-type"));
 
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);

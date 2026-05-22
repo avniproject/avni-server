@@ -70,7 +70,7 @@ public class AttendanceTypeServiceTest {
         when(conceptRepository.findByUuid("concept-uuid")).thenReturn(voided);
 
         JsonObject config = new JsonObject()
-                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID, "concept-uuid");
+                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "concept-uuid");
 
         try {
             service.validateConfig(config);
@@ -85,7 +85,7 @@ public class AttendanceTypeServiceTest {
         when(encounterTypeRepository.findByUuid("et-uuid")).thenReturn(null);
 
         JsonObject config = new JsonObject()
-                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "et-uuid");
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "et-uuid");
 
         try {
             service.validateConfig(config);
@@ -142,8 +142,8 @@ public class AttendanceTypeServiceTest {
         type.setUuid("type-uuid");
         type.setName("Morning Prayer");
         type.setConfig(new JsonObject()
-                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT_UUID, "concept-uuid")
-                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE_UUID, "et-uuid"));
+                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "concept-uuid")
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "et-uuid"));
 
         List<DanglingRefWarning> warnings = service.surfaceDanglingReferences(type);
 

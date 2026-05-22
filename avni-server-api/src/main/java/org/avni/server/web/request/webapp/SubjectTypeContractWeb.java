@@ -7,6 +7,7 @@ import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.FormatContract;
 import org.avni.server.web.request.GroupRoleContract;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.joda.time.DateTime;
 import org.springframework.hateoas.server.core.Relation;
 
@@ -58,6 +59,7 @@ public class SubjectTypeContractWeb {
     private Long subjectTypeId;
     private JsonObject settings;
     private Boolean attendanceEnabled;
+    private List<AttendanceTypeContract> attendanceTypes;
 
     public static SubjectTypeContractWeb fromOperationalSubjectType(OperationalSubjectType operationalSubjectType, FormMapping formMapping) {
         SubjectTypeContractWeb contract = new SubjectTypeContractWeb();
@@ -427,5 +429,13 @@ public class SubjectTypeContractWeb {
 
     public void setAttendanceEnabled(Boolean attendanceEnabled) {
         this.attendanceEnabled = attendanceEnabled;
+    }
+
+    public List<AttendanceTypeContract> getAttendanceTypes() {
+        return attendanceTypes;
+    }
+
+    public void setAttendanceTypes(List<AttendanceTypeContract> attendanceTypes) {
+        this.attendanceTypes = attendanceTypes;
     }
 }
