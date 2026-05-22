@@ -181,6 +181,70 @@ public class SubjectTypeAttendanceValidationTest {
         verify(attendanceTypeRepository, never()).findBySubjectTypeAndIsVoidedFalse(any());
     }
 
+    @Test
+    public void publicOverloadRejectsAttendanceOnIndividualType() {
+        try {
+            service.validateAttendanceEligibilityAndConfig(null, true, false, false);
+            fail("Expected BadRequestError");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().toLowerCase().contains("group"));
+        }
+    }
+
+    @Test
+    public void publicOverloadNoOpsWhenAttendanceDisabled() {
+        service.validateAttendanceEligibilityAndConfig(null, false, false, false);
+        verify(attendanceTypeRepository, never()).findBySubjectTypeAndIsVoidedFalse(any());
+    }
+
+    @Test
+    public void publicOverloadValidatesExistingAttendanceTypes() {
+        SubjectType existing = new SubjectType();
+        existing.setId(1L);
+        existing.setUuid("subj-type-uuid");
+        existing.setGroup(true);
+        AttendanceType incomplete = new AttendanceType();
+        incomplete.setUuid("type-uuid");
+        incomplete.setName("Morning Prayer");
+        incomplete.setConfig(new JsonObject());
+        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing)).thenReturn(List.of(incomplete));
+
+        try {
+            service.validateAttendanceEligibilityAndConfig(existing, true, true, false);
+            fail("Expected AttendanceConfigIncompleteException");
+        } catch (AttendanceConfigIncompleteException e) {
+            assertEquals(1, e.getIncompleteTypes().size());
+            assertEquals(2, e.getIncompleteTypes().get(0).getMissingFields().size());
+        }
+    }
+
+    @Test
+    public void seedHelperPubliclyCallableAndSeedsOnFlip() {
+        SubjectType subjectType = new SubjectType();
+        subjectType.setId(1L);
+        subjectType.setUuid("subj-type-uuid");
+        subjectType.setAttendanceEnabled(true);
+        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(subjectType)).thenReturn(Collections.emptyList());
+
+        service.seedDefaultAttendanceTypeIfEnabling(subjectType, false);
+
+        ArgumentCaptor<AttendanceType> captor = ArgumentCaptor.forClass(AttendanceType.class);
+        verify(attendanceTypeRepository, times(1)).save(captor.capture());
+        assertEquals("Attendance", captor.getValue().getName());
+    }
+
+    @Test
+    public void seedHelperSkipsWhenAlreadyEnabled() {
+        SubjectType subjectType = new SubjectType();
+        subjectType.setId(1L);
+        subjectType.setUuid("subj-type-uuid");
+        subjectType.setAttendanceEnabled(true);
+
+        service.seedDefaultAttendanceTypeIfEnabling(subjectType, true);
+
+        verify(attendanceTypeRepository, never()).save(any(AttendanceType.class));
+    }
+
     private SubjectTypeContract baseRequest() {
         SubjectTypeContract request = new SubjectTypeContract();
         request.setUuid("subj-type-uuid");

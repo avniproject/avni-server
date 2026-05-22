@@ -57,6 +57,7 @@ public class SubjectTypeContractWeb {
     private String nameHelpText;
     private Long subjectTypeId;
     private JsonObject settings;
+    private Boolean attendanceEnabled;
 
     public static SubjectTypeContractWeb fromOperationalSubjectType(OperationalSubjectType operationalSubjectType, FormMapping formMapping) {
         SubjectTypeContractWeb contract = new SubjectTypeContractWeb();
@@ -101,6 +102,7 @@ public class SubjectTypeContractWeb {
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setSubjectTypeId(subjectType.getId());
         contract.setSettings(subjectType.getSettings());
+        contract.setAttendanceEnabled(subjectType.isAttendanceEnabled());
         if (formMapping != null)
             contract.setEnableRegistrationApproval(formMapping.isEnableApproval());
 
@@ -417,5 +419,13 @@ public class SubjectTypeContractWeb {
 
     public void setSettings(JsonObject settings) {
         this.settings = settings;
+    }
+
+    public Boolean isAttendanceEnabled() {
+        return attendanceEnabled;
+    }
+
+    public void setAttendanceEnabled(Boolean attendanceEnabled) {
+        this.attendanceEnabled = attendanceEnabled;
     }
 }

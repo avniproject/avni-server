@@ -130,9 +130,14 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                     ReactAdminUtil.generateJsonError("Can't save subjectType with empty type")
             );
         }
+        boolean requestedIsGroup = Subject.Group.toString().equals(request.getType()) || Subject.Household.toString().equals(request.getType());
+        boolean requestedIsHousehold = Subject.Household.toString().equals(request.getType());
+        boolean requestedAttendanceEnabled = Boolean.TRUE.equals(request.isAttendanceEnabled());
+        subjectTypeService.validateAttendanceEligibilityAndConfig(null, requestedAttendanceEnabled, requestedIsGroup, requestedIsHousehold);
         SubjectType subjectType = new SubjectType();
         subjectType.assignUUID(request.getUUID());
         buildSubjectType(request, subjectType);
+        subjectTypeService.seedDefaultAttendanceTypeIfEnabling(subjectType, false);
         OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
         operationalSubjectType.assignUUID();
         operationalSubjectType.setName(request.getName());
@@ -179,6 +184,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         subjectType.setSyncRegistrationConcept2(request.getSyncRegistrationConcept2());
         subjectType.setNameHelpText(request.getNameHelpText());
         subjectType.setSettings(request.getSettings() != null ? request.getSettings() : subjectTypeService.getDefaultSettings());
+        if (request.isAttendanceEnabled() != null) {
+            subjectType.setAttendanceEnabled(request.isAttendanceEnabled());
+        }
         SubjectType savedSubjectType = subjectTypeRepository.save(subjectType);
         if (Subject.Household.toString().equals(request.getType())) {
             subjectType.setGroup(true);
@@ -192,6 +200,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @PutMapping(value = "/web/subjectType/{id}")
+    @Transactional
     public ResponseEntity updateSubjectTypeForWeb(@RequestBody SubjectTypeContractWeb request,
                                                   @PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
@@ -204,7 +213,17 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         if (operationalSubjectType == null)
             return ResponseEntity.badRequest()
                     .body(ReactAdminUtil.generateJsonError(String.format("Subject Type with id '%d' not found", id)));
+        if (request.getType() == null) {
+            return ResponseEntity.badRequest().body(
+                    ReactAdminUtil.generateJsonError("Can't save subjectType with empty type")
+            );
+        }
         SubjectType subjectType = operationalSubjectType.getSubjectType();
+        boolean wasAttendanceEnabled = subjectType.isAttendanceEnabled();
+        boolean requestedIsGroup = Subject.Group.toString().equals(request.getType()) || Subject.Household.toString().equals(request.getType());
+        boolean requestedIsHousehold = Subject.Household.toString().equals(request.getType());
+        boolean requestedAttendanceEnabled = request.isAttendanceEnabled() == null ? wasAttendanceEnabled : request.isAttendanceEnabled();
+        subjectTypeService.validateAttendanceEligibilityAndConfig(subjectType, requestedAttendanceEnabled, requestedIsGroup, requestedIsHousehold);
         boolean isSyncConcept1Changed = !Objects.equals(request.getSyncRegistrationConcept1(), subjectType.getSyncRegistrationConcept1());
         boolean isSyncConcept2Changed = !Objects.equals(request.getSyncRegistrationConcept2(), subjectType.getSyncRegistrationConcept2());
         if (isSyncConcept1Changed)
@@ -213,6 +232,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             subjectType.setSyncRegistrationConcept2Usable(false);
         resetSyncService.recordSyncAttributeChange(operationalSubjectType.getSubjectType(), request);
         updateSubjectType(request, operationalSubjectType);
+        subjectTypeService.seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
         subjectTypeService.updateSyncAttributesIfRequired(subjectType);
         FormMapping formMapping = formMappingService.find(subjectType);
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);

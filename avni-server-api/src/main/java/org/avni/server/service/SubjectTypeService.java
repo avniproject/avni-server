@@ -133,10 +133,14 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     private void validateAttendanceEligibilityAndConfig(SubjectTypeContract request, SubjectType existing) {
-        if (!request.isAttendanceEnabled()) {
+        validateAttendanceEligibilityAndConfig(existing, request.isAttendanceEnabled(), request.isGroup(), request.isHousehold());
+    }
+
+    public void validateAttendanceEligibilityAndConfig(SubjectType existing, boolean requestedAttendanceEnabled, boolean requestedIsGroup, boolean requestedIsHousehold) {
+        if (!requestedAttendanceEnabled) {
             return;
         }
-        if (!(request.isGroup() || request.isHousehold())) {
+        if (!(requestedIsGroup || requestedIsHousehold)) {
             throw new BadRequestError("attendance_enabled requires a group or household subject type");
         }
         if (existing == null || existing.getId() == null) {
@@ -160,7 +164,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         }
     }
 
-    private void seedDefaultAttendanceTypeIfEnabling(SubjectType subjectType, boolean wasAttendanceEnabled) {
+    public void seedDefaultAttendanceTypeIfEnabling(SubjectType subjectType, boolean wasAttendanceEnabled) {
         if (!subjectType.isAttendanceEnabled() || wasAttendanceEnabled) {
             return;
         }
