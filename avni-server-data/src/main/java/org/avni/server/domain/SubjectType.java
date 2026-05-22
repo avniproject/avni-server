@@ -198,10 +198,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
     // Used from projections
     @JsonIgnore
-    public List<String> getMemberSubjectUUIDs() {
+    public List<Long> getMemberSubjectIds() {
         return isGroup() ? groupRoles.stream()
                 .filter(gr -> !gr.getMemberSubjectType().isVoided())
-                .map(gr -> gr.getMemberSubjectType().getUuid()).collect(Collectors.toList()) : Collections.emptyList();
+                .map(gr -> gr.getMemberSubjectType().getId()).collect(Collectors.toList()) : Collections.emptyList();
     }
 
     public Boolean getActive() {
@@ -396,7 +396,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
         boolean isGroup();
 
-        String getMemberSubjectUUIDs();
+        String getMemberSubjectIds();
 
         String getType();
 

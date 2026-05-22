@@ -6,6 +6,8 @@ import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -30,6 +32,7 @@ public class GroupPrivilegeContract {
     private Optional<String> checklistDetailName;
     private boolean allow;
     private String uuid;
+    private List<Long> memberSubjectIds;
 
     public static GroupPrivilegeContract fromEntity(GroupPrivilege groupPrivilege) {
         GroupPrivilegeContract groupPrivilegeContract = new GroupPrivilegeContract();
@@ -42,6 +45,7 @@ public class GroupPrivilegeContract {
         groupPrivilegeContract.setPrivilegeDescription(groupPrivilege.getPrivilege().getDescription());
         groupPrivilegeContract.setSubjectTypeId(Optional.ofNullable(groupPrivilege.getSubjectType()).map(SubjectType::getId).orElse(null));
         groupPrivilegeContract.setSubjectTypeName(Optional.ofNullable(groupPrivilege.getSubjectType()).map(SubjectType::getName).orElse(null));
+        groupPrivilegeContract.setMemberSubjectIds(Optional.ofNullable(groupPrivilege.getSubjectType()).map(SubjectType::getMemberSubjectIds).orElse(Collections.emptyList()));
         groupPrivilegeContract.setProgramId(Optional.ofNullable(groupPrivilege.getProgram()).map(Program::getId));
         groupPrivilegeContract.setProgramName(Optional.ofNullable(groupPrivilege.getProgram()).map(Program::getName).orElse(null));
         groupPrivilegeContract.setProgramEncounterTypeId(Optional.ofNullable(groupPrivilege.getProgramEncounterType()).map(EncounterType::getId));
@@ -201,6 +205,14 @@ public class GroupPrivilegeContract {
 
     public String getPrivilegeTypeName() {
         return privilegeTypeName;
+    }
+
+    public void setMemberSubjectIds(List<Long> memberSubjectIds) {
+        this.memberSubjectIds = memberSubjectIds;
+    }
+
+    public List<Long> getMemberSubjectIds() {
+        return memberSubjectIds;
     }
 
     @Override
