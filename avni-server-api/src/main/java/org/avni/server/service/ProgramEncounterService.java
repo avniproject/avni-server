@@ -161,7 +161,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
             bugsnag.notify(new Exception(errorMessage));
             logger.error(errorMessage);
         }
-        encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
+        encounter.setTiming(request.getEncounterDateTime(), request.getCancelDateTime(), userService.getCurrentUser());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(request.getProgramEnrolmentUUID());
         encounter.setProgramEnrolment(programEnrolment);
         encounter.setEncounterType(encounterType);
@@ -169,7 +169,6 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         encounter.setName(request.getName());
         encounter.setEarliestVisitDateTime(request.getEarliestVisitDateTime());
         encounter.setMaxVisitDateTime(request.getMaxVisitDateTime());
-        encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
 
         PointRequest encounterLocation = request.getEncounterLocation();
