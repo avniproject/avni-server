@@ -22,6 +22,7 @@ public class ReportCardWebResponse extends ReportCardContract {
     private String actionDetailProgramUUID;
     private String actionDetailEncounterTypeUUID;
     private String actionDetailVisitType;
+    private String actionDetailAttendanceTypeUUID;
     private String customCardConfigUUID;
 
     public List<SubjectTypeContract> getStandardReportCardInputSubjectTypes() {
@@ -102,6 +103,14 @@ public class ReportCardWebResponse extends ReportCardContract {
 
     public void setActionDetailVisitType(String actionDetailVisitType) {
         this.actionDetailVisitType = actionDetailVisitType;
+    }
+
+    public String getActionDetailAttendanceTypeUUID() {
+        return actionDetailAttendanceTypeUUID;
+    }
+
+    public void setActionDetailAttendanceTypeUUID(String actionDetailAttendanceTypeUUID) {
+        this.actionDetailAttendanceTypeUUID = actionDetailAttendanceTypeUUID;
     }
 
     public String getCustomCardConfigUUID() {

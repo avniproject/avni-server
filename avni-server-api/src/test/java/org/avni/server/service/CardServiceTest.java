@@ -9,6 +9,7 @@ import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.StandardReportCardTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.Account;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.OperationalSubjectType;
@@ -16,9 +17,12 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.domain.factory.TestAccountBuilder;
 import org.avni.server.domain.factory.TestOrganisationBuilder;
 import org.avni.server.domain.factory.UserContextBuilder;
+import org.avni.server.domain.metadata.AttendanceTypeBuilder;
+import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
@@ -55,6 +59,7 @@ public class CardServiceTest {
     @Mock private OperationalSubjectTypeRepository operationalSubjectTypeRepository;
     @Mock private OperationalProgramRepository operationalProgramRepository;
     @Mock private OperationalEncounterTypeRepository operationalEncounterTypeRepository;
+    @Mock private AttendanceTypeRepository attendanceTypeRepository;
 
     private CardService cardService;
     private SubjectType subjectType;
@@ -71,7 +76,8 @@ public class CardServiceTest {
 
         cardService = new CardService(cardRepository, standardReportCardTypeRepository, subjectTypeRepository,
                 programRepository, encounterTypeRepository, customCardConfigRepository, customCardConfigService,
-                operationalSubjectTypeRepository, operationalProgramRepository, operationalEncounterTypeRepository);
+                operationalSubjectTypeRepository, operationalProgramRepository, operationalEncounterTypeRepository,
+                attendanceTypeRepository);
 
         subjectType = new SubjectType();
         subjectType.setUuid(SUBJECT_TYPE_UUID);
@@ -197,6 +203,109 @@ public class CardServiceTest {
     }
 
     @Test
+    public void saveCard_rejects_mark_attendance_when_subject_type_is_not_group() {
+        SubjectType individualSubjectType = newGroupSubjectType(SUBJECT_TYPE_UUID, "Beneficiary", false, true);
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(individualSubjectType);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(individualSubjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("MarkAttendance");
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        request.setActionDetailAttendanceTypeUUID("attendance-type-uuid");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError for non-Group subject type on MarkAttendance");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("not a Group subject type"));
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_mark_attendance_when_attendance_not_enabled_on_subject_type() {
+        SubjectType groupWithoutAttendance = newGroupSubjectType(SUBJECT_TYPE_UUID, "Class", true, false);
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(groupWithoutAttendance);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(groupWithoutAttendance, ORG_ID)).thenReturn(new OperationalSubjectType());
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("MarkAttendance");
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        request.setActionDetailAttendanceTypeUUID("attendance-type-uuid");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when attendance is not enabled on subject type");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("does not have attendance enabled"));
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_mark_attendance_when_attendance_type_belongs_to_other_subject_type() {
+        SubjectType groupSubjectType = newGroupSubjectType(SUBJECT_TYPE_UUID, "Class", true, true);
+        SubjectType otherSubjectType = newGroupSubjectType("other-st-uuid", "OtherClass", true, true);
+        AttendanceType attendanceType = newAttendanceType("attendance-type-uuid", "Morning Prayer", otherSubjectType);
+
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(groupSubjectType);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(groupSubjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
+        when(attendanceTypeRepository.findByUuid("attendance-type-uuid")).thenReturn(attendanceType);
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("MarkAttendance");
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        request.setActionDetailAttendanceTypeUUID("attendance-type-uuid");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when attendance type belongs to another subject type");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("does not belong to"));
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_mark_attendance_without_attendance_type_uuid() {
+        SubjectType groupSubjectType = newGroupSubjectType(SUBJECT_TYPE_UUID, "Class", true, true);
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(groupSubjectType);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(groupSubjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("MarkAttendance");
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        // No attendanceTypeUUID
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when attendance type UUID is missing");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Attendance type is required"));
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_persists_mark_attendance_card_when_everything_valid() {
+        SubjectType groupSubjectType = newGroupSubjectType(SUBJECT_TYPE_UUID, "Class", true, true);
+        AttendanceType attendanceType = newAttendanceType("attendance-type-uuid", "Morning Prayer", groupSubjectType);
+
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(groupSubjectType);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(groupSubjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
+        when(attendanceTypeRepository.findByUuid("attendance-type-uuid")).thenReturn(attendanceType);
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("MarkAttendance");
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        request.setActionDetailAttendanceTypeUUID("attendance-type-uuid");
+
+        cardService.saveCard(request);
+
+        verify(cardRepository).save(any());
+    }
+
+    @Test
     public void uploadCard_bundle_path_does_not_invoke_operational_validation() {
         ReportCardBundleRequest bundleRequest = new ReportCardBundleRequest();
         bundleRequest.setUuid("card-uuid");
@@ -217,5 +326,22 @@ public class CardServiceTest {
         request.setColor("#ffffff");
         request.setCount(1);
         return request;
+    }
+
+    private SubjectType newGroupSubjectType(String uuid, String name, boolean isGroup, boolean attendanceEnabled) {
+        return new SubjectTypeBuilder()
+                .setUuid(uuid)
+                .setName(name)
+                .setGroup(isGroup)
+                .setAttendanceEnabled(attendanceEnabled)
+                .build();
+    }
+
+    private AttendanceType newAttendanceType(String uuid, String name, SubjectType subjectType) {
+        return new AttendanceTypeBuilder()
+                .setUuid(uuid)
+                .setName(name)
+                .setSubjectType(subjectType)
+                .build();
     }
 }

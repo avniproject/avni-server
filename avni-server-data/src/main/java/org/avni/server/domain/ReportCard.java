@@ -203,12 +203,25 @@ public class ReportCard extends OrganisationAwareEntity {
         return actionDetail != null ? actionDetail.getString("visitType") : null;
     }
 
+    public String getActionDetailAttendanceTypeUUID() {
+        return actionDetail != null ? actionDetail.getString("attendanceTypeUUID") : null;
+    }
+
     public void setActionDetailFields(String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
         this.actionDetail = new JsonObject(new HashMap<>());
         this.actionDetail.with("subjectTypeUUID", subjectTypeUUID);
         this.actionDetail.with("programUUID", programUUID);
         this.actionDetail.with("encounterTypeUUID", encounterTypeUUID);
         this.actionDetail.with("visitType", visitType);
+    }
+
+    // MarkAttendance overload — fresh JsonObject so any stale DoVisit keys
+    // (programUUID / encounterTypeUUID / visitType) get cleared when an
+    // existing card is switched between action types.
+    public void setActionDetailFields(String subjectTypeUUID, String attendanceTypeUUID) {
+        this.actionDetail = new JsonObject(new HashMap<>());
+        this.actionDetail.with("subjectTypeUUID", subjectTypeUUID);
+        this.actionDetail.with("attendanceTypeUUID", attendanceTypeUUID);
     }
 
     public CustomCardConfig getCustomCardConfig() {

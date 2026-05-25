@@ -3,7 +3,9 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
@@ -43,9 +45,10 @@ public class CardService implements NonScopeAwareService {
     private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
     private final OperationalProgramRepository operationalProgramRepository;
     private final OperationalEncounterTypeRepository operationalEncounterTypeRepository;
+    private final AttendanceTypeRepository attendanceTypeRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService, OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService, OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, AttendanceTypeRepository attendanceTypeRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -56,6 +59,7 @@ public class CardService implements NonScopeAwareService {
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.operationalProgramRepository = operationalProgramRepository;
         this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
+        this.attendanceTypeRepository = attendanceTypeRepository;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
@@ -66,7 +70,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
         linkCustomCardConfig(card, reportCardRequest);
         cardRepository.save(card);
         return card;
@@ -81,7 +85,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
         upsertAndLinkCustomCardConfig(card, reportCardRequest.getCustomCardConfig());
         cardRepository.save(card);
     }
@@ -93,7 +97,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
-        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType());
+        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType(), request.getActionDetailAttendanceTypeUUID());
         linkCustomCardConfig(existingCard, request);
         return cardRepository.save(existingCard);
     }
@@ -229,11 +233,22 @@ public class CardService implements NonScopeAwareService {
         card.setCustomCardConfig(config);
     }
 
-    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
-        if (card.getAction() != ReportCardAction.DoVisit) {
-            card.setActionDetail(null);
+    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType, String attendanceTypeUUID) {
+        ReportCardAction action = card.getAction();
+        if (action == ReportCardAction.DoVisit) {
+            buildDoVisitActionDetail(card, subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
             return;
         }
+        if (action == ReportCardAction.MarkAttendance) {
+            buildMarkAttendanceActionDetail(card, subjectTypeUUID, attendanceTypeUUID);
+            return;
+        }
+        // For ViewSubjectProfile (and any future action without its own detail
+        // shape) clear any stale keys from a prior action.
+        card.setActionDetail(null);
+    }
+
+    private void buildDoVisitActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
         if (!StringUtils.hasText(subjectTypeUUID)) {
             throw new BadRequestError("Subject type is required when action is DoVisit");
         }
@@ -255,6 +270,33 @@ public class CardService implements NonScopeAwareService {
         card.setActionDetailFields(subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
     }
 
+    private void buildMarkAttendanceActionDetail(ReportCard card, String subjectTypeUUID, String attendanceTypeUUID) {
+        if (!StringUtils.hasText(subjectTypeUUID)) {
+            throw new BadRequestError("Subject type is required when action is MarkAttendance");
+        }
+        if (!StringUtils.hasText(attendanceTypeUUID)) {
+            throw new BadRequestError("Attendance type is required when action is MarkAttendance");
+        }
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+        if (subjectType == null || subjectType.isVoided()) {
+            throw new BadRequestError(String.format("SubjectType with uuid %s doesn't exist", subjectTypeUUID));
+        }
+        if (!subjectType.isGroup()) {
+            throw new BadRequestError(String.format("SubjectType '%s' is not a Group subject type; MarkAttendance only applies to Group subject types", subjectType.getName()));
+        }
+        if (!subjectType.isAttendanceEnabled()) {
+            throw new BadRequestError(String.format("SubjectType '%s' does not have attendance enabled", subjectType.getName()));
+        }
+        AttendanceType attendanceType = attendanceTypeRepository.findByUuid(attendanceTypeUUID);
+        if (attendanceType == null || attendanceType.isVoided()) {
+            throw new BadRequestError(String.format("AttendanceType with uuid %s doesn't exist", attendanceTypeUUID));
+        }
+        if (attendanceType.getSubjectType() == null || !subjectTypeUUID.equals(attendanceType.getSubjectTypeUUID())) {
+            throw new BadRequestError(String.format("AttendanceType '%s' does not belong to SubjectType '%s'", attendanceType.getName(), subjectType.getName()));
+        }
+        card.setActionDetailFields(subjectTypeUUID, attendanceTypeUUID);
+    }
+
     private void validateOperationalMappingsForWebRequest(ReportCardRequest request) {
         long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         requireOperational(request.getStandardReportCardInputSubjectTypes(), organisationId, "SubjectType",
@@ -272,6 +314,10 @@ public class CardService implements NonScopeAwareService {
             }
             requireOperational(List.of(request.getActionDetailEncounterTypeUUID()), organisationId, "EncounterType",
                     encounterTypeRepository::findByUuid, operationalEncounterTypeRepository::findByEncounterTypeAndOrganisationId, EncounterType::getName);
+        }
+        if (ReportCardAction.MarkAttendance.name().equals(request.getAction())) {
+            requireOperational(List.of(request.getActionDetailSubjectTypeUUID()), organisationId, "SubjectType",
+                    subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
         }
     }
 
