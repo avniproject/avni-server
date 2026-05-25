@@ -171,7 +171,7 @@ public class ImportController {
             consumes = APPLICATION_OCTET_STREAM_VALUE)
     @Transactional(readOnly = true)
     public ResponseEntity<InputStreamResource> getDocument(@RequestParam String jobUuid) {
-        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
         return ResponseEntity.ok()
                 .contentType(TEXT_PLAIN)
@@ -185,7 +185,7 @@ public class ImportController {
             consumes = APPLICATION_OCTET_STREAM_VALUE)
     @Transactional(readOnly = true)
     public ResponseEntity<InputStreamResource> getInputDocument(@RequestParam String filePath) {
-        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         InputStream file = bulkUploadS3Service.downloadInputFile(filePath);
         return ResponseEntity.ok()
                 .contentType(TEXT_PLAIN)
