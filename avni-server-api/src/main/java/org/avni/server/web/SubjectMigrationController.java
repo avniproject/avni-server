@@ -119,7 +119,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/api/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity migrate(@RequestParam(value = "mode", defaultValue = "byAddress") SubjectMigrationService.BulkSubjectMigrationModes mode,
+    public ResponseEntity migrate(@RequestParam(value = "mode") SubjectMigrationService.BulkSubjectMigrationModes mode,
                                   @RequestBody BulkSubjectMigrationRequest bulkSubjectMigrationRequest) {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         if (bulkSubjectMigrationRequest.getSubjectIds() == null) {

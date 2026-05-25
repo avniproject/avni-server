@@ -1282,13 +1282,15 @@ paths:
             default: 1
         - name: mode
           in: query
-          description: "Mode for the migration"
-          required: false
+          description: |
+            Mode for the migration. Mandatory. Supported values:
+              * `byAddress` - migrate subjects from their current address to a destination address. Requires `destinationAddresses` in the request body.
+              * `bySyncConcept` - update one or more sync concept values on the subjects. Requires `destinationSyncConcepts` in the request body.
+          required: true
           explode: false
           schema:
             type: string
             enum: ["byAddress", "bySyncConcept"]
-            default: "byAddress"
       requestBody:
         content:
           application/json:
