@@ -132,7 +132,7 @@ public class AbstractEncounter extends SyncAttributeEntity {
 
     // Set both timestamps together. The DB check constraint forbids both being non-null,
     // and JPA can auto-flush a managed entity during any intervening query — setting one
-    // without immediately settling the other risks a mid-method constraint violation.
+    // without immediately setting the other risks a mid-method constraint violation.
     public void setTiming(DateTime encounterDateTime, DateTime cancelDateTime, User currentUser) {
         setEncounterDateTime(encounterDateTime, currentUser);
         setCancelDateTime(cancelDateTime);
