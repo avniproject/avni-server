@@ -14,6 +14,7 @@ public class CalendarContract extends CHSRequest {
     private boolean isDefault;
     private DateTime createdDateTime;
     private DateTime lastModifiedDateTime;
+    private Long markerCountThisYear;
 
     public static CalendarContract fromEntity(Calendar calendar) {
         CalendarContract contract = new CalendarContract();
@@ -77,5 +78,13 @@ public class CalendarContract extends CHSRequest {
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
+    }
+
+    public Long getMarkerCountThisYear() {
+        return markerCountThisYear;
+    }
+
+    public void setMarkerCountThisYear(Long markerCountThisYear) {
+        this.markerCountThisYear = markerCountThisYear;
     }
 }

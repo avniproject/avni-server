@@ -28,6 +28,13 @@ public interface CalendarDateMarkerRepository extends ReferenceDataRepository<Ca
 
     List<CalendarDateMarker> findByCalendarAndMarkerDateBetweenAndIsVoidedFalse(Calendar calendar, LocalDate from, LocalDate to);
 
+    @Query("select cdm.calendar.id, count(cdm) from CalendarDateMarker cdm" +
+            " where cdm.isVoided = false and cdm.markerDate between :from and :to" +
+            " group by cdm.calendar.id")
+    List<Object[]> countByDateRangeGroupedByCalendar(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    long countByCalendarAndMarkerDateBetweenAndIsVoidedFalse(Calendar calendar, LocalDate from, LocalDate to);
+
     List<CalendarDateMarker> findByMarkerDateBetweenAndIsVoidedFalse(LocalDate from, LocalDate to);
 
     CalendarDateMarker findFirstByCalendarAndMarkerDateAndIsVoidedFalse(Calendar calendar, LocalDate markerDate);
