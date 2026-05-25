@@ -271,7 +271,7 @@ public class SessionService implements ScopeAwareService<Session> {
 
             String preservedFollowUpUuid = record.getFollowUpEncounterUuid();
             if (preservedFollowUpUuid == null) {
-                preservedFollowUpUuid = recordContract.getFollowUpEncounterUuid();
+                preservedFollowUpUuid = recordContract.getFollowUpEncounterUUID();
             }
             record.setFollowUpEncounterUuid(preservedFollowUpUuid);
 
@@ -294,7 +294,7 @@ public class SessionService implements ScopeAwareService<Session> {
     private Map<String, Encounter> batchLoadExistingFollowUps(List<AttendanceRecordContract> contracts,
                                                               Map<String, AttendanceRecord> existingBySubject) {
         Set<String> uuids = contracts.stream()
-                .map(AttendanceRecordContract::getFollowUpEncounterUuid)
+                .map(AttendanceRecordContract::getFollowUpEncounterUUID)
                 .filter(u -> u != null)
                 .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
         existingBySubject.values().stream()
