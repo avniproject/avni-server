@@ -1,6 +1,6 @@
 package org.avni.server.service.attendance;
 
-import org.joda.time.LocalDate;
+import java.time.LocalDate;
 
 public class FutureScheduledDateNotAllowedException extends RuntimeException {
     private final LocalDate scheduledDate;
