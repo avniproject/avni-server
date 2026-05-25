@@ -329,7 +329,7 @@ public class SessionServiceTest {
 
         SessionContract contract = baseContract(SessionStatus.Held);
         AttendanceRecordContract record = rosterEntry("subj-1", AttendanceStatus.Absent);
-        record.setFollowUpEncounterUuid("client-uuid");
+        record.setFollowUpEncounterUUID("client-uuid");
         contract.setRoster(List.of(record));
 
         SessionSaveResult result = service.save(contract);
