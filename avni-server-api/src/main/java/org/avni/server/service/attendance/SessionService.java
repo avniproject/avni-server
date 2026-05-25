@@ -207,7 +207,7 @@ public class SessionService implements ScopeAwareService<Session> {
             throw new BadRequestError("scheduledDate is required");
         }
         if (scheduledDate.isAfter(LocalDate.now())) {
-            throw new BadRequestError("scheduledDate cannot be in the future");
+            throw new FutureScheduledDateNotAllowedException(scheduledDate);
         }
     }
 
