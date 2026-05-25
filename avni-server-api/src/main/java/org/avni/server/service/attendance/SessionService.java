@@ -163,7 +163,9 @@ public class SessionService implements ScopeAwareService<Session> {
                 : conceptRepository.findByUuid(contract.getReasonConceptUUID());
 
         DayType dayType = resolveDayType(groupSubject, contract.getScheduledDate());
-        validateSessionReason(contract.getStatus(), dayType, contract.getReasonConceptUUID());
+        if (!contract.isVoided()) {
+            validateSessionReason(contract.getStatus(), dayType, contract.getReasonConceptUUID());
+        }
 
         Map<String, AttendanceRecord> existingRecordsBySubjectUuid = creating
                 ? new HashMap<>()
