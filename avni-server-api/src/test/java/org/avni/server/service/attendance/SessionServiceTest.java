@@ -253,13 +253,14 @@ public class SessionServiceTest {
     @Test
     public void rejectsFutureScheduledDate() {
         SessionContract contract = baseContract(SessionStatus.Held);
-        contract.setScheduledDate(LocalDate.now().plusDays(1));
+        LocalDate future = LocalDate.now().plusDays(1);
+        contract.setScheduledDate(future);
 
         try {
             service.save(contract);
-            fail("Expected BadRequestError");
-        } catch (BadRequestError e) {
-            assertTrue(e.getMessage().toLowerCase().contains("future"));
+            fail("Expected FutureScheduledDateNotAllowedException");
+        } catch (FutureScheduledDateNotAllowedException e) {
+            assertEquals(future, e.getScheduledDate());
         }
         verify(sessionRepository, never()).save(any(Session.class));
     }
