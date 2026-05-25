@@ -53,6 +53,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
     private Boolean isSyncRegistrationConcept2Usable;
     private String nameHelpText;
     private JsonObject settings;
+    private boolean attendanceEnabled;
 
     public static SubjectTypeContract fromSubjectType(SubjectType subjectType) {
         SubjectTypeContract contract = new SubjectTypeContract();
@@ -84,6 +85,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setIconFileS3Key(subjectType.getIconFileS3Key());
         contract.setSettings(subjectType.getSettings());
+        contract.setAttendanceEnabled(subjectType.isAttendanceEnabled());
         return contract;
     }
 
@@ -293,5 +295,13 @@ public class SubjectTypeContract extends ReferenceDataContract {
 
     public void setSettings(JsonObject settings) {
         this.settings = settings;
+    }
+
+    public boolean isAttendanceEnabled() {
+        return attendanceEnabled;
+    }
+
+    public void setAttendanceEnabled(boolean attendanceEnabled) {
+        this.attendanceEnabled = attendanceEnabled;
     }
 }

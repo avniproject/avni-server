@@ -34,6 +34,15 @@ import org.avni.server.util.S3File;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
+import org.avni.server.web.request.calendar.CalendarContract;
+import org.avni.server.web.request.calendar.CalendarDateMarkerContract;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
+import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
+import org.avni.server.dao.calendar.CalendarRepository;
+import org.avni.server.domain.attendance.AttendanceType;
+import org.avni.server.domain.calendar.Calendar;
+import org.avni.server.domain.calendar.CalendarDateMarker;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
@@ -65,6 +74,10 @@ import java.util.zip.ZipOutputStream;
 
 @Service
 public class OrganisationService {
+    private final CalendarRepository calendarRepository;
+    private final CalendarDateMarkerRepository calendarDateMarkerRepository;
+    private final AttendanceTypeRepository attendanceTypeRepository;
+
     private final FormRepository formRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final LocationRepository locationRepository;
@@ -269,7 +282,8 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository) {
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository,
+                               CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -372,6 +386,9 @@ public class OrganisationService {
         this.locationService = locationService;
         this.catchmentService = catchmentService;
         this.customCardConfigRepository = customCardConfigRepository;
+        this.calendarRepository = calendarRepository;
+        this.calendarDateMarkerRepository = calendarDateMarkerRepository;
+        this.attendanceTypeRepository = attendanceTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -735,6 +752,30 @@ public class OrganisationService {
         List<SubjectTypeContract> subjectTypeContracts = subjectTypes.map(SubjectTypeContract::fromSubjectType)
                 .collect(Collectors.toList());
         addFileToZip(zos, "subjectTypes.json", subjectTypeContracts);
+    }
+
+    public void addCalendarsJson(Long orgId, ZipOutputStream zos) throws IOException {
+        List<Calendar> calendars = calendarRepository.findAllByOrganisationId(orgId);
+        List<CalendarContract> contracts = calendars.stream()
+                .map(CalendarContract::fromEntity)
+                .collect(Collectors.toList());
+        addFileToZip(zos, "calendars.json", contracts);
+    }
+
+    public void addCalendarDateMarkersJson(Long orgId, ZipOutputStream zos) throws IOException {
+        List<CalendarDateMarker> markers = calendarDateMarkerRepository.findAllByOrganisationId(orgId);
+        List<CalendarDateMarkerContract> contracts = markers.stream()
+                .map(CalendarDateMarkerContract::fromEntity)
+                .collect(Collectors.toList());
+        addFileToZip(zos, "calendarDateMarkers.json", contracts);
+    }
+
+    public void addAttendanceTypesJson(Long orgId, ZipOutputStream zos) throws IOException {
+        List<AttendanceType> attendanceTypes = attendanceTypeRepository.findAllByOrganisationId(orgId);
+        List<AttendanceTypeContract> contracts = attendanceTypes.stream()
+                .map(AttendanceTypeContract::fromEntity)
+                .collect(Collectors.toList());
+        addFileToZip(zos, "attendanceTypes.json", contracts);
     }
 
     public void addCatchmentsJson(Organisation organisation, ZipOutputStream zos) throws IOException {

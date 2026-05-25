@@ -163,7 +163,7 @@ build_server: ## Builds the jar file
 build-server: build_server
 
 boot_run:
-	OPENCHS_DATABASE=$(DB) ./gradlew bootRun
+	OPENCHS_DATABASE=$(DB) ./gradlew :avni-server-api:bootRun
 
 test_server: rebuild_testdb ## Run tests
 	GRADLE_OPTS="-Xmx256m" ./gradlew clean test

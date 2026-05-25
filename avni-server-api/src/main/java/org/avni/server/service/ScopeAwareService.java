@@ -29,6 +29,11 @@ public interface ScopeAwareService<T extends CHSEntity> {
         return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, DateTime.now(), null, null, null, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 
+    default boolean isChangedByCatchmentAndSubjectType(User user, DateTime lastModifiedDateTime, Long typeId, SubjectType subjectType, SyncEntityName syncEntityName) {
+        if (user.getCatchment() == null) throw new ValidationException("NoCatchmentFound");
+        return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, DateTime.now(), typeId, null, null, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+    }
+
     SyncableRepository<T> repository();
 
     boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID);

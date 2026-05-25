@@ -148,6 +148,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         isGroup = group;
     }
 
+    public boolean isAttendanceEligible() {
+        return isGroup || isHousehold;
+    }
+
     public String getName() {
         return name;
     }
@@ -194,10 +198,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
     // Used from projections
     @JsonIgnore
-    public List<String> getMemberSubjectUUIDs() {
+    public List<Long> getMemberSubjectIds() {
         return isGroup() ? groupRoles.stream()
                 .filter(gr -> !gr.getMemberSubjectType().isVoided())
-                .map(gr -> gr.getMemberSubjectType().getUuid()).collect(Collectors.toList()) : Collections.emptyList();
+                .map(gr -> gr.getMemberSubjectType().getId()).collect(Collectors.toList()) : Collections.emptyList();
     }
 
     public Boolean getActive() {
@@ -392,7 +396,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
         boolean isGroup();
 
-        String getMemberSubjectUUIDs();
+        String getMemberSubjectIds();
 
         String getType();
 
@@ -431,5 +435,16 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
                 "name='" + name + '\'' +
                 "uuid='" + this.getUuid() + '\'' +
                 '}';
+    }
+
+    @Column(name = "attendance_enabled")
+    private boolean attendanceEnabled;
+
+    public boolean isAttendanceEnabled() {
+        return attendanceEnabled;
+    }
+
+    public void setAttendanceEnabled(boolean attendanceEnabled) {
+        this.attendanceEnabled = attendanceEnabled;
     }
 }

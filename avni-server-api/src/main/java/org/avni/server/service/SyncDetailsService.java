@@ -68,6 +68,10 @@ public class SyncDetailsService {
             if (subjectType.isGroup()) {
                 addToSyncableItems(syncableItems, SyncEntityName.GroupSubject, subjectType.getUuid());
             }
+            if (subjectType.isGroup() && subjectType.isAttendanceEnabled()) {
+                addToSyncableItems(syncableItems, SyncEntityName.Session, subjectType.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.AttendanceRecord, subjectType.getUuid());
+            }
             if (organisationConfigService.isCommentEnabled()) {
                 addToSyncableItems(syncableItems, SyncEntityName.Comment, subjectType.getUuid());
                 addToSyncableItems(syncableItems, SyncEntityName.CommentThread, subjectType.getUuid());
