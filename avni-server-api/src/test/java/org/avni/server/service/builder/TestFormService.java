@@ -7,6 +7,7 @@ import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
+import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -144,11 +145,15 @@ public class TestFormService {
             Form form
     ) {
         encounterTypeRepository.save(encounterType);
-        OperationalEncounterType operationalEncounterType = new OperationalEncounterType();
-        operationalEncounterType.setName(encounterType.getName());
-        operationalEncounterType.setEncounterType(encounterType);
-        operationalEncounterType.setUuid(UUID.randomUUID().toString());
-        operationalEncounterTypeRepository.save(operationalEncounterType);
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        OperationalEncounterType existingOperationalEncounterType = operationalEncounterTypeRepository.findByEncounterTypeAndOrganisationId(encounterType, organisationId);
+        if (existingOperationalEncounterType == null) {
+            OperationalEncounterType operationalEncounterType = new OperationalEncounterType();
+            operationalEncounterType.setName(encounterType.getName());
+            operationalEncounterType.setEncounterType(encounterType);
+            operationalEncounterType.setUuid(UUID.randomUUID().toString());
+            operationalEncounterTypeRepository.save(operationalEncounterType);
+        }
 
         FormMappingBuilder builder = new FormMappingBuilder()
                 .withSubjectType(subjectType)
@@ -184,5 +189,40 @@ public class TestFormService {
     ) {
         Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.ProgramEncounter, null, null, null, null);
         return createEncounterFormMapping(subjectType, program, encounterType, form);
+    }
+
+    public FormMapping createGeneralEncounterCancellationForm(
+            SubjectType subjectType,
+            EncounterType encounterType,
+            String formName,
+            List<String> singleSelectedConceptNames,
+            List<String> multiSelectedConceptNames
+    ) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.IndividualEncounterCancellation, null, null, null, null);
+        return createEncounterFormMapping(subjectType, null, encounterType, form);
+    }
+
+    public FormMapping createProgramEncounterCancellationForm(
+            SubjectType subjectType,
+            Program program,
+            EncounterType encounterType,
+            String formName,
+            List<String> singleSelectedConceptNames,
+            List<String> multiSelectedConceptNames
+    ) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.ProgramEncounterCancellation, null, null, null, null);
+        return createEncounterFormMapping(subjectType, program, encounterType, form);
+    }
+
+    public FormMapping createProgramExitForm(
+            SubjectType subjectType,
+            Program program,
+            String formName,
+            List<String> singleSelectedConceptNames,
+            List<String> multiSelectedConceptNames
+    ) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.ProgramExit, null, null, null, null);
+        FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withProgram(program).withUuid(UUID.randomUUID().toString()).withForm(form).build();
+        return formMappingRepository.save(formMapping);
     }
 }

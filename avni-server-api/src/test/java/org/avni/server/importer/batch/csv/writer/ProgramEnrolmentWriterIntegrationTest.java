@@ -10,7 +10,9 @@ import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.importer.batch.csv.creator.ProgramEnrolmentRowCreator;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentUploadMode;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
@@ -19,7 +21,6 @@ import org.avni.server.service.builder.TestLocationService;
 import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -46,7 +47,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private SubjectTypeRepository subjectTypeRepository;
     @Autowired
-    private ProgramEnrolmentWriter programEnrolmentWriter;
+    private ProgramEnrolmentRowCreator programEnrolmentRowCreator;
     @Autowired
     private TestFormService testFormService;
     @Autowired
@@ -184,21 +185,179 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         String[] header = validHeader();
         String[] dataRow = validDataRow();
 
-        programEnrolmentWriter.write(Chunk.of(new Row(header, dataRow)));
+        programEnrolmentRowCreator.create(new Row(header, dataRow), ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT);
         ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("EFGH");
         assertEquals(1, enrolment.getObservations().size());
 
         // Second insert should fail with ValidationException
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEnrolmentWriter.write(Chunk.of(new Row(header, dataRow)));
+            programEnrolmentRowCreator.create(new Row(header, dataRow), ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT);
         });
         assertTrue(exception.getMessage().toLowerCase().contains("entry with id from previous system, efgh already present in avni"));
+    }
+
+    private String[] validExitedEnrolmentHeader() {
+        return header("Id from previous system",
+                "Subject Id from previous system",
+                "Program",
+                "Enrolment Date",
+                "Enrolment Coordinates",
+                "\"Single Select Coded\"",
+                "Exit Date",
+                "Exit Coordinates",
+                "\"Exit: Exit Reason\"");
+    }
+
+    private String[] validExitedEnrolmentDataRow() {
+        return dataRow("EXIT-ENR-001",
+                "ABCD",
+                "Program1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "2020-06-01",
+                "22.5135243,86.6731848",
+                "Exit Reason Answer 1");
+    }
+
+    private String[] exitedEnrolmentDataRow_ExitDateBeforeEnrolment() {
+        return dataRow("EXIT-ENR-002",
+                "ABCD",
+                "Program1",
+                "2020-06-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "2020-01-01",
+                "22.5135243,86.6731848",
+                "Exit Reason Answer 1");
+    }
+
+    private String[] exitedEnrolmentDataRow_FutureExitDate() {
+        return dataRow("EXIT-ENR-003",
+                "ABCD",
+                "Program1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                LocalDate.now().plusDays(2).toString("yyyy-MM-dd"),
+                "22.5135243,86.6731848",
+                "Exit Reason Answer 1");
+    }
+
+    private String[] exitedEnrolmentDataRow_MissingExitDate() {
+        return dataRow("EXIT-ENR-004",
+                "ABCD",
+                "Program1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "",
+                "22.5135243,86.6731848",
+                "Exit Reason Answer 1");
+    }
+
+    private String[] malformedExitPrefixHeader() {
+        return header("Id from previous system",
+                "Subject Id from previous system",
+                "Program",
+                "Enrolment Date",
+                "Enrolment Coordinates",
+                "\"Single Select Coded\"",
+                "Exit Date",
+                "\"Vitals|Exit: Weight\"");
+    }
+
+    private String[] malformedExitPrefixDataRow() {
+        return dataRow("EXIT-ENR-005",
+                "ABCD",
+                "Program1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "2020-06-01",
+                "anything");
+    }
+
+    private FormMapping createProgramExitFormForTests() {
+        Concept exitReason = testConceptService.createCodedConcept("Exit Reason",
+                "Exit Reason Answer 1", "Exit Reason Answer 2");
+        SubjectType subjectType = subjectTypeRepository.findByName("SubjectType1");
+        Program program = programRepository.findByName("Program1");
+        return testFormService.createProgramExitForm(subjectType, program, "Program Exit Form " + UUID.randomUUID().toString().substring(0, 8),
+                List.of(exitReason.getName()), List.of());
+    }
+
+    @Test
+    public void exitedEnrolment_success_persistsBothRegularAndExitObservations() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        programEnrolmentRowCreator.create(new Row(validExitedEnrolmentHeader(), validExitedEnrolmentDataRow()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+
+        ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("EXIT-ENR-001");
+        assertNotNull(enrolment);
+        assertEquals(1, enrolment.getObservations().size(), "Regular observations from non-exit columns must be set");
+        assertNotNull(enrolment.getProgramExitDateTime(), "Exit date must be persisted");
+        assertNotNull(enrolment.getExitLocation(), "Exit location must be persisted");
+        assertNotNull(enrolment.getProgramExitObservations(), "Exit observations must be persisted");
+        assertEquals(1, enrolment.getProgramExitObservations().size(), "Exit observations from Exit:-prefixed columns must be set");
+    }
+
+    @Test
+    public void exitedEnrolment_failsWhenExitDateBeforeEnrolmentDate() {
+        createProgramExitFormForTests();
+        try {
+            programEnrolmentRowCreator.create(new Row(validExitedEnrolmentHeader(), exitedEnrolmentDataRow_ExitDateBeforeEnrolment()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+            fail("Expected ValidationException");
+        } catch (Exception e) {
+            String message = e.getMessage().toLowerCase();
+            assertTrue(message.contains("'exit date'"), message);
+            assertTrue(message.contains("on or after"), message);
+            assertTrue(message.contains("'enrolment date'"), message);
+        }
+    }
+
+    @Test
+    public void exitedEnrolment_failsWhenExitDateInFuture() {
+        createProgramExitFormForTests();
+        try {
+            programEnrolmentRowCreator.create(new Row(validExitedEnrolmentHeader(), exitedEnrolmentDataRow_FutureExitDate()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+            fail("Expected ValidationException");
+        } catch (Exception e) {
+            String message = e.getMessage().toLowerCase();
+            assertTrue(message.contains("'exit date'"), message);
+            assertTrue(message.contains("cannot be in future"), message);
+        }
+    }
+
+    @Test
+    public void exitedEnrolment_failsWhenExitDateMissing() {
+        createProgramExitFormForTests();
+        try {
+            programEnrolmentRowCreator.create(new Row(validExitedEnrolmentHeader(), exitedEnrolmentDataRow_MissingExitDate()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+            fail("Expected ValidationException");
+        } catch (Exception e) {
+            String message = e.getMessage().toLowerCase();
+            assertTrue(message.contains("'exit date'"), message);
+            assertTrue(message.contains("mandatory"), message);
+        }
+    }
+
+    @Test
+    public void exitedEnrolment_rejectsExitPrefixNotAtStartOfHeader() {
+        createProgramExitFormForTests();
+        try {
+            programEnrolmentRowCreator.create(new Row(malformedExitPrefixHeader(), malformedExitPrefixDataRow()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+            fail("Expected ValidationException");
+        } catch (Exception e) {
+            String message = e.getMessage().toLowerCase();
+            assertTrue(message.contains("exit:"), message);
+            assertTrue(message.contains("not at the start"), message);
+        }
     }
 
     private void success(String[] headers, String[] values) throws InvalidConfigurationException {
         try {
             long previousCount = programEnrolmentRepository.count();
-            programEnrolmentWriter.write(Chunk.of(new Row(headers, values)));
+            programEnrolmentRowCreator.create(new Row(headers, values), ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT);
             assertEquals(previousCount + 1, programEnrolmentRepository.count());
         } catch (ValidationException e) {
             throw new RuntimeException(e);
@@ -229,7 +388,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {
-            programEnrolmentWriter.write(Chunk.of(new Row(headers, cells)));
+            programEnrolmentRowCreator.create(new Row(headers, cells), ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT);
             fail();
         } catch (Exception e) {
             e.printStackTrace();

@@ -28,21 +28,9 @@ public class BasicEncounterCreator {
 
     public void updateEncounterFields(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs, EncounterUploadMode mode) {
         DateCreator dateCreator = new DateCreator();
-        if (EncounterUploadMode.SCHEDULE_VISIT == mode) {
-            LocalDate earliestVisitDate = dateCreator.getDate(
-                    row,
-                    EncounterHeadersCreator.EARLIEST_VISIT_DATE,
-                    allErrorMsgs, null
-            );
-            if (earliestVisitDate != null)
-                basicEncounter.setEarliestVisitDateTime(earliestVisitDate.toDateTimeAtStartOfDay());
-            LocalDate maxVisitDate = dateCreator.getDate(
-                    row,
-                    EncounterHeadersCreator.MAX_VISIT_DATE,
-                    allErrorMsgs, null
-            );
-            if (maxVisitDate != null) basicEncounter.setMaxVisitDateTime(maxVisitDate.toDateTimeAtStartOfDay());
-        } else {
+        applyScheduleWindowToEncounter(row, basicEncounter, allErrorMsgs, dateCreator);
+
+        if (encounterHasHappened(mode)) {
             LocalDate visitDate = row.ensureDateIsPresentAndNotInFuture(EncounterHeadersCreator.VISIT_DATE, allErrorMsgs);
             if (visitDate != null)
                 basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
@@ -51,5 +39,25 @@ public class BasicEncounterCreator {
 
         EncounterType encounterType = encounterTypeCreator.getEncounterType(row.get(EncounterHeadersCreator.ENCOUNTER_TYPE), EncounterHeadersCreator.ENCOUNTER_TYPE);
         basicEncounter.setEncounterType(encounterType);
+    }
+
+    private static boolean encounterHasHappened(EncounterUploadMode mode) {
+        return EncounterUploadMode.SCHEDULE_VISIT != mode && EncounterUploadMode.UPLOAD_CANCELLED_VISIT != mode;
+    }
+
+    private void applyScheduleWindowToEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs, DateCreator dateCreator) {
+        LocalDate earliestVisitDate = dateCreator.getDate(
+                row,
+                EncounterHeadersCreator.EARLIEST_VISIT_DATE,
+                allErrorMsgs, null
+        );
+        if (earliestVisitDate != null)
+            basicEncounter.setEarliestVisitDateTime(earliestVisitDate.toDateTimeAtStartOfDay());
+        LocalDate maxVisitDate = dateCreator.getDate(
+                row,
+                EncounterHeadersCreator.MAX_VISIT_DATE,
+                allErrorMsgs, null
+        );
+        if (maxVisitDate != null) basicEncounter.setMaxVisitDateTime(maxVisitDate.toDateTimeAtStartOfDay());
     }
 }

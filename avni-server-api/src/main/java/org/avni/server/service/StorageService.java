@@ -355,7 +355,7 @@ public abstract class StorageService implements S3Service {
                 FileUtils.forceMkdirParent(destination);
                 FileUtils.copyFile(tempFile, destination);
                 logger.info(format("[dev] Saved file locally at '%s'", destination.getAbsolutePath()));
-                return destination.getAbsolutePath();
+                return objectKey;
             } catch (IOException e) {
                 throw new RuntimeException(format("[dev] Failed to save file locally for key '%s'", objectKey), e);
             }

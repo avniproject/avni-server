@@ -199,6 +199,15 @@ Controller → Service → Repository → Database
 - **Null checks**: Only add when explicitly requested
 - **JavaDocs**: Avoid in favor of self-documenting code
 
+### Naming
+- Prefer full domain words over abbreviations. Match identifiers used in the codebase: `Encounter`, `ProgramEncounter`, `ProgramEnrolment`, `ProgramExit`, `IndividualEncounterCancellation`, `ProgramEncounterCancellation`. Do not introduce shortened forms like `enc`, `enr`, `obs`.
+- Mode-style enums name the action, not the state: `UPLOAD_CANCELLED_VISIT`, `UPLOAD_EXITED_ENROLMENT`. Their string values use snake_case (`upload_cancelled_visits`).
+- Boolean accessors: `isX` / `hasX` / `shouldX`. Never `flag`, `status` for booleans.
+- When a method/class name collides with an existing one in a different package, qualify on call-site rather than overloading the local identifier.
+
+### Domain name clashes — surface, don't decide silently
+When introducing a fixed identifier that could overlap with a configurable concept the user owns — e.g. a CSV column name vs. a concept name on a form, a mode value vs. an existing enum value, a header prefix vs. a concept name prefix — surface the clash to the user before writing code. Don't assume the org won't have a concept named "Exit Date" or starting with "Exit: ".
+
 ### Database Migrations
 - All migrations in `avni-server-api/src/main/resources/db/migration/`
 - Naming: `V{version}__{description}.sql` (e.g., `V1_99__AddUserTable.sql`)

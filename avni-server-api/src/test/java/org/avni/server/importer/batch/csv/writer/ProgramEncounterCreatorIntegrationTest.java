@@ -7,7 +7,7 @@ import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
-import org.avni.server.importer.batch.csv.creator.ProgramEncounterCreator;
+import org.avni.server.importer.batch.csv.creator.EncounterCreator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.model.Row;
@@ -41,7 +41,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private SubjectTypeRepository subjectTypeRepository;
     @Autowired
-    private ProgramEncounterCreator programEncounterCreator;
+    private EncounterCreator encounterCreator;
     @Autowired
     private TestFormService testFormService;
     @Autowired
@@ -60,6 +60,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
     private EncounterType encounterType;
     private Individual subject;
     private ProgramEnrolment programEnrolment;
+    private ProgramEnrolment exitedProgramEnrolment;
 
     private String[] validScheduleVisitHeader() {
         return header(
@@ -178,6 +179,90 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         );
     }
 
+    private String[] validCancelledVisitHeader() {
+        return header(
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                EncounterHeadersCreator.EARLIEST_VISIT_DATE,
+                EncounterHeadersCreator.MAX_VISIT_DATE,
+                EncounterHeadersCreator.CANCEL_DATE,
+                EncounterHeadersCreator.CANCEL_LOCATION,
+                "\"Program Cancel Reason\""
+        );
+    }
+
+    private String[] validCancelledVisitDataRow(String legacyId, String enrolmentLegacyId) {
+        return dataRow(
+                legacyId,
+                enrolmentLegacyId,
+                encounterType.getName(),
+                LocalDate.now().minusDays(8).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(1).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "PCR Answer 1"
+        );
+    }
+
+    private String[] cancelledVisitDataRow_CancelDateBeforeEnrolment(String legacyId) {
+        return dataRow(
+                legacyId,
+                "PENR-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(15).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(12).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(14).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "PCR Answer 1"
+        );
+    }
+
+    private String[] uploadVisitHeader_WithScheduleWindow() {
+        return header(
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                EncounterHeadersCreator.EARLIEST_VISIT_DATE,
+                EncounterHeadersCreator.MAX_VISIT_DATE,
+                EncounterHeadersCreator.VISIT_DATE,
+                EncounterHeadersCreator.ENCOUNTER_COORDINATES,
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Numeric Concept\""
+        );
+    }
+
+    private String[] uploadVisitDataRow_WithScheduleWindow() {
+        return dataRow(
+                "PENC-WIN-001",
+                "PENR-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(8).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(3).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "123"
+        );
+    }
+
+    private String[] uploadVisitDataRow_MaxBeforeEarliest() {
+        return dataRow(
+                "PENC-WIN-BAD-001",
+                "PENR-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(3).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(8).toString("yyyy-MM-dd"),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "123"
+        );
+    }
+
     private String[] invalidUploadVisitDataRow_InvalidConcepts() {
         return dataRow(
                 "PENC-006",
@@ -249,6 +334,19 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 multiSelectConcepts.stream().map(Concept::getName).collect(java.util.stream.Collectors.toList())
         );
 
+        // Create program-encounter cancellation form mapping for the same encounter type
+        Concept programCancelReasonConcept = testConceptService.createCodedConcept("Program Cancel Reason",
+                "PCR Answer 1", "PCR Answer 2");
+        String cancellationFormName = "Test Program Encounter Cancellation Form " + UUID.randomUUID().toString().substring(0, 8);
+        testFormService.createProgramEncounterCancellationForm(
+                subjectType,
+                program,
+                encounterType,
+                cancellationFormName,
+                List.of(programCancelReasonConcept.getName()),
+                List.of()
+        );
+
         // Create test subject
         subject = new SubjectBuilder()
                 .withRegistrationDate(LocalDate.now().minusDays(20))
@@ -268,6 +366,18 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 .setLegacyId("PENR-001")
                 .build();
         programEnrolmentRepository.save(programEnrolment);
+
+        // Create a second enrolment for the same subject that is already exited
+        // (used to test: cancelled visits can be created against an exited enrolment)
+        exitedProgramEnrolment = new ProgramEnrolmentBuilder()
+                .setProgram(program)
+                .setIndividual(subject)
+                .withMandatoryFieldsForNewEntity()
+                .setEnrolmentDateTime(LocalDateTime.now().minusDays(30).toDateTime())
+                .setProgramExitDateTime(LocalDateTime.now().minusDays(5).toDateTime())
+                .setLegacyId("PENR-EXITED-001")
+                .build();
+        programEnrolmentRepository.save(exitedProgramEnrolment);
     }
 
     @Test
@@ -277,7 +387,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("these fields are not needed when scheduling a visit"));
@@ -290,7 +400,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertEquals("value required for mandatory field: 'visit date'", exception.getMessage().toLowerCase());
@@ -302,7 +412,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validScheduleVisitDataRow();
 
         // Execute
-        programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
 
         // Verify
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-001");
@@ -321,7 +431,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validScheduleVisitDataRowForFutureDates();
 
         // Execute
-        programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
 
         // Verify
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-001");
@@ -340,7 +450,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validUploadVisitDataRow();
 
         // Execute
-        programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
 
         // Verify
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-002");
@@ -360,7 +470,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("cannot be in future"));
@@ -373,7 +483,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("visit date needs to be after program enrolment date"));
@@ -386,7 +496,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("max visit date needs to be after earliest visit date"));
@@ -399,7 +509,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         // Verify all validation errors are reported
@@ -415,11 +525,11 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validUploadVisitDataRow();
 
         // First insert should succeed
-        programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
 
         // Second insert with same legacy ID should fail
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("already present in avni"));
@@ -432,7 +542,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Execute and verify
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.SCHEDULE_VISIT.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("not found in database"));
@@ -444,16 +554,90 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         String[] dataRow = validUploadVisitDataRow();
 
         // First insert should succeed
-        programEncounterCreator.create(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
 
         // Try to insert another record with the same ID
         String[] duplicateDataRow = invalidUploadVisitDataRow_IdShouldBeUnique();
 
         // Second insert with same legacy ID should fail
         Exception exception = assertThrows(ValidationException.class, () -> {
-            programEncounterCreator.create(new Row(headers, duplicateDataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+            encounterCreator.createForEnrolment(new Row(headers, duplicateDataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
         });
 
         assertTrue(exception.getMessage().toLowerCase().contains("already present in avni"));
+    }
+
+    @Test
+    public void testUploadVisit_Success_WithOptionalScheduleWindow() throws Exception {
+        String[] headers = uploadVisitHeader_WithScheduleWindow();
+        String[] dataRow = uploadVisitDataRow_WithScheduleWindow();
+
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+
+        ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-WIN-001");
+        assertNotNull(programEncounter);
+        assertNotNull("Visit date must be set", programEncounter.getEncounterDateTime());
+        assertNotNull("Earliest visit date from schedule window must be preserved", programEncounter.getEarliestVisitDateTime());
+        assertNotNull("Max visit date from schedule window must be preserved", programEncounter.getMaxVisitDateTime());
+        assertEquals(3, programEncounter.getObservations().size());
+    }
+
+    @Test
+    public void testUploadVisit_Fails_MaxVisitDateBeforeEarliest() {
+        String[] headers = uploadVisitHeader_WithScheduleWindow();
+        String[] dataRow = uploadVisitDataRow_MaxBeforeEarliest();
+
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        });
+
+        assertTrue(exception.getMessage().toLowerCase().contains("max visit date needs to be after earliest visit date"));
+    }
+
+    @Test
+    public void testCancelledVisit_Success_WithCancellationObservations() throws Exception {
+        String[] headers = validCancelledVisitHeader();
+        String[] dataRow = validCancelledVisitDataRow("PENC-CAN-001", "PENR-001");
+
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_CANCELLED_VISIT.getValue());
+
+        ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-CAN-001");
+        assertNotNull(programEncounter);
+        assertNull("Cancelled program encounter must have no visit date", programEncounter.getEncounterDateTime());
+        assertNotNull("Cancel date must be set", programEncounter.getCancelDateTime());
+        assertNotNull("Cancel location must be set", programEncounter.getCancelLocation());
+        assertNotNull(programEncounter.getEarliestVisitDateTime());
+        assertNotNull(programEncounter.getMaxVisitDateTime());
+        assertEquals(0, programEncounter.getObservations().size());
+        assertNotNull(programEncounter.getCancelObservations());
+        assertEquals(1, programEncounter.getCancelObservations().size());
+    }
+
+    @Test
+    public void testCancelledVisit_Allowed_AgainstExitedEnrolment() throws Exception {
+        String[] headers = validCancelledVisitHeader();
+        String[] dataRow = validCancelledVisitDataRow("PENC-CAN-EXIT-001", "PENR-EXITED-001");
+
+        // Should succeed — cancellation against an exited enrolment is intentionally allowed
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_CANCELLED_VISIT.getValue());
+
+        ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-CAN-EXIT-001");
+        assertNotNull(programEncounter);
+        assertEquals("PENR-EXITED-001", programEncounter.getProgramEnrolment().getLegacyId());
+        assertNotNull(programEncounter.getProgramEnrolment().getProgramExitDateTime());
+        assertNotNull(programEncounter.getCancelDateTime());
+    }
+
+    @Test
+    public void testCancelledVisit_FailsWhenCancelDateBeforeEnrolmentDate() {
+        String[] headers = validCancelledVisitHeader();
+        String[] dataRow = cancelledVisitDataRow_CancelDateBeforeEnrolment("PENC-CAN-002");
+
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_CANCELLED_VISIT.getValue());
+        });
+
+        String message = exception.getMessage().toLowerCase();
+        assertTrue(message, message.contains("'cancel date'"));
     }
 }

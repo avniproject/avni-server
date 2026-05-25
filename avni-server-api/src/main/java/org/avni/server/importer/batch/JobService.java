@@ -68,7 +68,7 @@ public class JobService {
         }
     }
 
-    public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode, String locationHierarchy, String encounterUploadMode) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+    public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode, String locationHierarchy, String encounterUploadMode, String programEnrolmentUploadMode) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
         JobParametersBuilder jobParametersBuilder = new JobParametersBuilder()
                 .addString("organisationUUID", organisationUUID)
                 .addString("uuid", uuid)
@@ -86,6 +86,9 @@ public class JobService {
         }
         if (Objects.nonNull(encounterUploadMode)) {
             jobParametersBuilder.addString("encounterUploadMode", encounterUploadMode);
+        }
+        if (Objects.nonNull(programEnrolmentUploadMode)) {
+            jobParametersBuilder.addString("programEnrolmentUploadMode", programEnrolmentUploadMode);
         }
         JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         logger.info(format("Bulk upload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));

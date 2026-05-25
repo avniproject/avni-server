@@ -12,6 +12,7 @@ import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.LocationWriter;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.GroupMemberHeaders;
 import org.avni.server.importer.batch.csv.writer.header.HouseholdMemberHeaders;
 import org.avni.server.util.BadRequestError;
@@ -145,6 +146,10 @@ public class ImportService implements ImportLocationsConstants {
      * @return
      */
     public String getSampleFile(String uploadType) throws InvalidConfigurationException {
+        return getSampleFile(uploadType, null);
+    }
+
+    private String getSampleFile(String uploadType, ProgramEnrolmentUploadMode programEnrolmentUploadMode) throws InvalidConfigurationException {
         String[] uploadSpec = uploadType.split("---");
         String response = "";
 
@@ -157,7 +162,7 @@ public class ImportService implements ImportLocationsConstants {
                 return subjectImportService.generateSampleFile(uploadSpec, null);
             }
             case "ProgramEnrolment" -> {
-                return programImportService.generateSampleFile(uploadSpec, null);
+                return programImportService.generateSampleFile(uploadSpec, programEnrolmentUploadMode);
             }
             case "GroupMembers" -> {
                 return getGroupMembersSampleFile(uploadSpec, response, getSubjectType(uploadSpec[1]));
@@ -172,6 +177,7 @@ public class ImportService implements ImportLocationsConstants {
                                     String locationHierarchy,
                                     LocationWriter.LocationUploadMode locationUploadMode,
                                     EncounterUploadMode encounterUploadMode,
+                                    ProgramEnrolmentUploadMode programEnrolmentUploadMode,
                                     HttpServletResponse response) throws IOException, InvalidConfigurationException {
         if (uploadType.equals("locations")) {
             if (!StringUtils.hasText(locationHierarchy)) {
@@ -207,7 +213,7 @@ public class ImportService implements ImportLocationsConstants {
                 response.getWriter().write(sampleFile);
             }
         } else {
-            String sampleFile = getSampleFile(uploadType);
+            String sampleFile = getSampleFile(uploadType, programEnrolmentUploadMode);
             if (response != null) {
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
                 response.getWriter().write(sampleFile);

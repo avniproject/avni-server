@@ -14,6 +14,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
 import org.avni.server.importer.batch.csv.writer.LocationWriter;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentUploadMode;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
@@ -89,9 +90,10 @@ public class ImportController {
                                     @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                     @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
                                     @RequestParam(value = "encounterUploadMode", required = false) String encounterUploadMode,
+                                    @RequestParam(value = "programEnrolmentUploadMode", required = false) String programEnrolmentUploadMode,
                                     HttpServletResponse response) throws IOException, InvalidConfigurationException {
         response.setContentType("text/csv; charset=UTF-8");
-        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, EncounterUploadMode.fromString(encounterUploadMode), response);
+        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, EncounterUploadMode.fromString(encounterUploadMode), ProgramEnrolmentUploadMode.fromString(programEnrolmentUploadMode), response);
     }
 
     @RequestMapping(value = "/web/importSampleDownloadable", method = RequestMethod.GET)
@@ -100,11 +102,12 @@ public class ImportController {
                                                                                          @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                                                                          @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
                                                                                          @RequestParam(value = "encounterUploadMode", required = false) String encounterUploadMode,
+                                                                                         @RequestParam(value = "programEnrolmentUploadMode", required = false) String programEnrolmentUploadMode,
                                                                                          HttpServletResponse response) {
 
         try {
             importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode,
-                    EncounterUploadMode.fromString(encounterUploadMode), null);
+                    EncounterUploadMode.fromString(encounterUploadMode), ProgramEnrolmentUploadMode.fromString(programEnrolmentUploadMode), null);
             return ResponseEntity.ok(new ImportSampleCheckResponse(true, "Sample import file is downloadable"));
         } catch (Exception e) {
             return ResponseEntity.ok(new ImportSampleCheckResponse(false, e.getMessage()));
@@ -123,7 +126,8 @@ public class ImportController {
                                         @RequestParam boolean autoApprove,
                                         @RequestParam String locationUploadMode,
                                         @RequestParam String locationHierarchy,
-                                        @RequestParam String encounterUploadMode) throws IOException {
+                                        @RequestParam String encounterUploadMode,
+                                        @RequestParam(value = "programEnrolmentUploadMode", required = false) String programEnrolmentUploadMode) throws IOException {
 
         accessControlService.assertIsNotSuperAdmin();
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
@@ -139,7 +143,7 @@ public class ImportController {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         try {
             ObjectInfo storedFileInfo = type.equals("metadataZip") ? bulkUploadS3Service.uploadZip(file, uuid) : bulkUploadS3Service.uploadFile(file, uuid);
-            jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode, locationHierarchy, encounterUploadMode);
+            jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode, locationHierarchy, encounterUploadMode, programEnrolmentUploadMode);
         } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
             logger.error(format("Bulk upload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
