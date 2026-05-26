@@ -21,6 +21,7 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.domain.SubjectTypeSetting;
 import org.joda.time.DateTime;
@@ -133,30 +134,35 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     private void validateAttendanceEligibilityAndConfig(SubjectTypeContract request, SubjectType existing) {
-        validateAttendanceEligibilityAndConfig(existing, request.isAttendanceEnabled(), request.isGroup(), request.isHousehold());
+        // SubjectTypeContract (non-web REST API path) carries no attendanceTypes; eligibility-only.
+        validateAttendanceEligibilityAndConfig(request.isAttendanceEnabled(), request.isGroup(), request.isHousehold(), null);
     }
 
-    public void validateAttendanceEligibilityAndConfig(SubjectType existing, boolean requestedAttendanceEnabled, boolean requestedIsGroup, boolean requestedIsHousehold) {
+    public void validateAttendanceEligibilityAndConfig(boolean requestedAttendanceEnabled,
+                                                       boolean requestedIsGroup,
+                                                       boolean requestedIsHousehold,
+                                                       List<AttendanceTypeContract> requestAttendanceTypes) {
         if (!requestedAttendanceEnabled) {
             return;
         }
         if (!(requestedIsGroup || requestedIsHousehold)) {
             throw new BadRequestError("attendance_enabled requires a group or household subject type");
         }
-        if (existing == null || existing.getId() == null) {
+        if (requestAttendanceTypes == null) {
             return;
         }
-        List<AttendanceType> nonVoided = attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing);
         List<IncompleteAttendanceType> incomplete = new ArrayList<>();
-        for (AttendanceType attendanceType : nonVoided) {
+        for (AttendanceTypeContract contract : requestAttendanceTypes) {
+            if (contract.isVoided()) continue;
+            Map<String, Object> rawConfig = contract.getConfig();
+            JsonObject config = rawConfig == null ? new JsonObject() : new JsonObject(rawConfig);
             List<String> missing = new ArrayList<>();
-            JsonObject config = attendanceType.getConfig();
-            String sessionOutcome = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
-            String absenceReason = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
-            if (sessionOutcome == null) missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
-            if (absenceReason == null) missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
+            if (AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT) == null)
+                missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
+            if (AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT) == null)
+                missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
             if (!missing.isEmpty()) {
-                incomplete.add(new IncompleteAttendanceType(attendanceType.getUuid(), attendanceType.getName(), missing));
+                incomplete.add(new IncompleteAttendanceType(contract.getUuid(), contract.getName(), missing));
             }
         }
         if (!incomplete.isEmpty()) {
