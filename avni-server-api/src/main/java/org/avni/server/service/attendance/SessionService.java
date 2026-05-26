@@ -413,11 +413,16 @@ public class SessionService implements ScopeAwareService<Session> {
                     "Encounter already has Observations"));
             return;
         }
+        // Read the lazy EncounterType proxy BEFORE encounterService.save: the
+        // @Messageable aspect on save clears/flushes the persistence context as a
+        // side-effect of message dispatch, leaving the proxy without a Session and
+        // a `type.getName()` call below throwing LazyInitializationException.
+        EncounterType type = encounter.getEncounterType();
+        String typeName = (type == null) ? null : type.getName();
         encounter.setVoided(true);
         encounterService.save(encounter);
-        EncounterType type = encounter.getEncounterType();
         voidedFollowUps.add(new FollowUpDescriptor(studentUuid, studentName, encounter.getUuid(),
-                type == null ? null : type.getName(),
+                typeName,
                 encounter.getEarliestVisitDateTime(), encounter.getMaxVisitDateTime()));
     }
 
