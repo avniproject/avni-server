@@ -152,8 +152,9 @@ public class SubjectTypeService implements NonScopeAwareService {
             return;
         }
         List<IncompleteAttendanceType> incomplete = new ArrayList<>();
+        // Validate voided rows too: partial config on a voided row can still propagate to
+        // mobile clients (sync sends voided rows) and cause inconsistent behaviour there.
         for (AttendanceTypeContract contract : requestAttendanceTypes) {
-            if (contract.isVoided()) continue;
             Map<String, Object> rawConfig = contract.getConfig();
             JsonObject config = rawConfig == null ? new JsonObject() : new JsonObject(rawConfig);
             List<String> missing = new ArrayList<>();

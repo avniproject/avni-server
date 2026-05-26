@@ -212,8 +212,25 @@ public class SubjectTypeAttendanceValidationTest {
     }
 
     @Test
-    public void validatorSkipsVoidedAttendanceTypesInRequest() {
+    public void validatorRejectsVoidedAttendanceTypesWithIncompleteConfig() {
+        // Voided rows are still synced to clients; partial config would propagate and
+        // cause inconsistent client behaviour, so we reject the save and force a reload.
         AttendanceTypeContract voided = attendanceTypeContract("type-uuid", "Old Type");
+        voided.setVoided(true);
+
+        try {
+            service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(voided));
+            fail("Expected AttendanceConfigIncompleteException");
+        } catch (AttendanceConfigIncompleteException e) {
+            assertEquals(1, e.getIncompleteTypes().size());
+        }
+    }
+
+    @Test
+    public void validatorAllowsVoidedAttendanceTypesWithCompleteConfig() {
+        AttendanceTypeContract voided = attendanceTypeContract("type-uuid", "Old Type",
+                AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "session-outcome-uuid",
+                AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT, "absence-reason-uuid");
         voided.setVoided(true);
 
         service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(voided));
