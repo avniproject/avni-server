@@ -396,8 +396,6 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
         boolean isGroup();
 
-        String getMemberSubjectIds();
-
         String getType();
 
         boolean isAllowEmptyLocation();
