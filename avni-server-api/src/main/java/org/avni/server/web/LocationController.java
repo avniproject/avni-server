@@ -92,7 +92,12 @@ public class LocationController implements RestControllerResourceProcessor<Addre
             @RequestParam(value = "title", defaultValue = "") String title,
             @RequestParam(value = "typeId", required = false) Integer typeId,
             @RequestParam(value = "parentId", required = false) Integer parentId,
+            @RequestParam(value = "ancestorId", required = false) Long ancestorId,
             Pageable pageable) {
+        if (ancestorId != null) {
+            return addressLevelService.addTitleLineageToLocation(
+                    locationService.findByAncestorAndFilters(title, typeId, ancestorId, pageable));
+        }
         return addressLevelService.addTitleLineageToLocation(locationService.find(new LocationSearchRequest(title, typeId, parentId, pageable)));
     }
 

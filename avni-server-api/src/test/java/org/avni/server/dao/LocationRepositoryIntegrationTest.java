@@ -1,10 +1,12 @@
 package org.avni.server.dao;
 
 import org.springframework.transaction.annotation.Transactional;
+import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.AddressLevel;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -27,5 +29,33 @@ public class LocationRepositoryIntegrationTest extends AbstractControllerIntegra
 
         addressLevels = locationRepository.findByTitleAndType("non-existent address", addressLevel.getType(), PageRequest.of(0, 1));
         assertThat(addressLevels.size()).isEqualTo(0);
+    }
+
+    @Test
+    public void findByAncestorAndFiltersShouldReturnOnlyDescendantsOfGivenLineage() {
+        // test-data.sql sets up GP1 (id=3, lineage='3') with descendants GP1.Parent1 (id=4, '3.4') and GP1.Parent1.Child1 (id=5, '3.4.5')
+        Page<LocationProjection> result = locationRepository.findLocationProjectionByAncestorAndFilters(
+                null, null, "3", PageRequest.of(0, 50));
+
+        assertThat(result.getContent()).extracting(LocationProjection::getId).containsExactlyInAnyOrder(4L, 5L);
+    }
+
+    @Test
+    public void findByAncestorAndFiltersShouldNotMatchSiblingsWithSimilarLineagePrefix() {
+        // GP2 (id=6, lineage='6') and descendants must not appear when ancestor is GP1 (lineage='3').
+        // Integer-id dot separator prevents false prefix matches (e.g. '3' should not match '30').
+        Page<LocationProjection> result = locationRepository.findLocationProjectionByAncestorAndFilters(
+                null, null, "3", PageRequest.of(0, 50));
+
+        assertThat(result.getContent()).extracting(LocationProjection::getId).doesNotContain(3L, 6L, 7L, 8L);
+    }
+
+    @Test
+    public void findByAncestorAndFiltersShouldReturnAllNonVoidedWhenAllFiltersAreNull() {
+        Page<LocationProjection> result = locationRepository.findLocationProjectionByAncestorAndFilters(
+                null, null, null, PageRequest.of(0, 50));
+
+        // All eight seeded address_levels are non-voided.
+        assertThat(result.getContent()).hasSizeGreaterThanOrEqualTo(8);
     }
 }
