@@ -163,7 +163,9 @@ public class SessionService implements ScopeAwareService<Session> {
                 : conceptRepository.findByUuid(contract.getReasonConceptUUID());
 
         DayType dayType = resolveDayType(groupSubject, contract.getScheduledDate());
-        validateSessionReason(contract.getStatus(), dayType, contract.getReasonConceptUUID());
+        if (!contract.isVoided()) {
+            validateSessionReason(contract.getStatus(), dayType, contract.getReasonConceptUUID());
+        }
 
         Map<String, AttendanceRecord> existingRecordsBySubjectUuid = creating
                 ? new HashMap<>()
@@ -205,7 +207,7 @@ public class SessionService implements ScopeAwareService<Session> {
             throw new BadRequestError("scheduledDate is required");
         }
         if (scheduledDate.isAfter(LocalDate.now())) {
-            throw new BadRequestError("scheduledDate cannot be in the future");
+            throw new FutureScheduledDateNotAllowedException(scheduledDate);
         }
     }
 
@@ -271,7 +273,7 @@ public class SessionService implements ScopeAwareService<Session> {
 
             String preservedFollowUpUuid = record.getFollowUpEncounterUuid();
             if (preservedFollowUpUuid == null) {
-                preservedFollowUpUuid = recordContract.getFollowUpEncounterUuid();
+                preservedFollowUpUuid = recordContract.getFollowUpEncounterUUID();
             }
             record.setFollowUpEncounterUuid(preservedFollowUpUuid);
 
@@ -294,7 +296,7 @@ public class SessionService implements ScopeAwareService<Session> {
     private Map<String, Encounter> batchLoadExistingFollowUps(List<AttendanceRecordContract> contracts,
                                                               Map<String, AttendanceRecord> existingBySubject) {
         Set<String> uuids = contracts.stream()
-                .map(AttendanceRecordContract::getFollowUpEncounterUuid)
+                .map(AttendanceRecordContract::getFollowUpEncounterUUID)
                 .filter(u -> u != null)
                 .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
         existingBySubject.values().stream()
@@ -411,11 +413,16 @@ public class SessionService implements ScopeAwareService<Session> {
                     "Encounter already has Observations"));
             return;
         }
+        // Read the lazy EncounterType proxy BEFORE encounterService.save: the
+        // @Messageable aspect on save clears/flushes the persistence context as a
+        // side-effect of message dispatch, leaving the proxy without a Session and
+        // a `type.getName()` call below throwing LazyInitializationException.
+        EncounterType type = encounter.getEncounterType();
+        String typeName = (type == null) ? null : type.getName();
         encounter.setVoided(true);
         encounterService.save(encounter);
-        EncounterType type = encounter.getEncounterType();
         voidedFollowUps.add(new FollowUpDescriptor(studentUuid, studentName, encounter.getUuid(),
-                type == null ? null : type.getName(),
+                typeName,
                 encounter.getEarliestVisitDateTime(), encounter.getMaxVisitDateTime()));
     }
 

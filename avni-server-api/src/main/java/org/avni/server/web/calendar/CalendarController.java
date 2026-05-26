@@ -2,6 +2,7 @@ package org.avni.server.web.calendar;
 
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
 import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Individual;
@@ -18,25 +19,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 public class CalendarController {
 
+    // Matches DateTimeUtil.IST — calendars and markers are India-time-of-day concepts.
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+
     private final CalendarService calendarService;
     private final CalendarRepository calendarRepository;
+    private final CalendarDateMarkerRepository calendarDateMarkerRepository;
     private final LocationRepository locationRepository;
     private final IndividualRepository individualRepository;
     private final AccessControlService accessControlService;
 
     public CalendarController(CalendarService calendarService,
                               CalendarRepository calendarRepository,
+                              CalendarDateMarkerRepository calendarDateMarkerRepository,
                               LocationRepository locationRepository,
                               IndividualRepository individualRepository,
                               AccessControlService accessControlService) {
         this.calendarService = calendarService;
         this.calendarRepository = calendarRepository;
+        this.calendarDateMarkerRepository = calendarDateMarkerRepository;
         this.locationRepository = locationRepository;
         this.individualRepository = individualRepository;
         this.accessControlService = accessControlService;
@@ -46,9 +58,32 @@ public class CalendarController {
     @ResponseBody
     @Transactional(readOnly = true)
     public List<CalendarContract> getAll() {
-        return calendarRepository.findAllByIsVoidedFalse()
-                .stream().map(CalendarContract::fromEntity)
-                .collect(Collectors.toList());
+        List<Calendar> calendars = calendarRepository.findAllByIsVoidedFalse();
+        Map<Long, Long> markerCountByCalendarId = currentYearMarkerCountByCalendarId();
+        return calendars.stream().map(calendar -> {
+            CalendarContract contract = CalendarContract.fromEntity(calendar);
+            contract.setMarkerCountThisYear(markerCountByCalendarId.getOrDefault(calendar.getId(), 0L));
+            return contract;
+        }).collect(Collectors.toList());
+    }
+
+    private Map<Long, Long> currentYearMarkerCountByCalendarId() {
+        LocalDate[] range = currentYearRange();
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : calendarDateMarkerRepository.countByDateRangeGroupedByCalendar(range[0], range[1])) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
+    }
+
+    private long currentYearMarkerCountFor(Calendar calendar) {
+        LocalDate[] range = currentYearRange();
+        return calendarDateMarkerRepository.countByCalendarAndMarkerDateBetweenAndIsVoidedFalse(calendar, range[0], range[1]);
+    }
+
+    private LocalDate[] currentYearRange() {
+        int year = Year.now(IST).getValue();
+        return new LocalDate[]{LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31)};
     }
 
     @GetMapping(value = "/web/calendar/{uuid}")
@@ -59,7 +94,9 @@ public class CalendarController {
         if (calendar == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(CalendarContract.fromEntity(calendar));
+        CalendarContract contract = CalendarContract.fromEntity(calendar);
+        contract.setMarkerCountThisYear(currentYearMarkerCountFor(calendar));
+        return ResponseEntity.ok(contract);
     }
 
     @GetMapping(value = "/web/calendar/forSubject")

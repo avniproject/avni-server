@@ -215,7 +215,7 @@ public class AttendanceRecordController implements RestControllerResourceProcess
         record.setSubject(subject);
         record.setStatus(contract.getStatus());
         record.setReasonConcept(reasonConcept);
-        record.setFollowUpEncounterUuid(contract.getFollowUpEncounterUuid());
+        record.setFollowUpEncounterUuid(contract.getFollowUpEncounterUUID());
         record.setVoided(contract.isVoided());
     }
 }

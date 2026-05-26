@@ -10,7 +10,7 @@ public class AttendanceRecordContract extends CHSRequest {
     private String subjectUUID;
     private AttendanceStatus status;
     private String reasonConceptUUID;
-    private String followUpEncounterUuid;
+    private String followUpEncounterUUID;
     private DateTime createdDateTime;
     private DateTime lastModifiedDateTime;
 
@@ -23,7 +23,7 @@ public class AttendanceRecordContract extends CHSRequest {
         contract.setSubjectUUID(record.getSubjectUUID());
         contract.setStatus(record.getStatus());
         contract.setReasonConceptUUID(record.getReasonConceptUUID());
-        contract.setFollowUpEncounterUuid(record.getFollowUpEncounterUuid());
+        contract.setFollowUpEncounterUUID(record.getFollowUpEncounterUuid());
         contract.setCreatedDateTime(record.getCreatedDateTime());
         contract.setLastModifiedDateTime(record.getLastModifiedDateTime());
         return contract;
@@ -61,12 +61,12 @@ public class AttendanceRecordContract extends CHSRequest {
         this.reasonConceptUUID = reasonConceptUUID;
     }
 
-    public String getFollowUpEncounterUuid() {
-        return followUpEncounterUuid;
+    public String getFollowUpEncounterUUID() {
+        return followUpEncounterUUID;
     }
 
-    public void setFollowUpEncounterUuid(String followUpEncounterUuid) {
-        this.followUpEncounterUuid = followUpEncounterUuid;
+    public void setFollowUpEncounterUUID(String followUpEncounterUUID) {
+        this.followUpEncounterUUID = followUpEncounterUUID;
     }
 
     public DateTime getCreatedDateTime() {

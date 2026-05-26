@@ -147,7 +147,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         boolean requestedIsGroup = Subject.Group.toString().equals(request.getType()) || Subject.Household.toString().equals(request.getType());
         boolean requestedIsHousehold = Subject.Household.toString().equals(request.getType());
         boolean requestedAttendanceEnabled = Boolean.TRUE.equals(request.isAttendanceEnabled());
-        subjectTypeService.validateAttendanceEligibilityAndConfig(null, requestedAttendanceEnabled, requestedIsGroup, requestedIsHousehold);
+        subjectTypeService.validateAttendanceEligibilityAndConfig(requestedAttendanceEnabled, requestedIsGroup, requestedIsHousehold, request.getAttendanceTypes());
         SubjectType subjectType = new SubjectType();
         subjectType.assignUUID(request.getUUID());
         buildSubjectType(request, subjectType);
@@ -239,7 +239,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         boolean requestedIsGroup = Subject.Group.toString().equals(request.getType()) || Subject.Household.toString().equals(request.getType());
         boolean requestedIsHousehold = Subject.Household.toString().equals(request.getType());
         boolean requestedAttendanceEnabled = request.isAttendanceEnabled() == null ? wasAttendanceEnabled : request.isAttendanceEnabled();
-        subjectTypeService.validateAttendanceEligibilityAndConfig(subjectType, requestedAttendanceEnabled, requestedIsGroup, requestedIsHousehold);
+        subjectTypeService.validateAttendanceEligibilityAndConfig(requestedAttendanceEnabled, requestedIsGroup, requestedIsHousehold, request.getAttendanceTypes());
         boolean isSyncConcept1Changed = !Objects.equals(request.getSyncRegistrationConcept1(), subjectType.getSyncRegistrationConcept1());
         boolean isSyncConcept2Changed = !Objects.equals(request.getSyncRegistrationConcept2(), subjectType.getSyncRegistrationConcept2());
         if (isSyncConcept1Changed)

@@ -121,7 +121,9 @@ public class SyncDetailsService {
                 SyncEntityName.MyGroups, SyncEntityName.GroupPrivileges, SyncEntityName.Extension, SyncEntityName.GroupRole, SyncEntityName.LocationHierarchy, SyncEntityName.ReportCard,
                 SyncEntityName.Dashboard, SyncEntityName.DashboardSection, SyncEntityName.DashboardFilter, SyncEntityName.DashboardSectionCardMapping, SyncEntityName.ApprovalStatus, SyncEntityName.GroupDashboard,
                 SyncEntityName.News, SyncEntityName.UserInfo, SyncEntityName.Privilege, SyncEntityName.StandardReportCardType, SyncEntityName.Documentation, SyncEntityName.DocumentationItem,
-                SyncEntityName.Task, SyncEntityName.TaskType, SyncEntityName.TaskStatus, SyncEntityName.TaskUnAssignment, SyncEntityName.UserSubjectAssignment, SyncEntityName.LocationMapping
+                SyncEntityName.Task, SyncEntityName.TaskType, SyncEntityName.TaskStatus, SyncEntityName.TaskUnAssignment, SyncEntityName.UserSubjectAssignment, SyncEntityName.LocationMapping,
+                SyncEntityName.MenuItem, SyncEntityName.CustomCardConfig,
+                SyncEntityName.Calendar, SyncEntityName.CalendarDateMarker, SyncEntityName.AttendanceType
         ));
 
         if (!scopeAwareEAS) addToSyncableItems(syncableItems, Collections.singletonList(SyncEntityName.EntityApprovalStatus));

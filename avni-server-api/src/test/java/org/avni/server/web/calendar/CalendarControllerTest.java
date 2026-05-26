@@ -1,6 +1,7 @@
 package org.avni.server.web.calendar;
 
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
 import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.User;
@@ -34,6 +35,8 @@ public class CalendarControllerTest {
     @Mock
     private CalendarRepository calendarRepository;
     @Mock
+    private CalendarDateMarkerRepository calendarDateMarkerRepository;
+    @Mock
     private LocationRepository locationRepository;
     @Mock
     private AccessControlService accessControlService;
@@ -43,7 +46,7 @@ public class CalendarControllerTest {
     @Before
     public void setUp() {
         initMocks(this);
-        controller = new CalendarController(calendarService, calendarRepository, locationRepository, accessControlService);
+        controller = new CalendarController(calendarService, calendarRepository, calendarDateMarkerRepository, locationRepository, accessControlService);
         UserContext ctx = new UserContext();
         User user = new User();
         user.setUuid("user-uuid");

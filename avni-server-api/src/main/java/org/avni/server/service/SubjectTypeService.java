@@ -21,6 +21,7 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.domain.SubjectTypeSetting;
 import org.joda.time.DateTime;
@@ -92,6 +93,10 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
+        return saveSubjectType(subjectTypeRequest, false);
+    }
+
+    public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest, boolean skipAttendanceSeed) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
@@ -128,35 +133,43 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
         subjectType.setAttendanceEnabled(subjectTypeRequest.isAttendanceEnabled());
         subjectType = subjectTypeRepository.save(subjectType);
-        seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
+        if (!skipAttendanceSeed) {
+            seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
+        }
         return new SubjectTypeUpsertResponse(isSubjectTypeNotPresentInDB, subjectType);
     }
 
     private void validateAttendanceEligibilityAndConfig(SubjectTypeContract request, SubjectType existing) {
-        validateAttendanceEligibilityAndConfig(existing, request.isAttendanceEnabled(), request.isGroup(), request.isHousehold());
+        // SubjectTypeContract (non-web REST API path) carries no attendanceTypes; eligibility-only.
+        validateAttendanceEligibilityAndConfig(request.isAttendanceEnabled(), request.isGroup(), request.isHousehold(), null);
     }
 
-    public void validateAttendanceEligibilityAndConfig(SubjectType existing, boolean requestedAttendanceEnabled, boolean requestedIsGroup, boolean requestedIsHousehold) {
+    public void validateAttendanceEligibilityAndConfig(boolean requestedAttendanceEnabled,
+                                                       boolean requestedIsGroup,
+                                                       boolean requestedIsHousehold,
+                                                       List<AttendanceTypeContract> requestAttendanceTypes) {
         if (!requestedAttendanceEnabled) {
             return;
         }
         if (!(requestedIsGroup || requestedIsHousehold)) {
             throw new BadRequestError("attendance_enabled requires a group or household subject type");
         }
-        if (existing == null || existing.getId() == null) {
+        if (requestAttendanceTypes == null) {
             return;
         }
-        List<AttendanceType> nonVoided = attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing);
         List<IncompleteAttendanceType> incomplete = new ArrayList<>();
-        for (AttendanceType attendanceType : nonVoided) {
+        // Validate voided rows too: partial config on a voided row can still propagate to
+        // mobile clients (sync sends voided rows) and cause inconsistent behaviour there.
+        for (AttendanceTypeContract contract : requestAttendanceTypes) {
+            Map<String, Object> rawConfig = contract.getConfig();
+            JsonObject config = rawConfig == null ? new JsonObject() : new JsonObject(rawConfig);
             List<String> missing = new ArrayList<>();
-            JsonObject config = attendanceType.getConfig();
-            String sessionOutcome = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
-            String absenceReason = AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
-            if (sessionOutcome == null) missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
-            if (absenceReason == null) missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
+            if (AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT) == null)
+                missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
+            if (AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT) == null)
+                missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
             if (!missing.isEmpty()) {
-                incomplete.add(new IncompleteAttendanceType(attendanceType.getUuid(), attendanceType.getName(), missing));
+                incomplete.add(new IncompleteAttendanceType(contract.getUuid(), contract.getName(), missing));
             }
         }
         if (!incomplete.isEmpty()) {
@@ -375,7 +388,12 @@ public class SubjectTypeService implements NonScopeAwareService {
     public void saveSubjectTypesFromBundle(SubjectTypeContract[] subjectTypeContracts) {
         for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
             try {
-                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract);
+                // Skip the default-attendance-type seed: the bundle's attendanceTypes.json runs
+                // immediately after this and carries the source org's rows (seed-on-enable rows
+                // included). Seeding here would mint a destination-only row with a fresh UUID
+                // that the bundle row's INSERT then collides with on the partial unique index
+                // (subject_type_id, lower(name)) WHERE is_voided = false.
+                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract, true);
                 if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
                     userService.ensureSubjectsForUserSubjectType(response.getSubjectType());
                 }

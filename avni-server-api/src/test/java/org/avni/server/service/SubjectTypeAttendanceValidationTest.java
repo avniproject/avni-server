@@ -13,13 +13,16 @@ import org.avni.server.service.attendance.AttendanceTypeConfigKey;
 import org.avni.server.service.batch.BatchJobService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.SubjectTypeContract;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -136,34 +139,6 @@ public class SubjectTypeAttendanceValidationTest {
     }
 
     @Test
-    public void rejectsIncompleteAttendanceTypeWhenEnabled() {
-        SubjectTypeContract request = baseRequest();
-        request.setIsGroup(true);
-        request.setAttendanceEnabled(true);
-
-        SubjectType existing = new SubjectType();
-        existing.setId(1L);
-        existing.setUuid(request.getUuid());
-        existing.setGroup(true);
-        existing.setAttendanceEnabled(true);
-        AttendanceType incomplete = new AttendanceType();
-        incomplete.setUuid("type-uuid");
-        incomplete.setName("Morning Prayer");
-        incomplete.setConfig(new JsonObject().with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "concept-uuid"));
-        when(subjectTypeRepository.findByUuid(request.getUuid())).thenReturn(existing);
-        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing)).thenReturn(List.of(incomplete));
-
-        try {
-            service.saveSubjectType(request);
-            fail("Expected AttendanceConfigIncompleteException");
-        } catch (AttendanceConfigIncompleteException e) {
-            assertEquals(1, e.getIncompleteTypes().size());
-            assertEquals(List.of(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT),
-                    e.getIncompleteTypes().get(0).getMissingFields());
-        }
-    }
-
-    @Test
     public void allowsDisablingAttendanceWithoutValidatingConfig() {
         SubjectTypeContract request = baseRequest();
         request.setIsGroup(true);
@@ -184,7 +159,7 @@ public class SubjectTypeAttendanceValidationTest {
     @Test
     public void publicOverloadRejectsAttendanceOnIndividualType() {
         try {
-            service.validateAttendanceEligibilityAndConfig(null, true, false, false);
+            service.validateAttendanceEligibilityAndConfig(true, false, false, null);
             fail("Expected BadRequestError");
         } catch (BadRequestError e) {
             assertTrue(e.getMessage().toLowerCase().contains("group"));
@@ -193,29 +168,80 @@ public class SubjectTypeAttendanceValidationTest {
 
     @Test
     public void publicOverloadNoOpsWhenAttendanceDisabled() {
-        service.validateAttendanceEligibilityAndConfig(null, false, false, false);
+        service.validateAttendanceEligibilityAndConfig(false, false, false, null);
         verify(attendanceTypeRepository, never()).findBySubjectTypeAndIsVoidedFalse(any());
     }
 
     @Test
-    public void publicOverloadValidatesExistingAttendanceTypes() {
-        SubjectType existing = new SubjectType();
-        existing.setId(1L);
-        existing.setUuid("subj-type-uuid");
-        existing.setGroup(true);
-        AttendanceType incomplete = new AttendanceType();
-        incomplete.setUuid("type-uuid");
-        incomplete.setName("Morning Prayer");
-        incomplete.setConfig(new JsonObject());
-        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(existing)).thenReturn(List.of(incomplete));
+    public void validatorAcceptsRequestWithCompleteConfigEvenWhenDbConfigIsEmpty() {
+        // Regression for the actual bug: validator must NOT query the DB; complete config in the request passes.
+        AttendanceTypeContract contract = attendanceTypeContract("type-uuid", "Morning Prayer",
+                AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "session-outcome-uuid",
+                AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT, "absence-reason-uuid");
 
+        service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(contract));
+
+        verify(attendanceTypeRepository, never()).findBySubjectTypeAndIsVoidedFalse(any());
+    }
+
+    @Test
+    public void validatorRejectsRequestWithEmptyConfig() {
+        AttendanceTypeContract contract = attendanceTypeContract("type-uuid", "Morning Prayer");
         try {
-            service.validateAttendanceEligibilityAndConfig(existing, true, true, false);
+            service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(contract));
             fail("Expected AttendanceConfigIncompleteException");
         } catch (AttendanceConfigIncompleteException e) {
             assertEquals(1, e.getIncompleteTypes().size());
-            assertEquals(2, e.getIncompleteTypes().get(0).getMissingFields().size());
+            assertEquals(List.of(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT,
+                            AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT),
+                    e.getIncompleteTypes().get(0).getMissingFields());
         }
+    }
+
+    @Test
+    public void validatorRejectsRequestMissingOneKey() {
+        AttendanceTypeContract contract = attendanceTypeContract("type-uuid", "Morning Prayer",
+                AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "session-outcome-uuid");
+        try {
+            service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(contract));
+            fail("Expected AttendanceConfigIncompleteException");
+        } catch (AttendanceConfigIncompleteException e) {
+            assertEquals(List.of(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT),
+                    e.getIncompleteTypes().get(0).getMissingFields());
+        }
+    }
+
+    @Test
+    public void validatorRejectsVoidedAttendanceTypesWithIncompleteConfig() {
+        // Voided rows are still synced to clients; partial config would propagate and
+        // cause inconsistent client behaviour, so we reject the save and force a reload.
+        AttendanceTypeContract voided = attendanceTypeContract("type-uuid", "Old Type");
+        voided.setVoided(true);
+
+        try {
+            service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(voided));
+            fail("Expected AttendanceConfigIncompleteException");
+        } catch (AttendanceConfigIncompleteException e) {
+            assertEquals(1, e.getIncompleteTypes().size());
+        }
+    }
+
+    @Test
+    public void validatorAllowsVoidedAttendanceTypesWithCompleteConfig() {
+        AttendanceTypeContract voided = attendanceTypeContract("type-uuid", "Old Type",
+                AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "session-outcome-uuid",
+                AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT, "absence-reason-uuid");
+        voided.setVoided(true);
+
+        service.validateAttendanceEligibilityAndConfig(true, true, false, List.of(voided));
+
+        verify(attendanceTypeRepository, never()).findBySubjectTypeAndIsVoidedFalse(any());
+    }
+
+    @Test
+    public void validatorPassesWhenRequestHasNoAttendanceTypes() {
+        service.validateAttendanceEligibilityAndConfig(true, true, false, null);
+        verify(attendanceTypeRepository, never()).findBySubjectTypeAndIsVoidedFalse(any());
     }
 
     @Test
@@ -260,5 +286,17 @@ public class SubjectTypeAttendanceValidationTest {
                 .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "session-outcome-uuid")
                 .with(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT, "absence-reason-uuid"));
         return type;
+    }
+
+    private AttendanceTypeContract attendanceTypeContract(String uuid, String name, String... configEntries) {
+        AttendanceTypeContract contract = new AttendanceTypeContract();
+        contract.setUuid(uuid);
+        contract.setName(name);
+        Map<String, Object> config = new HashMap<>();
+        for (int i = 0; i < configEntries.length; i += 2) {
+            config.put(configEntries[i], configEntries[i + 1]);
+        }
+        contract.setConfig(config);
+        return contract;
     }
 }

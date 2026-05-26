@@ -91,7 +91,7 @@ public class SubjectTypeControllerAttendanceTest {
         controller.saveSubjectTypeForWeb(request);
 
         InOrder inOrder = inOrder(subjectTypeService, subjectTypeRepository);
-        inOrder.verify(subjectTypeService).validateAttendanceEligibilityAndConfig(eq(null), eq(true), eq(true), eq(false));
+        inOrder.verify(subjectTypeService).validateAttendanceEligibilityAndConfig(eq(true), eq(true), eq(false), eq(null));
         inOrder.verify(subjectTypeRepository).save(any(SubjectType.class));
         inOrder.verify(subjectTypeService).seedDefaultAttendanceTypeIfEnabling(any(SubjectType.class), eq(false));
     }
@@ -131,7 +131,7 @@ public class SubjectTypeControllerAttendanceTest {
 
         controller.saveSubjectTypeForWeb(request);
 
-        verify(subjectTypeService, never()).validateAttendanceEligibilityAndConfig(any(), anyBoolean(), anyBoolean(), anyBoolean());
+        verify(subjectTypeService, never()).validateAttendanceEligibilityAndConfig(anyBoolean(), anyBoolean(), anyBoolean(), any());
         verify(subjectTypeService, never()).seedDefaultAttendanceTypeIfEnabling(any(SubjectType.class), anyBoolean());
     }
 
@@ -164,7 +164,7 @@ public class SubjectTypeControllerAttendanceTest {
         controller.updateSubjectTypeForWeb(request, 20L);
 
         InOrder inOrder = inOrder(subjectTypeService);
-        inOrder.verify(subjectTypeService).validateAttendanceEligibilityAndConfig(eq(existingSubjectType), eq(true), eq(true), eq(false));
+        inOrder.verify(subjectTypeService).validateAttendanceEligibilityAndConfig(eq(true), eq(true), eq(false), eq(null));
         inOrder.verify(subjectTypeService).seedDefaultAttendanceTypeIfEnabling(eq(existingSubjectType), eq(true));
     }
 
@@ -227,7 +227,7 @@ public class SubjectTypeControllerAttendanceTest {
         controller.updateSubjectTypeForWeb(request, 60L);
 
         assertTrue(existingSubjectType.isAttendanceEnabled());
-        verify(subjectTypeService).validateAttendanceEligibilityAndConfig(eq(existingSubjectType), eq(true), eq(true), eq(false));
+        verify(subjectTypeService).validateAttendanceEligibilityAndConfig(eq(true), eq(true), eq(false), eq(null));
         verify(subjectTypeService).seedDefaultAttendanceTypeIfEnabling(eq(existingSubjectType), eq(true));
     }
 
@@ -260,7 +260,7 @@ public class SubjectTypeControllerAttendanceTest {
         org.springframework.http.ResponseEntity response = controller.updateSubjectTypeForWeb(request, 80L);
 
         assertTrue(response.getStatusCode().is4xxClientError());
-        verify(subjectTypeService, never()).validateAttendanceEligibilityAndConfig(any(), anyBoolean(), anyBoolean(), anyBoolean());
+        verify(subjectTypeService, never()).validateAttendanceEligibilityAndConfig(anyBoolean(), anyBoolean(), anyBoolean(), any());
         verify(subjectTypeService, never()).seedDefaultAttendanceTypeIfEnabling(any(SubjectType.class), anyBoolean());
     }
 

@@ -129,6 +129,25 @@ public class AttendanceTypeService implements NonScopeAwareService {
             if (subjectType == null) {
                 throw new BadRequestError("AttendanceType bundle row references unknown SubjectType uuid: %s", contract.getSubjectTypeUUID());
             }
+            if (attendanceType.getId() == null && !contract.isVoided()) {
+                // Destination may already have a non-voided AttendanceType with the same
+                // (subject_type, lower(name)) — typically the seedDefaultAttendanceTypeIfEnabling row
+                // with config={}, whose UUID won't match anything in the source bundle. Void that
+                // seed row so the partial unique index (where is_voided=false) is freed before we
+                // insert the bundle row. saveAndFlush forces the UPDATE ahead of Hibernate's INSERT
+                // in the same transaction. If the existing row has admin-customised config, refuse
+                // rather than overwrite silently.
+                AttendanceType nameConflict = attendanceTypeRepository.findBySubjectTypeAndNameIgnoreCaseAndIsVoidedFalse(subjectType, contract.getName());
+                if (nameConflict != null && !nameConflict.getUuid().equals(contract.getUuid())) {
+                    JsonObject existingConfig = nameConflict.getConfig();
+                    if (existingConfig == null || existingConfig.isEmpty()) {
+                        nameConflict.setVoided(true);
+                        attendanceTypeRepository.saveAndFlush(nameConflict);
+                    } else {
+                        throw new BadRequestError("AttendanceType '%s' for subject type '%s' already exists in destination with custom config; resolve manually before importing.", contract.getName(), subjectType.getUuid());
+                    }
+                }
+            }
             attendanceType.setSubjectType(subjectType);
             attendanceType.setName(contract.getName());
             attendanceType.setSortOrder(contract.getSortOrder());

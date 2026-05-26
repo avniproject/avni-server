@@ -253,13 +253,14 @@ public class SessionServiceTest {
     @Test
     public void rejectsFutureScheduledDate() {
         SessionContract contract = baseContract(SessionStatus.Held);
-        contract.setScheduledDate(LocalDate.now().plusDays(1));
+        LocalDate future = LocalDate.now().plusDays(1);
+        contract.setScheduledDate(future);
 
         try {
             service.save(contract);
-            fail("Expected BadRequestError");
-        } catch (BadRequestError e) {
-            assertTrue(e.getMessage().toLowerCase().contains("future"));
+            fail("Expected FutureScheduledDateNotAllowedException");
+        } catch (FutureScheduledDateNotAllowedException e) {
+            assertEquals(future, e.getScheduledDate());
         }
         verify(sessionRepository, never()).save(any(Session.class));
     }
@@ -329,7 +330,7 @@ public class SessionServiceTest {
 
         SessionContract contract = baseContract(SessionStatus.Held);
         AttendanceRecordContract record = rosterEntry("subj-1", AttendanceStatus.Absent);
-        record.setFollowUpEncounterUuid("client-uuid");
+        record.setFollowUpEncounterUUID("client-uuid");
         contract.setRoster(List.of(record));
 
         SessionSaveResult result = service.save(contract);
