@@ -121,7 +121,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("catchments.json");
         add("subjectTypes.json");
         add("operationalSubjectTypes.json");
-        add("attendanceTypes.json");
         add("programs.json");
         add("operationalPrograms.json");
         add("encounterTypes.json");
@@ -130,6 +129,11 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("calendarDateMarkers.json");
         add("documentations.json");
         add("concepts.json");
+        // attendanceTypes.json must come AFTER concepts.json and encounterTypes.json:
+        // AttendanceTypeService.validateConfig resolves sessionOutcomeReasonConcept and
+        // absenceReasonConcept against ConceptRepository and followUpEncounterType against
+        // EncounterTypeRepository — those rows must already exist in the destination.
+        add("attendanceTypes.json");
         add(BundleFolder.FORMS.getFolderName());
         add("formMappings.json");
         add("individualRelation.json");
