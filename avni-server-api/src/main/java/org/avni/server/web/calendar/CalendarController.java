@@ -1,13 +1,16 @@
 package org.avni.server.web.calendar;
 
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.Individual;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.calendar.Calendar;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.calendar.CalendarService;
+import org.avni.server.service.calendar.CalendarsResolver;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.CalendarWorkingPatternValidator;
 import org.avni.server.web.request.calendar.CalendarContract;
@@ -24,15 +27,18 @@ public class CalendarController {
     private final CalendarService calendarService;
     private final CalendarRepository calendarRepository;
     private final LocationRepository locationRepository;
+    private final IndividualRepository individualRepository;
     private final AccessControlService accessControlService;
 
     public CalendarController(CalendarService calendarService,
                               CalendarRepository calendarRepository,
                               LocationRepository locationRepository,
+                              IndividualRepository individualRepository,
                               AccessControlService accessControlService) {
         this.calendarService = calendarService;
         this.calendarRepository = calendarRepository;
         this.locationRepository = locationRepository;
+        this.individualRepository = individualRepository;
         this.accessControlService = accessControlService;
     }
 
@@ -54,6 +60,21 @@ public class CalendarController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(CalendarContract.fromEntity(calendar));
+    }
+
+    @GetMapping(value = "/web/calendar/forSubject")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<CalendarContract> forSubject(@RequestParam("subjectUUID") String subjectUUID) {
+        Individual subject = individualRepository.findByUuid(subjectUUID);
+        if (subject == null) {
+            throw new BadRequestError("Subject not found: %s", subjectUUID);
+        }
+        Calendar resolved = CalendarsResolver.forSubject(subject, calendarRepository);
+        if (resolved == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(CalendarContract.fromEntity(resolved));
     }
 
     @PostMapping(value = "/web/calendar")
