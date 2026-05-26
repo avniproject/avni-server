@@ -93,6 +93,10 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
+        return saveSubjectType(subjectTypeRequest, false);
+    }
+
+    public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest, boolean skipAttendanceSeed) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
@@ -129,7 +133,9 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
         subjectType.setAttendanceEnabled(subjectTypeRequest.isAttendanceEnabled());
         subjectType = subjectTypeRepository.save(subjectType);
-        seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
+        if (!skipAttendanceSeed) {
+            seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
+        }
         return new SubjectTypeUpsertResponse(isSubjectTypeNotPresentInDB, subjectType);
     }
 
@@ -382,7 +388,12 @@ public class SubjectTypeService implements NonScopeAwareService {
     public void saveSubjectTypesFromBundle(SubjectTypeContract[] subjectTypeContracts) {
         for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
             try {
-                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract);
+                // Skip the default-attendance-type seed: the bundle's attendanceTypes.json runs
+                // immediately after this and carries the source org's rows (seed-on-enable rows
+                // included). Seeding here would mint a destination-only row with a fresh UUID
+                // that the bundle row's INSERT then collides with on the partial unique index
+                // (subject_type_id, lower(name)) WHERE is_voided = false.
+                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract, true);
                 if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
                     userService.ensureSubjectsForUserSubjectType(response.getSubjectType());
                 }
