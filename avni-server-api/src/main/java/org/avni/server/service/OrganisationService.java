@@ -37,7 +37,9 @@ import org.avni.server.web.request.*;
 import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.avni.server.web.request.calendar.CalendarContract;
 import org.avni.server.web.request.calendar.CalendarDateMarkerContract;
+import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
+import org.avni.server.dao.attendance.SessionRepository;
 import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
 import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.attendance.AttendanceType;
@@ -77,6 +79,8 @@ public class OrganisationService {
     private final CalendarRepository calendarRepository;
     private final CalendarDateMarkerRepository calendarDateMarkerRepository;
     private final AttendanceTypeRepository attendanceTypeRepository;
+    private final SessionRepository sessionRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
 
     private final FormRepository formRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
@@ -283,7 +287,8 @@ public class OrganisationService {
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
                                GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository,
-                               CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository) {
+                               CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository,
+                               SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -389,6 +394,8 @@ public class OrganisationService {
         this.calendarRepository = calendarRepository;
         this.calendarDateMarkerRepository = calendarDateMarkerRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
+        this.sessionRepository = sessionRepository;
+        this.attendanceRecordRepository = attendanceRecordRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -417,6 +424,8 @@ public class OrganisationService {
 
     private JpaRepository[] getTxJpaRepositories() {
         JpaRepository[] transactionalRepositories = {
+                attendanceRecordRepository,
+                sessionRepository,
                 newsRepository,
                 commentRepository,
                 commentThreadRepository,
@@ -446,6 +455,8 @@ public class OrganisationService {
 
     private List<String> getTxJpaTableList() {
         return Arrays.asList(
+                "attendance_record",
+                "session",
                 "news",
                 "comment",
                 "comment_thread",
@@ -489,6 +500,8 @@ public class OrganisationService {
 
     private JpaRepository[] getMetadataJpaRepositories() {
         JpaRepository[] metadataRepositories = {
+                calendarDateMarkerRepository,
+                calendarRepository,
                 groupPrivilegeRepository,
                 groupRoleRepository,
                 checklistItemDetailRepository,
@@ -507,6 +520,7 @@ public class OrganisationService {
                 encounterTypeRepository,
                 operationalProgramRepository,
                 programRepository,
+                attendanceTypeRepository,
                 operationalSubjectTypeRepository,
                 subjectTypeRepository,
                 videoRepository,
@@ -531,6 +545,8 @@ public class OrganisationService {
 
     private List<String> getMetadataJpaTableList() {
         return Arrays.asList(
+                "calendar_date_marker",
+                "calendar",
                 "group_privilege",
                 "group_role",
                 "checklist_item_detail",
@@ -549,6 +565,7 @@ public class OrganisationService {
                 "encounter_type",
                 "operational_program",
                 "program",
+                "attendance_type",
                 "operational_subject_type",
                 "subject_type",
                 "video",
