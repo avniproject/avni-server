@@ -397,4 +397,81 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         long after = individualRepository.count();
         Assert.assertEquals(before, after);
     }
+
+    private Program createProgramWithEnrolmentForm(String programName, String formName, List<String> singleSelectConceptNames) {
+        SubjectType subjectType = subjectTypeRepository.findByName("SubjectType1");
+        Program program = programRepository.save(new ProgramBuilder().withName(programName).withUuid(UUID.randomUUID().toString()).build());
+        operationalProgramRepository.save(OperationalProgram.fromProgram(program));
+        testFormService.createEnrolmentForm(subjectType, program, formName, singleSelectConceptNames, new ArrayList<>());
+        return program;
+    }
+
+    @Test
+    public void defaultEnrolment_allowsConceptNameContainingExitPrefixSubstring() throws ValidationException, InvalidConfigurationException {
+        // A ProgramEnrolment-form concept whose name contains "Exit: " (not at the start) must not be
+        // rejected in default upload_enrolments mode — the misplaced-prefix check is exited-mode only.
+        Concept embeddedExit = testConceptService.createCodedConcept("Reason for Exit: Other", "Embedded Answer 1", "Embedded Answer 2");
+        createProgramWithEnrolmentForm("ProgramEmbeddedExit", "Enrolment Form With Embedded Exit", List.of(embeddedExit.getName()));
+
+        String[] header = header("Id from previous system",
+                "Subject Id from previous system",
+                "Program",
+                "Enrolment Date",
+                "Enrolment Coordinates",
+                "\"Reason for Exit: Other\"");
+        String[] dataRow = dataRow("DEFAULT-EMBEDDED-001",
+                "ABCD",
+                "ProgramEmbeddedExit",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "Embedded Answer 1");
+
+        programEnrolmentRowCreator.create(new Row(header, dataRow), ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT);
+
+        ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("DEFAULT-EMBEDDED-001");
+        assertNotNull(enrolment, "Default-mode enrolment with an 'Exit: ' substring concept must be created");
+        assertEquals(1, enrolment.getObservations().size(), "The embedded-prefix concept must be stored as a regular observation");
+        assertNull(enrolment.getProgramExitDateTime(), "Default-mode enrolment must not be exited");
+    }
+
+    @Test
+    public void exitedEnrolment_sharedConcept_storesIndependentValuesUnderSameConceptUuid() throws ValidationException, InvalidConfigurationException {
+        // A concept present on both the ProgramEnrolment and ProgramExit forms must keep independent
+        // values in observations vs programExitObservations under the same concept UUID.
+        SubjectType subjectType = subjectTypeRepository.findByName("SubjectType1");
+        Concept sharedConcept = testConceptService.createCodedConcept("Shared Status", "Active", "Closed");
+        Program program = createProgramWithEnrolmentForm("ProgramShared", "Shared Enrolment Form", List.of(sharedConcept.getName()));
+        testFormService.createProgramExitForm(subjectType, program, "Shared Exit Form " + UUID.randomUUID().toString().substring(0, 8),
+                List.of(sharedConcept.getName()), List.of());
+
+        String[] header = header("Id from previous system",
+                "Subject Id from previous system",
+                "Program",
+                "Enrolment Date",
+                "Enrolment Coordinates",
+                "\"Shared Status\"",
+                "Exit Date",
+                "Exit Coordinates",
+                "\"Exit: Shared Status\"");
+        String[] dataRow = dataRow("SHARED-ENR-001",
+                "ABCD",
+                "ProgramShared",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "Active",
+                "2020-06-01",
+                "22.5135243,86.6731848",
+                "Closed");
+
+        programEnrolmentRowCreator.create(new Row(header, dataRow), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+
+        ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("SHARED-ENR-001");
+        assertNotNull(enrolment);
+        String sharedConceptUuid = sharedConcept.getUuid();
+        String enrolmentValue = enrolment.getObservations().getStringValue(sharedConceptUuid);
+        String exitValue = enrolment.getProgramExitObservations().getStringValue(sharedConceptUuid);
+        assertNotNull(enrolmentValue, "Shared concept must have a regular-observation value");
+        assertNotNull(exitValue, "Shared concept must have an exit-observation value");
+        assertNotEquals(enrolmentValue, exitValue, "Shared concept must hold independent values across the two observation sets");
+    }
 }
