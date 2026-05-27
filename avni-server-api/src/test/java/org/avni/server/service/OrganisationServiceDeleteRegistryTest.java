@@ -35,6 +35,14 @@ public class OrganisationServiceDeleteRegistryTest {
                 list.indexOf("attendance_type") < list.indexOf("subject_type"));
     }
 
+    @Test
+    public void metadataJpaTableListContainsCustomCardConfigInFkSafeOrder() throws Exception {
+        List<String> list = invokeTableList("getMetadataJpaTableList");
+        assertTrue("custom_card_config must be in the metadata table list", list.contains("custom_card_config"));
+        assertTrue("report_card must be deleted before custom_card_config (FK report_card.custom_card_config_id -> custom_card_config.id)",
+                list.indexOf("report_card") < list.indexOf("custom_card_config"));
+    }
+
     @SuppressWarnings("unchecked")
     private List<String> invokeTableList(String methodName) throws Exception {
         OrganisationService svc = Mockito.mock(OrganisationService.class, Mockito.CALLS_REAL_METHODS);
