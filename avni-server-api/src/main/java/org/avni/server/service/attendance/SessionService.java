@@ -269,6 +269,7 @@ public class SessionService implements ScopeAwareService<Session> {
             record.setSubject(subject);
             record.setStatus(recordContract.getStatus());
             record.setReasonConcept(reasonConcept);
+            record.setNeedsFollowUp(recordContract.isNeedsFollowUp());
             record.setVoided(recordContract.isVoided());
 
             String preservedFollowUpUuid = record.getFollowUpEncounterUuid();
@@ -371,7 +372,7 @@ public class SessionService implements ScopeAwareService<Session> {
     private boolean triggersFollowUp(AttendanceRecord record) {
         return !record.isVoided()
                 && record.getStatus() == AttendanceStatus.Absent
-                && record.getReasonConcept() == null;
+                && record.isNeedsFollowUp();
     }
 
     // previouslyUnmatched holds prior records dropped from the new roster (resolveAttendanceRecord removes

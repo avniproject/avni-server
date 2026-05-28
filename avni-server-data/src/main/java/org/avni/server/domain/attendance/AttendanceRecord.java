@@ -36,6 +36,9 @@ public class AttendanceRecord extends OrganisationAwareEntity {
     @Column(name = "follow_up_encounter_uuid")
     private String followUpEncounterUuid;
 
+    @Column(name = "needs_follow_up", nullable = false)
+    private boolean needsFollowUp = false;
+
     public Session getSession() {
         return session;
     }
@@ -86,5 +89,13 @@ public class AttendanceRecord extends OrganisationAwareEntity {
 
     public void setFollowUpEncounterUuid(String followUpEncounterUuid) {
         this.followUpEncounterUuid = followUpEncounterUuid;
+    }
+
+    public boolean isNeedsFollowUp() {
+        return needsFollowUp;
+    }
+
+    public void setNeedsFollowUp(boolean needsFollowUp) {
+        this.needsFollowUp = needsFollowUp;
     }
 }

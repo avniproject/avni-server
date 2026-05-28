@@ -282,7 +282,7 @@ public class SessionServiceTest {
     }
 
     @Test
-    public void autoCreatesFollowUpForAbsentNoReasonWhenConfigured() {
+    public void autoCreatesFollowUpWhenAbsentAndNeedsFollowUpFlagged() {
         Individual subject1 = subjectWithUuid("subj-1");
         EncounterType followUpType = new EncounterType();
         followUpType.setUuid("followup-type-uuid");
@@ -302,13 +302,73 @@ public class SessionServiceTest {
         });
 
         SessionContract contract = baseContract(SessionStatus.Held);
-        contract.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+        AttendanceRecordContract absent = rosterEntry("subj-1", AttendanceStatus.Absent);
+        absent.setNeedsFollowUp(true);
+        contract.setRoster(List.of(absent));
 
         SessionSaveResult result = service.save(contract);
 
         assertEquals(1, result.getAutoCreatedFollowUps().size());
         assertEquals("Home Visit", result.getAutoCreatedFollowUps().get(0).getEncounterTypeName());
         verify(encounterService, times(1)).save(any(Encounter.class));
+    }
+
+    @Test
+    public void autoCreatesFollowUpWhenAbsentWithReasonAndNeedsFollowUpFlagged() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        Concept reason = conceptWithUuid("reason-uuid");
+        EncounterType followUpType = new EncounterType();
+        followUpType.setUuid("followup-type-uuid");
+        followUpType.setName("Home Visit");
+        attendanceType.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "followup-type-uuid"));
+
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(conceptRepository.findAllByUuidIn(anyList())).thenReturn(List.of(reason));
+        when(encounterTypeRepository.findByUuid("followup-type-uuid")).thenReturn(followUpType);
+        when(encounterService.createEmptyEncounter(any(), any())).thenAnswer(inv -> {
+            Encounter encounter = new Encounter();
+            encounter.setIndividual(inv.getArgument(0));
+            encounter.setEncounterType(inv.getArgument(1));
+            return encounter;
+        });
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        AttendanceRecordContract absent = rosterEntry("subj-1", AttendanceStatus.Absent);
+        absent.setReasonConceptUUID("reason-uuid");
+        absent.setNeedsFollowUp(true);
+        contract.setRoster(List.of(absent));
+
+        SessionSaveResult result = service.save(contract);
+
+        assertEquals(1, result.getAutoCreatedFollowUps().size());
+        verify(encounterService, times(1)).save(any(Encounter.class));
+    }
+
+    @Test
+    public void skipsFollowUpWhenAbsentButNeedsFollowUpNotFlagged() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        EncounterType followUpType = new EncounterType();
+        followUpType.setUuid("followup-type-uuid");
+        followUpType.setName("Home Visit");
+        attendanceType.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.FOLLOW_UP_ENCOUNTER_TYPE, "followup-type-uuid"));
+
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(encounterTypeRepository.findByUuid("followup-type-uuid")).thenReturn(followUpType);
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        // Absent with no reason and no needsFollowUp flag — under the new rule, no follow-up.
+        contract.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+
+        SessionSaveResult result = service.save(contract);
+
+        assertEquals(0, result.getAutoCreatedFollowUps().size());
+        verify(encounterService, never()).save(any(Encounter.class));
     }
 
     @Test
@@ -330,6 +390,7 @@ public class SessionServiceTest {
 
         SessionContract contract = baseContract(SessionStatus.Held);
         AttendanceRecordContract record = rosterEntry("subj-1", AttendanceStatus.Absent);
+        record.setNeedsFollowUp(true);
         record.setFollowUpEncounterUUID("client-uuid");
         contract.setRoster(List.of(record));
 
@@ -352,6 +413,7 @@ public class SessionServiceTest {
         previousRecord.setUuid("record-uuid");
         previousRecord.setSubject(subject1);
         previousRecord.setStatus(AttendanceStatus.Absent);
+        previousRecord.setNeedsFollowUp(true);
         previousRecord.setFollowUpEncounterUuid("enc-1");
         Encounter existingEncounter = new Encounter();
         existingEncounter.setUuid("enc-1");
@@ -369,6 +431,7 @@ public class SessionServiceTest {
         contract.setUuid("session-uuid");
         AttendanceRecordContract stillAbsent = rosterEntry("subj-1", AttendanceStatus.Absent);
         stillAbsent.setUuid("record-uuid");
+        stillAbsent.setNeedsFollowUp(true);
         contract.setRoster(List.of(stillAbsent));
 
         SessionSaveResult result = service.update(existingSession, contract);
@@ -410,10 +473,14 @@ public class SessionServiceTest {
 
         SessionContract prayerSession = baseContract(SessionStatus.Held);
         prayerSession.setAttendanceTypeUUID("prayer-type-uuid");
-        prayerSession.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+        AttendanceRecordContract prayerAbsent = rosterEntry("subj-1", AttendanceStatus.Absent);
+        prayerAbsent.setNeedsFollowUp(true);
+        prayerSession.setRoster(List.of(prayerAbsent));
         SessionContract sportsSession = baseContract(SessionStatus.Held);
         sportsSession.setAttendanceTypeUUID("sports-type-uuid");
-        sportsSession.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+        AttendanceRecordContract sportsAbsent = rosterEntry("subj-1", AttendanceStatus.Absent);
+        sportsAbsent.setNeedsFollowUp(true);
+        sportsSession.setRoster(List.of(sportsAbsent));
 
         SessionSaveResult prayerResult = service.save(prayerSession);
         SessionSaveResult sportsResult = service.save(sportsSession);
@@ -441,7 +508,9 @@ public class SessionServiceTest {
         when(encounterTypeRepository.findByUuid("voided-type")).thenReturn(voidedType);
 
         SessionContract contract = baseContract(SessionStatus.Held);
-        contract.setRoster(List.of(rosterEntry("subj-1", AttendanceStatus.Absent)));
+        AttendanceRecordContract absent = rosterEntry("subj-1", AttendanceStatus.Absent);
+        absent.setNeedsFollowUp(true);
+        contract.setRoster(List.of(absent));
 
         SessionSaveResult result = service.save(contract);
 
@@ -457,6 +526,7 @@ public class SessionServiceTest {
         previousRecord.setUuid("record-uuid");
         previousRecord.setSubject(subject1);
         previousRecord.setStatus(AttendanceStatus.Absent);
+        previousRecord.setNeedsFollowUp(true);
         previousRecord.setFollowUpEncounterUuid("encounter-uuid");
 
         Encounter encounter = new Encounter();
@@ -493,6 +563,7 @@ public class SessionServiceTest {
         previousRecord.setUuid("record-uuid");
         previousRecord.setSubject(subject1);
         previousRecord.setStatus(AttendanceStatus.Absent);
+        previousRecord.setNeedsFollowUp(true);
         previousRecord.setFollowUpEncounterUuid("encounter-uuid");
 
         Encounter encounter = new Encounter();

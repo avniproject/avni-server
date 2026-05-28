@@ -11,6 +11,7 @@ public class AttendanceRecordContract extends CHSRequest {
     private AttendanceStatus status;
     private String reasonConceptUUID;
     private String followUpEncounterUUID;
+    private boolean needsFollowUp;
     private DateTime createdDateTime;
     private DateTime lastModifiedDateTime;
 
@@ -24,6 +25,7 @@ public class AttendanceRecordContract extends CHSRequest {
         contract.setStatus(record.getStatus());
         contract.setReasonConceptUUID(record.getReasonConceptUUID());
         contract.setFollowUpEncounterUUID(record.getFollowUpEncounterUuid());
+        contract.setNeedsFollowUp(record.isNeedsFollowUp());
         contract.setCreatedDateTime(record.getCreatedDateTime());
         contract.setLastModifiedDateTime(record.getLastModifiedDateTime());
         return contract;
@@ -67,6 +69,14 @@ public class AttendanceRecordContract extends CHSRequest {
 
     public void setFollowUpEncounterUUID(String followUpEncounterUUID) {
         this.followUpEncounterUUID = followUpEncounterUUID;
+    }
+
+    public boolean isNeedsFollowUp() {
+        return needsFollowUp;
+    }
+
+    public void setNeedsFollowUp(boolean needsFollowUp) {
+        this.needsFollowUp = needsFollowUp;
     }
 
     public DateTime getCreatedDateTime() {
