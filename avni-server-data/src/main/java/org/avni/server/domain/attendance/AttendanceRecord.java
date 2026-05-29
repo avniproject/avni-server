@@ -3,15 +3,19 @@ package org.avni.server.domain.attendance;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.StringListUserType;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Type;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "attendance_record")
 @BatchSize(size = 100)
-@JsonIgnoreProperties({"session", "subject", "reasonConcept"})
+@JsonIgnoreProperties({"session", "subject"})
 public class AttendanceRecord extends OrganisationAwareEntity {
 
     @NotNull
@@ -29,9 +33,9 @@ public class AttendanceRecord extends OrganisationAwareEntity {
     @Column
     private AttendanceStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reason_concept_id")
-    private Concept reasonConcept;
+    @Column(name = "reason_concept_uuids")
+    @Type(value = StringListUserType.class)
+    private List<String> reasonConceptUuids = new ArrayList<>();
 
     @Column(name = "follow_up_encounter_uuid")
     private String followUpEncounterUuid;
@@ -71,16 +75,12 @@ public class AttendanceRecord extends OrganisationAwareEntity {
         this.status = status;
     }
 
-    public Concept getReasonConcept() {
-        return reasonConcept;
+    public List<String> getReasonConceptUUIDs() {
+        return reasonConceptUuids;
     }
 
-    public void setReasonConcept(Concept reasonConcept) {
-        this.reasonConcept = reasonConcept;
-    }
-
-    public String getReasonConceptUUID() {
-        return reasonConcept == null ? null : reasonConcept.getUuid();
+    public void setReasonConceptUUIDs(List<String> reasonConceptUuids) {
+        this.reasonConceptUuids = reasonConceptUuids == null ? new ArrayList<>() : reasonConceptUuids;
     }
 
     public String getFollowUpEncounterUuid() {

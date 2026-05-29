@@ -32,8 +32,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -209,14 +211,22 @@ public class AttendanceRecordController implements RestControllerResourceProcess
         if (subject == null) {
             throw new BadRequestError("Subject not found: %s", contract.getSubjectUUID());
         }
-        Concept reasonConcept = contract.getReasonConceptUUID() == null ? null : conceptRepository.findByUuid(contract.getReasonConceptUUID());
-
         record.setSession(session);
         record.setSubject(subject);
         record.setStatus(contract.getStatus());
-        record.setReasonConcept(reasonConcept);
+        record.setReasonConceptUUIDs(resolveExistingReasonConceptUuids(contract.getReasonConceptUUIDs()));
         record.setFollowUpEncounterUuid(contract.getFollowUpEncounterUUID());
         record.setNeedsFollowUp(contract.isNeedsFollowUp());
         record.setVoided(contract.isVoided());
+    }
+
+    private List<String> resolveExistingReasonConceptUuids(List<String> requested) {
+        if (requested == null || requested.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Set<String> existing = conceptRepository.findAllByUuidIn(requested).stream()
+                .map(Concept::getUuid)
+                .collect(Collectors.toSet());
+        return requested.stream().filter(existing::contains).collect(Collectors.toList());
     }
 }

@@ -263,12 +263,13 @@ public class SessionService implements ScopeAwareService<Session> {
                 throw new BadRequestError("Subject not found in roster: %s", recordContract.getSubjectUUID());
             }
             AttendanceRecord record = resolveAttendanceRecord(recordContract, existingBySubject);
-            Concept reasonConcept = recordContract.getReasonConceptUUID() == null ? null
-                    : reasonConceptsByUuid.get(recordContract.getReasonConceptUUID());
+            List<String> reasonConceptUuids = recordContract.getReasonConceptUUIDs().stream()
+                    .filter(reasonConceptsByUuid::containsKey)
+                    .collect(Collectors.toList());
             record.setSession(session);
             record.setSubject(subject);
             record.setStatus(recordContract.getStatus());
-            record.setReasonConcept(reasonConcept);
+            record.setReasonConceptUUIDs(reasonConceptUuids);
             record.setNeedsFollowUp(recordContract.isNeedsFollowUp());
             record.setVoided(recordContract.isVoided());
 
@@ -311,7 +312,7 @@ public class SessionService implements ScopeAwareService<Session> {
 
     private Map<String, Concept> preloadReasonConcepts(List<AttendanceRecordContract> rosterContracts) {
         Set<String> reasonConceptUuids = rosterContracts.stream()
-                .map(AttendanceRecordContract::getReasonConceptUUID)
+                .flatMap(contract -> contract.getReasonConceptUUIDs().stream())
                 .filter(uuid -> uuid != null)
                 .collect(Collectors.toSet());
         if (reasonConceptUuids.isEmpty()) {

@@ -236,6 +236,48 @@ public class SessionServiceTest {
     }
 
     @Test
+    public void legacySingleReasonFieldIsStoredAsOneElementArray() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        Concept reason = conceptWithUuid("reason-uuid");
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(conceptRepository.findAllByUuidIn(anyList())).thenReturn(List.of(reason));
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        AttendanceRecordContract legacy = rosterEntry("subj-1", AttendanceStatus.Absent);
+        legacy.setReasonConceptUUID("reason-uuid"); // pre-16.15 single-field client
+        contract.setRoster(List.of(legacy));
+
+        service.save(contract);
+
+        ArgumentCaptor<List<AttendanceRecord>> captor = ArgumentCaptor.forClass(List.class);
+        verify(attendanceRecordRepository, times(1)).saveAll(captor.capture());
+        assertEquals(List.of("reason-uuid"), captor.getValue().get(0).getReasonConceptUUIDs());
+    }
+
+    @Test
+    public void storesMultipleReasonsAndDropsUuidsThatAreNotConcepts() {
+        Individual subject1 = subjectWithUuid("subj-1");
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(individualRepository.findByUuid("subj-1")).thenReturn(subject1);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+        when(conceptRepository.findAllByUuidIn(anyList()))
+                .thenReturn(List.of(conceptWithUuid("reason-a"), conceptWithUuid("reason-b")));
+
+        SessionContract contract = baseContract(SessionStatus.Held);
+        AttendanceRecordContract record = rosterEntry("subj-1", AttendanceStatus.Absent);
+        record.setReasonConceptUUIDs(List.of("reason-a", "reason-b", "not-a-concept"));
+        contract.setRoster(List.of(record));
+
+        service.save(contract);
+
+        ArgumentCaptor<List<AttendanceRecord>> captor = ArgumentCaptor.forClass(List.class);
+        verify(attendanceRecordRepository, times(1)).saveAll(captor.capture());
+        assertEquals(List.of("reason-a", "reason-b"), captor.getValue().get(0).getReasonConceptUUIDs());
+    }
+
+    @Test
     public void heldSessionWithEmptyRosterPersistsSessionOnly() {
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
