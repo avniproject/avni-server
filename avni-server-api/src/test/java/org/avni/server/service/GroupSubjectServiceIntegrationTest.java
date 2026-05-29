@@ -1,8 +1,10 @@
 package org.avni.server.service;
 
 import org.springframework.transaction.annotation.Transactional;
+import org.avni.server.application.SubjectTypeSettingKey;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupRoleRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.UserBuilder;
@@ -11,9 +13,15 @@ import org.avni.server.domain.factory.txn.TestGroupRoleBuilder;
 import org.avni.server.domain.factory.txn.TestGroupSubjectBuilder;
 import org.avni.server.domain.factory.txn.TestUserSubjectAssignmentBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupSubjectService;
 import org.avni.server.service.builder.TestSubjectTypeService;
+import org.avni.server.dao.GroupSubjectRepository;
+import org.avni.server.domain.OperatingIndividualScope;
+import org.avni.server.web.GroupSubjectController;
+import org.avni.server.web.request.GroupSubjectContract;
+import org.joda.time.DateTime;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -41,6 +49,14 @@ public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegr
     private IndividualService individualService;
     @Autowired
     private TestGroupSubjectService testGroupSubjectService;
+    @Autowired
+    private SubjectTypeRepository subjectTypeRepository;
+    @Autowired
+    private TestConceptService testConceptService;
+    @Autowired
+    private GroupSubjectController groupSubjectController;
+    @Autowired
+    private GroupSubjectRepository groupSubjectRepository;
 
     @Test
     @Transactional
@@ -147,5 +163,158 @@ public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegr
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user1, directlyAssignableMember1));
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user1, directlyAssignableMember2));
 
+    }
+
+    private SubjectType configureGroupTypeWithRemovalReason(String groupTypeUuid, Concept reasonParentConcept) {
+        SubjectType groupType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid(groupTypeUuid).setName(groupTypeUuid).setGroup(true).build());
+        JsonObject settings = groupType.getSettings() == null ? new JsonObject() : groupType.getSettings();
+        settings.put(String.valueOf(SubjectTypeSettingKey.removalReasonConceptUuid), reasonParentConcept.getUuid());
+        groupType.setSettings(settings);
+        return subjectTypeRepository.save(groupType);
+    }
+
+    private SubjectType configureGroupTypeWithoutRemovalReason(String groupTypeUuid) {
+        return testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid(groupTypeUuid).setName(groupTypeUuid).setGroup(true).build());
+    }
+
+    private GroupSubject buildMembershipFor(SubjectType groupType, SubjectType memberType, TestDataSetupService.TestCatchmentData catchment) {
+        GroupRole groupRole = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(groupType).withMemberSubjectType(memberType).build());
+        Individual group = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupType).withLocation(catchment.getAddressLevel1()).build());
+        Individual member = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(memberType).withLocation(catchment.getAddressLevel1()).build());
+        return new TestGroupSubjectBuilder().withGroupRole(groupRole).withGroup(group).withMember(member).build();
+    }
+
+    @Test
+    @Transactional
+    public void removalReason_featureOff_savesWithEndDateAndNoReason() throws ValidationException {
+        testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData catchment = testDataSetupService.setupACatchment();
+        SubjectType groupType = configureGroupTypeWithoutRemovalReason("st_RemovalReason_Off");
+        SubjectType memberType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_RR_Member_Off").setName("st_RR_Member_Off").build());
+
+        GroupSubject groupSubject = buildMembershipFor(groupType, memberType, catchment);
+        groupSubject.setMembershipEndDate(DateTime.now());
+
+        testGroupSubjectService.save(groupSubject);
+        assertNotNull(groupSubject.getId());
+    }
+
+    @Test
+    @Transactional
+    public void removalReason_featureOn_endDateNull_savesWithoutValidation() throws ValidationException {
+        testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData catchment = testDataSetupService.setupACatchment();
+        Concept reasonParent = testConceptService.createCodedConcept("RR Reason Parent A", "Lost contact", "Moved away");
+        SubjectType groupType = configureGroupTypeWithRemovalReason("st_RR_EndDateNull", reasonParent);
+        SubjectType memberType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_RR_Member_EndDateNull").setName("st_RR_Member_EndDateNull").build());
+
+        GroupSubject groupSubject = buildMembershipFor(groupType, memberType, catchment);
+
+        testGroupSubjectService.save(groupSubject);
+        assertNotNull(groupSubject.getId());
+    }
+
+    @Test
+    @Transactional
+    public void removalReason_featureOn_endDateSet_reasonSet_persists() throws ValidationException {
+        testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData catchment = testDataSetupService.setupACatchment();
+        Concept reasonParent = testConceptService.createCodedConcept("RR Reason Parent C", "Lost contact", "Moved away");
+        Concept reasonAnswer = testConceptService.createConcept("RR Picked Reason", ConceptDataType.Coded);
+        SubjectType groupType = configureGroupTypeWithRemovalReason("st_RR_WithReason", reasonParent);
+        SubjectType memberType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_RR_Member_WithReason").setName("st_RR_Member_WithReason").build());
+
+        GroupSubject groupSubject = buildMembershipFor(groupType, memberType, catchment);
+        groupSubject.setMembershipEndDate(DateTime.now());
+        groupSubject.setRemovalReasonConceptUUID(reasonAnswer.getUuid());
+
+        testGroupSubjectService.save(groupSubject);
+        assertNotNull(groupSubject.getId());
+        assertEquals(reasonAnswer.getUuid(), groupSubject.getRemovalReasonConceptUUID());
+    }
+
+    private GroupSubjectContract buildContractFor(GroupSubject template) {
+        GroupSubjectContract contract = new GroupSubjectContract();
+        contract.setUuid(template.getUuid());
+        contract.setGroupSubjectUUID(template.getGroupSubjectUUID());
+        contract.setMemberSubjectUUID(template.getMemberSubjectUUID());
+        contract.setGroupRoleUUID(template.getGroupRoleUUID());
+        contract.setMembershipStartDate(template.getMembershipStartDate());
+        contract.setMembershipEndDate(template.getMembershipEndDate());
+        return contract;
+    }
+
+    private void assignCatchmentToContextUser(TestDataSetupService.TestOrganisationData orgData, TestDataSetupService.TestCatchmentData catchmentData) {
+        userRepository.save(new UserBuilder(orgData.getUser())
+                .withCatchment(catchmentData.getCatchment())
+                .withOperatingIndividualScope(OperatingIndividualScope.ByCatchment)
+                .build());
+    }
+
+    @Test
+    @Transactional
+    public void controller_setsRemovalReasonConceptUUID_andPersistsItVerbatim() {
+        TestDataSetupService.TestOrganisationData orgData = testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData catchment = testDataSetupService.setupACatchment();
+        assignCatchmentToContextUser(orgData, catchment);
+        SubjectType groupType = configureGroupTypeWithoutRemovalReason("st_Ctlr_Round_Group");
+        SubjectType memberType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_Ctlr_Round_Member").setName("st_Ctlr_Round_Member").build());
+
+        GroupSubject groupSubject = buildMembershipFor(groupType, memberType, catchment);
+        groupSubject.setUuid(java.util.UUID.randomUUID().toString());
+        groupSubject.setMembershipEndDate(DateTime.now());
+
+        GroupSubjectContract contract = buildContractFor(groupSubject);
+        String reasonUuid = java.util.UUID.randomUUID().toString();
+        contract.setRemovalReasonConceptUUID(reasonUuid);
+        contract.setVoided(true);
+
+        try {
+            groupSubjectController.save(contract);
+        } catch (ValidationException e) {
+            fail("controller.save threw: " + e.getMessage());
+        }
+        GroupSubject persisted = groupSubjectRepository.findByUuid(contract.getUuid());
+        assertNotNull(persisted);
+        assertEquals(reasonUuid, persisted.getRemovalReasonConceptUUID());
+    }
+
+    @Test
+    @Transactional
+    public void controller_omitsRemovalReasonOnUpdate_preservesPreviouslySavedValue() {
+        TestDataSetupService.TestOrganisationData orgData = testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData catchment = testDataSetupService.setupACatchment();
+        assignCatchmentToContextUser(orgData, catchment);
+        SubjectType groupType = configureGroupTypeWithoutRemovalReason("st_Ctlr_Wipe_Group");
+        SubjectType memberType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_Ctlr_Wipe_Member").setName("st_Ctlr_Wipe_Member").build());
+
+        GroupSubject groupSubject = buildMembershipFor(groupType, memberType, catchment);
+        groupSubject.setUuid(java.util.UUID.randomUUID().toString());
+        groupSubject.setMembershipEndDate(DateTime.now());
+
+        // First call from a new-version client carries the field.
+        GroupSubjectContract initial = buildContractFor(groupSubject);
+        String reasonUuid = java.util.UUID.randomUUID().toString();
+        initial.setRemovalReasonConceptUUID(reasonUuid);
+        initial.setVoided(true);
+        try {
+            groupSubjectController.save(initial);
+        } catch (ValidationException e) {
+            fail("initial controller.save threw: " + e.getMessage());
+        }
+        assertEquals(reasonUuid, groupSubjectRepository.findByUuid(initial.getUuid()).getRemovalReasonConceptUUID());
+
+        // Second call from a pre-feature client omits the field. The reason must not be wiped.
+        GroupSubjectContract followUp = buildContractFor(groupSubject);
+        followUp.setRemovalReasonConceptUUID(null);
+        followUp.setVoided(true);
+        try {
+            groupSubjectController.save(followUp);
+        } catch (ValidationException e) {
+            fail("follow-up controller.save threw: " + e.getMessage());
+        }
+        assertEquals("Older client must not wipe a previously-saved removal reason",
+                reasonUuid,
+                groupSubjectRepository.findByUuid(followUp.getUuid()).getRemovalReasonConceptUUID());
     }
 }

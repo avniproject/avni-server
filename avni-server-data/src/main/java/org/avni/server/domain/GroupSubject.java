@@ -41,6 +41,9 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @Convert(converter = JodaDateTimeConverter.class)
     private DateTime membershipEndDate;
 
+    @Column(name = "removal_reason_concept_uuid")
+    private String removalReasonConceptUUID;
+
     @Column(name = "member_subject_address_id")
     private Long memberSubjectAddressId;
 
@@ -109,6 +112,14 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
 
     public String getGroupRoleUUID() {
         return groupRole.getUuid();
+    }
+
+    public String getRemovalReasonConceptUUID() {
+        return removalReasonConceptUUID;
+    }
+
+    public void setRemovalReasonConceptUUID(String removalReasonConceptUUID) {
+        this.removalReasonConceptUUID = removalReasonConceptUUID;
     }
 
     @JsonIgnore

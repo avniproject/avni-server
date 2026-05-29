@@ -1,5 +1,5 @@
 package org.avni.server.application;
 
 public enum SubjectTypeSettingKey {
-    displayRegistrationDetails, displayPlannedEncounters
+    displayRegistrationDetails, displayPlannedEncounters, removalReasonConceptUuid
 }

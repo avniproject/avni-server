@@ -117,6 +117,11 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             existingOrNewGroupSubject.setGroupRole(groupRole);
             existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate() != null ? request.getMembershipStartDate() : new DateTime());
             existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
+            // Only set the removal reason when the client sent one. An older client that doesn't
+            // know the field would otherwise wipe a previously-saved reason on every re-sync.
+            if (request.getRemovalReasonConceptUUID() != null) {
+                existingOrNewGroupSubject.setRemovalReasonConceptUUID(request.getRemovalReasonConceptUUID());
+            }
             existingOrNewGroupSubject.setVoided(request.isVoided());
             groupSubjectService.save(existingOrNewGroupSubject);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
