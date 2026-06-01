@@ -66,11 +66,29 @@ public class OrganisationConfigService implements NonScopeAwareService {
         }
         organisationConfig.setOrganisationId(organisation.getId());
         organisationConfig.setUuid(request.getUuid() == null ? java.util.UUID.randomUUID().toString() : request.getUuid());
-        organisationConfig.setSettings(request.getSettings());
+        JsonObject incomingSettings = request.getSettings();
+        stampSqliteSnapshotGenerationTimestamps(organisationConfig.getSettings(), incomingSettings);
+        organisationConfig.setSettings(incomingSettings);
         organisationConfig.setWorklistUpdationRule(request.getWorklistUpdationRule());
         organisationConfig.updateLastModifiedDateTime();
         organisationConfigRepository.save(organisationConfig);
         return organisationConfig;
+    }
+
+    private void stampSqliteSnapshotGenerationTimestamps(JsonObject previousSettings, JsonObject incomingSettings) {
+        if (incomingSettings == null) return;
+        String flagKey = OrganisationConfigSettingKey.enableSqliteSnapshotGeneration.name();
+        String enabledAtKey = OrganisationConfigSettingKey.enabledSqliteSnapshotGenerationAt.name();
+        String disabledAtKey = OrganisationConfigSettingKey.disabledSqliteSnapshotGenerationAt.name();
+        boolean wasOn = previousSettings != null && Boolean.TRUE.equals(previousSettings.get(flagKey));
+        boolean isOn = Boolean.TRUE.equals(incomingSettings.get(flagKey));
+        String nowIso = DateTime.now().toString();
+        if (!wasOn && isOn) {
+            incomingSettings.put(enabledAtKey, nowIso);
+        }
+        if (wasOn && !isOn) {
+            incomingSettings.put(disabledAtKey, nowIso);
+        }
     }
 
     public OrganisationConfig createDefaultOrganisationConfig(Organisation organisation) {

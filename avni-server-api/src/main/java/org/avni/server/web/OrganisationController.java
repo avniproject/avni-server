@@ -1,11 +1,13 @@
 package org.avni.server.web;
 
+import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.OrganisationContract;
+import org.avni.server.web.request.SnapshotEnabledOrg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -29,12 +31,13 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     private final OrganisationService organisationService;
     private final OrganisationCategoryRepository organisationCategoryRepository;
     private final OrganisationStatusRepository organisationStatusRepository;
+    private final OrganisationConfigRepository organisationConfigRepository;
 
     @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
 
     @Autowired
-    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService, OrganisationCategoryRepository organisationCategoryRepository, OrganisationStatusRepository organisationStatusRepository) {
+    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService, OrganisationCategoryRepository organisationCategoryRepository, OrganisationStatusRepository organisationStatusRepository, OrganisationConfigRepository organisationConfigRepository) {
         this.organisationRepository = organisationRepository;
         this.accountRepository = accountRepository;
         this.implementationRepository = implementationRepository;
@@ -42,6 +45,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         this.organisationService = organisationService;
         this.organisationCategoryRepository = organisationCategoryRepository;
         this.organisationStatusRepository = organisationStatusRepository;
+        this.organisationConfigRepository = organisationConfigRepository;
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.POST)
@@ -145,6 +149,30 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     public Page<Organisation> findAllById(@Param("ids") Long[] ids, Pageable pageable) {
         accessControlService.assertIsSuperAdmin();
         return organisationRepository.findAllByIdInAndIsVoidedFalse(ids, pageable);
+    }
+
+    @RequestMapping(value = "/organisation/sqliteSnapshotEnabled", method = RequestMethod.GET)
+    @Transactional(readOnly = true)
+    public List<SnapshotEnabledOrg> findSqliteSnapshotEnabled() {
+        accessControlService.assertIsSuperAdmin();
+        List<SnapshotEnabledOrg> result = new ArrayList<>();
+        for (OrganisationConfig cfg : organisationConfigRepository.findAll()) {
+            JsonObject settings = cfg.getSettings();
+            if (settings == null) continue;
+            if (!Boolean.TRUE.equals(settings.get(OrganisationConfigSettingKey.enableSqliteSnapshotGeneration.name()))) continue;
+            Organisation org = organisationRepository.findOne(cfg.getOrganisationId());
+            if (org == null || org.isVoided()) continue;
+            Object enabledAt = settings.get(OrganisationConfigSettingKey.enabledSqliteSnapshotGenerationAt.name());
+            result.add(new SnapshotEnabledOrg(
+                org.getId(),
+                org.getName(),
+                org.getDbUser(),
+                org.getMediaDirectory(),
+                enabledAt.toString()
+            ));
+        }
+        result.sort(Comparator.comparing(SnapshotEnabledOrg::getEnabledAt));
+        return result;
     }
 
     private void setAttributesOnOrganisation(@RequestBody OrganisationContract request, Organisation organisation) {

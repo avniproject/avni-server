@@ -6,6 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.avni.server.web.request.UserActivity;
 import org.springframework.transaction.annotation.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
@@ -409,6 +410,15 @@ public class UserController {
     public Page<User> getUsersByOrganisation(@RequestParam("organisationId") Long organisationId, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         return userRepository.findByOrganisationIdAndIsVoidedFalse(organisationId, pageable);
+    }
+
+    @GetMapping("/user/activities")
+    @Transactional(readOnly = true)
+    @ResponseBody
+    public List<UserActivity> getUserActivities(
+            @RequestParam("organisationId") Long organisationId) {
+        accessControlService.assertIsSuperAdmin();
+        return userRepository.findUserActivities(organisationId);
     }
 
     @GetMapping(path = "/user/search/findAllById")
