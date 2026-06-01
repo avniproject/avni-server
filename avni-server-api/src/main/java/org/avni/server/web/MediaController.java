@@ -138,7 +138,8 @@ public class MediaController {
     public ResponseEntity<String> mobileDatabaseSqliteSnapshotExists() {
         logger.info("checking whether sqlite snapshot exists");
         try {
-            boolean eligible = currentUserIsInSqliteMigrationGroup() && latestSqliteSnapshotKey() != null;
+            boolean eligible = currentUserIsInSqliteMigrationGroup()
+                && s3Service.fileExists(sqliteSnapshotRelativeKey());
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(eligible));
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -152,12 +153,7 @@ public class MediaController {
     public ResponseEntity<String> generateMobileDatabaseSqliteSnapshotDownloadUrl() {
         logger.info("getting sqlite snapshot download url");
         try {
-            String latestKey = latestSqliteSnapshotKey();
-            String mediaDirectory = s3Service.getOrgDirectoryName();
-            String relativeKey = latestKey.startsWith(mediaDirectory + "/")
-                ? latestKey.substring(mediaDirectory.length() + 1)
-                : latestKey;
-            URL url = s3Service.generateMediaUploadUrl(relativeKey, HttpMethod.GET);
+            URL url = s3Service.generateMediaUploadUrl(sqliteSnapshotRelativeKey(), HttpMethod.GET);
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage(), e);
@@ -177,14 +173,9 @@ public class MediaController {
         return userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group) != null;
     }
 
-    private String latestSqliteSnapshotKey() {
+    private String sqliteSnapshotRelativeKey() {
         User user = UserContextHolder.getUserContext().getUser();
-        String prefix = format("%s/snapshots/%s/", s3Service.getOrgDirectoryName(), user.getUsername());
-        String[] keys = s3Service.getAllKeysWithPrefix(prefix);
-        if (keys == null || keys.length == 0) {
-            return null;
-        }
-        return Arrays.stream(keys).max(String::compareTo).orElse(null);
+        return format("snapshots/%s/snapshot.db", user.getUsername());
     }
 
     @RequestMapping(value = "/media/signedUrl", method = RequestMethod.GET)
