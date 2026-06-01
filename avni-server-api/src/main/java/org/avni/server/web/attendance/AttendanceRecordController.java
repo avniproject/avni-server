@@ -10,6 +10,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.attendance.AttendanceRecord;
+import org.avni.server.domain.attendance.AttendanceStatus;
 import org.avni.server.domain.attendance.Session;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.service.ScopeBasedSyncService;
@@ -214,9 +215,13 @@ public class AttendanceRecordController implements RestControllerResourceProcess
         record.setSession(session);
         record.setSubject(subject);
         record.setStatus(contract.getStatus());
-        record.setReasonConceptUUIDs(resolveExistingReasonConceptUuids(contract.getReasonConceptUUIDs()));
+        List<String> resolvedReasonUuids = resolveExistingReasonConceptUuids(contract.getReasonConceptUUIDs());
+        record.setReasonConceptUUIDs(resolvedReasonUuids);
         record.setFollowUpEncounterUuid(contract.getFollowUpEncounterUUID());
-        record.setNeedsFollowUp(contract.isNeedsFollowUp());
+        Boolean needsFollowUp = contract.getNeedsFollowUp();
+        record.setNeedsFollowUp(needsFollowUp != null
+                ? needsFollowUp
+                : contract.getStatus() == AttendanceStatus.Absent && resolvedReasonUuids.isEmpty());
         record.setVoided(contract.isVoided());
     }
 

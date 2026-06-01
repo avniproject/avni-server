@@ -20,7 +20,8 @@ public class AttendanceRecordContract extends CHSRequest {
     // one-element array by getReasonConceptUUIDs(). Write-only; never serialized back.
     private String reasonConceptUUID;
     private String followUpEncounterUUID;
-    private boolean needsFollowUp;
+    // Boxed: pre-1.33.57 clients omit this; null means "fall back to the pre-#1003 rule".
+    private Boolean needsFollowUp;
     private DateTime createdDateTime;
     private DateTime lastModifiedDateTime;
 
@@ -96,11 +97,11 @@ public class AttendanceRecordContract extends CHSRequest {
         this.followUpEncounterUUID = followUpEncounterUUID;
     }
 
-    public boolean isNeedsFollowUp() {
+    public Boolean getNeedsFollowUp() {
         return needsFollowUp;
     }
 
-    public void setNeedsFollowUp(boolean needsFollowUp) {
+    public void setNeedsFollowUp(Boolean needsFollowUp) {
         this.needsFollowUp = needsFollowUp;
     }
 

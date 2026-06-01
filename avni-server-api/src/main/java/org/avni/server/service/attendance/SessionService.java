@@ -270,7 +270,10 @@ public class SessionService implements ScopeAwareService<Session> {
             record.setSubject(subject);
             record.setStatus(recordContract.getStatus());
             record.setReasonConceptUUIDs(reasonConceptUuids);
-            record.setNeedsFollowUp(recordContract.isNeedsFollowUp());
+            Boolean needsFollowUp = recordContract.getNeedsFollowUp();
+            record.setNeedsFollowUp(needsFollowUp != null
+                    ? needsFollowUp
+                    : recordContract.getStatus() == AttendanceStatus.Absent && reasonConceptUuids.isEmpty());
             record.setVoided(recordContract.isVoided());
 
             String preservedFollowUpUuid = record.getFollowUpEncounterUuid();
@@ -349,10 +352,16 @@ public class SessionService implements ScopeAwareService<Session> {
             return;
         }
         String existingUuid = record.getFollowUpEncounterUuid();
-        if (existingUuid != null && preExistingFollowUps.containsKey(existingUuid)) {
+        Encounter alreadyAtUuid = existingUuid == null ? null : preExistingFollowUps.get(existingUuid);
+        if (alreadyAtUuid != null && !alreadyAtUuid.isVoided()) {
             return;
         }
-        String useUuid = existingUuid != null ? existingUuid : UUID.randomUUID().toString();
+        // If alreadyAtUuid is non-null and voided, the record was previously voided and is now
+        // being re-toggled on — we must mint a fresh UUID so the new encounter doesn't collide
+        // with the voided row on the encounter.uuid unique constraint.
+        String useUuid = (existingUuid != null && alreadyAtUuid == null)
+                ? existingUuid
+                : UUID.randomUUID().toString();
         Encounter encounter = encounterService.createEmptyEncounter(subject, followUpType);
         encounter.setUuid(useUuid);
         DateTime startOfToday = DateTime.now().withTimeAtStartOfDay();
@@ -423,6 +432,7 @@ public class SessionService implements ScopeAwareService<Session> {
         String typeName = (type == null) ? null : type.getName();
         encounter.setVoided(true);
         encounterService.save(encounter);
+        record.setFollowUpEncounterUuid(null);
         voidedFollowUps.add(new FollowUpDescriptor(studentUuid, studentName, encounter.getUuid(),
                 typeName,
                 encounter.getEarliestVisitDateTime(), encounter.getMaxVisitDateTime()));
