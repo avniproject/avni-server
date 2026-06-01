@@ -3,6 +3,8 @@ package org.avni.server.dao;
 import jakarta.persistence.criteria.*;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptDataType;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.joda.time.DateTime;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -66,12 +68,35 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
         Specification<T> spec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             concepts.forEach((concept, value) -> {
-                predicates.add(cb.equal(jsonExtractPathText(root.get(observationField), concept.getUuid(), cb), value));
+                predicates.add(conceptValuePredicate(root.get(observationField), concept, value, cb));
             });
 
             return cb.and(predicates.toArray(new Predicate[predicates.size()]));
         };
         return spec;
+    }
+
+    /**
+     * Predicate matching a single observation key=value.
+     *
+     * <p>For string-valued concepts (text, coded answer-uuid, id, date-as-text, …) this emits the
+     * jsonb containment operator {@code observations @> {"<uuid>":"<value>"}} via
+     * {@code jsonb_contains_value}, so a {@code GIN(observations jsonb_path_ops)} index can serve the
+     * lookup instead of a full-table scan (#1005). Containment on a {@code {"uuid":"value"}} object is
+     * equivalent to the previous {@code jsonb_extract_path_text(...) = value} for scalar string values,
+     * and (like before) does not match array/object-valued observations such as multi-select coded.
+     *
+     * <p>Numeric concepts are stored as JSON numbers, so the scalar-string containment above would not
+     * match them — those keep the original {@code jsonb_extract_path_text} text-equality (uncommon in this
+     * filter; not index-accelerated). A null value also falls back to the original behaviour.
+     */
+    default Predicate conceptValuePredicate(Path<?> observations, Concept concept, String value, CriteriaBuilder cb) {
+        boolean numeric = ConceptDataType.Numeric.toString().equals(concept.getDataType());
+        if (numeric || value == null) {
+            return cb.equal(jsonExtractPathText(observations, concept.getUuid(), cb), value);
+        }
+        String containment = ObjectMapperSingleton.writeValueAsStringSafe(Map.of(concept.getUuid(), value));
+        return cb.isTrue(cb.function("jsonb_contains_value", Boolean.class, observations, cb.literal(containment)));
     }
 
     default void voidEntity(Long id) {
