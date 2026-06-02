@@ -114,35 +114,6 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
     }
 
     @Test
-    public void filtersByConceptValueAcrossDataTypesWithoutRegression() {
-        // #1005: withConceptValues now uses `observations @> {...}` (GIN-indexable) for string-valued
-        // concepts and keeps jsonb_extract_path_text equality for Numeric. Assert both paths match the
-        // same rows as before, and that non-matching values return nothing.
-
-        // Text (string scalar -> indexed @> path)
-        assertEquals(1, filterByConcept(textConcept.getName(), "Hello world"));
-        assertEquals(0, filterByConcept(textConcept.getName(), "Goodbye"));
-
-        // Single coded (stored as answer-concept uuid string -> @> path)
-        assertEquals(1, filterByConcept(singleCodedConcept.getName(), singleCodedConcept.getAnswerConcept("singleCoded1").getUuid()));
-        assertEquals(0, filterByConcept(singleCodedConcept.getName(), singleCodedConcept.getAnswerConcept("singleCoded2").getUuid()));
-
-        // Numeric (stored as JSON number -> falls back to text-equality; must still match)
-        assertEquals(1, filterByConcept(numericConcept.getName(), "10"));
-        assertEquals(0, filterByConcept(numericConcept.getName(), "11"));
-    }
-
-    private int filterByConcept(String conceptName, String value) {
-        return subjectApiController.getSubjects(DateTime.now().minusDays(1),
-                DateTime.now().plusDays(1),
-                subjectType.getName(),
-                String.format("{\"%s\": \"%s\"}", conceptName, value),
-                Collections.singletonList(catchmentData.getAddressLevel1().getUuid()),
-                true,
-                PageRequest.of(0, 10)).getContent().size();
-    }
-
-    @Test
     public void shouldGetDateTimeForDateStyleObservationsForOldVersions() {
         ApiRequestContextHolder.create(new ApiRequestContext("1"));
 

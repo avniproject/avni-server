@@ -146,4 +146,31 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
 
     List<ProgramEnrolment> findByIndividualAndProgram(Individual individual, Program program);
     int countBySyncDisabled(boolean syncDisabled);
+
+    default Specification<ProgramEnrolment> withProgramName(String programName) {
+        return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                (programName == null || programName.isBlank()) ? null : cb.equal(root.get("program").get("name"), programName);
+    }
+
+    default Specification<ProgramEnrolment> withIndividualUuid(String subjectUuid) {
+        return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                (subjectUuid == null || subjectUuid.isBlank()) ? null : cb.equal(root.get("individual").get("uuid"), subjectUuid);
+    }
+
+    // The program+subject branch carries no date filter, so lastModifiedBetween won't set the
+    // order-by; apply it unconditionally to preserve the sync pagination contract.
+    default Specification<ProgramEnrolment> orderByLastModifiedAscIdAsc() {
+        return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            query.orderBy(cb.asc(root.get("lastModifiedDateTime")), cb.asc(root.get("id")));
+            return cb.conjunction();
+        };
+    }
+
+    default Page<ProgramEnrolment> search(Date lastModifiedDateTime, Date now, String programName, String subjectUuid, Pageable pageable) {
+        return findAll(Specification.where(lastModifiedBetween(lastModifiedDateTime, now))
+                .and(withProgramName(programName))
+                .and(withIndividualUuid(subjectUuid))
+                .and(inCurrentOrganisation())
+                .and(orderByLastModifiedAscIdAsc()), pageable);
+    }
 }
