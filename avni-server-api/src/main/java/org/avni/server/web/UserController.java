@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -153,13 +154,13 @@ public class UserController {
     }
 
     private String getRegionForUser(UserContract userContract) {
-        String region;
-        if (userContract.getAccountIds().isEmpty()) {
-            region = RegionUtil.getCurrentUserRegion();
-        } else {
-            region = accountRepository.findOne(userContract.getAccountIds().get(0)).getRegion();
+        if (StringUtils.hasText(userContract.getRegion())) {
+            return userContract.getRegion();
         }
-        return region;
+        if (userContract.getAccountIds().isEmpty()) {
+            return RegionUtil.getCurrentUserRegion();
+        }
+        return accountRepository.findOne(userContract.getAccountIds().get(0)).getRegion();
     }
 
     private Boolean emailIsValid(String email) {

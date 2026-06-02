@@ -11,6 +11,7 @@ public class CreateUserRequest {
     private long organisationId;
     private List<String> userGroupNames;
     private boolean enabled;
+    private String region;
 
     public String getUsername() {
         return username;
@@ -74,5 +75,13 @@ public class CreateUserRequest {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 }
