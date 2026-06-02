@@ -15,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -71,27 +69,11 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "group by enl.id")
     Stream<ProgramEnrolment> findAllProgramEncounters(List<Long> locationIds, DateTime startDateTime, DateTime endDateTime, Long encounterTypeId, Long programId);
 
-    Page<ProgramEnrolment> findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanAndProgramNameOrderByLastModifiedDateTimeAscIdAsc(
-            Date lastModifiedDateTime,
-            Date now,
-            String program,
-            Pageable pageable);
-
-    Page<ProgramEnrolment> findByProgramNameAndIndividualUuidOrderByLastModifiedDateTimeAscIdAsc(
-            String program,
-            String individualUuid,
-            Pageable pageable);
-
     @Query("select pe from ProgramEnrolment pe where pe.uuid =:id or pe.legacyId = :id")
     ProgramEnrolment findByLegacyIdOrUuid(String id);
 
     @Query("select pe from ProgramEnrolment pe where pe.legacyId = :id")
     ProgramEnrolment findByLegacyId(String id);
-
-    Page<ProgramEnrolment> findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
-            Pageable pageable);
 
     @Override
     default Specification<ProgramEnrolment> syncTypeIdSpecification(Long typeId) {
