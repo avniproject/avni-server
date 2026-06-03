@@ -206,8 +206,13 @@ public class OrganisationConfigService implements NonScopeAwareService {
 
         if (request.getWorklistUpdationRule() != null)
             organisationConfig.setWorklistUpdationRule(request.getWorklistUpdationRule());
-        if (request.getSettings() != null)
+        if (request.getSettings() != null) {
+            // Stamp before merging: updateOrganisationConfigSettings mutates
+            // the persisted settings in place, after which we can't tell what
+            // the previous flag value was.
+            stampSqliteSnapshotGenerationTimestamps(organisationConfig.getSettings(), request.getSettings());
             organisationConfig.setSettings(updateOrganisationConfigSettings(request.getSettings(), organisationConfig.getSettings()));
+        }
         organisationConfig.updateAudit();
         return organisationConfigRepository.save(organisationConfig);
     }
