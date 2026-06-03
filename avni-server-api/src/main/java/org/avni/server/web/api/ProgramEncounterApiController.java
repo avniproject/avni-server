@@ -188,10 +188,9 @@ public class ProgramEncounterApiController {
         encounter.setEncounterType(encounterType);
         encounter.setEncounterLocation(request.getEncounterLocation());
         encounter.setCancelLocation(request.getCancelLocation());
-        encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
+        encounter.setTiming(request.getEncounterDateTime(), request.getCancelDateTime(), userService.getCurrentUser());
         encounter.setEarliestVisitDateTime(request.getEarliestScheduledDate());
         encounter.setMaxVisitDateTime(request.getMaxScheduledDate());
-        encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setObservations(RequestUtils.createObservations(request.getObservations(), conceptRepository));
         encounter.setCancelObservations(RequestUtils.createObservations(request.getCancelObservations(), conceptRepository));
         encounter.setVoided(request.isVoided());

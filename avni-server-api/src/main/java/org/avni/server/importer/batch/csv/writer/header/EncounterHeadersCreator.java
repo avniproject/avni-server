@@ -1,6 +1,8 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
+import org.avni.server.dao.application.FormMappingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,13 +19,14 @@ public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCr
     public static final String EARLIEST_VISIT_DATE = "Earliest Visit Date";
     public static final String MAX_VISIT_DATE = "Max Visit Date";
     public static final String ENCOUNTER_COORDINATES = "Encounter Coordinates";
+    public static final String CANCEL_DATE = "Cancel Date";
     public static final String CANCEL_LOCATION = "Cancel Location";
 
-    private final EncounterHeaderStrategyFactory strategyFactory;
+    private final FormMappingRepository formMappingRepository;
 
     @Autowired
-    public EncounterHeadersCreator(EncounterHeaderStrategyFactory strategyFactory) {
-        this.strategyFactory = strategyFactory;
+    public EncounterHeadersCreator(FormMappingRepository formMappingRepository) {
+        this.formMappingRepository = formMappingRepository;
     }
 
     @Override
@@ -49,7 +52,28 @@ public class EncounterHeadersCreator extends AbstractHeaders implements HeaderCr
     @Override
     protected List<HeaderField> buildFields(FormMapping formMapping, Object mode) {
         EncounterUploadMode encounterMode = (EncounterUploadMode) mode;
-        EncounterHeaderStrategy strategy = strategyFactory.getStrategy(encounterMode);
-        return strategy.generateHeaders(formMapping);
+        EncounterHeadersBuilder builder = new EncounterHeadersBuilder(formMapping);
+        switch (encounterMode) {
+            case UPLOAD_VISIT_DETAILS:
+                return builder.withVisitDetails().build();
+            case SCHEDULE_VISIT:
+                return builder.withScheduleWindow().build();
+            case UPLOAD_CANCELLED_VISIT:
+                return builder.withCancelDetails(resolveCancellationFormMapping(formMapping)).build();
+            default:
+                throw new IllegalArgumentException("Unsupported EncounterUploadMode: " + encounterMode);
+        }
+    }
+
+    private FormMapping resolveCancellationFormMapping(FormMapping encounterFormMapping) {
+        if (encounterFormMapping.getType() == FormType.ProgramEncounter) {
+            return formMappingRepository.getProgramEncounterCancelFormMapping(
+                    encounterFormMapping.getSubjectType(),
+                    encounterFormMapping.getProgram(),
+                    encounterFormMapping.getEncounterType());
+        }
+        return formMappingRepository.getGeneralEncounterCancelFormMapping(
+                encounterFormMapping.getSubjectType(),
+                encounterFormMapping.getEncounterType());
     }
 }

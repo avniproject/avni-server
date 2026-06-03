@@ -41,9 +41,10 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final FormMappingService formMappingService;
     private final UserService userService;
+    private final SubjectMigrationService subjectMigrationService;
 
     @Autowired
-    public ProgramEncounterService(ProgramEncounterRepository programEncounterRepository, EncounterTypeRepository encounterTypeRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, ObservationService observationService, ProgramEnrolmentRepository programEnrolmentRepository, FormMappingService formMappingService, UserService userService) {
+    public ProgramEncounterService(ProgramEncounterRepository programEncounterRepository, EncounterTypeRepository encounterTypeRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, ObservationService observationService, ProgramEnrolmentRepository programEnrolmentRepository, FormMappingService formMappingService, UserService userService, SubjectMigrationService subjectMigrationService) {
         this.programEncounterRepository = programEncounterRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
@@ -51,6 +52,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.formMappingService = formMappingService;
         this.userService = userService;
+        this.subjectMigrationService = subjectMigrationService;
     }
 
     public ProgramEncounterContract getProgramEncounterByUuid(String uuid) {
@@ -159,7 +161,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
             bugsnag.notify(new Exception(errorMessage));
             logger.error(errorMessage);
         }
-        encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
+        encounter.setTiming(request.getEncounterDateTime(), request.getCancelDateTime(), userService.getCurrentUser());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(request.getProgramEnrolmentUUID());
         encounter.setProgramEnrolment(programEnrolment);
         encounter.setEncounterType(encounterType);
@@ -167,7 +169,6 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         encounter.setName(request.getName());
         encounter.setEarliestVisitDateTime(request.getEarliestVisitDateTime());
         encounter.setMaxVisitDateTime(request.getMaxVisitDateTime());
-        encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
 
         PointRequest encounterLocation = request.getEncounterLocation();
@@ -194,7 +195,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
             List<Decision> registrationDecisions = decisions.getRegistrationDecisions();
             if (registrationDecisions != null) {
                 ObservationCollection registrationObservations = observationService.createObservationsFromDecisions(registrationDecisions);
-                programEnrolment.getIndividual().addObservations(registrationObservations);
+                subjectMigrationService.applyRegistrationDecisionsAndPropagate(programEnrolment.getIndividual(), registrationObservations);
             }
         }
         encounter = this.save(encounter);

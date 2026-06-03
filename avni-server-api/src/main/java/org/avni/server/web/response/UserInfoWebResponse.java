@@ -6,6 +6,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.web.request.UserInfoContract;
+import org.avni.server.web.request.rules.RulesContractWrapper.MyUserGroupContract;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class UserInfoWebResponse extends UserInfoContract {
     private List<UserPrivilegeWebResponse> privileges;
     private boolean isAdmin;
     private String organisationCategoryName;
+    private List<MyUserGroupContract> myUserGroups;
 
     private UserInfoWebResponse() {
     }
@@ -39,13 +41,14 @@ public class UserInfoWebResponse extends UserInfoContract {
         return response;
     }
 
-    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges, long lastSessionTime, OrganisationCategory organisationCategory, String region) {
+    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges, long lastSessionTime, OrganisationCategory organisationCategory, String region, List<MyUserGroupContract> myUserGroups) {
         super(username, orgName, orgId, usernameSuffix, settings, name, catchmentName, syncSettings);
         this.privileges = privileges;
         this.hasAllPrivileges = hasAllPrivileges;
         this.lastSessionTime = lastSessionTime;
         this.organisationCategoryName = organisationCategory.getName();
         this.region = region;
+        this.myUserGroups = myUserGroups;
     }
 
     public List<UserPrivilegeWebResponse> getPrivileges() {
@@ -74,5 +77,13 @@ public class UserInfoWebResponse extends UserInfoContract {
 
     public String getRegion() {
         return region;
+    }
+
+    public List<MyUserGroupContract> getMyUserGroups() {
+        return myUserGroups;
+    }
+
+    public void setMyUserGroups(List<MyUserGroupContract> myUserGroups) {
+        this.myUserGroups = myUserGroups;
     }
 }

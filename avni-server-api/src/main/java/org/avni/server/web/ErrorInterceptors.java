@@ -6,6 +6,9 @@ import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.rest.RestControllerErrorResponse;
+import org.avni.server.service.attendance.AttendanceConfigIncompleteException;
+import org.avni.server.service.attendance.FutureScheduledDateNotAllowedException;
+import org.avni.server.service.attendance.ReasonRequiredException;
 import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.BugsnagReporter;
@@ -93,6 +96,31 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = {SizeLimitExceededException.class})
     public ResponseEntity fileUploadSizeLimitExceededError(Exception e) {
         return ResponseEntity.badRequest().body(String.format("Maximum upload file size exceeded; ensure file size is less than %s.", maxFileSize));
+    }
+
+    @ExceptionHandler(value = {AttendanceConfigIncompleteException.class})
+    public ResponseEntity<Map<String, Object>> attendanceConfigIncomplete(AttendanceConfigIncompleteException e) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "AttendanceConfigIncomplete");
+        body.put("incompleteTypes", e.getIncompleteTypes());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(value = {ReasonRequiredException.class})
+    public ResponseEntity<Map<String, Object>> reasonRequired(ReasonRequiredException e) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "ReasonRequired");
+        body.put("day_type", e.getDayType());
+        body.put("requiredFor", e.getRequiredFor());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(value = {FutureScheduledDateNotAllowedException.class})
+    public ResponseEntity<Map<String, Object>> futureScheduledDateNotAllowed(FutureScheduledDateNotAllowedException e) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "FutureScheduledDateNotAllowed");
+        body.put("scheduledDate", e.getScheduledDate());
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(value = {DataIntegrityViolationException.class, ConstraintViolationException.class, ConstraintViolationExceptionAcrossOrganisations.class})

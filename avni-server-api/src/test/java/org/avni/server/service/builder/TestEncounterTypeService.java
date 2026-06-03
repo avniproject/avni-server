@@ -32,6 +32,7 @@ public class TestEncounterTypeService {
 
     public FormMapping addGeneralEncounterTypeAndGetFormMapping(String encounterTypeName, SubjectType subjectType) {
         EncounterType encounterType = new EncounterTypeBuilder().withName(encounterTypeName).build();
+        encounterType.assignUUIDIfRequired();
         encounterTypeRepository.save(encounterType);
         OperationalEncounterType operationalEncounterType = new OperationalEncounterType();
         operationalEncounterType.setName(encounterTypeName);
@@ -48,6 +49,7 @@ public class TestEncounterTypeService {
 
     public FormMapping addProgramEncounterTypeAndGetFormMapping(String encounterTypeName, SubjectType subjectType, Program program) {
         EncounterType encounterType = new EncounterTypeBuilder().withName(encounterTypeName).build();
+        encounterType.assignUUIDIfRequired();
         encounterTypeRepository.save(encounterType);
         OperationalEncounterType operationalEncounterType = new OperationalEncounterType();
         operationalEncounterType.setName(encounterTypeName);

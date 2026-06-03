@@ -6,6 +6,7 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
+import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.WebResponseUtil;
@@ -14,6 +15,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -37,9 +39,13 @@ public class UserService implements NonScopeAwareService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccountAdminRepository accountAdminRepository;
     private final IdpServiceFactory idpServiceFactory;
+    private final OrganisationRepository organisationRepository;
+    private final OrganisationConfigService organisationConfigService;
+    private final AccountAdminService accountAdminService;
+    private final MetabaseService metabaseService;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, IdpServiceFactory idpServiceFactory, AccountAdminRepository accountAdminRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, IdpServiceFactory idpServiceFactory, AccountAdminRepository accountAdminRepository, OrganisationRepository organisationRepository, OrganisationConfigService organisationConfigService, AccountAdminService accountAdminService, @Lazy MetabaseService metabaseService) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
@@ -48,6 +54,10 @@ public class UserService implements NonScopeAwareService {
         this.subjectTypeRepository = subjectTypeRepository;
         this.accountAdminRepository = accountAdminRepository;
         this.idpServiceFactory = idpServiceFactory;
+        this.organisationRepository = organisationRepository;
+        this.organisationConfigService = organisationConfigService;
+        this.accountAdminService = accountAdminService;
+        this.metabaseService = metabaseService;
     }
 
     public User getCurrentUser() {
@@ -175,6 +185,9 @@ public class UserService implements NonScopeAwareService {
     }
 
     public void ensureSubjectForUser(User user, SubjectType subjectType) {
+        if (subjectType.isVoided())
+            return;
+
         if (!subjectType.getType().equals(Subject.User))
             throw new RuntimeException(String.format("Subject type: %s is not of User type", subjectType.getType()));
 
@@ -233,5 +246,41 @@ public class UserService implements NonScopeAwareService {
     public boolean isAdmin(User user) {
         List<AccountAdmin> accountAdmins = accountAdminRepository.findByUser_Id(user.getId());
         return !accountAdmins.isEmpty();
+    }
+
+    @Transactional
+    public User updateUser(User user, List<Long> accountIds, List<Long> groupIds) {
+        idpServiceFactory.getIdpService(user, isAdmin(user)).updateUser(user);
+        User savedUser = save(user);
+        accountAdminService.syncAccountAdmins(savedUser, accountIds);
+        List<UserGroup> userGroups = associateUserToGroups(savedUser, groupIds);
+        if (savedUser.getOrganisationId() != null
+                && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())
+                && userGroups != null
+                && userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
+            metabaseService.upsertUsersOnMetabase(userGroups);
+        }
+        return savedUser;
+    }
+
+    @Transactional(rollbackFor = IDPException.class)
+    public User createUser(User user, String password, List<Long> accountIds, List<Long> groupIds) throws IDPException {
+        User savedUser = save(user);
+        if (savedUser.getOrganisationId() != null) {
+            Organisation organisation = organisationRepository.findOne(savedUser.getOrganisationId());
+            idpServiceFactory.getIdpService(organisation).createUserWithPassword(savedUser, password, organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
+        } else {
+            idpServiceFactory.getIdpService().createSuperAdmin(savedUser, password);
+        }
+        accountAdminService.createAccountAdmins(savedUser, accountIds);
+        addToDefaultUserGroup(savedUser);
+        List<UserGroup> userGroups = associateUserToGroups(savedUser, groupIds);
+        if (savedUser.getOrganisationId() != null
+                && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())
+                && userGroups != null
+                && userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
+            metabaseService.upsertUsersOnMetabase(userGroups);
+        }
+        return savedUser;
     }
 }

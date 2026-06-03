@@ -61,6 +61,11 @@ public class SubjectTypeBuilder {
         return this;
     }
 
+    public SubjectTypeBuilder setAttendanceEnabled(boolean attendanceEnabled) {
+        subjectType.setAttendanceEnabled(attendanceEnabled);
+        return this;
+    }
+
     public SubjectTypeBuilder setSubjectSummaryRule(String subjectSummaryRule) {
         subjectType.setSubjectSummaryRule(subjectSummaryRule);
         return this;

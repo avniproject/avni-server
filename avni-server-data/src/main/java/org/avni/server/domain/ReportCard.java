@@ -14,7 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "report_card")
 @BatchSize(size = 100)
-@JsonIgnoreProperties({"standardReportCardType"})
+@JsonIgnoreProperties({"standardReportCardType", "customCardConfig"})
 public class ReportCard extends OrganisationAwareEntity {
     public static final int INT_CONSTANT_DEFAULT_COUNT_OF_CARDS = 1;
     public static final int INT_CONSTANT_MAX_COUNT_OF_CARDS = 9;
@@ -48,6 +48,14 @@ public class ReportCard extends OrganisationAwareEntity {
 
     @Type(value = JSONObjectUserType.class)
     private JsonObject actionDetail;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "custom_card_config_id")
+    private CustomCardConfig customCardConfig;
+
+    @Column(name = "on_action_completion")
+    @Enumerated(EnumType.STRING)
+    private ReportCardActionCompletion onActionCompletion;
 
     public String getName() {
         return name;
@@ -195,11 +203,40 @@ public class ReportCard extends OrganisationAwareEntity {
         return actionDetail != null ? actionDetail.getString("visitType") : null;
     }
 
+    public String getActionDetailAttendanceTypeUUID() {
+        return actionDetail != null ? actionDetail.getString("attendanceTypeUUID") : null;
+    }
+
     public void setActionDetailFields(String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
         this.actionDetail = new JsonObject(new HashMap<>());
         this.actionDetail.with("subjectTypeUUID", subjectTypeUUID);
         this.actionDetail.with("programUUID", programUUID);
         this.actionDetail.with("encounterTypeUUID", encounterTypeUUID);
         this.actionDetail.with("visitType", visitType);
+    }
+
+    // MarkAttendance overload — fresh JsonObject so any stale DoVisit keys
+    // (programUUID / encounterTypeUUID / visitType) get cleared when an
+    // existing card is switched between action types.
+    public void setActionDetailFields(String subjectTypeUUID, String attendanceTypeUUID) {
+        this.actionDetail = new JsonObject(new HashMap<>());
+        this.actionDetail.with("subjectTypeUUID", subjectTypeUUID);
+        this.actionDetail.with("attendanceTypeUUID", attendanceTypeUUID);
+    }
+
+    public CustomCardConfig getCustomCardConfig() {
+        return customCardConfig;
+    }
+
+    public void setCustomCardConfig(CustomCardConfig customCardConfig) {
+        this.customCardConfig = customCardConfig;
+    }
+
+    public ReportCardActionCompletion getOnActionCompletion() {
+        return onActionCompletion;
+    }
+
+    public void setOnActionCompletion(ReportCardActionCompletion onActionCompletion) {
+        this.onActionCompletion = onActionCompletion;
     }
 }

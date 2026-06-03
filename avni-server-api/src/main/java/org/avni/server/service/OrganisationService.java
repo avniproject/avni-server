@@ -27,12 +27,24 @@ import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.application.MenuItemService;
+import org.avni.server.service.CustomCardConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
+import org.avni.server.web.request.calendar.CalendarContract;
+import org.avni.server.web.request.calendar.CalendarDateMarkerContract;
+import org.avni.server.dao.attendance.AttendanceRecordRepository;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
+import org.avni.server.dao.attendance.SessionRepository;
+import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
+import org.avni.server.dao.calendar.CalendarRepository;
+import org.avni.server.domain.attendance.AttendanceType;
+import org.avni.server.domain.calendar.Calendar;
+import org.avni.server.domain.calendar.CalendarDateMarker;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
@@ -64,6 +76,12 @@ import java.util.zip.ZipOutputStream;
 
 @Service
 public class OrganisationService {
+    private final CalendarRepository calendarRepository;
+    private final CalendarDateMarkerRepository calendarDateMarkerRepository;
+    private final AttendanceTypeRepository attendanceTypeRepository;
+    private final SessionRepository sessionRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
+
     private final FormRepository formRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final LocationRepository locationRepository;
@@ -171,6 +189,7 @@ public class OrganisationService {
     private final StorageManagementConfigRepository storageManagementConfigRepository;
     private final LocationService locationService;
     private final CatchmentService catchmentService;
+    private final CustomCardConfigRepository customCardConfigRepository;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -267,7 +286,9 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService) {
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository,
+                               CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository,
+                               SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -369,6 +390,12 @@ public class OrganisationService {
         this.storageManagementConfigRepository = storageManagementConfigRepository;
         this.locationService = locationService;
         this.catchmentService = catchmentService;
+        this.customCardConfigRepository = customCardConfigRepository;
+        this.calendarRepository = calendarRepository;
+        this.calendarDateMarkerRepository = calendarDateMarkerRepository;
+        this.attendanceTypeRepository = attendanceTypeRepository;
+        this.sessionRepository = sessionRepository;
+        this.attendanceRecordRepository = attendanceRecordRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -397,6 +424,8 @@ public class OrganisationService {
 
     private JpaRepository[] getTxJpaRepositories() {
         JpaRepository[] transactionalRepositories = {
+                attendanceRecordRepository,
+                sessionRepository,
                 newsRepository,
                 commentRepository,
                 commentThreadRepository,
@@ -426,6 +455,8 @@ public class OrganisationService {
 
     private List<String> getTxJpaTableList() {
         return Arrays.asList(
+                "attendance_record",
+                "session",
                 "news",
                 "comment",
                 "comment_thread",
@@ -469,6 +500,8 @@ public class OrganisationService {
 
     private JpaRepository[] getMetadataJpaRepositories() {
         JpaRepository[] metadataRepositories = {
+                calendarDateMarkerRepository,
+                calendarRepository,
                 groupPrivilegeRepository,
                 groupRoleRepository,
                 checklistItemDetailRepository,
@@ -487,6 +520,7 @@ public class OrganisationService {
                 encounterTypeRepository,
                 operationalProgramRepository,
                 programRepository,
+                attendanceTypeRepository,
                 operationalSubjectTypeRepository,
                 subjectTypeRepository,
                 videoRepository,
@@ -511,6 +545,8 @@ public class OrganisationService {
 
     private List<String> getMetadataJpaTableList() {
         return Arrays.asList(
+                "calendar_date_marker",
+                "calendar",
                 "group_privilege",
                 "group_role",
                 "checklist_item_detail",
@@ -529,6 +565,7 @@ public class OrganisationService {
                 "encounter_type",
                 "operational_program",
                 "program",
+                "attendance_type",
                 "operational_subject_type",
                 "subject_type",
                 "video",
@@ -734,6 +771,30 @@ public class OrganisationService {
         addFileToZip(zos, "subjectTypes.json", subjectTypeContracts);
     }
 
+    public void addCalendarsJson(Long orgId, ZipOutputStream zos) throws IOException {
+        List<Calendar> calendars = calendarRepository.findAllByOrganisationId(orgId);
+        List<CalendarContract> contracts = calendars.stream()
+                .map(CalendarContract::fromEntity)
+                .collect(Collectors.toList());
+        addFileToZip(zos, "calendars.json", contracts);
+    }
+
+    public void addCalendarDateMarkersJson(Long orgId, ZipOutputStream zos) throws IOException {
+        List<CalendarDateMarker> markers = calendarDateMarkerRepository.findAllByOrganisationId(orgId);
+        List<CalendarDateMarkerContract> contracts = markers.stream()
+                .map(CalendarDateMarkerContract::fromEntity)
+                .collect(Collectors.toList());
+        addFileToZip(zos, "calendarDateMarkers.json", contracts);
+    }
+
+    public void addAttendanceTypesJson(Long orgId, ZipOutputStream zos) throws IOException {
+        List<AttendanceType> attendanceTypes = attendanceTypeRepository.findAllByOrganisationId(orgId);
+        List<AttendanceTypeContract> contracts = attendanceTypes.stream()
+                .map(AttendanceTypeContract::fromEntity)
+                .collect(Collectors.toList());
+        addFileToZip(zos, "attendanceTypes.json", contracts);
+    }
+
     public void addCatchmentsJson(Organisation organisation, ZipOutputStream zos) throws IOException {
         Stream<Catchment> allCatchments = catchmentRepository.findAllByOrganisationId(organisation.getId()).stream();
         List<CatchmentExport> catchmentExports = allCatchments.map(CatchmentExport::fromCatchment).collect(Collectors.toList());
@@ -836,6 +897,20 @@ public class OrganisationService {
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
             addMediaToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+        }
+    }
+
+    public void addCustomCardHtmlFiles(Organisation organisation, ZipOutputStream zos) throws IOException {
+        List<CustomCardConfig> configs = customCardConfigRepository.findAllByIsVoidedFalseOrderByName().stream()
+                .filter(c -> c.getHtmlFileS3Key() != null && !c.getHtmlFileS3Key().trim().isEmpty())
+                .collect(Collectors.toList());
+        if (!configs.isEmpty()) {
+            addDirectoryToZip(zos, BundleFolder.CUSTOM_CARD_HTML_FILES.getFolderName());
+        }
+        for (CustomCardConfig config : configs) {
+            String s3Path = String.format("%s/%s", CustomCardConfigService.CUSTOM_CARD_CONFIGS_SUBDIR, config.getHtmlFileS3Key());
+            InputStream content = s3Service.getOrgScopedContent(s3Path, organisation);
+            addMediaToZip(zos, String.format("%s/%s", BundleFolder.CUSTOM_CARD_HTML_FILES.getFolderName(), config.getHtmlFileS3Key()), IOUtils.toByteArray(content));
         }
     }
 

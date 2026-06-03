@@ -3,13 +3,18 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.domain.util.EntityUtil;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.domain.ValueUnit;
+import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
+import org.avni.server.web.request.reports.ReportCardRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +26,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static org.avni.server.domain.StandardReportCardTypeType.OverdueVisits;
 import static org.avni.server.domain.StandardReportCardTypeType.ScheduledVisits;
@@ -33,24 +40,38 @@ public class CardService implements NonScopeAwareService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
+    private final CustomCardConfigRepository customCardConfigRepository;
+    private final CustomCardConfigService customCardConfigService;
+    private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
+    private final OperationalProgramRepository operationalProgramRepository;
+    private final OperationalEncounterTypeRepository operationalEncounterTypeRepository;
+    private final AttendanceTypeRepository attendanceTypeRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService, OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, AttendanceTypeRepository attendanceTypeRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
+        this.customCardConfigRepository = customCardConfigRepository;
+        this.customCardConfigService = customCardConfigService;
+        this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
+        this.operationalProgramRepository = operationalProgramRepository;
+        this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
+        this.attendanceTypeRepository = attendanceTypeRepository;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
         assertNoExistingCardWithName(reportCardRequest.getName());
+        validateOperationalMappingsForWebRequest(reportCardRequest);
         ReportCard card = new ReportCard();
         card.assignUUID();
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
+        linkCustomCardConfig(card, reportCardRequest);
         cardRepository.save(card);
         return card;
     }
@@ -64,17 +85,20 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
+        upsertAndLinkCustomCardConfig(card, reportCardRequest.getCustomCardConfig());
         cardRepository.save(card);
     }
 
     public ReportCard editCard(ReportCardWebRequest request, Long cardId) {
         ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(request.getName(), existingCard.getName());
+        validateOperationalMappingsForWebRequest(request);
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
-        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType());
+        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType(), request.getActionDetailAttendanceTypeUUID());
+        linkCustomCardConfig(existingCard, request);
         return cardRepository.save(existingCard);
     }
 
@@ -151,7 +175,7 @@ public class CardService implements NonScopeAwareService {
         card.setName(reportCardRequest.getName());
         card.setColour(reportCardRequest.getColor());
         card.setDescription(reportCardRequest.getDescription());
-        card.setQuery(reportCardRequest.getQuery());
+        card.setQuery(StringUtils.hasText(reportCardRequest.getQuery()) ? reportCardRequest.getQuery() : null);
         card.setVoided(reportCardRequest.isVoided());
         card.setIconFileS3Key(reportCardRequest.getIconFileS3Key());
 
@@ -161,6 +185,7 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
+        buildOnActionCompletion(reportCardRequest.getOnActionCompletion(), card);
     }
 
     private void buildAction(String action, ReportCard card) {
@@ -175,22 +200,142 @@ public class CardService implements NonScopeAwareService {
         }
     }
 
-    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
-        if (card.getAction() != ReportCardAction.DoVisit) {
-            card.setActionDetail(null);
+    private void buildOnActionCompletion(String onActionCompletion, ReportCard card) {
+        if (onActionCompletion == null) {
+            card.setOnActionCompletion(null);
             return;
+        }
+        try {
+            card.setOnActionCompletion(ReportCardActionCompletion.valueOf(onActionCompletion));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestError(String.format("Invalid onActionCompletion '%s'. Allowed values: %s", onActionCompletion, Arrays.toString(ReportCardActionCompletion.values())));
+        }
+    }
+
+    private void linkCustomCardConfig(ReportCard card, ReportCardWebRequest request) {
+        CustomCardConfigRequest configRequest = request.getCustomCardConfig();
+        if (configRequest != null) {
+            upsertAndLinkCustomCardConfig(card, configRequest);
+            return;
+        }
+        buildCustomCardConfig(card, request.getCustomCardConfigUUID());
+    }
+
+    private void buildCustomCardConfig(ReportCard card, String customCardConfigUUID) {
+        if (!StringUtils.hasText(customCardConfigUUID)) {
+            card.setCustomCardConfig(null);
+            return;
+        }
+        CustomCardConfig config = customCardConfigRepository.findByUuid(customCardConfigUUID);
+        if (config == null) {
+            throw new BadRequestError(String.format("CustomCardConfig with uuid %s doesn't exist", customCardConfigUUID));
+        }
+        card.setCustomCardConfig(config);
+    }
+
+    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType, String attendanceTypeUUID) {
+        ReportCardAction action = card.getAction();
+        if (action == ReportCardAction.DoVisit) {
+            buildDoVisitActionDetail(card, subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
+            return;
+        }
+        if (action == ReportCardAction.MarkAttendance) {
+            buildMarkAttendanceActionDetail(card, subjectTypeUUID, attendanceTypeUUID);
+            return;
+        }
+        // For ViewSubjectProfile (and any future action without its own detail
+        // shape) clear any stale keys from a prior action.
+        card.setActionDetail(null);
+    }
+
+    private void buildDoVisitActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
+        if (!StringUtils.hasText(subjectTypeUUID)) {
+            throw new BadRequestError("Subject type is required when action is DoVisit");
+        }
+        if (subjectTypeRepository.findByUuid(subjectTypeUUID) == null) {
+            throw new BadRequestError(String.format("SubjectType with uuid %s doesn't exist", subjectTypeUUID));
+        }
+        if (StringUtils.hasText(programUUID) && programRepository.findByUuid(programUUID) == null) {
+            throw new BadRequestError(String.format("Program with uuid %s doesn't exist", programUUID));
         }
         if (!StringUtils.hasText(encounterTypeUUID)) {
             throw new BadRequestError("Encounter type is required when action is DoVisit");
         }
+        if (encounterTypeRepository.findByUuid(encounterTypeUUID) == null) {
+            throw new BadRequestError(String.format("EncounterType with uuid %s doesn't exist", encounterTypeUUID));
+        }
         if (!StringUtils.hasText(visitType)) {
             throw new BadRequestError("Visit type is required when action is DoVisit");
         }
-        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
-        if (encounterType == null) {
-            throw new BadRequestError(String.format("EncounterType with uuid %s doesn't exist", encounterTypeUUID));
-        }
         card.setActionDetailFields(subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
+    }
+
+    private void buildMarkAttendanceActionDetail(ReportCard card, String subjectTypeUUID, String attendanceTypeUUID) {
+        if (!StringUtils.hasText(subjectTypeUUID)) {
+            throw new BadRequestError("Subject type is required when action is MarkAttendance");
+        }
+        if (!StringUtils.hasText(attendanceTypeUUID)) {
+            throw new BadRequestError("Attendance type is required when action is MarkAttendance");
+        }
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+        if (subjectType == null || subjectType.isVoided()) {
+            throw new BadRequestError(String.format("SubjectType with uuid %s doesn't exist", subjectTypeUUID));
+        }
+        if (!subjectType.isGroup()) {
+            throw new BadRequestError(String.format("SubjectType '%s' is not a Group subject type; MarkAttendance only applies to Group subject types", subjectType.getName()));
+        }
+        if (!subjectType.isAttendanceEnabled()) {
+            throw new BadRequestError(String.format("SubjectType '%s' does not have attendance enabled", subjectType.getName()));
+        }
+        AttendanceType attendanceType = attendanceTypeRepository.findByUuid(attendanceTypeUUID);
+        if (attendanceType == null || attendanceType.isVoided()) {
+            throw new BadRequestError(String.format("AttendanceType with uuid %s doesn't exist", attendanceTypeUUID));
+        }
+        if (attendanceType.getSubjectType() == null || !subjectTypeUUID.equals(attendanceType.getSubjectTypeUUID())) {
+            throw new BadRequestError(String.format("AttendanceType '%s' does not belong to SubjectType '%s'", attendanceType.getName(), subjectType.getName()));
+        }
+        card.setActionDetailFields(subjectTypeUUID, attendanceTypeUUID);
+    }
+
+    private void validateOperationalMappingsForWebRequest(ReportCardRequest request) {
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        requireOperational(request.getStandardReportCardInputSubjectTypes(), organisationId, "SubjectType",
+                subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
+        requireOperational(request.getStandardReportCardInputPrograms(), organisationId, "Program",
+                programRepository::findByUuid, operationalProgramRepository::findByProgramAndOrganisationId, Program::getName);
+        requireOperational(request.getStandardReportCardInputEncounterTypes(), organisationId, "EncounterType",
+                encounterTypeRepository::findByUuid, operationalEncounterTypeRepository::findByEncounterTypeAndOrganisationId, EncounterType::getName);
+        if (ReportCardAction.DoVisit.name().equals(request.getAction())) {
+            requireOperational(List.of(request.getActionDetailSubjectTypeUUID()), organisationId, "SubjectType",
+                    subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
+            if (StringUtils.hasText(request.getActionDetailProgramUUID())) {
+                requireOperational(List.of(request.getActionDetailProgramUUID()), organisationId, "Program",
+                        programRepository::findByUuid, operationalProgramRepository::findByProgramAndOrganisationId, Program::getName);
+            }
+            requireOperational(List.of(request.getActionDetailEncounterTypeUUID()), organisationId, "EncounterType",
+                    encounterTypeRepository::findByUuid, operationalEncounterTypeRepository::findByEncounterTypeAndOrganisationId, EncounterType::getName);
+        }
+        if (ReportCardAction.MarkAttendance.name().equals(request.getAction())) {
+            requireOperational(List.of(request.getActionDetailSubjectTypeUUID()), organisationId, "SubjectType",
+                    subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
+        }
+    }
+
+    private <T> void requireOperational(List<String> uuids, long organisationId, String entityTypeLabel,
+                                        Function<String, T> findByUuid,
+                                        BiFunction<T, Long, ?> findOperational,
+                                        Function<T, String> nameOf) {
+        if (uuids == null) return;
+        for (String uuid : uuids) {
+            if (!StringUtils.hasText(uuid)) continue;
+            T entity = findByUuid.apply(uuid);
+            if (entity == null) {
+                throw new BadRequestError("%s with uuid %s doesn't exist", entityTypeLabel, uuid);
+            }
+            if (findOperational.apply(entity, organisationId) == null) {
+                throw new BadRequestError("%s '%s' (%s) is not available in this organisation", entityTypeLabel, nameOf.apply(entity), uuid);
+            }
+        }
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
@@ -227,6 +372,15 @@ public class CardService implements NonScopeAwareService {
 
     public List<EncounterType> getStandardReportCardInputEncounterTypes(ReportCard card) {
         return encounterTypeRepository.findAllByUuidIn(card.getStandardReportCardInputEncounterTypes());
+    }
+
+    private void upsertAndLinkCustomCardConfig(ReportCard card, CustomCardConfigRequest configRequest) {
+        if (configRequest == null) {
+            card.setCustomCardConfig(null);
+            return;
+        }
+        CustomCardConfig config = customCardConfigService.createOrUpdateCustomCardConfig(configRequest);
+        card.setCustomCardConfig(config);
     }
 
     @Override

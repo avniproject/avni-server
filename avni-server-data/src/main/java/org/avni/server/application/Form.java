@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.DeclarativeRule;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
@@ -59,6 +61,16 @@ public class Form extends OrganisationAwareEntity {
     @Column(name = "task_schedule_declarative_rule")
     @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule taskScheduleDeclarativeRule;
+
+    @Column(name = "share_rule")
+    private String shareRule;
+
+    @Column(name = "share_template_s3_key")
+    private String shareTemplateS3Key;
+
+    @Column(name = "share_translations")
+    @Type(value = JSONObjectUserType.class)
+    private JsonObject shareTranslations;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
     private Set<DecisionConcept> decisionConcepts = new HashSet<>();
@@ -235,5 +247,29 @@ public class Form extends OrganisationAwareEntity {
 
     public void setEditFormRule(String editFormRule) {
         this.editFormRule = editFormRule;
+    }
+
+    public String getShareRule() {
+        return shareRule;
+    }
+
+    public void setShareRule(String shareRule) {
+        this.shareRule = shareRule;
+    }
+
+    public String getShareTemplateS3Key() {
+        return shareTemplateS3Key;
+    }
+
+    public void setShareTemplateS3Key(String shareTemplateS3Key) {
+        this.shareTemplateS3Key = shareTemplateS3Key;
+    }
+
+    public JsonObject getShareTranslations() {
+        return shareTranslations;
+    }
+
+    public void setShareTranslations(JsonObject shareTranslations) {
+        this.shareTranslations = shareTranslations;
     }
 }

@@ -24,7 +24,9 @@ public class ResourceProtectionStatus {
             "/ping",
             "/web/media",
             "/config",
-            "/api/user/generateToken"
+            "/api/user/generateToken",
+            "/open",
+            "/.well-known/**"
     );
 
     public static boolean isProtected(HttpServletRequest request) {

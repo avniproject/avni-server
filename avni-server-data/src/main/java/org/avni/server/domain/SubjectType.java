@@ -148,6 +148,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         isGroup = group;
     }
 
+    public boolean isAttendanceEligible() {
+        return isGroup || isHousehold;
+    }
+
     public String getName() {
         return name;
     }
@@ -194,10 +198,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
     // Used from projections
     @JsonIgnore
-    public List<String> getMemberSubjectUUIDs() {
+    public List<Long> getMemberSubjectIds() {
         return isGroup() ? groupRoles.stream()
                 .filter(gr -> !gr.getMemberSubjectType().isVoided())
-                .map(gr -> gr.getMemberSubjectType().getUuid()).collect(Collectors.toList()) : Collections.emptyList();
+                .map(gr -> gr.getMemberSubjectType().getId()).collect(Collectors.toList()) : Collections.emptyList();
     }
 
     public Boolean getActive() {
@@ -320,11 +324,19 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         return isSyncRegistrationConcept1Usable;
     }
 
+    public Boolean getSyncRegistrationConcept1Usable() {
+        return isSyncRegistrationConcept1Usable;
+    }
+
     public void setSyncRegistrationConcept1Usable(Boolean syncRegistrationConcept1Usable) {
         isSyncRegistrationConcept1Usable = syncRegistrationConcept1Usable;
     }
 
     public Boolean isSyncRegistrationConcept2Usable() {
+        return isSyncRegistrationConcept2Usable;
+    }
+
+    public Boolean getSyncRegistrationConcept2Usable() {
         return isSyncRegistrationConcept2Usable;
     }
 
@@ -384,8 +396,6 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
         boolean isGroup();
 
-        String getMemberSubjectUUIDs();
-
         String getType();
 
         boolean isAllowEmptyLocation();
@@ -407,6 +417,14 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         List<GroupRole.GroupRoleProjection> getGroupRoles();
 
         JsonObject getSettings();
+
+        String getSyncRegistrationConcept1();
+
+        String getSyncRegistrationConcept2();
+
+        Boolean getSyncRegistrationConcept1Usable();
+
+        Boolean getSyncRegistrationConcept2Usable();
     }
 
     @Override
@@ -415,5 +433,16 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
                 "name='" + name + '\'' +
                 "uuid='" + this.getUuid() + '\'' +
                 '}';
+    }
+
+    @Column(name = "attendance_enabled")
+    private boolean attendanceEnabled;
+
+    public boolean isAttendanceEnabled() {
+        return attendanceEnabled;
+    }
+
+    public void setAttendanceEnabled(boolean attendanceEnabled) {
+        this.attendanceEnabled = attendanceEnabled;
     }
 }

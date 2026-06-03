@@ -14,4 +14,5 @@ public interface FormWebProjection {
     Set<FormElementGroupWebProjection> getFormElementGroups();
     FormType getFormType();
     Set<ConceptWebProjection> getDecisionConcepts();
+    String getEditFormRule();
 }

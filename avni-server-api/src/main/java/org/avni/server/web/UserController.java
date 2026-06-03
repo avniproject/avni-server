@@ -16,7 +16,6 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
@@ -51,14 +50,11 @@ public class UserController {
     private final OrganisationRepository organisationRepository;
     private final UserService userService;
     private final IdpServiceFactory idpServiceFactory;
-    private final AccountAdminService accountAdminService;
     private final AccountRepository accountRepository;
     private final AccountAdminRepository accountAdminRepository;
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
-    private final OrganisationConfigService organisationConfigService;
-    private final MetabaseService metabaseService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -68,24 +64,20 @@ public class UserController {
                           OrganisationRepository organisationRepository,
                           UserService userService,
                           IdpServiceFactory idpServiceFactory,
-                          AccountAdminService accountAdminService, AccountRepository accountRepository,
+                          AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService,
-                          MetabaseService metabaseService) {
+                          AccessControlService accessControlService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.userService = userService;
         this.idpServiceFactory = idpServiceFactory;
-        this.accountAdminService = accountAdminService;
         this.accountRepository = accountRepository;
         this.accountAdminRepository = accountAdminRepository;
         this.resetSyncService = resetSyncService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.accessControlService = accessControlService;
-        this.organisationConfigService = organisationConfigService;
-        this.metabaseService = metabaseService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -94,7 +86,6 @@ public class UserController {
     }
 
     @RequestMapping(value = {"/user", "/user/accountOrgAdmin"}, method = RequestMethod.POST)
-    @Transactional
     public ResponseEntity createUser(@RequestBody UserContract userContract) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
@@ -113,21 +104,7 @@ public class UserController {
             user.setUsername(userContract.getUsername().trim());
             user = setUserAttributes(user, userContract, getRegionForUser(userContract));
 
-            User savedUser = userService.save(user);
-
-            if (savedUser.getOrganisationId() != null) {
-                idpServiceFactory.getIdpService(organisationRepository.findOne(savedUser.getOrganisationId())).createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
-            } else {
-                idpServiceFactory.getIdpService().createSuperAdmin(savedUser, userContract.getPassword());
-            }
-            accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
-            userService.addToDefaultUserGroup(savedUser);
-            List<UserGroup> userGroups = userService.associateUserToGroups(savedUser, userContract.getGroupIds());
-            if (savedUser.getOrganisationId() != null &&
-                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                    userGroups != null && userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
-                metabaseService.upsertUsersOnMetabase(userGroups);
-            }
+            User savedUser = userService.createUser(user, userContract.getPassword(), userContract.getAccountIds(), userContract.getGroupIds());
             logger.info(String.format("Saved new user '%s', UUID '%s'", userContract.getUsername(), savedUser.getUuid()));
             return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
         } catch (ValidationException | UsernameExistsException ex) {
@@ -152,7 +129,6 @@ public class UserController {
     }
 
     @PutMapping(value = {"/user/{id}", "/user/accountOrgAdmin/{id}"})
-    @Transactional
     public ResponseEntity updateUser(@RequestBody UserContract userContract, @PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
@@ -167,17 +143,9 @@ public class UserController {
             String region = getRegionForUser(userContract);
             user = setUserAttributes(user, userContract, region);
 
-            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).updateUser(user);
-            userService.save(user);
-            accountAdminService.syncAccountAdmins(user, userContract.getAccountIds());
-            List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
-            if (user.getOrganisationId() != null &&
-                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                    associatedUserGroups != null && associatedUserGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
-                metabaseService.upsertUsersOnMetabase(associatedUserGroups);
-            }
-            logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
+            User savedUser = userService.updateUser(user, userContract.getAccountIds(), userContract.getGroupIds());
+            logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), savedUser.getUuid()));
+            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
         } catch (ValidationException ex) {
             return WebResponseUtil.createBadRequestResponse(ex, logger);
         } catch (AWSCognitoIdentityProviderException ex) {

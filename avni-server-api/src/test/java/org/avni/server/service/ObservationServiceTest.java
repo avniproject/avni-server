@@ -15,13 +15,16 @@ import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.request.ObservationRequest;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -128,5 +131,29 @@ public class ObservationServiceTest {
         Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfQuestionGroupObservations(map, TimeZone.getDefault().getDisplayName());
         assertEquals(2, maxNumberOfObservationSets.get(groupFormElement1).intValue());
         assertEquals(null, maxNumberOfObservationSets.get(groupFormElement2));
+    }
+
+    @Test
+    public void getMaxNumberOfObservationSetsQueryFiltersNonArrayValues() {
+        Concept groupConcept = new ConceptBuilder().withName("GC").withUuid("gc").withId(1).withDataType(ConceptDataType.QuestionGroup).build();
+        Concept child = new ConceptBuilder().withName("C").withId(2).withUuid("gc-c").withDataType(ConceptDataType.Text).build();
+
+        FormElement groupFE = new TestFormElementBuilder().withConcept(groupConcept).withId(1).withRepeatable(true).build();
+        FormElement childFE = new TestFormElementBuilder().withQuestionGroupElement(groupFE).withId(2).withConcept(child).build();
+        FormElementGroup feg = new TestFormElementGroupBuilder().addFormElement(groupFE, childFE).build();
+        Form form = new TestFormBuilder().addFormElementGroup(feg).build();
+
+        when(namedParameterJdbcTemplate.query(any(String.class), any(HashMap.class), any(ObservationService.CountMapper.class)))
+                .thenReturn(Collections.singletonList(2));
+
+        HashMap<Form, ExportFilters> map = new HashMap<>();
+        map.put(form, new ExportFilters());
+        observationService.getMaxNumberOfQuestionGroupObservations(map, TimeZone.getDefault().getDisplayName());
+
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(namedParameterJdbcTemplate).query(sqlCaptor.capture(), any(HashMap.class), any(ObservationService.CountMapper.class));
+        String sql = sqlCaptor.getValue();
+        assertTrue("Query must filter non-array observation values via jsonb_typeof to avoid 'cannot get array length of a non-array' when the same QG concept is repeatable in one form and non-repeatable in another. Actual SQL: " + sql,
+                sql.contains("jsonb_typeof") && sql.contains("'array'"));
     }
 }

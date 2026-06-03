@@ -3,6 +3,7 @@
     import org.springframework.transaction.annotation.Transactional;
     import org.avni.server.dao.CatchmentRepository;
     import org.avni.server.dao.OrganisationRepository;
+    import org.avni.server.dao.UserGroupRepository;
     import org.avni.server.dao.UserRepository;
     import org.avni.server.domain.*;
     import org.avni.server.domain.accessControl.GroupPrivilege;
@@ -19,6 +20,7 @@
     import org.avni.server.web.request.UserBulkUploadContract;
     import org.avni.server.web.request.UserInfoClientContract;
     import org.avni.server.web.request.UserInfoContract;
+    import org.avni.server.web.request.rules.RulesContractWrapper.MyUserGroupContract;
     import org.avni.server.web.response.slice.SlicedResources;
     import org.joda.time.DateTime;
     import org.slf4j.Logger;
@@ -51,10 +53,12 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     private final OrganisationConfigService organisationConfigService;
     private final GroupPrivilegeService groupPrivilegeService;
     private final AccessControlService accessControlService;
+    private final UserGroupRepository userGroupRepository;
 
     @Autowired
     public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService,
-                              IdpServiceFactory idpServiceFactory, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService, AccessControlService accessControlService) {
+                              IdpServiceFactory idpServiceFactory, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService, AccessControlService accessControlService,
+                              UserGroupRepository userGroupRepository) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -63,6 +67,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         this.organisationConfigService = organisationConfigService;
         this.groupPrivilegeService = groupPrivilegeService;
         this.accessControlService = accessControlService;
+        this.userGroupRepository = userGroupRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -122,6 +127,9 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
                 .map(GroupPrivilegeContract::fromEntity)
                 .distinct()
                 .collect(Collectors.toList());
+        List<MyUserGroupContract> myUserGroups = userGroupRepository.findByUser_IdAndIsVoidedFalse(user.getId()).stream()
+                .map(MyUserGroupContract::fromEntity)
+                .collect(Collectors.toList());
         UserInfoClientContract userInfoClientContract = new UserInfoClientContract(user.getUsername(),
                 organisation.getName(),
                 organisation.getId(),
@@ -133,6 +141,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
                 user.getSyncSettings(),
                 groupPrivilegeContractList);
         userInfoClientContract.setUserUUID(user.getUuid());
+        userInfoClientContract.setMyUserGroups(myUserGroups);
         return userInfoClientContract;
     }
 

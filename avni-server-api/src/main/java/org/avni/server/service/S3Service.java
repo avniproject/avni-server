@@ -49,7 +49,7 @@ public interface S3Service {
 
     InputStream getObjectContent(String s3Key);
 
-    InputStream getExtensionContent(String fileName, Organisation organisation);
+    InputStream getOrgScopedContent(String fileName, Organisation organisation);
 
     URL getURLForExtensions(String fileName, Organisation organisation);
 

@@ -13,6 +13,7 @@ import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.web.request.webapp.search.*;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -176,6 +177,13 @@ public class BaseSubjectSearchQueryBuilder<T> {
         if (ageRange == null || ageRange.getMinValue() == null) return (T) this;
         parameters.put("age", ageRange.getMinValue());
         whereClauses.add("cast(date_part(cast('year' as text), age(now(), cast(i.date_of_birth as timestamp with time zone))) as numeric) = :age");
+        return (T) this;
+    }
+
+    public T withDateOfBirthFilter(LocalDate dateOfBirth) {
+        if (dateOfBirth == null) return (T) this;
+        addParameter("dateOfBirth", dateOfBirth.toString());
+        whereClauses.add("i.date_of_birth = cast(:dateOfBirth as date)");
         return (T) this;
     }
 

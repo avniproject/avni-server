@@ -9,12 +9,19 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.attendance.AttendanceConfigIncompleteException;
+import org.avni.server.service.attendance.AttendanceTypeConfigKey;
+import org.avni.server.service.attendance.IncompleteAttendanceType;
 import org.avni.server.service.batch.BatchJobService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.domain.SubjectTypeSetting;
 import org.joda.time.DateTime;
@@ -38,6 +45,8 @@ import java.util.stream.Stream;
 
 @Service
 public class SubjectTypeService implements NonScopeAwareService {
+    private static final String DEFAULT_ATTENDANCE_TYPE_NAME = "Attendance";
+    private static final int DEFAULT_ATTENDANCE_TYPE_SORT_ORDER = 1;
     private final Logger logger;
     private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -52,6 +61,7 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final UserService userService;
     private final LocationHierarchyService locationHierarchyService;
     private final BatchJobService batchJobService;
+    private final AttendanceTypeRepository attendanceTypeRepository;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -63,7 +73,8 @@ public class SubjectTypeService implements NonScopeAwareService {
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService, OrganisationConfigService organisationConfigService,
                               AddressLevelTypeRepository addressLevelTypeRepository, UserService userService, LocationHierarchyService locationHierarchyService,
-                              BatchJobService batchJobService) {
+                              BatchJobService batchJobService,
+                              AttendanceTypeRepository attendanceTypeRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -76,17 +87,24 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationHierarchyService = locationHierarchyService;
         this.batchJobService = batchJobService;
+        this.attendanceTypeRepository = attendanceTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.userService = userService;
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
+        return saveSubjectType(subjectTypeRequest, false);
+    }
+
+    public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest, boolean skipAttendanceSeed) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
+        boolean wasAttendanceEnabled = subjectType != null && subjectType.isAttendanceEnabled();
         if (isSubjectTypeNotPresentInDB) {
             subjectType = new SubjectType();
         }
+        validateAttendanceEligibilityAndConfig(subjectTypeRequest, subjectType);
         subjectType.setUuid(subjectTypeRequest.getUuid());
         subjectType.setVoided(subjectTypeRequest.isVoided());
         subjectType.setName(subjectTypeRequest.getName());
@@ -113,8 +131,67 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setSyncRegistrationConcept2Usable(subjectTypeRequest.getSyncRegistrationConcept2Usable());
         subjectType.setNameHelpText(subjectTypeRequest.getNameHelpText());
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
+        subjectType.setAttendanceEnabled(subjectTypeRequest.isAttendanceEnabled());
         subjectType = subjectTypeRepository.save(subjectType);
+        if (!skipAttendanceSeed) {
+            seedDefaultAttendanceTypeIfEnabling(subjectType, wasAttendanceEnabled);
+        }
         return new SubjectTypeUpsertResponse(isSubjectTypeNotPresentInDB, subjectType);
+    }
+
+    private void validateAttendanceEligibilityAndConfig(SubjectTypeContract request, SubjectType existing) {
+        // SubjectTypeContract (non-web REST API path) carries no attendanceTypes; eligibility-only.
+        validateAttendanceEligibilityAndConfig(request.isAttendanceEnabled(), request.isGroup(), request.isHousehold(), null);
+    }
+
+    public void validateAttendanceEligibilityAndConfig(boolean requestedAttendanceEnabled,
+                                                       boolean requestedIsGroup,
+                                                       boolean requestedIsHousehold,
+                                                       List<AttendanceTypeContract> requestAttendanceTypes) {
+        if (!requestedAttendanceEnabled) {
+            return;
+        }
+        if (!(requestedIsGroup || requestedIsHousehold)) {
+            throw new BadRequestError("attendance_enabled requires a group or household subject type");
+        }
+        if (requestAttendanceTypes == null) {
+            return;
+        }
+        List<IncompleteAttendanceType> incomplete = new ArrayList<>();
+        // Validate voided rows too: partial config on a voided row can still propagate to
+        // mobile clients (sync sends voided rows) and cause inconsistent behaviour there.
+        for (AttendanceTypeContract contract : requestAttendanceTypes) {
+            Map<String, Object> rawConfig = contract.getConfig();
+            JsonObject config = rawConfig == null ? new JsonObject() : new JsonObject(rawConfig);
+            List<String> missing = new ArrayList<>();
+            if (AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT) == null)
+                missing.add(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT);
+            if (AttendanceTypeConfigKey.stringValue(config, AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT) == null)
+                missing.add(AttendanceTypeConfigKey.ABSENCE_REASON_CONCEPT);
+            if (!missing.isEmpty()) {
+                incomplete.add(new IncompleteAttendanceType(contract.getUuid(), contract.getName(), missing));
+            }
+        }
+        if (!incomplete.isEmpty()) {
+            throw new AttendanceConfigIncompleteException(incomplete);
+        }
+    }
+
+    public void seedDefaultAttendanceTypeIfEnabling(SubjectType subjectType, boolean wasAttendanceEnabled) {
+        if (!subjectType.isAttendanceEnabled() || wasAttendanceEnabled) {
+            return;
+        }
+        List<AttendanceType> existing = attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(subjectType);
+        if (!existing.isEmpty()) {
+            return;
+        }
+        AttendanceType seed = new AttendanceType();
+        seed.assignUUIDIfRequired();
+        seed.setSubjectType(subjectType);
+        seed.setName(DEFAULT_ATTENDANCE_TYPE_NAME);
+        seed.setSortOrder(DEFAULT_ATTENDANCE_TYPE_SORT_ORDER);
+        seed.setConfig(new JsonObject());
+        attendanceTypeRepository.save(seed);
     }
 
     public void createOperationalSubjectType(OperationalSubjectTypeContract operationalSubjectTypeContract, Organisation organisation) {
@@ -311,7 +388,12 @@ public class SubjectTypeService implements NonScopeAwareService {
     public void saveSubjectTypesFromBundle(SubjectTypeContract[] subjectTypeContracts) {
         for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
             try {
-                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract);
+                // Skip the default-attendance-type seed: the bundle's attendanceTypes.json runs
+                // immediately after this and carries the source org's rows (seed-on-enable rows
+                // included). Seeding here would mint a destination-only row with a fresh UUID
+                // that the bundle row's INSERT then collides with on the partial unique index
+                // (subject_type_id, lower(name)) WHERE is_voided = false.
+                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract, true);
                 if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
                     userService.ensureSubjectsForUserSubjectType(response.getSubjectType());
                 }

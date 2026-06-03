@@ -305,7 +305,7 @@ public class AccessControlService {
                 return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.SyncAttributeForUserNotValidForUpdate);
             }
 
-            if (subjectType.getSyncRegistrationConcept2() != null && !userSyncSettingsForSubjectType.hasSync1Value(applicablePartitionData.getSync2ConceptValue())) {
+            if (subjectType.getSyncRegistrationConcept2() != null && !userSyncSettingsForSubjectType.hasSync2Value(applicablePartitionData.getSync2ConceptValue())) {
                 return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.SyncAttributeForUserNotValidForUpdate);
             }
         }

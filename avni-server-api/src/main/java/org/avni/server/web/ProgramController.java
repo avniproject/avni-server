@@ -10,6 +10,7 @@ import org.avni.server.domain.OperationalProgram;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.util.EntityUtil;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.FormMappingParameterObject;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
@@ -34,7 +35,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -181,6 +184,12 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
         } else {
             allPrograms = formMappingService.getAllPrograms(subjectTypeUuids);
         }
+
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        Set<Long> operationalProgramIds = new HashSet<>(operationalProgramRepository.findProgramIdsByOrganisationId(organisationId));
+        allPrograms = allPrograms.stream()
+                .filter(p -> operationalProgramIds.contains(p.getId()))
+                .collect(Collectors.toList());
 
         return allPrograms.stream().map(program -> {
             ProgramContract programContract = new ProgramContract();

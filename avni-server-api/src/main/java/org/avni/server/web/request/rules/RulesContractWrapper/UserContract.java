@@ -3,6 +3,7 @@ package org.avni.server.web.request.rules.RulesContractWrapper;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
+import org.avni.server.domain.UserGroup;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +19,10 @@ public class UserContract implements RuleServerEntityContract {
     private List<String> userGroupNames;
 
     public static UserContract fromUser(User user, Organisation organisation) {
+        return fromUser(user, organisation, user.getUserGroups());
+    }
+
+    public static UserContract fromUser(User user, Organisation organisation, List<UserGroup> userGroups) {
         UserContract userContract = new UserContract();
         userContract.setUuid(user.getUuid());
         userContract.setName(user.getName());
@@ -25,10 +30,10 @@ public class UserContract implements RuleServerEntityContract {
         userContract.setSettings(user.getSettings());
         userContract.setSyncSettings(user.getSyncSettings());
         userContract.setOrganisationName(organisation.getName());
-        userContract.setGroupIds(user.getUserGroups().stream()
-                .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
-        userContract.setUserGroupNames(user.getUserGroups().stream()
-                .map(userGroup -> userGroup.getGroupName()).collect(Collectors.toList()));
+        userContract.setGroupIds(userGroups.stream()
+                .map(UserGroup::getGroupId).collect(Collectors.toList()));
+        userContract.setUserGroupNames(userGroups.stream()
+                .map(UserGroup::getGroupName).collect(Collectors.toList()));
         return userContract;
     }
 

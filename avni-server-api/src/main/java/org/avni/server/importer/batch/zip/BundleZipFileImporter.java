@@ -18,13 +18,20 @@ import org.avni.server.importer.batch.model.BundleFile;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.importer.batch.model.BundleZip;
 import org.avni.server.service.*;
+import org.avni.server.service.CustomCardConfigService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
+import org.avni.server.service.attendance.AttendanceTypeService;
+import org.avni.server.service.calendar.CalendarDateMarkerService;
+import org.avni.server.service.calendar.CalendarService;
 import org.avni.server.service.media.MediaFolder;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
+import org.avni.server.web.request.attendance.AttendanceTypeContract;
+import org.avni.server.web.request.calendar.CalendarContract;
+import org.avni.server.web.request.calendar.CalendarDateMarkerContract;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
@@ -91,6 +98,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final CustomQueryService customQueryService;
     private final ConceptRepository conceptRepository;
     private final AvniSpringBatchJobHelper avniSpringBatchJobHelper;
+    private final CalendarService calendarService;
+    private final CalendarDateMarkerService calendarDateMarkerService;
+    private final AttendanceTypeService attendanceTypeService;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -115,8 +125,15 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("operationalPrograms.json");
         add("encounterTypes.json");
         add("operationalEncounterTypes.json");
+        add("calendars.json");
+        add("calendarDateMarkers.json");
         add("documentations.json");
         add("concepts.json");
+        // attendanceTypes.json must come AFTER concepts.json and encounterTypes.json:
+        // AttendanceTypeService.validateConfig resolves sessionOutcomeReasonConcept and
+        // absenceReasonConcept against ConceptRepository and followUpEncounterType against
+        // EncounterTypeRepository — those rows must already exist in the destination.
+        add("attendanceTypes.json");
         add(BundleFolder.FORMS.getFolderName());
         add("formMappings.json");
         add("individualRelation.json");
@@ -139,6 +156,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add(BundleFolder.OLD_RULES.getFolderName());
         add(BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         add(BundleFolder.REPORT_CARD_ICONS.getFolderName());
+        add(BundleFolder.CUSTOM_CARD_HTML_FILES.getFolderName());
         add(BundleFolder.CONCEPT_MEDIA.getFolderName());
         add("customQueries.json");
     }};
@@ -175,7 +193,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  RuleDependencyService ruleDependencyService,
                                  TranslationService translationService,
                                  RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryService customQueryService, ConceptRepository conceptRepository,
-                                 AvniSpringBatchJobHelper avniSpringBatchJobHelper) {
+                                 AvniSpringBatchJobHelper avniSpringBatchJobHelper,
+                                 CalendarService calendarService, CalendarDateMarkerService calendarDateMarkerService, AttendanceTypeService attendanceTypeService) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -211,6 +230,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.customQueryService = customQueryService;
         this.conceptRepository = conceptRepository;
         this.avniSpringBatchJobHelper = avniSpringBatchJobHelper;
+        this.calendarService = calendarService;
+        this.calendarDateMarkerService = calendarDateMarkerService;
+        this.attendanceTypeService = attendanceTypeService;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -398,6 +420,18 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 List<CustomQueryContract> customQueries = convertString(fileData, new TypeReference<List<CustomQueryContract>>() {});
                 customQueryService.processCustomQueries(customQueries);
                 break;
+            case "calendars.json":
+                CalendarContract[] calendarContracts = convertString(fileData, CalendarContract[].class);
+                calendarService.saveFromBundle(calendarContracts);
+                break;
+            case "calendarDateMarkers.json":
+                CalendarDateMarkerContract[] calendarDateMarkerContracts = convertString(fileData, CalendarDateMarkerContract[].class);
+                calendarDateMarkerService.saveFromBundle(calendarDateMarkerContracts);
+                break;
+            case "attendanceTypes.json":
+                AttendanceTypeContract[] attendanceTypeContracts = convertString(fileData, AttendanceTypeContract[].class);
+                attendanceTypeService.saveFromBundle(attendanceTypeContracts);
+                break;
         }
     }
 
@@ -481,6 +515,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 ReportCard card = cardRepository.findByUuid(reportCardUUID);
                 card.setIconFileS3Key(cs3ObjectKey);
                 cardRepository.save(card);
+                break;
+            case CUSTOM_CARD_HTML_FILES:
+                uploadMedia(CustomCardConfigService.CUSTOM_CARD_CONFIGS_SUBDIR, fileData.getKey(), (byte[]) fileData.getValue());
                 break;
             case CONCEPT_MEDIA:
                 String[] keyParts = fileData.getKey().split(ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR, 3);

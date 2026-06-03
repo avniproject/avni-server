@@ -31,6 +31,6 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     }
 
     private void write(Row row) throws Exception {
-        encounterCreator.create(row, encounterUploadMode);
+        encounterCreator.createForSubject(row, encounterUploadMode);
     }
 }

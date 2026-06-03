@@ -9,7 +9,8 @@ public enum BundleFolder {
     OLD_RULES("oldRules", "oldRule"),
     SUBJECT_TYPE_ICONS("subjectTypeIcons", "subjectTypeIcon"),
     REPORT_CARD_ICONS("reportCardIcons", "reportCardIcon"),
-    CONCEPT_MEDIA("conceptMedia", "conceptMedia");
+    CONCEPT_MEDIA("conceptMedia", "conceptMedia"),
+    CUSTOM_CARD_HTML_FILES("customCardHtmlFiles", "customCardHtmlFile");
 
     String folderName;
     String modifiedFileName;

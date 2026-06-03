@@ -68,6 +68,10 @@ public class SyncDetailsService {
             if (subjectType.isGroup()) {
                 addToSyncableItems(syncableItems, SyncEntityName.GroupSubject, subjectType.getUuid());
             }
+            if (subjectType.isGroup() && subjectType.isAttendanceEnabled()) {
+                addToSyncableItems(syncableItems, SyncEntityName.Session, subjectType.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.AttendanceRecord, subjectType.getUuid());
+            }
             if (organisationConfigService.isCommentEnabled()) {
                 addToSyncableItems(syncableItems, SyncEntityName.Comment, subjectType.getUuid());
                 addToSyncableItems(syncableItems, SyncEntityName.CommentThread, subjectType.getUuid());
@@ -117,7 +121,9 @@ public class SyncDetailsService {
                 SyncEntityName.MyGroups, SyncEntityName.GroupPrivileges, SyncEntityName.Extension, SyncEntityName.GroupRole, SyncEntityName.LocationHierarchy, SyncEntityName.ReportCard,
                 SyncEntityName.Dashboard, SyncEntityName.DashboardSection, SyncEntityName.DashboardFilter, SyncEntityName.DashboardSectionCardMapping, SyncEntityName.ApprovalStatus, SyncEntityName.GroupDashboard,
                 SyncEntityName.News, SyncEntityName.UserInfo, SyncEntityName.Privilege, SyncEntityName.StandardReportCardType, SyncEntityName.Documentation, SyncEntityName.DocumentationItem,
-                SyncEntityName.Task, SyncEntityName.TaskType, SyncEntityName.TaskStatus, SyncEntityName.TaskUnAssignment, SyncEntityName.UserSubjectAssignment, SyncEntityName.LocationMapping
+                SyncEntityName.Task, SyncEntityName.TaskType, SyncEntityName.TaskStatus, SyncEntityName.TaskUnAssignment, SyncEntityName.UserSubjectAssignment, SyncEntityName.LocationMapping,
+                SyncEntityName.MenuItem, SyncEntityName.CustomCardConfig,
+                SyncEntityName.Calendar, SyncEntityName.CalendarDateMarker, SyncEntityName.AttendanceType
         ));
 
         if (!scopeAwareEAS) addToSyncableItems(syncableItems, Collections.singletonList(SyncEntityName.EntityApprovalStatus));

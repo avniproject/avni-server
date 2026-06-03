@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.avni.server.application.Form;
 import org.avni.server.domain.DeclarativeRule;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.ReferenceDataContract;
@@ -40,6 +41,9 @@ public class FormContract extends ReferenceDataContract {
     private DeclarativeRule decisionDeclarativeRule;
     private DeclarativeRule visitScheduleDeclarativeRule;
     private DeclarativeRule taskScheduleDeclarativeRule;
+    private String shareRule;
+    private String shareTemplateS3Key;
+    private JsonObject shareTranslations;
 
     public FormContract() {
     }
@@ -126,6 +130,9 @@ public class FormContract extends ReferenceDataContract {
         formContract.setVisitScheduleDeclarativeRule(form.getVisitScheduleDeclarativeRule());
         formContract.setTaskScheduleRule(form.getTaskScheduleRule());
         formContract.setTaskScheduleDeclarativeRule(form.getTaskScheduleDeclarativeRule());
+        formContract.setShareRule(form.getShareRule());
+        formContract.setShareTemplateS3Key(form.getShareTemplateS3Key());
+        formContract.setShareTranslations(form.getShareTranslations());
 
         List<FormElementGroupContract> fegContracts = form.getFormElementGroups().stream()
                 .map(FormElementGroupContract::fromFormElementGroup)
@@ -273,5 +280,29 @@ public class FormContract extends ReferenceDataContract {
 
     public void setEditFormRule(String editFormRule) {
         this.editFormRule = editFormRule;
+    }
+
+    public String getShareRule() {
+        return shareRule;
+    }
+
+    public void setShareRule(String shareRule) {
+        this.shareRule = shareRule;
+    }
+
+    public String getShareTemplateS3Key() {
+        return shareTemplateS3Key;
+    }
+
+    public void setShareTemplateS3Key(String shareTemplateS3Key) {
+        this.shareTemplateS3Key = shareTemplateS3Key;
+    }
+
+    public JsonObject getShareTranslations() {
+        return shareTranslations;
+    }
+
+    public void setShareTranslations(JsonObject shareTranslations) {
+        this.shareTranslations = shareTranslations;
     }
 }

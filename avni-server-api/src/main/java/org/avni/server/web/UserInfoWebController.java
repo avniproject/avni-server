@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.PrivilegeRepository;
+import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
@@ -10,6 +11,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.IdpServiceFactory;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
+import org.avni.server.web.request.rules.RulesContractWrapper.MyUserGroupContract;
 import org.avni.server.web.response.UserPrivilegeWebResponse;
 import org.avni.server.web.response.UserInfoWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +31,16 @@ public class UserInfoWebController {
     private final PrivilegeRepository privilegeRepository;
     private final IdpServiceFactory idpServiceFactory;
     private final UserService userService;
+    private final UserGroupRepository userGroupRepository;
 
     @Autowired
-    public UserInfoWebController(GroupPrivilegeService groupPrivilegeService, UserRepository userRepository, PrivilegeRepository privilegeRepository, IdpServiceFactory idpServiceFactory, UserService userService) {
+    public UserInfoWebController(GroupPrivilegeService groupPrivilegeService, UserRepository userRepository, PrivilegeRepository privilegeRepository, IdpServiceFactory idpServiceFactory, UserService userService, UserGroupRepository userGroupRepository) {
         this.groupPrivilegeService = groupPrivilegeService;
         this.userRepository = userRepository;
         this.privilegeRepository = privilegeRepository;
         this.idpServiceFactory = idpServiceFactory;
         this.userService = userService;
+        this.userGroupRepository = userGroupRepository;
     }
 
     @RequestMapping(value = "/web/userInfo", method = RequestMethod.GET)
@@ -60,6 +64,9 @@ public class UserInfoWebController {
                 .map(UserPrivilegeWebResponse::createForOrgUser)
                 .distinct()
                 .collect(Collectors.toList());
+        List<MyUserGroupContract> myUserGroups = userGroupRepository.findByUser_IdAndIsVoidedFalse(user.getId()).stream()
+                .map(MyUserGroupContract::fromEntity)
+                .collect(Collectors.toList());
         return new UserInfoWebResponse(user.getUsername(),
                 contextOrganisation.getName(),
                 contextOrganisation.getId(),
@@ -72,7 +79,8 @@ public class UserInfoWebController {
                 user.hasAllPrivileges(),
                 lastSessionTime,
                 contextOrganisation.getCategory(),
-                contextOrganisation.getAccount().getRegion()
+                contextOrganisation.getAccount().getRegion(),
+                myUserGroups
                 );
     }
 }

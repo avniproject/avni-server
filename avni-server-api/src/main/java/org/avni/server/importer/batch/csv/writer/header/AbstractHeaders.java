@@ -71,30 +71,48 @@ public abstract class AbstractHeaders implements HeaderCreator {
     protected abstract List<HeaderField> buildFields(FormMapping formMapping, Object mode) throws InvalidConfigurationException;
 
     protected static List<HeaderField> generateConceptFields(FormMapping formMapping, boolean mandatoryCheckApplied) {
+        return generateConceptFields(formMapping, mandatoryCheckApplied, "");
+    }
+
+    protected static List<HeaderField> generateConceptFields(FormMapping formMapping, boolean mandatoryCheckApplied, String headerPrefix) {
         return formMapping.getForm().getApplicableFormElements().stream()
                 .filter(fe -> !ConceptDataType.isQuestionGroup(fe.getConcept().getDataType()))
-                .map((FormElement fe1) -> mapFormElementToField(fe1, mandatoryCheckApplied))
+                .map((FormElement fe1) -> mapFormElementToField(fe1, mandatoryCheckApplied, headerPrefix))
                 .collect(Collectors.toList());
     }
 
     protected List<HeaderField> generateDecisionConceptFields(Form form) {
-        return form.getDecisionConcepts().stream().map(this::mapDecisionConceptToField).toList();
+        return generateDecisionConceptFields(form, "");
     }
 
-    private HeaderField mapDecisionConceptToField(Concept concept) {
+    protected List<HeaderField> generateDecisionConceptFields(Form form, String headerPrefix) {
+        return form.getDecisionConcepts().stream().map(concept -> mapDecisionConceptToField(concept, headerPrefix)).toList();
+    }
+
+    private HeaderField mapDecisionConceptToField(Concept concept, String headerPrefix) {
         FieldDescriptor strategy = getStrategy(concept.getDataType());
         String format = strategy.getFormat(concept);
-        return new HeaderField("\"" + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);
+        return new HeaderField("\"" + headerPrefix + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);
     }
 
-    private static HeaderField mapFormElementToField(FormElement fe, boolean mandatoryCheckApplied) {
+    private static HeaderField mapFormElementToField(FormElement fe, boolean mandatoryCheckApplied, String headerPrefix) {
         Concept concept = fe.getConcept();
-        String header = ImportService.getHeaderName(fe);
+        String header = applyPrefixToConceptHeader(ImportService.getHeaderName(fe), headerPrefix);
         FieldDescriptor strategy = getStrategy(concept.getDataType());
 
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
 
         return new HeaderField(header, "", mandatoryCheckApplied && fe.isMandatory(), allowedValues, format, null, mandatoryCheckApplied);
+    }
+
+    private static String applyPrefixToConceptHeader(String conceptHeader, String headerPrefix) {
+        if (headerPrefix == null || headerPrefix.isEmpty()) {
+            return conceptHeader;
+        }
+        if (conceptHeader.startsWith("\"") && conceptHeader.endsWith("\"")) {
+            return "\"" + headerPrefix + conceptHeader.substring(1, conceptHeader.length() - 1) + "\"";
+        }
+        return headerPrefix + conceptHeader;
     }
 }

@@ -163,18 +163,18 @@ build_server: ## Builds the jar file
 build-server: build_server
 
 boot_run:
-	OPENCHS_DATABASE=$(DB) ./gradlew bootRun
+	OPENCHS_DATABASE=$(DB) ./gradlew :avni-server-api:bootRun
 
 test_server: rebuild_testdb ## Run tests
-	GRADLE_OPTS="-Xmx256m" ./gradlew clean test
+	OPENCHS_MODE=test GRADLE_OPTS="-Xmx256m" ./gradlew clean test
 test-server: test_server
 
 test_server_quick_without_clean_rebuild:  ## Run tests
-	MAVEN_OPTS="-Xmx3200m" ./gradlew test
+	OPENCHS_MODE=test MAVEN_OPTS="-Xmx3200m" ./gradlew test
 
 test_server_with_remote_db_quick_with_rebuild: check_db_user check_db_server check_db_port
 	#make rebuild_testdb su=$(REM_DBUSER) dbServer=$(REM_DBSERVER) dbPort=$(REM_DBPORT)
-	OPENCHS_DATABASE_HOST=$(REM_DBSERVER) OPENCHS_DATABASE_PORT=$(REM_DBPORT) OPENCHS_DATABASE=openchs_test GRADLE_OPTS="-Xmx3200m" ./gradlew clean build test
+	OPENCHS_DATABASE_HOST=$(REM_DBSERVER) OPENCHS_DATABASE_PORT=$(REM_DBPORT) OPENCHS_DATABASE=openchs_test OPENCHS_MODE=test GRADLE_OPTS="-Xmx3200m" ./gradlew clean build test
 
 test_server_with_remote_db: check_db_user check_db_server check_db_port
 	make rebuild_testdb su=$(REM_DBUSER) dbServer=$(REM_DBSERVER) dbPort=$(REM_DBPORT)

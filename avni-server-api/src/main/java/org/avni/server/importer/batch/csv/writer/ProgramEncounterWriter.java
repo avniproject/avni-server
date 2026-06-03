@@ -1,6 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import org.avni.server.importer.batch.csv.creator.ProgramEncounterCreator;
+import org.avni.server.importer.batch.csv.creator.EncounterCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.OrganisationConfigService;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -15,15 +15,15 @@ import java.io.Serializable;
 @StepScope
 @Component
 public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
-    private final ProgramEncounterCreator programEncounterCreator;
+    private final EncounterCreator encounterCreator;
     private final String encounterUploadMode;
 
     @Autowired
-    public ProgramEncounterWriter(ProgramEncounterCreator programEncounterCreator,
+    public ProgramEncounterWriter(EncounterCreator encounterCreator,
                                   OrganisationConfigService organisationConfigService,
                                   @Value("#{jobParameters['encounterUploadMode']}") String encounterUploadMode) {
         super(organisationConfigService);
-        this.programEncounterCreator = programEncounterCreator;
+        this.encounterCreator = encounterCreator;
         this.encounterUploadMode = encounterUploadMode;
     }
 
@@ -33,6 +33,6 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
     }
 
     private void write(Row row) throws Exception {
-        programEncounterCreator.create(row, encounterUploadMode);
+        encounterCreator.createForEnrolment(row, encounterUploadMode);
     }
 }

@@ -1,11 +1,14 @@
 package org.avni.server.mapper.dashboard;
 
 import org.avni.server.domain.CHSBaseEntity;
+import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.service.CardService;
+import org.avni.server.util.JsonObjectUtil;
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.response.reports.ReportCardBundleContract;
@@ -39,6 +42,11 @@ public class ReportCardMapper {
         response.setActionDetailProgramUUID(card.getActionDetailProgramUUID());
         response.setActionDetailEncounterTypeUUID(card.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(card.getActionDetailVisitType());
+        response.setActionDetailAttendanceTypeUUID(card.getActionDetailAttendanceTypeUUID());
+        response.setOnActionCompletion(card.getOnActionCompletion() != null ? card.getOnActionCompletion().name() : null);
+        if (card.getCustomCardConfig() != null) {
+            response.setCustomCardConfigUUID(card.getCustomCardConfig().getUuid());
+        }
         return response;
     }
 
@@ -71,6 +79,19 @@ public class ReportCardMapper {
         response.setActionDetailProgramUUID(reportCard.getActionDetailProgramUUID());
         response.setActionDetailEncounterTypeUUID(reportCard.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(reportCard.getActionDetailVisitType());
+        response.setActionDetailAttendanceTypeUUID(reportCard.getActionDetailAttendanceTypeUUID());
+        response.setOnActionCompletion(reportCard.getOnActionCompletion() != null ? reportCard.getOnActionCompletion().name() : null);
+        CustomCardConfig config = reportCard.getCustomCardConfig();
+        if (config != null) {
+            CustomCardConfigRequest configRequest = new CustomCardConfigRequest();
+            configRequest.setUuid(config.getUuid());
+            configRequest.setName(config.getName());
+            configRequest.setDataRule(config.getDataRule());
+            configRequest.setHtmlFileS3Key(config.getHtmlFileS3Key());
+            configRequest.setVoided(config.isVoided());
+            configRequest.setTranslations(JsonObjectUtil.toStringMap(config.getTranslations()));
+            response.setCustomCardConfig(configRequest);
+        }
         return response;
     }
 }

@@ -143,6 +143,9 @@ public class Avni {
                 if (standardReportCardType != null) {
                     resource.add(Link.of(standardReportCardType.getUuid(), "standardReportCardUUID"));
                 }
+                if (card.getCustomCardConfig() != null) {
+                    resource.add(Link.of(card.getCustomCardConfig().getUuid(), "customCardConfigUUID"));
+                }
                 return resource;
             }
         };

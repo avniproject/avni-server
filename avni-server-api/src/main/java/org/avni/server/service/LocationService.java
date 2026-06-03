@@ -314,6 +314,16 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         return locationRepository.findLocationProjectionByTitleIgnoreCaseAndTypeIdAndParentId(searchRequest.getTitle(), searchRequest.getAddressLevelTypeId(), searchRequest.getParentId(), searchRequest.getPageable());
     }
 
+    public Page<LocationProjection> findByAncestorAndFilters(String title, Integer typeId, Long ancestorId, org.springframework.data.domain.Pageable pageable) {
+        String lineagePrefix = null;
+        if (ancestorId != null) {
+            AddressLevel ancestor = locationRepository.findById(ancestorId)
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown ancestor id: " + ancestorId));
+            lineagePrefix = ancestor.getLineage();
+        }
+        return locationRepository.findLocationProjectionByAncestorAndFilters(title, typeId, lineagePrefix, pageable);
+    }
+
     public List<LocationProjection> getParents(String uuid, Long maxLevelTypeId) {
         return maxLevelTypeId == null ?
                 locationRepository.getParents(uuid) : locationRepository.getParentsWithMaxLevelTypeId(uuid, maxLevelTypeId);

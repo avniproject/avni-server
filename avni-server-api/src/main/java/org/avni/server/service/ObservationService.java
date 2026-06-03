@@ -345,8 +345,8 @@ public class ObservationService {
         return observations.filterByConcepts(mediaConcepts);
     }
 
-    private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null";
-    private static final String maxNumberOfRepeatableItemsWithDateFilterQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null and (%s between :fromDate and :toDate)";
+    private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null and jsonb_typeof(%s->'%s') = 'array'";
+    private static final String maxNumberOfRepeatableItemsWithDateFilterQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null and jsonb_typeof(%s->'%s') = 'array' and (%s between :fromDate and :toDate)";
 
     static class CountMapper implements RowMapper<Integer> {
         @Override
@@ -369,10 +369,11 @@ public class ObservationService {
             repeatableQuestionGroupElements.forEach(formElement -> {
                 boolean dateFilterApplicable = fromDate != null;
                 String query;
+                String conceptUuid = formElement.getConcept().getUuid();
                 if (dateFilterApplicable) {
-                    query = String.format(maxNumberOfRepeatableItemsWithDateFilterQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid(), ColumnNames.getOccurrenceDateTimeColumn(form.getFormType()));
+                    query = String.format(maxNumberOfRepeatableItemsWithDateFilterQuery, obsColumn, conceptUuid, tableName, obsColumn, conceptUuid, obsColumn, conceptUuid, ColumnNames.getOccurrenceDateTimeColumn(form.getFormType()));
                 } else {
-                    query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
+                    query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, conceptUuid, tableName, obsColumn, conceptUuid, obsColumn, conceptUuid);
                 }
 
                 if (formElement.isRepeatable()) {

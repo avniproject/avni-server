@@ -71,9 +71,12 @@ public class TxnDataHeaderValidator {
                 })
             .collect(Collectors.toSet());
         if (!filteredUnknownHeaders.isEmpty()) {
-            boolean isScheduleVisitMode = mode != null && mode instanceof EncounterUploadMode && mode == EncounterUploadMode.SCHEDULE_VISIT;
+            boolean isScheduleVisitMode = mode == EncounterUploadMode.SCHEDULE_VISIT;
+            boolean isCancelledVisitMode = mode == EncounterUploadMode.UPLOAD_CANCELLED_VISIT;
             if (isScheduleVisitMode) {
                 allErrorMsgs.add(String.format("Form fields found in schedule visit CSV: %s. These fields are not needed when scheduling a visit.", String.join(", ", filteredUnknownHeaders)));
+            } else if (isCancelledVisitMode) {
+                allErrorMsgs.add(String.format("Unexpected fields found in cancelled visit CSV: %s. Cancelled visits accept only cancellation form concepts (visit observations and Visit Date are not allowed).", String.join(", ", filteredUnknownHeaders)));
             } else {
                 allErrorMsgs.add(String.format(CommonWriterError.ERR_MSG_UNKNOWN_HEADERS, String.join(", ", filteredUnknownHeaders)));
             }

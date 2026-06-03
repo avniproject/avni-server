@@ -8,6 +8,11 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.accessControl.PrivilegeService;
 import org.avni.server.service.application.MenuItemService;
+import org.avni.server.service.attendance.AttendanceRecordService;
+import org.avni.server.service.attendance.AttendanceTypeService;
+import org.avni.server.service.attendance.SessionService;
+import org.avni.server.service.calendar.CalendarDateMarkerService;
+import org.avni.server.service.calendar.CalendarService;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
@@ -108,6 +113,12 @@ public class SyncController {
     private final UserSubjectAssignmentService userSubjectAssignmentService;
     private final ScopedEntityApprovalStatusService scopedEntityApprovalStatusService;
     private final DashboardFilterService dashboardFilterService;
+    private final CustomCardConfigService customCardConfigService;
+    private final CalendarService calendarService;
+    private final CalendarDateMarkerService calendarDateMarkerService;
+    private final AttendanceTypeService attendanceTypeService;
+    private final SessionService sessionService;
+    private final AttendanceRecordService attendanceRecordService;
 
     @Autowired
     public SyncController(Environment environment, IndividualService individualService, EncounterService encounterService,
@@ -140,7 +151,11 @@ public class SyncController {
                           DocumentationService documentationService, DocumentationItemService documentationItemService,
                           TaskService taskService, TaskTypeService taskTypeService, TaskStatusService taskStatusService,
                           TaskUnAssigmentService taskUnAssigmentService, SubjectProgramEligibilityService subjectProgramEligibilityService, MenuItemService menuItemService, UserSubjectAssignmentService userSubjectAssignmentService,
-                          ScopedEntityApprovalStatusService scopedEntityApprovalStatusService, DashboardFilterService dashboardFilterService) {
+                          ScopedEntityApprovalStatusService scopedEntityApprovalStatusService, DashboardFilterService dashboardFilterService,
+                          CustomCardConfigService customCardConfigService,
+                          CalendarService calendarService, CalendarDateMarkerService calendarDateMarkerService,
+                          AttendanceTypeService attendanceTypeService, SessionService sessionService,
+                          AttendanceRecordService attendanceRecordService) {
         this.environment = environment;
         this.individualService = individualService;
         this.encounterService = encounterService;
@@ -207,6 +222,12 @@ public class SyncController {
         this.userSubjectAssignmentService = userSubjectAssignmentService;
         this.scopedEntityApprovalStatusService = scopedEntityApprovalStatusService;
         this.dashboardFilterService = dashboardFilterService;
+        this.customCardConfigService = customCardConfigService;
+        this.calendarService = calendarService;
+        this.calendarDateMarkerService = calendarDateMarkerService;
+        this.attendanceTypeService = attendanceTypeService;
+        this.sessionService = sessionService;
+        this.attendanceRecordService = attendanceRecordService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -237,6 +258,10 @@ public class SyncController {
         scopeAwareServiceMap.put(ProgramEncounterEntityApprovalStatus, scopedEntityApprovalStatusService);
         scopeAwareServiceMap.put(ProgramEnrolmentEntityApprovalStatus, scopedEntityApprovalStatusService);
         scopeAwareServiceMap.put(ChecklistItemEntityApprovalStatus, scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put(Calendar, calendarService);
+        scopeAwareServiceMap.put(CalendarDateMarker, calendarDateMarkerService);
+        scopeAwareServiceMap.put(Session, sessionService);
+        scopeAwareServiceMap.put(AttendanceRecord, attendanceRecordService);
     }
 
     private void populateEntityNameToTableMap() {
@@ -269,6 +294,7 @@ public class SyncController {
         nonScopeAwareServiceMap.put(GroupRole, groupRoleService);
         nonScopeAwareServiceMap.put(LocationHierarchy, locationHierarchyService);
         nonScopeAwareServiceMap.put(ReportCard, cardService);
+        nonScopeAwareServiceMap.put(CustomCardConfig, customCardConfigService);
         nonScopeAwareServiceMap.put(Dashboard, dashboardService);
         nonScopeAwareServiceMap.put(DashboardSection, dashboardSectionService);
         nonScopeAwareServiceMap.put(DashboardFilter, dashboardFilterService);
@@ -288,6 +314,7 @@ public class SyncController {
         nonScopeAwareServiceMap.put(TaskUnAssignment, taskUnAssigmentService);
         nonScopeAwareServiceMap.put(MenuItem, menuItemService);
         nonScopeAwareServiceMap.put(UserSubjectAssignment, userSubjectAssignmentService);
+        nonScopeAwareServiceMap.put(AttendanceType, attendanceTypeService);
     }
 
     private void populateDeviceAwareServiceMap() {

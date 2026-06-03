@@ -45,8 +45,11 @@ public class BundleService extends RoleSwitchableRepository {
             }
             organisationService.addSubjectTypesJson(orgId, zos);
             organisationService.addOperationalSubjectTypesJson(organisation, zos);
+            organisationService.addAttendanceTypesJson(orgId, zos);
             organisationService.addEncounterTypesJson(organisation, zos);
             organisationService.addOperationalEncounterTypesJson(organisation, zos);
+            organisationService.addCalendarsJson(orgId, zos);
+            organisationService.addCalendarDateMarkersJson(orgId, zos);
             organisationService.addProgramsJson(organisation, zos);
             organisationService.addOperationalProgramsJson(organisation, zos);
             organisationService.addConceptsJson(orgId, zos);
@@ -63,6 +66,7 @@ public class BundleService extends RoleSwitchableRepository {
             organisationService.addGroupPrivilegeJson(zos);
             organisationService.addVideoJson(zos);
             organisationService.addReportCards(zos);
+            organisationService.addCustomCardHtmlFiles(organisation, zos);
             organisationService.addReportDashboard(zos);
             organisationService.addGroupDashboardJson(zos);
             organisationService.addDocumentation(zos);
