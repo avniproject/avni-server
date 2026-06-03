@@ -91,15 +91,17 @@ public class UserPrivilegeWebResponse {
 
     public static class PrivilegedEntityContract {
         private Long id;
+        private String uuid;
         private String name;
 
         public static PrivilegedEntityContract create(NamedEntity namedEntity) {
             if (namedEntity == null) return null;
-            return new PrivilegedEntityContract(namedEntity.getId(), namedEntity.getName());
+            return new PrivilegedEntityContract(namedEntity.getId(), namedEntity.getUuid(), namedEntity.getName());
         }
 
-        private PrivilegedEntityContract(Long id, String name) {
+        private PrivilegedEntityContract(Long id, String uuid, String name) {
             this.id = id;
+            this.uuid = uuid;
             this.name = name;
         }
 
@@ -109,6 +111,14 @@ public class UserPrivilegeWebResponse {
 
         public void setId(long id) {
             this.id = id;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public void setUuid(String uuid) {
+            this.uuid = uuid;
         }
 
         public String getName() {
