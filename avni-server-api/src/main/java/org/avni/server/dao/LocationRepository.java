@@ -91,8 +91,8 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             nativeQuery = true)
     Page<LocationProjection> findLocationProjectionByTitleIgnoreCaseAndTypeIdAndParentId(String title, int typeId, Integer parentId, Pageable pageable);
 
-    String addressLevelLineagePrefixClause = " and (:lineagePrefix is null or (al.lineage::text) COLLATE \"C\" like :lineagePrefix || '.%') ";
-    String optionalTypeIdClause = " and (:typeId is null or al.type_id = :typeId) ";
+    String addressLevelLineagePrefixClause = " and (:lineagePrefix is null or (al.lineage::text) COLLATE \"C\" = :lineagePrefix or (al.lineage::text) COLLATE \"C\" like :lineagePrefix || '.%') ";
+    String optionalTypeIdClause = " and (cast(:typeId as integer) is null or al.type_id = :typeId) ";
     String findLocationProjectionByAncestorAndFiltersQuery =
             locationProjectionBaseQuery + addressLevelLineagePrefixClause + optionalTypeIdClause + orderByTitle;
 

@@ -200,7 +200,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
     @JsonIgnore
     public List<Long> getMemberSubjectIds() {
         return isGroup() ? groupRoles.stream()
-                .filter(gr -> !gr.getMemberSubjectType().isVoided())
+                .filter(gr -> !gr.isVoided() && !gr.getMemberSubjectType().isVoided())
                 .map(gr -> gr.getMemberSubjectType().getId()).collect(Collectors.toList()) : Collections.emptyList();
     }
 

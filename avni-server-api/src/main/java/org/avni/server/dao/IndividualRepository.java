@@ -162,7 +162,8 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     }
 
     default Page<Individual> findSubjects(IndividualSearchParams individualSearchParams, Pageable pageable) {
-        Specification specification = withConceptValues(individualSearchParams.getObservations(), "observations");
+        Specification specification = withConceptValues(individualSearchParams.getObservations(), "observations")
+                .and(inCurrentOrganisation());
         if (individualSearchParams.getLastModifiedDateTime() != null)
             specification = specification.and(lastModifiedBetween(CHSEntity.toDate(individualSearchParams.getLastModifiedDateTime()), CHSEntity.toDate(individualSearchParams.getNow())));
         if (!individualSearchParams.getAllLocationIds().isEmpty())

@@ -33,6 +33,7 @@ public class UserContract extends ReferenceDataContract {
     private DateTime createdDateTime;
     private List<Long> groupIds;
     private List<String> userGroupNames;
+    private String region;
 
     public static UserContract fromEntity(User user) {
         UserContract userContract = new UserContract();
@@ -218,6 +219,14 @@ public class UserContract extends ReferenceDataContract {
 
     public void setUserGroupNames(List<String> userGroupNames) {
         this.userGroupNames = userGroupNames;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 
 }

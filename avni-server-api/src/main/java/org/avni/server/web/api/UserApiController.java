@@ -82,7 +82,8 @@ public class UserApiController {
         user.setUsername(createUserRequest.getUsername());
         user.setEmail(createUserRequest.getEmail());
         user.setName(createUserRequest.getName());
-        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(createUserRequest.getPhoneNumber(), RegionUtil.getCurrentUserRegion()));
+        String region = StringUtils.hasText(createUserRequest.getRegion()) ? createUserRequest.getRegion() : RegionUtil.getCurrentUserRegion();
+        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(createUserRequest.getPhoneNumber(), region));
         user.setOrganisationId(createUserRequest.getOrganisationId());
         user.setCreatedBy(UserContextHolder.getUser());
         user.setLastModifiedBy(UserContextHolder.getUser());

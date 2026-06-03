@@ -57,8 +57,10 @@ public class ProgramEnrolmentRowCreator {
         ProgramEnrolmentUploadMode effectiveMode = mode == null ? ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT : mode;
         List<String> allErrorMsgs = new ArrayList<>();
 
-        rejectMisplacedExitPrefixHeaders(row, allErrorMsgs);
-        ValidationUtil.handleErrors(allErrorMsgs);
+        if (effectiveMode == ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT) {
+            rejectMisplacedExitPrefixHeaders(row, allErrorMsgs);
+            ValidationUtil.handleErrors(allErrorMsgs);
+        }
 
         String id = row.get(ProgramEnrolmentHeadersCreator.id);
         if (id != null && !id.trim().isEmpty()) {

@@ -15,9 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
@@ -71,27 +69,11 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "group by enl.id")
     Stream<ProgramEnrolment> findAllProgramEncounters(List<Long> locationIds, DateTime startDateTime, DateTime endDateTime, Long encounterTypeId, Long programId);
 
-    Page<ProgramEnrolment> findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanAndProgramNameOrderByLastModifiedDateTimeAscIdAsc(
-            Date lastModifiedDateTime,
-            Date now,
-            String program,
-            Pageable pageable);
-
-    Page<ProgramEnrolment> findByProgramNameAndIndividualUuidOrderByLastModifiedDateTimeAscIdAsc(
-            String program,
-            String individualUuid,
-            Pageable pageable);
-
     @Query("select pe from ProgramEnrolment pe where pe.uuid =:id or pe.legacyId = :id")
     ProgramEnrolment findByLegacyIdOrUuid(String id);
 
     @Query("select pe from ProgramEnrolment pe where pe.legacyId = :id")
     ProgramEnrolment findByLegacyId(String id);
-
-    Page<ProgramEnrolment> findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
-            Pageable pageable);
 
     @Override
     default Specification<ProgramEnrolment> syncTypeIdSpecification(Long typeId) {
@@ -146,4 +128,31 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
 
     List<ProgramEnrolment> findByIndividualAndProgram(Individual individual, Program program);
     int countBySyncDisabled(boolean syncDisabled);
+
+    default Specification<ProgramEnrolment> withProgramName(String programName) {
+        return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                (programName == null || programName.isBlank()) ? null : cb.equal(root.get("program").get("name"), programName);
+    }
+
+    default Specification<ProgramEnrolment> withIndividualUuid(String subjectUuid) {
+        return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                (subjectUuid == null || subjectUuid.isBlank()) ? null : cb.equal(root.get("individual").get("uuid"), subjectUuid);
+    }
+
+    // The program+subject branch carries no date filter, so lastModifiedBetween won't set the
+    // order-by; apply it unconditionally to preserve the sync pagination contract.
+    default Specification<ProgramEnrolment> orderByLastModifiedAscIdAsc() {
+        return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            query.orderBy(cb.asc(root.get("lastModifiedDateTime")), cb.asc(root.get("id")));
+            return cb.conjunction();
+        };
+    }
+
+    default Page<ProgramEnrolment> search(Date lastModifiedDateTime, Date now, String programName, String subjectUuid, Pageable pageable) {
+        return findAll(Specification.where(lastModifiedBetween(lastModifiedDateTime, now))
+                .and(withProgramName(programName))
+                .and(withIndividualUuid(subjectUuid))
+                .and(inCurrentOrganisation())
+                .and(orderByLastModifiedAscIdAsc()), pageable);
+    }
 }

@@ -93,10 +93,14 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
-        return saveSubjectType(subjectTypeRequest, false);
+        return saveSubjectType(subjectTypeRequest, false, false);
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest, boolean skipAttendanceSeed) {
+        return saveSubjectType(subjectTypeRequest, skipAttendanceSeed, false);
+    }
+
+    public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest, boolean skipAttendanceSeed, boolean skipSettingsValidation) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
@@ -105,6 +109,11 @@ public class SubjectTypeService implements NonScopeAwareService {
             subjectType = new SubjectType();
         }
         validateAttendanceEligibilityAndConfig(subjectTypeRequest, subjectType);
+        // During bundle import the referenced Concept may not have been processed yet (subjectTypes.json
+        // runs before concepts.json), so the strict UUID-resolves check would falsely fail every import.
+        if (!skipSettingsValidation) {
+            validateRemovalReasonConceptSetting(subjectTypeRequest.getSettings());
+        }
         subjectType.setUuid(subjectTypeRequest.getUuid());
         subjectType.setVoided(subjectTypeRequest.isVoided());
         subjectType.setName(subjectTypeRequest.getName());
@@ -174,6 +183,26 @@ public class SubjectTypeService implements NonScopeAwareService {
         }
         if (!incomplete.isEmpty()) {
             throw new AttendanceConfigIncompleteException(incomplete);
+        }
+    }
+
+    public void validateRemovalReasonConceptSetting(JsonObject settings) {
+        if (settings == null) return;
+        Object configured = settings.get(String.valueOf(SubjectTypeSettingKey.removalReasonConceptUuid));
+        if (configured == null) return;
+        if (!(configured instanceof String) || ((String) configured).isEmpty()) {
+            throw new BadRequestError(String.format("'%s' must be a concept UUID string", SubjectTypeSettingKey.removalReasonConceptUuid));
+        }
+        String configuredUuid = (String) configured;
+        Concept concept = conceptService.get(configuredUuid);
+        if (concept == null) {
+            throw new BadRequestError(String.format("'%s' references unknown concept UUID '%s'", SubjectTypeSettingKey.removalReasonConceptUuid, configuredUuid));
+        }
+        if (concept.isVoided()) {
+            throw new BadRequestError(String.format("'%s' references voided concept '%s'", SubjectTypeSettingKey.removalReasonConceptUuid, concept.getName()));
+        }
+        if (!ConceptDataType.Coded.toString().equals(concept.getDataType())) {
+            throw new BadRequestError(String.format("'%s' must reference a Coded concept; '%s' is '%s'", SubjectTypeSettingKey.removalReasonConceptUuid, concept.getName(), concept.getDataType()));
         }
     }
 
@@ -393,7 +422,7 @@ public class SubjectTypeService implements NonScopeAwareService {
                 // included). Seeding here would mint a destination-only row with a fresh UUID
                 // that the bundle row's INSERT then collides with on the partial unique index
                 // (subject_type_id, lower(name)) WHERE is_voided = false.
-                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract, true);
+                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract, true, true);
                 if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
                     userService.ensureSubjectsForUserSubjectType(response.getSubjectType());
                 }
