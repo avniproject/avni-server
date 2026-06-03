@@ -408,7 +408,7 @@ public class CardService implements NonScopeAwareService {
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
             reportCard.setName(standardReportCardType.getDescription());
-            reportCard.setColour(WHITE_BG_COLOUR);
+            reportCard.setColour(DEFAULT_CARD_COLOUR);
             if (standardReportCardType.getType().isInputStandardReportCardType()) {
                 reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
                 reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
@@ -418,10 +418,10 @@ public class CardService implements NonScopeAwareService {
                 reportCard.setStandardReportCardInputRecentDuration(ValueUnit.getDefaultRecentDuration());
             }
             if (standardReportCardType.getType().equals(OverdueVisits)) {
-                reportCard.setColour(RED_BG_COLOUR);
+                reportCard.setColour(OVERDUE_CARD_COLOUR);
             }
             if (standardReportCardType.getType().equals(ScheduledVisits)) {
-                reportCard.setColour(GREEN_BG_COLOUR);
+                reportCard.setColour(SCHEDULED_CARD_COLOUR);
             }
             savedCards.put(standardReportCardType.getType(), cardRepository.save(reportCard));
         });

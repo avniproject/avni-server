@@ -47,8 +47,9 @@ public interface DefaultDashboardConstants {
         put(AS_ON_DATE_FILTER, "efea5b8d-d621-47d0-a02c-c9b1a667b680");
     }};
 
-    String WHITE_BG_COLOUR = "#ffffff";
-    String RED_BG_COLOUR = "#d32f2f";
-    String GREEN_BG_COLOUR = "#388e3c";
+    // Avni recommended Report Card palette (pale tones tested to work on the dashboard).
+    String DEFAULT_CARD_COLOUR = "#E7F3F8";
+    String OVERDUE_CARD_COLOUR = "#F8E7F1";
+    String SCHEDULED_CARD_COLOUR = "#EBF8E7";
 
 }
