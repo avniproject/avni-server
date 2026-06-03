@@ -32,12 +32,23 @@ public class LocationRepositoryIntegrationTest extends AbstractControllerIntegra
     }
 
     @Test
-    public void findByAncestorAndFiltersShouldReturnOnlyDescendantsOfGivenLineage() {
+    public void findByAncestorAndFiltersShouldReturnAncestorAndItsDescendants() {
         // test-data.sql sets up GP1 (id=3, lineage='3') with descendants GP1.Parent1 (id=4, '3.4') and GP1.Parent1.Child1 (id=5, '3.4.5')
+        // The selected ancestor itself is included alongside its descendants so drilling to any location surfaces that location.
         Page<LocationProjection> result = locationRepository.findLocationProjectionByAncestorAndFilters(
                 null, null, "3", PageRequest.of(0, 50));
 
-        assertThat(result.getContent()).extracting(LocationProjection::getId).containsExactlyInAnyOrder(4L, 5L);
+        assertThat(result.getContent()).extracting(LocationProjection::getId).containsExactlyInAnyOrder(3L, 4L, 5L);
+    }
+
+    @Test
+    public void findByAncestorAndFiltersShouldReturnLeafItselfWhenAncestorIsALeaf() {
+        // Drilling the cascade all the way to a leaf (GP1.Parent1.Child1, id=5, lineage='3.4.5') must return that leaf,
+        // even though it has no descendants of its own.
+        Page<LocationProjection> result = locationRepository.findLocationProjectionByAncestorAndFilters(
+                null, null, "3.4.5", PageRequest.of(0, 50));
+
+        assertThat(result.getContent()).extracting(LocationProjection::getId).containsExactly(5L);
     }
 
     @Test
@@ -47,7 +58,7 @@ public class LocationRepositoryIntegrationTest extends AbstractControllerIntegra
         Page<LocationProjection> result = locationRepository.findLocationProjectionByAncestorAndFilters(
                 null, null, "3", PageRequest.of(0, 50));
 
-        assertThat(result.getContent()).extracting(LocationProjection::getId).doesNotContain(3L, 6L, 7L, 8L);
+        assertThat(result.getContent()).extracting(LocationProjection::getId).doesNotContain(6L, 7L, 8L);
     }
 
     @Test
