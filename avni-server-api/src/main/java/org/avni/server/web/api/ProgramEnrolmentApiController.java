@@ -123,11 +123,11 @@ public class ProgramEnrolmentApiController {
                                 Pageable pageable) {
         Page<ProgramEnrolment> programEnrolments;
         if (S.isEmpty(program) && lastModifiedDateTime != null) {
-            programEnrolments = programEnrolmentRepository.findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanOrderByLastModifiedDateTimeAscIdAsc(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable);
+            programEnrolments = programEnrolmentRepository.search(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), null, null, pageable);
         } else if (S.isEmpty(subjectUuid) && lastModifiedDateTime != null) {
-            programEnrolments = programEnrolmentRepository.findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanAndProgramNameOrderByLastModifiedDateTimeAscIdAsc(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), program, pageable);
+            programEnrolments = programEnrolmentRepository.search(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), program, null, pageable);
         } else if (!S.isEmpty(subjectUuid) && !S.isEmpty(program)) {
-            programEnrolments = programEnrolmentRepository.findByProgramNameAndIndividualUuidOrderByLastModifiedDateTimeAscIdAsc(program, subjectUuid, pageable);
+            programEnrolments = programEnrolmentRepository.search(null, null, program, subjectUuid, pageable);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

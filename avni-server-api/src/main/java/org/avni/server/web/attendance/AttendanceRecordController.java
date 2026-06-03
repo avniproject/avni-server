@@ -10,6 +10,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.attendance.AttendanceRecord;
+import org.avni.server.domain.attendance.AttendanceStatus;
 import org.avni.server.domain.attendance.Session;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.service.ScopeBasedSyncService;
@@ -32,8 +33,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -209,13 +212,26 @@ public class AttendanceRecordController implements RestControllerResourceProcess
         if (subject == null) {
             throw new BadRequestError("Subject not found: %s", contract.getSubjectUUID());
         }
-        Concept reasonConcept = contract.getReasonConceptUUID() == null ? null : conceptRepository.findByUuid(contract.getReasonConceptUUID());
-
         record.setSession(session);
         record.setSubject(subject);
         record.setStatus(contract.getStatus());
-        record.setReasonConcept(reasonConcept);
+        List<String> resolvedReasonUuids = resolveExistingReasonConceptUuids(contract.getReasonConceptUUIDs());
+        record.setReasonConceptUUIDs(resolvedReasonUuids);
         record.setFollowUpEncounterUuid(contract.getFollowUpEncounterUUID());
+        Boolean needsFollowUp = contract.getNeedsFollowUp();
+        record.setNeedsFollowUp(needsFollowUp != null
+                ? needsFollowUp
+                : contract.getStatus() == AttendanceStatus.Absent && resolvedReasonUuids.isEmpty());
         record.setVoided(contract.isVoided());
+    }
+
+    private List<String> resolveExistingReasonConceptUuids(List<String> requested) {
+        if (requested == null || requested.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Set<String> existing = conceptRepository.findAllByUuidIn(requested).stream()
+                .map(Concept::getUuid)
+                .collect(Collectors.toSet());
+        return requested.stream().filter(existing::contains).collect(Collectors.toList());
     }
 }

@@ -199,6 +199,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         subjectType.setSyncRegistrationConcept1(request.getSyncRegistrationConcept1());
         subjectType.setSyncRegistrationConcept2(request.getSyncRegistrationConcept2());
         subjectType.setNameHelpText(request.getNameHelpText());
+        subjectTypeService.validateRemovalReasonConceptSetting(request.getSettings());
         subjectType.setSettings(request.getSettings() != null ? request.getSettings() : subjectTypeService.getDefaultSettings());
         if (request.isAttendanceEnabled() != null) {
             subjectType.setAttendanceEnabled(request.isAttendanceEnabled());

@@ -3,6 +3,8 @@ package org.avni.server.dao;
 import jakarta.persistence.criteria.*;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.UserContext;
+import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -84,5 +86,22 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
 
     default boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime) {
         return existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime == null ? null : lastModifiedDateTime.toDate());
+    }
+
+    /**
+     * Restricts a query to the current organisation via a standalone {@code organisation_id = ?} predicate.
+     *
+     * <p>The RLS policy on transactional tables is {@code organisation_id = <own org> OR organisation_id IN
+     * (organisation_group_organisation)}; the {@code OR}-with-subplan is not index-pushable, so the planner
+     * ignores the organisation_id btree and full-scans the whole (cross-org) table. Adding this flat,
+     * indexable equality lets the planner restrict to the org's rows first (see #1005 follow-up). RLS still
+     * applies as the backstop. Intended for single-organisation read paths (the external /api endpoints).
+     */
+    default Specification<T> inCurrentOrganisation() {
+        return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            UserContext userContext = UserContextHolder.getUserContext();
+            Long organisationId = userContext == null ? null : userContext.getOrganisationId();
+            return organisationId == null ? cb.conjunction() : cb.equal(root.get("organisationId"), organisationId);
+        };
     }
 }

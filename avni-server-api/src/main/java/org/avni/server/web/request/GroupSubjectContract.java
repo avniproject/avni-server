@@ -13,6 +13,7 @@ public class GroupSubjectContract extends CHSRequest {
     private String groupRoleName;
     private DateTime membershipStartDate;
     private DateTime membershipEndDate;
+    private String removalReasonConceptUUID;
     private SubjectTypeContract groupSubjectSubjectType;
 
     public static GroupSubjectContract fromEntity(GroupSubject groupSubject) {
@@ -27,6 +28,7 @@ public class GroupSubjectContract extends CHSRequest {
         groupSubjectContract.setGroupRoleName(groupSubject.getGroupRole().getRole());
         groupSubjectContract.setMembershipStartDate(groupSubject.getMembershipStartDate());
         groupSubjectContract.setMembershipEndDate(groupSubject.getMembershipEndDate());
+        groupSubjectContract.setRemovalReasonConceptUUID(groupSubject.getRemovalReasonConceptUUID());
         groupSubjectContract.setGroupSubjectSubjectType(SubjectTypeContract.fromSubjectType(groupS.getSubjectType()));
         return groupSubjectContract;
     }
@@ -93,5 +95,13 @@ public class GroupSubjectContract extends CHSRequest {
 
     public void setGroupSubjectSubjectType(SubjectTypeContract groupSubjectSubjectType) {
         this.groupSubjectSubjectType = groupSubjectSubjectType;
+    }
+
+    public String getRemovalReasonConceptUUID() {
+        return removalReasonConceptUUID;
+    }
+
+    public void setRemovalReasonConceptUUID(String removalReasonConceptUUID) {
+        this.removalReasonConceptUUID = removalReasonConceptUUID;
     }
 }

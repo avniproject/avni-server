@@ -125,7 +125,8 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
         return findAll(where(lastModifiedBetween(searchParams.lastModifiedDateTime, searchParams.now))
                 .and(withConceptValues(searchParams.concepts, "observations"))
                 .and(withEncounterType(searchParams.encounterType))
-                .and(withProgramEnrolment(searchParams.programEnrolment)), pageable);
+                .and(withProgramEnrolment(searchParams.programEnrolment))
+                .and(inCurrentOrganisation()), pageable);
     }
 
     @Modifying(clearAutomatically = true)

@@ -9,20 +9,22 @@ public class CodedFieldDescriptor extends FieldDescriptor {
     @Override
     public String getAllowedValues(FormElement fe) {
         Concept concept = fe.getConcept();
-        String values = "Allowed values: {" + concept.getConceptAnswers().stream()
-                .map(ca -> ca.getAnswerConcept().getName())
-                .sorted()
-                .collect(Collectors.joining(", ")) + "}";
+        String values = "Allowed values: {" + nonVoidedAnswerNames(concept) + "}";
         return fe.isSingleSelect() ? values + " Only single value allowed"
                 : values + " Format: Separate multiple values by a comma";
     }
 
     @Override
     public String getAllowedValues(Concept concept) {
-        String values = "Allowed values: {" + concept.getConceptAnswers().stream()
+        String values = "Allowed values: {" + nonVoidedAnswerNames(concept) + "}";
+        return values + " Format: May allow single value or multiple values separated a comma. Please check with developer.";
+    }
+
+    private static String nonVoidedAnswerNames(Concept concept) {
+        return concept.getConceptAnswers().stream()
+                .filter(ca -> !ca.isVoided() && !ca.getAnswerConcept().isVoided())
                 .map(ca -> ca.getAnswerConcept().getName())
                 .sorted()
-                .collect(Collectors.joining(", ")) + "}";
-        return values + " Format: May allow single value or multiple values separated a comma. Please check with developer.";
+                .collect(Collectors.joining(", "));
     }
 }

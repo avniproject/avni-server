@@ -1,16 +1,27 @@
 package org.avni.server.web.request.attendance;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.domain.attendance.AttendanceRecord;
 import org.avni.server.domain.attendance.AttendanceStatus;
 import org.avni.server.web.request.CHSRequest;
 import org.joda.time.DateTime;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class AttendanceRecordContract extends CHSRequest {
     private String sessionUUID;
     private String subjectUUID;
     private AttendanceStatus status;
+    private List<String> reasonConceptUUIDs = new ArrayList<>();
+    // Backwards-compat: pre-16.15 clients POST a single reasonConceptUUID. Treated as a
+    // one-element array by getReasonConceptUUIDs(). Write-only; never serialized back.
     private String reasonConceptUUID;
     private String followUpEncounterUUID;
+    // Boxed: pre-1.33.57 clients omit this; null means "fall back to the pre-#1003 rule".
+    private Boolean needsFollowUp;
     private DateTime createdDateTime;
     private DateTime lastModifiedDateTime;
 
@@ -22,8 +33,9 @@ public class AttendanceRecordContract extends CHSRequest {
         contract.setSessionUUID(record.getSessionUUID());
         contract.setSubjectUUID(record.getSubjectUUID());
         contract.setStatus(record.getStatus());
-        contract.setReasonConceptUUID(record.getReasonConceptUUID());
+        contract.setReasonConceptUUIDs(record.getReasonConceptUUIDs());
         contract.setFollowUpEncounterUUID(record.getFollowUpEncounterUuid());
+        contract.setNeedsFollowUp(record.isNeedsFollowUp());
         contract.setCreatedDateTime(record.getCreatedDateTime());
         contract.setLastModifiedDateTime(record.getLastModifiedDateTime());
         return contract;
@@ -53,10 +65,26 @@ public class AttendanceRecordContract extends CHSRequest {
         this.status = status;
     }
 
+    public List<String> getReasonConceptUUIDs() {
+        if (reasonConceptUUIDs != null && !reasonConceptUUIDs.isEmpty()) {
+            return reasonConceptUUIDs;
+        }
+        if (reasonConceptUUID != null) {
+            return Collections.singletonList(reasonConceptUUID);
+        }
+        return Collections.emptyList();
+    }
+
+    public void setReasonConceptUUIDs(List<String> reasonConceptUUIDs) {
+        this.reasonConceptUUIDs = reasonConceptUUIDs == null ? new ArrayList<>() : reasonConceptUUIDs;
+    }
+
+    @JsonIgnore
     public String getReasonConceptUUID() {
         return reasonConceptUUID;
     }
 
+    @JsonProperty("reasonConceptUUID")
     public void setReasonConceptUUID(String reasonConceptUUID) {
         this.reasonConceptUUID = reasonConceptUUID;
     }
@@ -67,6 +95,14 @@ public class AttendanceRecordContract extends CHSRequest {
 
     public void setFollowUpEncounterUUID(String followUpEncounterUUID) {
         this.followUpEncounterUUID = followUpEncounterUUID;
+    }
+
+    public Boolean getNeedsFollowUp() {
+        return needsFollowUp;
+    }
+
+    public void setNeedsFollowUp(Boolean needsFollowUp) {
+        this.needsFollowUp = needsFollowUp;
     }
 
     public DateTime getCreatedDateTime() {
