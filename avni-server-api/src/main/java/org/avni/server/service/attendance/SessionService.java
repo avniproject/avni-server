@@ -364,6 +364,9 @@ public class SessionService implements ScopeAwareService<Session> {
                 : UUID.randomUUID().toString();
         Encounter encounter = encounterService.createEmptyEncounter(subject, followUpType);
         encounter.setUuid(useUuid);
+        // DEA's planned-visits table reads encounter.name directly; createEmptyEncounter
+        // leaves it null, so without this the row renders with an empty name cell.
+        encounter.setName(followUpType.getName());
         DateTime startOfToday = DateTime.now().withTimeAtStartOfDay();
         encounter.setEarliestVisitDateTime(startOfToday);
         encounter.setMaxVisitDateTime(startOfToday.plusDays(FOLLOW_UP_WINDOW_DAYS));
