@@ -131,6 +131,60 @@ public class AttendanceTypeServiceTest {
     }
 
     @Test
+    public void bundleSaveToleratesVoidedConceptReference() {
+        Concept voided = new Concept();
+        voided.setUuid("concept-uuid");
+        voided.setVoided(true);
+        when(conceptRepository.findByUuid("concept-uuid")).thenReturn(voided);
+
+        AttendanceType type = new AttendanceType();
+        type.setUuid("type-uuid");
+        type.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "concept-uuid"));
+
+        service.save(type, true);
+
+        try {
+            service.save(type, false);
+            fail("Expected BadRequestError on interactive save");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().contains("concept-uuid"));
+        }
+    }
+
+    @Test
+    public void bundleSaveStillRejectsUnknownConceptReference() {
+        when(conceptRepository.findByUuid("missing-uuid")).thenReturn(null);
+
+        AttendanceType type = new AttendanceType();
+        type.setUuid("type-uuid");
+        type.setConfig(new JsonObject()
+                .with(AttendanceTypeConfigKey.SESSION_OUTCOME_REASON_CONCEPT, "missing-uuid"));
+
+        try {
+            service.save(type, true);
+            fail("Expected BadRequestError");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().contains("missing-uuid"));
+        }
+    }
+
+    @Test
+    public void bundleSaveSkipsLastTypeGuardForVoidedRows() {
+        SubjectType subjectType = new SubjectType();
+        subjectType.setAttendanceEnabled(true);
+        subjectType.setName("Class");
+
+        AttendanceType type = new AttendanceType();
+        type.setUuid("type-uuid");
+        type.setSubjectType(subjectType);
+        type.setVoided(true);
+        when(attendanceTypeRepository.findBySubjectTypeAndIsVoidedFalse(subjectType)).thenReturn(Collections.emptyList());
+
+        service.save(type, true);
+    }
+
+    @Test
     public void surfacesDanglingWarningsForVoidedReferences() {
         Concept voided = new Concept();
         voided.setUuid("concept-uuid");

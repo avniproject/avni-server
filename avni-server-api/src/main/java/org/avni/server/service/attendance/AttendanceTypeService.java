@@ -40,9 +40,18 @@ public class AttendanceTypeService implements NonScopeAwareService {
 
     @Transactional
     public AttendanceType save(AttendanceType attendanceType) {
+        return save(attendanceType, false);
+    }
+
+    @Transactional
+    public AttendanceType save(AttendanceType attendanceType, boolean fromBundle) {
         if (!attendanceType.isVoided()) {
-            validateConfig(attendanceType.getConfig());
-        } else {
+            validateConfig(attendanceType.getConfig(), fromBundle);
+        } else if (!fromBundle) {
+            // Interactive-only guard. A bundle mirrors source state: a voided row may be
+            // processed before any live row for its subject type exists in the destination,
+            // and the source already holds at least one live row per attendance-enabled
+            // subject type, which the same file carries.
             validateNotLast(attendanceType);
         }
         attendanceType.assignUUIDIfRequired();
@@ -50,6 +59,10 @@ public class AttendanceTypeService implements NonScopeAwareService {
     }
 
     public void validateConfig(JsonObject config) {
+        validateConfig(config, false);
+    }
+
+    private void validateConfig(JsonObject config, boolean allowVoidedReferences) {
         if (config == null || config.isEmpty()) {
             return;
         }
@@ -62,7 +75,7 @@ public class AttendanceTypeService implements NonScopeAwareService {
             String uuid = AttendanceTypeConfigKey.stringValue(config, key);
             if (uuid != null) {
                 Concept concept = conceptRepository.findByUuid(uuid);
-                if (concept == null || concept.isVoided()) {
+                if (concept == null || (concept.isVoided() && !allowVoidedReferences)) {
                     throw new BadRequestError("AttendanceType.config.%s references unknown or voided concept: %s", key, uuid);
                 }
             }
@@ -71,7 +84,7 @@ public class AttendanceTypeService implements NonScopeAwareService {
             String uuid = AttendanceTypeConfigKey.stringValue(config, key);
             if (uuid != null) {
                 EncounterType encounterType = encounterTypeRepository.findByUuid(uuid);
-                if (encounterType == null || encounterType.isVoided()) {
+                if (encounterType == null || (encounterType.isVoided() && !allowVoidedReferences)) {
                     throw new BadRequestError("AttendanceType.config.%s references unknown or voided encounter type: %s", key, uuid);
                 }
             }
@@ -154,7 +167,10 @@ public class AttendanceTypeService implements NonScopeAwareService {
             JsonObject config = contract.getConfig() == null ? new JsonObject() : new JsonObject(contract.getConfig());
             attendanceType.setConfig(config);
             attendanceType.setVoided(contract.isVoided());
-            save(attendanceType);
+            // fromBundle=true: tolerate references to voided concepts/encounter types (the
+            // source org holds these as a warned state — see surfaceDanglingReferences) and
+            // skip the interactive last-row voiding guard.
+            save(attendanceType, true);
         }
     }
 

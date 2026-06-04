@@ -45,7 +45,6 @@ public class BundleService extends RoleSwitchableRepository {
             }
             organisationService.addSubjectTypesJson(orgId, zos);
             organisationService.addOperationalSubjectTypesJson(organisation, zos);
-            organisationService.addAttendanceTypesJson(orgId, zos);
             organisationService.addEncounterTypesJson(organisation, zos);
             organisationService.addOperationalEncounterTypesJson(organisation, zos);
             organisationService.addCalendarsJson(orgId, zos);
@@ -53,6 +52,12 @@ public class BundleService extends RoleSwitchableRepository {
             organisationService.addProgramsJson(organisation, zos);
             organisationService.addOperationalProgramsJson(organisation, zos);
             organisationService.addConceptsJson(orgId, zos);
+            // attendanceTypes.json must come AFTER subjectTypes.json, encounterTypes.json and
+            // concepts.json: with the import job's chunk size of 1, files are processed in the
+            // order they are inserted here, and AttendanceTypeService.saveFromBundle resolves the
+            // subject type UUID while validateConfig resolves the config concept and encounter
+            // type UUIDs against the destination org's repositories.
+            organisationService.addAttendanceTypesJson(orgId, zos);
             organisationService.addFormsJson(orgId, zos);
             organisationService.addFormMappingsJson(orgId, zos);
             organisationService.addOrganisationConfig(orgId, zos);
