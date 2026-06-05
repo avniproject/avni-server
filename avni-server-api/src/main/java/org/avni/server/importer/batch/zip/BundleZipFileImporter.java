@@ -109,7 +109,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
 
     /**
      * IMPORTANT: The un-tampered bundle is processed in the order of files inserted while generating the bundle,
-     * which is as per code in ImplementationController.export().
+     * which is as per code in BundleService.createBundle(). The import step uses chunk size 1
+     * (ZipJobBatchConfiguration), so each write() receives ONE file in zip-entry order — the position of a file
+     * in this list does NOT reorder processing across files; it only acts as the dispatch allowlist per chunk.
      * <p>
      * Always ensure that bundle is created with content in the same sequence that you want it to be processed during upload.
      * DISCLAIMER: If the bundle is tampered, for example to remove any forms or concepts, then the sequence of processing of bundle files is unknown
@@ -129,10 +131,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("calendarDateMarkers.json");
         add("documentations.json");
         add("concepts.json");
-        // attendanceTypes.json must come AFTER concepts.json and encounterTypes.json:
-        // AttendanceTypeService.validateConfig resolves sessionOutcomeReasonConcept and
-        // absenceReasonConcept against ConceptRepository and followUpEncounterType against
-        // EncounterTypeRepository — those rows must already exist in the destination.
+        // attendanceTypes.json must come AFTER subjectTypes.json, encounterTypes.json and
+        // concepts.json. NOTE: the position here does not enforce that for un-tampered bundles
+        // (see class comment) — the authoritative ordering is the export insertion order in
+        // BundleService.createBundle(), which this list must mirror.
         add("attendanceTypes.json");
         add(BundleFolder.FORMS.getFolderName());
         add("formMappings.json");
