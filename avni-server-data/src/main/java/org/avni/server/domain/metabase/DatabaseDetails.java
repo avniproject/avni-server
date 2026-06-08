@@ -41,7 +41,7 @@ public class DatabaseDetails {
     }
 
     public DatabaseDetails(AvniDatabase avniDatabase, String dbUser, String dbUserPassword) {
-        this.host = avniDatabase.getAvniDatabaseServer();
+        this.host = avniDatabase.getAvniReadDatabaseServer();
         this.port = Integer.parseInt(avniDatabase.getAvniDatabasePort());
         this.dbname = avniDatabase.getAvniDatabaseName();
         this.user = dbUser;

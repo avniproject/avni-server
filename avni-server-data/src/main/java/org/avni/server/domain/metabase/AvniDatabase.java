@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AvniDatabase {
-    @Value("${avni.database.server}")
-    private String avniDatabaseServer;
+    @Value("${avni.read.database.server}")
+    private String avniReadDatabaseServer;
 
     @Value("${avni.database.port}")
     private String avniDatabasePort;
@@ -20,8 +20,8 @@ public class AvniDatabase {
     public AvniDatabase() {
     }
 
-    public String getAvniDatabaseServer() {
-        return avniDatabaseServer;
+    public String getAvniReadDatabaseServer() {
+        return avniReadDatabaseServer;
     }
 
     public String getAvniDatabasePort() {
