@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
@@ -77,6 +78,9 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     @GetMapping(value = "catchment/{id}")
     public EntityModel<CatchmentContract> getById(@PathVariable Long id) {
         Catchment catchment = catchmentRepository.findOne(id);
+        if (catchment == null) {
+            throw new EntityNotFoundException(String.format("Catchment not found with id %d", id));
+        }
         CatchmentContract catchmentContract = CatchmentContract.fromEntity(catchment);
         boolean fastSyncExists = s3Service.fileExists(String.format("MobileDbBackup-%s", catchment.getUuid()));
         catchmentContract.setFastSyncExists(fastSyncExists);
