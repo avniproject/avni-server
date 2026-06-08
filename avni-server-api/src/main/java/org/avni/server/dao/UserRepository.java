@@ -5,6 +5,7 @@ import jakarta.persistence.QueryHint;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
 import org.avni.server.projection.UserWebProjection;
+import org.avni.server.web.request.UserActivity;
 import org.avni.server.web.request.api.RequestUtils;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
@@ -42,6 +43,13 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
 
     Page<User> findByOrganisationIdAndIsVoidedFalse(@Param("organisationId") Long organisationId,
                                                     Pageable pageable);
+
+    @RestResource(exported = false)
+    @Query("SELECT new org.avni.server.web.request.UserActivity(u.id, u.uuid, u.username, MAX(st.syncEndTime)) " +
+        "FROM User u LEFT JOIN SyncTelemetry st ON st.user.id = u.id " +
+        "WHERE u.organisationId = :organisationId AND u.isVoided = false " +
+        "GROUP BY u.id, u.uuid, u.username")
+    List<UserActivity> findUserActivities(@Param("organisationId") Long organisationId);
 
     @RestResource(exported = false)
     List<User> findByIdIn(@Param("ids") Long[] ids);

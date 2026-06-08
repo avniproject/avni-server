@@ -3,5 +3,6 @@ package org.avni.server.application;
 public enum OrganisationConfigSettingKey {
     languages, searchFilters, myDashboardFilters, lowestAddressLevelType, saveDrafts, enableComments,
     searchResultFields, useMinioForStorage, useKeycloakAsIDP, skipRuleExecution, customRegistrationLocations, enableMessaging,
-    donotRequirePasswordChangeOnFirstLogin, failOnValidationError, guideUserToRegisterButton
+    donotRequirePasswordChangeOnFirstLogin, failOnValidationError, guideUserToRegisterButton,
+    enableSqliteSnapshotGeneration, enabledSqliteSnapshotGenerationAt, disabledSqliteSnapshotGenerationAt
 }

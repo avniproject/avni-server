@@ -4,6 +4,9 @@ import com.amazonaws.HttpMethod;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FilenameUtils;
+import org.avni.server.dao.GroupRepository;
+import org.avni.server.dao.UserGroupRepository;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
@@ -43,16 +46,22 @@ import static java.lang.String.format;
 
 @RestController
 public class MediaController {
+    private static final String SQLITE_MIGRATION_GROUP = "SQLite Migration";
     private final Logger logger;
     private final S3Service s3Service;
     private final AccessControlService accessControlService;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final GroupRepository groupRepository;
+    private final UserGroupRepository userGroupRepository;
 
     @Autowired
-    public MediaController(S3Service s3Service, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
+    public MediaController(S3Service s3Service, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder,
+                           GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
         this.s3Service = s3Service;
         this.accessControlService = accessControlService;
         this.errorBodyBuilder = errorBodyBuilder;
+        this.groupRepository = groupRepository;
+        this.userGroupRepository = userGroupRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -121,6 +130,52 @@ public class MediaController {
         } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    @RequestMapping(value = "/media/mobileDatabaseSqliteSnapshotUrl/exists", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> mobileDatabaseSqliteSnapshotExists() {
+        logger.info("checking whether sqlite snapshot exists");
+        try {
+            boolean eligible = currentUserIsInSqliteMigrationGroup()
+                && s3Service.fileExists(sqliteSnapshotRelativeKey());
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(eligible));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
+    }
+
+    @RequestMapping(value = "/media/mobileDatabaseSqliteSnapshotUrl/download", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> generateMobileDatabaseSqliteSnapshotDownloadUrl() {
+        logger.info("getting sqlite snapshot download url");
+        try {
+            URL url = s3Service.generateMediaUploadUrl(sqliteSnapshotRelativeKey(), HttpMethod.GET);
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
+    }
+
+    private boolean currentUserIsInSqliteMigrationGroup() {
+        User user = UserContextHolder.getUserContext().getUser();
+        Group group = groupRepository.findByNameAndOrganisationId(SQLITE_MIGRATION_GROUP, UserContextHolder.getUserContext().getOrganisationId());
+        if (group == null) {
+            return false;
+        }
+        return userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group) != null;
+    }
+
+    private String sqliteSnapshotRelativeKey() {
+        User user = UserContextHolder.getUserContext().getUser();
+        return format("snapshots/%s/snapshot.db", user.getUsername());
     }
 
     @RequestMapping(value = "/media/signedUrl", method = RequestMethod.GET)
