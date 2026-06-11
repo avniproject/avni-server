@@ -54,6 +54,7 @@ public class TestDataSetupService {
                 .setCategory(organisationCategoryRepository.findEntity(1L))
                 .withStatus(organisationStatusRepository.findEntity(1L))
                 .withMandatoryFields()
+                .withDbUser(dbUserFor(orgSuffix))
                 .withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user1);
 
@@ -80,6 +81,13 @@ public class TestDataSetupService {
 
     public TestOrganisationData setupOrganisation() {
         return this.setupOrganisation("example");
+    }
+
+    // Derive a deterministic, valid db_user role name from the org suffix so that a single test can set up
+    // several RLS-distinct organisations (the org's RLS is enforced via SET ROLE "<db_user>"). Deterministic
+    // rather than random keeps the set of created roles bounded and reused across runs.
+    private static String dbUserFor(String orgSuffix) {
+        return "test_db_user_" + orgSuffix.toLowerCase().replaceAll("[^a-z0-9_]", "_");
     }
 
     public TestCatchmentData setupACatchment() {
