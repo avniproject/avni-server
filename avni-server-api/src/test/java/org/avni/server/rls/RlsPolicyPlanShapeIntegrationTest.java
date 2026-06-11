@@ -3,9 +3,13 @@ package org.avni.server.rls;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -16,8 +20,10 @@ import static org.junit.Assert.assertTrue;
  * representative cross-org probe table (100k rows, 1% in the "small" org) and EXPLAINs the two policy shapes:
  *  - the new `organisation_id = ANY(<stable fn>)` shape must scan via the organisation_id index;
  *  - the old `... OR organisation_id IN (subplan)` shape cannot use that index (the regression V1_398 fixes).
- * Asserts on the index NAME via EXPLAIN (FORMAT JSON) rather than substring-matching the loose token "Index"
- * (which the bigserial PK index would also satisfy). Self-contained and reversible (drops its probe objects).
+ * Runs everything in one transaction with `enable_seqscan = off` and rolls back: that pins the policy SHAPE
+ * (can the org index be used at all?) deterministically instead of a cost-based, machine-dependent planner
+ * choice, and discards the probe table/index/function/stats with no separate cleanup. Asserts on the index
+ * NAME via EXPLAIN (FORMAT JSON) rather than the loose token "Index" (which the bigserial PK would also match).
  */
 public class RlsPolicyPlanShapeIntegrationTest extends AbstractControllerIntegrationTest {
     private static final String ORG_INDEX = "rls_plan_probe_org_idx";
@@ -25,43 +31,53 @@ public class RlsPolicyPlanShapeIntegrationTest extends AbstractControllerIntegra
     @Autowired
     private DataSource dataSource;
 
-    private String explainJson(JdbcTemplate jdbc, String whereClause) {
-        return jdbc.queryForObject(
-                "explain (costs off, format json) select count(*) from public.rls_plan_probe where " + whereClause,
-                String.class);
+    private String explain(Statement statement, String whereClause) throws SQLException {
+        try (ResultSet rs = statement.executeQuery(
+                "explain (costs off, format json) select count(*) from public.rls_plan_probe where " + whereClause)) {
+            rs.next();
+            return rs.getString(1);
+        }
     }
 
     @Test
     public void indexableShapeUsesTheOrgIndexWhileTheOldOrShapeCannot() {
-        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-        try {
-            jdbc.execute("drop table if exists public.rls_plan_probe");
-            jdbc.execute("create table public.rls_plan_probe (id bigserial primary key, organisation_id integer not null)");
-            jdbc.execute("insert into public.rls_plan_probe (organisation_id) " +
-                    "select case when g % 100 = 0 then 200 else 100 end from generate_series(1, 100000) g");
-            jdbc.execute("create index " + ORG_INDEX + " on public.rls_plan_probe(organisation_id)");
-            jdbc.execute("analyze public.rls_plan_probe");
-            // STABLE function with a table-reading body (so it is not constant-folded) returning the small org id,
-            // mirroring the production rls_visible_org_ids() shape.
-            jdbc.execute("create or replace function public.rls_plan_probe_ids() returns integer[] language sql stable " +
-                    "as $$ select array(select 200 from public.organisation limit 1) $$");
+        new JdbcTemplate(dataSource).execute((ConnectionCallback<Void>) connection -> {
+            boolean autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("create table public.rls_plan_probe (id bigserial primary key, organisation_id integer not null)");
+                statement.execute("insert into public.rls_plan_probe (organisation_id) " +
+                        "select case when g % 100 = 0 then 200 else 100 end from generate_series(1, 100000) g");
+                statement.execute("create index " + ORG_INDEX + " on public.rls_plan_probe(organisation_id)");
+                statement.execute("analyze public.rls_plan_probe");
+                // STABLE function with a table-reading body (so it is not constant-folded) returning the small org
+                // id, mirroring the production rls_visible_org_ids() shape.
+                statement.execute("create function public.rls_plan_probe_ids() returns integer[] language sql stable " +
+                        "as $$ select array(select 200 from public.organisation limit 1) $$");
+                // Force the planner to avoid a seq scan wherever an index is usable, so the assertions pin whether
+                // each policy shape CAN use the org index, not a cost-based choice that varies by machine/PG config.
+                statement.execute("set local enable_seqscan = off");
 
-            String newPlan = explainJson(jdbc, "organisation_id = ANY (public.rls_plan_probe_ids())");
-            String oldPlan = explainJson(jdbc,
-                    "organisation_id = 200 or organisation_id in (select organisation_id from public.organisation_group_organisation)");
+                String newPlan = explain(statement, "organisation_id = ANY (public.rls_plan_probe_ids())");
+                String oldPlan = explain(statement,
+                        "organisation_id = 200 or organisation_id in (select organisation_id from public.organisation_group_organisation)");
 
-            assertTrue("new `= ANY(stable fn)` shape must scan via the organisation_id index, but plan was:\n" + newPlan,
-                    newPlan.contains(ORG_INDEX));
-            assertFalse("new shape must NOT sequentially scan the whole table, but plan was:\n" + newPlan,
-                    newPlan.contains("Seq Scan"));
-            assertFalse("old `OR ... IN (subplan)` shape must NOT be able to use the organisation_id index " +
-                            "(the regression V1_398 fixes), but plan was:\n" + oldPlan,
-                    oldPlan.contains(ORG_INDEX));
-            assertTrue("old shape is expected to sequentially scan, but plan was:\n" + oldPlan,
-                    oldPlan.contains("Seq Scan"));
-        } finally {
-            jdbc.execute("drop function if exists public.rls_plan_probe_ids()");
-            jdbc.execute("drop table if exists public.rls_plan_probe");
-        }
+                // The new shape can be served entirely by the org index (no seq scan); the old OR/subplan shape
+                // cannot avoid a seq scan even with enable_seqscan off (the hashed subplan is not index-pushable,
+                // so the whole table is still scanned - it may additionally bitmap-index the `= 200` literal arm,
+                // which is why we assert the residual Seq Scan rather than absence of the index here).
+                assertTrue("new `= ANY(stable fn)` shape must scan via the organisation_id index, but plan was:\n" + newPlan,
+                        newPlan.contains(ORG_INDEX));
+                assertFalse("new shape must NOT sequentially scan the whole table, but plan was:\n" + newPlan,
+                        newPlan.contains("Seq Scan"));
+                assertTrue("old `OR ... IN (subplan)` shape cannot avoid a seq scan even with enable_seqscan off " +
+                                "(the regression V1_398 fixes), but plan was:\n" + oldPlan,
+                        oldPlan.contains("Seq Scan"));
+            } finally {
+                connection.rollback();
+                connection.setAutoCommit(autoCommit);
+            }
+            return null;
+        });
     }
 }

@@ -49,7 +49,11 @@ ALTER FUNCTION public.rls_visible_org_ids_with_ancestors() OWNER TO openchs;
 --    The target table is schema-qualified (public.%I) so the functions are immune to the "$user" search_path trap
 --    (under SET ROLE <org> an unqualified table name resolves to the org's ETL schema, not public).
 
-CREATE OR REPLACE FUNCTION enable_rls_on_ref_table(tablename text) RETURNS text
+-- Shared body: the only difference between tx and ref policies is which visible-org-ids function the USING
+-- clause calls. Keeping the DROP/CREATE/ENABLE scaffolding, the policy-naming convention and the (unchanged)
+-- WITH CHECK clause in one place means tx and ref policies cannot silently diverge. visibleOrgIdsFn is a
+-- trusted internal literal (not user input), so interpolating it into the policy expression is safe.
+CREATE OR REPLACE FUNCTION enable_rls_on_org_table(tablename text, visibleOrgIdsFn text) RETURNS text
     LANGUAGE plpgsql
 AS
 $$
@@ -59,10 +63,20 @@ DECLARE
 BEGIN
     EXECUTE 'DROP POLICY IF EXISTS ' || polisy;
     EXECUTE 'CREATE POLICY ' || polisy || '
-            USING (organisation_id = ANY (public.rls_visible_org_ids_with_ancestors()))
+            USING (organisation_id = ANY (' || visibleOrgIdsFn || '()))
             WITH CHECK ((organisation_id = (select id from public.organisation where db_user = current_user)))';
     EXECUTE 'ALTER TABLE ' || tabl || ' ENABLE ROW LEVEL SECURITY';
     RETURN 'CREATED POLICY ' || polisy;
+END
+$$;
+ALTER FUNCTION enable_rls_on_org_table(text, text) OWNER TO openchs;
+
+CREATE OR REPLACE FUNCTION enable_rls_on_ref_table(tablename text) RETURNS text
+    LANGUAGE plpgsql
+AS
+$$
+BEGIN
+    RETURN enable_rls_on_org_table(tablename, 'public.rls_visible_org_ids_with_ancestors');
 END
 $$;
 ALTER FUNCTION enable_rls_on_ref_table(text) OWNER TO openchs;
@@ -71,16 +85,8 @@ CREATE OR REPLACE FUNCTION enable_rls_on_tx_table(tablename text) RETURNS text
     LANGUAGE plpgsql
 AS
 $$
-DECLARE
-    tabl   TEXT := format('public.%I', tablename);
-    polisy TEXT := quote_ident(tablename || '_orgs') || ' ON ' || tabl || ' ';
 BEGIN
-    EXECUTE 'DROP POLICY IF EXISTS ' || polisy;
-    EXECUTE 'CREATE POLICY ' || polisy || '
-            USING (organisation_id = ANY (public.rls_visible_org_ids()))
-            WITH CHECK ((organisation_id = (select id from public.organisation where db_user = current_user)))';
-    EXECUTE 'ALTER TABLE ' || tabl || ' ENABLE ROW LEVEL SECURITY';
-    RETURN 'CREATED POLICY ' || polisy;
+    RETURN enable_rls_on_org_table(tablename, 'public.rls_visible_org_ids');
 END
 $$;
 ALTER FUNCTION enable_rls_on_tx_table(text) OWNER TO openchs;
