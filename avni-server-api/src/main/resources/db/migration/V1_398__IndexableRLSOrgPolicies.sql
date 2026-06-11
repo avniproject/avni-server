@@ -135,6 +135,7 @@ $$
     DECLARE
         rec      record;
         unknowns text;
+        migrated int := 0;
     BEGIN
         SELECT string_agg(policy_name || ' on ' || table_name, ', ')
         INTO unknowns
@@ -146,13 +147,20 @@ $$
 
         FOR rec IN SELECT * FROM pg_temp.v1_398_stale_orgs_policies()
             LOOP
-                EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', rec.policy_name, rec.table_name);
+                -- Only drop here when the policy name is non-canonical (a renamed table whose policy kept the old
+                -- name); for the common case the helper's own DROP POLICY IF EXISTS removes it without a NOTICE.
+                IF rec.policy_name <> rec.table_name || '_orgs' THEN
+                    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', rec.policy_name, rec.table_name);
+                END IF;
                 IF rec.kind = 'ref' THEN
                     PERFORM public.enable_rls_on_ref_table(rec.table_name);
                 ELSE
                     PERFORM public.enable_rls_on_tx_table(rec.table_name);
                 END IF;
+                migrated := migrated + 1;
+                RAISE NOTICE 'V1_398: migrated % policy on % to the indexable shape', rec.kind, rec.table_name;
             END LOOP;
+        RAISE NOTICE 'V1_398: migrated % org-scoped policy(ies) to the indexable shape', migrated;
 
         -- 4. Trailing assertion (same source of truth): fail the migration (atomic rollback) if any org-scoped
         --    policy is still on the old, non-indexable shape.
