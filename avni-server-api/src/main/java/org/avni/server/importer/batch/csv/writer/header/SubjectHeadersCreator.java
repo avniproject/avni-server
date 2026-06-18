@@ -81,11 +81,9 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public List<HeaderField> generateAddressFields(Object mode) {
         String locationHierarchy = (String) mode;
 
-        List<Long> hierarchyIds = Arrays.stream(locationHierarchy.split("\\."))
-                .map(Long::parseLong)
-                .collect(Collectors.toList());
+        List<String> hierarchyUuids = Arrays.asList(locationHierarchy.split("\\."));
 
-        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByIdIn(hierarchyIds);
+        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findByUuidIn(hierarchyUuids);
 
         List<String> orderedNames = addressLevelTypes.stream()
                 .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())

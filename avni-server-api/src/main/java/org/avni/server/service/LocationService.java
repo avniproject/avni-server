@@ -238,6 +238,7 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
             addressLevelType = new AddressLevelType();
             addressLevelType.setUuid(contract.getUuid());
         }
+        boolean wasVoidedBefore = addressLevelType.isVoided();
         if (contract.getUuid() == null)
             addressLevelType.setUuid(UUID.randomUUID().toString());
         if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(contract.getName(), ValidationUtil.COMMON_INVALID_CHARS_PATTERN)) {
@@ -263,6 +264,14 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         }
         addressLevelType.setParent(parent);
         addressLevelTypeRepository.save(addressLevelType);
+
+        // When a type transitions to voided, cascade the void to its locations so the void
+        // syncs to devices (#871). The lowestAddressLevelType config keeps referencing the
+        // voided type on purpose - pruning it would orphan locations already on devices.
+        if (!wasVoidedBefore && addressLevelType.isVoided()) {
+            Long lastModifiedById = UserContextHolder.getUserContext().getUser().getId();
+            locationRepository.voidLocationsByAddressLevelTypeId(addressLevelType.getId(), lastModifiedById);
+        }
         return addressLevelType;
     }
 

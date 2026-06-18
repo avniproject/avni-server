@@ -245,11 +245,10 @@ public class ImportService implements ImportLocationsConstants {
         if (!StringUtils.hasText(locationHierarchy)) {
             throw new RuntimeException(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
         }
-        List<Long> selectedLocationHierarchy = Arrays.stream(locationHierarchy.split("\\."))
-                .map(Long::parseLong).toList();
+        List<String> selectedLocationHierarchy = Arrays.asList(locationHierarchy.split("\\."));
         return addressLevelTypeRepository.findAllByIsVoidedFalse().stream()
                 .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
-                .filter(alt -> selectedLocationHierarchy.contains(alt.getId()))
+                .filter(alt -> selectedLocationHierarchy.contains(alt.getUuid()))
                 .collect(Collectors.toList());
     }
 
