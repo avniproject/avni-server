@@ -284,6 +284,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         return operationalSubjectTypeRepository.findAllByIsVoidedFalse().stream().map(OperationalSubjectType::getSubjectType);
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateSyncAttributesIfRequired(SubjectType subjectType) {
         Boolean isSyncAttribute1Usable = subjectType.isSyncRegistrationConcept1Usable();
         Boolean isSyncAttribute2Usable = subjectType.isSyncRegistrationConcept2Usable();
