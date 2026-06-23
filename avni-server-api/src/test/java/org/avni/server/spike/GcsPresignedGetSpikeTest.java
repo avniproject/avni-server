@@ -7,6 +7,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import org.junit.Assume;
@@ -93,7 +94,13 @@ public class GcsPresignedGetSpikeTest {
     /** AC: object `exists` behaviour on GCS interop (HEAD object). */
     @Test
     public void exists_returnsTrueForTheTestObject() {
-        boolean exists = gcs.doesObjectExist(bucket, objectKey);
+        boolean exists;
+        try {
+            exists = gcs.doesObjectExist(bucket, objectKey);
+        } catch (AmazonS3Exception e) {
+            logS3Error("exists/HEAD", e);
+            throw e;
+        }
         log("exists(%s) = %b", objectKey, exists);
         assertTrue("doesObjectExist should return true for the seeded test object on GCS interop", exists);
     }
@@ -106,6 +113,9 @@ public class GcsPresignedGetSpikeTest {
             byte[] head = in.readNBytes(64);
             log("get() ok  contentLength=%d  firstBytes=%d", s3Object.getObjectMetadata().getContentLength(), head.length);
             assertTrue("getObject should stream content", head.length > 0);
+        } catch (AmazonS3Exception e) {
+            logS3Error("get/GET", e);
+            throw e;
         }
     }
 
@@ -134,11 +144,18 @@ public class GcsPresignedGetSpikeTest {
         conn.connect();
 
         int status = conn.getResponseCode();
-        long downloaded;
-        try (InputStream in = status >= 400 ? conn.getErrorStream() : conn.getInputStream()) {
-            downloaded = drain(in);
+        long downloaded = 0;
+        if (status >= 400) {
+            // GCS returns an XML error body with the real reason (<Code>SignatureDoesNotMatch</Code> vs
+            // <Code>AccessDenied</Code>) — print it so signing-vs-permission is unambiguous.
+            String body = readBody(conn.getErrorStream());
+            log("download FAILED status=%d  GCS error body:%n%s", status, body);
+        } else {
+            try (InputStream in = conn.getInputStream()) {
+                downloaded = drain(in);
+            }
+            log("download status=%d  bytes=%d  (forwarded headers present: USER-NAME, AUTH-TOKEN)", status, downloaded);
         }
-        log("download status=%d  bytes=%d  (forwarded headers present: USER-NAME, AUTH-TOKEN)", status, downloaded);
 
         assertEquals("presigned GET against GCS should return 200 with forwarded headers present", 200, status);
         assertTrue("downloaded body should be non-empty", downloaded > 0);
@@ -151,6 +168,27 @@ public class GcsPresignedGetSpikeTest {
         int n;
         while ((n = in.read(buf)) != -1) total += n;
         return total;
+    }
+
+    private String readBody(InputStream in) throws Exception {
+        if (in == null) return "(no body)";
+        try (InputStream s = in) {
+            return new String(s.readAllBytes());
+        }
+    }
+
+    /**
+     * Surfaces the real GCS reason behind an SDK exception. The AWS SDK often can't map GCS's XML
+     * error into errorCode (you see a bare "403 Forbidden" with null Request ID), so the raw response
+     * XML — which carries {@code <Code>AccessDenied</Code>} (permission) vs
+     * {@code <Code>SignatureDoesNotMatch</Code>} (signing/interop) — is the disambiguator.
+     */
+    private static void logS3Error(String op, AmazonS3Exception e) {
+        log("%s FAILED  httpStatus=%d  sdkErrorCode=%s  message=%s", op, e.getStatusCode(), e.getErrorCode(), e.getErrorMessage());
+        log("%s GCS error XML:%n%s", op, e.getErrorResponseXml() == null ? "(none)" : e.getErrorResponseXml());
+        if (e.getAdditionalDetails() != null && !e.getAdditionalDetails().isEmpty()) {
+            log("%s additional details: %s", op, e.getAdditionalDetails());
+        }
     }
 
     private static boolean isPresent(String s) {
