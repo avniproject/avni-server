@@ -396,21 +396,21 @@ public class SubjectTypeService implements NonScopeAwareService {
                 .collect(Collectors.toList());
 
         if (customRegistrationLevelTypeUuids != null) {
-            List<String> customLevelTypeIds = registrationSetting.getAddressLevelTypes(locationTypes).stream().map(alt -> alt.getId().toString()).collect(Collectors.toList());
+            List<String> customLevelTypeUuids = registrationSetting.getAddressLevelTypes(locationTypes).stream().map(alt -> alt.getUuid()).collect(Collectors.toList());
 
-            Set<String> addressIds = hierarchies.stream()
+            Set<String> addressUuids = hierarchies.stream()
                     .map(typesInHierarchy -> typesInHierarchy.stream()
-                            .map(altId -> customLevelTypeIds.contains(altId) ? typesInHierarchy.subList(typesInHierarchy.indexOf(altId), typesInHierarchy.size()) : null)
+                            .map(altUuid -> customLevelTypeUuids.contains(altUuid) ? typesInHierarchy.subList(typesInHierarchy.indexOf(altUuid), typesInHierarchy.size()) : null)
                             .filter(Objects::nonNull)
                             .flatMap(Collection::stream)
                             .collect(Collectors.toList()))
                     .flatMap(Collection::stream)
                     .collect(Collectors.toSet());
 
-            return new AddressLevelTypes(locationTypes.stream().filter(alt -> addressIds.contains(alt.getId().toString())).collect(Collectors.toList()));
+            return new AddressLevelTypes(locationTypes.stream().filter(alt -> addressUuids.contains(alt.getUuid())).collect(Collectors.toList()));
         } else {
-            List<String> lowestAddressIds = hierarchies.stream().map(lh -> lh.get(lh.size() - 1)).collect(Collectors.toList());
-            return new AddressLevelTypes(locationTypes.stream().filter(alt -> lowestAddressIds.contains(alt.getId().toString())).collect(Collectors.toList()));
+            List<String> lowestAddressUuids = hierarchies.stream().map(lh -> lh.get(lh.size() - 1)).collect(Collectors.toList());
+            return new AddressLevelTypes(locationTypes.stream().filter(alt -> lowestAddressUuids.contains(alt.getUuid())).collect(Collectors.toList()));
         }
     }
 

@@ -299,4 +299,12 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     @Modifying
     @Query(value = "delete from address_level", nativeQuery = true)
     void deleteAllInBatch();
+
+    @Modifying
+    @RestResource(exported = false)
+    @Query(value = "update address_level set is_voided = true, " +
+            "last_modified_date_time = (current_timestamp + random() * 5000 * (interval '1 millisecond')), " +
+            "last_modified_by_id = :lastModifiedById " +
+            "where type_id = :addressLevelTypeId and is_voided = false", nativeQuery = true)
+    void voidLocationsByAddressLevelTypeId(@Param("addressLevelTypeId") Long addressLevelTypeId, @Param("lastModifiedById") Long lastModifiedById);
 }

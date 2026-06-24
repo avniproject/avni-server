@@ -33,7 +33,7 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
             return;
         }
         Organisation organisation = userContext.getOrganisation();
-        if (userContext.getUser() != null && userContext.getUser().isAdmin() && userContext.getOrganisationUUID() == null) {
+        if (userContext.isActingAsSuperAdmin()) {
             logger.trace(String.format("Getting connection out of connection pool. ConnectionId: %s. SuperAdmin user", connectionId));
             return;
         }

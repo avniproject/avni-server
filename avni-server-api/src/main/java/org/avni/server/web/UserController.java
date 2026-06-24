@@ -343,7 +343,11 @@ public class UserController {
         List<Long> userAccountIds = getOwnedAccountIds(user);
         List<Long> organisationIds = getOwnedOrganisationIds(user);
         List<Long> queryParam = organisationIds.isEmpty() ? null : organisationIds;
-        UserContract userContract = UserContract.fromEntity(userRepository.getOne(id, userAccountIds, queryParam));
+        User targetUser = userRepository.getOne(id, userAccountIds, queryParam);
+        if (targetUser == null) {
+            throw new EntityNotFoundException(String.format("User not found with id %d", id));
+        }
+        UserContract userContract = UserContract.fromEntity(targetUser);
         setAccountIds(userContract);
         return userContract;
     }

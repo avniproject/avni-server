@@ -41,6 +41,14 @@ public class SubjectHeadersCreatorUnitTest {
     private AddressLevelType panchayat;
     private AddressLevelType village;
 
+    private static final String STATE_UUID = "11111111-1111-1111-1111-111111111111";
+    private static final String DISTRICT_UUID = "22222222-2222-2222-2222-222222222222";
+    private static final String BLOCK_UUID = "33333333-3333-3333-3333-333333333333";
+    private static final String PANCHAYAT_UUID = "44444444-4444-4444-4444-444444444444";
+    private static final String VILLAGE_UUID = "55555555-5555-5555-5555-555555555555";
+    private static final String FULL_HIERARCHY = String.join(".", STATE_UUID, DISTRICT_UUID, BLOCK_UUID, PANCHAYAT_UUID, VILLAGE_UUID);
+    private static final String STATE_DISTRICT_HIERARCHY = String.join(".", STATE_UUID, DISTRICT_UUID);
+
     @Before
     public void setUp() {
         initMocks(this);
@@ -50,14 +58,14 @@ public class SubjectHeadersCreatorUnitTest {
         UserContext userContext = new UserContextBuilder().withOrganisation(organisation).build();
         UserContextHolder.create(userContext);
 
-        state = new AddressLevelTypeBuilder().withId(1L).name("State").level(5.0).build();
-        district = new AddressLevelTypeBuilder().withId(2L).name("District").level(4.0).parent(state).build();
-        block = new AddressLevelTypeBuilder().withId(3L).name("Block").level(3.0).parent(district).build();
-        panchayat = new AddressLevelTypeBuilder().withId(4L).name("Panchayat").level(2.0).parent(block).build();
-        village = new AddressLevelTypeBuilder().withId(5L).name("Village").level(1.0).parent(panchayat).build();
+        state = new AddressLevelTypeBuilder().withId(1L).withUuid(STATE_UUID).name("State").level(5.0).build();
+        district = new AddressLevelTypeBuilder().withId(2L).withUuid(DISTRICT_UUID).name("District").level(4.0).parent(state).build();
+        block = new AddressLevelTypeBuilder().withId(3L).withUuid(BLOCK_UUID).name("Block").level(3.0).parent(district).build();
+        panchayat = new AddressLevelTypeBuilder().withId(4L).withUuid(PANCHAYAT_UUID).name("Panchayat").level(2.0).parent(block).build();
+        village = new AddressLevelTypeBuilder().withId(5L).withUuid(VILLAGE_UUID).name("Village").level(1.0).parent(panchayat).build();
 
-        when(addressLevelTypeRepository.findAllByIdIn(List.of(1L, 2L, 3L, 4L, 5L))).thenReturn(List.of(state, district, block, panchayat, village));
-        when(addressLevelTypeRepository.findAllByIdIn(List.of(1L, 2L))).thenReturn(List.of(state, district));
+        when(addressLevelTypeRepository.findByUuidIn(List.of(STATE_UUID, DISTRICT_UUID, BLOCK_UUID, PANCHAYAT_UUID, VILLAGE_UUID))).thenReturn(List.of(state, district, block, panchayat, village));
+        when(addressLevelTypeRepository.findByUuidIn(List.of(STATE_UUID, DISTRICT_UUID))).thenReturn(List.of(state, district));
 
         subjectHeadersCreator = new SubjectHeadersCreator(
                 addressLevelTypeRepository,
@@ -89,7 +97,7 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(village);
 
-        Map<String, String> mockHierarchy = Map.of("1.2.3.4.5", "State -> District -> Block -> Panchayat -> Village");
+        Map<String, String> mockHierarchy = Map.of(FULL_HIERARCHY, "State -> District -> Block -> Panchayat -> Village");
         when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
         
         String locationHierarchy = mockHierarchy.keySet().iterator().next();
@@ -123,7 +131,7 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(village);
 
-        Map<String, String> mockHierarchy = Map.of("1.2.3.4.5", "State -> District -> Block -> Panchayat -> Village");
+        Map<String, String> mockHierarchy = Map.of(FULL_HIERARCHY, "State -> District -> Block -> Panchayat -> Village");
         when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
         
         String locationHierarchy = mockHierarchy.keySet().iterator().next();
@@ -150,7 +158,7 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(village);
 
-        Map<String, String> mockHierarchy = Map.of("1.2.3.4.5", "State -> District -> Block -> Panchayat -> Village");
+        Map<String, String> mockHierarchy = Map.of(FULL_HIERARCHY, "State -> District -> Block -> Panchayat -> Village");
         when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
         
         String locationHierarchy = mockHierarchy.keySet().iterator().next();
@@ -176,7 +184,7 @@ public class SubjectHeadersCreatorUnitTest {
                 .thenReturn(Collections.singletonList(formMapping));
         when(addressLevelService.getRegistrationLocationType(subjectType)).thenReturn(district);
 
-        Map<String, String> mockHierarchy = Map.of("1.2", "State -> District");
+        Map<String, String> mockHierarchy = Map.of(STATE_DISTRICT_HIERARCHY, "State -> District");
         when(locationHierarchyService.getAvailableHierarchiesForSubjectType(subjectType)).thenReturn(mockHierarchy);
         
         String locationHierarchy = mockHierarchy.keySet().iterator().next();

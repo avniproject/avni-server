@@ -30,6 +30,12 @@ public class AvniTenantIdentifierResolver implements CurrentTenantIdentifierReso
         if (userContext == null) {
             return SUPER_ADMIN;
         }
+        // An RLS-bypassed session (admin without a selected org) reads every org's rows, so it must
+        // share the isolated super-admin cache bucket, not its home org's. Same predicate the JDBC
+        // interceptor uses to skip SET ROLE - kept as one method so cache key and RLS scope can't diverge.
+        if (userContext.isActingAsSuperAdmin()) {
+            return SUPER_ADMIN;
+        }
         Organisation organisation = userContext.getOrganisation();
         if (organisation == null || organisation.getId() == null) {
             return SUPER_ADMIN;

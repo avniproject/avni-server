@@ -134,7 +134,10 @@ public class StorageManagementConfigJobIntegrationTest extends AbstractControlle
 
     @Test
     public void markSyncDisabledInLoops() {
-        saveStorageManagementConfig("select id from individual limit 1");
+        // `limit 1` forces the job to process one subject per loop iteration. The config must exclude
+        // already-disabled subjects, otherwise the unordered `limit 1` can keep re-picking the same physical row
+        // (heap-order dependent after the UPDATE) and the loop stops after marking only one subject - a flake.
+        saveStorageManagementConfig("select id from individual where sync_disabled = false limit 1");
         int count = individualRepository.countBySyncDisabled(false);
         assertEquals(3, count);
         int enrolmentCount = programEnrolmentRepository.countBySyncDisabled(false);

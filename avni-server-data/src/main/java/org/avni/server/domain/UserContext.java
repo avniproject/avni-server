@@ -78,4 +78,15 @@ public class UserContext {
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
     }
+
+    /**
+     * True when this session runs with RLS bypassed: an admin acting without a selected organisation.
+     * Such a session reads every org's rows (the JDBC interceptor skips SET ROLE), so it must share the
+     * isolated super-admin cache bucket rather than any real org's. Single source of truth for both the
+     * RLS-bypass decision ({@code SetOrganisationJdbcInterceptor}) and the L2 cache key
+     * ({@code AvniTenantIdentifierResolver}); they must never diverge.
+     */
+    public boolean isActingAsSuperAdmin() {
+        return user != null && user.isAdmin() && organisationUUID == null;
+    }
 }

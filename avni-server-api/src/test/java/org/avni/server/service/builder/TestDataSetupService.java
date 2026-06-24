@@ -54,6 +54,7 @@ public class TestDataSetupService {
                 .setCategory(organisationCategoryRepository.findEntity(1L))
                 .withStatus(organisationStatusRepository.findEntity(1L))
                 .withMandatoryFields()
+                .withDbUser(dbUserFor(orgSuffix))
                 .withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user1);
 
@@ -80,6 +81,20 @@ public class TestDataSetupService {
 
     public TestOrganisationData setupOrganisation() {
         return this.setupOrganisation("example");
+    }
+
+    // Derive a deterministic, valid db_user role name from the org suffix so that a single test can set up
+    // several RLS-distinct organisations (the org's RLS is enforced via SET ROLE "<db_user>"). Deterministic
+    // rather than random keeps the set of created roles bounded and reused across runs.
+    // The trailing hash keeps it injective: lower-casing, collapsing non-[a-z0-9_] chars and Postgres' 63-char
+    // identifier truncation could otherwise map two distinct suffixes to one role, which would make two org rows
+    // share a db_user and silently break RLS isolation (rls_visible_org_ids() would return both org ids).
+    private static String dbUserFor(String orgSuffix) {
+        String sanitized = orgSuffix.toLowerCase().replaceAll("[^a-z0-9_]", "_");
+        if (sanitized.length() > 30) {
+            sanitized = sanitized.substring(0, 30);
+        }
+        return "test_db_user_" + sanitized + "_" + Integer.toHexString(orgSuffix.hashCode());
     }
 
     public TestCatchmentData setupACatchment() {
