@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ConceptAnswerRepository;
 import org.avni.server.dao.ConceptRepository;
@@ -79,7 +80,11 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     @Transactional(readOnly = true)
     @ResponseBody
     public ConceptProjection getOneForWeb(@PathVariable String uuid) {
-        return projectionFactory.createProjection(ConceptProjection.class, conceptService.get(uuid));
+        Concept concept = conceptService.get(uuid);
+        if (concept == null) {
+            throw new EntityNotFoundException(String.format("Concept not found with uuid %s", uuid));
+        }
+        return projectionFactory.createProjection(ConceptProjection.class, concept);
     }
 
     @GetMapping(value = "/web/concept")
