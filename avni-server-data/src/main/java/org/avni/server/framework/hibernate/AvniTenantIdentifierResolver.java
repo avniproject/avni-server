@@ -1,7 +1,6 @@
 package org.avni.server.framework.hibernate;
 
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
@@ -31,12 +30,10 @@ public class AvniTenantIdentifierResolver implements CurrentTenantIdentifierReso
         if (userContext == null) {
             return SUPER_ADMIN;
         }
-        // Mirror SetOrganisationJdbcInterceptor's RLS-bypass predicate: an admin acting without a
-        // selected organisation runs unrestricted (no SET ROLE on the connection) and can read every
-        // org's rows. It must share the isolated super-admin cache bucket, not its own home org's, or
-        // it would poison that bucket with rows a regular home-org user must not be served from cache.
-        User user = userContext.getUser();
-        if (user != null && user.isAdmin() && userContext.getOrganisationUUID() == null) {
+        // An RLS-bypassed session (admin without a selected org) reads every org's rows, so it must
+        // share the isolated super-admin cache bucket, not its home org's. Same predicate the JDBC
+        // interceptor uses to skip SET ROLE - kept as one method so cache key and RLS scope can't diverge.
+        if (userContext.isActingAsSuperAdmin()) {
             return SUPER_ADMIN;
         }
         Organisation organisation = userContext.getOrganisation();
