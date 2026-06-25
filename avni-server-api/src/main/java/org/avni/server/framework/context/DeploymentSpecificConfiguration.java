@@ -28,6 +28,10 @@ public class DeploymentSpecificConfiguration {
     @Autowired(required = false)
     private AWSMinioService awsMinioService;
 
+    @Qualifier("GCSStorageService")
+    @Autowired(required = false)
+    private GCSStorageService gcsStorageService;
+
     private final SpringProfiles springProfiles;
 
     private final OrganisationConfigService organisationConfigService;
@@ -77,6 +81,12 @@ public class DeploymentSpecificConfiguration {
 
         if (awsMinioService != null)
             return awsMinioService;
+
+        // TODO(avniproject/avni-server#1012): per-org/per-data-class resolver (story 3) selects the GCS
+        //  backend for MODEL data; until then GCS is wired only as a last-resort DEFAULT provider so the
+        //  bean is selectable when gcs.s3.enable=true and AWS/MinIO are disabled.
+        if (gcsStorageService != null)
+            return gcsStorageService;
 
         throw new NoSuchBeanDefinitionException("BatchS3Service", "Batch Storage service bean of type BatchS3Service not found");
     }
