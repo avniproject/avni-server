@@ -190,6 +190,7 @@ public class OrganisationService {
     private final LocationService locationService;
     private final CatchmentService catchmentService;
     private final CustomCardConfigRepository customCardConfigRepository;
+    private final DownloadableContentRepository downloadableContentRepository;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -286,7 +287,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository,
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository, DownloadableContentRepository downloadableContentRepository,
                                CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository,
                                SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository) {
         this.formRepository = formRepository;
@@ -391,6 +392,7 @@ public class OrganisationService {
         this.locationService = locationService;
         this.catchmentService = catchmentService;
         this.customCardConfigRepository = customCardConfigRepository;
+        this.downloadableContentRepository = downloadableContentRepository;
         this.calendarRepository = calendarRepository;
         this.calendarDateMarkerRepository = calendarDateMarkerRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
@@ -527,6 +529,7 @@ public class OrganisationService {
                 dashboardSectionCardMappingRepository,
                 cardRepository,
                 customCardConfigRepository,
+                downloadableContentRepository,
                 dashboardSectionRepository,
                 groupDashboardRepository,
                 dashboardFilterRepository,
@@ -573,6 +576,7 @@ public class OrganisationService {
                 "dashboard_section_card_mapping",
                 "report_card",
                 "custom_card_config",
+                "downloadable_content",
                 "dashboard_section",
                 "group_dashboard",
                 "dashboard_filter",
