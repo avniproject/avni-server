@@ -117,7 +117,9 @@ public class OrganisationConfigService implements NonScopeAwareService {
 
     public LinkedHashMap<String, Object> getOrganisationSettings(Long organisationId) {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
-        JsonObject settings = new JsonObject(organisationConfig.getSettings());
+        // Strip server-only keys (storage routing/targets - avniproject/avni-server#1012, D17) so the
+        // webapp never receives backend/bucket/endpoint/credentialRef metadata.
+        JsonObject settings = OrganisationConfig.withoutServerOnlyKeys(new JsonObject(organisationConfig.getSettings()));
         LinkedHashMap<String, Object> organisationSettingsConceptListMap = new LinkedHashMap<>();
         List<String> conceptUuidList = new ArrayList<>();
         JsonObject searchFilters = new JsonObject().with("searchFilters", settings.getOrDefault("searchFilters", Collections.emptyList()));

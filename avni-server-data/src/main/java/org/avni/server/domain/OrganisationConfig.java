@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,9 +35,47 @@ public class OrganisationConfig extends OrganisationAwareEntity {
     @Type(value = JSONObjectUserType.class)
     private JsonObject exportSettings;
 
+    /**
+     * Org-config setting keys that are SERVER-ONLY and must NEVER reach a client - neither the
+     * webapp ({@code /web/organisationConfig}) nor a device ({@code SyncEntityName.OrganisationConfig}).
+     * Currently the per-org/per-data-class storage routing + target metadata
+     * (avniproject/avni-server#1012, D17): the device must stay backend-agnostic and never see a
+     * bucket/endpoint/credentialRef. Filtered out by {@link #getSettingsForSerialization()} (device
+     * sync) and by {@code OrganisationConfigService.getOrganisationSettings} (web).
+     */
+    public static final Set<String> SERVER_ONLY_SETTING_KEYS = Set.of(
+            OrganisationConfigSettingKey.storageBackends.name(),
+            OrganisationConfigSettingKey.storageTargets.name()
+    );
+
+    /**
+     * Returns a copy of {@code settings} with every {@link #SERVER_ONLY_SETTING_KEYS} key removed.
+     * Safe to serialise to any client surface.
+     */
+    public static JsonObject withoutServerOnlyKeys(JsonObject settings) {
+        if (settings == null) {
+            return null;
+        }
+        JsonObject filtered = new JsonObject(settings);
+        SERVER_ONLY_SETTING_KEYS.forEach(filtered::remove);
+        return filtered;
+    }
+
+    // Internal use only - the raw, unfiltered settings (may contain server-only keys). NOT serialised
+    // directly to clients: device sync uses getSettingsForSerialization() below.
+    @JsonIgnore
     @Deprecated
     public JsonObject getSettings() {
         return settings;
+    }
+
+    /**
+     * The {@code settings} as serialised to the DEVICE (Spring Data REST entity sync). Server-only
+     * keys are stripped (D17) so the device never receives storage backend/bucket/endpoint/creds.
+     */
+    @JsonProperty("settings")
+    public JsonObject getSettingsForSerialization() {
+        return withoutServerOnlyKeys(settings);
     }
 
     @JsonIgnore
