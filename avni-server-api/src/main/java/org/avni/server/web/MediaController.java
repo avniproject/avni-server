@@ -7,6 +7,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Group;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.StorageDataClass;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -52,6 +53,7 @@ import static java.lang.String.format;
 public class MediaController {
     private static final String SQLITE_MIGRATION_GROUP = "SQLite Migration";
     private static final Pattern MODEL_FILE_NAME = Pattern.compile("^[0-9a-f]{64}\\.bin$");
+    private static final Pattern MODEL_RELATIVE_KEY = Pattern.compile("^models/[0-9a-f]{64}\\.bin$");
     private final Logger logger;
     private final S3Service s3Service;
     private final StorageServiceProvider storageServiceProvider;
@@ -238,6 +240,20 @@ public class MediaController {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
+    }
+
+    // The device knows only the relative model key (it must stay backend-agnostic), so it cannot use /media/signedUrl which parses a full URL.
+    @RequestMapping(value = "/media/modelBlobUrl", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> generateModelBlobUrl(@RequestParam String key) {
+        if (key == null || !MODEL_RELATIVE_KEY.matcher(key).matches()) {
+            throw new BadRequestError("Invalid model key '%s'. Expected models/<sha256>.bin.", key);
+        }
+        Organisation organisation = UserContextHolder.getOrganisation();
+        S3Service modelBackend = storageServiceProvider.forDataClass(StorageDataClass.MODEL);
+        URL url = modelBackend.getURLForExtensions(key, organisation);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
     }
 
     //unprotected endpoint

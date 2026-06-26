@@ -83,6 +83,10 @@ public class MediaControllerRoutingTest {
                 .thenReturn(new URL("https://gcs/put"));
         when(defaultS3Service.generateMediaUploadUrl(anyString(), any(HttpMethod.class)))
                 .thenReturn(new URL("https://s3/put"));
+        when(modelBackend.getURLForExtensions(anyString(), any(Organisation.class)))
+                .thenReturn(new URL("https://gcs/model-blob"));
+        when(defaultS3Service.getURLForExtensions(anyString(), any(Organisation.class)))
+                .thenReturn(new URL("https://s3/default-blob"));
 
         Organisation organisation = new TestOrganisationBuilder().setId(1L).build();
         User user = new User();
@@ -213,6 +217,37 @@ public class MediaControllerRoutingTest {
 
         assertThrows(AvniAccessException.class, () -> controller.generateUploadUrl(MODEL_REL_KEY));
         verify(modelBackend, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void modelBlobUrlSignsTheRelativeKeyOnTheResolvedModelBackend() {
+        ResponseEntity<String> response = controller.generateModelBlobUrl(MODEL_REL_KEY);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("https://gcs/model-blob", response.getBody());
+        verify(storageServiceProvider).forDataClass(StorageDataClass.MODEL);
+        verify(modelBackend).getURLForExtensions(eq(MODEL_REL_KEY), any(Organisation.class));
+        verify(defaultS3Service, never()).getURLForExtensions(anyString(), any(Organisation.class));
+    }
+
+    @Test
+    public void modelBlobUrlWithANonModelsKeyIsRejected() {
+        assertThrows(BadRequestError.class, () -> controller.generateModelBlobUrl("photos/" + MODEL_FILE));
+        verify(modelBackend, never()).getURLForExtensions(anyString(), any(Organisation.class));
+    }
+
+    @Test
+    public void modelBlobUrlWithANonHexFileNameIsRejected() {
+        assertThrows(BadRequestError.class,
+                () -> controller.generateModelBlobUrl("models/zzzz.bin"));
+        verify(modelBackend, never()).getURLForExtensions(anyString(), any(Organisation.class));
+    }
+
+    @Test
+    public void modelBlobUrlWithATraversalKeyIsRejected() {
+        assertThrows(BadRequestError.class,
+                () -> controller.generateModelBlobUrl("models/../" + MODEL_FILE));
+        verify(modelBackend, never()).getURLForExtensions(anyString(), any(Organisation.class));
     }
 
     @Test
