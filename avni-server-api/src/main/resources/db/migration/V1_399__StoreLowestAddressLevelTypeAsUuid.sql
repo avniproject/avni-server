@@ -26,6 +26,7 @@ $$
         new_lineages    JSONB;
         lineage_ok      BOOLEAN;
         seg_uuid        TEXT;
+        visible_org_ids BIGINT[];
         uuid_pattern    TEXT := '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$';
     BEGIN
         FOR cfg IN
@@ -37,6 +38,21 @@ $$
               -- Per-org savepoint: isolate any unexpected failure to the one org (logged + skipped) instead of
               -- rolling back the conversion for every org and blocking the deploy.
               BEGIN
+                -- An id segment must resolve against the same visibility the value was written under, not own-org
+                -- only: address_level_type is a ref table (org-group + ancestor visible), so a child/group org's
+                -- lineage can legitimately reference an ALT owned by an ancestor org. Resolving against
+                -- {self + ancestors} keeps those (matching the runtime findAllByIdIn under RLS) while still
+                -- rejecting cross-environment ids (a different env's org is never in this org's ancestry).
+                WITH RECURSIVE ancestry(org_id) AS (
+                    SELECT cfg.organisation_id
+                    UNION
+                    SELECT o.parent_organisation_id
+                    FROM public.organisation o
+                             JOIN ancestry a ON o.id = a.org_id
+                    WHERE o.parent_organisation_id IS NOT NULL
+                )
+                SELECT array_agg(org_id) INTO visible_org_ids FROM ancestry;
+
                 new_lineages := '[]'::jsonb;
 
                 FOR lineage IN
@@ -59,7 +75,7 @@ $$
                                     INTO seg_uuid
                                     FROM address_level_type alt
                                     WHERE alt.id = segment::BIGINT
-                                      AND alt.organisation_id = cfg.organisation_id;
+                                      AND alt.organisation_id = ANY(visible_org_ids);
                                 ELSE
                                     seg_uuid := NULL;
                                 END IF;
