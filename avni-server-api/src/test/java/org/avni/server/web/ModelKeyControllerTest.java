@@ -27,11 +27,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-/**
- * Device key-delivery endpoint behaviour (avniproject/avni-server#1020, D19/D20): returns the REAL
- * (unmasked) key to a {@code 'user'} caller; an absent sha256 yields a clean 404 (not a 500); the key
- * is never echoed by the write path.
- */
 public class ModelKeyControllerTest {
 
     private static final String SHA256 = "abc123sha256";
@@ -70,7 +65,6 @@ public class ModelKeyControllerTest {
         ResponseEntity<String> response = controller.getModelKey(SHA256);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        // D19 deviation from Msg91: the body is the REAL key, not a masked one.
         assertEquals(REAL_MODEL_KEY, response.getBody());
     }
 
@@ -93,16 +87,12 @@ public class ModelKeyControllerTest {
         ResponseEntity<?> response = controller.storeKey(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        // the write path must not return the key (not even masked) in the body.
         assertNull("the write response must not echo the key", response.getBody());
         verify(modelKeyService).storeKey(SHA256, REAL_MODEL_KEY);
     }
 
     @Test
     public void writePathPropagatesBadRequestForClientInputErrors() {
-        // Client input validation (blank/malformed sha256 or blank key) surfaces as BadRequestError,
-        // which the global ErrorInterceptors maps to a clean 400 - the controller must NOT swallow it
-        // into a 500/Bugsnag path.
         ModelKeyRequest request = new ModelKeyRequest();
         request.setSha256("bad");
         request.setKey("");
@@ -112,14 +102,11 @@ public class ModelKeyControllerTest {
             controller.storeKey(request);
             fail("a client input error must propagate as BadRequestError (-> 400 via ErrorInterceptors)");
         } catch (BadRequestError expected) {
-            // ErrorInterceptors.unknownException() turns this into a 400.
         }
     }
 
     @Test
     public void serverFaultMapsToCleanFiveHundredWithoutLeakingConfig() {
-        // A crypto/config fault (ModelKeyException) maps to a clean 5xx via the controller's
-        // @ExceptionHandler - the body must NOT echo the master-key property name or internal config.
         ModelKeyException fault = new ModelKeyException("Failed to decrypt the model key");
 
         ResponseEntity<String> response = controller.modelKeyServerFault(fault);

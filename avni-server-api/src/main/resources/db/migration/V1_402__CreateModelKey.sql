@@ -1,9 +1,4 @@
--- Server-only model key store (avniproject/avni-server#1020, D19/D20).
--- Holds the model's AES key ENCRYPTED AT REST (AES/GCM via CryptoService, IV-prefixed, base64) under a
--- base64 deploy master key. Keyed by org + sha256OfPlaintext so each ensemble fold's key is addressable
--- (matches the models/<sha256>.bin object-key convention). The plaintext key is NEVER stored here, and
--- it is never written to any subject/ref-data record or any /web/... response - it is served only via the
--- device key-delivery endpoint.
+-- Server-only model key store; holds the model's AES key encrypted at rest, keyed by org + sha256.
 create table model_key
 (
     id                      SERIAL PRIMARY KEY,

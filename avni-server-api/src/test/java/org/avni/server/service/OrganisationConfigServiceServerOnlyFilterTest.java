@@ -21,11 +21,6 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-/**
- * Server-only-routing filter on the web surface (avniproject/avni-server#1012, D17): the
- * {@code storageBackends} / {@code storageTargets} keys must be absent from the
- * {@code /web/organisationConfig} payload produced by {@link OrganisationConfigService#getOrganisationSettings}.
- */
 public class OrganisationConfigServiceServerOnlyFilterTest {
 
     @Mock
@@ -76,7 +71,6 @@ public class OrganisationConfigServiceServerOnlyFilterTest {
                 webSettings.containsKey(OrganisationConfigSettingKey.storageTargets.name()));
         assertTrue("non-server-only keys must still be present", webSettings.containsKey("languages"));
 
-        // the persisted (server-side) settings must be untouched
         assertTrue("server-side settings must retain the routing config",
                 config.getSettings().containsKey(OrganisationConfigSettingKey.storageBackends.name()));
     }

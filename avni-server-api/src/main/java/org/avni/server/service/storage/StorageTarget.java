@@ -5,12 +5,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
-/**
- * Non-secret descriptor of a named storage target (avniproject/avni-server#1012, D14):
- * {@code {type (s3|minio|gcs), endpoint, bucket, credentialRef}}. The non-secret parts live in
- * org config ({@code storageTargets}); the actual credentials are resolved separately via a
- * {@link StorageCredentialProvider} keyed by {@link #getCredentialRef()}. No secret is ever held here.
- */
+// Non-secret descriptor of a named storage target {type, endpoint, bucket, credentialRef}. Credentials are resolved separately.
 public class StorageTarget {
     private final String name;
     private final StorageBackendType type;
@@ -26,11 +21,6 @@ public class StorageTarget {
         this.credentialRef = credentialRef;
     }
 
-    /**
-     * Builds a target from its org-config descriptor map (a value under {@code storageTargets}).
-     * Fails loud on a missing/invalid type or bucket so a misconfiguration surfaces at resolve
-     * time rather than silently falling through.
-     */
     public static StorageTarget fromConfig(String name, Map<String, Object> descriptor) {
         if (descriptor == null) {
             throw new IllegalArgumentException(String.format("Storage target '%s' has no descriptor", name));

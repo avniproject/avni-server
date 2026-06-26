@@ -1,5 +1,4 @@
--- Encrypted-per-org storage credential store (avniproject/avni-server#1012, D14).
--- The secret_key is stored encrypted at rest (AES/GCM via CryptoService); no plaintext secret here.
+-- Per-org storage credential store; secret_key is stored encrypted at rest.
 create table org_storage_credential
 (
     id                      SERIAL PRIMARY KEY,

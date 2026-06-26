@@ -45,33 +45,14 @@ public class DeploymentSpecificConfiguration {
         this.storageResolver = storageResolver;
     }
 
-    /**
-     * The per-org, per-data-class storage seam (avniproject/avni-server#1012). A PLAIN SINGLETON
-     * (active in all profiles) - NOT request-scoped: Story 4's media upload/serve must work in
-     * batch/sync/non-request contexts too, where a request-scoped bean would throw
-     * {@code ScopeNotActiveException}. The current org is read per-call from {@link UserContextHolder}
-     * (a thread-local, valid on request threads); when no org/active context is present the resolver
-     * falls back to the default backend (D16). Routes MODEL to the org's MODEL backend when an org is
-     * present; DEFAULT data resolves to today's backend, byte-for-byte unchanged.
-     */
+    // Plain singleton (not request-scoped) so media routing also works in batch/sync/non-request contexts.
     @Bean("StorageServiceProvider")
     @Primary
     public StorageServiceProvider getStorageServiceProvider() {
         return new StorageServiceProvider(storageResolver, this::resolveDefaultBackend);
     }
 
-    /**
-     * The request-scoped {@code S3Service} (DEFAULT data class) for dev/staging, where the default
-     * backend is selected per-request from the current org's {@code useMinioForStorage} toggle - so
-     * the selection must be re-evaluated on every request (hence request scope + a scoped proxy so it
-     * is injectable into singletons). It resolves through the per-org resolver, but for the DEFAULT
-     * class the resolver returns the default backend, so existing media/extension/export/bulk-upload
-     * call sites behave exactly as before (D16).
-     * <p>
-     * Note: batch/sync/non-request consumers must NOT route through this request-scoped bean (they
-     * would hit {@code ScopeNotActiveException} with no active request); they inject
-     * {@code @Qualifier("BatchS3Service")} instead, which is a plain singleton (D16).
-     */
+    // dev/staging: request-scoped because the default backend depends on the per-request useMinioForStorage toggle.
     @Profile({"dev", "staging"})
     @Bean("S3Service")
     @Primary
@@ -80,14 +61,7 @@ public class DeploymentSpecificConfiguration {
         return storageResolver.resolve(UserContextHolder.getOrganisation(), StorageDataClass.DEFAULT, this::resolveDefaultBackend);
     }
 
-    /**
-     * The plain-singleton {@code S3Service} (DEFAULT data class) for non-dev/staging profiles
-     * (prod/test). Outside dev/staging the default backend is a static, profile-derived choice (no
-     * per-request minio toggle), so a singleton is correct and - crucially - usable from
-     * batch/sync/non-request contexts without an active request. It resolves through the per-org
-     * resolver, but for the DEFAULT class the resolver returns the default backend, so existing call
-     * sites behave byte-for-byte as before (D16).
-     */
+    // prod/test: plain singleton (static default backend, usable without an active request).
     @Profile({"!dev", "!staging"})
     @Bean("S3Service")
     @Primary
@@ -95,11 +69,7 @@ public class DeploymentSpecificConfiguration {
         return storageResolver.resolve(UserContextHolder.getOrganisation(), StorageDataClass.DEFAULT, this::resolveDefaultBackend);
     }
 
-    /**
-     * Today's default-backend selection, made profile-agnostic. Replicates the previous dev/staging
-     * {@code useMinioForStorage} branch (so DEFAULT is byte-for-byte unchanged there) and falls back
-     * to the batch service everywhere else (prod). Used as the resolver's DEFAULT supplier.
-     */
+    // Today's default-backend selection, made profile-agnostic: dev/staging useMinioForStorage branch, else batch service.
     private S3Service resolveDefaultBackend() {
         if (springProfiles.isDevOrStaging()) {
             User user = UserContextHolder.getUser();
@@ -126,9 +96,7 @@ public class DeploymentSpecificConfiguration {
         if (awsMinioService != null)
             return awsMinioService;
 
-        // GCS is selectable as a last-resort DEFAULT provider when AWS/MinIO are disabled (e.g. an
-        // org running entirely on GCS). Per-data-class MODEL routing to a per-org GCS target is
-        // handled by the StorageResolver / StorageServiceProvider above.
+        // last-resort default provider when AWS/MinIO are disabled
         if (gcsStorageService != null)
             return gcsStorageService;
 

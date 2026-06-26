@@ -18,27 +18,9 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-/**
- * Per-org, per-data-class storage resolver (avniproject/avni-server#1012, D12/D16).
- * <p>
- * Returns the {@link S3Service} for {@code (org, dataClass)}:
- * <ul>
- *     <li>An org with a {@code storageBackends} routing entry for the data class resolves to that
- *     named target (built from {@code storageTargets} + the encrypted-per-org credential store).</li>
- *     <li>Otherwise it resolves to <b>today's default backend</b> (the supplied default provider) -
- *     byte-for-byte unchanged for unconfigured orgs (D16). {@link StorageDataClass#DEFAULT} ALWAYS
- *     resolves to the default provider in P0 (only {@code MODEL} is routable), guaranteeing the whole
- *     existing media/extension/export/bulk-upload surface is unaffected.</li>
- * </ul>
- * Misconfiguration (unknown target name, malformed descriptor, missing/undecryptable credential)
- * <b>fails safe and loud</b> via {@link StorageConfigurationException} - never a silent fallback.
- * <p>
- * Built per-org-target {@link S3Service}s are cached (each wraps a live S3 client). The cache key
- * includes a <b>version component</b> - the routed credential's last-modified stamp + a hash of the
- * resolved target descriptor - so rotating a credential or editing a target invalidates the cached
- * client without a JVM restart (avniproject/avni-server#1012). When a stale entry is superseded the
- * previous {@link TargetStorageService}'s S3 client is shut down to release its connection pool.
- */
+// Resolves the S3Service for (org, dataClass): a routed named target, else the default backend.
+// DEFAULT class always resolves to the default backend; misconfiguration fails loud. Built target
+// services are cached, keyed with a version component so credential/target edits invalidate the cache.
 @Component
 public class StorageResolver {
     private static final Logger logger = LoggerFactory.getLogger(StorageResolver.class);
@@ -46,7 +28,6 @@ public class StorageResolver {
     private final OrganisationConfigService organisationConfigService;
     private final StorageServiceFactory storageServiceFactory;
     private final StorageCredentialProvider credentialProvider;
-    // org:target -> cached entry (versioned). A change in version supersedes the entry.
     private final Map<String, CachedTargetService> targetServiceCache = new ConcurrentHashMap<>();
 
     @Autowired
@@ -58,14 +39,7 @@ public class StorageResolver {
         this.credentialProvider = credentialProvider;
     }
 
-    /**
-     * @param organisation    current org (may be null for batch/non-request contexts).
-     * @param dataClass       the data class being routed.
-     * @param defaultProvider supplies today's default backend (e.g. the batch/minio-aware S3 service).
-     *                        Used for {@link StorageDataClass#DEFAULT} and for any unconfigured class.
-     */
     public S3Service resolve(Organisation organisation, StorageDataClass dataClass, Supplier<S3Service> defaultProvider) {
-        // DEFAULT data, no org context, or an org without routing config => today's backend, unchanged.
         if (dataClass == StorageDataClass.DEFAULT || organisation == null) {
             return defaultProvider.get();
         }
@@ -88,7 +62,7 @@ public class StorageResolver {
             if (existing != null && existing.version.equals(version)) {
                 return existing;
             }
-            // Supersede a stale entry: release the previous client's connection pool first.
+            // release the superseded client's connection pool
             if (existing != null) {
                 existing.shutdown();
             }
@@ -139,11 +113,7 @@ public class StorageResolver {
         }
     }
 
-    /**
-     * Version stamp for the cache key: the routed credential's last-modified (so credential rotation
-     * invalidates) plus a hash of the resolved target descriptor (so endpoint/bucket/type/credentialRef
-     * edits invalidate). Either changing supersedes the cached client.
-     */
+    // Cache-key version: credential last-modified + hash of the target descriptor; either change invalidates the cache.
     private String versionFor(Organisation organisation, StorageTarget target) {
         long credentialVersion = credentialProvider.credentialVersion(organisation, target.getCredentialRef());
         int descriptorHash = Objects.hash(target.getType(), target.getEndpoint(), target.getBucket(), target.getCredentialRef());
@@ -154,7 +124,6 @@ public class StorageResolver {
         return organisation.getId() + ":" + targetName;
     }
 
-    /** A cached target service tagged with the version that produced it (see {@link #versionFor}). */
     private static final class CachedTargetService {
         private final String version;
         private final S3Service service;

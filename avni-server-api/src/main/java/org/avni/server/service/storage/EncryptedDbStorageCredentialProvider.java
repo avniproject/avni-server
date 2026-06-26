@@ -12,16 +12,7 @@ import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
-/**
- * P0 {@link StorageCredentialProvider} (avniproject/avni-server#1012, D14): reads the credential for a
- * target's {@code credentialRef} from the encrypted-per-org DB store ({@link OrgStorageCredential}),
- * decrypting the secret via {@link CryptoService} under a base64 deploy master key - mirroring the
- * {@code Msg91Config} / story-5 key-store precedent.
- * <p>
- * Decrypt is load-bearing: a missing/incorrect master key throws (fails loud) rather than returning
- * a garbage secret that would only surface as an opaque S3 auth failure later. RLS on
- * {@code org_storage_credential} keeps org A out of org B's credentials.
- */
+// Reads a target's credential from the encrypted-per-org DB store, decrypting the secret under a deploy master key.
 @Service
 public class EncryptedDbStorageCredentialProvider implements StorageCredentialProvider {
 
@@ -69,21 +60,13 @@ public class EncryptedDbStorageCredentialProvider implements StorageCredentialPr
         return credential.getLastModifiedDateTime().getMillis();
     }
 
-    /**
-     * Encrypts a secret for write. Used by the ops/admin write path (and tests) to populate the store.
-     */
     public String encryptSecret(String plaintextSecret) throws GeneralSecurityException {
         requireMasterKey();
         byte[] encrypted = cryptoService.encryptWithIVPrefixed(plaintextSecret.getBytes(StandardCharsets.UTF_8), base64MasterKey);
         return cryptoService.encodeToBase64(encrypted);
     }
 
-    /**
-     * Lazy, fail-loud guard (avniproject/avni-server#1012, D14): the master key is intentionally
-     * unset by default so the server boots fine for deployments that don't use per-org storage
-     * routing. It is only required at the point an org storage credential is actually
-     * encrypted/decrypted - at which point a blank key is a hard misconfiguration.
-     */
+    // Master key is unset by default (server boots fine without per-org storage routing); required only at point of use.
     private void requireMasterKey() {
         if (!StringUtils.hasText(base64MasterKey)) {
             throw new StorageConfigurationException(
@@ -99,7 +82,6 @@ public class EncryptedDbStorageCredentialProvider implements StorageCredentialPr
                     cryptoService.decryptWithIVPrefixed(cryptoService.decodeFromBase64(encryptedSecretKey), base64MasterKey),
                     StandardCharsets.UTF_8);
         } catch (GeneralSecurityException | IllegalArgumentException e) {
-            // Missing/incorrect deploy master key (or corrupt ciphertext). Fail loud.
             throw new StorageConfigurationException(String.format(
                     "Failed to decrypt storage credential for credentialRef '%s'; check the deploy master key "
                             + "'avni.storage.credentials.base64EncodedEncryptionKey'", credentialRef), e);

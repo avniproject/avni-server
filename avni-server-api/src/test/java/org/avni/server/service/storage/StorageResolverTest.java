@@ -25,14 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-/**
- * Per-org, per-data-class resolution (avniproject/avni-server#1012):
- * <ul>
- *     <li>configured {@code (org, MODEL)} -> the routed target backend;</li>
- *     <li>unconfigured org / DEFAULT class -> today's default backend (D16);</li>
- *     <li>misconfigured target name -> fails safe and loud.</li>
- * </ul>
- */
 public class StorageResolverTest {
 
     @Mock
@@ -45,7 +37,6 @@ public class StorageResolverTest {
     private StorageResolver resolver;
     private Organisation organisation;
 
-    // distinct stand-ins so we can assert WHICH backend was returned
     private final S3Service defaultBackend = mock(S3Service.class, "default");
     private final S3Service modelBackend = mock(S3Service.class, "model");
 
@@ -107,7 +98,6 @@ public class StorageResolverTest {
 
     @Test
     public void unconfiguredOrgResolvesModelToDefaultBackend() {
-        // no storageBackends config at all
         when(organisationConfigService.getOrganisationConfig(organisation))
                 .thenReturn(configWith(null, null));
 
@@ -119,18 +109,15 @@ public class StorageResolverTest {
 
     @Test
     public void defaultDataClassAlwaysResolvesToDefaultBackend() {
-        // even if MODEL routing is configured, DEFAULT data must use the default backend (regression guard)
         S3Service resolved = resolver.resolve(organisation, StorageDataClass.DEFAULT, () -> defaultBackend);
 
         assertSame("DEFAULT class must always resolve to today's backend", defaultBackend, resolved);
-        // DEFAULT must not even read org config (cheap + no routing for the whole existing media surface)
         verify(organisationConfigService, never()).getOrganisationConfig(any());
         verify(storageServiceFactory, never()).build(any(), any());
     }
 
     @Test
     public void nullOrganisationResolvesToDefaultBackend() {
-        // batch / non-request contexts
         S3Service resolved = resolver.resolve(null, StorageDataClass.MODEL, () -> defaultBackend);
         assertSame(defaultBackend, resolved);
         verify(storageServiceFactory, never()).build(any(), any());
@@ -138,7 +125,6 @@ public class StorageResolverTest {
 
     @Test
     public void unknownTargetNameFailsLoud() {
-        // MODEL routed to "missing" but no such target in storageTargets
         when(organisationConfigService.getOrganisationConfig(organisation))
                 .thenReturn(configWith(modelRoutedTo("missing"), gcsTarget()));
 
@@ -167,7 +153,6 @@ public class StorageResolverTest {
 
     @Test
     public void malformedTargetDescriptorFailsLoud() {
-        // target present but missing the required bucket
         Map<String, Object> badTarget = new LinkedHashMap<>();
         badTarget.put("type", "gcs");
         badTarget.put("endpoint", "https://storage.googleapis.com");
@@ -210,7 +195,6 @@ public class StorageResolverTest {
                 .thenReturn(configWith(modelRoutedTo("org-gcs"), gcsTarget()));
         when(storageServiceFactory.build(eq(organisation), any(StorageTarget.class)))
                 .thenReturn(firstClient, secondClient);
-        // credential rotates: version changes between the two resolves
         when(credentialProvider.credentialVersion(eq(organisation), eq("org-gcs-creds")))
                 .thenReturn(100L, 200L);
 
@@ -220,13 +204,11 @@ public class StorageResolverTest {
         assertSame(firstClient, first);
         assertSame("a rotated credential must produce a freshly built client", secondClient, second);
         verify(storageServiceFactory, times(2)).build(eq(organisation), any(StorageTarget.class));
-        // the superseded client must be shut down to release its connection pool
         verify(firstClient).shutdown();
     }
 
     @Test
     public void modelWithoutRoutingEntryResolvesToDefault() {
-        // storageBackends present but no "model" key -> default
         Map<String, Object> backends = new LinkedHashMap<>();
         backends.put("default", "avni-s3");
         when(organisationConfigService.getOrganisationConfig(organisation))

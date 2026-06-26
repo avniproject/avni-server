@@ -18,16 +18,7 @@ import java.util.regex.Matcher;
 
 import static java.lang.String.format;
 
-/**
- * A {@link StorageService} built per-org from a {@link StorageTarget} descriptor + resolved
- * credentials (avniproject/avni-server#1012) - as opposed to the startup-singleton
- * {@code AWSS3Service}/{@code AWSMinioService}/{@code GCSStorageService} that are built from global
- * {@code @Value} props. It carries its own bucket and a pre-built {@link AmazonS3} client (so a
- * target can point at its own endpoint/bucket/creds).
- * <p>
- * URL parsing reuses {@link MinioUri} (path-style, which all three S3-interop backends use here).
- * The download-url authorisation (mediaDir == org dir, bucket match) mirrors {@code AWSMinioService}.
- */
+// A StorageService built per-org from a StorageTarget descriptor + resolved credentials, carrying its own bucket and S3 client.
 public class TargetStorageService extends StorageService {
     private static final Logger logger = LoggerFactory.getLogger(TargetStorageService.class);
 
@@ -37,11 +28,7 @@ public class TargetStorageService extends StorageService {
         this.s3Client = s3Client;
     }
 
-    /**
-     * Releases the underlying {@link AmazonS3} client's connection pool. Called by the
-     * {@link StorageResolver} when a cached target service is superseded (credential/target rotation),
-     * so a rebuilt client does not leak the previous one's connections (avniproject/avni-server#1012).
-     */
+    // Releases the S3 client's connection pool; called when a cached target service is superseded.
     public void shutdown() {
         try {
             s3Client.shutdown();

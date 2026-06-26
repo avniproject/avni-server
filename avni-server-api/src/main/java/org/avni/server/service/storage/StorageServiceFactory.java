@@ -17,16 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-/**
- * Builds a concrete {@link S3Service} for a named storage target descriptor
- * (avniproject/avni-server#1012). Generalises the per-backend client construction from
- * {@code AWSS3Service}/{@code AWSMinioService}/{@code GCSStorageService} (which are global-prop
- * singletons) so a per-org target can have its OWN endpoint/bucket/credentials.
- * <p>
- * Resolution: target descriptor (non-secret, from org config) + credentials (resolved via
- * {@link StorageCredentialProvider}, P0 = encrypted-per-org DB). The GCS client-build mirrors the
- * Story-2 {@code GCSStorageService} (S3-interop endpoint, path-style, {@code AWSS3V4SignerType}).
- */
+// Builds a per-org S3Service from a named target descriptor (org config) + credentials (StorageCredentialProvider).
 @Component
 public class StorageServiceFactory {
     private static final Regions SIGNING_REGION = Regions.AP_SOUTH_1;
@@ -58,8 +49,7 @@ public class StorageServiceFactory {
                 new AWSStaticCredentialsProvider(new BasicAWSCredentials(credentials.getAccessKey(), credentials.getSecretKey()));
         switch (target.getType()) {
             case S3:
-                // Honor an explicit endpoint (path-style, e.g. a non-AWS S3-compatible host) when
-                // provided; otherwise fall back to the default region.
+                // honor an explicit endpoint (S3-compatible host) when provided, else use the default region
                 if (StringUtils.hasText(target.getEndpoint())) {
                     return AmazonS3ClientBuilder.standard()
                             .withEndpointConfiguration(new AwsClientBuilder

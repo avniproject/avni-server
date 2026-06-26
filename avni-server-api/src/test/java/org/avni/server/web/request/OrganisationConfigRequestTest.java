@@ -12,11 +12,6 @@ import java.util.Map;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * The implementation/metadata export (organisationConfig.json) must NOT leak the server-only storage
- * routing/target metadata (avniproject/avni-server#1012, D17 / F1): a portable bundle must never
- * carry backend/bucket/endpoint/credentialRef.
- */
 public class OrganisationConfigRequestTest {
 
     @Test

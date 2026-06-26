@@ -25,12 +25,6 @@ public class SpringProfiles {
         return isProfile(SpringProfiles.ON_PREMISE);
     }
 
-    /**
-     * Whether the app is running under the {@code dev} or {@code staging} profile - the profiles
-     * that, before avniproject/avni-server#1012, were the only ones with per-org storage selection
-     * (the {@code useMinioForStorage} branch). Kept so DEFAULT-class resolution stays byte-for-byte
-     * identical on those profiles after the resolver was made profile-agnostic.
-     */
     public boolean isDevOrStaging() {
         return isProfile(SpringProfiles.DEV) || isProfile(SpringProfiles.STAGING);
     }

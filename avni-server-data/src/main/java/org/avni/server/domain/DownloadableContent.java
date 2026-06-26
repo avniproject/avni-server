@@ -8,14 +8,7 @@ import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
-/**
- * Generic admin-configured reference data that declares a downloadable blob (e.g. an edge model).
- * Synced to every device as metadata (admin-managed, global - like forms/concepts/extensions).
- * The bytes referenced by {@code contentKey} are fetched during sync by the client.
- * <p>
- * The AES key for an encrypted blob is NEVER stored on this entity - it lives in a separate
- * server-only key store served via a device key-delivery endpoint (avniproject/avni-server#1020).
- */
+// The AES key for an encrypted blob is never stored on this entity - it lives in the server-only ModelKey store.
 @Entity
 @Table(name = "downloadable_content")
 @BatchSize(size = 100)
@@ -25,38 +18,19 @@ public class DownloadableContent extends OrganisationAwareEntity {
     @Column
     private String name;
 
-    /**
-     * Content category, e.g. {@code edgeModel}. Drives category-specific interpretation of {@link #payload}.
-     */
     @NotNull
     @Column
     private String category;
 
-    /**
-     * Object key of the downloadable blob, e.g. {@code models/<sha256OfPlaintext>.bin}.
-     * The {@code models/} prefix is the data-class signal for storage routing
-     * (avniproject/avni-server#1013); a non-null contentKey + sha256 is the "has downloadable
-     * content" signal the client uses to drive the content-download capability.
-     */
     @Column(name = "content_key")
     private String contentKey;
 
-    /**
-     * SHA-256 of the plaintext blob. Cache key and key-store lookup key on the client.
-     */
     @Column
     private String sha256;
 
-    /**
-     * Whether the blob is encrypted and the client must fetch an AES key from the key store
-     * (avniproject/avni-server#1020) to use it. The key itself is never a field here.
-     */
     @Column(name = "needs_key")
     private boolean needsKey;
 
-    /**
-     * Category-specific, non-secret metadata (for the edge model: engine / inputShape / labelMap).
-     */
     @Column
     @Type(value = JSONObjectUserType.class)
     private JsonObject payload;

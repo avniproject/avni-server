@@ -15,13 +15,6 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-/**
- * JPA persistence round-trip for {@link OrgStorageCredential} (avniproject/avni-server#1012, F3):
- * proves the Hibernate mapping (incl. the {@code created_by_id}/{@code last_modified_by_id} audit
- * columns set up by {@code V1_401}) matches the base {@code CHSEntity}/{@code OrganisationAwareEntity}
- * mapping by saving and re-reading against the real test DB. A column-name mismatch would fail here
- * rather than silently at runtime. Also exercises {@link DownloadableContent} (same base + pattern).
- */
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Transactional
@@ -48,7 +41,6 @@ public class OrgStorageCredentialRepositoryIntegrationTest extends AbstractContr
 
         OrgStorageCredential saved = orgStorageCredentialRepository.save(credential);
         assertNotNull("save must assign an id (mapping ok)", saved.getId());
-        // audit columns (created_by_id/last_modified_by_id) must have been populated via JPA auditing
         assertNotNull("created_by_id must be mapped + populated", saved.getCreatedBy());
         assertNotNull("last_modified_by_id must be mapped + populated", saved.getLastModifiedBy());
 

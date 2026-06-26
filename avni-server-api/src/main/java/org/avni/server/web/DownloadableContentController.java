@@ -23,11 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Admin/ops CRUD for {@link DownloadableContent} plus the sync read endpoint that delivers
- * the metadata to every device. No AES key is ever exposed here - the key lives only in the
- * server-only key store (avniproject/avni-server#1020).
- */
 @RestController
 public class DownloadableContentController implements RestControllerResourceProcessor<DownloadableContent> {
     private final DownloadableContentRepository downloadableContentRepository;
@@ -103,11 +98,6 @@ public class DownloadableContentController implements RestControllerResourceProc
         }
     }
 
-    /**
-     * Sync read endpoint - delivers the reference data to every device as metadata. Mirrors the
-     * CustomCardConfig sync endpoint shape; {@link DownloadableContent} carries no key field, so
-     * the entity is safe to serialise directly.
-     */
     @GetMapping(value = "/v2/downloadableContent/search/lastModified")
     @Transactional(readOnly = true)
     public CollectionModel<EntityModel<DownloadableContent>> getDownloadableContents(

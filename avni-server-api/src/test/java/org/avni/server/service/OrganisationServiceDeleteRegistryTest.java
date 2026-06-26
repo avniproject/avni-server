@@ -49,8 +49,6 @@ public class OrganisationServiceDeleteRegistryTest {
 
     @Test
     public void metadataJpaTableListContainsDownloadableContentForOrgDeleteAndReset() throws Exception {
-        // Guards the review's top bug: org delete/reset must cover downloadable_content,
-        // otherwise the row is orphaned when an organisation is deleted/reset.
         List<String> list = invokeTableList("getMetadataJpaTableList");
         assertTrue("downloadable_content must be in the metadata table list (org delete/reset coverage)",
                 list.contains("downloadable_content"));
@@ -58,7 +56,6 @@ public class OrganisationServiceDeleteRegistryTest {
 
     @Test
     public void metadataJpaRepositoriesContainsDownloadableContentRepository() throws Exception {
-        // The JPA-repository path of org delete/reset must also cover DownloadableContent.
         DownloadableContentRepository downloadableContentRepository = Mockito.mock(DownloadableContentRepository.class);
         OrganisationService svc = Mockito.mock(OrganisationService.class, Mockito.CALLS_REAL_METHODS);
         Field field = OrganisationService.class.getDeclaredField("downloadableContentRepository");

@@ -4,11 +4,6 @@ import org.avni.server.domain.DownloadableContent;
 
 import java.util.Map;
 
-/**
- * Web/admin contract for {@link DownloadableContent}. Deliberately carries no AES key -
- * the key lives only in the server-only key store (avniproject/avni-server#1020) and is
- * never serialised on this entity.
- */
 public class DownloadableContentResponse {
     private String uuid;
     private String name;

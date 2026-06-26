@@ -11,10 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Server-only-routing filter (avniproject/avni-server#1012, D17): the {@code storageBackends} /
- * {@code storageTargets} keys must never appear in the device-synced org-config serialization.
- */
 class OrganisationConfigServerOnlyKeysTest {
 
     private OrganisationConfig configWithStorageRouting() {

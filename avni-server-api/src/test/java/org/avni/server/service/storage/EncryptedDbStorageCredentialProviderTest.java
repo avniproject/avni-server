@@ -15,14 +15,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-/**
- * Encrypted-per-org credential store (avniproject/avni-server#1012, D14):
- * encrypt-on-write / decrypt-on-read round-trip via {@link CryptoService}; a wrong/missing master
- * key fails loud at decrypt (cred decrypt is load-bearing).
- */
 public class EncryptedDbStorageCredentialProviderTest {
 
-    // valid AES-256 base64 key (32 bytes)
     private static final String MASTER_KEY = "xqtzQhHsDFVQt9TK50UHcKda7/QM31bEE2lvTrcFoTU=";
     private static final String OTHER_MASTER_KEY = "AAAAQhHsDFVQt9TK50UHcKda7/QM31bEE2lvTrcFoTU=";
 
@@ -67,12 +61,10 @@ public class EncryptedDbStorageCredentialProviderTest {
 
     @Test
     public void wrongMasterKeyFailsLoud() throws Exception {
-        // encrypt under one key...
         String encrypted = provider.encryptSecret("super-secret-hmac-key");
         when(repository.findByOrganisationIdAndCredentialRefAndIsVoidedFalse(7L, "org-gcs-creds"))
                 .thenReturn(storedCredential("ACCESS123", encrypted));
 
-        // ...decrypt under a different deploy master key
         EncryptedDbStorageCredentialProvider wrongKeyProvider =
                 new EncryptedDbStorageCredentialProvider(repository, cryptoService, OTHER_MASTER_KEY);
 
@@ -118,10 +110,8 @@ public class EncryptedDbStorageCredentialProviderTest {
 
     @Test
     public void blankMasterKeyConstructsButFailsLoudAtEncrypt() {
-        // The server must boot fine when the master key is unset (D14) - construction must not throw...
         EncryptedDbStorageCredentialProvider blankKeyProvider =
                 new EncryptedDbStorageCredentialProvider(repository, cryptoService, "  ");
-        // ...but the first encrypt (point of use) must fail loud with a clear, actionable error.
         try {
             blankKeyProvider.encryptSecret("super-secret-hmac-key");
             fail("encrypting with a blank master key must fail loud at point of use");
@@ -134,7 +124,6 @@ public class EncryptedDbStorageCredentialProviderTest {
 
     @Test
     public void blankMasterKeyFailsLoudAtDecrypt() throws Exception {
-        // Pre-existing ciphertext (encrypted under a real key) but the deploy now has no master key.
         String encrypted = provider.encryptSecret("super-secret-hmac-key");
         when(repository.findByOrganisationIdAndCredentialRefAndIsVoidedFalse(7L, "org-gcs-creds"))
                 .thenReturn(storedCredential("ACCESS123", encrypted));

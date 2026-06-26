@@ -158,7 +158,6 @@ public class DownloadableContentServiceTest {
         existing.setUuid(uuid);
         existing.setName("Edge Model");
         when(downloadableContentRepository.findByUuid(uuid)).thenReturn(existing);
-        // the name belongs to the same entity being saved
         when(downloadableContentRepository.findByNameIgnoreCaseAndIsVoidedFalse("Edge Model")).thenReturn(existing);
 
         DownloadableContent saved = service.createOrUpdate(buildRequest(uuid, "Edge Model", "edgeModel", null));

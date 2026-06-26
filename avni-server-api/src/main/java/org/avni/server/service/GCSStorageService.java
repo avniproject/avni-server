@@ -29,19 +29,7 @@ import java.util.regex.Matcher;
 
 import static java.lang.String.format;
 
-/**
- * Google Cloud Storage backend implemented via S3 interoperability.
- * <p>
- * Mirrors {@link AWSMinioService} as closely as possible: it points the AWS S3 SDK (v1) at the
- * GCS interop endpoint ({@code https://storage.googleapis.com}), enables path-style access, forces
- * the {@code AWSS3V4SignerType} signer override, and authenticates with GCS HMAC interop credentials
- * (access key + secret). All core storage operations (object exists, get object, presigned GET,
- * putObject) are inherited from {@link StorageService}.
- * <p>
- * GCS S3-interop signing is the load-bearing assumption here (validated by the DR-2 spike,
- * avniproject/avni-server#1014 — GO). REGION is used only for the v4 signer's credential scope; the
- * interop endpoint accepts the placeholder region.
- */
+// Google Cloud Storage backend via S3 interoperability (path-style, AWSS3V4SignerType, GCS HMAC interop credentials).
 @Service("GCSStorageService")
 @ConditionalOnProperty(value = "gcs.s3.enable", havingValue = "true")
 public class GCSStorageService extends StorageService {
@@ -101,18 +89,13 @@ public class GCSStorageService extends StorageService {
         return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
     }
 
-    /**
-     * Parses the object key from a GCS path-style URL of the form
-     * {@code https://storage.googleapis.com/<bucket>/<key>} (the form produced by
-     * {@code AmazonS3#getUrl} with path-style access enabled).
-     */
+    // Object key from a path-style URL: https://<endpoint>/<bucket>/<key>
     static String getObjectKeyFromUrl(String url) {
         String path = rawPathOf(url);
         int index = path.indexOf('/', 1);
         if (index == -1 || index == path.length() - 1) {
             return null;
         }
-        // https://<endpoint>/<bucket>/<key>
         return decode(path.substring(index + 1));
     }
 
@@ -120,24 +103,12 @@ public class GCSStorageService extends StorageService {
         String path = rawPathOf(url);
         int index = path.indexOf('/', 1);
         if (index == -1) {
-            // https://<endpoint>/<bucket>
             return decode(path.substring(1));
         }
-        // https://<endpoint>/<bucket>/<key> (or trailing-slash bucket-only form)
         return decode(path.substring(1, index));
     }
 
-    /**
-     * Returns the raw (still percent-encoded) path of a GCS path-style URL.
-     * <p>
-     * The raw URL string is pre-encoded the same way {@link org.avni.server.util.MinioUri} does
-     * (see {@code preprocessUrlStr}) before being handed to {@link URI#create}: the whole string is
-     * URL-encoded, then the path-structure delimiters {@code ':'} and {@code '/'} are restored and
-     * {@code '+'} is mapped back to {@code %20}. This lets keys containing spaces / special
-     * characters parse without {@link URI#create} throwing, while {@code getRawPath()} keeps the
-     * remaining percent-escapes intact so each segment can be {@link #decode(String) decoded} once
-     * to recover the exact stored object key (no double-decode / mismatch).
-     */
+    // Raw (still percent-encoded) path. preprocessUrlStr keeps escapes intact so each segment decodes once to the exact stored key.
     static String rawPathOf(String url) {
         URI uri = URI.create(preprocessUrlStr(url));
         String path = uri.getRawPath();
@@ -147,11 +118,7 @@ public class GCSStorageService extends StorageService {
         return path;
     }
 
-    /**
-     * Mirrors {@code MinioUri.preprocessUrlStr}: URL-encode the entire string, then restore the
-     * path-structure delimiters so {@link URI#create} sees a syntactically valid URL whose path
-     * segments still carry the percent-escapes for any special characters in bucket/key.
-     */
+    // URL-encode the whole string, then restore the ':' and '/' path delimiters so URI.create accepts it.
     static String preprocessUrlStr(String str) {
         try {
             return URLEncoder.encode(str, "UTF-8")
@@ -159,7 +126,6 @@ public class GCSStorageService extends StorageService {
                     .replace("%2F", "/")
                     .replace("+", "%20");
         } catch (UnsupportedEncodingException e) {
-            // UTF-8 is always supported; this cannot happen on a sane JVM.
             throw new RuntimeException(e);
         }
     }

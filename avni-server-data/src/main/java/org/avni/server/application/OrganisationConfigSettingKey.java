@@ -5,8 +5,6 @@ public enum OrganisationConfigSettingKey {
     searchResultFields, useMinioForStorage, useKeycloakAsIDP, skipRuleExecution, customRegistrationLocations, enableMessaging,
     donotRequirePasswordChangeOnFirstLogin, failOnValidationError, guideUserToRegisterButton,
     enableSqliteSnapshotGeneration, enabledSqliteSnapshotGenerationAt, disabledSqliteSnapshotGenerationAt,
-    // Server-only per-org/per-data-class storage routing + named target metadata
-    // (avniproject/avni-server#1012). MUST be excluded from /web/organisationConfig and device sync
-    // - see OrganisationConfig.SERVER_ONLY_SETTING_KEYS.
+    // server-only - excluded from clients via OrganisationConfig.SERVER_ONLY_SETTING_KEYS
     storageBackends, storageTargets
 }

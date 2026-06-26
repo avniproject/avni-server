@@ -2,10 +2,6 @@ package org.avni.server.service.storage;
 
 import java.util.Arrays;
 
-/**
- * Concrete storage backend technology a named target maps to (avniproject/avni-server#1012).
- * All three are spoken over the AWS S3 SDK v1; {@code minio} and {@code gcs} are S3-interop endpoints.
- */
 public enum StorageBackendType {
     S3,
     MINIO,

@@ -22,26 +22,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-/**
- * Server-only model key store (avniproject/avni-server#1020, D19/D20). Mirrors
- * {@code EncryptedDbStorageCredentialProviderTest}: encrypt-on-write / decrypt-on-read round-trip via
- * {@link CryptoService}; a wrong/blank master key fails loud at point-of-use (key decrypt is
- * load-bearing); construction with a blank master key must NOT throw (server boots fine); RLS/org
- * scoping (org A cannot read org B's key); absent key returns null (caller -> clean 404).
- */
 public class ModelKeyServiceTest {
 
-    // valid AES-256 base64 key (32 bytes)
     private static final String MASTER_KEY = "xqtzQhHsDFVQt9TK50UHcKda7/QM31bEE2lvTrcFoTU=";
     private static final String OTHER_MASTER_KEY = "AAAAQhHsDFVQt9TK50UHcKda7/QM31bEE2lvTrcFoTU=";
 
     private static final long ORG_A_ID = 11L;
     private static final long ORG_B_ID = 22L;
-    // a valid 64-char hex SHA-256 digest (the store now validates the shape before any lookup)
     private static final String SHA256 = "a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00";
-    // a valid 64-char hex sha that resolves to no stored key (for the clean-404 path)
     private static final String ABSENT_SHA256 = "0000000000000000000000000000000000000000000000000000000000000000";
-    // the model's real AES key (base64) the device must receive unmasked
     private static final String REAL_MODEL_KEY = "Zm9vYmFyMTIzNDU2Nzg5MGFiY2RlZmdoaWprbA==";
 
     @Mock
@@ -86,7 +75,6 @@ public class ModelKeyServiceTest {
         when(repository.findByOrganisationIdAndSha256AndIsVoidedFalse(ORG_A_ID, SHA256))
                 .thenReturn(stored(saved.getEncryptedKey()));
 
-        // D19 deviation: read returns the REAL (unmasked) key, not a masked one.
         assertEquals("decrypt must recover the original key bytes unmasked",
                 REAL_MODEL_KEY, service.getDecryptedKey(SHA256));
     }
@@ -108,9 +96,8 @@ public class ModelKeyServiceTest {
 
     @Test
     public void blankMasterKeyConstructsButFailsLoudAtEncrypt() {
-        // The server must boot fine when the master key is unset (F2 lesson) - construction must not throw...
+        // construction with a blank master key must not throw (server boots fine); first encrypt must fail loud
         ModelKeyService blankKeyService = new ModelKeyService(repository, cryptoService, "  ");
-        // ...but the first encrypt (point of use) must fail loud with a clear, actionable error.
         try {
             blankKeyService.storeKey(SHA256, REAL_MODEL_KEY);
             fail("encrypting with a blank master key must fail loud at point of use");
@@ -121,7 +108,6 @@ public class ModelKeyServiceTest {
 
     @Test
     public void blankMasterKeyFailsLoudAtDecrypt() {
-        // Pre-existing ciphertext (encrypted under a real key) but the deploy now has no master key.
         ModelKey saved = service.storeKey(SHA256, REAL_MODEL_KEY);
         when(repository.findByOrganisationIdAndSha256AndIsVoidedFalse(ORG_A_ID, SHA256))
                 .thenReturn(stored(saved.getEncryptedKey()));
@@ -145,7 +131,6 @@ public class ModelKeyServiceTest {
 
     @Test
     public void blankSha256OnReadIsABadRequest() {
-        // A blank required param is a client error -> clean 400 (BadRequestError), not an opaque path.
         try {
             service.getDecryptedKey("  ");
             fail("a blank sha256 must be a clean 400");
@@ -156,7 +141,6 @@ public class ModelKeyServiceTest {
 
     @Test
     public void malformedSha256OnReadIsABadRequestAndDoesNotEchoTheRawValue() {
-        // Non-64-hex value -> clean 400; the raw client-supplied value must NOT be echoed in the message.
         String malformed = "not-a-valid-hex-sha256";
         try {
             service.getDecryptedKey(malformed);
@@ -181,7 +165,6 @@ public class ModelKeyServiceTest {
 
     @Test
     public void storeRejectsBlankKeyWithBadRequest() {
-        // Client input validation -> 400 (BadRequestError), not a 500/Bugsnag.
         try {
             service.storeKey(SHA256, "  ");
             fail("storing a blank key must be a clean 400");
@@ -192,8 +175,6 @@ public class ModelKeyServiceTest {
 
     @Test
     public void cryptoFaultMessageDoesNotLeakMasterKeyPropOrSha256() {
-        // Server crypto fault (wrong master key on decrypt): the ModelKeyException message returned to
-        // the caller must be generic - no master-key property name, no raw sha256.
         ModelKey saved = service.storeKey(SHA256, REAL_MODEL_KEY);
         when(repository.findByOrganisationIdAndSha256AndIsVoidedFalse(ORG_A_ID, SHA256))
                 .thenReturn(stored(saved.getEncryptedKey()));
@@ -210,18 +191,14 @@ public class ModelKeyServiceTest {
 
     @Test
     public void rlsOrgScopingOrgACannotReadOrgBKey() {
-        // Org A's key is stored under (ORG_A_ID, SHA256). Org B asking for the same sha256 must not see it
-        // because the lookup is scoped to the current org from UserContextHolder.
         ModelKey saved = service.storeKey(SHA256, REAL_MODEL_KEY);
         when(repository.findByOrganisationIdAndSha256AndIsVoidedFalse(ORG_A_ID, SHA256))
                 .thenReturn(stored(saved.getEncryptedKey()));
         when(repository.findByOrganisationIdAndSha256AndIsVoidedFalse(ORG_B_ID, SHA256))
                 .thenReturn(null);
 
-        // Org A reads its own key fine.
         assertEquals(REAL_MODEL_KEY, service.getDecryptedKey(SHA256));
 
-        // Switch the request context to org B - same sha256 resolves to nothing.
         setOrg(ORG_B_ID);
         assertNull("org B must not read org A's key", service.getDecryptedKey(SHA256));
     }

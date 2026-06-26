@@ -35,9 +35,7 @@ public class OrganisationConfigRequest {
     public static OrganisationConfigRequest fromOrganisationConfig(OrganisationConfig organisationConfig) {
         OrganisationConfigRequest configRequest = new OrganisationConfigRequest();
         configRequest.setUuid(organisationConfig.getUuid());
-        // Strip server-only keys (storage routing/targets - avniproject/avni-server#1012, D17) so the
-        // implementation/metadata export (organisationConfig.json) never leaks backend/bucket/endpoint/
-        // credentialRef into a portable bundle.
+        // strip server-only keys so the metadata export never leaks storage routing/target config
         configRequest.setSettings(OrganisationConfig.withoutServerOnlyKeys(organisationConfig.getSettings()));
         configRequest.setWorklistUpdationRule(organisationConfig.getWorklistUpdationRule());
         return configRequest;
