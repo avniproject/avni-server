@@ -34,6 +34,9 @@ $$
             WHERE settings ? 'lowestAddressLevelType'
               AND jsonb_typeof(settings -> 'lowestAddressLevelType') = 'array'
             LOOP
+              -- Per-org savepoint: isolate any unexpected failure to the one org (logged + skipped) instead of
+              -- rolling back the conversion for every org and blocking the deploy.
+              BEGIN
                 new_lineages := '[]'::jsonb;
 
                 FOR lineage IN
@@ -47,7 +50,11 @@ $$
                                 IF segment ~ uuid_pattern THEN
                                     -- already a UUID (idempotent re-run or mixed value): keep
                                     seg_uuid := segment;
-                                ELSIF segment ~ '^[0-9]+$' THEN
+                                ELSIF segment ~ '^[0-9]+$' AND length(segment) <= 18 THEN
+                                    -- length <= 18 keeps the value inside bigint range (max 18-digit value
+                                    -- < 9.2e18); a longer all-digit segment is cross-env junk, not a real id, so
+                                    -- it falls through to NULL (unresolvable) rather than raising on the cast and
+                                    -- aborting the whole migration for every org.
                                     SELECT alt.uuid
                                     INTO seg_uuid
                                     FROM address_level_type alt
@@ -79,6 +86,10 @@ $$
                 UPDATE organisation_config
                 SET settings = jsonb_set(settings, '{lowestAddressLevelType}', new_lineages, false)
                 WHERE id = cfg.id;
+              EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE 'V1_399: skipped organisation_config % (org %) due to error: % (its lowestAddressLevelType is left unchanged for manual follow-up)',
+                    cfg.id, cfg.organisation_id, SQLERRM;
+              END;
             END LOOP;
     END
 $$;
