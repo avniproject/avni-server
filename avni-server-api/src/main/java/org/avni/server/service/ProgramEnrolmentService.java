@@ -19,6 +19,7 @@ import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -118,13 +119,15 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         Specification<ProgramEncounter> completedEncounterSpecification = where(programEncounterRepository.withNotNullEncounterDateTime())
             .or(programEncounterRepository.withNotNullCancelDateTime())
             .and(programEncounterRepository.withVoidedFalse());
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         programEncountersContract = programEncounterRepository.findAll(
             where(programEncounterRepository.withProgramEncounterId(programEnrolment.getId()))
                 .and(programEncounterRepository.withProgramEncounterTypeIdUuids(accessibleEncounterTypeUUIDs))
                 .and(programEncounterRepository.withProgramEncounterEarliestVisitDateTime(earliestVisitDateTime))
                 .and(programEncounterRepository.withProgramEncounterDateTime(encounterDateTime))
                 .and(completedEncounterSpecification)
-            , pageable).map(programEncounterService::constructProgramEncounters);
+                .and(programEncounterRepository.orderByVisitDateDescIdDesc())
+            , unsortedPageable).map(programEncounterService::constructProgramEncounters);
         return programEncountersContract;
     }
 

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -84,6 +85,7 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
         Specification<Encounter> completedEncounterSpecification = Specification.where(encounterRepository.withNotNullEncounterDateTime())
                 .or(encounterRepository.withNotNullCancelDateTime());
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         encountersContract = encounterRepository.findAll(
                 where(encounterRepository.withIndividualId(individual.getId()))
                         .and(encounterRepository.withEncounterTypeIdUuids(encounterTypeIdList))
@@ -91,7 +93,8 @@ public class EncounterService implements ScopeAwareService<Encounter> {
                         .and(encounterRepository.withEncounterDateTime(encounterDateTime))
                         .and(encounterRepository.withVoidedFalse())
                         .and(completedEncounterSpecification)
-                , pageable).map(this::constructEncounter);
+                        .and(encounterRepository.orderByVisitDateDescIdDesc())
+                , unsortedPageable).map(this::constructEncounter);
         return encountersContract;
     }
 
