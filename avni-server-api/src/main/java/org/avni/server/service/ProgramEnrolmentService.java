@@ -10,7 +10,6 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
-import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.ChecklistContract;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
@@ -48,7 +47,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     private final ChecklistRepository checklistRepository;
     private final ChecklistItemRepository checklistItemRepository;
     private final IdentifierAssignmentRepository identifierAssignmentRepository;
-    private final AccessControlService accessControlService;
     private final Bugsnag bugsnag;
     private final FormMappingService formMappingService;
     private final SubjectMigrationService subjectMigrationService;
@@ -65,7 +63,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
                                    ChecklistRepository checklistRepository,
                                    ChecklistItemRepository checklistItemRepository,
                                    IdentifierAssignmentRepository identifierAssignmentRepository,
-                                   AccessControlService accessControlService,
                                    FormMappingService formMappingService,
                                    Bugsnag bugsnag,
                                    SubjectMigrationService subjectMigrationService) {
@@ -81,7 +78,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         this.checklistItemRepository = checklistItemRepository;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
         this.formMappingService = formMappingService;
-        this.accessControlService = accessControlService;
         this.bugsnag = bugsnag;
         this.subjectMigrationService = subjectMigrationService;
     }
@@ -114,7 +110,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         if (encounterTypeUuids != null) {
             encounterTypeIdList = Arrays.asList(encounterTypeUuids.split(","));
         }
-        List<String> accessibleEncounterTypeUUIDs = encounterTypeIdList.stream().filter(accessControlService::hasProgramEncounterPrivilege).collect(Collectors.toList());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
         Specification<ProgramEncounter> completedEncounterSpecification = where(programEncounterRepository.withNotNullEncounterDateTime())
             .or(programEncounterRepository.withNotNullCancelDateTime())
@@ -122,7 +117,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         programEncountersContract = programEncounterRepository.findAll(
             where(programEncounterRepository.withProgramEncounterId(programEnrolment.getId()))
-                .and(programEncounterRepository.withProgramEncounterTypeIdUuids(accessibleEncounterTypeUUIDs))
+                .and(programEncounterRepository.withProgramEncounterTypeIdUuids(encounterTypeIdList))
                 .and(programEncounterRepository.withProgramEncounterEarliestVisitDateTime(earliestVisitDateTime))
                 .and(programEncounterRepository.withProgramEncounterDateTime(encounterDateTime))
                 .and(completedEncounterSpecification)
