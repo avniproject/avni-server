@@ -15,12 +15,14 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 // Resolves the S3Service for (org, dataClass): a routed named target, else the default backend.
-// DEFAULT class always resolves to the default backend; misconfiguration fails loud. Built target
-// services are cached, keyed with a version component so credential/target edits invalidate the cache.
+// DEFAULT class always resolves to the default backend (a configured 'default' routing entry is ignored
+// but warned about); MODEL misconfiguration fails loud. Built target services are cached, keyed with a
+// version component so credential/target edits invalidate the cache.
 @Component
 public class StorageResolver {
     private static final Logger logger = LoggerFactory.getLogger(StorageResolver.class);
@@ -29,6 +31,7 @@ public class StorageResolver {
     private final StorageServiceFactory storageServiceFactory;
     private final StorageCredentialProvider credentialProvider;
     private final Map<String, CachedTargetService> targetServiceCache = new ConcurrentHashMap<>();
+    private final Set<Long> defaultRoutingChecked = ConcurrentHashMap.newKeySet();
 
     @Autowired
     public StorageResolver(OrganisationConfigService organisationConfigService,
@@ -40,7 +43,12 @@ public class StorageResolver {
     }
 
     public S3Service resolve(Organisation organisation, StorageDataClass dataClass, Supplier<S3Service> defaultProvider) {
-        if (dataClass == StorageDataClass.DEFAULT || organisation == null) {
+        if (organisation == null) {
+            return defaultProvider.get();
+        }
+
+        if (dataClass == StorageDataClass.DEFAULT) {
+            warnOnceIfDefaultRoutingConfigured(organisation);
             return defaultProvider.get();
         }
 
@@ -69,6 +77,26 @@ public class StorageResolver {
             return new CachedTargetService(version, buildTargetService(organisation, target));
         });
         return cached.service;
+    }
+
+    // A 'default' storageBackends entry is intentionally not honoured in this release (DEFAULT/media stays on the
+    // deploy default to avoid migrating existing media). Surface the ignored, misleading config loudly, but check
+    // at most once per org so the DEFAULT/media hot path issues no per-request config read.
+    private void warnOnceIfDefaultRoutingConfigured(Organisation organisation) {
+        if (!defaultRoutingChecked.add(organisation.getId())) {
+            return;
+        }
+        OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
+        if (organisationConfig == null) {
+            return;
+        }
+        String defaultTarget = routedTargetName(organisationConfig, StorageDataClass.DEFAULT);
+        if (StringUtils.hasText(defaultTarget)) {
+            logger.warn("Organisation '{}' (id {}) configures a '{}' storage routing entry ('{}'), but it is ignored: "
+                            + "media stays on the deploy default in this release.",
+                    organisation.getName(), organisation.getId(),
+                    StorageDataClass.DEFAULT.getConfigName(), defaultTarget);
+        }
     }
 
     @SuppressWarnings("unchecked")

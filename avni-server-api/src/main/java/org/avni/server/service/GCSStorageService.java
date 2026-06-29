@@ -6,6 +6,7 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import org.avni.server.domain.UserContext;
 import org.avni.server.service.media.MediaUrlResolver;
@@ -17,6 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -65,6 +67,26 @@ public class GCSStorageService extends StorageService {
     }
 
     @Override
+    public InputStream getObjectContent(String s3Key) {
+        try {
+            return super.getObjectContent(s3Key);
+        } catch (AmazonS3Exception e) {
+            logS3Error("getObjectContent", s3Key, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public String putObject(String objectKey, File tempFile) {
+        try {
+            return super.putObject(objectKey, tempFile);
+        } catch (AmazonS3Exception e) {
+            logS3Error("putObject", objectKey, e);
+            throw e;
+        }
+    }
+
+    @Override
     public URL generateMediaDownloadUrl(String url) {
         UserContext userContext = authorizeUser();
         String mediaDirectory = getOrgDirectoryName();
@@ -86,7 +108,19 @@ public class GCSStorageService extends StorageService {
 
         GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, objectKey)
                 .withMethod(HttpMethod.GET).withExpiration(getExpireDate(DOWNLOAD_EXPIRY_DURATION));
-        return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+        try {
+            return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+        } catch (AmazonS3Exception e) {
+            logS3Error("generateMediaDownloadUrl", objectKey, e);
+            throw e;
+        }
+    }
+
+    // GCS's S3-interop endpoint often returns errors the SDK can't parse into errorCode (bare 403, null Request ID);
+    // the real cause (e.g. AccessDenied, SignatureDoesNotMatch) is only in the raw error-response XML.
+    private void logS3Error(String op, String key, AmazonS3Exception e) {
+        logger.error(format("GCS %s failed for key '%s' in bucket '%s': status=%d errorCode='%s' requestId='%s' responseXml=%s",
+                op, key, bucketName, e.getStatusCode(), e.getErrorCode(), e.getRequestId(), e.getErrorResponseXml()), e);
     }
 
     // Object key from a path-style URL: https://<endpoint>/<bucket>/<key>

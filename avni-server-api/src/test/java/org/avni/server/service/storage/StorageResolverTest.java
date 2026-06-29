@@ -109,10 +109,26 @@ public class StorageResolverTest {
 
     @Test
     public void defaultDataClassAlwaysResolvesToDefaultBackend() {
+        when(organisationConfigService.getOrganisationConfig(organisation))
+                .thenReturn(configWith(null, null));
+
         S3Service resolved = resolver.resolve(organisation, StorageDataClass.DEFAULT, () -> defaultBackend);
 
         assertSame("DEFAULT class must always resolve to today's backend", defaultBackend, resolved);
-        verify(organisationConfigService, never()).getOrganisationConfig(any());
+        verify(storageServiceFactory, never()).build(any(), any());
+    }
+
+    @Test
+    public void defaultDataClassIgnoresConfiguredDefaultRoutingEntry() {
+        Map<String, Object> backends = new LinkedHashMap<>();
+        backends.put("default", "org-gcs");
+        when(organisationConfigService.getOrganisationConfig(organisation))
+                .thenReturn(configWith(backends, gcsTarget()));
+
+        S3Service resolved = resolver.resolve(organisation, StorageDataClass.DEFAULT, () -> defaultBackend);
+
+        assertSame("a configured 'default' storageBackends entry must be ignored; media stays on the default backend",
+                defaultBackend, resolved);
         verify(storageServiceFactory, never()).build(any(), any());
     }
 
