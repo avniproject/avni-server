@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class ConceptMedia implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -37,7 +38,21 @@ public class ConceptMedia implements Serializable {
         this.type = type;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConceptMedia that = (ConceptMedia) o;
+        return Objects.equals(url, that.url) && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(url, type);
+    }
+
     public enum MediaType {
         Image, Video
     }
+
 }

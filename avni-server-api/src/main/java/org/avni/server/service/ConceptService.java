@@ -199,12 +199,14 @@ public class ConceptService implements NonScopeAwareService {
             for (ConceptContract answerConceptRequest : answerConcepts) {
                 Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, !requestType.equals(ConceptContract.RequestType.Bundle));
                 String dataType = getDataType(answerConceptRequest, answerConcept);
-                answerConcept.setName(answerConceptRequest.getName());
-                answerConcept.setDataType(dataType);
-                updateMediaInfo(answerConceptRequest, answerConcept, requestType.equals(ConceptContract.RequestType.Full));
-                answerConcept.updateAudit();
-                conceptRepository.save(answerConcept);
-                addToMigrationIfRequired(answerConceptRequest);
+                if (answerConceptNeedsSave(answerConcept, answerConceptRequest, requestType.equals(ConceptContract.RequestType.Full))) {
+                    answerConcept.setName(answerConceptRequest.getName());
+                    answerConcept.setDataType(dataType);
+                    updateMediaInfo(answerConceptRequest, answerConcept, requestType.equals(ConceptContract.RequestType.Full));
+                    answerConcept.updateAudit();
+                    conceptRepository.save(answerConcept);
+                    addToMigrationIfRequired(answerConceptRequest);
+                }
             }
 
             Concept concept = fetchOrCreateConcept(conceptRequest, false);
@@ -419,5 +421,19 @@ public class ConceptService implements NonScopeAwareService {
             default:
                 return EMPTY_STRING;
         }
+    }
+
+    private boolean answerConceptNeedsSave(Concept answerConcept, ConceptContract answerConceptRequest, boolean ignoreMediaAbsence) {
+        return answerConcept.isNew()
+                || !Objects.equals(answerConcept.getName(), answerConceptRequest.getName())
+                || mediaChanged(answerConcept, answerConceptRequest, ignoreMediaAbsence);
+    }
+
+    private boolean mediaChanged(Concept answerConcept, ConceptContract answerConceptRequest, boolean ignoreMediaAbsence) {
+        List<ConceptMedia> requestMedia = answerConceptRequest.getMedia();
+        if (requestMedia == null) {
+            return !ignoreMediaAbsence && !answerConcept.getMedia().isEmpty();
+        }
+        return !Objects.equals(answerConcept.getMedia(), requestMedia);
     }
 }
