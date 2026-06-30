@@ -71,6 +71,10 @@ public class ConceptService implements NonScopeAwareService {
     }
 
     private Concept fetchOrCreateConcept(ConceptContract conceptRequest, boolean ignoreAnswerConceptUUIDAbsence) {
+        return fetchOrCreateConcept(conceptRequest, ignoreAnswerConceptUUIDAbsence, Collections.emptyMap());
+    }
+
+    private Concept fetchOrCreateConcept(ConceptContract conceptRequest, boolean ignoreAnswerConceptUUIDAbsence, Map<String, Concept> preloadedByUuid) {
         if (conceptRequest == null) {
             throw new BadRequestError("Concept request cannot be null");
         }
@@ -78,7 +82,10 @@ public class ConceptService implements NonScopeAwareService {
         assertNotDuplicate(conceptRequest);
         String uuid = conceptRequest.getUuid();
         String name = conceptRequest.getName();
-        Concept concept = conceptRepository.findByUuid(uuid);
+        Concept concept = StringUtils.hasText(uuid) ? preloadedByUuid.get(uuid) : null;
+        if (concept == null) {
+            concept = conceptRepository.findByUuid(uuid);
+        }
 
         if (concept == null && StringUtils.hasText(name)) {
             Concept existingConceptWithSameName = conceptRepository.findByName(name.trim());
@@ -227,9 +234,10 @@ public class ConceptService implements NonScopeAwareService {
             ConceptContract conceptRequest = conceptRequests.get(i);
             logger.info("Processing concept {}/{}: {} {}", i + 1, size, conceptRequest.getName(), conceptRequest.getUuid());
             List<ConceptContract> answerConcepts = getAnswerConcepts(conceptRequest);
+            Map<String, Concept> preloadedAnswerConcepts = preloadConceptsByUuid(answerConcepts);
             Map<String, Concept> resolvedAnswerConcepts = new HashMap<>();
             for (ConceptContract answerConceptRequest : answerConcepts) {
-                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, !requestType.equals(ConceptContract.RequestType.Bundle));
+                Concept answerConcept = fetchOrCreateConcept(answerConceptRequest, !requestType.equals(ConceptContract.RequestType.Bundle), preloadedAnswerConcepts);
                 String dataType = getDataType(answerConceptRequest, answerConcept);
                 if (answerConceptNeedsSave(answerConcept, answerConceptRequest, requestType.equals(ConceptContract.RequestType.Full))) {
                     answerConcept.setName(answerConceptRequest.getName());
@@ -465,6 +473,20 @@ public class ConceptService implements NonScopeAwareService {
         return answerConcept.isNew()
                 || !Objects.equals(answerConcept.getName(), answerConceptRequest.getName())
                 || mediaChanged(answerConcept, answerConceptRequest, ignoreMediaAbsence);
+    }
+
+    private Map<String, Concept> preloadConceptsByUuid(List<ConceptContract> conceptRequests) {
+        List<String> uuids = conceptRequests.stream()
+                .map(ConceptContract::getUuid)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .collect(Collectors.toList());
+        if (uuids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return conceptRepository.findAllByUuidInAndOrganisationId(uuids, conceptRepository.buildOrganisationIdList())
+                .stream()
+                .collect(Collectors.toMap(Concept::getUuid, concept -> concept, (first, second) -> first));
     }
 
     private boolean mediaChanged(Concept answerConcept, ConceptContract answerConceptRequest, boolean ignoreMediaAbsence) {
