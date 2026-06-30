@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -86,7 +87,9 @@ public class CardService implements NonScopeAwareService {
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
         buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
+        CustomCardConfig previousConfig = card.getCustomCardConfig();
         upsertAndLinkCustomCardConfig(card, reportCardRequest.getCustomCardConfig());
+        voidOrphanedCustomCardConfig(card, previousConfig);
         cardRepository.save(card);
     }
 
@@ -213,12 +216,30 @@ public class CardService implements NonScopeAwareService {
     }
 
     private void linkCustomCardConfig(ReportCard card, ReportCardWebRequest request) {
+        CustomCardConfig previousConfig = card.getCustomCardConfig();
         CustomCardConfigRequest configRequest = request.getCustomCardConfig();
         if (configRequest != null) {
             upsertAndLinkCustomCardConfig(card, configRequest);
+        } else {
+            buildCustomCardConfig(card, request.getCustomCardConfigUUID());
+        }
+        voidOrphanedCustomCardConfig(card, previousConfig);
+    }
+
+    private void voidOrphanedCustomCardConfig(ReportCard card, CustomCardConfig previousConfig) {
+        if (previousConfig == null || previousConfig.isVoided()) {
             return;
         }
-        buildCustomCardConfig(card, request.getCustomCardConfigUUID());
+        CustomCardConfig currentConfig = card.getCustomCardConfig();
+        if (currentConfig != null && Objects.equals(previousConfig.getUuid(), currentConfig.getUuid())) {
+            return;
+        }
+        if (cardRepository.existsByCustomCardConfigIdAndIdNotAndIsVoidedFalse(previousConfig.getId(), card.getId())) {
+            return;
+        }
+        previousConfig.setVoided(true);
+        previousConfig.setName(EntityUtil.getVoidedName(previousConfig.getName(), previousConfig.getId()));
+        customCardConfigRepository.save(previousConfig);
     }
 
     private void buildCustomCardConfig(ReportCard card, String customCardConfigUUID) {
