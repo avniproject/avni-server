@@ -79,6 +79,19 @@ public class StorageResolverTest {
     }
 
     @Test
+    public void nullIdOrganisationFallsBackToDefaultWithoutTouchingTheWarnOnceSet() {
+        // The eager S3Service singleton is built at context startup with UserContextHolder.getOrganisation(),
+        // which can be a non-null Organisation with a null id. resolve() must treat it as no-org and return the
+        // default - NOT call defaultRoutingChecked.add(null), which NPEs (a CHM-backed set rejects null).
+        Organisation nullIdOrg = new Organisation("Startup Org");   // id left null
+
+        S3Service resolved = resolver.resolve(nullIdOrg, StorageDataClass.DEFAULT, () -> defaultBackend);
+
+        assertSame("a null-id org must resolve to the default backend", defaultBackend, resolved);
+        verify(organisationConfigService, never()).getOrganisationConfig(any(Organisation.class));
+    }
+
+    @Test
     public void configuredModelResolvesToRoutedTarget() {
         when(organisationConfigService.getOrganisationConfig(organisation))
                 .thenReturn(configWith(modelRoutedTo("org-gcs"), gcsTarget()));

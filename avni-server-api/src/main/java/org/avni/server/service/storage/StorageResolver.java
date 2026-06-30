@@ -43,7 +43,10 @@ public class StorageResolver {
     }
 
     public S3Service resolve(Organisation organisation, StorageDataClass dataClass, Supplier<S3Service> defaultProvider) {
-        if (organisation == null) {
+        // A null-id organisation (e.g. the eager S3Service singleton built at context startup, where the
+        // UserContext holds no real request org) can't be routed or cached - the warn-once set and the cache key
+        // both need the id (and a CHM-backed set rejects a null element) - so fall back to default, same as no org.
+        if (organisation == null || organisation.getId() == null) {
             return defaultProvider.get();
         }
 
