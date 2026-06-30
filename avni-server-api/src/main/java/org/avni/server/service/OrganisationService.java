@@ -191,6 +191,8 @@ public class OrganisationService {
     private final CatchmentService catchmentService;
     private final CustomCardConfigRepository customCardConfigRepository;
     private final DownloadableContentRepository downloadableContentRepository;
+    private final ModelKeyRepository modelKeyRepository;
+    private final OrgStorageCredentialRepository orgStorageCredentialRepository;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -287,7 +289,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository, DownloadableContentRepository downloadableContentRepository,
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository, DownloadableContentRepository downloadableContentRepository, ModelKeyRepository modelKeyRepository, OrgStorageCredentialRepository orgStorageCredentialRepository,
                                CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository,
                                SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository) {
         this.formRepository = formRepository;
@@ -393,6 +395,8 @@ public class OrganisationService {
         this.catchmentService = catchmentService;
         this.customCardConfigRepository = customCardConfigRepository;
         this.downloadableContentRepository = downloadableContentRepository;
+        this.modelKeyRepository = modelKeyRepository;
+        this.orgStorageCredentialRepository = orgStorageCredentialRepository;
         this.calendarRepository = calendarRepository;
         this.calendarDateMarkerRepository = calendarDateMarkerRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
@@ -530,6 +534,8 @@ public class OrganisationService {
                 cardRepository,
                 customCardConfigRepository,
                 downloadableContentRepository,
+                modelKeyRepository,
+                orgStorageCredentialRepository,
                 dashboardSectionRepository,
                 groupDashboardRepository,
                 dashboardFilterRepository,
@@ -577,6 +583,8 @@ public class OrganisationService {
                 "report_card",
                 "custom_card_config",
                 "downloadable_content",
+                "model_key",
+                "org_storage_credential",
                 "dashboard_section",
                 "group_dashboard",
                 "dashboard_filter",

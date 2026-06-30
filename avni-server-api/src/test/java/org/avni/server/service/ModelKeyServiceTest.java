@@ -31,7 +31,8 @@ public class ModelKeyServiceTest {
     private static final long ORG_B_ID = 22L;
     private static final String SHA256 = "a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00";
     private static final String ABSENT_SHA256 = "0000000000000000000000000000000000000000000000000000000000000000";
-    private static final String REAL_MODEL_KEY = "Zm9vYmFyMTIzNDU2Nzg5MGFiY2RlZmdoaWprbA==";
+    // base64 of 32 raw bytes: a valid AES-256 key
+    private static final String REAL_MODEL_KEY = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
 
     @Mock
     private ModelKeyRepository repository;
@@ -170,6 +171,34 @@ public class ModelKeyServiceTest {
             fail("storing a blank key must be a clean 400");
         } catch (BadRequestError e) {
             assertTrue(e.getMessage().toLowerCase().contains("blank"));
+        }
+    }
+
+    @Test
+    public void storeAcceptsValidAes256Key() {
+        ModelKey saved = service.storeKey(SHA256, REAL_MODEL_KEY);
+        assertNotEquals("a valid 32-byte AES key must be accepted and stored as ciphertext",
+                REAL_MODEL_KEY, saved.getEncryptedKey());
+    }
+
+    @Test
+    public void storeRejectsNonBase64KeyWithBadRequest() {
+        try {
+            service.storeKey(SHA256, "not base64 @@@");
+            fail("a non-base64 key must be a clean 400");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().toLowerCase().contains("base64"));
+        }
+    }
+
+    @Test
+    public void storeRejectsWrongLengthKeyWithBadRequest() {
+        String tenByteKey = "MDEyMzQ1Njc4OQ==";
+        try {
+            service.storeKey(SHA256, tenByteKey);
+            fail("a key that is not 16, 24, or 32 bytes must be a clean 400");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().toLowerCase().contains("16, 24, or 32 bytes"));
         }
     }
 

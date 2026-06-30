@@ -55,6 +55,20 @@ public class OrganisationServiceDeleteRegistryTest {
     }
 
     @Test
+    public void metadataJpaTableListContainsModelKeyForOrgDeleteAndReset() throws Exception {
+        List<String> list = invokeTableList("getMetadataJpaTableList");
+        assertTrue("model_key must be in the metadata table list (org delete/reset coverage)",
+                list.contains("model_key"));
+    }
+
+    @Test
+    public void metadataJpaTableListContainsOrgStorageCredentialForOrgDeleteAndReset() throws Exception {
+        List<String> list = invokeTableList("getMetadataJpaTableList");
+        assertTrue("org_storage_credential must be in the metadata table list (org delete/reset coverage)",
+                list.contains("org_storage_credential"));
+    }
+
+    @Test
     public void metadataJpaRepositoriesContainsDownloadableContentRepository() throws Exception {
         DownloadableContentRepository downloadableContentRepository = Mockito.mock(DownloadableContentRepository.class);
         OrganisationService svc = Mockito.mock(OrganisationService.class, Mockito.CALLS_REAL_METHODS);

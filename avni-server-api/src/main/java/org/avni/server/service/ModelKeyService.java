@@ -43,6 +43,7 @@ public class ModelKeyService {
         if (!StringUtils.hasText(plaintextBase64Key)) {
             throw new BadRequestError("Cannot store a blank model key");
         }
+        validateAesKeyMaterial(plaintextBase64Key);
         Long organisationId = UserContextHolder.getUserContext().getOrganisation().getId();
         ModelKey modelKey = modelKeyRepository.findByOrganisationIdAndSha256AndIsVoidedFalse(organisationId, sha256);
         if (modelKey == null) {
@@ -73,6 +74,19 @@ public class ModelKeyService {
         if (!SHA256_HEX.matcher(sha256).matches()) {
             logger.warn("Rejected model key request with malformed sha256: '{}'", sha256);
             throw new BadRequestError("The provided sha256 is malformed; it must be a 64-character hex digest");
+        }
+    }
+
+    // Fail fast on a malformed key so it surfaces at store time, not as a native GCM failure after a large device download.
+    private void validateAesKeyMaterial(String plaintextBase64Key) {
+        byte[] keyBytes;
+        try {
+            keyBytes = cryptoService.decodeFromBase64(plaintextBase64Key);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestError("model key must be base64-encoded AES key material of 16, 24, or 32 bytes");
+        }
+        if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
+            throw new BadRequestError("model key must be base64-encoded AES key material of 16, 24, or 32 bytes");
         }
     }
 
