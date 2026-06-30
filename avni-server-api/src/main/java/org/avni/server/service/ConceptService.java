@@ -79,10 +79,12 @@ public class ConceptService implements NonScopeAwareService {
             throw new BadRequestError("Concept request cannot be null");
         }
         conceptRequest.validate();
-        assertNotDuplicate(conceptRequest);
         String uuid = conceptRequest.getUuid();
         String name = conceptRequest.getName();
         Concept concept = StringUtils.hasText(uuid) ? preloadedByUuid.get(uuid) : null;
+        if (concept == null || !Objects.equals(concept.getName(), name)) {
+            assertNotDuplicate(conceptRequest);
+        }
         if (concept == null) {
             concept = conceptRepository.findByUuid(uuid);
         }
