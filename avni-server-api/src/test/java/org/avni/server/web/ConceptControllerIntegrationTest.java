@@ -1,18 +1,22 @@
 package org.avni.server.web;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.EntityManagerFactory;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ConceptService;
 import org.avni.server.web.request.ConceptContract;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +28,8 @@ public class ConceptControllerIntegrationTest extends AbstractControllerIntegrat
     private ConceptRepository conceptRepository;
     @Autowired
     private ConceptService conceptService;
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     @Before
     public void setUp() throws Exception {
@@ -77,6 +83,57 @@ public class ConceptControllerIntegrationTest extends AbstractControllerIntegrat
         conceptService.saveOrUpdateConcepts(conceptRequests, ConceptContract.RequestType.Bundle);
         assertThat(conceptRepository.findByUuid("d78edcbb-2034-4220-ace2-20b445a1e0ad").getDataType()).isEqualTo(ConceptDataType.Coded.toString());
         assertThat(conceptRepository.findByUuid("60f284a6-0240-4de8-a6a1-8839bc9cc219").getDataType()).isEqualTo(ConceptDataType.Numeric.toString());
+    }
+
+    @Test
+    public void reSavingCodedConceptDoesNotReSaveUnchangedAnswersAndTouchesOnlyRenamedAnswer() {
+        String parentUuid = "5f1c0c1e-0001-4000-8000-000000000001";
+        String answer1Uuid = "5f1c0c1e-0001-4000-8000-0000000000a1";
+        String answer2Uuid = "5f1c0c1e-0001-4000-8000-0000000000a2";
+        String answer3Uuid = "5f1c0c1e-0001-4000-8000-0000000000a3";
+
+        conceptService.saveOrUpdateConcepts(List.of(codedConcept(parentUuid, "Regression Coded",
+                answer(answer1Uuid, "Answer One"),
+                answer(answer2Uuid, "Answer Two"),
+                answer(answer3Uuid, "Answer Three"))), ConceptContract.RequestType.Full);
+
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+
+        // Re-saving with nothing changed must update only the parent concept (its audit); no answer concept is re-saved.
+        statistics.clear();
+        conceptService.saveOrUpdateConcepts(List.of(codedConcept(parentUuid, "Regression Coded",
+                answer(answer1Uuid, "Answer One"),
+                answer(answer2Uuid, "Answer Two"),
+                answer(answer3Uuid, "Answer Three"))), ConceptContract.RequestType.Full);
+        assertThat(statistics.getEntityUpdateCount()).isEqualTo(1);
+
+        // Renaming a single answer must touch only the parent concept and that one answer concept.
+        statistics.clear();
+        conceptService.saveOrUpdateConcepts(List.of(codedConcept(parentUuid, "Regression Coded",
+                answer(answer1Uuid, "Answer One Renamed"),
+                answer(answer2Uuid, "Answer Two"),
+                answer(answer3Uuid, "Answer Three"))), ConceptContract.RequestType.Full);
+        assertThat(statistics.getEntityUpdateCount()).isEqualTo(2);
+        assertThat(conceptRepository.findByUuid(answer1Uuid).getName()).isEqualTo("Answer One Renamed");
+        assertThat(conceptRepository.findByUuid(answer2Uuid).getName()).isEqualTo("Answer Two");
+        assertThat(conceptRepository.findByUuid(answer3Uuid).getName()).isEqualTo("Answer Three");
+    }
+
+    private ConceptContract codedConcept(String uuid, String name, ConceptContract... answers) {
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(uuid);
+        conceptContract.setName(name);
+        conceptContract.setDataType(ConceptDataType.Coded.toString());
+        conceptContract.setAnswers(Arrays.asList(answers));
+        return conceptContract;
+    }
+
+    private ConceptContract answer(String uuid, String name) {
+        ConceptContract answerContract = new ConceptContract();
+        answerContract.setUuid(uuid);
+        answerContract.setName(name);
+        return answerContract;
     }
 
     private List<ConceptContract> readJSON(String jsonFile) throws IOException {
