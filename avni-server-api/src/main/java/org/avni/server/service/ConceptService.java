@@ -172,9 +172,12 @@ public class ConceptService implements NonScopeAwareService {
         for (ConceptContract answerContract : answers) {
             ConceptAnswer conceptAnswer = fetchOrCreateConceptAnswer(answerContract, index.incrementAndGet(),
                     existingByAnswerConceptUuid, existingByAnswerConceptName, resolvedAnswerConcepts);
+            Concept answerConcept = conceptAnswer.getAnswerConcept();
+            if (answerConcept == null || !referencedAnswerConceptUuids.add(answerConcept.getUuid())) {
+                continue;
+            }
             conceptAnswer.setConcept(concept);
             concept.getConceptAnswers().add(conceptAnswer);
-            referencedAnswerConceptUuids.add(conceptAnswer.getAnswerConcept().getUuid());
         }
 
         previouslyExistingAnswers.forEach(existingAnswer -> {
@@ -306,12 +309,6 @@ public class ConceptService implements NonScopeAwareService {
 
     public Concept getByName(String name) {
         return conceptRepository.findByName(name);
-    }
-
-    public ConceptAnswer getAnswer(String conceptUUID, String conceptAnswerUUID) {
-        Concept concept = this.get(conceptUUID);
-        Concept answerConcept = this.get(conceptAnswerUUID);
-        return conceptAnswerRepository.findByConceptAndAnswerConcept(concept, answerConcept);
     }
 
     /**
