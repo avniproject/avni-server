@@ -116,13 +116,6 @@ public class GCSStorageService extends StorageService {
         }
     }
 
-    // GCS's S3-interop endpoint often returns errors the SDK can't parse into errorCode (bare 403, null Request ID);
-    // the real cause (e.g. AccessDenied, SignatureDoesNotMatch) is only in the raw error-response XML.
-    private void logS3Error(String op, String key, AmazonS3Exception e) {
-        logger.error(format("GCS %s failed for key '%s' in bucket '%s': status=%d errorCode='%s' requestId='%s' responseXml=%s",
-                op, key, bucketName, e.getStatusCode(), e.getErrorCode(), e.getRequestId(), e.getErrorResponseXml()), e);
-    }
-
     // Object key from a path-style URL: https://<endpoint>/<bucket>/<key>
     static String getObjectKeyFromUrl(String url) {
         String path = rawPathOf(url);

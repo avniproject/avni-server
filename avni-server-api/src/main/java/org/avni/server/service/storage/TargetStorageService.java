@@ -2,6 +2,7 @@ package org.avni.server.service.storage;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import org.avni.server.domain.UserContext;
 import org.avni.server.service.StorageService;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
@@ -44,6 +46,26 @@ public class TargetStorageService extends StorageService {
     }
 
     @Override
+    public InputStream getObjectContent(String s3Key) {
+        try {
+            return super.getObjectContent(s3Key);
+        } catch (AmazonS3Exception e) {
+            logS3Error("getObjectContent", s3Key, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public String putObject(String objectKey, File tempFile) {
+        try {
+            return super.putObject(objectKey, tempFile);
+        } catch (AmazonS3Exception e) {
+            logS3Error("putObject", objectKey, e);
+            throw e;
+        }
+    }
+
+    @Override
     public URL generateMediaDownloadUrl(String url) {
         UserContext userContext = authorizeUser();
         String mediaDirectory = getOrgDirectoryName();
@@ -62,6 +84,11 @@ public class TargetStorageService extends StorageService {
 
         GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, objectKey)
                 .withMethod(HttpMethod.GET).withExpiration(getExpireDate(DOWNLOAD_EXPIRY_DURATION));
-        return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+        try {
+            return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+        } catch (AmazonS3Exception e) {
+            logS3Error("generateMediaDownloadUrl", objectKey, e);
+            throw e;
+        }
     }
 }
