@@ -43,6 +43,7 @@ public class EncounterHeadersBuilder {
         fields.add(new HeaderField(EncounterHeadersCreator.VISIT_DATE, "", true, null, FLEXIBLE_DATE_FORMAT, null));
         fields.add(new HeaderField(EncounterHeadersCreator.ENCOUNTER_COORDINATES, "", false, null, COORDINATES_FORMAT, null));
         fields.addAll(AbstractHeaders.generateConceptFields(encounterFormMapping, false));
+        fields.addAll(AbstractHeaders.generateDecisionConceptFields(encounterFormMapping.getForm()));
         return this;
     }
 
@@ -54,6 +55,7 @@ public class EncounterHeadersBuilder {
         fields.add(new HeaderField(EncounterHeadersCreator.CANCEL_LOCATION, "", false, null, COORDINATES_FORMAT, null));
         if (cancellationFormMapping != null) {
             fields.addAll(AbstractHeaders.generateConceptFields(cancellationFormMapping, false));
+            fields.addAll(AbstractHeaders.generateDecisionConceptFields(cancellationFormMapping.getForm()));
         }
         return this;
     }

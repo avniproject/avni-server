@@ -52,6 +52,7 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
     private EncounterType encounterType;
     private EncounterType encounterTypeWithoutCancellationForm;
+    private Concept decisionConcept;
 
     private String[] validScheduleVisitHeader() {
         return header(
@@ -358,13 +359,17 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Create form mapping with unique name
         String formName = "Test Encounter Form " + UUID.randomUUID().toString().substring(0, 8);
-        testFormService.createEncounterForm(
+        org.avni.server.application.FormMapping encounterFormMapping = testFormService.createEncounterForm(
                 subjectType,
                 encounterType,
                 formName,
                 singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
                 multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList())
         );
+
+        // Attach a decision concept to the visit form (imported as a normal observation, not rule-computed)
+        decisionConcept = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(encounterFormMapping.getForm().getId(), decisionConcept);
 
         // Create cancellation form mapping for the same encounter type
         Concept cancelReasonConcept = testConceptService.createCodedConcept("Cancel Reason Single Select",
@@ -483,6 +488,68 @@ public class EncounterCreatorIntegrationTest extends BaseCSVImportTest {
         assertNull(encounter.getEarliestVisitDateTime());
         assertNull(encounter.getMaxVisitDateTime());
         assertEquals(3, encounter.getObservations().size());
+    }
+
+    @Test
+    public void testUploadVisit_Success_WithDecisionConcept() throws Exception {
+        String[] headers = header(
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.SUBJECT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                EncounterHeadersCreator.VISIT_DATE,
+                EncounterHeadersCreator.ENCOUNTER_COORDINATES,
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Numeric Concept\"",
+                "\"Weight for Age status\""
+        );
+        String[] dataRow = dataRow(
+                "ENC-DEC-001",
+                "SUB-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "123",
+                "Moderate"
+        );
+
+        encounterCreator.createForSubject(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+
+        Encounter encounter = encounterRepository.findByLegacyId("ENC-DEC-001");
+        assertNotNull(encounter);
+        assertEquals(4, encounter.getObservations().size());
+        assertTrue("Decision concept value must be stored as a normal observation",
+                encounter.getObservations().containsKey(decisionConcept.getUuid()));
+    }
+
+    @Test
+    public void testUploadVisit_FailsWithInvalidDecisionConceptAnswer() {
+        String[] headers = header(
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.SUBJECT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                EncounterHeadersCreator.VISIT_DATE,
+                EncounterHeadersCreator.ENCOUNTER_COORDINATES,
+                "\"Weight for Age status\""
+        );
+        String[] dataRow = dataRow(
+                "ENC-DEC-002",
+                "SUB-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "Not A Valid Status"
+        );
+
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.createForSubject(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        });
+
+        String message = exception.getMessage().toLowerCase();
+        assertTrue(message, message.contains("invalid answer 'not a valid status'"));
+        assertTrue(message, message.contains("weight for age status"));
     }
 
     @Test
