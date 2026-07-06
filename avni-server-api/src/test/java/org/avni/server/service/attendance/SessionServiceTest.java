@@ -269,6 +269,7 @@ public class SessionServiceTest {
         SessionContract contract = baseContract(SessionStatus.Held);
         AttendanceRecordContract record = rosterEntry("subj-1", AttendanceStatus.Absent);
         record.setReasonConceptUUIDs(List.of("reason-a", "reason-b", "not-a-concept"));
+        record.setOtherReasonText("shifted to another town");
         contract.setRoster(List.of(record));
 
         service.save(contract);
@@ -276,6 +277,7 @@ public class SessionServiceTest {
         ArgumentCaptor<List<AttendanceRecord>> captor = ArgumentCaptor.forClass(List.class);
         verify(attendanceRecordRepository, times(1)).saveAll(captor.capture());
         assertEquals(List.of("reason-a", "reason-b"), captor.getValue().get(0).getReasonConceptUUIDs());
+        assertEquals("shifted to another town", captor.getValue().get(0).getOtherReasonText());
     }
 
     @Test
