@@ -161,7 +161,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             return groupSubjects.stream().map(groupSubject -> {
                 Individual member = individualRepository.findByUuid(groupSubject.getMemberSubjectUUID());
                 GroupRole groupRole = groupRoleRepository.findByUuid(groupSubject.getGroupRole().getUuid());
-                return individualService.createGroupSubjectContractWeb(groupSubject.getUuid(), member, groupRole);
+                return individualService.createGroupSubjectContractWeb(groupSubject, member, groupRole);
             }).collect(Collectors.toList());
         } else {
             throw new BadRequestError("Invalid Group Id");

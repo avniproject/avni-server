@@ -303,12 +303,14 @@ public class IndividualService implements ScopeAwareService<Individual> {
         return relationshipContract;
     }
 
-    public GroupSubjectContractWeb createGroupSubjectContractWeb(String uuid, Individual member, GroupRole groupRole) {
+    public GroupSubjectContractWeb createGroupSubjectContractWeb(GroupSubject groupSubject, Individual member, GroupRole groupRole) {
         GroupSubjectContractWeb groupSubjectContractWeb = new GroupSubjectContractWeb();
-        groupSubjectContractWeb.setUuid(uuid);
+        groupSubjectContractWeb.setUuid(groupSubject.getUuid());
         groupSubjectContractWeb.setMember(createIndividualContractWeb(member));
         groupSubjectContractWeb.setRole(GroupRoleContract.fromEntity(groupRole));
         groupSubjectContractWeb.setEncounterMetadata(createEncounterMetadataContract(member));
+        groupSubjectContractWeb.setMembershipStartDate(groupSubject.getMembershipStartDate());
+        groupSubjectContractWeb.setMembershipEndDate(groupSubject.getMembershipEndDate());
         return groupSubjectContractWeb;
     }
 
@@ -323,6 +325,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
             individualContractWeb.setProfilePicture(individual.getProfilePicture());
         }
         individualContractWeb.setDateOfBirth(individual.getDateOfBirth());
+        individualContractWeb.setRegistrationDate(individual.getRegistrationDate());
         individualContractWeb.setSubjectType(SubjectTypeContract.fromSubjectType(individual.getSubjectType()));
         if (individual.getSubjectType().getType().equals(Subject.Person)) {
             individualContractWeb.setGender(individual.getGender().getName());
