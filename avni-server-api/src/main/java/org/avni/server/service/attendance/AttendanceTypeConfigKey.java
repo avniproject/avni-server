@@ -9,6 +9,7 @@ import java.util.List;
 public final class AttendanceTypeConfigKey {
     public static final String SESSION_OUTCOME_REASON_CONCEPT = "sessionOutcomeReasonConcept";
     public static final String ABSENCE_REASON_CONCEPT = "absenceReasonConcept";
+    public static final String OTHER_REASON_CONCEPT = "otherReasonConcept";
     public static final String FOLLOW_UP_ENCOUNTER_TYPE = "followUpEncounterType";
     public static final String SHARE_RULE = "shareRule";
     public static final String AUTO_SHARE_ON_SAVE = "autoShareOnSave";
@@ -22,6 +23,7 @@ public final class AttendanceTypeConfigKey {
     public static final List<String> ALL = Arrays.asList(
             SESSION_OUTCOME_REASON_CONCEPT,
             ABSENCE_REASON_CONCEPT,
+            OTHER_REASON_CONCEPT,
             FOLLOW_UP_ENCOUNTER_TYPE,
             SHARE_RULE,
             AUTO_SHARE_ON_SAVE,
@@ -32,7 +34,8 @@ public final class AttendanceTypeConfigKey {
 
     public static final List<String> CONCEPT_UUID_KEYS = Arrays.asList(
             SESSION_OUTCOME_REASON_CONCEPT,
-            ABSENCE_REASON_CONCEPT
+            ABSENCE_REASON_CONCEPT,
+            OTHER_REASON_CONCEPT
     );
 
     public static final List<String> ENCOUNTER_TYPE_UUID_KEYS = List.of(
