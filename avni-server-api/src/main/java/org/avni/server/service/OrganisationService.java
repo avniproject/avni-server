@@ -935,13 +935,16 @@ public class OrganisationService {
             addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
         }
         for (Concept concept : conceptsWithMedia) {
-            for (ConceptMedia media: concept.getMedia()) {
+            List<ConceptMedia> mediaList = concept.getMedia();
+            for (int index = 0; index < mediaList.size(); index++) {
+                ConceptMedia media = mediaList.get(index);
                 InputStream objectContent = s3Service.getObjectContentFromUrl(media.getUrl());
                 String fileName = S.getLastStringAfter(media.getUrl(), "/");
-                // conceptMedia/<conceptUuid>--<mediaType>--<fileName>
-                // conceptMedia/1f51e69f-5425-4c46-adcc-8968a47cd264--Image--659e7ee1-ad4b-4f4d-8fbe-73d8d2f9c482.jpg
-                String format = "%s/%s" + ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR + "%s" + ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR + "%s";
-                addMediaToZip(zos, String.format(format, BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), media.getType(), fileName), IOUtils.toByteArray(objectContent));
+                // conceptMedia/<conceptUuid>--<mediaType>--<NNN>--<fileName>
+                String zipEntryName = String.format("%s/%s",
+                        BundleFolder.CONCEPT_MEDIA.getFolderName(),
+                        ConceptMedia.buildBundleFileName(concept.getUuid(), media.getType(), index, fileName));
+                addMediaToZip(zos, zipEntryName, IOUtils.toByteArray(objectContent));
             }
         }
     }
