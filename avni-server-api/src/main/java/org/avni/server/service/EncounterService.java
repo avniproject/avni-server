@@ -154,6 +154,7 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         encounter.setEarliestVisitDateTime(visitSchedule.getEarliestDate());
         encounter.setMaxVisitDateTime(visitSchedule.getMaxDate());
         encounter.setName(visitSchedule.getName());
+        encounter.setLastModifiedBy(userService.getCurrentUser());
     }
 
     public Encounter createEmptyEncounter(Individual individual, EncounterType encounterType) {
@@ -164,6 +165,9 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         encounter.setVoided(false);
         encounter.setObservations(new ObservationCollection());
         encounter.setCancelObservations(new ObservationCollection());
+        encounter.setFilledBy(userService.getCurrentUser());
+        encounter.setCreatedBy(userService.getCurrentUser());
+        encounter.setLastModifiedBy(userService.getCurrentUser());
         return encounter;
     }
 
