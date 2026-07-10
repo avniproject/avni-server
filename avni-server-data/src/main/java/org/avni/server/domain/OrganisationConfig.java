@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,9 +35,31 @@ public class OrganisationConfig extends OrganisationAwareEntity {
     @Type(value = JSONObjectUserType.class)
     private JsonObject exportSettings;
 
+    // Setting keys that must never reach a client (webapp or device). Stripped by getSettingsForSerialization() and OrganisationConfigService.getOrganisationSettings.
+    public static final Set<String> SERVER_ONLY_SETTING_KEYS = Set.of(
+            OrganisationConfigSettingKey.storageBackends.name(),
+            OrganisationConfigSettingKey.storageTargets.name()
+    );
+
+    public static JsonObject withoutServerOnlyKeys(JsonObject settings) {
+        if (settings == null) {
+            return null;
+        }
+        JsonObject filtered = new JsonObject(settings);
+        SERVER_ONLY_SETTING_KEYS.forEach(filtered::remove);
+        return filtered;
+    }
+
+    // Raw unfiltered settings (may contain server-only keys); not serialised to clients - sync uses getSettingsForSerialization().
+    @JsonIgnore
     @Deprecated
     public JsonObject getSettings() {
         return settings;
+    }
+
+    @JsonProperty("settings")
+    public JsonObject getSettingsForSerialization() {
+        return withoutServerOnlyKeys(settings);
     }
 
     @JsonIgnore

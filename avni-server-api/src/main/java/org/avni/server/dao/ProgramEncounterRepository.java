@@ -105,6 +105,15 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
         return (Root<ProgramEncounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb.isNotNull(root.get("cancelDateTime"));
     }
 
+    default Specification<ProgramEncounter> orderByVisitDateDescIdDesc() {
+        return (Root<ProgramEncounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            query.orderBy(
+                    cb.desc(cb.coalesce(cb.coalesce(root.get("earliestVisitDateTime"), root.get("encounterDateTime")), root.get("cancelDateTime"))),
+                    cb.desc(root.get("id")));
+            return cb.conjunction();
+        };
+    }
+
     default Specification<ProgramEncounter> withProgramEncounterTypeIdUuids(List<String> encounterTypeUuids) {
         return (Root<ProgramEncounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 encounterTypeUuids.isEmpty() ? null : root.get("encounterType").get("uuid").in(encounterTypeUuids);

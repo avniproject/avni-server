@@ -82,4 +82,7 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     }
 
     Concept findByNameOrUuid(String name, String uuid);
+
+    @Query("select c from Concept c where c.uuid IN ?1 and c.organisationId IN ?2")
+    List<Concept> findAllByUuidInAndOrganisationId(List<String> uuids, List<Long> organisationIds);
 }

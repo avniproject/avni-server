@@ -37,6 +37,9 @@ public class AttendanceRecord extends OrganisationAwareEntity {
     @Type(value = StringListUserType.class)
     private List<String> reasonConceptUuids = new ArrayList<>();
 
+    @Column(name = "other_reason_text")
+    private String otherReasonText;
+
     @Column(name = "follow_up_encounter_uuid")
     private String followUpEncounterUuid;
 
@@ -81,6 +84,14 @@ public class AttendanceRecord extends OrganisationAwareEntity {
 
     public void setReasonConceptUUIDs(List<String> reasonConceptUuids) {
         this.reasonConceptUuids = reasonConceptUuids == null ? new ArrayList<>() : reasonConceptUuids;
+    }
+
+    public String getOtherReasonText() {
+        return otherReasonText;
+    }
+
+    public void setOtherReasonText(String otherReasonText) {
+        this.otherReasonText = otherReasonText;
     }
 
     public String getFollowUpEncounterUuid() {

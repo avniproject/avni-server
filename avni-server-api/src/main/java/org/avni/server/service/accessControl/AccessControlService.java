@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -188,15 +187,6 @@ public class AccessControlService {
         if (!userRepository.hasProgramEncounterPrivilege(privilegeType.name(), encounterType.getId(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType, encounterTypeUUID, EncounterType.class);
         }
-    }
-
-    public boolean hasProgramEncounterPrivilege(@NotNull String encounterTypeUUID) {
-        return this.hasProgramEncounterPrivilege(Objects.requireNonNull(UserContextHolder.getUser()), encounterTypeUUID);
-    }
-
-    public boolean hasProgramEncounterPrivilege(User contextUser, @NotNull String encounterTypeUUID) {
-        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
-        return userRepository.hasProgramEncounterPrivilege(PrivilegeType.ViewVisit.name(), encounterType.getId(), contextUser.getId());
     }
 
     public void checkProgramEncounterPrivilege(PrivilegeType privilegeType, @NotNull String encounterTypeUUID) {

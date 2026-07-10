@@ -22,4 +22,6 @@ public interface CardRepository extends ReferenceDataRepository<ReportCard>, Jpa
     List<ReportCard> findByNameIgnoreCaseAndIsVoidedFalse(String name);
 
     boolean existsByCustomCardConfigIdAndIsVoidedFalse(Long customCardConfigId);
+
+    boolean existsByCustomCardConfigIdAndIdNotAndIsVoidedFalse(Long customCardConfigId, Long id);
 }

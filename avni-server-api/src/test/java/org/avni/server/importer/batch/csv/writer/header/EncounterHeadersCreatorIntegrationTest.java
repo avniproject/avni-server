@@ -121,6 +121,45 @@ public class EncounterHeadersCreatorIntegrationTest extends AbstractControllerIn
     }
 
     @Test
+    public void testDecisionConceptHeader_uploadVisitDetails_andAbsentFromScheduleVisit() {
+        Concept decisionConcept = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(formMapping.getForm().getId(), decisionConcept);
+
+        String[] visitHeaders = encounterHeadersCreator.getAllHeaders(formMapping, EncounterUploadMode.UPLOAD_VISIT_DETAILS);
+        assertTrue(Arrays.asList(visitHeaders).contains("\"Weight for Age status\""),
+                "Upload visit details should include the decision concept column");
+
+        String[] scheduleHeaders = encounterHeadersCreator.getAllHeaders(formMapping, EncounterUploadMode.SCHEDULE_VISIT);
+        assertFalse(Arrays.asList(scheduleHeaders).contains("\"Weight for Age status\""),
+                "Schedule visit should not include any concept columns");
+    }
+
+    @Test
+    public void testDecisionConceptHeader_uploadCancelledVisit() {
+        Concept visitDecision = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(formMapping.getForm().getId(), visitDecision);
+
+        Concept cancelDecision = testConceptService.createCodedConcept("Cancellation Outcome status", "Refused", "Not Available");
+        FormMapping cancellationFormMapping = testFormService.createGeneralEncounterCancellationForm(
+                subjectType, encounterType, "Cancellation Form " + java.util.UUID.randomUUID(),
+                Collections.emptyList(), Collections.emptyList());
+        testFormService.addDecisionConcepts(cancellationFormMapping.getForm().getId(), cancelDecision);
+
+        String[] headers = encounterHeadersCreator.getAllHeaders(formMapping, EncounterUploadMode.UPLOAD_CANCELLED_VISIT);
+        assertTrue(Arrays.asList(headers).contains("\"Cancellation Outcome status\""),
+                "Upload cancelled visit should include the cancellation form's decision concept column");
+        assertFalse(Arrays.asList(headers).contains("\"Weight for Age status\""),
+                "Upload cancelled visit should not include the visit form's decision concept column");
+    }
+
+    @Test
+    public void testUploadCancelledVisit_withoutCancellationForm_doesNotFail() {
+        String[] headers = encounterHeadersCreator.getAllHeaders(formMapping, EncounterUploadMode.UPLOAD_CANCELLED_VISIT);
+        assertNotNull(headers);
+        assertTrue(Arrays.asList(headers).contains(EncounterHeadersCreator.CANCEL_DATE));
+    }
+
+    @Test
     public void testAllowsHeadersWithQuotesInBetween() {
         Concept codedConcept = testConceptService.createCodedConcept("\"Multi \"Select\" Coded\"", "SSC Answer 1", "SSC Answer 2");
         Concept codedConcept2 = testConceptService.createCodedConcept("\"test\"", "test Answer 1", "test Answer 2");

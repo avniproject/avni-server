@@ -11,6 +11,7 @@ import org.avni.server.dao.StandardReportCardTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.Account;
+import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.Organisation;
@@ -25,6 +26,8 @@ import org.avni.server.domain.metadata.AttendanceTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.domain.ReportCard;
+import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.junit.Before;
@@ -33,6 +36,9 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -318,6 +324,118 @@ public class CardServiceTest {
         cardService.uploadCard(bundleRequest);
 
         verifyNoInteractions(operationalEncounterTypeRepository, operationalSubjectTypeRepository, operationalProgramRepository);
+    }
+
+    @Test
+    public void editCard_voids_orphaned_custom_card_config_when_card_switched_away_from_custom_design() {
+        CustomCardConfig existingConfig = new CustomCardConfig();
+        existingConfig.setId(42L);
+        existingConfig.assignUUID();
+        existingConfig.setName("sample");
+
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setCustomCardConfig(existingConfig);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Request carries no customCardConfig and no customCardConfigUUID, i.e.
+        // the card has been switched from Custom Design to a Standard card.
+        ReportCardWebRequest request = newWebRequest();
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getCustomCardConfig());
+        assertTrue(existingConfig.isVoided());
+        assertFalse("orphaned config name must be freed up", "sample".equals(existingConfig.getName()));
+        verify(customCardConfigRepository).save(existingConfig);
+    }
+
+    @Test
+    public void editCard_does_not_void_config_when_another_card_still_references_it() {
+        CustomCardConfig existingConfig = new CustomCardConfig();
+        existingConfig.setId(42L);
+        existingConfig.assignUUID();
+        existingConfig.setName("sample");
+
+        ReportCard existingCard = new ReportCard();
+        existingCard.setId(7L);
+        existingCard.setName("Some Report Card");
+        existingCard.setCustomCardConfig(existingConfig);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cardRepository.existsByCustomCardConfigIdAndIdNotAndIsVoidedFalse(42L, 7L)).thenReturn(true);
+
+        // Switch this card away from custom design, but another card still uses the config.
+        ReportCardWebRequest request = newWebRequest();
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getCustomCardConfig());
+        assertFalse(existingConfig.isVoided());
+        assertEquals("sample", existingConfig.getName());
+        verify(customCardConfigRepository, never()).save(any());
+    }
+
+    @Test
+    public void uploadCard_voids_orphaned_custom_card_config_when_bundle_card_switched_away_from_custom_design() {
+        CustomCardConfig existingConfig = new CustomCardConfig();
+        existingConfig.setId(42L);
+        existingConfig.assignUUID();
+        existingConfig.setName("sample");
+
+        ReportCard existingCard = new ReportCard();
+        existingCard.setId(7L);
+        existingCard.setName("Bundle Card");
+        existingCard.setCustomCardConfig(existingConfig);
+
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportCardBundleRequest bundleRequest = new ReportCardBundleRequest();
+        bundleRequest.setUuid("card-uuid");
+        bundleRequest.setName("Bundle Card");
+        bundleRequest.setColor("#fff");
+        bundleRequest.setCount(1);
+        // No customCardConfig on the bundle: card switched away from custom design.
+
+        cardService.uploadCard(bundleRequest);
+
+        assertNull(existingCard.getCustomCardConfig());
+        assertTrue(existingConfig.isVoided());
+        assertFalse("orphaned config name must be freed up", "sample".equals(existingConfig.getName()));
+        verify(customCardConfigRepository).save(existingConfig);
+    }
+
+    @Test
+    public void editCard_does_not_void_config_when_card_remains_custom_design_with_same_config() {
+        CustomCardConfig existingConfig = new CustomCardConfig();
+        existingConfig.setId(42L);
+        existingConfig.assignUUID();
+        existingConfig.setName("sample");
+
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setCustomCardConfig(existingConfig);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(customCardConfigService.createOrUpdateCustomCardConfig(any())).thenReturn(existingConfig);
+
+        ReportCardWebRequest request = newWebRequest();
+        CustomCardConfigRequest configRequest = new CustomCardConfigRequest();
+        configRequest.setUuid(existingConfig.getUuid());
+        configRequest.setName("sample");
+        request.setCustomCardConfig(configRequest);
+
+        cardService.editCard(request, 7L);
+
+        assertEquals(existingConfig, existingCard.getCustomCardConfig());
+        assertFalse(existingConfig.isVoided());
+        assertEquals("sample", existingConfig.getName());
+        verify(customCardConfigRepository, never()).save(any());
     }
 
     private ReportCardWebRequest newWebRequest() {

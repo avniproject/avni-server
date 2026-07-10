@@ -115,8 +115,17 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             existingOrNewGroupSubject.setGroupSubject(groupSubject);
             existingOrNewGroupSubject.setMemberSubject(memberSubject);
             existingOrNewGroupSubject.setGroupRole(groupRole);
-            existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate() != null ? request.getMembershipStartDate() : new DateTime());
-            existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
+            // Only set the membership dates when the client sent them. The DEA's add/edit form
+            // posts neither, so an existing membership would otherwise have its start date reset
+            // to now and its end date wiped every time the role was edited.
+            if (request.getMembershipStartDate() != null) {
+                existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate());
+            } else if (existingOrNewGroupSubject.isNew()) {
+                existingOrNewGroupSubject.setMembershipStartDate(new DateTime());
+            }
+            if (request.getMembershipEndDate() != null) {
+                existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
+            }
             // Only set the removal reason when the client sent one. An older client that doesn't
             // know the field would otherwise wipe a previously-saved reason on every re-sync.
             if (request.getRemovalReasonConceptUUID() != null) {
@@ -161,7 +170,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             return groupSubjects.stream().map(groupSubject -> {
                 Individual member = individualRepository.findByUuid(groupSubject.getMemberSubjectUUID());
                 GroupRole groupRole = groupRoleRepository.findByUuid(groupSubject.getGroupRole().getUuid());
-                return individualService.createGroupSubjectContractWeb(groupSubject.getUuid(), member, groupRole);
+                return individualService.createGroupSubjectContractWeb(groupSubject, member, groupRole);
             }).collect(Collectors.toList());
         } else {
             throw new BadRequestError("Invalid Group Id");

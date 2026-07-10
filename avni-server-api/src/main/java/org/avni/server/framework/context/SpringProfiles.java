@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 public class SpringProfiles {
     public static final String DEFAULT = "default";
     public static final String ON_PREMISE = "onPremise";
+    public static final String DEV = "dev";
+    public static final String STAGING = "staging";
     private final Environment environment;
 
     @Autowired
@@ -21,6 +23,10 @@ public class SpringProfiles {
     @Deprecated
     public boolean isOnPremise() {
         return isProfile(SpringProfiles.ON_PREMISE);
+    }
+
+    public boolean isDevOrStaging() {
+        return isProfile(SpringProfiles.DEV) || isProfile(SpringProfiles.STAGING);
     }
 
     private boolean isProfile(String profileName) {

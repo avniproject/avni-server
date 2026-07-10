@@ -270,6 +270,7 @@ public class SessionService implements ScopeAwareService<Session> {
             record.setSubject(subject);
             record.setStatus(recordContract.getStatus());
             record.setReasonConceptUUIDs(reasonConceptUuids);
+            record.setOtherReasonText(recordContract.getOtherReasonText());
             Boolean needsFollowUp = recordContract.getNeedsFollowUp();
             record.setNeedsFollowUp(needsFollowUp != null
                     ? needsFollowUp

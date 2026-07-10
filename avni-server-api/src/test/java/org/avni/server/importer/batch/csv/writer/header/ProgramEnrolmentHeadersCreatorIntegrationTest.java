@@ -16,6 +16,7 @@ import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
+import org.avni.server.service.builder.TestFormService;
 import org.avni.server.service.builder.TestProgramService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.junit.Before;
@@ -24,10 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -54,6 +55,9 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
 
     @Autowired
     TestConceptService testConceptService;
+
+    @Autowired
+    private TestFormService testFormService;
 
     private FormMapping formMapping;
     private Program program;
@@ -151,6 +155,37 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
         Arrays.sort(description);
         assertEquals("\"Coded Concept Multi Select\",\"Coded Concept Single Select\",\"Date Concept\",\"Notes Concept\",\"Numeric Concept\",\"Text Concept (This should remain a single cell , not a different cell)\",\"Text,Concept\",Enrolment Coordinates,Enrolment Date,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
         assertEquals("\"Optional. Allowed values: {Ans 1, Ans 2} Format: Separate multiple values by a comma.\",\"Optional. Allowed values: {Answer 1, Answer 2} Only single value allowed.\",\"Optional. Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172).\",Mandatory. Format: DD-MM-YYYY or YYYY-MM-DD.,Mandatory. Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file).,Mandatory. TestProgram.,Optional,Optional. Any Text.,Optional. Any Text.,Optional. Can be used to later identify the entry.,Optional. Format: DD-MM-YYYY.,Optional. Min value allowed: 2.0 Max value allowed: 5.0.", String.join(",", description));
+    }
+
+    @Test
+    public void testDecisionConceptHeader_uploadEnrolment() throws InvalidConfigurationException {
+        Concept decisionConcept = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(formMapping.getForm().getId(), decisionConcept);
+
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT);
+        assertTrue(Arrays.asList(headers).contains("\"Weight for Age status\""),
+                "Upload enrolment should include the enrolment form's decision concept column");
+    }
+
+    @Test
+    public void testDecisionConceptHeader_uploadExitedEnrolment_appliesExitPrefixToExitFormDecision() throws InvalidConfigurationException {
+        Concept enrolmentDecision = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(formMapping.getForm().getId(), enrolmentDecision);
+
+        Concept exitDecision = testConceptService.createCodedConcept("Exit Reason status", "Migrated", "Deceased");
+        FormMapping exitFormMapping = testFormService.createProgramExitForm(
+                formMapping.getSubjectType(), program, "Program Exit Form " + UUID.randomUUID(),
+                Collections.emptyList(), Collections.emptyList());
+        testFormService.addDecisionConcepts(exitFormMapping.getForm().getId(), exitDecision);
+
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+
+        assertTrue(Arrays.asList(headers).contains("\"Weight for Age status\""),
+                "Exited enrolment should include the enrolment form's decision concept column unprefixed");
+        assertTrue(Arrays.asList(headers).contains("\"" + ProgramEnrolmentHeadersCreator.EXIT_CONCEPT_PREFIX + "Exit Reason status\""),
+                "Exited enrolment should include the exit form's decision concept column with the Exit prefix");
+        assertFalse(Arrays.asList(headers).contains("\"Exit Reason status\""),
+                "The exit form's decision concept should not appear without the Exit prefix");
     }
 
     @Test

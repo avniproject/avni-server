@@ -162,4 +162,24 @@ public class LocationServiceTest {
 
         verify(locationRepository, never()).voidLocationsByAddressLevelTypeId(anyLong(), anyLong());
     }
+
+    @Test
+    public void bundleImportVoidingAnAddressLevelTypeDoesNotCascadeToLocations() {
+        // #871: a config bundle carries voided types + locations.json separately. Cascading on import would
+        // mass-void locations of a type voided in the source env but active in the target. The bundle path
+        // (createAddressLevelType with cascadeVoidedLocations=false) must NOT touch locations.
+        String uuid = UUID.randomUUID().toString();
+        AddressLevelType existing = new AddressLevelTypeBuilder().withId(5L).withUuid(uuid).name("Village").level(1.0).build();
+        when(addressLevelTypeRepository.findByUuid(uuid)).thenReturn(existing);
+
+        AddressLevelTypeContract contract = new AddressLevelTypeContract();
+        contract.setUuid(uuid);
+        contract.setName("Village");
+        contract.setLevel(1.0);
+        contract.setVoided(true);
+
+        locationService.createAddressLevelType(organisation, contract, false);
+
+        verify(locationRepository, never()).voidLocationsByAddressLevelTypeId(anyLong(), anyLong());
+    }
 }

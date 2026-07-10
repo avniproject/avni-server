@@ -122,7 +122,7 @@ public class SyncDetailsService {
                 SyncEntityName.Dashboard, SyncEntityName.DashboardSection, SyncEntityName.DashboardFilter, SyncEntityName.DashboardSectionCardMapping, SyncEntityName.ApprovalStatus, SyncEntityName.GroupDashboard,
                 SyncEntityName.News, SyncEntityName.UserInfo, SyncEntityName.Privilege, SyncEntityName.StandardReportCardType, SyncEntityName.Documentation, SyncEntityName.DocumentationItem,
                 SyncEntityName.Task, SyncEntityName.TaskType, SyncEntityName.TaskStatus, SyncEntityName.TaskUnAssignment, SyncEntityName.UserSubjectAssignment, SyncEntityName.LocationMapping,
-                SyncEntityName.MenuItem, SyncEntityName.CustomCardConfig,
+                SyncEntityName.MenuItem, SyncEntityName.CustomCardConfig, SyncEntityName.DownloadableContent,
                 SyncEntityName.Calendar, SyncEntityName.CalendarDateMarker, SyncEntityName.AttendanceType
         ));
 

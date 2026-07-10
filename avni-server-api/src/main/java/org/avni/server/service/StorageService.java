@@ -207,6 +207,14 @@ public abstract class StorageService implements S3Service {
         return s3Client.getObject(bucketName, s3Key).getObjectContent();
     }
 
+    // GCS's S3-interop endpoint often returns errors the SDK can't parse into errorCode (bare 403, null Request ID);
+    // the real cause (e.g. AccessDenied, SignatureDoesNotMatch) is only in the raw error-response XML. GCS-backed
+    // subclasses log via this on their get/presign/put paths so routed failures are diagnosable.
+    protected void logS3Error(String op, String key, AmazonS3Exception e) {
+        logger.error(format("%s failed for key '%s' in bucket '%s': status=%d errorCode='%s' requestId='%s' responseXml=%s",
+                op, key, bucketName, e.getStatusCode(), e.getErrorCode(), e.getRequestId(), e.getErrorResponseXml()), e);
+    }
+
     @Override
     public InputStream getOrgScopedContent(String fileName, Organisation organisation) {
         String objectKey = format("%s/%s", organisation.getMediaDirectory(), fileName);
