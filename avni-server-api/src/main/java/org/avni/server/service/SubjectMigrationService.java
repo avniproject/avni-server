@@ -264,7 +264,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         }
         Concept syncConcept = conceptRepository.findByUuid(subjectTypeSyncConceptUuid);
 
-        if (currentValue != null && Objects.equals(currentValue.trim(), destinationSyncConceptValue.trim())) {
+        if (Objects.equals(currentValue, destinationSyncConceptValue)) {
             throw new RuntimeException("Source value and Destination value are the same");
         }
 
@@ -281,10 +281,10 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         ObservationCollection newObservations = new ObservationCollection();
         //set observation for unchanged values if sync concept exists so unchanged sync concept values are not overwritten
         if (subject.getSubjectType().getSyncRegistrationConcept1() != null) {
-            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept1(), destinationSyncConcept1Value != null ? destinationSyncConcept1Value.trim() : subject.getSyncConcept1Value());
+            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept1(), destinationSyncConcept1Value != null ? destinationSyncConcept1Value : subject.getSyncConcept1Value());
         }
         if (subject.getSubjectType().getSyncRegistrationConcept2() != null) {
-            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept2(), destinationSyncConcept2Value != null ? destinationSyncConcept2Value.trim() : subject.getSyncConcept2Value());
+            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept2(), destinationSyncConcept2Value != null ? destinationSyncConcept2Value : subject.getSyncConcept2Value());
         }
         return newObservations;
     }

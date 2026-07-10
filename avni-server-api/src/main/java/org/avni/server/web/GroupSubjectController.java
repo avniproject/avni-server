@@ -115,8 +115,17 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             existingOrNewGroupSubject.setGroupSubject(groupSubject);
             existingOrNewGroupSubject.setMemberSubject(memberSubject);
             existingOrNewGroupSubject.setGroupRole(groupRole);
-            existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate() != null ? request.getMembershipStartDate() : new DateTime());
-            existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
+            // Only set the membership dates when the client sent them. The DEA's add/edit form
+            // posts neither, so an existing membership would otherwise have its start date reset
+            // to now and its end date wiped every time the role was edited.
+            if (request.getMembershipStartDate() != null) {
+                existingOrNewGroupSubject.setMembershipStartDate(request.getMembershipStartDate());
+            } else if (existingOrNewGroupSubject.isNew()) {
+                existingOrNewGroupSubject.setMembershipStartDate(new DateTime());
+            }
+            if (request.getMembershipEndDate() != null) {
+                existingOrNewGroupSubject.setMembershipEndDate(request.getMembershipEndDate());
+            }
             // Only set the removal reason when the client sent one. An older client that doesn't
             // know the field would otherwise wipe a previously-saved reason on every re-sync.
             if (request.getRemovalReasonConceptUUID() != null) {
