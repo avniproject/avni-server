@@ -231,6 +231,11 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     }
 
     public AddressLevelType createAddressLevelType(Organisation organisation, AddressLevelTypeContract contract) {
+        // Interactive paths (admin create/update) cascade a void to the type's locations so it syncs to devices.
+        return createAddressLevelType(organisation, contract, true);
+    }
+
+    public AddressLevelType createAddressLevelType(Organisation organisation, AddressLevelTypeContract contract, boolean cascadeVoidedLocations) {
         // Validate name uniqueness - moved to controller to provide better error messages for API consumers
 
         AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
@@ -268,7 +273,12 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         // When a type transitions to voided, cascade the void to its locations so the void
         // syncs to devices (#871). The lowestAddressLevelType config keeps referencing the
         // voided type on purpose - pruning it would orphan locations already on devices.
-        if (!wasVoidedBefore && addressLevelType.isVoided()) {
+        //
+        // NOT on the bundle-import path: a config bundle carries the source env's voided types AND its
+        // locations.json separately, so the target's location void state must come from locations.json,
+        // not be inferred here. Cascading on import would mass-void locations of a type that is voided in
+        // the source env but active (with live locations) in the target - silent operational-data loss.
+        if (cascadeVoidedLocations && !wasVoidedBefore && addressLevelType.isVoided()) {
             Long lastModifiedById = UserContextHolder.getUserContext().getUser().getId();
             locationRepository.voidLocationsByAddressLevelTypeId(addressLevelType.getId(), lastModifiedById);
         }
@@ -357,9 +367,10 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
             }
         }
 
-        // Once validated, process all contracts
+        // Once validated, process all contracts. Bundle import must NOT cascade-void locations (#871):
+        // location void state is carried by locations.json, not inferred from a source-env-voided type.
         for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
-            this.createAddressLevelType(organisation, addressLevelTypeContract);
+            this.createAddressLevelType(organisation, addressLevelTypeContract, false);
         }
     }
 }

@@ -61,6 +61,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
     private Individual subject;
     private ProgramEnrolment programEnrolment;
     private ProgramEnrolment exitedProgramEnrolment;
+    private Concept decisionConcept;
 
     private String[] validScheduleVisitHeader() {
         return header(
@@ -325,7 +326,7 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
 
         // Create form mapping with unique name
         String formName = "Test Program Encounter Form " + UUID.randomUUID().toString().substring(0, 8);
-        testFormService.createProgramEncounterForm(
+        org.avni.server.application.FormMapping programEncounterFormMapping = testFormService.createProgramEncounterForm(
                 subjectType,
                 program,
                 encounterType,
@@ -333,6 +334,10 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
                 singleSelectConcepts.stream().map(Concept::getName).collect(java.util.stream.Collectors.toList()),
                 multiSelectConcepts.stream().map(Concept::getName).collect(java.util.stream.Collectors.toList())
         );
+
+        // Attach a decision concept to the visit form (imported as a normal observation, not rule-computed)
+        decisionConcept = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(programEncounterFormMapping.getForm().getId(), decisionConcept);
 
         // Create program-encounter cancellation form mapping for the same encounter type
         Concept programCancelReasonConcept = testConceptService.createCodedConcept("Program Cancel Reason",
@@ -461,6 +466,68 @@ public class ProgramEncounterCreatorIntegrationTest extends BaseCSVImportTest {
         assertNull(programEncounter.getEarliestVisitDateTime());
         assertNull(programEncounter.getMaxVisitDateTime());
         assertEquals(3, programEncounter.getObservations().size());
+    }
+
+    @Test
+    public void testUploadVisit_Success_WithDecisionConcept() throws Exception {
+        String[] headers = header(
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                EncounterHeadersCreator.VISIT_DATE,
+                EncounterHeadersCreator.ENCOUNTER_COORDINATES,
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Numeric Concept\"",
+                "\"Weight for Age status\""
+        );
+        String[] dataRow = dataRow(
+                "PENC-DEC-001",
+                "PENR-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "123",
+                "Moderate"
+        );
+
+        encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+
+        ProgramEncounter programEncounter = programEncounterRepository.findByLegacyId("PENC-DEC-001");
+        assertNotNull(programEncounter);
+        assertEquals(4, programEncounter.getObservations().size());
+        assertTrue("Decision concept value must be stored as a normal observation",
+                programEncounter.getObservations().containsKey(decisionConcept.getUuid()));
+    }
+
+    @Test
+    public void testUploadVisit_FailsWithInvalidDecisionConceptAnswer() {
+        String[] headers = header(
+                EncounterHeadersCreator.ID,
+                EncounterHeadersCreator.PROGRAM_ENROLMENT_ID,
+                EncounterHeadersCreator.ENCOUNTER_TYPE,
+                EncounterHeadersCreator.VISIT_DATE,
+                EncounterHeadersCreator.ENCOUNTER_COORDINATES,
+                "\"Weight for Age status\""
+        );
+        String[] dataRow = dataRow(
+                "PENC-DEC-002",
+                "PENR-001",
+                encounterType.getName(),
+                LocalDate.now().minusDays(2).toString("yyyy-MM-dd"),
+                "21.5135243,85.6731848",
+                "Not A Valid Status"
+        );
+
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            encounterCreator.createForEnrolment(new Row(headers, dataRow), EncounterUploadMode.UPLOAD_VISIT_DETAILS.getValue());
+        });
+
+        String message = exception.getMessage().toLowerCase();
+        assertTrue(message, message.contains("invalid answer 'not a valid status'"));
+        assertTrue(message, message.contains("weight for age status"));
     }
 
     @Test

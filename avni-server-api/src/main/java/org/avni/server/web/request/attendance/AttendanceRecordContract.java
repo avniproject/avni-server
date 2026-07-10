@@ -19,6 +19,7 @@ public class AttendanceRecordContract extends CHSRequest {
     // Backwards-compat: pre-16.15 clients POST a single reasonConceptUUID. Treated as a
     // one-element array by getReasonConceptUUIDs(). Write-only; never serialized back.
     private String reasonConceptUUID;
+    private String otherReasonText;
     private String followUpEncounterUUID;
     // Boxed: pre-1.33.57 clients omit this; null means "fall back to the pre-#1003 rule".
     private Boolean needsFollowUp;
@@ -34,6 +35,7 @@ public class AttendanceRecordContract extends CHSRequest {
         contract.setSubjectUUID(record.getSubjectUUID());
         contract.setStatus(record.getStatus());
         contract.setReasonConceptUUIDs(record.getReasonConceptUUIDs());
+        contract.setOtherReasonText(record.getOtherReasonText());
         contract.setFollowUpEncounterUUID(record.getFollowUpEncounterUuid());
         contract.setNeedsFollowUp(record.isNeedsFollowUp());
         contract.setCreatedDateTime(record.getCreatedDateTime());
@@ -87,6 +89,14 @@ public class AttendanceRecordContract extends CHSRequest {
     @JsonProperty("reasonConceptUUID")
     public void setReasonConceptUUID(String reasonConceptUUID) {
         this.reasonConceptUUID = reasonConceptUUID;
+    }
+
+    public String getOtherReasonText() {
+        return otherReasonText;
+    }
+
+    public void setOtherReasonText(String otherReasonText) {
+        this.otherReasonText = otherReasonText;
     }
 
     public String getFollowUpEncounterUUID() {

@@ -119,6 +119,7 @@ public class SyncController {
     private final AttendanceTypeService attendanceTypeService;
     private final SessionService sessionService;
     private final AttendanceRecordService attendanceRecordService;
+    private final DownloadableContentService downloadableContentService;
 
     @Autowired
     public SyncController(Environment environment, IndividualService individualService, EncounterService encounterService,
@@ -155,7 +156,8 @@ public class SyncController {
                           CustomCardConfigService customCardConfigService,
                           CalendarService calendarService, CalendarDateMarkerService calendarDateMarkerService,
                           AttendanceTypeService attendanceTypeService, SessionService sessionService,
-                          AttendanceRecordService attendanceRecordService) {
+                          AttendanceRecordService attendanceRecordService,
+                          DownloadableContentService downloadableContentService) {
         this.environment = environment;
         this.individualService = individualService;
         this.encounterService = encounterService;
@@ -228,6 +230,7 @@ public class SyncController {
         this.attendanceTypeService = attendanceTypeService;
         this.sessionService = sessionService;
         this.attendanceRecordService = attendanceRecordService;
+        this.downloadableContentService = downloadableContentService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -315,6 +318,7 @@ public class SyncController {
         nonScopeAwareServiceMap.put(MenuItem, menuItemService);
         nonScopeAwareServiceMap.put(UserSubjectAssignment, userSubjectAssignmentService);
         nonScopeAwareServiceMap.put(AttendanceType, attendanceTypeService);
+        nonScopeAwareServiceMap.put(DownloadableContent, downloadableContentService);
     }
 
     private void populateDeviceAwareServiceMap() {

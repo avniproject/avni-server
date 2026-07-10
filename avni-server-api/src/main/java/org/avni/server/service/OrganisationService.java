@@ -190,6 +190,9 @@ public class OrganisationService {
     private final LocationService locationService;
     private final CatchmentService catchmentService;
     private final CustomCardConfigRepository customCardConfigRepository;
+    private final DownloadableContentRepository downloadableContentRepository;
+    private final ModelKeyRepository modelKeyRepository;
+    private final OrgStorageCredentialRepository orgStorageCredentialRepository;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -286,7 +289,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository,
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository, DownloadableContentRepository downloadableContentRepository, ModelKeyRepository modelKeyRepository, OrgStorageCredentialRepository orgStorageCredentialRepository,
                                CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository,
                                SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository) {
         this.formRepository = formRepository;
@@ -391,6 +394,9 @@ public class OrganisationService {
         this.locationService = locationService;
         this.catchmentService = catchmentService;
         this.customCardConfigRepository = customCardConfigRepository;
+        this.downloadableContentRepository = downloadableContentRepository;
+        this.modelKeyRepository = modelKeyRepository;
+        this.orgStorageCredentialRepository = orgStorageCredentialRepository;
         this.calendarRepository = calendarRepository;
         this.calendarDateMarkerRepository = calendarDateMarkerRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
@@ -527,6 +533,9 @@ public class OrganisationService {
                 dashboardSectionCardMappingRepository,
                 cardRepository,
                 customCardConfigRepository,
+                downloadableContentRepository,
+                modelKeyRepository,
+                orgStorageCredentialRepository,
                 dashboardSectionRepository,
                 groupDashboardRepository,
                 dashboardFilterRepository,
@@ -573,6 +582,9 @@ public class OrganisationService {
                 "dashboard_section_card_mapping",
                 "report_card",
                 "custom_card_config",
+                "downloadable_content",
+                "model_key",
+                "org_storage_credential",
                 "dashboard_section",
                 "group_dashboard",
                 "dashboard_filter",
@@ -923,13 +935,16 @@ public class OrganisationService {
             addDirectoryToZip(zos, BundleFolder.CONCEPT_MEDIA.getFolderName());
         }
         for (Concept concept : conceptsWithMedia) {
-            for (ConceptMedia media: concept.getMedia()) {
+            List<ConceptMedia> mediaList = concept.getMedia();
+            for (int index = 0; index < mediaList.size(); index++) {
+                ConceptMedia media = mediaList.get(index);
                 InputStream objectContent = s3Service.getObjectContentFromUrl(media.getUrl());
                 String fileName = S.getLastStringAfter(media.getUrl(), "/");
-                // conceptMedia/<conceptUuid>--<mediaType>--<fileName>
-                // conceptMedia/1f51e69f-5425-4c46-adcc-8968a47cd264--Image--659e7ee1-ad4b-4f4d-8fbe-73d8d2f9c482.jpg
-                String format = "%s/%s" + ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR + "%s" + ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR + "%s";
-                addMediaToZip(zos, String.format(format, BundleFolder.CONCEPT_MEDIA.getFolderName(), concept.getUuid(), media.getType(), fileName), IOUtils.toByteArray(objectContent));
+                // conceptMedia/<conceptUuid>--<mediaType>--<NNN>--<fileName>
+                String zipEntryName = String.format("%s/%s",
+                        BundleFolder.CONCEPT_MEDIA.getFolderName(),
+                        ConceptMedia.buildBundleFileName(concept.getUuid(), media.getType(), index, fileName));
+                addMediaToZip(zos, zipEntryName, IOUtils.toByteArray(objectContent));
             }
         }
     }

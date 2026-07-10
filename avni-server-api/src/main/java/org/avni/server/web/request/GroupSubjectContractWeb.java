@@ -1,12 +1,15 @@
 package org.avni.server.web.request;
 
 import org.avni.server.web.request.common.CommonIndividualRequest;
+import org.joda.time.DateTime;
 
 public class GroupSubjectContractWeb extends CHSRequest {
     IndividualContract group;
     IndividualContract member;
     GroupRoleContract role;
     EncounterMetadataContract encounterMetadata;
+    private DateTime membershipStartDate;
+    private DateTime membershipEndDate;
 
     public IndividualContract getGroup() {
         return group;
@@ -38,5 +41,21 @@ public class GroupSubjectContractWeb extends CHSRequest {
 
     public void setEncounterMetadata(EncounterMetadataContract encounterMetadata) {
         this.encounterMetadata = encounterMetadata;
+    }
+
+    public DateTime getMembershipStartDate() {
+        return membershipStartDate;
+    }
+
+    public void setMembershipStartDate(DateTime membershipStartDate) {
+        this.membershipStartDate = membershipStartDate;
+    }
+
+    public DateTime getMembershipEndDate() {
+        return membershipEndDate;
+    }
+
+    public void setMembershipEndDate(DateTime membershipEndDate) {
+        this.membershipEndDate = membershipEndDate;
     }
 }

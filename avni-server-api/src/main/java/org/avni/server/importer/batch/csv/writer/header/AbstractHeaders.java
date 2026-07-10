@@ -81,15 +81,15 @@ public abstract class AbstractHeaders implements HeaderCreator {
                 .collect(Collectors.toList());
     }
 
-    protected List<HeaderField> generateDecisionConceptFields(Form form) {
+    protected static List<HeaderField> generateDecisionConceptFields(Form form) {
         return generateDecisionConceptFields(form, "");
     }
 
-    protected List<HeaderField> generateDecisionConceptFields(Form form, String headerPrefix) {
+    protected static List<HeaderField> generateDecisionConceptFields(Form form, String headerPrefix) {
         return form.getDecisionConcepts().stream().map(concept -> mapDecisionConceptToField(concept, headerPrefix)).toList();
     }
 
-    private HeaderField mapDecisionConceptToField(Concept concept, String headerPrefix) {
+    private static HeaderField mapDecisionConceptToField(Concept concept, String headerPrefix) {
         FieldDescriptor strategy = getStrategy(concept.getDataType());
         String format = strategy.getFormat(concept);
         return new HeaderField("\"" + headerPrefix + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);

@@ -20,6 +20,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import javax.sql.DataSource;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -93,12 +94,23 @@ public class RlsOrgVisibilityIntegrationTest extends AbstractControllerIntegrati
         new JdbcTemplate(dataSource).update("update public.organisation set parent_organisation_id = ? where id = ?",
                 parent.getOrganisationId(), child.getOrganisationId());
 
+        // Query the concept table with raw SQL (no WHERE on organisation_id) so ONLY the RLS policy decides
+        // visibility. conceptRepository.findByUuid is overridden to findByUuidAndOrganisationId(uuid, own+ancestors),
+        // whose application-level org filter would mask the policy: the sibling assertion would pass even if the
+        // ref policy leaked across orgs, because the app filter alone nulls out a foreign-org row. Raw SQL under
+        // SET ROLE removes that masking, so this actually exercises V1_398's ref ancestor arm in both directions.
         setUser(child.getUser());
-        assertNotNull("child org must see its ancestor's concept (ref ancestor arm)",
-                conceptRepository.findByUuid(parentConcept.getUuid()));
+        assertEquals("child org must see its ancestor's concept (ref ancestor arm of the RLS policy)",
+                Integer.valueOf(1), countConceptByUuid(parentConcept.getUuid()));
 
         setUser(sibling.getUser());
-        assertNull("an unrelated sibling org must NOT see the ancestor's concept",
-                conceptRepository.findByUuid(parentConcept.getUuid()));
+        assertEquals("an unrelated sibling org must NOT see the ancestor's concept (RLS isolation)",
+                Integer.valueOf(0), countConceptByUuid(parentConcept.getUuid()));
+    }
+
+    private Integer countConceptByUuid(String uuid) {
+        // public.-qualified: under SET ROLE <org>, an unqualified name resolves to the org's ETL schema.
+        return new JdbcTemplate(dataSource).queryForObject(
+                "select count(*) from public.concept where uuid = ?", Integer.class, uuid);
     }
 }
