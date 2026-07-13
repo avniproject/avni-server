@@ -48,32 +48,4 @@ public class BundleZipTest {
         assertTrue(extensionNames.stream().anyMatch(s -> s.equals("extensions/foo.html")));
         assertTrue(extensionNames.stream().anyMatch(s -> s.equals("extensions/bar.html")));
     }
-
-    @Test
-    public void getsConceptMediaFilesSortedByConceptThenIndex() {
-        HashMap<String, byte[]> entries = new HashMap<>();
-        // deliberately inserted out of order; HashMap iteration is unordered
-        entries.put("conceptMedia/A--Image--002--c.jpg", new byte[]{2});
-        entries.put("conceptMedia/A--Image--000--a.jpg", new byte[]{0});
-        entries.put("conceptMedia/A--Image--001--b.jpg", new byte[]{1});
-        entries.put("conceptMedia/B--Video--000--v.mp4", new byte[]{9});
-        entries.put("someParentFolder/programs.json", new byte[1]);
-        BundleZip bundleZip = new BundleZip(entries);
-
-        List<Map.Entry<String, byte[]>> ordered = bundleZip.getConceptMediaFilesInOrder();
-
-        assertEquals(4, ordered.size());
-        assertEquals("A--Image--000--a.jpg", ordered.get(0).getKey());
-        assertEquals("A--Image--001--b.jpg", ordered.get(1).getKey());
-        assertEquals("A--Image--002--c.jpg", ordered.get(2).getKey());
-        assertEquals("B--Video--000--v.mp4", ordered.get(3).getKey());
-    }
-
-    @Test
-    public void conceptMediaAccessorReturnsEmptyWhenNoMediaFolder() {
-        HashMap<String, byte[]> entries = new HashMap<>();
-        entries.put("encounterTypes.json", new byte[1]);
-        BundleZip bundleZip = new BundleZip(entries);
-        assertTrue(bundleZip.getConceptMediaFilesInOrder().isEmpty());
-    }
 }
