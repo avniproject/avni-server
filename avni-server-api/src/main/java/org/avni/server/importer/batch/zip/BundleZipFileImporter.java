@@ -273,14 +273,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     private void deployFolder(BundleFolder bundleFolder, BundleZip bundleZip) throws IOException, FormBuilderException {
-        List<Map.Entry<String, byte[]>> fileEntries;
-        if (bundleFolder == BundleFolder.CONCEPT_MEDIA) {
-            fileEntries = bundleZip.getConceptMediaFilesInOrder();
-        } else {
-            fileEntries = new ArrayList<>(
-                    bundleZip.getFileNameAndDataInFolder(bundleFolder.getFolderName()).entrySet());
-        }
-        for (Map.Entry<String, byte[]> fileEntry : fileEntries) {
+        Map<String, byte[]> files = bundleZip.getFileNameAndDataInFolder(bundleFolder.getFolderName());
+        for (Map.Entry fileEntry : files.entrySet()) {
             deployFolder(bundleFolder, fileEntry);
         }
     }
@@ -528,14 +522,14 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 uploadMedia(CustomCardConfigService.CUSTOM_CARD_CONFIGS_SUBDIR, fileData.getKey(), (byte[]) fileData.getValue());
                 break;
             case CONCEPT_MEDIA:
-                ConceptMedia.BundleFileNameParts parts =
-                        ConceptMedia.parseBundleFileName(fileData.getKey());
-                String conceptUuid = parts.conceptUuid;
-                String fileName = parts.s3FileName;
+                String[] keyParts = fileData.getKey().split(ConceptMedia.CONCEPT_MEDIA_EXPORT_FILENAME_SEPARATOR, 3);
+                String conceptUuid = keyParts[0];
+                String mediaType = keyParts[1];
+                String fileName = keyParts[2];
 
                 String medias3ObjectKey = uploadMedia(MediaFolder.MetaData.label, fileName, fileData.getValue());
                 Concept concept = conceptRepository.findByUuid(conceptUuid);
-                ConceptMedia conceptMedia = new ConceptMedia(medias3ObjectKey, parts.type);
+                ConceptMedia conceptMedia = new ConceptMedia(medias3ObjectKey, ConceptMedia.MediaType.valueOf(mediaType));
 
                 List<ConceptMedia> media = concept.getMedia() != null ?
                     new ArrayList<>(concept.getMedia()) : new ArrayList<>();

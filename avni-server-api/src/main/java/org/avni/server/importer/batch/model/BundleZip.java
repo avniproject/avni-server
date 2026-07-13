@@ -1,12 +1,8 @@
 package org.avni.server.importer.batch.model;
 
-import org.avni.server.domain.ConceptMedia;
 import org.avni.server.domain.OrganisationConfig;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,26 +31,6 @@ public class BundleZip extends HashMap<String, byte[]> {
                 .forEach(x -> map.put(x.getKey().substring(x.getKey().lastIndexOf(STRING_FOLDER_PATH_SEPARATOR) + 1),
                         x.getValue()));
         return map;
-    }
-
-    public List<Map.Entry<String, byte[]>> getConceptMediaFilesInOrder() {
-        String folder = BundleFolder.CONCEPT_MEDIA.getFolderName();
-        List<Map.Entry<String, byte[]>> files = new ArrayList<>();
-        this.entrySet().stream()
-                .filter(x -> x.getKey().contains(folder + STRING_FOLDER_PATH_SEPARATOR)
-                        && !fileNameHasExclusionPatterns(x.getKey()))
-                .forEach(x -> {
-                    String name = x.getKey().substring(x.getKey().lastIndexOf(STRING_FOLDER_PATH_SEPARATOR) + 1);
-                    files.add(new AbstractMap.SimpleEntry<>(name, x.getValue()));
-                });
-        files.sort(Comparator
-                .comparing((Map.Entry<String, byte[]> e) ->
-                        ConceptMedia.parseBundleFileName(e.getKey()).conceptUuid)
-                .thenComparing(e -> {
-                    Integer idx = ConceptMedia.parseBundleFileName(e.getKey()).index;
-                    return idx == null ? Integer.MAX_VALUE : idx;
-                }));
-        return files;
     }
 
     public List<String> getExtensionNames() {
