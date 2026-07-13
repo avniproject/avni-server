@@ -14,14 +14,13 @@ import static org.junit.Assert.*;
 /**
  * Applied-state assertions for the org-scoped RLS policies (`*_orgs`).
  *
- * The two shape assertions from #1008 - every policy on the `organisation_id = ANY(<stable fn>)` indexable
- * shape, and the correct tx/ref function variant - were RETIRED by the #1029 revert (V1_405), which restored the
- * pre-17.0 OR-based USING clause (`= ANY(stable_fn())` re-evaluated the function per tuple, collapsing prod).
- * #1030 recovers them, updated for the once-per-query `organisation_id IN (SELECT unnest(<fn>))` shape.
- *
- * What remains are shape-agnostic invariants that hold across the revert: the helper functions are retained
- * (unused by the reverted policy, reused by #1030), policy names are canonical, and WITH CHECK still scopes
- * writes to the caller's own org.
+ * History: #1008 (V1_398) shipped `organisation_id = ANY(<stable fn>())` - re-evaluated per index tuple,
+ * collapsed prod; #1029 (V1_405) reverted to the pre-17.0 OR-based USING (once per query, but seq scans);
+ * #1030 (V1_406) re-lands the index plan with single evaluation via
+ * `organisation_id = ANY (COALESCE((SELECT <fn>()), '{}'::integer[]))` - the scalar sublink is a once-per-query
+ * InitPlan (the COALESCE is the fail-closed NULL guard) and the qual is an indexable ScalarArrayOpExpr. The two
+ * shape assertions retired by the revert are recovered here for that InitPlan shape;
+ * RlsPolicyPlanShapeIntegrationTest proves the plan behaviour through a real policy under SET ROLE.
  */
 public class IndexableRlsPolicyMigrationIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
@@ -55,10 +54,6 @@ public class IndexableRlsPolicyMigrationIntegrationTest extends AbstractControll
         }
     }
 
-    // The two shape assertions that lived here - everyOrgScopedPolicyUsesTheIndexableFunctionWithoutASubquery
-    // and txAndRefPoliciesUseTheCorrectFunctionVariant - were retired by the #1029 revert (V1_405), which
-    // restored the pre-17.0 OR-based USING clause. #1030 recovers them for the `IN (SELECT unnest(<fn>))` shape.
-
     @Test
     public void everyOrgScopedPolicyNameMatchesItsTable() {
         assertEquals("renamed-table policies must have been canonicalized to <table>_orgs", 0,
@@ -87,5 +82,69 @@ public class IndexableRlsPolicyMigrationIntegrationTest extends AbstractControll
                         "or with_check like '%org_ids%' " +
                         "or with_check like '%rls_visible_org_ids%' " +
                         "or with_check like '% ANY %')"));
+    }
+
+    @Test
+    public void everyOrgScopedPolicyUsesTheSingleEvalInitPlanShape() {
+        // V1_406: every *_orgs USING must be `organisation_id = ANY (COALESCE((SELECT <fn>()), '{}'::integer[]))`.
+        // Its deparsed qual references the visible-org-ids function AND carries the COALESCE-wrapped sublink (the
+        // (SELECT ...) is what makes the function a once-per-query InitPlan Param instead of the per-tuple #1008
+        // form; the COALESCE is the fail-closed NULL guard). coalesce() over pg_get_expr makes a NULL-qual policy
+        // fail the check instead of vanishing from it.
+        assertEquals("every *_orgs policy must be on the InitPlan shape: = ANY (COALESCE((SELECT rls_visible_org_ids...()), '{}'))", 0,
+                count("select count(*) from pg_policy p " +
+                        "join pg_class c on c.oid = p.polrelid " +
+                        "join pg_namespace n on n.oid = c.relnamespace " +
+                        "where n.nspname = 'public' and p.polname like '%\\_orgs' " +
+                        "and not (coalesce(pg_get_expr(p.polqual, p.polrelid), '') like '%rls_visible_org_ids%' " +
+                        "     and coalesce(pg_get_expr(p.polqual, p.polrelid), '') like '%COALESCE%')"));
+        // The #1008 regression shape: references the function but WITHOUT the COALESCE-wrapped sublink ->
+        // re-evaluated per tuple.
+        assertEquals("no *_orgs policy may retain the #1008 per-tuple = ANY(fn()) shape (function without COALESCE)", 0,
+                count("select count(*) from pg_policy p " +
+                        "join pg_class c on c.oid = p.polrelid " +
+                        "join pg_namespace n on n.oid = c.relnamespace " +
+                        "where n.nspname = 'public' and p.polname like '%\\_orgs' " +
+                        "and coalesce(pg_get_expr(p.polqual, p.polrelid), '') like '%rls_visible_org_ids%' " +
+                        "and coalesce(pg_get_expr(p.polqual, p.polrelid), '') not like '%COALESCE%'"));
+        // The reverted (V1_405 / pre-17.0) shape: two arms joined by OR.
+        assertEquals("no *_orgs policy may retain the reverted OR-based shape", 0,
+                count("select count(*) from pg_policies " +
+                        "where schemaname = 'public' and policyname like '%\\_orgs' and qual like '% OR %'"));
+    }
+
+    @Test
+    public void txAndRefPoliciesUseTheCorrectVisibleOrgIdsFunctionVariant() {
+        // ref tables are ancestor-visible and must use rls_visible_org_ids_with_ancestors(); tx tables the base
+        // rls_visible_org_ids(). A tx table on the ancestor variant would widen visibility to ancestor orgs
+        // (cross-tenant read). Each policy must reference exactly one variant...
+        List<Map<String, Object>> policies = jdbc().queryForList(
+                "select c.relname as table_name, pg_get_expr(p.polqual, p.polrelid) as qual " +
+                        "from pg_policy p join pg_class c on c.oid = p.polrelid " +
+                        "join pg_namespace n on n.oid = c.relnamespace " +
+                        "where n.nspname = 'public' and p.polname like '%\\_orgs'");
+        assertFalse("expected some org-scoped policies", policies.isEmpty());
+        for (Map<String, Object> policy : policies) {
+            String table = String.valueOf(policy.get("table_name"));
+            String qual = String.valueOf(policy.get("qual"));
+            boolean ref = qual.contains("rls_visible_org_ids_with_ancestors(");
+            boolean tx = qual.contains("rls_visible_org_ids(");   // base fn call - the ancestors variant's name continues with '_', not '('
+            assertTrue(table + " policy must reference exactly one visible-org-ids variant, was: " + qual, ref ^ tx);
+        }
+        // ...and the split is correct on known anchors: individual is tx (base), address_level_type is ref (ancestor).
+        assertTrue("individual (tx) must use the base rls_visible_org_ids()",
+                qualFor("individual").contains("rls_visible_org_ids(")
+                        && !qualFor("individual").contains("rls_visible_org_ids_with_ancestors("));
+        assertTrue("address_level_type (ref) must use rls_visible_org_ids_with_ancestors()",
+                qualFor("address_level_type").contains("rls_visible_org_ids_with_ancestors("));
+    }
+
+    private String qualFor(String table) {
+        List<String> quals = jdbc().queryForList(
+                "select pg_get_expr(p.polqual, p.polrelid) from pg_policy p " +
+                        "join pg_class c on c.oid = p.polrelid join pg_namespace n on n.oid = c.relnamespace " +
+                        "where n.nspname = 'public' and c.relname = ? and p.polname like '%\\_orgs'", String.class, table);
+        assertEquals("expected exactly one *_orgs policy on " + table, 1, quals.size());
+        return quals.get(0);
     }
 }
