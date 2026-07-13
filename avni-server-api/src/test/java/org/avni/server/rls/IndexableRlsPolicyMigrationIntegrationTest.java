@@ -12,11 +12,16 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 /**
- * Layer 1 - applied-state assertion for V1_398 (indexable RLS org policies, #1008).
- * Verifies, against the migrated catalog, that every org-scoped (`*_orgs`) policy was moved to the
- * index-friendly `organisation_id = ANY(<stable fn>)` shape and that the helper functions have the
- * properties the access-path improvement depends on. Cheap guard that the catalog-driven re-application
- * did not silently miss or mis-classify a table.
+ * Applied-state assertions for the org-scoped RLS policies (`*_orgs`).
+ *
+ * The two shape assertions from #1008 - every policy on the `organisation_id = ANY(<stable fn>)` indexable
+ * shape, and the correct tx/ref function variant - were RETIRED by the #1029 revert (V1_405), which restored the
+ * pre-17.0 OR-based USING clause (`= ANY(stable_fn())` re-evaluated the function per tuple, collapsing prod).
+ * #1030 recovers them, updated for the once-per-query `organisation_id IN (SELECT unnest(<fn>))` shape.
+ *
+ * What remains are shape-agnostic invariants that hold across the revert: the helper functions are retained
+ * (unused by the reverted policy, reused by #1030), policy names are canonical, and WITH CHECK still scopes
+ * writes to the caller's own org.
  */
 public class IndexableRlsPolicyMigrationIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
@@ -50,35 +55,9 @@ public class IndexableRlsPolicyMigrationIntegrationTest extends AbstractControll
         }
     }
 
-    @Test
-    public void everyOrgScopedPolicyUsesTheIndexableFunctionWithoutASubquery() {
-        assertEquals("no *_orgs policy may remain on the old subquery/OR shape", 0,
-                count("select count(*) from pg_policies where policyname like '%\\_orgs' " +
-                        "and qual not like '%rls_visible_org_ids%'"));
-        assertEquals("no *_orgs policy USING clause may contain a SELECT subquery", 0,
-                count("select count(*) from pg_policies where policyname like '%\\_orgs' " +
-                        "and upper(qual) like '%SELECT%'"));
-    }
-
-    @Test
-    public void txAndRefPoliciesUseTheCorrectFunctionVariant() {
-        int total = count("select count(*) from pg_policies where policyname like '%\\_orgs'");
-        int ref = count("select count(*) from pg_policies where policyname like '%\\_orgs' " +
-                "and qual like '%with_ancestors%'");
-        int tx = count("select count(*) from pg_policies where policyname like '%\\_orgs' " +
-                "and qual like '%rls_visible_org_ids%' and qual not like '%with_ancestors%'");
-
-        assertTrue("there must be tx-shaped policies", tx > 0);
-        assertTrue("there must be ref-shaped policies", ref > 0);
-        assertEquals("every *_orgs policy must be exactly one of tx / ref", total, tx + ref);
-
-        assertEquals("individual is a tx table (own org + group members, no ancestors)", 0,
-                count("select count(*) from pg_policies where policyname = 'individual_orgs' " +
-                        "and qual like '%with_ancestors%'"));
-        assertEquals("concept is a ref table (own org + ancestors + group members)", 1,
-                count("select count(*) from pg_policies where policyname = 'concept_orgs' " +
-                        "and qual like '%with_ancestors%'"));
-    }
+    // The two shape assertions that lived here - everyOrgScopedPolicyUsesTheIndexableFunctionWithoutASubquery
+    // and txAndRefPoliciesUseTheCorrectFunctionVariant - were retired by the #1029 revert (V1_405), which
+    // restored the pre-17.0 OR-based USING clause. #1030 recovers them for the `IN (SELECT unnest(<fn>))` shape.
 
     @Test
     public void everyOrgScopedPolicyNameMatchesItsTable() {
