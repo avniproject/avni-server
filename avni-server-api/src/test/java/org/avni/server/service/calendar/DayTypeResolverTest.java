@@ -73,12 +73,37 @@ public class DayTypeResolverTest {
     }
 
     @Test
-    public void nonEmptyShiftArrayResolvesToWorkingDay() {
-        JsonObject pattern = allWeek().with("mon", List.of(1, 2));
+    public void listedShiftResolvesToWorkingDay() {
+        // MONDAY is the 3rd Monday of the month, and 3 is ticked.
+        JsonObject pattern = allWeek().with("mon", List.of(1, 3, 5));
         Calendar calendar = calendarWithPattern(pattern);
         when(markerRepository.findFirstByCalendarAndMarkerDateAndIsVoidedFalse(any(), any())).thenReturn(null);
 
         assertEquals(DayType.working_day, DayTypeResolver.resolve(calendar, MONDAY, markerRepository));
+    }
+
+    @Test
+    public void unlistedShiftResolvesToWeeklyOff() {
+        // MONDAY is the 3rd Monday of the month, and only the 1st and 2nd are ticked.
+        JsonObject pattern = allWeek().with("mon", List.of(1, 2));
+        Calendar calendar = calendarWithPattern(pattern);
+        when(markerRepository.findFirstByCalendarAndMarkerDateAndIsVoidedFalse(any(), any())).thenReturn(null);
+
+        assertEquals(DayType.weekly_off, DayTypeResolver.resolve(calendar, MONDAY, markerRepository));
+    }
+
+    @Test
+    public void alternateSaturdayPatternResolvesPerOccurrence() {
+        // The Bengaluru-schools pattern from the feature spec: 1st, 3rd and 5th Saturdays work.
+        JsonObject pattern = allWeek().with("sat", List.of(1, 3, 5));
+        Calendar calendar = calendarWithPattern(pattern);
+        when(markerRepository.findFirstByCalendarAndMarkerDateAndIsVoidedFalse(any(), any())).thenReturn(null);
+
+        assertEquals(DayType.working_day, DayTypeResolver.resolve(calendar, LocalDate.of(2026, 5, 2), markerRepository));
+        assertEquals(DayType.weekly_off, DayTypeResolver.resolve(calendar, LocalDate.of(2026, 5, 9), markerRepository));
+        assertEquals(DayType.working_day, DayTypeResolver.resolve(calendar, LocalDate.of(2026, 5, 16), markerRepository));
+        assertEquals(DayType.weekly_off, DayTypeResolver.resolve(calendar, SATURDAY, markerRepository));
+        assertEquals(DayType.working_day, DayTypeResolver.resolve(calendar, LocalDate.of(2026, 5, 30), markerRepository));
     }
 
     @Test

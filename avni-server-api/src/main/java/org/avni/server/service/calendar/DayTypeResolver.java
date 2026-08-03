@@ -40,12 +40,29 @@ public final class DayTypeResolver {
             if ("none".equals(s)) return DayType.weekly_off;
         }
         if (value instanceof List) {
-            return ((List<?>) value).isEmpty() ? DayType.weekly_off : DayType.working_day;
+            return isWorkingOccurrence((List<?>) value, occurrenceOf(date)) ? DayType.working_day : DayType.weekly_off;
         }
         return DayType.working_day;
     }
 
     private static int indexOf(DayOfWeek dow) {
         return dow.getValue() - 1;
+    }
+
+    // A working_pattern array holds week-of-month occurrences (ints 1-5, enforced by
+    // CalendarWorkingPatternValidator): "sat": [1,3,5] means the 1st, 3rd and 5th Saturday are
+    // working days and the 2nd and 4th are weekly offs. Occurrences of a given weekday are seven
+    // days apart, so the nth one always falls on days 7(n-1)+1 through 7n.
+    private static int occurrenceOf(LocalDate date) {
+        return ((date.getDayOfMonth() - 1) / 7) + 1;
+    }
+
+    private static boolean isWorkingOccurrence(List<?> occurrences, int occurrence) {
+        for (Object element : occurrences) {
+            if (element instanceof Number && ((Number) element).intValue() == occurrence) {
+                return true;
+            }
+        }
+        return false;
     }
 }
