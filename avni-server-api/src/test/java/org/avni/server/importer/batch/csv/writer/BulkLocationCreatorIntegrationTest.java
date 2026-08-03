@@ -283,7 +283,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 dataRow("  state 1", "Example: distr 1 ", "Example: blo 1", " Ex. 23.45,43.85 "));
     }
 
-    @Test
+    @Test(timeout = 60_000)
     public void headerRowPaddedWithTrailingEmptyColumnsImportsNormally() throws ValidationException {
         // avni-product#1897: a padded header row must behave like a clean one; a regression makes this test hang
         int padding = 2000;
@@ -297,5 +297,16 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         success(paddedHeaders, paddedCells,
                 newLocationsCreated(3),
                 lineageExists("Bihar", "Vaishali", "Mahua"));
+    }
+
+    @Test
+    public void propertyColumnBeforeTypeColumnsIsIgnored() throws ValidationException {
+        // positional semantics: a property column ahead of the first location-type column is ignored
+        success(header("GPS coordinates", "State"),
+                dataRow("23.45,43.85", "Bihar"),
+                newLocationsCreated(1),
+                lineageExists("Bihar"));
+        AddressLevel bihar = locationRepository.findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse("Bihar", "State").get(0);
+        assertNull(bihar.getGpsCoordinates());
     }
 }

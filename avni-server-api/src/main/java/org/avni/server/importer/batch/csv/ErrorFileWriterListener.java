@@ -5,7 +5,9 @@ import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.util.BugsnagReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.annotation.OnSkipInRead;
 import org.springframework.batch.core.annotation.OnSkipInWrite;
+import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,24 @@ public class ErrorFileWriterListener {
     @OnSkipInWrite
     public void onSkipInWrite(Row item, Throwable t) {
         appendToErrorFile(item, t);
+    }
+
+    @OnSkipInRead
+    public void onSkipInRead(Throwable t) {
+        String line = t instanceof FlatFileParseException ? ((FlatFileParseException) t).getInput() : "";
+        String message = t.getCause() != null ? t.getCause().getMessage() : t.getMessage();
+        try {
+            bugsnagReporter.logAndReportToBugsnag(t);
+            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
+            fileWriter.append(line);
+            fileWriter.append(",\"");
+            fileWriter.append(message);
+            fileWriter.append("\"\n");
+            fileWriter.close();
+        } catch (IOException e) {
+            logger.error("Error recording error", e);
+            throw new RuntimeException(format("Error recording error: '%s'", e.getMessage()));
+        }
     }
 
     public void appendToErrorFile(Row item, Throwable t) {

@@ -64,7 +64,13 @@ public class BatchConfiguration {
         int numberOfLinesToSkip = this.getNumberOfLinesToSkip(new StringReader(new String(bytes)));
         DefaultLineMapper<Row> lineMapper = new DefaultLineMapper<>();
         lineMapper.setLineTokenizer(new DelimitedLineTokenizer());
-        lineMapper.setFieldSetMapper(fieldSet -> new Row(headers, fieldSet.getValues()));
+        lineMapper.setFieldSetMapper(fieldSet -> {
+            Row row = new Row(headers, fieldSet.getValues());
+            if (!row.getOrphanedValueColumns().isEmpty()) {
+                throw new RuntimeException(String.format("Column(s) %s have values but no header", row.getOrphanedValueColumns()));
+            }
+            return row;
+        });
 
         return new FlatFileItemReaderBuilder<Row>()
                 .name("csvFileItemReader")

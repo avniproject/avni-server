@@ -105,6 +105,10 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
     private GroupSubject getOrCreateGroupSubject(Row row, List<String> errorMsgs) {
 //        boolean isHouseholdUpload = Arrays.asList(row.getHeaders()).contains(householdMemberHeaders.groupId);
 //        String groupIdIdentifier = isHouseholdUpload ? householdMemberHeaders.groupId : groupMemberHeaders.groupId;
+        if (row.getHeaders().length == 0) {
+            errorMsgs.add("No headers found in file");
+            return null;
+        }
         String groupIdIdentifier = row.getHeaders()[0];  //hack assumes group id/household id is the first element. Added to handle dynamic group id header values.
         String groupId = row.get(groupIdIdentifier);
         String memberId = row.get(GroupMemberHeaders.memberId);

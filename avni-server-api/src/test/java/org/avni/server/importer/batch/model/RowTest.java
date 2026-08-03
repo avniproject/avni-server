@@ -2,8 +2,11 @@ package org.avni.server.importer.batch.model;
 
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class RowTest {
     @Test
@@ -57,5 +60,15 @@ public class RowTest {
         assertArrayEquals(new String[]{"A", "B"}, row.getHeaders());
         assertEquals("AA", row.get("A"));
         assertEquals("BB", row.get("B"));
+    }
+
+    @Test
+    public void distinguishPaddingFromClearedHeaders() {
+        // padding: blank headers over blank values - no orphans
+        Row padded = new Row(new String[]{"A", "", "  "}, new String[]{"AA", "", ""});
+        assertTrue(padded.getOrphanedValueColumns().isEmpty());
+        // cleared header: blank header over real values - reported by original column number
+        Row cleared = new Row(new String[]{"A", "", "B"}, new String[]{"AA", "orphan", "BB"});
+        assertEquals(List.of(2), cleared.getOrphanedValueColumns());
     }
 }

@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+
+import org.avni.server.domain.Concept;
 
 import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
@@ -34,6 +37,10 @@ public class BulkLocationEditor extends BulkLocationModifier {
     }
 
     public void editLocation(Row row, List<String> allErrorMsgs) throws ValidationException {
+        editLocation(row, allErrorMsgs, observationCreator.getConceptsInHeader(headerCreator, null, row.getHeaders()));
+    }
+
+    public void editLocation(Row row, List<String> allErrorMsgs, Set<Concept> conceptsInHeader) throws ValidationException {
         String existingLocationTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY);
         String newLocationParentTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY);
 
@@ -61,7 +68,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
         }
-        updateExistingLocation(existingLocationAddressLevel.get(), newLocationParentAddressLevel, row, allErrorMsgs);
+        updateExistingLocation(existingLocationAddressLevel.get(), newLocationParentAddressLevel, row, allErrorMsgs, conceptsInHeader);
     }
 
     public void validateEditModeHeaders(String[] headers, List<String> allErrorMsgs) {
@@ -79,24 +86,25 @@ public class BulkLocationEditor extends BulkLocationModifier {
         }
     }
 
-    private void updateExistingLocation(AddressLevel location, AddressLevel newParent, Row row, List<String> allErrorMsgs) throws ValidationException {
+    private void updateExistingLocation(AddressLevel location, AddressLevel newParent, Row row, List<String> allErrorMsgs, Set<Concept> conceptsInHeader) throws ValidationException {
         String newTitle = row.get(ImportLocationsConstants.COLUMN_NAME_NEW_LOCATION_NAME);
         if (!StringUtils.isEmpty(newTitle)) location.setTitle(newTitle);
         if (newParent != null) {
             locationService.updateParent(location, newParent);
         }
-        updateLocationProperties(row, allErrorMsgs, location);
+        updateLocationProperties(row, allErrorMsgs, location, conceptsInHeader);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void write(List<? extends Row> rows) throws ValidationException {
         List<String> allErrorMsgs = new ArrayList<>();
         validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
+        Set<Concept> conceptsInHeader = observationCreator.getConceptsInHeader(headerCreator, null, rows.get(0).getHeaders());
         for (Row row : rows) {
             if (skipRow(row, Arrays.asList(rows.get(0).getHeaders()))) {
                 continue;
             }
-            editLocation(row, allErrorMsgs);
+            editLocation(row, allErrorMsgs, conceptsInHeader);
         }
     }
 

@@ -18,9 +18,9 @@ public class Row extends HashMap<String, String> {
     public static final Pattern TRUE_VALUE = Pattern.compile("y|yes|true|1", Pattern.CASE_INSENSITIVE);
     public static final Pattern FALSE_VALUE = Pattern.compile("n|no|false|0", Pattern.CASE_INSENSITIVE);
     private final String[] headers;
-    private final String[] values;
     private final String[] originalHeaders;
     private final String[] originalValues;
+    private final List<Integer> orphanedValueColumns;
 
     public Row(String[] headers, String[] values) {
         // Drop blank header columns (spreadsheet export padding) - import loops over them turn quadratic
@@ -28,14 +28,19 @@ public class Row extends HashMap<String, String> {
         this.originalHeaders = headers;
         this.originalValues = values;
         int[] namedColumns = IntStream.range(0, headers.length)
-                .filter(index -> headers[index] != null && !headers[index].trim().isEmpty())
+                .filter(index -> StringUtils.hasText(headers[index]))
                 .toArray();
         this.headers = IntStream.of(namedColumns).mapToObj(index -> headers[index]).toArray(String[]::new);
-        this.values = IntStream.of(namedColumns)
+        String[] sanitisedValues = IntStream.of(namedColumns)
                 .mapToObj(index -> values.length > index && values[index] != null ? values[index] : "")
                 .toArray(String[]::new);
         IntStream.range(0, this.headers.length).forEach(index ->
-                this.put(this.headers[index].trim(), this.values[index].trim()));
+                this.put(this.headers[index].trim(), sanitisedValues[index].trim()));
+        // A value under a blank header is a cleared header, not padding - the reader rejects such rows
+        this.orphanedValueColumns = IntStream.range(0, Math.min(headers.length, values.length))
+                .filter(index -> !StringUtils.hasText(headers[index]) && StringUtils.hasText(values[index]))
+                .mapToObj(index -> index + 1)
+                .collect(Collectors.toList());
     }
 
     private String nullSafeTrim(String s) {
@@ -107,5 +112,9 @@ public class Row extends HashMap<String, String> {
             errorMsgs.add(String.format("Invalid '%s'", headerColumnName));
         }
         return null;
+    }
+
+    public List<Integer> getOrphanedValueColumns() {
+        return orphanedValueColumns;
     }
 }

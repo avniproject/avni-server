@@ -100,7 +100,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
     }
 
     private void checkForUnknownHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
-        headerList.removeIf(StringUtils::isEmpty);
         HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
         expectedHeaders.addAll(syncAttributeHeadersForSubjectTypes);
         Sets.SetView<String> unknownHeaders = Sets.difference(new HashSet<>(headerList), expectedHeaders);

@@ -13,11 +13,14 @@ import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 
 import java.util.List;
+import java.util.Set;
+
+import org.avni.server.domain.Concept;
 
 public abstract class BulkLocationModifier {
     protected final LocationRepository locationRepository;
-    private final ObservationCreator observationCreator;
-    private final HeaderCreator headerCreator;
+    protected final ObservationCreator observationCreator;
+    protected final HeaderCreator headerCreator;
 
     public BulkLocationModifier(LocationRepository locationRepository, ObservationCreator observationCreator, HeaderCreator headerCreator) {
         this.locationRepository = locationRepository;
@@ -25,12 +28,12 @@ public abstract class BulkLocationModifier {
         this.headerCreator = headerCreator;
     }
 
-    protected void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) throws ValidationException {
+    protected void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location, Set<Concept> conceptsInHeader) throws ValidationException {
         LocationCreator locationCreator = new LocationCreator();
         Point gpsCoordinates = locationCreator.getGeoLocation(row, LocationHeaderCreator.gpsCoordinates, allErrorMsgs);
         if (gpsCoordinates != null) location.setGpsCoordinates(gpsCoordinates);
 
-        ObservationCollection locationProperties = observationCreator.getObservations(row, headerCreator, allErrorMsgs, FormType.Location, location.getLocationProperties(), null);
+        ObservationCollection locationProperties = observationCreator.getObservations(row, headerCreator, allErrorMsgs, FormType.Location, location.getLocationProperties(), null, conceptsInHeader);
         if (!locationProperties.isEmpty()) location.setLocationProperties(locationProperties);
         locationRepository.save(location);
     }

@@ -8,6 +8,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.Concept;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
@@ -50,21 +51,22 @@ public class BulkLocationCreator extends BulkLocationModifier {
         this.formService = formService;
     }
 
-    public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) throws ValidationException {
+    public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames, Set<Concept> conceptsInHeader) throws ValidationException {
         AddressLevel parent = null;
         AddressLevel location = null;
-        boolean hasNonTypeHeaders = false;
+        boolean hasPropertyColumn = false;
         for (String columnHeader : row.getHeaders()) {
             if (isValidLocation(columnHeader, row, locationTypeNames)) {
                 location = createAddressLevel(row, parent, columnHeader, locationTypeNames);
                 parent = location;
-            } else if (!locationTypeNames.contains(columnHeader)) {
-                hasNonTypeHeaders = true;
+            } else if (location != null && !locationTypeNames.contains(columnHeader)) {
+                hasPropertyColumn = true;
             }
         }
-        // Single pass with the deepest resolved location instead of one call per non-type column (avni-product#1897)
-        if (location != null && hasNonTypeHeaders) {
-            updateLocationProperties(row, allErrorMsgs, location);
+        // Single pass with the deepest resolved location instead of one call per non-type column; property
+        // columns before the first resolved location column stay ignored, as before (avni-product#1897)
+        if (location != null && hasPropertyColumn) {
+            updateLocationProperties(row, allErrorMsgs, location, conceptsInHeader);
         }
     }
 
@@ -94,7 +96,6 @@ public class BulkLocationCreator extends BulkLocationModifier {
     }
 
     private void checkIfHeaderRowHasUnknownHeaders(List<String> additionalHeaders, List<String> allErrorMsgs) {
-        additionalHeaders.removeIf(StringUtils::isEmpty);
         if (!additionalHeaders.isEmpty()) {
             List<String> locationPropertyNames = formService.getFormElementNamesForLocationTypeForms()
                     .stream().map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList());
@@ -145,12 +146,13 @@ public class BulkLocationCreator extends BulkLocationModifier {
         try {
             List<String> allErrorMsgs = new ArrayList<>();
             List<String> hierarchicalLocationTypeNames = validateHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
+            Set<Concept> conceptsInHeader = observationCreator.getConceptsInHeader(headerCreator, null, rows.get(0).getHeaders());
             for (Row row : rows) {
                 if (skipRow(row, hierarchicalLocationTypeNames)) {
                     continue;
                 }
                 validateRow(row, hierarchicalLocationTypeNames, allErrorMsgs);
-                createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames);
+                createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames, conceptsInHeader);
             }
         } catch (ValidationException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
