@@ -8,8 +8,6 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.dao.attendance.SessionRepository;
-import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
-import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
@@ -23,9 +21,6 @@ import org.avni.server.domain.attendance.AttendanceStatus;
 import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.domain.attendance.Session;
 import org.avni.server.domain.attendance.SessionStatus;
-import org.avni.server.domain.calendar.Calendar;
-import org.avni.server.domain.calendar.CalendarDateMarker;
-import org.avni.server.domain.calendar.DayType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.EncounterService;
 import org.avni.server.util.BadRequestError;
@@ -68,10 +63,6 @@ public class SessionServiceTest {
     @Mock
     private ConceptRepository conceptRepository;
     @Mock
-    private CalendarRepository calendarRepository;
-    @Mock
-    private CalendarDateMarkerRepository calendarDateMarkerRepository;
-    @Mock
     private EncounterTypeRepository encounterTypeRepository;
     @Mock
     private EncounterRepository encounterRepository;
@@ -89,7 +80,7 @@ public class SessionServiceTest {
     public void setUp() {
         initMocks(this);
         service = new SessionService(sessionRepository, attendanceRecordRepository, individualRepository,
-                attendanceTypeRepository, conceptRepository, calendarRepository, calendarDateMarkerRepository,
+                attendanceTypeRepository, conceptRepository,
                 encounterTypeRepository, encounterRepository, encounterService, subjectTypeRepository);
 
         User user = new User();
@@ -105,7 +96,6 @@ public class SessionServiceTest {
 
         when(sessionRepository.save(any(Session.class))).thenAnswer(inv -> inv.getArgument(0));
         when(attendanceRecordRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-        when(calendarRepository.findAllByIsVoidedFalse()).thenReturn(Collections.emptyList());
         when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(any())).thenReturn(Collections.emptyList());
     }
 
@@ -314,19 +304,27 @@ public class SessionServiceTest {
     }
 
     @Test
-    public void didntHappenWithoutReasonThrowsReasonRequired() {
+    public void didntHappenWithoutReasonPersists() {
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
 
-        SessionContract contract = baseContract(SessionStatus.DidntHappen);
+        SessionSaveResult result = service.save(baseContract(SessionStatus.DidntHappen));
 
-        try {
-            service.save(contract);
-            fail("Expected ReasonRequiredException");
-        } catch (ReasonRequiredException e) {
-            assertEquals(ReasonRequiredException.RequiredFor.DidntHappen, e.getRequiredFor());
-        }
-        verify(sessionRepository, never()).save(any(Session.class));
+        verify(sessionRepository, times(1)).save(any(Session.class));
+        assertEquals(SessionStatus.DidntHappen, result.getSession().getStatus());
+        assertNull(result.getSession().getReasonConcept());
+    }
+
+    @Test
+    public void heldWithoutReasonPersists() {
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+
+        SessionSaveResult result = service.save(baseContract(SessionStatus.Held));
+
+        verify(sessionRepository, times(1)).save(any(Session.class));
+        assertEquals(SessionStatus.Held, result.getSession().getStatus());
+        assertNull(result.getSession().getReasonConcept());
     }
 
     @Test
@@ -778,103 +776,6 @@ public class SessionServiceTest {
         assertTrue(record.isVoided());
         assertTrue(encounter.isVoided());
         assertEquals(1, result.getVoidedStaleFollowUps().size());
-    }
-
-    @Test
-    public void heldOnPublicHolidayWithoutReasonThrowsReasonRequiredOnWebPath() {
-        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
-        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
-        markScheduledDateAsPublicHoliday();
-
-        try {
-            service.save(baseContract(SessionStatus.Held));
-            fail("Expected ReasonRequiredException");
-        } catch (ReasonRequiredException e) {
-            assertEquals(ReasonRequiredException.RequiredFor.MarkAnywayHeld, e.getRequiredFor());
-            assertEquals(DayType.public_holiday, e.getDayType());
-        }
-        verify(sessionRepository, never()).save(any(Session.class));
-    }
-
-    @Test
-    public void syncSaveOfHeldOnPublicHolidayWithoutReasonPersists() {
-        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
-        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
-        markScheduledDateAsPublicHoliday();
-
-        SessionSaveResult result = service.saveForSync(baseContract(SessionStatus.Held));
-
-        verify(sessionRepository, times(1)).save(any(Session.class));
-        assertEquals(SessionStatus.Held, result.getSession().getStatus());
-        assertNull(result.getSession().getReasonConcept());
-    }
-
-    @Test
-    public void syncSaveOfDidntHappenWithoutReasonPersists() {
-        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
-        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
-
-        SessionSaveResult result = service.saveForSync(baseContract(SessionStatus.DidntHappen));
-
-        verify(sessionRepository, times(1)).save(any(Session.class));
-        assertEquals(SessionStatus.DidntHappen, result.getSession().getStatus());
-        assertNull(result.getSession().getReasonConcept());
-    }
-
-    @Test
-    public void syncUpdateOfHeldOnPublicHolidayWithoutReasonPersists() {
-        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
-        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
-        markScheduledDateAsPublicHoliday();
-
-        Session existingSession = new Session();
-        existingSession.setUuid("session-uuid");
-        SessionContract contract = baseContract(SessionStatus.Held);
-        contract.setUuid("session-uuid");
-
-        SessionSaveResult result = service.updateForSync(existingSession, contract);
-
-        verify(sessionRepository, times(1)).save(any(Session.class));
-        assertSame(existingSession, result.getSession());
-    }
-
-    @Test
-    public void syncSaveStillRejectsFutureScheduledDate() {
-        SessionContract contract = baseContract(SessionStatus.Held);
-        LocalDate future = LocalDate.now().plusDays(1);
-        contract.setScheduledDate(future);
-
-        try {
-            service.saveForSync(contract);
-            fail("Expected FutureScheduledDateNotAllowedException");
-        } catch (FutureScheduledDateNotAllowedException e) {
-            assertEquals(future, e.getScheduledDate());
-        }
-        verify(sessionRepository, never()).save(any(Session.class));
-    }
-
-    @Test
-    public void syncSaveSkipsCalendarLookupEntirely() {
-        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
-        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
-
-        service.saveForSync(baseContract(SessionStatus.Held));
-
-        verify(calendarRepository, never()).findAllByIsVoidedFalse();
-        verify(calendarDateMarkerRepository, never())
-                .findFirstByCalendarAndMarkerDateAndIsVoidedFalse(any(), any());
-    }
-
-    private void markScheduledDateAsPublicHoliday() {
-        Calendar calendar = new Calendar();
-        calendar.setUuid("calendar-uuid");
-        CalendarDateMarker marker = new CalendarDateMarker();
-        marker.setCalendar(calendar);
-        marker.setMarkerDate(LocalDate.of(2026, 1, 1));
-        marker.setWorking(false);
-        when(calendarRepository.findAllByIsVoidedFalse()).thenReturn(List.of(calendar));
-        when(calendarDateMarkerRepository.findFirstByCalendarAndMarkerDateAndIsVoidedFalse(any(), any()))
-                .thenReturn(marker);
     }
 
     private Individual subjectWithUuid(String uuid) {

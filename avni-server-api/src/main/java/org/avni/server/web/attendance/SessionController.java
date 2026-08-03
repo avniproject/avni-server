@@ -154,9 +154,9 @@ public class SessionController implements RestControllerResourceProcessor<Sessio
         contract.setupUuidIfNeeded();
         Session existing = sessionRepository.findByUuid(contract.getUuid());
         if (existing == null) {
-            sessionService.saveForSync(contract);
+            sessionService.save(contract);
         } else {
-            sessionService.updateForSync(existing, contract);
+            sessionService.update(existing, contract);
         }
     }
 
