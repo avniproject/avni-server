@@ -69,6 +69,7 @@ public class ObservationCreator {
     }
 
     private Concept findConcept(String name, boolean isChildQuestionGroup) {
+        if (!StringUtils.hasText(name)) return null;
         Concept concept = conceptRepository.findByName(name);
         if (concept == null && name.contains("|")) {
             String[] parentChildNameArray = name.split("\\|");

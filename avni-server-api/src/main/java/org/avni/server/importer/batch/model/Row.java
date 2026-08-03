@@ -21,11 +21,18 @@ public class Row extends HashMap<String, String> {
     private final String[] values;
 
     public Row(String[] headers, String[] values) {
-        this.headers = headers;
-        this.values = values;
-        IntStream.range(0, headers.length).forEach(index -> {
-            this.put(headers[index].trim(), values.length > index ? values[index].trim() : "");
-        });
+        // Spreadsheet exports pad the header row with trailing empty columns. A blank header can never be
+        // addressed by name, and header-driven import loops over thousands of them turn quadratic
+        // (avni-product#1897: a header row padded with ~16k commas wedged the background job worker for hours).
+        int[] namedColumns = IntStream.range(0, headers.length)
+                .filter(index -> headers[index] != null && !headers[index].trim().isEmpty())
+                .toArray();
+        this.headers = IntStream.of(namedColumns).mapToObj(index -> headers[index]).toArray(String[]::new);
+        this.values = IntStream.of(namedColumns)
+                .mapToObj(index -> values.length > index ? values[index] : "")
+                .toArray(String[]::new);
+        IntStream.range(0, this.headers.length).forEach(index ->
+                this.put(this.headers[index].trim(), this.values[index].trim()));
     }
 
     private String nullSafeTrim(String s) {

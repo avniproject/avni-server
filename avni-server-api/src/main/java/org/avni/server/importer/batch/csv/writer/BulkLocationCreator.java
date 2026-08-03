@@ -53,14 +53,20 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) throws ValidationException {
         AddressLevel parent = null;
         AddressLevel location = null;
+        boolean hasNonTypeHeaders = false;
         for (String columnHeader : row.getHeaders()) {
             if (isValidLocation(columnHeader, row, locationTypeNames)) {
                 location = createAddressLevel(row, parent, columnHeader, locationTypeNames);
                 parent = location;
-            } //This will get called only when location have extra properties
-            if (location != null && !locationTypeNames.contains(columnHeader)) {
-                updateLocationProperties(row, allErrorMsgs, location);
+            } else if (!locationTypeNames.contains(columnHeader)) {
+                hasNonTypeHeaders = true;
             }
+        }
+        // Property/GPS columns follow the validated type-column prefix, so a single pass with the deepest
+        // resolved location is equivalent to the previous call-per-extra-column - without re-resolving the
+        // row-invariant concept headers once per column (avni-product#1897).
+        if (location != null && hasNonTypeHeaders) {
+            updateLocationProperties(row, allErrorMsgs, location);
         }
     }
 

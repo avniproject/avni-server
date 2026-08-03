@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.model;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class RowTest {
@@ -29,5 +30,27 @@ public class RowTest {
         assertEquals("BB", row.get("B"));
         assertEquals("AA", row.get("A "));
         assertEquals("BB", row.get(" B"));
+    }
+
+    @Test
+    public void dropBlankHeaderColumns() {
+        // avni-product#1897: spreadsheet exports pad the header row with trailing empty columns; they must not
+        // survive into getHeaders(), which header-driven import loops iterate.
+        String[] paddedHeaders = {"A", "B", "", "  ", null, ""};
+        Row row = new Row(paddedHeaders, new String[]{"AA", "BB", "junk", "", "", ""});
+        assertArrayEquals(new String[]{"A", "B"}, row.getHeaders());
+        assertEquals("AA", row.get("A"));
+        assertEquals("BB", row.get("B"));
+        assertEquals("\"AA\",\"BB\"", row.toString());
+    }
+
+    @Test
+    public void dropBlankHeaderColumnsKeepsHeaderValuePairing() {
+        // a blank header mid-row must drop its own value, not shift its neighbour's
+        String[] paddedHeaders = {"A", "", "B"};
+        Row row = new Row(paddedHeaders, new String[]{"AA", "orphan", "BB"});
+        assertArrayEquals(new String[]{"A", "B"}, row.getHeaders());
+        assertEquals("AA", row.get("A"));
+        assertEquals("BB", row.get("B"));
     }
 }
