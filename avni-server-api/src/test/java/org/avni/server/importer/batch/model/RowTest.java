@@ -34,14 +34,19 @@ public class RowTest {
 
     @Test
     public void dropBlankHeaderColumns() {
-        // avni-product#1897: spreadsheet exports pad the header row with trailing empty columns; they must not
-        // survive into getHeaders(), which header-driven import loops iterate.
         String[] paddedHeaders = {"A", "B", "", "  ", null, ""};
         Row row = new Row(paddedHeaders, new String[]{"AA", "BB", "junk", "", "", ""});
         assertArrayEquals(new String[]{"A", "B"}, row.getHeaders());
         assertEquals("AA", row.get("A"));
         assertEquals("BB", row.get("B"));
-        assertEquals("\"AA\",\"BB\"", row.toString());
+        assertEquals("\"AA\",\"BB\",\"junk\",\"\",\"\",\"\"", row.toString());
+    }
+
+    @Test
+    public void allBlankHeaderRowYieldsNoHeadersButStillSerialises() {
+        Row row = new Row(new String[]{"", "  "}, new String[]{"v1", "v2"});
+        assertArrayEquals(new String[]{}, row.getHeaders());
+        assertEquals("\"v1\",\"v2\"", row.toString());
     }
 
     @Test

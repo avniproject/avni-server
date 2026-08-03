@@ -19,17 +19,20 @@ public class Row extends HashMap<String, String> {
     public static final Pattern FALSE_VALUE = Pattern.compile("n|no|false|0", Pattern.CASE_INSENSITIVE);
     private final String[] headers;
     private final String[] values;
+    private final String[] originalHeaders;
+    private final String[] originalValues;
 
     public Row(String[] headers, String[] values) {
-        // Spreadsheet exports pad the header row with trailing empty columns. A blank header can never be
-        // addressed by name, and header-driven import loops over thousands of them turn quadratic
-        // (avni-product#1897: a header row padded with ~16k commas wedged the background job worker for hours).
+        // Drop blank header columns (spreadsheet export padding) - import loops over them turn quadratic
+        // (avni-product#1897). Raw arrays are kept so toString() stays aligned with the error file's raw header line.
+        this.originalHeaders = headers;
+        this.originalValues = values;
         int[] namedColumns = IntStream.range(0, headers.length)
                 .filter(index -> headers[index] != null && !headers[index].trim().isEmpty())
                 .toArray();
         this.headers = IntStream.of(namedColumns).mapToObj(index -> headers[index]).toArray(String[]::new);
         this.values = IntStream.of(namedColumns)
-                .mapToObj(index -> values.length > index ? values[index] : "")
+                .mapToObj(index -> values.length > index && values[index] != null ? values[index] : "")
                 .toArray(String[]::new);
         IntStream.range(0, this.headers.length).forEach(index ->
                 this.put(this.headers[index].trim(), this.values[index].trim()));
@@ -72,10 +75,10 @@ public class Row extends HashMap<String, String> {
 
     @Override
     public String toString() {
-        return IntStream.range(0, headers.length)
-                .mapToObj(index -> index < values.length ? format("\"%s\"", values[index]) : "\"\"")
+        return IntStream.range(0, originalHeaders.length)
+                .mapToObj(index -> index < originalValues.length ? format("\"%s\"", originalValues[index]) : "\"\"")
                 .reduce((c1, c2) -> format("%s,%s", c1, c2))
-                .get();
+                .orElse("");
     }
 
     public Boolean getBool(String header) {

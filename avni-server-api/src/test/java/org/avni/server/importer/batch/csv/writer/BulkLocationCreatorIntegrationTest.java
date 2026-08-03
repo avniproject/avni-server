@@ -285,11 +285,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void headerRowPaddedWithTrailingEmptyColumnsImportsNormally() throws ValidationException {
-        // avni-product#1897: a spreadsheet-exported file whose header row carried ~16k trailing commas turned the
-        // per-row import loop quadratic (one updateLocationProperties per empty header, each re-resolving every
-        // empty header via conceptRepository.findByName) and wedged the background job worker for hours. With
-        // blank headers dropped at Row construction and property resolution hoisted to once per row, a padded
-        // file must behave exactly like a clean one. If this regresses, the padding below makes the test hang.
+        // avni-product#1897: a padded header row must behave like a clean one; a regression makes this test hang
         int padding = 2000;
         String[] cleanHeaders = header("State", "District", "Block", "GPS coordinates");
         String[] cleanCells = dataRow("Bihar", "Vaishali", "Mahua", "23.45,43.85");

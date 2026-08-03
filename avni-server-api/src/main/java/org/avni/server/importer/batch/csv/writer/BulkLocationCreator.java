@@ -62,9 +62,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
                 hasNonTypeHeaders = true;
             }
         }
-        // Property/GPS columns follow the validated type-column prefix, so a single pass with the deepest
-        // resolved location is equivalent to the previous call-per-extra-column - without re-resolving the
-        // row-invariant concept headers once per column (avni-product#1897).
+        // Single pass with the deepest resolved location instead of one call per non-type column (avni-product#1897)
         if (location != null && hasNonTypeHeaders) {
             updateLocationProperties(row, allErrorMsgs, location);
         }
