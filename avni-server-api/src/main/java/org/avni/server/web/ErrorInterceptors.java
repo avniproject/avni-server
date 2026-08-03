@@ -7,7 +7,6 @@ import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.rest.RestControllerErrorResponse;
 import org.avni.server.service.attendance.AttendanceConfigIncompleteException;
-import org.avni.server.service.attendance.FutureScheduledDateNotAllowedException;
 import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.BugsnagReporter;
@@ -102,14 +101,6 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("error", "AttendanceConfigIncomplete");
         body.put("incompleteTypes", e.getIncompleteTypes());
-        return ResponseEntity.badRequest().body(body);
-    }
-
-    @ExceptionHandler(value = {FutureScheduledDateNotAllowedException.class})
-    public ResponseEntity<Map<String, Object>> futureScheduledDateNotAllowed(FutureScheduledDateNotAllowedException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("error", "FutureScheduledDateNotAllowed");
-        body.put("scheduledDate", e.getScheduledDate());
         return ResponseEntity.badRequest().body(body);
     }
 

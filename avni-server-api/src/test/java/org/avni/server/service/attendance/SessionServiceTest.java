@@ -289,16 +289,31 @@ public class SessionServiceTest {
     }
 
     @Test
-    public void rejectsFutureScheduledDate() {
+    public void futureScheduledDatePersists() {
+        // Both UIs already prevent picking a future date, so the only way one arrives is a device
+        // whose clock is wrong -- and rejecting it blocked the whole upload queue with no way out.
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
         SessionContract contract = baseContract(SessionStatus.Held);
         LocalDate future = LocalDate.now().plusDays(1);
         contract.setScheduledDate(future);
 
+        SessionSaveResult result = service.save(contract);
+
+        verify(sessionRepository, times(1)).save(any(Session.class));
+        assertEquals(future, result.getSession().getScheduledDate());
+    }
+
+    @Test
+    public void missingScheduledDateThrowsBeforeAnyPersist() {
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setScheduledDate(null);
+
         try {
             service.save(contract);
-            fail("Expected FutureScheduledDateNotAllowedException");
-        } catch (FutureScheduledDateNotAllowedException e) {
-            assertEquals(future, e.getScheduledDate());
+            fail("Expected BadRequestError");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().contains("scheduledDate"));
         }
         verify(sessionRepository, never()).save(any(Session.class));
     }

@@ -129,7 +129,7 @@ public class SessionService implements ScopeAwareService<Session> {
     }
 
     private SessionSaveResult saveInternal(SessionContract contract, Session preloaded) {
-        rejectFutureDate(contract.getScheduledDate());
+        requireScheduledDate(contract.getScheduledDate());
 
         Session session = preloaded != null ? preloaded
                 : (contract.getUuid() != null ? sessionRepository.findByUuid(contract.getUuid()) : null);
@@ -185,12 +185,9 @@ public class SessionService implements ScopeAwareService<Session> {
         return new SessionSaveResult(saved, persistedRoster, autoCreatedFollowUps, voidedStaleFollowUps, skippedFollowUps, warnings);
     }
 
-    private void rejectFutureDate(LocalDate scheduledDate) {
+    private void requireScheduledDate(LocalDate scheduledDate) {
         if (scheduledDate == null) {
             throw new BadRequestError("scheduledDate is required");
-        }
-        if (scheduledDate.isAfter(LocalDate.now())) {
-            throw new FutureScheduledDateNotAllowedException(scheduledDate);
         }
     }
 
