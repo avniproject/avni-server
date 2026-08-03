@@ -70,5 +70,8 @@ public class RowTest {
         // cleared header: blank header over real values - reported by original column number
         Row cleared = new Row(new String[]{"A", "", "B"}, new String[]{"AA", "orphan", "BB"});
         assertEquals(List.of(2), cleared.getOrphanedValueColumns());
+        // data row longer than the header row: the extra value has no header at all
+        Row extraValues = new Row(new String[]{"A", "B"}, new String[]{"AA", "BB", "CC"});
+        assertEquals(List.of(3), extraValues.getOrphanedValueColumns());
     }
 }

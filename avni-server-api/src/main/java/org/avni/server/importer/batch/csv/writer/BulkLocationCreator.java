@@ -8,7 +8,6 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.Concept;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
@@ -23,7 +22,6 @@ import org.avni.server.web.request.LocationContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,6 +37,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public static final String LocationTypesHeaderError = "Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.";
     public static final String UnknownHeadersErrorMessage = "Unknown headers included in file. Please refer to sample file for valid list of headers.";
     public static final String ParentMissingOfLocation = "Parent missing for location provided";
+    public static final String PropertyColumnBeforeLocationColumns = "Property column '%s' must come after the location columns";
     public static final String NoLocationProvided = "No location provided";
 
     @Autowired
@@ -51,7 +50,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         this.formService = formService;
     }
 
-    public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames, Set<Concept> conceptsInHeader) throws ValidationException {
+    public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) throws ValidationException {
         AddressLevel parent = null;
         AddressLevel location = null;
         boolean hasPropertyColumn = false;
@@ -59,14 +58,17 @@ public class BulkLocationCreator extends BulkLocationModifier {
             if (isValidLocation(columnHeader, row, locationTypeNames)) {
                 location = createAddressLevel(row, parent, columnHeader, locationTypeNames);
                 parent = location;
-            } else if (location != null && !locationTypeNames.contains(columnHeader)) {
+            } else if (!locationTypeNames.contains(columnHeader)) {
+                if (location == null) {
+                    allErrorMsgs.add(String.format(PropertyColumnBeforeLocationColumns, columnHeader));
+                    throw new RuntimeException(String.join(", ", allErrorMsgs));
+                }
                 hasPropertyColumn = true;
             }
         }
-        // Single pass with the deepest resolved location instead of one call per non-type column; property
-        // columns before the first resolved location column stay ignored, as before (avni-product#1897)
+        // Single pass with the deepest resolved location instead of one call per non-type column (avni-product#1897)
         if (location != null && hasPropertyColumn) {
-            updateLocationProperties(row, allErrorMsgs, location, conceptsInHeader);
+            updateLocationProperties(row, allErrorMsgs, location);
         }
     }
 
@@ -146,13 +148,12 @@ public class BulkLocationCreator extends BulkLocationModifier {
         try {
             List<String> allErrorMsgs = new ArrayList<>();
             List<String> hierarchicalLocationTypeNames = validateHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
-            Set<Concept> conceptsInHeader = observationCreator.getConceptsInHeader(headerCreator, null, rows.get(0).getHeaders());
             for (Row row : rows) {
                 if (skipRow(row, hierarchicalLocationTypeNames)) {
                     continue;
                 }
                 validateRow(row, hierarchicalLocationTypeNames, allErrorMsgs);
-                createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames, conceptsInHeader);
+                createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames);
             }
         } catch (ValidationException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();

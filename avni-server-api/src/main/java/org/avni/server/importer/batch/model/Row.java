@@ -36,9 +36,10 @@ public class Row extends HashMap<String, String> {
                 .toArray(String[]::new);
         IntStream.range(0, this.headers.length).forEach(index ->
                 this.put(this.headers[index].trim(), sanitisedValues[index].trim()));
-        // A value under a blank header is a cleared header, not padding - the reader rejects such rows
-        this.orphanedValueColumns = IntStream.range(0, Math.min(headers.length, values.length))
-                .filter(index -> !StringUtils.hasText(headers[index]) && StringUtils.hasText(values[index]))
+        // A value under a blank or missing header is a cleared header, not padding - the reader rejects such rows
+        this.orphanedValueColumns = IntStream.range(0, values.length)
+                .filter(index -> StringUtils.hasText(values[index])
+                        && (index >= headers.length || !StringUtils.hasText(headers[index])))
                 .mapToObj(index -> index + 1)
                 .collect(Collectors.toList());
     }

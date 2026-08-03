@@ -26,6 +26,7 @@ public class ErrorFileWriterListener {
     private final BugsnagReporter bugsnagReporter;
     @Value("#{jobParameters['uuid']}")
     private String uuid;
+    private boolean readSkipReported;
 
     public ErrorFileWriterListener(BulkUploadS3Service bulkUploadS3Service, BugsnagReporter bugsnagReporter) {
         this.bulkUploadS3Service = bulkUploadS3Service;
@@ -42,7 +43,12 @@ public class ErrorFileWriterListener {
         String line = t instanceof FlatFileParseException ? ((FlatFileParseException) t).getInput() : "";
         String message = t.getCause() != null ? t.getCause().getMessage() : t.getMessage();
         try {
-            bugsnagReporter.logAndReportToBugsnag(t);
+            // a read-side rejection is usually a whole-file condition (e.g. a cleared header hits every
+            // row) - one report per step execution is enough; the listener is @StepScope
+            if (!readSkipReported) {
+                bugsnagReporter.logAndReportToBugsnag(t);
+                readSkipReported = true;
+            }
             FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
             fileWriter.append(line);
             fileWriter.append(",\"");
