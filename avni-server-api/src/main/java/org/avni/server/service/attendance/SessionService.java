@@ -106,12 +106,12 @@ public class SessionService implements ScopeAwareService<Session> {
 
     @Transactional
     public SessionSaveResult save(SessionContract contract) {
-        return saveInternal(contract, null);
+        return saveInternal(contract, null, ReasonValidation.ENFORCE);
     }
 
     @Transactional
     public SessionSaveResult update(Session existing, SessionContract contract) {
-        return saveInternal(contract, existing);
+        return saveInternal(contract, existing, ReasonValidation.ENFORCE);
     }
 
     @Transactional
@@ -140,7 +140,7 @@ public class SessionService implements ScopeAwareService<Session> {
                 .collect(Collectors.toMap(Encounter::getUuid, e -> e));
     }
 
-    private SessionSaveResult saveInternal(SessionContract contract, Session preloaded) {
+    private SessionSaveResult saveInternal(SessionContract contract, Session preloaded, ReasonValidation reasonValidation) {
         rejectFutureDate(contract.getScheduledDate());
 
         Session session = preloaded != null ? preloaded
@@ -162,8 +162,13 @@ public class SessionService implements ScopeAwareService<Session> {
         Concept sessionReasonConcept = contract.getReasonConceptUUID() == null ? null
                 : conceptRepository.findByUuid(contract.getReasonConceptUUID());
 
-        DayType dayType = resolveDayType(groupSubject, contract.getScheduledDate());
-        if (!contract.isVoided()) {
+        // Sync uploads skip this: a device-only Session the server rejects can never be corrected once it
+        // is past the client's edit lock, and one such record blocks the user's entire upload queue
+        // (avniproject/avni-server#1035, FD-8271). Reports surface the accepted rows instead — avni-etl's
+        // expected_sessions flags them as calendar_day_type='mark_anyway' with a null reason_concept_uuid.
+        // Resolving the day type is only needed for this check, so sync also avoids the calendar lookups.
+        if (reasonValidation == ReasonValidation.ENFORCE && !contract.isVoided()) {
+            DayType dayType = resolveDayType(groupSubject, contract.getScheduledDate());
             validateSessionReason(contract.getStatus(), dayType, contract.getReasonConceptUUID());
         }
 
@@ -454,5 +459,20 @@ public class SessionService implements ScopeAwareService<Session> {
         if (last == null) return first;
         if (first == null) return last;
         return first + " " + last;
+    }
+
+    private enum ReasonValidation {
+        ENFORCE,
+        SKIP
+    }
+
+    @Transactional
+    public SessionSaveResult saveForSync(SessionContract contract) {
+        return saveInternal(contract, null, ReasonValidation.SKIP);
+    }
+
+    @Transactional
+    public SessionSaveResult updateForSync(Session existing, SessionContract contract) {
+        return saveInternal(contract, existing, ReasonValidation.SKIP);
     }
 }
