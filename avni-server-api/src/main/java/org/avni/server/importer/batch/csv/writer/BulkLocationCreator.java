@@ -22,7 +22,6 @@ import org.avni.server.web.request.LocationContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +37,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public static final String LocationTypesHeaderError = "Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.";
     public static final String UnknownHeadersErrorMessage = "Unknown headers included in file. Please refer to sample file for valid list of headers.";
     public static final String ParentMissingOfLocation = "Parent missing for location provided";
+    public static final String PropertyColumnBeforeLocationColumns = "Property column '%s' must come after the location columns";
     public static final String NoLocationProvided = "No location provided";
 
     @Autowired
@@ -53,14 +53,22 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) throws ValidationException {
         AddressLevel parent = null;
         AddressLevel location = null;
+        boolean hasPropertyColumn = false;
         for (String columnHeader : row.getHeaders()) {
             if (isValidLocation(columnHeader, row, locationTypeNames)) {
                 location = createAddressLevel(row, parent, columnHeader, locationTypeNames);
                 parent = location;
-            } //This will get called only when location have extra properties
-            if (location != null && !locationTypeNames.contains(columnHeader)) {
-                updateLocationProperties(row, allErrorMsgs, location);
+            } else if (!locationTypeNames.contains(columnHeader)) {
+                if (location == null) {
+                    allErrorMsgs.add(String.format(PropertyColumnBeforeLocationColumns, columnHeader));
+                    throw new RuntimeException(String.join(", ", allErrorMsgs));
+                }
+                hasPropertyColumn = true;
             }
+        }
+        // Single pass with the deepest resolved location instead of one call per non-type column (avni-product#1897)
+        if (location != null && hasPropertyColumn) {
+            updateLocationProperties(row, allErrorMsgs, location);
         }
     }
 
@@ -90,7 +98,6 @@ public class BulkLocationCreator extends BulkLocationModifier {
     }
 
     private void checkIfHeaderRowHasUnknownHeaders(List<String> additionalHeaders, List<String> allErrorMsgs) {
-        additionalHeaders.removeIf(StringUtils::isEmpty);
         if (!additionalHeaders.isEmpty()) {
             List<String> locationPropertyNames = formService.getFormElementNamesForLocationTypeForms()
                     .stream().map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList());

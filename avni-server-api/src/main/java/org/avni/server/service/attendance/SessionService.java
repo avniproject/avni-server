@@ -9,9 +9,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.dao.attendance.SessionRepository;
-import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
 import org.avni.server.common.EntityHelper;
-import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
@@ -25,14 +23,10 @@ import org.avni.server.domain.attendance.AttendanceStatus;
 import org.avni.server.domain.attendance.AttendanceType;
 import org.avni.server.domain.attendance.Session;
 import org.avni.server.domain.attendance.SessionStatus;
-import org.avni.server.domain.calendar.Calendar;
-import org.avni.server.domain.calendar.DayType;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.ScopeAwareService;
-import org.avni.server.service.calendar.CalendarsResolver;
-import org.avni.server.service.calendar.DayTypeResolver;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.attendance.AttendanceRecordContract;
 import org.avni.server.web.request.attendance.SessionContract;
@@ -60,8 +54,6 @@ public class SessionService implements ScopeAwareService<Session> {
     private final IndividualRepository individualRepository;
     private final AttendanceTypeRepository attendanceTypeRepository;
     private final ConceptRepository conceptRepository;
-    private final CalendarRepository calendarRepository;
-    private final CalendarDateMarkerRepository calendarDateMarkerRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final EncounterRepository encounterRepository;
     private final EncounterService encounterService;
@@ -72,8 +64,6 @@ public class SessionService implements ScopeAwareService<Session> {
                           IndividualRepository individualRepository,
                           AttendanceTypeRepository attendanceTypeRepository,
                           ConceptRepository conceptRepository,
-                          CalendarRepository calendarRepository,
-                          CalendarDateMarkerRepository calendarDateMarkerRepository,
                           EncounterTypeRepository encounterTypeRepository,
                           EncounterRepository encounterRepository,
                           EncounterService encounterService,
@@ -83,8 +73,6 @@ public class SessionService implements ScopeAwareService<Session> {
         this.individualRepository = individualRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
         this.conceptRepository = conceptRepository;
-        this.calendarRepository = calendarRepository;
-        this.calendarDateMarkerRepository = calendarDateMarkerRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
         this.encounterService = encounterService;
@@ -141,7 +129,7 @@ public class SessionService implements ScopeAwareService<Session> {
     }
 
     private SessionSaveResult saveInternal(SessionContract contract, Session preloaded) {
-        rejectFutureDate(contract.getScheduledDate());
+        requireScheduledDate(contract.getScheduledDate());
 
         Session session = preloaded != null ? preloaded
                 : (contract.getUuid() != null ? sessionRepository.findByUuid(contract.getUuid()) : null);
@@ -161,11 +149,6 @@ public class SessionService implements ScopeAwareService<Session> {
         }
         Concept sessionReasonConcept = contract.getReasonConceptUUID() == null ? null
                 : conceptRepository.findByUuid(contract.getReasonConceptUUID());
-
-        DayType dayType = resolveDayType(groupSubject, contract.getScheduledDate());
-        if (!contract.isVoided()) {
-            validateSessionReason(contract.getStatus(), dayType, contract.getReasonConceptUUID());
-        }
 
         Map<String, AttendanceRecord> existingRecordsBySubjectUuid = creating
                 ? new HashMap<>()
@@ -202,28 +185,9 @@ public class SessionService implements ScopeAwareService<Session> {
         return new SessionSaveResult(saved, persistedRoster, autoCreatedFollowUps, voidedStaleFollowUps, skippedFollowUps, warnings);
     }
 
-    private void rejectFutureDate(LocalDate scheduledDate) {
+    private void requireScheduledDate(LocalDate scheduledDate) {
         if (scheduledDate == null) {
             throw new BadRequestError("scheduledDate is required");
-        }
-        if (scheduledDate.isAfter(LocalDate.now())) {
-            throw new FutureScheduledDateNotAllowedException(scheduledDate);
-        }
-    }
-
-    private DayType resolveDayType(Individual groupSubject, LocalDate date) {
-        Calendar calendar = CalendarsResolver.forSubject(groupSubject, calendarRepository);
-        return DayTypeResolver.resolve(calendar, date, calendarDateMarkerRepository);
-    }
-
-    private void validateSessionReason(SessionStatus status, DayType dayType, String reasonUuid) {
-        if (status == SessionStatus.DidntHappen && reasonUuid == null) {
-            throw new ReasonRequiredException(dayType, ReasonRequiredException.RequiredFor.DidntHappen);
-        }
-        if (status == SessionStatus.Held
-                && (dayType == DayType.public_holiday || dayType == DayType.weekly_off)
-                && reasonUuid == null) {
-            throw new ReasonRequiredException(dayType, ReasonRequiredException.RequiredFor.MarkAnywayHeld);
         }
     }
 
@@ -455,4 +419,5 @@ public class SessionService implements ScopeAwareService<Session> {
         if (first == null) return last;
         return first + " " + last;
     }
+
 }

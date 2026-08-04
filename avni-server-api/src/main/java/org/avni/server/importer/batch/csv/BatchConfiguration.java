@@ -15,11 +15,9 @@ import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.batch.item.file.transform.FlatFileFormatException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +30,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 import java.util.Arrays;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public class BatchConfiguration {
         int numberOfLinesToSkip = this.getNumberOfLinesToSkip(new StringReader(new String(bytes)));
         DefaultLineMapper<Row> lineMapper = new DefaultLineMapper<>();
         lineMapper.setLineTokenizer(new DelimitedLineTokenizer());
-        lineMapper.setFieldSetMapper(fieldSet -> new Row(headers, fieldSet.getValues()));
+        lineMapper.setFieldSetMapper(fieldSet -> mapRow(headers, fieldSet.getValues()));
 
         return new FlatFileItemReaderBuilder<Row>()
                 .name("csvFileItemReader")
@@ -72,6 +71,15 @@ public class BatchConfiguration {
                 .linesToSkip(numberOfLinesToSkip)
                 .lineMapper(lineMapper)
                 .build();
+    }
+
+    static Row mapRow(String[] headers, String[] values) {
+        Row row = new Row(headers, values);
+        if (!row.getOrphanedValueColumns().isEmpty()) {
+            String columns = row.getOrphanedValueColumns().stream().map(String::valueOf).collect(Collectors.joining(", "));
+            throw new RuntimeException(String.format("Column(s) %s have values but no header", columns));
+        }
+        return row;
     }
 
     @Bean
@@ -93,11 +101,7 @@ public class BatchConfiguration {
                 .reader(csvFileItemReader)
                 .writer(csvFileItemWriter)
                 .faultTolerant()
-                .skip(Exception.class)
-                .skip(RuntimeException.class)
-                .noSkip(FileNotFoundException.class)
-                .noSkip(FlatFileParseException.class)
-                .noSkip(FlatFileFormatException.class)
+                // skipPolicy wins over skip()/noSkip() classes: every failing row is skipped into the error file
                 .skipPolicy((error, count) -> true)
                 .listener(errorFileWriterListener)
                 .build();

@@ -7,7 +7,6 @@ import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.util.S;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,8 +48,6 @@ public class TxnDataHeaderValidator {
     }
 
     private static void checkForUnknownHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, Object mode) {
-        ArrayList<String> workingHeaderList = new ArrayList<>(headerList);
-        workingHeaderList.removeIf(header -> !StringUtils.hasText(header));
         HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
         Sets.SetView<String> unknownHeaders = Sets.difference(new HashSet<>(headerList), expectedHeaders);
         Set<String> filteredUnknownHeaders = unknownHeaders.stream()

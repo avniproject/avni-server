@@ -8,8 +8,6 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceRecordRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.dao.attendance.SessionRepository;
-import org.avni.server.dao.calendar.CalendarDateMarkerRepository;
-import org.avni.server.dao.calendar.CalendarRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
@@ -65,10 +63,6 @@ public class SessionServiceTest {
     @Mock
     private ConceptRepository conceptRepository;
     @Mock
-    private CalendarRepository calendarRepository;
-    @Mock
-    private CalendarDateMarkerRepository calendarDateMarkerRepository;
-    @Mock
     private EncounterTypeRepository encounterTypeRepository;
     @Mock
     private EncounterRepository encounterRepository;
@@ -86,7 +80,7 @@ public class SessionServiceTest {
     public void setUp() {
         initMocks(this);
         service = new SessionService(sessionRepository, attendanceRecordRepository, individualRepository,
-                attendanceTypeRepository, conceptRepository, calendarRepository, calendarDateMarkerRepository,
+                attendanceTypeRepository, conceptRepository,
                 encounterTypeRepository, encounterRepository, encounterService, subjectTypeRepository);
 
         User user = new User();
@@ -102,7 +96,6 @@ public class SessionServiceTest {
 
         when(sessionRepository.save(any(Session.class))).thenAnswer(inv -> inv.getArgument(0));
         when(attendanceRecordRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
-        when(calendarRepository.findAllByIsVoidedFalse()).thenReturn(Collections.emptyList());
         when(attendanceRecordRepository.findBySessionAndIsVoidedFalse(any())).thenReturn(Collections.emptyList());
     }
 
@@ -296,34 +289,57 @@ public class SessionServiceTest {
     }
 
     @Test
-    public void rejectsFutureScheduledDate() {
+    public void futureScheduledDatePersists() {
+        // Both UIs already prevent picking a future date, so the only way one arrives is a device
+        // whose clock is wrong -- and rejecting it blocked the whole upload queue with no way out.
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
         SessionContract contract = baseContract(SessionStatus.Held);
         LocalDate future = LocalDate.now().plusDays(1);
         contract.setScheduledDate(future);
 
+        SessionSaveResult result = service.save(contract);
+
+        verify(sessionRepository, times(1)).save(any(Session.class));
+        assertEquals(future, result.getSession().getScheduledDate());
+    }
+
+    @Test
+    public void missingScheduledDateThrowsBeforeAnyPersist() {
+        SessionContract contract = baseContract(SessionStatus.Held);
+        contract.setScheduledDate(null);
+
         try {
             service.save(contract);
-            fail("Expected FutureScheduledDateNotAllowedException");
-        } catch (FutureScheduledDateNotAllowedException e) {
-            assertEquals(future, e.getScheduledDate());
+            fail("Expected BadRequestError");
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage().contains("scheduledDate"));
         }
         verify(sessionRepository, never()).save(any(Session.class));
     }
 
     @Test
-    public void didntHappenWithoutReasonThrowsReasonRequired() {
+    public void didntHappenWithoutReasonPersists() {
         when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
         when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
 
-        SessionContract contract = baseContract(SessionStatus.DidntHappen);
+        SessionSaveResult result = service.save(baseContract(SessionStatus.DidntHappen));
 
-        try {
-            service.save(contract);
-            fail("Expected ReasonRequiredException");
-        } catch (ReasonRequiredException e) {
-            assertEquals(ReasonRequiredException.RequiredFor.DidntHappen, e.getRequiredFor());
-        }
-        verify(sessionRepository, never()).save(any(Session.class));
+        verify(sessionRepository, times(1)).save(any(Session.class));
+        assertEquals(SessionStatus.DidntHappen, result.getSession().getStatus());
+        assertNull(result.getSession().getReasonConcept());
+    }
+
+    @Test
+    public void heldWithoutReasonPersists() {
+        when(individualRepository.findByUuid("group-uuid")).thenReturn(groupSubject);
+        when(attendanceTypeRepository.findByUuid("att-type-uuid")).thenReturn(attendanceType);
+
+        SessionSaveResult result = service.save(baseContract(SessionStatus.Held));
+
+        verify(sessionRepository, times(1)).save(any(Session.class));
+        assertEquals(SessionStatus.Held, result.getSession().getStatus());
+        assertNull(result.getSession().getReasonConcept());
     }
 
     @Test
