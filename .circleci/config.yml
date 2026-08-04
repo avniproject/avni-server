@@ -59,7 +59,9 @@ jobs:
     docker:
       - image: cimg/openjdk:21.0
 
-      - image: circleci/postgres:12.7
+      # Match prod's PostgreSQL major (16) so CI validates the engine we actually run -
+      # planner/RLS behaviour differs across majors (see #1008/#1029/#1030).
+      - image: cimg/postgres:16.4
         environment:
           - POSTGRES_USER: openchs
           - POSTGRES_DB: openchs_test

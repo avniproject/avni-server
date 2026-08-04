@@ -282,4 +282,46 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
                 dataRow("  state 1", "Example: distr 1 ", "Example: blo 1", " Ex. 23.45,43.85 "));
     }
+
+    @Test(timeout = 60_000)
+    public void headerRowPaddedWithTrailingEmptyColumnsImportsNormally() throws ValidationException {
+        // avni-product#1897: a padded header row must behave like a clean one; a regression makes this test hang
+        int padding = 2000;
+        String[] cleanHeaders = header("State", "District", "Block", "GPS coordinates");
+        String[] cleanCells = dataRow("Bihar", "Vaishali", "Mahua", "23.45,43.85");
+        String[] paddedHeaders = Arrays.copyOf(cleanHeaders, cleanHeaders.length + padding);
+        String[] paddedCells = Arrays.copyOf(cleanCells, cleanCells.length + padding);
+        Arrays.fill(paddedHeaders, cleanHeaders.length, paddedHeaders.length, "");
+        Arrays.fill(paddedCells, cleanCells.length, paddedCells.length, "");
+
+        success(paddedHeaders, paddedCells,
+                newLocationsCreated(3),
+                lineageExists("Bihar", "Vaishali", "Mahua"));
+    }
+
+    @Test
+    public void propertyColumnBeforeTypeColumnsIsRejected() {
+        // previously the property value was silently dropped; now the row errors
+        failure(header("GPS coordinates", "State"),
+                dataRow("23.45,43.85", "Bihar"),
+                String.format(BulkLocationCreator.PropertyColumnBeforeLocationColumns, "GPS coordinates"));
+    }
+
+    @Test
+    public void propertyColumnBetweenTypeColumnsBindsToTheRowsFinalLocation() throws ValidationException {
+        // sub-prefix header rows (shorter than the hierarchy) skip the prefix-order check; a property
+        // column between type columns binds to the row's final location - the decided behaviour
+        AddressLevelType village = new AddressLevelTypeBuilder().name("Village").level(1d).withUuid(UUID.randomUUID()).build();
+        testDataSetupService.saveLocationTypes(Collections.singletonList(village));
+        hierarchy = String.join(".", locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg().keySet());
+
+        success(header("State", "GPS coordinates", "District"),
+                dataRow("Bihar", "23.45,43.85", "Vaishali"),
+                newLocationsCreated(2),
+                lineageExists("Bihar", "Vaishali"));
+        AddressLevel vaishali = locationRepository.findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse("Vaishali", "District").get(0);
+        assertNotNull(vaishali.getGpsCoordinates());
+        AddressLevel bihar = locationRepository.findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse("Bihar", "State").get(0);
+        assertNull(bihar.getGpsCoordinates());
+    }
 }

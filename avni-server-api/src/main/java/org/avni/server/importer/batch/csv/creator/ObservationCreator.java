@@ -81,8 +81,16 @@ public class ObservationCreator {
     public ObservationCollection getObservations(Row row,
                                                  HeaderCreator headers,
                                                  List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) throws ValidationException {
+        return getObservations(row, headers, errorMsgs, formType, oldObservations, formMapping,
+                getConceptsInHeader(headers, formMapping, row.getHeaders()));
+    }
+
+    // conceptsInHeader is row-invariant: resolve it once per file and pass it in (avni-product#1897)
+    public ObservationCollection getObservations(Row row,
+                                                 HeaderCreator headers,
+                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, Set<Concept> conceptsInHeader) throws ValidationException {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType,
-                oldObservations, formMapping, row.getHeaders(), false);
+                oldObservations, formMapping, conceptsInHeader, false);
         ValidationUtil.handleErrors(errorMsgs);
         return observationCollection;
     }
@@ -98,9 +106,8 @@ public class ObservationCreator {
         return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders, boolean performMandatoryCheck) {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, Set<Concept> conceptsInHeader, boolean performMandatoryCheck) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType, formMapping);
             String rowValue = getRowValue(formElement, row, null);
