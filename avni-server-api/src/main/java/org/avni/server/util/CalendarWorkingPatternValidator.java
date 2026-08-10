@@ -51,9 +51,18 @@ public final class CalendarWorkingPatternValidator {
         throw new BadRequestError("workingPattern.%s must be 'all', 'none', or an array of ints 1-5", day);
     }
 
+    // intValue() truncates, so a fractional shift would be accepted here as its floor and then stored
+    // verbatim. Every consumer matches the stored value exactly -- avni-etl's `@> to_jsonb(occurrence)`
+    // and the client's _.includes -- so 2.5 would silently mean "no occurrence matches" rather than the
+    // 2 this validator saw. Reject it here; nothing downstream can arbitrate it.
     private static int toShiftInt(String day, Object element) {
         if (element instanceof Number) {
-            return ((Number) element).intValue();
+            Number number = (Number) element;
+            int shift = number.intValue();
+            if (number.doubleValue() != (double) shift) {
+                throw new BadRequestError("workingPattern.%s shift values must be whole numbers, got %s", day, element);
+            }
+            return shift;
         }
         throw new BadRequestError("workingPattern.%s shift values must be numeric, got %s", day, element);
     }
