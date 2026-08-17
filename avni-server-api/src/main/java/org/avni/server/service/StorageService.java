@@ -204,7 +204,12 @@ public abstract class StorageService implements S3Service {
                 return new ByteArrayInputStream(new byte[]{});
             }
         }
-        return s3Client.getObject(bucketName, s3Key).getObjectContent();
+        try {
+            return s3Client.getObject(bucketName, s3Key).getObjectContent();
+        } catch (AmazonS3Exception e) {
+            logS3Error("getObjectContent", s3Key, e);
+            throw e;
+        }
     }
 
     // GCS's S3-interop endpoint often returns errors the SDK can't parse into errorCode (bare 403, null Request ID);
@@ -312,7 +317,11 @@ public abstract class StorageService implements S3Service {
         if (deleteMetadata) {
             this.deleteDirectory(mediaDirectory);
         } else {
-            List<String> metadataDirs = Arrays.asList("icons/", String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR));
+            List<String> metadataDirs = Arrays.asList(
+                    "icons/",
+                    String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR),
+                    String.format("%s/", CustomCardConfigService.CUSTOM_CARD_CONFIGS_SUBDIR),
+                    String.format("%s/", MediaFolder.MetaData.label));
             String[] allKeys = getAllKeysWithPrefix(mediaDirectory);
             String[] txKeys = Arrays.stream(allKeys)
                     .filter(key -> metadataDirs.stream().noneMatch(key::contains))
