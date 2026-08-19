@@ -147,36 +147,6 @@ endif
 		--exclude-table-data='scheduled_job_run' \
 		--exclude-table-data='qrtz_*'
 
-dump-multiple-schemas:
-ifndef hosting
-	@echo "Provde the hosting variable"
-	exit 1
-endif
-	pg_dump -h localhost -p 5433 \
-		--dbname=openchs \
-		--username=openchs \
-		--schema=public --schema=rwb \
-		--file=$(HOME)/projects/avni/avni-db-dumps/$(hosting).sql \
-		--verbose --schema=public --host=localhost \
-		--exclude-table-data=audit \
-		--exclude-table-data='public.sync_telemetry' \
-		--exclude-table-data='rule_failure_log' \
-		--exclude-table-data='batch_*' \
-		--exclude-table-data='scheduled_job_run' \
-		--exclude-table-data='qrtz_*'
-		--exclude-table='public.individual_copy' \
-		--exclude-table='public.program_enrolment_copy' \
-		--exclude-table='public.encounter_copy' \
-		--exclude-table='public.program_encounter_copy' \
-		--exclude-table='public.individual_copy_ck' \
-		--exclude-table='public.program_enrolment_ck' \
-		--exclude-table='public.encounter_ck' \
-		--exclude-table='public.program_encounter_ck' \
-		--exclude-table='public.individual_copy_ihmp' \
-		--exclude-table='public.program_enrolment_ihmp' \
-		--exclude-table='public.individual_02_24' \
-		--exclude-table='public.program_enrolment_02_24'
-
 dump-org-data-without-etl:
 ifndef dbRole
 	@echo "Provde the dbRole variable"
