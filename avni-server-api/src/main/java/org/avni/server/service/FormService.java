@@ -9,6 +9,7 @@ import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.MediaFolder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.AvniFiles;
@@ -37,7 +38,7 @@ import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
 @Service
 public class FormService implements NonScopeAwareService {
-    public static final String FORM_SHARE_TEMPLATES_SUBDIR = "formsharetemplates";
+    public static final String FORM_SHARE_TEMPLATES_SUBDIR = MediaFolder.FORM_SHARE_TEMPLATES.label;
     private static final Logger logger = LoggerFactory.getLogger(FormService.class);
 
     private final FormRepository formRepository;

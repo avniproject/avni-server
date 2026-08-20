@@ -11,10 +11,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.MediaFolder;
 import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.media.MediaFolder;
 import org.avni.server.service.media.MediaUrlResolver;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.S;
@@ -35,6 +35,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -213,8 +214,8 @@ public abstract class StorageService implements S3Service {
     }
 
     // GCS's S3-interop endpoint often returns errors the SDK can't parse into errorCode (bare 403, null Request ID);
-    // the real cause (e.g. AccessDenied, SignatureDoesNotMatch) is only in the raw error-response XML. GCS-backed
-    // subclasses log via this on their get/presign/put paths so routed failures are diagnosable.
+    // the real cause (e.g. AccessDenied, SignatureDoesNotMatch) is only in the raw error-response XML. This class
+    // logs via this on the get path for all backends; GCS-backed subclasses use it on their presign/put paths.
     protected void logS3Error(String op, String key, AmazonS3Exception e) {
         logger.error(format("%s failed for key '%s' in bucket '%s': status=%d errorCode='%s' requestId='%s' responseXml=%s",
                 op, key, bucketName, e.getStatusCode(), e.getErrorCode(), e.getRequestId(), e.getErrorResponseXml()), e);
@@ -317,17 +318,25 @@ public abstract class StorageService implements S3Service {
         if (deleteMetadata) {
             this.deleteDirectory(mediaDirectory);
         } else {
-            List<String> metadataDirs = Arrays.asList(
-                    "icons/",
-                    String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR),
-                    String.format("%s/", CustomCardConfigService.CUSTOM_CARD_CONFIGS_SUBDIR),
-                    String.format("%s/", MediaFolder.MetaData.label));
-            String[] allKeys = getAllKeysWithPrefix(mediaDirectory);
-            String[] txKeys = Arrays.stream(allKeys)
-                    .filter(key -> metadataDirs.stream().noneMatch(key::contains))
+            String mediaDirectoryPrefix = mediaDirectory + "/";
+            Set<String> transactionalFolders = MediaFolder.getFoldersWithTransactionalData().stream()
+                    .map(folder -> folder.label)
+                    .collect(Collectors.toSet());
+            String[] transactionalKeys = Arrays.stream(getAllKeysWithPrefix(mediaDirectoryPrefix))
+                    .filter(key -> holdsTransactionalData(key.substring(mediaDirectoryPrefix.length()), transactionalFolders))
                     .toArray(String[]::new);
-            deleteKeys(txKeys);
+            if (transactionalKeys.length > 0) {
+                deleteKeys(transactionalKeys);
+            }
         }
+    }
+
+    static boolean holdsTransactionalData(String relativePath, Set<String> transactionalFolders) {
+        if (!relativePath.contains("/")) {
+            return true;
+        }
+        String subfolder = relativePath.substring(0, relativePath.indexOf('/'));
+        return transactionalFolders.contains(subfolder);
     }
 
     @Override

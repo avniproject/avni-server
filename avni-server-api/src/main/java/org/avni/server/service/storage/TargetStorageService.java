@@ -46,16 +46,6 @@ public class TargetStorageService extends StorageService {
     }
 
     @Override
-    public InputStream getObjectContent(String s3Key) {
-        try {
-            return super.getObjectContent(s3Key);
-        } catch (AmazonS3Exception e) {
-            logS3Error("getObjectContent", s3Key, e);
-            throw e;
-        }
-    }
-
-    @Override
     public String putObject(String objectKey, File tempFile) {
         try {
             return super.putObject(objectKey, tempFile);
