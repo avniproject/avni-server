@@ -314,11 +314,10 @@ public abstract class StorageService implements S3Service {
 
     @Override
     public void deleteOrgMedia(boolean deleteMetadata) {
-        String mediaDirectory = getOrgDirectoryName();
+        String mediaDirectoryPrefix = getOrgDirectoryName() + "/";
         if (deleteMetadata) {
-            this.deleteDirectory(mediaDirectory);
+            this.deleteDirectory(mediaDirectoryPrefix);
         } else {
-            String mediaDirectoryPrefix = mediaDirectory + "/";
             Set<String> metadataFolders = MediaFolder.getMetadataFolders().stream()
                     .map(folder -> folder.label)
                     .collect(Collectors.toSet());
