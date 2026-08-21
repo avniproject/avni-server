@@ -10,32 +10,33 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class StorageServiceTest {
-    private final Set<String> transactionalFolders = MediaFolder.getFoldersWithTransactionalData().stream()
+    private final Set<String> metadataFolders = MediaFolder.getMetadataFolders().stream()
             .map(folder -> folder.label)
             .collect(Collectors.toSet());
 
     @Test
     public void metadataFoldersArePreservedOnTransactionalDelete() {
-        assertFalse(StorageService.holdsTransactionalData("icons/subject-type.png", transactionalFolders));
-        assertFalse(StorageService.holdsTransactionalData("metadata/concept-image.jpg", transactionalFolders));
-        assertFalse(StorageService.holdsTransactionalData("customcardconfigs/card.html", transactionalFolders));
-        assertFalse(StorageService.holdsTransactionalData("formsharetemplates/template.html", transactionalFolders));
-        assertFalse(StorageService.holdsTransactionalData("extensions/theme/style.css", transactionalFolders));
+        assertFalse(StorageService.holdsTransactionalData("icons/subject-type.png", metadataFolders));
+        assertFalse(StorageService.holdsTransactionalData("metadata/concept-image.jpg", metadataFolders));
+        assertFalse(StorageService.holdsTransactionalData("customcardconfigs/card.html", metadataFolders));
+        assertFalse(StorageService.holdsTransactionalData("formsharetemplates/template.html", metadataFolders));
+        assertFalse(StorageService.holdsTransactionalData("extensions/theme/style.css", metadataFolders));
     }
 
     @Test
     public void transactionalFoldersAreDeletedOnTransactionalDelete() {
-        assertTrue(StorageService.holdsTransactionalData("news/announcement.png", transactionalFolders));
-        assertTrue(StorageService.holdsTransactionalData("profile-pics/subject.jpg", transactionalFolders));
+        assertTrue(StorageService.holdsTransactionalData("news/announcement.png", metadataFolders));
+        assertTrue(StorageService.holdsTransactionalData("profile-pics/subject.jpg", metadataFolders));
+        assertTrue(StorageService.holdsTransactionalData("thumbnails/subject-thumb.jpg", metadataFolders));
     }
 
     @Test
     public void keysDirectlyUnderOrgMediaDirectoryAreDeletedOnTransactionalDelete() {
-        assertTrue(StorageService.holdsTransactionalData("observation-media.jpg", transactionalFolders));
+        assertTrue(StorageService.holdsTransactionalData("observation-media.jpg", metadataFolders));
     }
 
     @Test
-    public void unregisteredSubfoldersArePreservedOnTransactionalDelete() {
-        assertFalse(StorageService.holdsTransactionalData("some-future-folder/file.html", transactionalFolders));
+    public void unregisteredSubfoldersAreDeletedOnTransactionalDelete() {
+        assertTrue(StorageService.holdsTransactionalData("some-future-folder/file.html", metadataFolders));
     }
 }

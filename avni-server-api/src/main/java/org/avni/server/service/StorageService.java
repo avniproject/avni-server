@@ -319,11 +319,11 @@ public abstract class StorageService implements S3Service {
             this.deleteDirectory(mediaDirectory);
         } else {
             String mediaDirectoryPrefix = mediaDirectory + "/";
-            Set<String> transactionalFolders = MediaFolder.getFoldersWithTransactionalData().stream()
+            Set<String> metadataFolders = MediaFolder.getMetadataFolders().stream()
                     .map(folder -> folder.label)
                     .collect(Collectors.toSet());
             String[] transactionalKeys = Arrays.stream(getAllKeysWithPrefix(mediaDirectoryPrefix))
-                    .filter(key -> holdsTransactionalData(key.substring(mediaDirectoryPrefix.length()), transactionalFolders))
+                    .filter(key -> holdsTransactionalData(key.substring(mediaDirectoryPrefix.length()), metadataFolders))
                     .toArray(String[]::new);
             if (transactionalKeys.length > 0) {
                 deleteKeys(transactionalKeys);
@@ -331,12 +331,12 @@ public abstract class StorageService implements S3Service {
         }
     }
 
-    static boolean holdsTransactionalData(String relativePath, Set<String> transactionalFolders) {
+    static boolean holdsTransactionalData(String relativePath, Set<String> metadataFolders) {
         if (!relativePath.contains("/")) {
             return true;
         }
         String subfolder = relativePath.substring(0, relativePath.indexOf('/'));
-        return transactionalFolders.contains(subfolder);
+        return !metadataFolders.contains(subfolder);
     }
 
     @Override

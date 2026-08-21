@@ -46,9 +46,9 @@ public enum MediaFolder {
         return null;
     }
 
-    public static List<MediaFolder> getFoldersWithTransactionalData() {
+    public static List<MediaFolder> getMetadataFolders() {
         return Arrays.stream(values())
-                .filter(folder -> folder.retention == TRANSACTIONAL)
+                .filter(folder -> folder.retention == METADATA)
                 .collect(Collectors.toList());
     }
 

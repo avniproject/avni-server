@@ -12,9 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class MediaFolderTest {
 
     @Test
-    void onlyNewsAndProfilePicsHoldTransactionalData() {
-        List<MediaFolder> folders = MediaFolder.getFoldersWithTransactionalData();
-        assertEquals(Arrays.asList(MediaFolder.NEWS, MediaFolder.PROFILE_PICS), folders);
+    void metadataFoldersAreIconsMetadataCustomCardConfigsFormShareTemplatesAndExtensions() {
+        List<MediaFolder> folders = MediaFolder.getMetadataFolders();
+        assertEquals(Arrays.asList(MediaFolder.ICONS, MediaFolder.MetaData, MediaFolder.CUSTOM_CARD_CONFIGS,
+                MediaFolder.FORM_SHARE_TEMPLATES, MediaFolder.EXTENSIONS), folders);
     }
 
     @Test
