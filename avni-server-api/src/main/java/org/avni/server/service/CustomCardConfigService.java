@@ -6,6 +6,7 @@ import org.avni.server.dao.TranslationRepository;
 import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.MediaFolder;
 import org.avni.server.domain.Translation;
 import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.AvniFiles;
@@ -29,7 +30,7 @@ import static java.lang.String.format;
 
 @Service
 public class CustomCardConfigService implements NonScopeAwareService {
-    public static final String CUSTOM_CARD_CONFIGS_SUBDIR = "customcardconfigs";
+    public static final String CUSTOM_CARD_CONFIGS_SUBDIR = MediaFolder.CUSTOM_CARD_CONFIGS.label;
     private static final Logger logger = LoggerFactory.getLogger(CustomCardConfigService.class);
 
     private final CustomCardConfigRepository customCardConfigRepository;
