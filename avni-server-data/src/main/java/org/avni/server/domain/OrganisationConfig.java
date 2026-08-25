@@ -148,7 +148,7 @@ public class OrganisationConfig extends OrganisationAwareEntity {
     }
 
     public static class Extension extends BaseJsonObject {
-        public static final String EXTENSION_DIR = "extensions";
+        public static final String EXTENSION_DIR = MediaFolder.EXTENSIONS.label;
 
         public Extension(Map<String, Object> map) {
             super(map);

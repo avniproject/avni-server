@@ -14,7 +14,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.service.media.MediaFolder;
+import org.avni.server.domain.MediaFolder;
 import org.avni.server.service.storage.StorageServiceProvider;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.BadRequestError;
@@ -298,7 +298,7 @@ public class MediaController {
 
     @PostMapping("/media/saveImage")
     public ResponseEntity<?> saveImage(@RequestParam MultipartFile file, @RequestParam String folderName) {
-        MediaFolder folder = MediaFolder.valueOfLabel(folderName);
+        MediaFolder folder = MediaFolder.imageFolderOfLabel(folderName);
         if (folder == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(String.format("Unsupported folderName %s", folderName));
         }
@@ -350,7 +350,7 @@ public class MediaController {
     @PostMapping("/media/saveVideo")
     public ResponseEntity<?> saveVideo(@RequestParam MultipartFile file, @RequestParam String folderName) {
         MediaFolder folder = MediaFolder.valueOfLabel(folderName);
-        if (folder == null || folder != MediaFolder.MetaData) {
+        if (folder != MediaFolder.MetaData) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(String.format("Unsupported folderName %s", folderName));
         }
 

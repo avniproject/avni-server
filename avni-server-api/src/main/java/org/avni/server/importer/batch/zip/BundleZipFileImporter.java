@@ -24,7 +24,7 @@ import org.avni.server.service.application.MenuItemService;
 import org.avni.server.service.attendance.AttendanceTypeService;
 import org.avni.server.service.calendar.CalendarDateMarkerService;
 import org.avni.server.service.calendar.CalendarService;
-import org.avni.server.service.media.MediaFolder;
+import org.avni.server.domain.MediaFolder;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
