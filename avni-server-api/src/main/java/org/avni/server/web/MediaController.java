@@ -14,6 +14,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.domain.ManagedContentNamespace;
 import org.avni.server.domain.MediaFolder;
 import org.avni.server.service.storage.StorageServiceProvider;
 import org.avni.server.util.AvniFiles;
@@ -41,9 +42,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -52,8 +53,6 @@ import static java.lang.String.format;
 @RestController
 public class MediaController {
     private static final String SQLITE_MIGRATION_GROUP = "SQLite Migration";
-    private static final Pattern MODEL_FILE_NAME = Pattern.compile("^[0-9a-f]{64}\\.bin$");
-    private static final Pattern MODEL_RELATIVE_KEY = Pattern.compile("^models/[0-9a-f]{64}\\.bin$");
     private final Logger logger;
     private final S3Service s3Service;
     private final StorageServiceProvider storageServiceProvider;
@@ -79,12 +78,13 @@ public class MediaController {
         return storageServiceProvider.forDataClass(StorageDataClass.dataClassForKey(keyOrUrl));
     }
 
-    private String authorizedModelKey(String fileName) {
+    private String authorizedNamespacedKey(ManagedContentNamespace namespace, String fileName) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        if (fileName == null || !MODEL_FILE_NAME.matcher(fileName).matches()) {
-            throw new BadRequestError("Invalid model file name '%s'. Expected <sha256>.bin.", fileName);
+        if (!namespace.accepts(fileName)) {
+            throw new BadRequestError("Invalid file name '%s' for '%s'. Expected %s.",
+                    fileName, namespace.getPrefix(), namespace.getExpectedFileNameForm());
         }
-        return format("%s/%s", StorageDataClass.MODEL_NAMESPACE, fileName);
+        return namespace.relativeKeyFor(fileName);
     }
 
     @RequestMapping(value = "/media/uploadUrl/{fileName:.+}", method = RequestMethod.GET)
@@ -92,9 +92,14 @@ public class MediaController {
     @Transactional(readOnly = true)
     public ResponseEntity<String> generateUploadUrl(@PathVariable String fileName) {
         logger.info("getting media upload url");
-        if (StorageDataClass.dataClassForKey(fileName) == StorageDataClass.MODEL) {
-            String modelKey = authorizedModelKey(FilenameUtils.getName(fileName));
-            return getFileUrlResponse(modelKey, HttpMethod.PUT, storageServiceProvider.forDataClass(StorageDataClass.MODEL));
+        // A namespace reserved for admin-managed content must not be writable via the media presign.
+        Optional<ManagedContentNamespace> namespace = ManagedContentNamespace.forRelativeKey(fileName);
+        if (namespace.isPresent()) {
+            String key = authorizedNamespacedKey(namespace.get(), FilenameUtils.getName(fileName));
+            return getFileUrlResponse(key, HttpMethod.PUT, storageServiceProvider.forDataClass(namespace.get().getDataClass()));
+        }
+        if (ManagedContentNamespace.forPrefix(prefixOf(fileName)).isPresent()) {
+            throw new BadRequestError("Invalid file name '%s'. Expected %s.", fileName, ManagedContentNamespace.expectedKeyForms());
         }
         return getFileUrlResponse(fileName, HttpMethod.PUT, s3Service);
     }
@@ -242,18 +247,24 @@ public class MediaController {
         }
     }
 
-    // The device knows only the relative model key (it must stay backend-agnostic), so it cannot use /media/signedUrl which parses a full URL.
+    // The device knows only the relative key, so it cannot use /media/signedUrl. The path keeps its
+    // original name so devices already in the field carry on working.
     @RequestMapping(value = "/media/modelBlobUrl", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
     public ResponseEntity<String> generateModelBlobUrl(@RequestParam String key) {
-        if (key == null || !MODEL_RELATIVE_KEY.matcher(key).matches()) {
-            throw new BadRequestError("Invalid model key '%s'. Expected models/<sha256>.bin.", key);
-        }
+        ManagedContentNamespace namespace = ManagedContentNamespace.forRelativeKey(key)
+                .orElseThrow(() -> new BadRequestError(
+                        "Invalid content key '%s'. Expected one of %s.", key, ManagedContentNamespace.expectedKeyForms()));
         Organisation organisation = UserContextHolder.getOrganisation();
-        S3Service modelBackend = storageServiceProvider.forDataClass(StorageDataClass.MODEL);
-        URL url = modelBackend.getURLForExtensions(key, organisation);
+        S3Service backend = storageServiceProvider.forDataClass(namespace.getDataClass());
+        URL url = backend.getURLForExtensions(key, organisation);
         return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
+    }
+
+    private static String prefixOf(String key) {
+        int separator = key == null ? -1 : key.indexOf('/');
+        return separator < 0 ? "" : key.substring(0, separator);
     }
 
     //unprotected endpoint
@@ -277,10 +288,10 @@ public class MediaController {
                                          @RequestParam(value = "parentFolder", required = false) String parentFolder) {
         User user = UserContextHolder.getUserContext().getUser();
         String targetFilePath;
-        if (StorageDataClass.MODEL_NAMESPACE.equals(parentFolder)) {
-            targetFilePath = authorizedModelKey(FilenameUtils.getName(file.getOriginalFilename()));
-        } else if (parentFolder != null && !parentFolder.isEmpty()) {
-            throw new BadRequestError("Unsupported parentFolder '%s'.", parentFolder);
+        if (parentFolder != null && !parentFolder.isEmpty()) {
+            ManagedContentNamespace namespace = ManagedContentNamespace.forPrefix(parentFolder)
+                    .orElseThrow(() -> new BadRequestError("Unsupported parentFolder '%s'.", parentFolder));
+            targetFilePath = authorizedNamespacedKey(namespace, FilenameUtils.getName(file.getOriginalFilename()));
         } else {
             String uuid = UUID.randomUUID().toString();
             String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());

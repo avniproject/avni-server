@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.dao.DownloadableContentRepository;
 import org.avni.server.domain.DownloadableContent;
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.ManagedContentNamespace;
 import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.DownloadableContentRequest;
@@ -48,12 +49,29 @@ public class DownloadableContentService implements NonScopeAwareService {
 
         content.setName(name);
         content.setCategory(category);
-        content.setContentKey(StringUtils.hasText(request.getContentKey()) ? request.getContentKey().trim() : null);
-        content.setSha256(StringUtils.hasText(request.getSha256()) ? request.getSha256().trim() : null);
+        String contentKey = StringUtils.hasText(request.getContentKey()) ? request.getContentKey().trim() : null;
+        String sha256 = StringUtils.hasText(request.getSha256()) ? request.getSha256().trim() : null;
+        assertContentKeyIsAddressable(contentKey, sha256);
+        content.setContentKey(contentKey);
+        content.setSha256(sha256);
         content.setNeedsKey(request.isNeedsKey());
         content.setPayload(toPayload(request.getPayload()));
         content.setVoided(request.isVoided());
         return downloadableContentRepository.save(content);
+    }
+
+    // The device resolves the path from contentKey and hashes that file against sha256, so a key
+    // naming a different hash can never download, on any sync.
+    private void assertContentKeyIsAddressable(String contentKey, String sha256) {
+        if (contentKey == null) {
+            return;
+        }
+        ManagedContentNamespace namespace = ManagedContentNamespace.forRelativeKey(contentKey)
+                .orElseThrow(() -> new BadRequestError("Invalid contentKey '%s'. Expected one of %s.",
+                        contentKey, ManagedContentNamespace.expectedKeyForms()));
+        if (sha256 == null || !namespace.relativeKeyStartsWithHash(contentKey, sha256)) {
+            throw new BadRequestError("contentKey '%s' must be named after sha256 '%s'.", contentKey, sha256);
+        }
     }
 
     public void deleteContent(String uuid) {

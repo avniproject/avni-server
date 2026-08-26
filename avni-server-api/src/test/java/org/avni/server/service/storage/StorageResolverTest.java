@@ -39,6 +39,7 @@ public class StorageResolverTest {
 
     private final S3Service defaultBackend = mock(S3Service.class, "default");
     private final S3Service modelBackend = mock(S3Service.class, "model");
+    private final S3Service guidanceBackend = mock(S3Service.class, "guidance");
 
     private static S3Service mock(Class<S3Service> c, String name) {
         return org.mockito.Mockito.mock(c, name);
@@ -73,8 +74,12 @@ public class StorageResolverTest {
     }
 
     private Map<String, Object> modelRoutedTo(String targetName) {
+        return routedTo("model", targetName);
+    }
+
+    private Map<String, Object> routedTo(String configName, String targetName) {
         Map<String, Object> backends = new LinkedHashMap<>();
-        backends.put("model", targetName);
+        backends.put(configName, targetName);
         return backends;
     }
 
@@ -118,6 +123,45 @@ public class StorageResolverTest {
 
         assertSame("unconfigured org must resolve MODEL to today's default", defaultBackend, resolved);
         verify(storageServiceFactory, never()).build(any(), any());
+    }
+
+    // Capture-guidance pictures are clinical reference material. They must not ride the MODEL
+    // routing (that would put them wherever the org keeps its AI models), but an org that wants
+    // them on a backend of its own must still be able to say so — which a DEFAULT-classed
+    // namespace could not, since a 'default' routing entry is deliberately ignored.
+    @Test
+    public void configuredGuidanceResolvesToItsOwnRoutedTarget() {
+        when(organisationConfigService.getOrganisationConfig(organisation))
+                .thenReturn(configWith(routedTo("guidance", "org-gcs"), gcsTarget()));
+        when(storageServiceFactory.build(eq(organisation), any(StorageTarget.class))).thenReturn(guidanceBackend);
+
+        S3Service resolved = resolver.resolve(organisation, StorageDataClass.GUIDANCE, () -> defaultBackend);
+
+        assertSame("GUIDANCE must resolve to the routed target backend", guidanceBackend, resolved);
+    }
+
+    @Test
+    public void unconfiguredOrgResolvesGuidanceToDefaultBackend() {
+        when(organisationConfigService.getOrganisationConfig(organisation))
+                .thenReturn(configWith(null, null));
+
+        S3Service resolved = resolver.resolve(organisation, StorageDataClass.GUIDANCE, () -> defaultBackend);
+
+        assertSame("an org that routes nothing keeps guidance on the deploy default", defaultBackend, resolved);
+        verify(storageServiceFactory, never()).build(any(), any());
+    }
+
+    @Test
+    public void routingModelDoesNotDragGuidanceAlongWithIt() {
+        // The whole point of the split: an org may route its models elsewhere while its guidance
+        // pictures stay put.
+        when(organisationConfigService.getOrganisationConfig(organisation))
+                .thenReturn(configWith(modelRoutedTo("org-gcs"), gcsTarget()));
+        when(storageServiceFactory.build(eq(organisation), any(StorageTarget.class))).thenReturn(modelBackend);
+
+        assertSame(modelBackend, resolver.resolve(organisation, StorageDataClass.MODEL, () -> defaultBackend));
+        assertSame("guidance must stay on the default when only model is routed",
+                defaultBackend, resolver.resolve(organisation, StorageDataClass.GUIDANCE, () -> defaultBackend));
     }
 
     @Test
