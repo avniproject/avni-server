@@ -1062,3 +1062,54 @@ $BODY$ LANGUAGE PLPGSQL;
 select grant_roles_to_user('reporting_ro_user');
 
 -- Queries to create a read-only user - END
+
+
+-- CLEAR A STUCK RESET SYNC - START
+-- Symptom: the app asks for a reset sync on every sync, even after the user has completed a full one.
+-- A row in reset_sync is created whenever a catchment changes or a subject type's sync attributes
+-- change (ResetSyncService.recordCatchmentChange / recordSyncAttributeChange). The client clears it
+-- by running the reset and marking its own copy migrated; if that does not stick, the prompt repeats.
+
+-- reset_sync has RLS (enable_rls_on_tx_table), and the policy is
+--   organisation_id = (select id from organisation where db_user = current_user)
+-- Connected as any other role you get ZERO ROWS AND NO ERROR, which reads as "nothing to clear".
+-- Check first:
+select current_user;
+
+-- 1. Look before touching anything. A row with user_id null applies to every user in the org;
+--    subject_type_id null means the reset wipes all data rather than one subject type.
+select rs.id,
+       rs.uuid,
+       u.username,
+       st.name as subject_type,
+       rs.is_voided,
+       rs.last_modified_date_time
+from reset_sync rs
+         left join users u on u.id = rs.user_id
+         left join subject_type st on st.id = rs.subject_type_id
+where rs.organisation_id = (select id from organisation where db_user = '<org_db_user>')
+order by rs.last_modified_date_time desc;
+
+-- 2. Void it. Do NOT delete.
+--    The device holds its own copy of the row with hasMigrated = false, and sync is the only way it
+--    learns anything. A deleted row simply stops being sent, so the handset never hears and keeps
+--    prompting forever. Voiding is what actually reaches it: the client reads getAllNonVoided(), so
+--    a voided row drops out of the check.
+--    Bumping last_modified_date_time is equally necessary — the client pulls this entity on a
+--    last_modified_date_time window, so without it the row never re-syncs.
+update reset_sync
+set is_voided               = true,
+    last_modified_date_time = now(),
+    version                 = version + 1
+where organisation_id = (select id from organisation where db_user = '<org_db_user>')
+  and is_voided = false
+  and (user_id is null
+    or user_id = (select id from users where username = '<username>'));
+
+-- 3. Then sync on the device. The prompt should not reappear.
+
+-- Device-side alternative, no DB access needed: clear app data and log in again.
+-- ResetSyncService.isResetSyncRequired() short-circuits when the database has never synced — and
+-- "never synced" is literally "does any Concept row exist" — so a fresh install marks every pending
+-- reset as migrated and never prompts. Costs one full sync.
+-- CLEAR A STUCK RESET SYNC - END
