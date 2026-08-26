@@ -42,8 +42,16 @@ public enum ManagedContentNamespace {
         return fileName != null && fileNamePattern.matcher(fileName).matches();
     }
 
-    public boolean relativeKeyStartsWithHash(String relativeKey, String sha256) {
-        return relativeKey.startsWith(String.format("%s/%s.", prefix, sha256));
+    // What makes a row downloadable: the device resolves the blob path from the key, then hashes
+    // that file against sha256. The file name's exact form is the upload endpoint's business.
+    public boolean addresses(String relativeKey, String sha256) {
+        if (relativeKey == null || sha256 == null) {
+            return false;
+        }
+        if (!relativeKey.startsWith(String.format("%s/%s.", prefix, sha256))) {
+            return false;
+        }
+        return relativeKey.indexOf('/', prefix.length() + 1) < 0;
     }
 
     public static String expectedKeyForms() {

@@ -73,9 +73,25 @@ class ManagedContentNamespaceTest {
 
     @Test
     void tiesAKeyToTheHashItIsNamedAfter() {
-        assertTrue(ManagedContentNamespace.GUIDANCE.relativeKeyStartsWithHash("guidance/" + SHA + ".png", SHA));
-        assertFalse(ManagedContentNamespace.GUIDANCE.relativeKeyStartsWithHash("guidance/" + SHA + ".png", "b".repeat(64)));
-        assertFalse(ManagedContentNamespace.MODELS.relativeKeyStartsWithHash("models/" + SHA + ".bin", "b".repeat(64)));
+        assertTrue(ManagedContentNamespace.GUIDANCE.addresses("guidance/" + SHA + ".png", SHA));
+        assertFalse(ManagedContentNamespace.GUIDANCE.addresses("guidance/" + SHA + ".png", "b".repeat(64)));
+        assertFalse(ManagedContentNamespace.MODELS.addresses("models/" + SHA + ".bin", "b".repeat(64)));
+        assertFalse(ManagedContentNamespace.MODELS.addresses(null, SHA));
+        assertFalse(ManagedContentNamespace.MODELS.addresses("models/" + SHA + ".bin", null));
+    }
+
+    @Test
+    void addressingDoesNotRequireTheStrictUploadFileName() {
+        // Records predate the <sha256>.<ext> upload rule, and editing one must not be blocked by a
+        // shape only the upload endpoint is responsible for.
+        assertTrue(ManagedContentNamespace.MODELS.addresses("models/abc.bin", "abc"));
+        assertFalse(ManagedContentNamespace.MODELS.accepts("abc.bin"));
+    }
+
+    @Test
+    void addressingRejectsANestedPath() {
+        assertFalse(ManagedContentNamespace.MODELS.addresses("models/" + SHA + ".bin/evil", SHA));
+        assertFalse(ManagedContentNamespace.MODELS.addresses("models/sub/" + SHA + ".bin", SHA));
     }
 
     @Test

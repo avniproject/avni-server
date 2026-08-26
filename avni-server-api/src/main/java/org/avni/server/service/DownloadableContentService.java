@@ -66,10 +66,12 @@ public class DownloadableContentService implements NonScopeAwareService {
         if (contentKey == null) {
             return;
         }
-        ManagedContentNamespace namespace = ManagedContentNamespace.forRelativeKey(contentKey)
+        int separator = contentKey.indexOf('/');
+        String prefix = separator < 0 ? "" : contentKey.substring(0, separator);
+        ManagedContentNamespace namespace = ManagedContentNamespace.forPrefix(prefix)
                 .orElseThrow(() -> new BadRequestError("Invalid contentKey '%s'. Expected one of %s.",
                         contentKey, ManagedContentNamespace.expectedKeyForms()));
-        if (sha256 == null || !namespace.relativeKeyStartsWithHash(contentKey, sha256)) {
+        if (!namespace.addresses(contentKey, sha256)) {
             throw new BadRequestError("contentKey '%s' must be named after sha256 '%s'.", contentKey, sha256);
         }
     }
