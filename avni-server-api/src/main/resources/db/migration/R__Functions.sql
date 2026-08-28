@@ -377,7 +377,13 @@ begin
         return true;
     end if;
     
-    -- Check form type consistency
+    -- Check form type consistency.
+    -- This is an exclusion list - a form type matching its branch here is REJECTED. Form types with
+    -- no branch (including Approval and Rejection) are accepted in every combination of programme
+    -- and visit type, which is intended for those two: an approval or rejection form may be attached
+    -- to a subject type alone, to a programme, to a visit type, or to a programme and visit type
+    -- together. Whether approval is actually enabled for that combination is enforced in
+    -- FormMappingService, not here, because it depends on sibling rows.
     select exists(
         select 1
         from public.form f
@@ -416,7 +422,8 @@ begin
         USING HINT = 'Form type rules: IndividualProfile - no program, no encounter type | ' ||
                    'ProgramEnrolment/Exit - with program, no encounter type | ' ||
                    'ProgramEncounter/Cancellation - with program and encounter type | ' ||
-                   'Encounter/IndividualCancellation - no program, with encounter type';
+                   'Encounter/IndividualCancellation - no program, with encounter type | ' ||
+                   'Approval/Rejection - any combination';
     end if;
 
     -- Check for duplicate mappings

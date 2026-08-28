@@ -7,6 +7,8 @@ import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.EncounterTypeBuilder;
+import org.avni.server.domain.Program;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
@@ -198,5 +200,86 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
         Form form = new TestFormBuilder().withDefaultFieldsForNewEntity().withFormType(FormType.Encounter).build();
         formRepository.save(form);
         formMappingRepository.saveFormMapping(new FormMappingBuilder().withForm(form).withEncounterType(encounterType).withProgram(programFormMapping.getProgram()).withSubjectType(programFormMapping.getSubjectType()).build());
+    }
+
+    // Approval / Rejection form mappings (#1050).
+    //
+    // The form-type-consistency block in check_form_mapping_uniqueness is an exclusion list: a match
+    // raises the exception. Approval and Rejection have no branch there, so every shape is permitted.
+    // These tests pin that down, and pin the property the coded-approval design rests on - that two
+    // different form types may share one combination while the same type may not be repeated.
+    // All fixtures are non-voided, because the function returns early on formMappingIsVoided = true.
+
+    private SubjectType approvalTestSubjectType() {
+        return testSubjectTypeService.createWithDefaultsAndGetFormMapping(
+                new SubjectTypeBuilder()
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectType1")
+                        .setName("subjectType1")
+                        .build()).getSubjectType();
+    }
+
+    private Program approvalTestProgram(SubjectType subjectType) {
+        return testProgramService.addProgramAndGetFormMapping(
+                new ProgramBuilder().withName("program1").withUuid("program1").build(),
+                subjectType).getProgram();
+    }
+
+    private EncounterType approvalTestEncounterType() {
+        EncounterType encounterType = new EncounterTypeBuilder()
+                .withName("encounterType1").withUuid(UUID.randomUUID().toString()).build();
+        return encounterTypeRepository.save(encounterType);
+    }
+
+    private Form saveFormOfType(FormType formType) {
+        return formRepository.save(new TestFormBuilder().withDefaultFieldsForNewEntity().withFormType(formType).build());
+    }
+
+    private void assertSavesInAllFourShapes(FormType formType) {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+        EncounterType encounterType = approvalTestEncounterType();
+        Form form = saveFormOfType(formType);
+
+        assertNotNull("subject type only", formMappingRepository.saveFormMapping(
+                new FormMappingBuilder().withForm(form).withSubjectType(subjectType).build()));
+        assertNotNull("with programme", formMappingRepository.saveFormMapping(
+                new FormMappingBuilder().withForm(form).withSubjectType(subjectType).withProgram(program).build()));
+        assertNotNull("with visit type", formMappingRepository.saveFormMapping(
+                new FormMappingBuilder().withForm(form).withSubjectType(subjectType).withEncounterType(encounterType).build()));
+        assertNotNull("with programme and visit type", formMappingRepository.saveFormMapping(
+                new FormMappingBuilder().withForm(form).withSubjectType(subjectType)
+                        .withProgram(program).withEncounterType(encounterType).build()));
+    }
+
+    @Test
+    public void allowApprovalFormMappingInAllFourShapes() {
+        assertSavesInAllFourShapes(FormType.Approval);
+    }
+
+    @Test
+    public void allowRejectionFormMappingInAllFourShapes() {
+        assertSavesInAllFourShapes(FormType.Rejection);
+    }
+
+    @Test
+    public void doNotAllowTheSameApprovalFormTypeTwiceOnOneCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build());
+
+        tryFailedFormMappingSave(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build());
+    }
+
+    @Test
+    public void allowApprovalAndRejectionOnTheSameCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+
+        assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).withProgram(program).build()));
+        assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType).withProgram(program).build()));
     }
 }
