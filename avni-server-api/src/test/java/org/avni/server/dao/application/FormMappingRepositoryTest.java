@@ -316,6 +316,26 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
                 .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).withProgram(programTwo).build()));
     }
 
+    /**
+     * Voiding an approval mapping must free the combination for a different approval form. The
+     * duplicate check compares against sibling rows; without a voided filter on those siblings it
+     * matches the row the administrator just removed and refuses the replacement with "Duplicate
+     * form mapping exists". Registration and enrolment forms never reach this because
+     * FormMappingService.saveFormMapping reuses the existing row, but Approval and Rejection go
+     * through createOrUpdateFormMapping, which keys on the request UUID and so creates a new row.
+     */
+    @Test
+    public void allowANewApprovalFormOnceTheOldMappingIsVoided() {
+        SubjectType subjectType = approvalTestSubjectType();
+        FormMapping original = formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build());
+        original.setVoided(true);
+        formMappingRepository.saveFormMapping(original);
+
+        assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build()));
+    }
+
     @Test
     public void allowApprovalAndRejectionOnTheSameCombination() {
         SubjectType subjectType = approvalTestSubjectType();

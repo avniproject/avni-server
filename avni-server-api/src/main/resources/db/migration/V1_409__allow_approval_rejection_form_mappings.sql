@@ -15,7 +15,10 @@
 -- only a comment and the hint text were added.
 --
 -- Restricting them to combinations where an approval can actually arise is deliberately NOT done in
--- the database: it depends on sibling rows, which a row-level CHECK cannot see. That rule is planned
--- as application-level validation in FormMappingService (avniproject/avni-server#1052) and is NOT
--- yet built - today any of the four shapes is accepted. This is a separate concern from
--- form_mapping.enable_approval, the pre-existing flag that switches the approval workflow on.
+-- the database. It depends on sibling rows, and while a CHECK function can read other rows - the
+-- duplicate block in that function does exactly that - doing so is unsound: the result is not stable
+-- under concurrent inserts, and pg_dump restores rows in an order that can fail a check which was
+-- satisfied when the row was written. That rule is planned as application-level validation in
+-- FormMappingService (avniproject/avni-server#1052) and is NOT yet built - today any of the four
+-- shapes is accepted. This is a separate concern from form_mapping.enable_approval, the pre-existing
+-- flag that switches the approval workflow on.
