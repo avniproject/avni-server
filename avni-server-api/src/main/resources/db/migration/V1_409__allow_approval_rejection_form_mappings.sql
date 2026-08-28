@@ -1,108 +1,21 @@
 -- Approval and Rejection form mappings (#1050).
 --
--- No behaviour change. The form-type-consistency block below is an exclusion list: a matching row
--- sets mapping_exists and raises. Approval and Rejection deliberately have no branch, so all four
--- shapes (subject type alone, with programme, with visit type, with both) are permitted. This
--- migration records that intent so the silent fall-through is not mistaken for an oversight, and
--- extends the hint text. The seven existing branches are unchanged.
+-- No statements here on purpose. The change to check_form_mapping_uniqueness lives in
+-- R__Functions.sql, which owns the only live copy of that function. Flyway runs repeatable
+-- migrations after all versioned ones, so a create-or-replace body in this file would be
+-- overwritten seconds later on every fresh database - inert, and one more copy to keep in step.
+-- This file stays as the numbered marker for when the change landed.
 --
--- Kept in step with R__Functions.sql, which carries a second copy of this function. Flyway runs
--- repeatable migrations after versioned ones, so editing only this file would be overwritten on
--- any fresh database build.
-
-create or replace function check_form_mapping_uniqueness(organisationId int, subjectTypeId int, entityId bigint,
-                                                         observationsTypeEntityId int, taskTypeId int,
-                                                         formId bigint,
-                                                         formMappingId int, implVersion int, formMappingIsVoided boolean) returns boolean
-    language plpgsql
-as
-$$
-declare
-    mapping_exists boolean;
-begin
-    -- Skip validation if mapping is voided
-    if formMappingIsVoided = true then
-        return true;
-    end if;
-    
-    -- Check form type consistency.
-    -- This is an exclusion list - a form type matching its branch here is REJECTED. Form types with
-    -- no branch (including Approval and Rejection) are accepted in every combination of programme
-    -- and visit type, which is intended for those two: an approval or rejection form may be attached
-    -- to a subject type alone, to a programme, to a visit type, or to a programme and visit type
-    -- together.
-    --
-    -- Restricting them to combinations where an approval can actually arise is deliberately NOT
-    -- done here: it depends on sibling rows, which a row-level CHECK cannot see. That rule is
-    -- planned as application-level validation in FormMappingService (avniproject/avni-server#1052)
-    -- and is NOT yet built - today any of the four shapes is accepted. Note this is a separate
-    -- concern from form_mapping.enable_approval, the pre-existing flag that switches the approval
-    -- workflow on for a mapping.
-    select exists(
-        select 1
-        from public.form f
-        where f.id = formId
-          and (
-              (f.form_type = 'IndividualProfile' and
-               (entityId is not null or observationsTypeEntityId is not null))
-                  or
-              (f.form_type = 'ProgramEnrolment' and
-               (entityId is null or observationsTypeEntityId is not null))
-                  or
-              (f.form_type = 'ProgramExit' and
-               (entityId is null or observationsTypeEntityId is not null))
-                  or
-              (f.form_type = 'ProgramEncounter' and
-               (entityId is null or observationsTypeEntityId is null))
-                  or
-              (f.form_type = 'ProgramEncounterCancellation' and
-               (entityId is null or observationsTypeEntityId is null))
-                  or
-              (f.form_type = 'Encounter' and
-               (entityId is not null or observationsTypeEntityId is null))
-                  or
-              (f.form_type = 'IndividualEncounterCancellation' and
-               (entityId is not null or observationsTypeEntityId is null))
-              )
-    ) into mapping_exists;
-    
-    if mapping_exists then
-        raise EXCEPTION 'Invalid form mapping(uuid: %): Form(uuid: %) is of type % and hence cannot be mapped % and %.',
-               (select fm.uuid from form_mapping fm where fm.id = formMappingId),
-               (select f.uuid from form f where f.id = formId),
-               (select f.form_type from form f where f.id = formId),
-               case when entityId is not null then 'with program' else 'without program' end,
-               case when observationsTypeEntityId is not null then 'with encounter type' else 'without encounter type' end
-        USING HINT = 'Form type rules: IndividualProfile - no program, no encounter type | ' ||
-                   'ProgramEnrolment/Exit - with program, no encounter type | ' ||
-                   'ProgramEncounter/Cancellation - with program and encounter type | ' ||
-                   'Encounter/IndividualCancellation - no program, with encounter type | ' ||
-                   'Approval/Rejection - any combination';
-    end if;
-
-    -- Check for duplicate mappings
-    select exists(
-        select form_mapping.*
-        from public.form
-                 inner join form_mapping on form_mapping.form_id = form.id
-        where form_mapping.organisation_id = organisationId
-          and form_mapping.subject_type_id = subjectTypeId
-          and (form_mapping.entity_id = entityId or (form_mapping.entity_id is null and entityId is null))
-          and (form_mapping.observations_type_entity_id = observationsTypeEntityId or
-               (form_mapping.observations_type_entity_id is null and observationsTypeEntityId is null))
-          and (form_mapping.task_type_id = taskTypeId or
-               (form_mapping.task_type_id is null and taskTypeId is null))
-          and form_mapping.impl_version = 1
-          and implVersion = 1
-          and form.form_type = (select public.form.form_type from form where id = formId)
-          and form_mapping.id <> formMappingId
-    ) into mapping_exists;
-    
-    if mapping_exists then
-        raise 'Duplicate form mapping exists for: organisation_id: %, subject_type_id: %, entity_id: %, observations_type_entity_id: %, task_type_id: %. Using formId: %, formMappingId: %.',
-              organisationId, subjectTypeId, entityId, observationsTypeEntityId, taskTypeId, formId, formMappingId;
-    end if;
-    
-    return true;
-end
-$$;
+-- What changed in R__Functions.sql, and why:
+--
+-- The form-type-consistency block there is an exclusion list - a form type matching its branch is
+-- REJECTED. Approval and Rejection deliberately have no branch, so all four shapes are permitted:
+-- an approval or rejection form may be attached to a subject type alone, to a programme, to a
+-- visit type, or to a programme and visit type together. The seven existing branches are unchanged;
+-- only a comment and the hint text were added.
+--
+-- Restricting them to combinations where an approval can actually arise is deliberately NOT done in
+-- the database: it depends on sibling rows, which a row-level CHECK cannot see. That rule is planned
+-- as application-level validation in FormMappingService (avniproject/avni-server#1052) and is NOT
+-- yet built - today any of the four shapes is accepted. This is a separate concern from
+-- form_mapping.enable_approval, the pre-existing flag that switches the approval workflow on.

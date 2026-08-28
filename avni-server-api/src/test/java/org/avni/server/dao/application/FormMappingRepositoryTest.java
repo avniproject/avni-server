@@ -25,6 +25,7 @@ import org.springframework.test.context.jdbc.Sql;
 import java.util.UUID;
 
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.fail;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -255,6 +256,27 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
     @Test
     public void allowApprovalFormMappingInAllFourShapes() {
         assertSavesInAllFourShapes(FormType.Approval);
+    }
+
+    /**
+     * Registration lookup must survive a subject-type-only Approval mapping. getRegistrationFormMapping
+     * returns a single entity, so without a form type filter a second mapping with no programme and no
+     * encounter type makes Spring Data throw IncorrectResultSizeDataAccessException - breaking CSV
+     * subject import (SubjectWriter), the subject registration reporting view and the Subject Type
+     * admin screens, at runtime rather than at build.
+     */
+    @Test
+    public void registrationFormMappingIsFoundEvenWhenAnApprovalFormSharesTheSubjectTypeOnlyShape() {
+        SubjectType subjectType = approvalTestSubjectType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build());
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType).build());
+
+        FormMapping registrationFormMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
+
+        assertNotNull(registrationFormMapping);
+        assertEquals(FormType.IndividualProfile, registrationFormMapping.getForm().getFormType());
     }
 
     @Test

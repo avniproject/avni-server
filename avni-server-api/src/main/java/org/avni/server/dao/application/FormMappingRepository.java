@@ -74,10 +74,15 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
     }
 
     //    Registration
-    FormMapping findBySubjectTypeAndProgramNullAndEncounterTypeNullAndImplVersionAndIsVoidedFalse(SubjectType subjectType, int implVersion);
+    //    The form type filter is required, not cosmetic: without it this returns every non-voided
+    //    mapping that has no program and no encounter type, and more than one form type has that
+    //    shape (SubjectEnrolmentEligibility, and now Approval/Rejection). Two matches make Spring
+    //    Data throw IncorrectResultSizeDataAccessException. getAllRegistrationFormMappings below
+    //    filters the same way.
+    FormMapping findBySubjectTypeAndProgramNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(SubjectType subjectType, FormType formType, int implVersion);
 
     default FormMapping getRegistrationFormMapping(SubjectType subjectType) {
-        return this.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndImplVersionAndIsVoidedFalse(subjectType, FormMapping.IMPL_VERSION);
+        return this.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(subjectType, FormType.IndividualProfile, FormMapping.IMPL_VERSION);
     }
 
     //    Program Enrolment
