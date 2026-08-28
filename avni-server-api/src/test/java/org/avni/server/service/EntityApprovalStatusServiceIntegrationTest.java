@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -210,5 +211,45 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
         saveDecision(uuid, rejected, new DateTime(), Collections.emptyList());
 
         assertNull("An explicit empty list means clear the answers", storedObservations(uuid));
+    }
+
+    /**
+     * Two rejections of the same record keep their own answers and their own dates.
+     *
+     * The intermediate Pending is not decoration. EntityApprovalStatusRepository.saveEAS silently
+     * drops a row whose status matches the entity's latest non-voided status, so a back-to-back
+     * Rejected/Rejected never produces two rows. The cycle below is the one the product actually
+     * produces: reject, the field user edits the record and it returns to Pending, reject again.
+     * That guard is pre-existing behaviour and is out of scope for #1051.
+     */
+    @Test
+    public void rejectingTheSameRecordTwiceKeepsBothSetsOfAnswers() {
+        DateTime firstRejection = new DateTime().minusDays(3);
+        String firstUuid = saveDecision(rejected, firstRejection, Arrays.asList(
+                observation(rejectionNote.getUuid(), "Address looks wrong")));
+
+        saveDecision(pending, new DateTime().minusDays(2), null);
+
+        DateTime secondRejection = new DateTime().minusDays(1);
+        String secondUuid = saveDecision(rejected, secondRejection, Arrays.asList(
+                observation(rejectionNote.getUuid(), "Still wrong after the edit")));
+
+        List<Map<String, Object>> rejections = jdbcTemplate.queryForList(
+                "select uuid, status_date_time, observations::text as observations " +
+                        "from entity_approval_status " +
+                        "where entity_id = ? and entity_type = 'Subject' and is_voided = false " +
+                        "and approval_status_id = ? " +
+                        "order by status_date_time",
+                subject.getId(), rejected.getId());
+
+        assertEquals("Both rejections should be kept as separate rows", 2, rejections.size());
+        assertEquals(firstUuid, rejections.get(0).get("uuid"));
+        assertEquals(secondUuid, rejections.get(1).get("uuid"));
+        assertTrue("The earlier rejection must keep its own answers: " + rejections.get(0),
+                ((String) rejections.get(0).get("observations")).contains("Address looks wrong"));
+        assertTrue("The earlier rejection must not have been overwritten: " + rejections.get(0),
+                !((String) rejections.get(0).get("observations")).contains("Still wrong after the edit"));
+        assertTrue("The later rejection keeps its own answers: " + rejections.get(1),
+                ((String) rejections.get(1).get("observations")).contains("Still wrong after the edit"));
     }
 }
