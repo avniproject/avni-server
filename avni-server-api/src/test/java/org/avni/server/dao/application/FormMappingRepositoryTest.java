@@ -272,6 +272,28 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
                 .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build());
     }
 
+    /**
+     * Two different approval forms, one per programme, on one subject type. The programme is part of
+     * the uniqueness key, so both save. This is the shape that breaks if a caller ever routes an
+     * Approval mapping through FormMappingService.saveFormMapping(FormMappingParameterObject, ..):
+     * setProgramIfRequired guards on FormType.isLinkedToProgram(), which is false for Approval and
+     * Rejection because their programme is optional, so the programme would be dropped and both
+     * mappings would collapse onto the same key. Not reachable today - App Designer and bundle
+     * import both go through createOrUpdateFormMapping, which sets the programme directly.
+     */
+    @Test
+    public void allowTwoApprovalFormsOnDifferentProgrammesOfOneSubjectType() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program programOne = approvalTestProgram(subjectType);
+        Program programTwo = testProgramService.addProgramAndGetFormMapping(
+                new ProgramBuilder().withName("program2").withUuid("program2").build(), subjectType).getProgram();
+
+        assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).withProgram(programOne).build()));
+        assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).withProgram(programTwo).build()));
+    }
+
     @Test
     public void allowApprovalAndRejectionOnTheSameCombination() {
         SubjectType subjectType = approvalTestSubjectType();
