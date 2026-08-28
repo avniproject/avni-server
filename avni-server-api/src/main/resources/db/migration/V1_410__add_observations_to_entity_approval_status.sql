@@ -1,9 +1,14 @@
 -- Approval and rejection form answers, stored per decision (#1051).
 --
--- Nullable, no default, no backfill. The column has to distinguish three states that a DEFAULT '{}'
--- would flatten into one: no form was filled (NULL), a form was filled and left blank (NULL, see
--- EntityApprovalStatusService), and a form was filled in (the answers). Every client released before
--- the approval/rejection form sends no observations at all and must keep writing NULL.
+-- Nullable, no default, no backfill. NULL means the decision carried no answers: either the request
+-- had no observations key at all - which is what every client released before the approval/rejection
+-- form sends, and its stored shape must not change - or it carried a list that retained no entries.
+-- A DEFAULT '{}' would flatten those into the same value as a form that was filled in.
+--
+-- NULL is NOT a reliable "the approver did not fill the form" flag. ObservationService.createObservations
+-- drops an answer only when its value is literally null, so a text question cleared to an empty string
+-- is retained and stored as {"<concept uuid>": ""}. That matches visit-form behaviour. A report that
+-- needs "no form was filled" must therefore not read `observations is null` as proof of it.
 --
 -- Answers live on the decision row rather than on the approved entity so that a second rejection
 -- does not overwrite the first one's reasons - each entity_approval_status row keeps its own answers

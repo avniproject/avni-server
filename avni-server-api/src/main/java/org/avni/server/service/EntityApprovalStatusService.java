@@ -74,8 +74,12 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
      * ProgramEncounterService does. An empty ObservationCollection is written as {} by
      * ObservationCollectionUserType, which would change the stored shape for every client released
      * before the approval/rejection form. And createObservations drops entries whose value is null,
-     * so a form submitted with every question skipped arrives here empty too. One rule covers both:
-     * no answers, whatever the request shape, stores NULL.
+     * so a list of skipped questions arrives here having retained nothing. One rule covers both: an
+     * answers list that retains no entries stores NULL.
+     *
+     * "Retains no entries" is narrower than "the approver left the form blank". createObservations
+     * only drops a value that is literally null, so a text question cleared to an empty string is
+     * kept and stored as {"<concept uuid>": ""}. That matches visit-form behaviour and is deliberate.
      *
      * The caller checks for a null list separately, and that check is load-bearing: save() is an
      * upsert, so an absent observations key must leave answers that are already stored alone rather

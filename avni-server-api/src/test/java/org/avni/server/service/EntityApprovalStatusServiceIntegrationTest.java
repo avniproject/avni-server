@@ -164,8 +164,14 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
     }
 
     /**
-     * The path every client released before the approval/rejection form takes. Its stored shape must
-     * not change: SQL NULL, never {}.
+     * The path every client released before the approval/rejection form takes, asserted end to end:
+     * a decision posted with no observations key is readable as SQL NULL, never {}.
+     *
+     * Weak on purpose, and it is not the guard for AC #3. A new EntityApprovalStatus already has a
+     * null observations field and the != null check means the setter is never reached, so this stays
+     * green under most mutations of toObservations. It documents the legacy shape rather than
+     * discriminating. The tests that actually bite are aDecisionWithAnEmptyAnswerListStoresSqlNull
+     * (an empty list must not become {}) and reSavingADecisionWithoutAnswersDoesNotEraseThem.
      */
     @Test
     public void aDecisionWithNoAnswersStoresSqlNull() {

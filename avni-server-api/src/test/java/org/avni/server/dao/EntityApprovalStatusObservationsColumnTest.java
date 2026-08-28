@@ -52,7 +52,12 @@ public class EntityApprovalStatusObservationsColumnTest extends AbstractControll
      * EntityApprovalStatus is serialised directly to the client by EntityApprovalStatusController,
      * and its @JsonIgnoreProperties list decides what survives. If observations were ever added to
      * that list the sync payload would silently lose the answers, and the symptom would look like a
-     * client bug. Assert the field is on the wire.
+     * client bug.
+     *
+     * Scope: this serialises the entity, not the response. The real payload is an
+     * EntityModel<EntityApprovalStatus> assembled by RestControllerResourceProcessor.wrap and the
+     * controller's process(). So this catches a @JsonIgnoreProperties or field-level regression, and
+     * would NOT catch the endpoint being switched to a contract/DTO that omits observations.
      */
     @Test
     public void observationsAreSerialisedIntoTheSyncPayload() throws Exception {
