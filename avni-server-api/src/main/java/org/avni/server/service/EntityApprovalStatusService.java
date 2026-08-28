@@ -4,6 +4,7 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.web.request.EntityApprovalStatusRequest;
+import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.EntityApprovalStatusWrapper;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +22,14 @@ import static org.avni.server.domain.EntityApprovalStatus.EntityType.*;
 public class EntityApprovalStatusService implements NonScopeAwareService {
     private final EntityApprovalStatusRepository entityApprovalStatusRepository;
     private final ApprovalStatusRepository approvalStatusRepository;
+    private final ObservationService observationService;
     private final Map<EntityApprovalStatus.EntityType, TransactionalDataRepository> typeMap = new HashMap<>();
 
     @Autowired
-    public EntityApprovalStatusService(EntityApprovalStatusRepository entityApprovalStatusRepository, ApprovalStatusRepository approvalStatusRepository, IndividualRepository individualRepository, EncounterRepository encounterRepository, ChecklistItemRepository checklistItemRepository, ProgramEncounterRepository programEncounterRepository, ProgramEnrolmentRepository programEnrolmentRepository) {
+    public EntityApprovalStatusService(EntityApprovalStatusRepository entityApprovalStatusRepository, ApprovalStatusRepository approvalStatusRepository, IndividualRepository individualRepository, EncounterRepository encounterRepository, ChecklistItemRepository checklistItemRepository, ProgramEncounterRepository programEncounterRepository, ProgramEnrolmentRepository programEnrolmentRepository, ObservationService observationService) {
         this.entityApprovalStatusRepository = entityApprovalStatusRepository;
         this.approvalStatusRepository = approvalStatusRepository;
+        this.observationService = observationService;
         this.typeMap.put(Subject, individualRepository);
         this.typeMap.put(Encounter, encounterRepository);
         this.typeMap.put(ChecklistItem, checklistItemRepository);
@@ -49,6 +52,9 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         entityApprovalStatus.setUuid(request.getUuid());
         entityApprovalStatus.setApprovalStatus(approvalStatusRepository.findByUuid(request.getApprovalStatusUuid()));
         entityApprovalStatus.setApprovalStatusComment(request.getApprovalStatusComment());
+        if (request.getObservations() != null) {
+            entityApprovalStatus.setObservations(toObservations(request.getObservations()));
+        }
         entityApprovalStatus.setVoided(request.isVoided());
         entityApprovalStatus.setEntityType(entityType);
         entityApprovalStatus.setAutoApproved(request.getAutoApproved());
@@ -59,6 +65,28 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         CHSEntity chsEntity = this.typeMap.get(entityType).findByUuid(request.getEntityUuid());
         updateIndividualAndSyncAttributes(chsEntity, entityApprovalStatus, entityType);
         entityApprovalStatusRepository.saveEAS(entityApprovalStatus);
+    }
+
+    /**
+     * A decision that carries no answers stores SQL NULL, not {}.
+     *
+     * Two reasons the conversion is guarded rather than calling ObservationService directly the way
+     * ProgramEncounterService does. An empty ObservationCollection is written as {} by
+     * ObservationCollectionUserType, which would change the stored shape for every client released
+     * before the approval/rejection form. And createObservations drops entries whose value is null,
+     * so a form submitted with every question skipped arrives here empty too. One rule covers both:
+     * no answers, whatever the request shape, stores NULL.
+     *
+     * The caller checks for a null list separately, and that check is load-bearing: save() is an
+     * upsert, so an absent observations key must leave answers that are already stored alone rather
+     * than erasing them.
+     */
+    private ObservationCollection toObservations(List<ObservationRequest> observationRequests) {
+        if (observationRequests.isEmpty()) {
+            return null;
+        }
+        ObservationCollection observations = observationService.createObservations(observationRequests);
+        return observations.isEmpty() ? null : observations;
     }
 
     public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid, FormMapping formMapping) {
