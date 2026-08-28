@@ -41,4 +41,33 @@ public class AccessControlServiceTest {
         when(privilegeRepository.isAllowedForAdmin(PrivilegeType.EditSubject)).thenReturn(false);
         accessControlService.checkPrivilege(user, PrivilegeType.EditSubject);
     }
+
+    // EditApproval / EditRejection (#1050). These are NonTransaction privileges granted to nobody by
+    // the migration, so who may build approval and rejection forms is decided entirely here.
+
+    @Test
+    public void adminCanEditApprovalAndRejectionFormsWithoutAGrant() {
+        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository, null, null, null);
+        User user = new UserBuilder().id(1L).isAdmin(true).build();
+        when(privilegeRepository.isAllowedForAdmin(PrivilegeType.EditApproval)).thenReturn(true);
+        when(privilegeRepository.isAllowedForAdmin(PrivilegeType.EditRejection)).thenReturn(true);
+        accessControlService.checkPrivilege(user, PrivilegeType.EditApproval);
+        accessControlService.checkPrivilege(user, PrivilegeType.EditRejection);
+    }
+
+    @Test
+    public void aUserGroupWithAllPrivilegesCanEditApprovalFormsWithoutAGrant() {
+        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository, null, null, null);
+        User user = new UserBuilder().id(2L).isAdmin(false).build();
+        when(userRepository.hasAllPrivileges(2L)).thenReturn(true);
+        accessControlService.checkPrivilege(user, PrivilegeType.EditApproval);
+    }
+
+    @Test(expected = AvniAccessException.class)
+    public void anOrdinaryUserWithoutTheGrantIsRefusedApprovalFormEditing() {
+        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository, null, null, null);
+        User user = new UserBuilder().id(1L).isAdmin(false).build();
+        when(userRepository.hasPrivilege(PrivilegeType.EditApproval.name(), 1L)).thenReturn(false);
+        accessControlService.checkPrivilege(user, PrivilegeType.EditApproval);
+    }
 }
