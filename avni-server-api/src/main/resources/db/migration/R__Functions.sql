@@ -382,8 +382,14 @@ begin
     -- no branch (including Approval and Rejection) are accepted in every combination of programme
     -- and visit type, which is intended for those two: an approval or rejection form may be attached
     -- to a subject type alone, to a programme, to a visit type, or to a programme and visit type
-    -- together. Whether approval is actually enabled for that combination is enforced in
-    -- FormMappingService, not here, because it depends on sibling rows.
+    -- together.
+    --
+    -- Restricting them to combinations where an approval can actually arise is deliberately NOT
+    -- done here: it depends on sibling rows, which a row-level CHECK cannot see. That rule is
+    -- planned as application-level validation in FormMappingService (avniproject/avni-server#1052)
+    -- and is NOT yet built - today any of the four shapes is accepted. Note this is a separate
+    -- concern from form_mapping.enable_approval, the pre-existing flag that switches the approval
+    -- workflow on for a mapping.
     select exists(
         select 1
         from public.form f
