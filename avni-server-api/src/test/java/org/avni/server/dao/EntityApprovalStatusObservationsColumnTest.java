@@ -1,12 +1,19 @@
 package org.avni.server.dao;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.domain.EntityApprovalStatus;
+import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.User;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The observations column added by V1_410 (#1051).
@@ -39,5 +46,31 @@ public class EntityApprovalStatusObservationsColumnTest extends AbstractControll
                         "where table_name = 'entity_approval_status' and column_name = 'observations'",
                 String.class);
         assertNull("A default would give every existing row a non-null value", columnDefault);
+    }
+
+    /**
+     * EntityApprovalStatus is serialised directly to the client by EntityApprovalStatusController,
+     * and its @JsonIgnoreProperties list decides what survives. If observations were ever added to
+     * that list the sync payload would silently lose the answers, and the symptom would look like a
+     * client bug. Assert the field is on the wire.
+     */
+    @Test
+    public void observationsAreSerialisedIntoTheSyncPayload() throws Exception {
+        Map<String, Object> answers = new HashMap<>();
+        answers.put("concept-uuid", "answer-concept-uuid");
+        EntityApprovalStatus entityApprovalStatus = new EntityApprovalStatus();
+        entityApprovalStatus.setObservations(new ObservationCollection(answers));
+        // CHSEntity exposes createdBy/lastModifiedBy as the user's name and dereferences the user
+        // without a null check, so a bare entity cannot be serialised at all.
+        User user = userRepository.getDefaultSuperAdmin();
+        entityApprovalStatus.setCreatedBy(user);
+        entityApprovalStatus.setLastModifiedBy(user);
+
+        String json = mapper.writeValueAsString(entityApprovalStatus);
+
+        assertTrue("observations must survive serialisation to the client: " + json,
+                json.contains("\"observations\""));
+        assertTrue("the answer value must survive serialisation: " + json,
+                json.contains("answer-concept-uuid"));
     }
 }
