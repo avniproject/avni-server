@@ -20,7 +20,9 @@ public enum FormType {
     ChecklistItem,
     IndividualRelationship,
     Location,
-    Task;
+    Task,
+    Approval,
+    Rejection;
 
     static final FormType[] performEncounterTypes = {Encounter, ProgramEncounter};
     static final FormType[] cancelEncounterTypes = {IndividualEncounterCancellation, ProgramEncounterCancellation};
@@ -42,6 +44,8 @@ public enum FormType {
         put(IndividualRelationship, PrivilegeType.EditSubject);
         put(Location, PrivilegeType.EditLocationType);
         put(Task, PrivilegeType.EditTaskType);
+        put(Approval, PrivilegeType.EditApproval);
+        put(Rejection, PrivilegeType.EditRejection);
     }};
 
     public static PrivilegeType getPrivilegeType(FormType formType) {
