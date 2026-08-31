@@ -125,7 +125,50 @@ public class FormMappingService implements NonScopeAwareService {
 
         formMapping.setVoided(formMappingRequest.isVoided());
         formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
+
+        if (!formMappingRequest.isVoided() && form.getFormType().isApprovalDecisionForm()) {
+            assertCombinationCanProduceAnApproval(formMapping);
+        }
+
         formMappingRepository.saveFormMapping(formMapping);
+    }
+
+    /**
+     * An Approval or Rejection form is only ever shown at the moment an approval decision is made, so
+     * attaching one where no approval can happen builds a form nobody will ever see. Requires a sibling
+     * mapping on the same combination that has approval switched on AND whose form type actually creates
+     * an EntityApprovalStatus row.
+     * <p>
+     * Checking enable_approval alone is not enough: ManualProgramEnrolmentEligibility carries the flag in
+     * two production organisations but produces no approval, which is the specific case #1052 exists to
+     * stop. 108 production triples carry two approval-enabled form types, so this looks across a list
+     * rather than assuming a single sibling.
+     * <p>
+     * The tuple is built from the resolved entities, not the request: createOrUpdateFormMapping defaults a
+     * missing subject type to the Individual subject type, so reading subjectTypeUUID off the request
+     * would miss every subject-only mapping. Organisation is not part of the Java-side key - row level
+     * security scopes the query to the caller's organisation.
+     * <p>
+     * The mapping being saved can never satisfy its own condition, because Approval and Rejection have no
+     * EntityApprovalStatus.EntityType. No self-exclusion clause is needed.
+     */
+    private void assertCombinationCanProduceAnApproval(FormMapping formMapping) {
+        List<FormMapping> approvalEnabledSiblings = formMappingRepository.findApprovalEnabledMappingsForCombination(
+                idOf(formMapping.getSubjectType()), idOf(formMapping.getProgram()), idOf(formMapping.getEncounterType()));
+        boolean anySiblingProducesAnApproval = approvalEnabledSiblings.stream()
+                .anyMatch(sibling -> sibling.getForm().getFormType().getApprovalEntityType() != null);
+        if (!anySiblingProducesAnApproval) {
+            throw new ValidationException(String.format(
+                    "Cannot attach a %s form here. Approval is not switched on for this subject type, programme and " +
+                            "visit type combination, or it is only switched on for a form that never produces an " +
+                            "approval to decide on. Switch approval on for the registration, enrolment, exit, visit, " +
+                            "visit cancellation or checklist item form of this combination first.",
+                    formMapping.getForm().getFormType()));
+        }
+    }
+
+    private Long idOf(CHSEntity entity) {
+        return entity == null ? null : entity.getId();
     }
 
     public void createOrUpdateEmptyFormMapping(FormMappingContract formMappingRequest) {
