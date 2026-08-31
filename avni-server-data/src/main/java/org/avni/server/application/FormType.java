@@ -1,5 +1,6 @@
 package org.avni.server.application;
 
+import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.accessControl.PrivilegeType;
 
 import java.util.Arrays;
@@ -48,8 +49,33 @@ public enum FormType {
         put(Rejection, PrivilegeType.EditRejection);
     }};
 
+    /**
+     * The form types whose save creates an EntityApprovalStatus row, and the entity type it is created
+     * against. A form type absent from this map never produces an approval to decide on - which is why
+     * enable_approval alone is not enough to justify attaching an Approval or Rejection form.
+     * See EntityApprovalStatusService.createStatus and its callers.
+     */
+    private static final Map<FormType, EntityApprovalStatus.EntityType> ApprovalEntityTypes = new HashMap<FormType, EntityApprovalStatus.EntityType>() {{
+        put(IndividualProfile, EntityApprovalStatus.EntityType.Subject);
+        put(ProgramEnrolment, EntityApprovalStatus.EntityType.ProgramEnrolment);
+        put(ProgramExit, EntityApprovalStatus.EntityType.ProgramEnrolment);
+        put(Encounter, EntityApprovalStatus.EntityType.Encounter);
+        put(IndividualEncounterCancellation, EntityApprovalStatus.EntityType.Encounter);
+        put(ProgramEncounter, EntityApprovalStatus.EntityType.ProgramEncounter);
+        put(ProgramEncounterCancellation, EntityApprovalStatus.EntityType.ProgramEncounter);
+        put(ChecklistItem, EntityApprovalStatus.EntityType.ChecklistItem);
+    }};
+
     public static PrivilegeType getPrivilegeType(FormType formType) {
         return PrivilegeTypes.get(formType);
+    }
+
+    public EntityApprovalStatus.EntityType getApprovalEntityType() {
+        return ApprovalEntityTypes.get(this);
+    }
+
+    public boolean isApprovalDecisionForm() {
+        return this == Approval || this == Rejection;
     }
 
     public static PrivilegeType getPrivilegeType(Form form) {
