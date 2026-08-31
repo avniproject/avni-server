@@ -226,6 +226,34 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "  and observations_type_entity_id notnull", nativeQuery = true)
     List<FormMapping> findByProgramNotNullAndEncounterTypeNotNullAndIsVoidedFalse();
 
+    /**
+     * Every non-voided mapping on exactly this (subject type, programme, visit type) combination whose
+     * approval switch is on. Organisation scoping is left to row level security (V1_398), as with every
+     * other query here - form_mapping is never filtered on organisation_id in Java.
+     *
+     * The left joins are load-bearing. With an implicit join (fm.program.id) Hibernate emits an INNER
+     * JOIN for the whole query, which drops every mapping that has no programme - that is, all of the
+     * subject-type-only and general-encounter shapes. The "is null" branches would not save it, because
+     * the join is applied query-wide rather than per-branch.
+     */
+    @Query("select fm from FormMapping fm " +
+            "left join fm.program p " +
+            "left join fm.encounterType et " +
+            "where fm.subjectType.id = :subjectTypeId " +
+            "and ((:programId is null and p.id is null) or p.id = :programId) " +
+            "and ((:encounterTypeId is null and et.id is null) or et.id = :encounterTypeId) " +
+            "and fm.enableApproval = true " +
+            "and fm.isVoided = false " +
+            "and fm.implVersion = :implVersion")
+    List<FormMapping> findApprovalEnabledMappingsForCombinationAndImplVersion(@Param("subjectTypeId") Long subjectTypeId,
+                                                                             @Param("programId") Long programId,
+                                                                             @Param("encounterTypeId") Long encounterTypeId,
+                                                                             @Param("implVersion") int implVersion);
+
+    default List<FormMapping> findApprovalEnabledMappingsForCombination(Long subjectTypeId, Long programId, Long encounterTypeId) {
+        return findApprovalEnabledMappingsForCombinationAndImplVersion(subjectTypeId, programId, encounterTypeId, FormMapping.IMPL_VERSION);
+    }
+
     @Query("select st from SubjectType st " +
             "left join FormMapping fm on st.id = fm.subjectType.id " +
             "where fm.form.uuid = :formUUID ")

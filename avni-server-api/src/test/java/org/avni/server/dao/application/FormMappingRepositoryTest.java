@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.List;
 import java.util.UUID;
 
 import static junit.framework.Assert.assertNotNull;
@@ -334,6 +335,99 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
 
         assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
                 .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build()));
+    }
+
+    // Sibling lookup for #1052. The tuple is (subject type, programme, visit type); organisation is left
+    // to row level security, as with every other query in this repository.
+    //
+    // Approval is switched on by updating the mapping that already exists for a combination, not by adding
+    // a second one - createWithDefaultsAndGetFormMapping and addProgramAndGetFormMapping already create the
+    // registration and enrolment mappings, and a second mapping of the same form type on one combination is
+    // refused by check_form_mapping_uniqueness. That is also what an administrator actually does.
+
+    private FormMapping switchApprovalOnFor(FormMapping formMapping) {
+        formMapping.setEnableApproval(true);
+        return formMappingRepository.saveFormMapping(formMapping);
+    }
+
+    /**
+     * The subject-type-only shape is the one an implicit join would silently lose (see the left joins in
+     * findApprovalEnabledMappingsForCombination). It is also the commonest shape in production, so losing
+     * it would refuse almost every legitimate approval form while looking like it worked.
+     */
+    @Test
+    public void findsApprovalEnabledMappingsWhereProgrammeAndVisitTypeAreNull() {
+        SubjectType subjectType = approvalTestSubjectType();
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+
+        List<FormMapping> found = formMappingRepository.findApprovalEnabledMappingsForCombination(
+                subjectType.getId(), null, null);
+
+        assertEquals(1, found.size());
+        assertEquals(FormType.IndividualProfile, found.get(0).getForm().getFormType());
+    }
+
+    @Test
+    public void findsApprovalEnabledMappingsOnTheProgrammeAndVisitTypeCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+        EncounterType encounterType = approvalTestEncounterType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.ProgramEncounter)).withSubjectType(subjectType)
+                .withProgram(program).withEncounterType(encounterType).withEnableApproval(true).build());
+
+        assertEquals(1, formMappingRepository.findApprovalEnabledMappingsForCombination(
+                subjectType.getId(), program.getId(), encounterType.getId()).size());
+    }
+
+    /**
+     * A mapping on a different combination must not count as a sibling. Without exclusive null branches a
+     * programme-scoped mapping would answer a subject-type-only query.
+     */
+    @Test
+    public void doesNotFindApprovalEnabledMappingsFromADifferentCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+        switchApprovalOnFor(formMappingRepository.getProgramEnrolmentFormMapping(subjectType, program));
+
+        assertEquals(0, formMappingRepository.findApprovalEnabledMappingsForCombination(
+                subjectType.getId(), null, null).size());
+    }
+
+    /**
+     * The registration mapping created by the fixture has approval switched off, and the voided mapping
+     * has it switched on. Neither may be returned. A voided duplicate of an existing form type is
+     * accepted by the constraint, which returns early on voided rows - which is what makes this fixture
+     * possible at all.
+     */
+    @Test
+    public void doesNotFindMappingsWithApprovalSwitchedOffOrVoided() {
+        SubjectType subjectType = approvalTestSubjectType();
+        FormMapping voided = new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.IndividualProfile)).withSubjectType(subjectType)
+                .withEnableApproval(true).build();
+        voided.setVoided(true);
+        formMappingRepository.saveFormMapping(voided);
+
+        assertEquals(0, formMappingRepository.findApprovalEnabledMappingsForCombination(
+                subjectType.getId(), null, null).size());
+    }
+
+    /**
+     * 108 production triples carry two approval-enabled form types, so the caller must handle a list
+     * rather than assume a single sibling.
+     */
+    @Test
+    public void findsEveryApprovalEnabledMappingOnOneCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+        switchApprovalOnFor(formMappingRepository.getProgramEnrolmentFormMapping(subjectType, program));
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.ProgramExit)).withSubjectType(subjectType)
+                .withProgram(program).withEnableApproval(true).build());
+
+        assertEquals(2, formMappingRepository.findApprovalEnabledMappingsForCombination(
+                subjectType.getId(), program.getId(), null).size());
     }
 
     @Test
