@@ -18,6 +18,7 @@ import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.importer.batch.zip.BundleZipFileImporter;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupService;
 import org.avni.server.service.builder.TestProgramService;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -216,6 +218,39 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
         formMappingService.createOrUpdateFormMapping(contract);
 
         assertTrue(formMappingRepository.findByUuid(contract.getUuid()).isVoided());
+    }
+
+    // AC 5 - the rule applies to bundle import too, and must not depend on the order inside the file
+
+    /**
+     * formMappings.json is one array, processed element by element in file order (BundleZipFileImporter,
+     * "formMappings.json" case). This is the ordering that breaks: the Rejection mapping is listed before
+     * the enrolment form whose approval switch it depends on. Without the sort the whole bundle import
+     * fails - see theSameOrderIsRefusedWithoutTheSort below, which pins that this test is not vacuous.
+     */
+    @Test
+    public void aBundleSucceedsWhenTheRejectionMappingIsListedBeforeTheFormItDependsOn() {
+        Program program = aProgram("p1052f");
+        FormMappingContract enrolment = FormMappingContract.fromFormMapping(
+                formMappingRepository.getProgramEnrolmentFormMapping(subjectType, program));
+        enrolment.setEnableApproval(true);
+        FormMappingContract rejection = requestFor(FormType.Rejection, program, null);
+        rejection.setFormType(FormType.Rejection);
+
+        BundleZipFileImporter.approvalDecisionFormsLast(Arrays.asList(rejection, enrolment))
+                .forEach(formMappingService::createOrUpdateFormMapping);
+
+        assertNotNull(formMappingRepository.findByUuid(rejection.getUuid()));
+        assertTrue(formMappingRepository.findByUuid(enrolment.getUuid()).isEnableApproval());
+    }
+
+    @Test
+    public void theSameOrderIsRefusedWithoutTheSort() {
+        Program program = aProgram("p1052g");
+        FormMappingContract rejection = requestFor(FormType.Rejection, program, null);
+        rejection.setFormType(FormType.Rejection);
+
+        assertRefused(rejection);
     }
 
     // The guard must not touch any other form type
