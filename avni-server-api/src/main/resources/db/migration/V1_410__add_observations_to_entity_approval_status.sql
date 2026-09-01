@@ -5,10 +5,17 @@
 -- form sends, and its stored shape must not change - or it carried a list that retained no entries.
 -- A DEFAULT '{}' would flatten those into the same value as a form that was filled in.
 --
--- NULL is NOT a reliable "the approver did not fill the form" flag. ObservationService.createObservations
--- drops an answer only when its value is literally null, so a text question cleared to an empty string
--- is retained and stored as {"<concept uuid>": ""}. That matches visit-form behaviour. A report that
--- needs "no form was filled" must therefore not read `observations is null` as proof of it.
+-- NULL is NOT a reliable "the approver did not fill the form" flag, and the filter behind that is broader
+-- than it looks. ObservationService.createObservations (ObservationService:73-74) discards any answer
+-- whose value stringifies to "null", case-insensitively:
+--
+--     !"null".equalsIgnoreCase(String.valueOf(obsReqAsMap.getValue()))
+--
+-- so a literal null is dropped, but so is an approver who types "null", "NULL" or "Null" as a rejection
+-- note - that answer is silently lost, and if it was the only one the decision stores NULL as though no
+-- form had been filled. A text question cleared to an empty string is retained and stored as
+-- {"<concept uuid>": ""}. That matches visit-form behaviour. A report that needs "no form was filled"
+-- must therefore not read `observations is null` as proof of it.
 --
 -- Answers live on the decision row rather than on the approved entity so that a second rejection
 -- does not overwrite the first one's reasons - each entity_approval_status row keeps its own answers

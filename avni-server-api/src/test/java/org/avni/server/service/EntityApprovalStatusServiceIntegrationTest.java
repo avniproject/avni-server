@@ -159,9 +159,15 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
      * stores the value verbatim (ObservationService.java:71) and never maps an answer name to a UUID
      * nor checks the answer belongs to the concept - a client that sends "Wrong address" would store
      * that string. The visit-form path behaves identically, so this is a client contract on both, and
-     * "stored the same way it is on a visit form" is satisfied by sharing the conversion. Enforcing it
-     * server-side would mean validating against the Approval/Rejection form mapping, which is
-     * avniproject/avni-server#1052, not this story.
+     * "stored the same way it is on a visit form" is satisfied by sharing the conversion.
+     *
+     * This used to defer server-side enforcement to #1052. That pointer was wrong: #1052 restricts where
+     * an Approval or Rejection form may be attached, and never looks at a decision's answers. Enforcement
+     * arrived instead from the #1051 review - EntityApprovalStatusService validates answers against the
+     * attached decision form, and EntityApprovalStatusValidationIntegrationTest is where that lives.
+     * The conversion asserted here is still unguarded on its own; the check sits one layer above it, and
+     * only where the deployment has AVNI_ENHANCED_VALIDATION and the organisation's failOnValidationError
+     * both switched on.
      */
     @Test
     public void aCodedAnswerIsStoredAsTheAnswerConceptUuid() throws ValidationException {
@@ -220,6 +226,18 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
                 observations.contains("Address looks wrong"));
     }
 
+    /**
+     * An explicit empty list clears stored answers, where an absent key leaves them alone.
+     *
+     * What actually writes the NULL is worth naming, because the obvious reading is wrong. save() finds
+     * the existing row by uuid, so the EntityApprovalStatus is JPA-managed inside the test's transaction;
+     * setObservations(null) makes it dirty and the flush in saveDecision writes it. The saveEAS call this
+     * test appears to exercise is not what persists the change - dirty checking would carry it even if
+     * saveEAS did nothing at all. Raised in the #1051 review.
+     *
+     * The assertion is still sound: storedObservations reads through JdbcTemplate, not the persistence
+     * context, so it is reading what the database actually holds rather than an in-memory entity.
+     */
     @Test
     public void reSavingADecisionWithAnEmptyAnswerListClearsTheAnswers() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime().minusDays(1), Arrays.asList(
