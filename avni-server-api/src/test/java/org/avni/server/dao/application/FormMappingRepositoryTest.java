@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.fail;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -439,5 +440,94 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
                 .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).withProgram(program).build()));
         assertNotNull(formMappingRepository.saveFormMapping(new FormMappingBuilder()
                 .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType).withProgram(program).build()));
+    }
+
+    // Locating the Approval or Rejection form to validate a decision's answers against (#1051 review).
+    // Same left-join shape, and the same reason for it, as findApprovalEnabledMappingsForCombination.
+
+    /**
+     * The subject-type-only shape, which an implicit join would silently drop along with every other
+     * combination that has no programme. This is the commonest one in production.
+     */
+    @Test
+    public void findsTheRejectionFormOnASubjectTypeWithNoProgrammeOrVisitType() {
+        SubjectType subjectType = approvalTestSubjectType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType).build());
+
+        FormMapping found = formMappingRepository.findDecisionFormMappingForCombination(
+                subjectType.getId(), null, null, FormType.Rejection);
+
+        assertNotNull(found);
+        assertEquals(FormType.Rejection, found.getForm().getFormType());
+    }
+
+    @Test
+    public void findsTheApprovalFormOnAProgrammeAndVisitTypeCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+        EncounterType encounterType = approvalTestEncounterType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType)
+                .withProgram(program).withEncounterType(encounterType).build());
+
+        assertNotNull(formMappingRepository.findDecisionFormMappingForCombination(
+                subjectType.getId(), program.getId(), encounterType.getId(), FormType.Approval));
+    }
+
+    /**
+     * Approval and Rejection may both be attached to one combination, so the lookup has to pick the one
+     * matching the decision being made rather than whichever comes back first.
+     */
+    @Test
+    public void tellsApprovalAndRejectionApartOnTheSameCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Approval)).withSubjectType(subjectType).build());
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType).build());
+
+        assertEquals(FormType.Approval, formMappingRepository.findDecisionFormMappingForCombination(
+                subjectType.getId(), null, null, FormType.Approval).getForm().getFormType());
+        assertEquals(FormType.Rejection, formMappingRepository.findDecisionFormMappingForCombination(
+                subjectType.getId(), null, null, FormType.Rejection).getForm().getFormType());
+    }
+
+    /**
+     * A decision form attached to a different combination must not be found for this one - otherwise a
+     * decision would be validated against the wrong organisation's questions.
+     */
+    @Test
+    public void doesNotFindADecisionFormFromAnotherCombination() {
+        SubjectType subjectType = approvalTestSubjectType();
+        Program program = approvalTestProgram(subjectType);
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType)
+                .withProgram(program).build());
+
+        assertNull("the programme's rejection form is not the subject type's",
+                formMappingRepository.findDecisionFormMappingForCombination(
+                        subjectType.getId(), null, null, FormType.Rejection));
+    }
+
+    @Test
+    public void findsNothingWhenNoDecisionFormIsAttached() {
+        SubjectType subjectType = approvalTestSubjectType();
+
+        assertNull(formMappingRepository.findDecisionFormMappingForCombination(
+                subjectType.getId(), null, null, FormType.Rejection));
+    }
+
+    @Test
+    public void doesNotFindAVoidedDecisionForm() {
+        SubjectType subjectType = approvalTestSubjectType();
+        FormMapping rejectionMapping = formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Rejection)).withSubjectType(subjectType).build());
+        rejectionMapping.setVoided(true);
+        formMappingRepository.saveFormMapping(rejectionMapping);
+
+        assertNull("a detached form must not go on validating decisions",
+                formMappingRepository.findDecisionFormMappingForCombination(
+                        subjectType.getId(), null, null, FormType.Rejection));
     }
 }

@@ -254,6 +254,38 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
         return findApprovalEnabledMappingsForCombinationAndImplVersion(subjectTypeId, programId, encounterTypeId, FormMapping.IMPL_VERSION);
     }
 
+    /**
+     * The Approval or Rejection form attached to exactly this (subject type, programme, visit type)
+     * combination, or null if none is. Used to validate the answers on an approval decision against the
+     * form they were captured on (EntityApprovalStatusService#save).
+     *
+     * Both may be attached to one combination, so the form type is part of the lookup rather than
+     * something to filter afterwards. The left joins carry over from
+     * findApprovalEnabledMappingsForCombination above, for the same reason: an implicit join makes the
+     * whole query an INNER JOIN and drops every combination that has no programme.
+     *
+     * check_form_mapping_uniqueness makes at most one non-voided mapping possible per combination and
+     * form type, so a single result is safe to return.
+     */
+    @Query("select fm from FormMapping fm " +
+            "left join fm.program p " +
+            "left join fm.encounterType et " +
+            "where fm.subjectType.id = :subjectTypeId " +
+            "and ((:programId is null and p.id is null) or p.id = :programId) " +
+            "and ((:encounterTypeId is null and et.id is null) or et.id = :encounterTypeId) " +
+            "and fm.form.formType = :formType " +
+            "and fm.isVoided = false " +
+            "and fm.implVersion = :implVersion")
+    FormMapping findDecisionFormMappingForCombinationAndImplVersion(@Param("subjectTypeId") Long subjectTypeId,
+                                                                    @Param("programId") Long programId,
+                                                                    @Param("encounterTypeId") Long encounterTypeId,
+                                                                    @Param("formType") FormType formType,
+                                                                    @Param("implVersion") int implVersion);
+
+    default FormMapping findDecisionFormMappingForCombination(Long subjectTypeId, Long programId, Long encounterTypeId, FormType formType) {
+        return findDecisionFormMappingForCombinationAndImplVersion(subjectTypeId, programId, encounterTypeId, formType, FormMapping.IMPL_VERSION);
+    }
+
     @Query("select st from SubjectType st " +
             "left join FormMapping fm on st.id = fm.subjectType.id " +
             "where fm.form.uuid = :formUUID ")
