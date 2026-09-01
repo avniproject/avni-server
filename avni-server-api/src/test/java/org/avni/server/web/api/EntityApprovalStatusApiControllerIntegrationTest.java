@@ -9,10 +9,13 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.EntityApprovalStatusService;
+import org.avni.server.application.FormType;
 import org.avni.server.service.builder.TestConceptService;
+import org.avni.server.service.builder.TestFormService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupService;
 import org.avni.server.service.builder.TestSubjectService;
@@ -63,12 +66,15 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
     @Autowired
     private TestGroupService testGroupService;
     @Autowired
+    private TestFormService testFormService;
+    @Autowired
     private EntityApprovalStatusService entityApprovalStatusService;
     @Autowired
     private ApprovalStatusRepository approvalStatusRepository;
     @Autowired
     private EntityApprovalStatusApiController entityApprovalStatusApiController;
 
+    private SubjectType subjectType;
     private Individual subject;
     private ApprovalStatus rejected;
     private Concept rejectionReason;
@@ -79,7 +85,7 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
     public void setUp() throws Exception {
         super.setUp();
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
-        SubjectType subjectType = new SubjectTypeBuilder().setType(Subject.Individual).setName("ST1").build();
+        subjectType = new SubjectTypeBuilder().setType(Subject.Individual).setName("ST1").build();
         testSubjectTypeService.createWithDefaults(subjectType);
 
         // checkApprovePrivilegeOnEntityApprovalStatuses runs in the controller body and throws for any
@@ -94,6 +100,11 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
         rejectionReason = testConceptService.createCodedConcept("Rejection reason", "Wrong address", "Duplicate");
         answerWrongAddress = rejectionReason.findAnswerConcept("Wrong address");
         rejectionNote = testConceptService.createConcept("Rejection note", ConceptDataType.Text);
+
+        // Answers on a decision are validated against the attached decision form (#1051 review), so the
+        // questions read back below have to be on one.
+        testFormService.createDecisionForm(subjectType, FormType.Rejection, "Rejection form 1053",
+                java.util.Arrays.asList("Rejection reason", "Rejection note"), java.util.Collections.emptyList());
     }
 
     private ObservationRequest observation(String conceptUuid, Object value) {
@@ -103,7 +114,7 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
         return observationRequest;
     }
 
-    private void saveDecision(List<ObservationRequest> observations) {
+    private void saveDecision(List<ObservationRequest> observations) throws ValidationException {
         EntityApprovalStatusRequest request = new EntityApprovalStatusRequest();
         request.setUuid(UUID.randomUUID().toString());
         request.setEntityUuid(subject.getUuid());
@@ -117,15 +128,20 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> singleResponseEntry() {
+        // `now` is passed explicitly rather than left to default. findEntityApprovalStatuses falls back to
+        // new DateTime() evaluated when the query runs, and filters lastModifiedBetween(REALLY_OLD_DATE, now)
+        // - so a decision saved in the same millisecond as the read sits on the boundary and intermittently
+        // drops out. Real callers of this sync endpoint always pass `now`; leaving it null made this test
+        // flaky roughly one run in two.
         ResponsePage page = entityApprovalStatusApiController.getEntityApprovalStatuses(
-                null, null, null, null, PageRequest.of(0, 10));
+                null, new DateTime().plusMinutes(1), null, null, PageRequest.of(0, 10));
         assertEquals("exactly one decision was saved", 1, page.getContent().size());
         return (Map<String, Object>) page.getContent().get(0);
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void theAnswersOnARejectionAreReadableThroughTheApi() {
+    public void theAnswersOnARejectionAreReadableThroughTheApi() throws ValidationException {
         saveDecision(Arrays.asList(
                 observation(rejectionReason.getUuid(), answerWrongAddress.getUuid()),
                 observation(rejectionNote.getUuid(), "Door number did not match")));
@@ -151,7 +167,7 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
      * the shape of every decision recorded before one was attached.
      */
     @Test
-    public void aRejectionWithNoAnswersIsReturnedWithoutError() {
+    public void aRejectionWithNoAnswersIsReturnedWithoutError() throws ValidationException {
         saveDecision(null);
 
         Map<String, Object> entry = singleResponseEntry();
@@ -168,7 +184,7 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
      * than on a serialised string.
      */
     @Test
-    public void theExistingKeysAndTheirOrderAreUnchanged() {
+    public void theExistingKeysAndTheirOrderAreUnchanged() throws ValidationException {
         saveDecision(null);
 
         List<String> keys = new java.util.ArrayList<>(((LinkedHashMap<String, Object>) singleResponseEntry()).keySet());

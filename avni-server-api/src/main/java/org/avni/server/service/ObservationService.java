@@ -77,6 +77,17 @@ public class ObservationService {
         return new ObservationCollection(completedObservationRequests);
     }
 
+    /**
+     * Whether observation validation is switched on for this deployment (AVNI_ENHANCED_VALIDATION,
+     * default true in production and false in the test profile). Exposed so a caller that has to do
+     * structural work before it can validate - resolving the decision form on the approval path, say -
+     * can skip that work under the same switch, rather than enforcing a check the deployment has
+     * deliberately turned off.
+     */
+    public boolean isEnhancedValidationEnabled() {
+        return enhancedValidationEnabled;
+    }
+
     public void validateObservationsAndDecisions(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) throws ValidationException {
         if (enhancedValidationEnabled) {
             enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);

@@ -13,6 +13,7 @@ import org.avni.server.service.EntityApprovalStatusService;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.web.request.EntityApprovalStatusRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
@@ -66,7 +67,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
     @RequestMapping(value = "/entityApprovalStatuses", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void save(@RequestBody EntityApprovalStatusRequest request) {
+    public void save(@RequestBody EntityApprovalStatusRequest request) throws ValidationException {
         entityApprovalStatusService.save(request);
     }
 

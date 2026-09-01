@@ -13,7 +13,10 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.application.FormType;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.service.builder.TestConceptService;
+import org.avni.server.service.builder.TestFormService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestSubjectService;
 import org.avni.server.service.builder.TestSubjectTypeService;
@@ -56,6 +59,8 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
     @Autowired
     private TestConceptService testConceptService;
     @Autowired
+    private TestFormService testFormService;
+    @Autowired
     private EntityApprovalStatusService entityApprovalStatusService;
     @Autowired
     private ApprovalStatusRepository approvalStatusRepository;
@@ -89,6 +94,13 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
         assertNotNull("The answer concept must be seeded before any decision is posted - "
                 + "ObservationService.createObservations fails loudly on an unknown concept", answerWrongAddress);
         rejectionNote = testConceptService.createConcept("Rejection note", ConceptDataType.Text);
+
+        // Since the #1051 review, answers on a decision are validated against the decision form they were
+        // captured on, so the questions used below have to actually be on an attached Rejection form.
+        // Storage is still what this class is about; EntityApprovalStatusValidationIntegrationTest covers
+        // the validation itself.
+        testFormService.createDecisionForm(subjectType, FormType.Rejection, "Rejection form 1051",
+                Arrays.asList("Rejection reason", "Rejection note"), Collections.emptyList());
     }
 
     private ObservationRequest observation(String conceptUuid, Object value) {
@@ -99,12 +111,12 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
     }
 
     private String saveDecision(ApprovalStatus approvalStatus, DateTime statusDateTime,
-                                List<ObservationRequest> observations) {
+                                List<ObservationRequest> observations) throws ValidationException {
         return saveDecision(UUID.randomUUID().toString(), approvalStatus, statusDateTime, observations);
     }
 
     private String saveDecision(String uuid, ApprovalStatus approvalStatus, DateTime statusDateTime,
-                                List<ObservationRequest> observations) {
+                                List<ObservationRequest> observations) throws ValidationException {
         EntityApprovalStatusRequest request = new EntityApprovalStatusRequest();
         request.setUuid(uuid);
         request.setEntityUuid(subject.getUuid());
@@ -125,7 +137,7 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
     }
 
     @Test
-    public void answersSentWithADecisionAreSavedAgainstIt() {
+    public void answersSentWithADecisionAreSavedAgainstIt() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime(), Arrays.asList(
                 observation(rejectionReason.getUuid(), answerWrongAddress.getUuid()),
                 observation(rejectionNote.getUuid(), "House number did not match")));
@@ -152,7 +164,7 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
      * avniproject/avni-server#1052, not this story.
      */
     @Test
-    public void aCodedAnswerIsStoredAsTheAnswerConceptUuid() {
+    public void aCodedAnswerIsStoredAsTheAnswerConceptUuid() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime(), Arrays.asList(
                 observation(rejectionReason.getUuid(), answerWrongAddress.getUuid())));
 
@@ -174,14 +186,14 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
      * (an empty list must not become {}) and reSavingADecisionWithoutAnswersDoesNotEraseThem.
      */
     @Test
-    public void aDecisionWithNoAnswersStoresSqlNull() {
+    public void aDecisionWithNoAnswersStoresSqlNull() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime(), null);
 
         assertNull("A decision with no observations must store SQL NULL, not {}", storedObservations(uuid));
     }
 
     @Test
-    public void aDecisionWithAnEmptyAnswerListStoresSqlNull() {
+    public void aDecisionWithAnEmptyAnswerListStoresSqlNull() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime(), Collections.emptyList());
 
         assertNull("An empty answer list must store SQL NULL, not {}", storedObservations(uuid));
@@ -195,7 +207,7 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
      * already stored. Absent key means "nothing to say about the answers"; an empty list clears them.
      */
     @Test
-    public void reSavingADecisionWithoutAnswersDoesNotEraseThem() {
+    public void reSavingADecisionWithoutAnswersDoesNotEraseThem() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime().minusDays(1), Arrays.asList(
                 observation(rejectionNote.getUuid(), "Address looks wrong")));
         assertNotNull(storedObservations(uuid));
@@ -209,7 +221,7 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
     }
 
     @Test
-    public void reSavingADecisionWithAnEmptyAnswerListClearsTheAnswers() {
+    public void reSavingADecisionWithAnEmptyAnswerListClearsTheAnswers() throws ValidationException {
         String uuid = saveDecision(rejected, new DateTime().minusDays(1), Arrays.asList(
                 observation(rejectionNote.getUuid(), "Address looks wrong")));
         assertNotNull(storedObservations(uuid));
@@ -229,7 +241,7 @@ public class EntityApprovalStatusServiceIntegrationTest extends AbstractControll
      * That guard is pre-existing behaviour and is out of scope for #1051.
      */
     @Test
-    public void rejectingTheSameRecordTwiceKeepsBothSetsOfAnswers() {
+    public void rejectingTheSameRecordTwiceKeepsBothSetsOfAnswers() throws ValidationException {
         DateTime firstRejection = new DateTime().minusDays(3);
         String firstUuid = saveDecision(rejected, firstRejection, Arrays.asList(
                 observation(rejectionNote.getUuid(), "Address looks wrong")));
