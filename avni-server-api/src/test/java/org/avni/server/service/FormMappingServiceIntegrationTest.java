@@ -265,4 +265,100 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
         assertEquals(FormType.ProgramEncounter,
                 formMappingRepository.findByUuid(contract.getUuid()).getForm().getFormType());
     }
+
+    // Findings from ombhardwajj's review of #1052, 2 Sep 2026
+
+    /**
+     * Finding 1. form_mapping.form_id is nullable (V1_146) and createOrUpdateEmptyFormMapping sets it to
+     * null explicitly, while findApprovalEnabledMappingsForCombination filters only on enableApproval,
+     * isVoided and implVersion - so a form-less approval-enabled row is returned to the guard. Without a
+     * null check the anyMatch dereferences it and the admin gets a 500 instead of the validation message.
+     */
+    @Test
+    public void doesNotFallOverWhenAnApprovalEnabledSiblingHasNoForm() {
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(null).withSubjectType(subjectType).withEnableApproval(true).build());
+
+        assertRefused(requestFor(FormType.Approval, null, null));
+    }
+
+    /**
+     * The same row must not mask a genuine approval-enabled sibling either: the form-less row is skipped,
+     * not treated as disqualifying.
+     */
+    @Test
+    public void aFormLessSiblingDoesNotHideARealApprovalEnabledOne() {
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(null).withSubjectType(subjectType).withEnableApproval(true).build());
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+
+        FormMappingContract contract = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(contract);
+
+        assertNotNull(formMappingRepository.findByUuid(contract.getUuid()));
+    }
+
+    /**
+     * Finding 4. POST /emptyFormMapping reaches createOrUpdateEmptyFormMapping, which set subject type,
+     * programme, visit type, voided and enableApproval and saved with no guard at all - so it could create
+     * exactly the orphaned decision form this story exists to refuse.
+     */
+    @Test
+    public void refusesAnApprovalFormThroughTheEmptyFormMappingRoute() {
+        FormMappingContract contract = requestFor(FormType.Approval, null, null);
+
+        try {
+            formMappingService.createOrUpdateEmptyFormMapping(contract);
+            fail("Expected the mapping to be refused");
+        } catch (ValidationException e) {
+            assertTrue("Message must explain why: " + e.getMessage(),
+                    e.getMessage().toLowerCase().contains("approval"));
+        }
+    }
+
+    @Test
+    public void allowsAnApprovalFormThroughTheEmptyFormMappingRouteWhereApprovalIsOn() {
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        FormMappingContract contract = requestFor(FormType.Approval, null, null);
+
+        formMappingService.createOrUpdateEmptyFormMapping(contract);
+
+        assertNotNull(formMappingRepository.findByUuid(contract.getUuid()));
+    }
+
+    /**
+     * A form-less mapping through this route carries no form type, so there is nothing to guard - and
+     * refusing it would break the route's actual purpose.
+     */
+    @Test
+    public void stillAllowsAFormLessMappingThroughTheEmptyFormMappingRoute() {
+        FormMappingContract contract = requestFor(FormType.Approval, null, null);
+        contract.setFormUUID(null);
+
+        formMappingService.createOrUpdateEmptyFormMapping(contract);
+
+        assertNotNull(formMappingRepository.findByUuid(contract.getUuid()));
+    }
+
+    /**
+     * Finding 6. The message is shown to a non-developer administrator in App Designer, so it has to read
+     * as English - "a Approval form" does not.
+     */
+    @Test
+    public void namesTheFormTypeWithTheRightArticle() {
+        try {
+            formMappingService.createOrUpdateFormMapping(requestFor(FormType.Approval, null, null));
+            fail("Expected the mapping to be refused");
+        } catch (ValidationException e) {
+            assertTrue("Should read 'an Approval form', got: " + e.getMessage(),
+                    e.getMessage().contains("an Approval form"));
+        }
+        try {
+            formMappingService.createOrUpdateFormMapping(requestFor(FormType.Rejection, null, null));
+            fail("Expected the mapping to be refused");
+        } catch (ValidationException e) {
+            assertTrue("Should read 'a Rejection form', got: " + e.getMessage(),
+                    e.getMessage().contains("a Rejection form"));
+        }
+    }
 }

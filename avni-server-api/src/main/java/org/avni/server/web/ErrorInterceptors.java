@@ -112,6 +112,21 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
                         errorBodyBuilder.getErrorMessageBody(e)));
     }
 
+    /**
+     * A failed validation is the expected outcome of a routine administrator mistake - attaching an
+     * Approval form before switching approval on, say - not a server fault. Without this it fell through
+     * to the catch-all below, which raises a Bugsnag incident and answers App Designer with a 500.
+     *
+     * Both types are listed because the codebase has two: the checked domain one, thrown by the
+     * observation-validation path, and the unchecked web one, thrown by form-mapping validation. Handling
+     * only one would leave the other still reported as a server error.
+     */
+    @ExceptionHandler(value = {org.avni.server.web.validation.ValidationException.class,
+            org.avni.server.domain.ValidationException.class})
+    public ResponseEntity validationFailed(Exception e) {
+        return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorBody(e));
+    }
+
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity unknownException(Exception e) {
         if (e instanceof BadRequestError) {

@@ -155,20 +155,32 @@ public class FormMappingService implements NonScopeAwareService {
     private void assertCombinationCanProduceAnApproval(FormMapping formMapping) {
         List<FormMapping> approvalEnabledSiblings = formMappingRepository.findApprovalEnabledMappingsForCombination(
                 idOf(formMapping.getSubjectType()), idOf(formMapping.getProgram()), idOf(formMapping.getEncounterType()));
+        // form_id is nullable (V1_146) and createOrUpdateEmptyFormMapping sets it to null explicitly, so a
+        // form-less approval-enabled row reaches here. Skip it rather than dereferencing it - otherwise an
+        // organisation holding one gets a 500 where it should get the validation message below.
         boolean anySiblingProducesAnApproval = approvalEnabledSiblings.stream()
-                .anyMatch(sibling -> sibling.getForm().getFormType().getApprovalEntityType() != null);
+                .anyMatch(sibling -> sibling.getForm() != null
+                        && sibling.getForm().getFormType().getApprovalEntityType() != null);
         if (!anySiblingProducesAnApproval) {
             throw new ValidationException(String.format(
-                    "Cannot attach a %s form here. Approval is not switched on for this subject type, programme and " +
+                    "Cannot attach %s form here. Approval is not switched on for this subject type, programme and " +
                             "visit type combination, or it is only switched on for a form that never produces an " +
                             "approval to decide on. Switch approval on for the registration, enrolment, exit, visit, " +
                             "visit cancellation or checklist item form of this combination first.",
-                    formMapping.getForm().getFormType()));
+                    articleFor(formMapping.getForm().getFormType())));
         }
     }
 
     private Long idOf(CHSEntity entity) {
         return entity == null ? null : entity.getId();
+    }
+
+    /**
+     * The message is shown to a non-developer administrator in App Designer, so it has to read as English:
+     * "an Approval form", not "a Approval form".
+     */
+    private String articleFor(FormType formType) {
+        return (formType == FormType.Approval ? "an " : "a ") + formType;
     }
 
     public void createOrUpdateEmptyFormMapping(FormMappingContract formMappingRequest) {
@@ -204,8 +216,22 @@ public class FormMappingService implements NonScopeAwareService {
             formMapping.setSubjectType(null);
         }
 
-        formMapping.setVoided(formMappingRequest.getIsVoided());
+        // getIsVoided() reads a field only Jackson populates - FormMappingContract has no setter for it, and
+        // fromFormMapping sets the superclass's flag instead. So any contract not deserialised from JSON
+        // arrives with it null and unboxing it here threw. Default to not-voided rather than blowing up.
+        formMapping.setVoided(Boolean.TRUE.equals(formMappingRequest.getIsVoided()));
         formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
+
+        // The same guard createOrUpdateFormMapping applies. Without it this route could create exactly the
+        // orphaned decision form #1052 exists to refuse. A form-less mapping carries no form type, so there
+        // is nothing to check and refusing it would break what this route is for.
+        // Read the flag off the request, not off the entity: setVoided above accepts a null Boolean, and
+        // unboxing that here would turn a missing isVoided into an NPE on a route that tolerates it today.
+        if (!Boolean.TRUE.equals(formMappingRequest.getIsVoided())
+                && form != null && form.getFormType().isApprovalDecisionForm()) {
+            assertCombinationCanProduceAnApproval(formMapping);
+        }
+
         formMappingRepository.saveFormMapping(formMapping);
     }
 
