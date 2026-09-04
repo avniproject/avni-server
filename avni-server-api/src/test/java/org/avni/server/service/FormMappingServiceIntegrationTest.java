@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -360,5 +361,47 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
             assertTrue("Should read 'a Rejection form', got: " + e.getMessage(),
                     e.getMessage().contains("a Rejection form"));
         }
+    }
+
+    /**
+     * Finding 5, characterised rather than fixed. The invariant is enforced on the way in only: nothing
+     * stops an administrator switching approval back off on the sibling, or voiding it, once a decision
+     * form is attached - leaving exactly the orphan #1052 refuses to let anyone create.
+     *
+     * These two tests assert what the code does today, so the gap is visible and pinned rather than
+     * implicit. Whether to warn on disable, cascade-void the decision form, or accept the state is a
+     * product call, recorded in avni-product-ops context/open-decisions.md. When it is made, these tests
+     * are the ones to change.
+     */
+    @Test
+    public void currentlyAllowsApprovalToBeSwitchedOffUnderAnAttachedDecisionForm() {
+        FormMapping registration = formMappingRepository.getRegistrationFormMapping(subjectType);
+        switchApprovalOnFor(registration);
+        FormMappingContract approvalForm = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(approvalForm);
+
+        registration.setEnableApproval(false);
+        formMappingRepository.saveFormMapping(registration);
+
+        assertFalse("approval can still be switched off underneath the decision form",
+                formMappingRepository.getRegistrationFormMapping(subjectType).isEnableApproval());
+        assertNotNull("and the decision form is left attached to a combination that can no longer approve",
+                formMappingRepository.findByUuid(approvalForm.getUuid()));
+        assertFalse(formMappingRepository.findByUuid(approvalForm.getUuid()).isVoided());
+    }
+
+    @Test
+    public void currentlyAllowsTheApprovalEnabledSiblingToBeVoidedUnderAnAttachedDecisionForm() {
+        FormMapping registration = formMappingRepository.getRegistrationFormMapping(subjectType);
+        switchApprovalOnFor(registration);
+        FormMappingContract approvalForm = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(approvalForm);
+
+        registration.setVoided(true);
+        formMappingRepository.saveFormMapping(registration);
+
+        assertNotNull("the decision form survives its sibling being voided",
+                formMappingRepository.findByUuid(approvalForm.getUuid()));
+        assertFalse(formMappingRepository.findByUuid(approvalForm.getUuid()).isVoided());
     }
 }
