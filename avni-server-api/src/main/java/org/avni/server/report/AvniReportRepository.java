@@ -167,7 +167,7 @@ public class AvniReportRepository {
                 "       count(*) as count\n" +
                 "from sync_telemetry st\n" +
                 "         join users u on st.user_id = u.id\n" +
-                "where sync_status = 'incomplete'\n" +
+                "where sync_status in ('incomplete', 'failed')\n" +
                 "and u.is_voided = false and u.organisation_id notnull\n" +
                 "${syncTelemetryWhere}\n"+
                 "${userWhere}\n"+
