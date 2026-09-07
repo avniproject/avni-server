@@ -21,7 +21,6 @@ import org.avni.server.service.builder.TestGroupService;
 import org.avni.server.service.builder.TestSubjectService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.avni.server.web.request.EntityApprovalStatusRequest;
-import org.avni.server.web.request.ObservationContract;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
@@ -34,11 +33,11 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -148,18 +147,34 @@ public class EntityApprovalStatusApiControllerIntegrationTest extends AbstractCo
 
         Map<String, Object> entry = singleResponseEntry();
 
-        List<ObservationContract> observations = (List<ObservationContract>) entry.get("observations");
+        Map<String, Object> observations = (Map<String, Object>) entry.get("observations");
         assertNotNull("a rejection carrying answers must return them", observations);
-        List<String> questions = observations.stream()
-                .map(o -> o.getConcept().getName()).collect(Collectors.toList());
-        assertTrue("both questions should come back, named rather than as concept UUIDs: " + questions,
-                questions.containsAll(Arrays.asList("Rejection reason", "Rejection note")));
+        assertTrue("both questions should come back, named rather than as concept UUIDs: " + observations.keySet(),
+                observations.keySet().containsAll(Arrays.asList("Rejection reason", "Rejection note")));
 
-        Object codedValue = observations.stream()
-                .filter(o -> o.getConcept().getName().equals("Rejection reason"))
-                .findFirst().get().getValue();
-        assertEquals("the coded answer is returned as the answer concept UUID, as it is stored",
-                answerWrongAddress.getUuid(), codedValue);
+        // The reason the story exists: an integration reading this gets the answer a human would read.
+        // ObservationService.constructObservations, which this response used to call, leaves the raw UUID.
+        assertEquals("the coded answer must be resolved to the answer concept's name",
+                "Wrong address", observations.get("Rejection reason"));
+        assertEquals("Door number did not match", observations.get("Rejection note"));
+    }
+
+    /**
+     * The whole point of rendering through Response.putObservations rather than through the web/DEA
+     * ObservationContract helper: /api/approvalStatuses hands back the same observation shape as every
+     * other /api/ endpoint, so one integration parser works across all of them.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void theAnswerShapeMatchesTheOtherApiResponses() throws ValidationException {
+        saveDecision(Collections.singletonList(
+                observation(rejectionReason.getUuid(), answerWrongAddress.getUuid())));
+
+        Object observations = singleResponseEntry().get("observations");
+
+        assertTrue("observations must be a {question name: answer} map, as on /api/subjects, not a list of contracts",
+                observations instanceof Map);
+        assertEquals(Collections.singletonMap("Rejection reason", "Wrong address"), observations);
     }
 
     /**

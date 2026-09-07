@@ -2081,6 +2081,14 @@ components:
         Approval status comment:
           type: string
           description: Comments on the approval status for the entity
+        observations:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: "Answers captured on the approval or rejection form, as key value pairs, in the same shape as observations on a subject or an encounter. Null when the decision carries no answers - either no approval form is attached to the entity type, or the decision was taken before one was attached."
+          example:
+            Rejection reason: Wrong address
+            Rejection note: Door number did not match
         Status date time:
           type: string
           description: Date/Time when the approval status was set
