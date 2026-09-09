@@ -1113,3 +1113,42 @@ where organisation_id = (select id from organisation where db_user = '<org_db_us
 -- "never synced" is literally "does any Concept row exist" — so a fresh install marks every pending
 -- reset as migrated and never prompts. Costs one full sync.
 -- CLEAR A STUCK RESET SYNC - END
+
+
+-- DISABLE METABASE FOR AN ORG (e.g. on prerelease) - START
+-- Symptom: creating/updating a user, or adding/removing a user from a group, fails outright.
+-- Cause: four write paths call MetabaseService.upsertUsersOnMetabase() synchronously inside a
+-- transaction - UserService.createUser, UserService.updateUser, UserGroupController.addUsersToGroup
+-- and UserGroupController.removeUserFromGroup. Its first statement is
+-- MetabaseGroupRepository.findGroup(), which does not degrade gracefully: any failure reaching
+-- Metabase (connection refused, 401 on a stale METABASE_API_KEY, 502) is rethrown as a
+-- RuntimeException and rolls the whole transaction back. In addUsersToGroup the Metabase call runs
+-- before userGroupRepository.saveAll(), so the membership is never persisted at all.
+
+-- AVNI_REPORTING_METABASE_SELF_SERVICE_ENABLED=false does NOT help. That property is read only by
+-- CannedAnalyticsStatusService, where it just makes /web/metabase/status report NotEnabled. It gates
+-- none of the four write paths.
+
+-- What does gate them is the per-org metabaseSetupEnabled flag in organisation_config.settings,
+-- read via OrganisationConfigService.isMetabaseSetupEnabled().
+
+-- organisation_config is RLS scoped, so connect as the org's db_user or the update silently
+-- matches zero rows.
+set role <org_db_user>;
+
+update organisation_config
+set settings = jsonb_set(settings, '{metabaseSetupEnabled}', 'false'::jsonb, true)
+where settings ->> 'metabaseSetupEnabled' = 'true';
+
+-- Takes effect immediately - OrganisationConfigService reads the row per call, nothing is cached,
+-- no restart needed.
+
+-- This is the non-destructive option: it only breaks the link, leaving the org's Metabase group,
+-- collection and questions intact, so setup can be re-run later. Do NOT use POST /web/metabase/teardown
+-- to achieve the same thing - that also flips the flag to false, but only after
+-- MetabaseService.tearDownMetabase() has deleted the group, the collection and the database
+-- registration.
+
+-- Caveat: anyone pressing Setup in the Admin UI flips the flag back to true
+-- (CannedAnalyticsSetupTasklet), and /web/metabase/setup carries no environment-level check.
+-- DISABLE METABASE FOR AN ORG (e.g. on prerelease) - END
