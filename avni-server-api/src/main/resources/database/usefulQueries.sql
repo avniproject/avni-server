@@ -1113,3 +1113,50 @@ where organisation_id = (select id from organisation where db_user = '<org_db_us
 -- "never synced" is literally "does any Concept row exist" — so a fresh install marks every pending
 -- reset as migrated and never prompts. Costs one full sync.
 -- CLEAR A STUCK RESET SYNC - END
+
+-- MOVE METABASE ORG CONNECTIONS FROM MAIN PROD DB TO PROD READ REPLICA - START
+-- Run against the Metabase application database. Each Avni org's Metabase connection is a row in
+-- metabase_database; details is a JSON text column holding host/user/password. Metabase sometimes
+-- stores the host with a trailing dot, hence the trim.
+
+-- 1. See which connections currently point at the primary
+SELECT id, name, created_at, details::json->>'host' AS host, details::json->>'user' AS db_user,
+       metadata_sync_schedule, cache_field_values_schedule
+FROM metabase_database
+WHERE engine = 'postgres'
+  AND trim(trailing '.' from (details::json->>'host')) = 'serverdb.avniproject.org'
+ORDER BY id;
+
+-- 2. Connections whose sync schedules are NOT already disabled (see "update cron expression" section above).
+--    Expected 0; anything else would start metadata/field-value scans against the replica.
+SELECT count(*) AS rows_that_would_be_blocked
+FROM metabase_database
+WHERE engine = 'postgres'
+  AND trim(trailing '.' from (details::json->>'host')) = 'serverdb.avniproject.org'
+  AND (metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+    OR cache_field_values_schedule <> '0 0 0 1 1 ? 2090');
+
+-- 3. Back up the table. Table name is built from today's date, e.g. metabase_database_bak_20260914
+DO
+$$
+BEGIN
+    EXECUTE format('CREATE TABLE metabase_database_bak_%s AS SELECT * FROM metabase_database',
+                   to_char(now(), 'YYYYMMDD'));
+END
+$$;
+
+-- 4. Repoint the host
+UPDATE metabase_database
+SET details = jsonb_set(details::jsonb, '{host}', '"serverdb.read.avniproject.org"')::text,
+    updated_at = now()
+WHERE engine = 'postgres'
+  AND trim(trailing '.' from (details::json->>'host')) = 'serverdb.avniproject.org';
+
+-- 5. Verify: primary should no longer appear, replica count should equal step 1's row count
+SELECT trim(trailing '.' from (details::json->>'host')) AS host, count(*) AS connections
+FROM metabase_database WHERE engine = 'postgres' GROUP BY 1 ORDER BY 2 DESC;
+
+-- Rollback, if needed (replace the date with the backup table you created):
+-- UPDATE metabase_database m SET details = b.details, updated_at = now()
+-- FROM metabase_database_bak_20260914 b WHERE b.id = m.id;
+-- MOVE METABASE ORG CONNECTIONS FROM MAIN PROD DB TO PROD READ REPLICA - END
