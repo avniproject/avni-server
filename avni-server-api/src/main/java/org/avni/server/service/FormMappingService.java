@@ -162,12 +162,17 @@ public class FormMappingService implements NonScopeAwareService {
                 .anyMatch(sibling -> sibling.getForm() != null
                         && sibling.getForm().getFormType().getApprovalEntityType() != null);
         if (!anySiblingProducesAnApproval) {
+            String combination = describeCombination(formMapping);
+            String article = articleFor(formMapping.getForm().getFormType());
+            if (approvalEnabledSiblings.isEmpty()) {
+                throw new ValidationException(String.format(
+                        "Approval is not switched on for the %s, therefore %s form cannot be attached.",
+                        combination, article));
+            }
             throw new ValidationException(String.format(
-                    "Cannot attach %s form here. Approval is not switched on for this subject type, programme and " +
-                            "visit type combination, or it is only switched on for a form that never produces an " +
-                            "approval to decide on. Switch approval on for the registration, enrolment, exit, visit, " +
-                            "visit cancellation or checklist item form of this combination first.",
-                    articleFor(formMapping.getForm().getFormType())));
+                    "Approval is switched on only for the %s, which never produces an approval to decide on, " +
+                            "therefore %s form cannot be attached. Switch it on for the %s instead.",
+                    namesOf(approvalEnabledSiblings), article, combination));
         }
     }
 
@@ -181,6 +186,46 @@ public class FormMappingService implements NonScopeAwareService {
      */
     private String articleFor(FormType formType) {
         return (formType == FormType.Approval ? "an " : "a ") + formType;
+    }
+
+    /**
+     * Names the one form that has to carry the approval switch, rather than listing every form type it
+     * could be. The reader is an administrator who has just chosen a subject type, programme and visit
+     * type, so "the Mother registration form" sends them somewhere; naming the combination in the
+     * abstract left them to work out which of six forms applied to what they had picked.
+     * <p>
+     * Both the enrolment and the exit form of a programme produce an approval, as do both the visit and
+     * the visit cancellation form of a visit type, so each pair is named rather than guessed between. The
+     * subject type is carried into the programme and visit wording because one programme can be attached
+     * to several subject types.
+     */
+    private String describeCombination(FormMapping formMapping) {
+        String subjectTypeName = formMapping.getSubjectType().getName();
+        EncounterType encounterType = formMapping.getEncounterType();
+        Program program = formMapping.getProgram();
+        if (encounterType != null) {
+            return program == null
+                    ? String.format("%s visit or visit cancellation form for %s", encounterType.getName(), subjectTypeName)
+                    : String.format("%s visit or visit cancellation form for %s in %s", encounterType.getName(), subjectTypeName, program.getName());
+        }
+        if (program != null) {
+            return String.format("%s enrolment or exit form for %s", program.getName(), subjectTypeName);
+        }
+        return String.format("%s registration form", subjectTypeName);
+    }
+
+    /**
+     * The forms that do carry the switch but cannot produce an approval. Named so the administrator can
+     * see that the switch they already set is on the wrong form, rather than being told approval is off
+     * when they know they turned it on.
+     */
+    private String namesOf(List<FormMapping> formMappings) {
+        return formMappings.stream()
+                .map(FormMapping::getForm)
+                .filter(Objects::nonNull)
+                .map(Form::getName)
+                .distinct()
+                .collect(Collectors.joining(", "));
     }
 
     public void createOrUpdateEmptyFormMapping(FormMappingContract formMappingRequest) {

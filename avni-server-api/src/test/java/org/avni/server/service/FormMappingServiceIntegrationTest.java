@@ -124,12 +124,21 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
     }
 
     private void assertRefused(FormMappingContract contract) {
+        assertRefusedWith(contract, "approval");
+    }
+
+    /**
+     * The message is the whole point of the refusal - an administrator told only that something is wrong
+     * has to guess which of six forms to go and change. Asserting the naming here is what stops the
+     * wording drifting back to a generic sentence.
+     */
+    private void assertRefusedWith(FormMappingContract contract, String expectedFragment) {
         try {
             formMappingService.createOrUpdateFormMapping(contract);
             fail("Expected the mapping to be refused");
         } catch (ValidationException e) {
-            assertTrue("Message must explain why, not fail generically: " + e.getMessage(),
-                    e.getMessage().toLowerCase().contains("approval"));
+            assertTrue("Message must name what to fix, got: " + e.getMessage(),
+                    e.getMessage().toLowerCase().contains(expectedFragment.toLowerCase()));
         }
     }
 
@@ -161,12 +170,22 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
 
     @Test
     public void refusesAnApprovalFormWhereApprovalIsSwitchedOff() {
-        assertRefused(requestFor(FormType.Approval, null, null));
+        assertRefusedWith(requestFor(FormType.Approval, null, null), "st1052 registration form");
     }
 
     @Test
     public void refusesARejectionFormWhereApprovalIsSwitchedOffOnTheProgramme() {
-        assertRefused(requestFor(FormType.Rejection, aProgram("p1052b"), null));
+        assertRefusedWith(requestFor(FormType.Rejection, aProgram("p1052b"), null),
+                "p1052b enrolment or exit form for st1052");
+    }
+
+    @Test
+    public void refusesAnApprovalFormOnAVisitTypeAndNamesThatVisitType() {
+        EncounterType encounterType = encounterTypeRepository.save(
+                new EncounterTypeBuilder().withName("et1052").withUuid("et1052").build());
+
+        assertRefusedWith(requestFor(FormType.Approval, null, encounterType),
+                "et1052 visit or visit cancellation form for st1052");
     }
 
     /**
@@ -179,7 +198,9 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
         Program program = aProgram("p1052c");
         addApprovalEnabledMapping(FormType.ManualProgramEnrolmentEligibility, program, null);
 
-        assertRefused(requestFor(FormType.Approval, program, null));
+        // The switch is on, just on a form that cannot produce an approval - so the message must not
+        // claim approval is switched off, which is what the administrator would reasonably dispute.
+        assertRefusedWith(requestFor(FormType.Approval, program, null), "never produces an approval");
     }
 
     @Test
