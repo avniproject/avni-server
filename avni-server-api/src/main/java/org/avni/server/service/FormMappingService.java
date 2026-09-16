@@ -95,10 +95,16 @@ public class FormMappingService implements NonScopeAwareService {
             throw new RuntimeException("Form not found!" + formMappingRequest);
         }
         FormMapping formMapping = formMappingRepository.findByUuid(formMappingRequest.getUuid());
-        if (formMapping == null) {
+        boolean isNewMapping = formMapping == null;
+        if (isNewMapping) {
             formMapping = new FormMapping();
             formMapping.setUuid(formMappingRequest.getUuid());
         }
+        // Taken before anything is set, so the duplicate check below can tell a real change from a no-op
+        // re-save. FormSettings resubmits every one of a form's mappings on every save, and the database
+        // constraint only fires on an actual insert or update - so checking unconditionally would refuse
+        // saves the database allows.
+        String combinationBeforeSave = isNewMapping ? null : combinationOf(formMapping);
         accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
         formMapping.setForm(form);
 
@@ -131,7 +137,13 @@ public class FormMappingService implements NonScopeAwareService {
             assertCombinationCanProduceAnApproval(formMapping);
         }
 
-        assertNoDuplicateMapping(formMapping);
+        // Only when this row is new or its combination actually moved. Two live mappings can already share
+        // a combination - changing a form's type does not re-run the constraint on form_mapping - and
+        // checking every resubmitted row would make both of those forms permanently unsaveable, with no
+        // way out through App Designer, because the clash is with a mapping belonging to another form.
+        if (isNewMapping || !combinationOf(formMapping).equals(combinationBeforeSave)) {
+            assertNoDuplicateMapping(formMapping);
+        }
 
         formMappingRepository.saveFormMapping(formMapping);
     }
@@ -211,6 +223,21 @@ public class FormMappingService implements NonScopeAwareService {
                             "therefore %s form cannot be attached. Switch it on for the %s instead.",
                     namesOf(approvalEnabledSiblings), article, combination));
         }
+    }
+
+    /**
+     * Everything check_form_mapping_uniqueness keys on, plus the voided flag. Comparing this before and
+     * after tells a genuine change from a resubmission of an unchanged row, which is the difference
+     * between the constraint firing and staying silent.
+     */
+    private String combinationOf(FormMapping formMapping) {
+        return String.join("|",
+                String.valueOf(idOf(formMapping.getForm())),
+                String.valueOf(idOf(formMapping.getSubjectType())),
+                String.valueOf(idOf(formMapping.getProgram())),
+                String.valueOf(idOf(formMapping.getEncounterType())),
+                String.valueOf(idOf(formMapping.getTaskType())),
+                String.valueOf(formMapping.isVoided()));
     }
 
     private Long idOf(CHSEntity entity) {

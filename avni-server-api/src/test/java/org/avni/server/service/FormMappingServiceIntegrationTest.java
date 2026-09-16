@@ -287,6 +287,36 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
                 formMappingRepository.findByUuid(rejection.getUuid()));
     }
 
+    /**
+     * Two live mappings can already share a combination, because changing a form's type does not re-run
+     * the constraint on form_mapping. Checking every resubmitted row made both of those forms permanently
+     * uneditable through App Designer: FormSettings resubmits all of a form's mappings on every save, the
+     * clash is with a mapping belonging to the *other* form, and this request cannot void that one.
+     */
+    @Test
+    public void allowsResavingAnUnchangedMappingThatAlreadyClashes() {
+        EncounterType encounterType = anEncounterType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Encounter)).withSubjectType(subjectType)
+                .withEncounterType(encounterType).build());
+
+        Form cancellationForm = saveFormOfType(FormType.IndividualEncounterCancellation);
+        FormMapping clashing = new FormMappingBuilder()
+                .withForm(cancellationForm).withSubjectType(subjectType)
+                .withEncounterType(encounterType).build();
+        formMappingRepository.saveFormMapping(clashing);
+
+        // Retyped straight through the repository, which is what updateMetadata does to the form row. The
+        // constraint lives on form_mapping and does not re-run, so two live Encounter mappings now sit on
+        // one combination - the state this test exists to make survivable.
+        cancellationForm.setFormType(FormType.Encounter);
+        formRepository.save(cancellationForm);
+
+        formMappingService.createOrUpdateFormMapping(FormMappingContract.fromFormMapping(clashing));
+
+        assertNotNull(formMappingRepository.findByUuid(clashing.getUuid()));
+    }
+
     /** Saving an existing mapping again must not report it as a duplicate of itself. */
     @Test
     public void doesNotTreatUpdatingAMappingAsItsOwnDuplicate() {
