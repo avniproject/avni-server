@@ -28,5 +28,5 @@ public interface FormRepository extends ReferenceDataRepository<Form>, FindByLas
      * original name is freed and an administrator who deletes a form must be able to use its name again.
      * Row level security scopes this to the caller's organisation, so no organisation predicate is needed.
      */
-    Form findByNameIgnoreCaseAndIsVoidedFalse(String name);
+    List<Form> findByNameIgnoreCaseAndIsVoidedFalse(String name);
 }

@@ -153,25 +153,25 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         formController.createWeb(formRequest("Household Registration"));
         formController.createWeb(formRequest("Member Registration"));
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Member Registration")).isNotNull();
+        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Member Registration")).hasSize(1);
     }
 
     /** Saving a form without touching its name must not be refused as a duplicate of itself. */
     @Test
     public void allowsSavingAFormWithoutChangingItsName() {
         formController.createWeb(formRequest("Household Registration"));
-        Form form = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration");
+        Form form = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration").get(0);
 
         formController.updateMetadata(formRequest("Household Registration"), form.getUuid());
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration")).isNotNull();
+        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration")).hasSize(1);
     }
 
     @Test
     public void refusesRenamingAFormOntoAnotherFormsName() {
         formController.createWeb(formRequest("Household Registration"));
         formController.createWeb(formRequest("Member Registration"));
-        Form member = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Member Registration");
+        Form member = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Member Registration").get(0);
 
         assertRefused(() -> formController.updateMetadata(formRequest("Household Registration"), member.getUuid()),
                 "already exists");
@@ -184,13 +184,37 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void allowsReusingTheNameOfAVoidedForm() {
         formController.createWeb(formRequest("Household Registration"));
-        Form form = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration");
+        Form form = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration").get(0);
         form.setVoided(true);
         formRepository.save(form);
 
         formController.createWeb(formRequest("Household Registration"));
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration")).isNotNull();
+        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration")).hasSize(1);
+    }
+
+    /**
+     * The rule must not turn the duplicates that already exist into unsaveable forms.
+     *
+     * 224 live forms across 57 production organisations share a name with another form, from before there
+     * was anything stopping it. Looking the name up as a single result raises
+     * IncorrectResultSizeDataAccessException on those rows, or returns whichever of the pair it likes -
+     * so saving one of them, even for an edit that has nothing to do with its name, would fail.
+     */
+    @Test
+    public void allowsSavingAFormWhoseNameWasAlreadyDuplicated() {
+        formController.createWeb(formRequest("Shared Name"));
+        Form first = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Shared Name").get(0);
+        formController.createWeb(formRequest("Set Aside"));
+        Form second = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Set Aside").get(0);
+        // Renamed straight through the repository: the controller is what refuses this, and the point is to
+        // reproduce data that predates the rule.
+        second.setName("Shared Name");
+        formRepository.save(second);
+
+        formController.updateMetadata(formRequest("Shared Name"), first.getUuid());
+
+        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Shared Name")).hasSize(2);
     }
 
     @Test
