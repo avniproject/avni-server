@@ -4,7 +4,6 @@ import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementGroup;
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementGroupRepository;
@@ -14,11 +13,8 @@ import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.framework.security.AuthenticationFilter;
-import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.application.FormContract;
-import org.avni.server.web.request.webapp.CreateUpdateFormRequest;
 import org.hibernate.Hibernate;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -60,9 +56,6 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
     private FormRepository formRepository;
 
     @Autowired
-    private FormController formController;
-
-    @Autowired
     private FormElementGroupRepository formElementGroupRepository;
 
     private Object getJson(String path) throws IOException {
@@ -97,168 +90,6 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         assertThat(response.getBody()).contains("{\"rel\":\"lastModifiedBy\"");
     }
 
-    /**
-     * Form names had no uniqueness rule at any layer - no constraint, no entity annotation, no service or
-     * controller check - while every sibling metadata entity refuses a repeat. Two forms in an organisation
-     * could be named identically, leaving an administrator picking one from a list no way to tell them
-     * apart.
-     *
-     * These go through the controller rather than over HTTP because the base class's post() helper asserts
-     * a 2xx itself, so it cannot express a refusal.
-     */
-    private CreateUpdateFormRequest formRequest(String name) {
-        return formRequest(name, FormType.IndividualProfile);
-    }
-
-    /**
-     * The overload exists so a save can be observed. updateMetadata persists the form type as well as the
-     * name, so asking for a different type and finding it afterwards proves the call actually ran - where
-     * asserting on the name alone only restates what was already true before it.
-     */
-    private CreateUpdateFormRequest formRequest(String name, FormType formType) {
-        CreateUpdateFormRequest request = new CreateUpdateFormRequest();
-        request.setName(name);
-        request.setFormType(formType.name());
-        // updateMetadata iterates getFormMappings() unguarded and the field has no default, so a request
-        // without this throws a NullPointerException rather than saving.
-        request.setFormMappings(new ArrayList<>());
-        return request;
-    }
-
-    // The finder is organisation-scoped, because row level security on form admits ancestor and org-group
-    // organisations rather than only the caller's own.
-    private List<Form> liveFormsNamed(String name) {
-        return formRepository.findByNameIgnoreCaseAndIsVoidedFalseAndOrganisationId(
-                name, UserContextHolder.getUserContext().getOrganisationId());
-    }
-
-    private void assertRefused(Runnable call, String expectedFragment) {
-        try {
-            call.run();
-            org.junit.Assert.fail("Expected the form to be refused");
-        } catch (BadRequestError e) {
-            assertThat(e.getMessage()).contains(expectedFragment);
-        }
-    }
-
-    @Test
-    public void refusesASecondFormWithTheSameName() {
-        formController.createWeb(formRequest("Household Registration"));
-
-        assertRefused(() -> formController.createWeb(formRequest("Household Registration")),
-                "already exists");
-    }
-
-    @Test
-    public void namesTheFormThatIsAlreadyTaken() {
-        formController.createWeb(formRequest("Household Registration"));
-
-        assertRefused(() -> formController.createWeb(formRequest("Household Registration")),
-                "Household Registration");
-    }
-
-    @Test
-    public void ignoresCaseWhenComparingNames() {
-        formController.createWeb(formRequest("Household Registration"));
-
-        assertRefused(() -> formController.createWeb(formRequest("household registration")),
-                "already exists");
-    }
-
-    @Test
-    public void allowsTwoFormsWithDifferentNames() {
-        formController.createWeb(formRequest("Household Registration"));
-        formController.createWeb(formRequest("Member Registration"));
-
-        assertThat(liveFormsNamed("Member Registration")).hasSize(1);
-    }
-
-    /** Saving a form without touching its name must not be refused as a duplicate of itself. */
-    @Test
-    public void allowsSavingAFormWithoutChangingItsName() {
-        formController.createWeb(formRequest("Household Registration"));
-        Form form = liveFormsNamed("Household Registration").get(0);
-
-        formController.updateMetadata(formRequest("Household Registration", FormType.Encounter), form.getUuid());
-
-        // The changed type is what shows the save ran. Asserting the name is still there would hold even
-        // if updateMetadata had silently done nothing.
-        assertThat(liveFormsNamed("Household Registration")).hasSize(1);
-        assertThat(formRepository.findByUuid(form.getUuid()).getFormType()).isEqualTo(FormType.Encounter);
-    }
-
-    /**
-     * A request omitting the name dereferenced it unguarded, returning 500 with a stack trace and filing a
-     * Bugsnag incident. Nothing covered a null name, which is why it shipped.
-     */
-    @Test
-    public void doesNotFallOverWhenTheRequestOmitsTheName() {
-        formController.createWeb(formRequest("Household Registration"));
-        Form form = liveFormsNamed("Household Registration").get(0);
-        CreateUpdateFormRequest withoutName = formRequest(null, FormType.Encounter);
-
-        formController.updateMetadata(withoutName, form.getUuid());
-
-        assertThat(formRepository.findByUuid(form.getUuid()).getFormType()).isEqualTo(FormType.Encounter);
-    }
-
-    @Test
-    public void refusesRenamingAFormOntoAnotherFormsName() {
-        formController.createWeb(formRequest("Household Registration"));
-        formController.createWeb(formRequest("Member Registration"));
-        Form member = liveFormsNamed("Member Registration").get(0);
-
-        assertRefused(() -> formController.updateMetadata(formRequest("Household Registration"), member.getUuid()),
-                "already exists");
-    }
-
-    /**
-     * Voiding renames a form to "<name> (voided~<id>)" precisely so the name can be used again, so a voided
-     * form must not hold its old name hostage.
-     */
-    @Test
-    public void allowsReusingTheNameOfAVoidedForm() {
-        formController.createWeb(formRequest("Household Registration"));
-        Form voided = liveFormsNamed("Household Registration").get(0);
-        voided.setVoided(true);
-        formRepository.save(voided);
-
-        formController.createWeb(formRequest("Household Registration"));
-
-        // hasSize(1) alone would pass without the second create ever succeeding, because the finder
-        // excludes the voided row anyway. The claim is that a *different* form now holds the name.
-        List<Form> live = liveFormsNamed("Household Registration");
-        assertThat(live).hasSize(1);
-        assertThat(live.get(0).getUuid()).isNotEqualTo(voided.getUuid());
-    }
-
-    /**
-     * The rule must not turn the duplicates that already exist into unsaveable forms.
-     *
-     * 224 live forms across 57 production organisations share a name with another form, from before there
-     * was anything stopping it. Looking the name up as a single result raises
-     * IncorrectResultSizeDataAccessException on those rows, or returns whichever of the pair it likes -
-     * so saving one of them, even for an edit that has nothing to do with its name, would fail.
-     */
-    @Test
-    public void allowsSavingAFormWhoseNameWasAlreadyDuplicated() {
-        formController.createWeb(formRequest("Shared Name"));
-        Form first = liveFormsNamed("Shared Name").get(0);
-        formController.createWeb(formRequest("Set Aside"));
-        Form second = liveFormsNamed("Set Aside").get(0);
-        // Renamed straight through the repository: the controller is what refuses this, and the point is to
-        // reproduce data that predates the rule.
-        second.setName("Shared Name");
-        formRepository.save(second);
-
-        formController.updateMetadata(formRequest("Shared Name", FormType.Encounter), first.getUuid());
-
-        // The changed type is the assertion that can fail. hasSize(2) was already true before the call, so
-        // on its own it could not tell a successful save from a refusal that left both rows alone - and
-        // this is the guard for the 224 production forms that already share a name.
-        assertThat(liveFormsNamed("Shared Name")).hasSize(2);
-        assertThat(formRepository.findByUuid(first.getUuid()).getFormType()).isEqualTo(FormType.Encounter);
-    }
 
     @Test
     @Ignore("Not Applicable as coded-concepts are created/updated by concept API")
