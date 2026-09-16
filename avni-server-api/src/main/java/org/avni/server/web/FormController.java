@@ -169,9 +169,31 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
                 .withType(request.getFormType())
                 .withUUID(UUID.randomUUID().toString())
                 .build();
+        // Privilege first: telling a caller who may not manage forms that a name is taken discloses what
+        // the organisation holds to someone not entitled to know it.
         accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
+        assertNameIsFree(request.getName(), null);
         formRepository.save(form);
         return ResponseEntity.ok(form);
+    }
+
+    /**
+     * Every other metadata entity refuses a repeated name - subject type, programme, encounter type,
+     * catchment, address level type, dashboard, card, news. Forms did not, so an organisation could hold
+     * two forms called the same thing and an administrator picking one from a list had no way to tell them
+     * apart.
+     *
+     * Voided forms are excluded by the finder: voiding renames a form to "<name> (voided~<id>)", which
+     * exists precisely so the name can be used again.
+     *
+     * ownUuid is null when creating and the form's own uuid when renaming, so saving a form without
+     * changing its name is not refused as a duplicate of itself.
+     */
+    private void assertNameIsFree(String name, String ownUuid) {
+        if (name == null || name.trim().isEmpty()) return;
+        Form existing = formRepository.findByNameIgnoreCaseAndIsVoidedFalse(name);
+        if (existing == null || existing.getUuid().equals(ownUuid)) return;
+        throw new BadRequestError("A form named '%s' already exists. Form names must be unique.", name);
     }
 
     @DeleteMapping(value = "/web/forms/{formUUID}")
@@ -200,6 +222,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @Transactional
     public ResponseEntity updateMetadata(@RequestBody CreateUpdateFormRequest request, @PathVariable String formUUID) {
         Form form = validateUpdateMetadata(request, formUUID);
+        assertNameIsFree(request.getName(), formUUID);
         List<FormMappingRequest> formMappingRequests = request.getFormMappings();
         form.setName(request.getName());
         form.setFormType(FormType.valueOf(request.getFormType()));
