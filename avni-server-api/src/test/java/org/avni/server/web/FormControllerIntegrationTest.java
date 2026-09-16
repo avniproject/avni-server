@@ -14,6 +14,7 @@ import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.framework.security.AuthenticationFilter;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.application.FormContract;
@@ -115,6 +116,13 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         return request;
     }
 
+    // The finder is organisation-scoped, because row level security on form admits ancestor and org-group
+    // organisations rather than only the caller's own.
+    private List<Form> liveFormsNamed(String name) {
+        return formRepository.findByNameIgnoreCaseAndIsVoidedFalseAndOrganisationId(
+                name, UserContextHolder.getUserContext().getOrganisationId());
+    }
+
     private void assertRefused(Runnable call, String expectedFragment) {
         try {
             call.run();
@@ -153,25 +161,25 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         formController.createWeb(formRequest("Household Registration"));
         formController.createWeb(formRequest("Member Registration"));
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Member Registration")).hasSize(1);
+        assertThat(liveFormsNamed("Member Registration")).hasSize(1);
     }
 
     /** Saving a form without touching its name must not be refused as a duplicate of itself. */
     @Test
     public void allowsSavingAFormWithoutChangingItsName() {
         formController.createWeb(formRequest("Household Registration"));
-        Form form = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration").get(0);
+        Form form = liveFormsNamed("Household Registration").get(0);
 
         formController.updateMetadata(formRequest("Household Registration"), form.getUuid());
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration")).hasSize(1);
+        assertThat(liveFormsNamed("Household Registration")).hasSize(1);
     }
 
     @Test
     public void refusesRenamingAFormOntoAnotherFormsName() {
         formController.createWeb(formRequest("Household Registration"));
         formController.createWeb(formRequest("Member Registration"));
-        Form member = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Member Registration").get(0);
+        Form member = liveFormsNamed("Member Registration").get(0);
 
         assertRefused(() -> formController.updateMetadata(formRequest("Household Registration"), member.getUuid()),
                 "already exists");
@@ -184,13 +192,13 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void allowsReusingTheNameOfAVoidedForm() {
         formController.createWeb(formRequest("Household Registration"));
-        Form form = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration").get(0);
+        Form form = liveFormsNamed("Household Registration").get(0);
         form.setVoided(true);
         formRepository.save(form);
 
         formController.createWeb(formRequest("Household Registration"));
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Household Registration")).hasSize(1);
+        assertThat(liveFormsNamed("Household Registration")).hasSize(1);
     }
 
     /**
@@ -204,9 +212,9 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void allowsSavingAFormWhoseNameWasAlreadyDuplicated() {
         formController.createWeb(formRequest("Shared Name"));
-        Form first = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Shared Name").get(0);
+        Form first = liveFormsNamed("Shared Name").get(0);
         formController.createWeb(formRequest("Set Aside"));
-        Form second = formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Set Aside").get(0);
+        Form second = liveFormsNamed("Set Aside").get(0);
         // Renamed straight through the repository: the controller is what refuses this, and the point is to
         // reproduce data that predates the rule.
         second.setName("Shared Name");
@@ -214,7 +222,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
 
         formController.updateMetadata(formRequest("Shared Name"), first.getUuid());
 
-        assertThat(formRepository.findByNameIgnoreCaseAndIsVoidedFalse("Shared Name")).hasSize(2);
+        assertThat(liveFormsNamed("Shared Name")).hasSize(2);
     }
 
     @Test

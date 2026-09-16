@@ -11,6 +11,7 @@ import org.avni.server.domain.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.FormMappingContract;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -154,6 +155,7 @@ public class FormMappingService implements NonScopeAwareService {
         if (formMapping.isVoided()) return;
 
         List<FormMapping> duplicates = formMappingRepository.findDuplicateFormMappings(
+                UserContextHolder.getUserContext().getOrganisationId(),
                 idOf(formMapping.getSubjectType()),
                 idOf(formMapping.getProgram()),
                 idOf(formMapping.getEncounterType()),

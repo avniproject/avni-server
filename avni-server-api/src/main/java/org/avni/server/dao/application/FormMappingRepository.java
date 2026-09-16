@@ -204,6 +204,12 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
      * joins for the same reason: an implicit join through fm.program.id would drop every row whose
      * programme is null and make that branch unreachable.
      *
+     * The organisation predicate is explicit and must stay. Row level security does not supply it: the
+     * policy on form_mapping is form_mapping_orgs, which walks parent_organisation_id recursively, so a
+     * read sees the caller's organisation plus every ancestor and org-group member. Without this clause a
+     * child organisation's mapping is refused because a parent organisation holds the same combination -
+     * one the database constraint permits, since it keys on organisation_id.
+     *
      * formMappingId excludes the row being saved, and is null when it has not been persisted yet.
      */
     @Query("select fm from FormMapping fm " +
@@ -212,7 +218,8 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "left join fm.program p " +
             "left join fm.encounterType et " +
             "left join fm.taskType tt " +
-            "where st.id = :subjectTypeId " +
+            "where fm.organisationId = :organisationId " +
+            "and st.id = :subjectTypeId " +
             "and (p.id = :programId or (p is null and :programId is null)) " +
             "and (et.id = :encounterTypeId or (et is null and :encounterTypeId is null)) " +
             "and (tt.id = :taskTypeId or (tt is null and :taskTypeId is null)) " +
@@ -220,7 +227,8 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "and fm.isVoided = false " +
             "and fm.implVersion = 1 " +
             "and (:formMappingId is null or fm.id <> :formMappingId) ")
-    List<FormMapping> findDuplicateFormMappings(@Param("subjectTypeId") Long subjectTypeId,
+    List<FormMapping> findDuplicateFormMappings(@Param("organisationId") Long organisationId,
+                                                @Param("subjectTypeId") Long subjectTypeId,
                                                 @Param("programId") Long programId,
                                                 @Param("encounterTypeId") Long encounterTypeId,
                                                 @Param("taskTypeId") Long taskTypeId,

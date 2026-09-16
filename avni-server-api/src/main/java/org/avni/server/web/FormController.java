@@ -196,7 +196,9 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         // IncorrectResultSizeDataAccessException on those rows - a 500 - or returns whichever of the pair
         // it likes, which may not be the one being saved. Either way it would make every one of those
         // forms unsaveable, including for edits that have nothing to do with the name.
-        boolean takenByAnother = formRepository.findByNameIgnoreCaseAndIsVoidedFalse(name).stream()
+        boolean takenByAnother = formRepository
+                .findByNameIgnoreCaseAndIsVoidedFalseAndOrganisationId(name, UserContextHolder.getUserContext().getOrganisationId())
+                .stream()
                 .anyMatch(form -> !form.getUuid().equals(ownUuid));
         if (!takenByAnother) return;
         throw new BadRequestError("A form named '%s' already exists. Form names must be unique.", name);
@@ -228,18 +230,21 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @Transactional
     public ResponseEntity updateMetadata(@RequestBody CreateUpdateFormRequest request, @PathVariable String formUUID) {
         Form form = validateUpdateMetadata(request, formUUID);
-        // Only when the name is actually changing. 224 live forms across 57 production organisations
-        // already share a name with another form, from before there was a rule against it - and saving one
-        // of those under its own name must go through, or every one of them becomes unsaveable for edits
-        // that have nothing to do with naming.
-        if (!request.getName().equalsIgnoreCase(form.getName())) {
-            assertNameIsFree(request.getName(), formUUID);
-        }
         List<FormMappingRequest> formMappingRequests = request.getFormMappings();
+        boolean nameIsChanging = !Objects.equals(request.getName(), form.getName());
         form.setName(request.getName());
         form.setFormType(FormType.valueOf(request.getFormType()));
 
         accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
+        // After the privilege check, for the reason createWeb states: a caller who may not manage forms
+        // must not learn which names are taken. Only when the name is actually changing, because 224 live
+        // forms across 57 production organisations already share one with another form and saving those
+        // unchanged has to go through. Compared exactly rather than ignoring case - a form named
+        // "household registration" renamed to "Household Registration" is a change, and treating it as
+        // one of those unchanged saves would produce the byte-identical pair this rule exists to stop.
+        if (nameIsChanging) {
+            assertNameIsFree(request.getName(), formUUID);
+        }
         formRepository.save(form);
         formMappingRequests.forEach(formMappingRequest -> {
             FormMappingContract formMappingContract = new FormMappingContract();
