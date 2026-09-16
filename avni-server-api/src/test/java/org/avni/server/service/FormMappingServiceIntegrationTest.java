@@ -47,8 +47,8 @@ import static org.junit.Assert.fail;
  * reach this through createOrUpdateFormMapping, so guarding there covers both routes.
  * <p>
  * Approval is switched on by updating the mapping a combination already has, never by adding a second
- * one of the same form type - that is what an administrator does, and a duplicate would be refused by
- * check_form_mapping_uniqueness anyway.
+ * one of the same form type - that is what an administrator does, and a second one of the same type is
+ * refused outright, named rather than as a database error.
  */
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -120,6 +120,20 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
         contract.setSubjectTypeUUID(subjectType.getUuid());
         contract.setProgramUUID(program == null ? null : program.getUuid());
         contract.setEncounterTypeUUID(encounterType == null ? null : encounterType.getUuid());
+        return contract;
+    }
+
+    // withDefaultFieldsForNewEntity names the form after a random uuid, which cannot be asserted on. The
+    // duplicate message exists to name the form already holding the combination, so these tests need one
+    // with a name a human would recognise.
+    private FormMappingContract requestForNamedForm(FormType formType, String formName, Program program) {
+        Form form = formRepository.save(new TestFormBuilder()
+                .withDefaultFieldsForNewEntity().withFormType(formType).withName(formName).build());
+        FormMappingContract contract = new FormMappingContract();
+        contract.setUuid(UUID.randomUUID().toString());
+        contract.setFormUUID(form.getUuid());
+        contract.setSubjectTypeUUID(subjectType.getUuid());
+        contract.setProgramUUID(program == null ? null : program.getUuid());
         return contract;
     }
 
@@ -213,6 +227,91 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
         formMappingService.createOrUpdateFormMapping(contract);
 
         assertNotNull(formMappingRepository.findByUuid(contract.getUuid()));
+    }
+
+    /**
+     * A second form of the same type on one combination.
+     *
+     * check_form_mapping_uniqueness catches this too, but raises a bare plpgsql error: it arrives as a
+     * JpaSystemException, misses the constraint-violation handler and reaches App Designer as a 500 reading
+     * "Duplicate form mapping exists for: organisation_id: 586, subject_type_id: 3194 ...". Refusing it here
+     * is only worth doing if the message names something the administrator can act on, which is what these
+     * assert. The client cannot catch this case at all - FormSettings compares a form's mappings against
+     * each other, and the clash is with a mapping belonging to a different form.
+     */
+    @Test
+    public void refusesASecondFormOfTheSameTypeAndNamesTheOneAlreadyAttached() {
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        formMappingService.createOrUpdateFormMapping(
+                requestForNamedForm(FormType.Approval, "Screening Approval", null));
+
+        assertRefusedWith(requestForNamedForm(FormType.Approval, "Another Approval", null), "Screening Approval");
+    }
+
+    @Test
+    public void namesTheCombinationTheDuplicateIsOn() {
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        formMappingService.createOrUpdateFormMapping(requestForNamedForm(FormType.Approval, "First Approval", null));
+
+        assertRefusedWith(requestForNamedForm(FormType.Approval, "Second Approval", null), "st1052 registration form");
+    }
+
+    /**
+     * The null handling that made a new repository method necessary. getRequiredFormMapping treats a null
+     * programme as "any programme", so reusing it would report a subject-only decision form as a duplicate
+     * of a programme-level one. The database function matches null to null, and so must this.
+     */
+    @Test
+    public void doesNotTreatASubjectOnlyMappingAsADuplicateOfAProgrammeOne() {
+        Program program = aProgram("p1052e");
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        switchApprovalOnFor(formMappingRepository.getProgramEnrolmentFormMapping(subjectType, program));
+        formMappingService.createOrUpdateFormMapping(requestFor(FormType.Approval, program, null));
+
+        FormMappingContract subjectOnly = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(subjectOnly);
+
+        assertNotNull("a subject-only mapping is a different combination, not a duplicate",
+                formMappingRepository.findByUuid(subjectOnly.getUuid()));
+    }
+
+    @Test
+    public void allowsADifferentFormTypeOnTheSameCombination() {
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        formMappingService.createOrUpdateFormMapping(requestFor(FormType.Approval, null, null));
+
+        FormMappingContract rejection = requestFor(FormType.Rejection, null, null);
+        formMappingService.createOrUpdateFormMapping(rejection);
+
+        assertNotNull("an approval and a rejection form share a combination by design",
+                formMappingRepository.findByUuid(rejection.getUuid()));
+    }
+
+    /** Saving an existing mapping again must not report it as a duplicate of itself. */
+    @Test
+    public void doesNotTreatUpdatingAMappingAsItsOwnDuplicate() {
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        FormMappingContract contract = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(contract);
+
+        formMappingService.createOrUpdateFormMapping(contract);
+
+        assertNotNull(formMappingRepository.findByUuid(contract.getUuid()));
+    }
+
+    /** A mapping the administrator has already removed must not block its replacement. */
+    @Test
+    public void doesNotCountAVoidedMappingAsADuplicate() {
+        switchApprovalOnFor(formMappingRepository.getRegistrationFormMapping(subjectType));
+        FormMappingContract first = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(first);
+        first.setVoided(true);
+        formMappingService.createOrUpdateFormMapping(first);
+
+        FormMappingContract replacement = requestFor(FormType.Approval, null, null);
+        formMappingService.createOrUpdateFormMapping(replacement);
+
+        assertNotNull(formMappingRepository.findByUuid(replacement.getUuid()));
     }
 
     // AC 4 - removing is always allowed, whatever state the rest of the configuration is in

@@ -192,6 +192,41 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "and fm.implVersion = 1 ")
     FormMapping getRequiredFormMapping(String subjectTypeUUID, String programUUID, String encounterTypeUUID, FormType formType);    //left join to fetch eagerly in first select
 
+    /**
+     * Mirrors the check_form_mapping_uniqueness database function, so the same clash can be reported before
+     * the constraint raises it. The database raise is a bare plpgsql error, which arrives as a
+     * JpaSystemException, misses the constraint-violation handler and reaches the administrator as a 500
+     * carrying a stack trace and integer ids.
+     *
+     * The null handling is the part that must match exactly. Unlike getRequiredFormMapping above, where a
+     * null parameter means "any", here a null programme matches only a mapping with no programme - so a
+     * subject-only decision form is not reported as a duplicate of a programme-level one. Joins are left
+     * joins for the same reason: an implicit join through fm.program.id would drop every row whose
+     * programme is null and make that branch unreachable.
+     *
+     * formMappingId excludes the row being saved, and is null when it has not been persisted yet.
+     */
+    @Query("select fm from FormMapping fm " +
+            "join fm.form f " +
+            "join fm.subjectType st " +
+            "left join fm.program p " +
+            "left join fm.encounterType et " +
+            "left join fm.taskType tt " +
+            "where st.id = :subjectTypeId " +
+            "and (p.id = :programId or (p is null and :programId is null)) " +
+            "and (et.id = :encounterTypeId or (et is null and :encounterTypeId is null)) " +
+            "and (tt.id = :taskTypeId or (tt is null and :taskTypeId is null)) " +
+            "and f.formType = :formType " +
+            "and fm.isVoided = false " +
+            "and fm.implVersion = 1 " +
+            "and (:formMappingId is null or fm.id <> :formMappingId) ")
+    List<FormMapping> findDuplicateFormMappings(@Param("subjectTypeId") Long subjectTypeId,
+                                                @Param("programId") Long programId,
+                                                @Param("encounterTypeId") Long encounterTypeId,
+                                                @Param("taskTypeId") Long taskTypeId,
+                                                @Param("formType") FormType formType,
+                                                @Param("formMappingId") Long formMappingId);
+
     @Query("select fm from FormMapping fm " +
             "left join fetch fm.form f " +
             "left join fetch f.formElementGroups fg " +

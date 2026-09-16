@@ -130,7 +130,42 @@ public class FormMappingService implements NonScopeAwareService {
             assertCombinationCanProduceAnApproval(formMapping);
         }
 
+        assertNoDuplicateMapping(formMapping);
+
         formMappingRepository.saveFormMapping(formMapping);
+    }
+
+    /**
+     * The same clash the check_form_mapping_uniqueness constraint catches, reported before it fires.
+     *
+     * The constraint raises a bare plpgsql error, so Postgres emits SQLSTATE P0001 rather than a check
+     * violation. That arrives as a JpaSystemException, misses the handler for constraint violations, and
+     * falls through to the catch-all - which returns 500 with the full stack trace in the body and files a
+     * Bugsnag incident. What the administrator reads is "Duplicate form mapping exists for:
+     * organisation_id: 586, subject_type_id: 3194 ...", which names nothing they can act on.
+     *
+     * Raising it here instead produces a 400 naming the form already holding that combination. The
+     * constraint stays as the backstop for every other write path.
+     *
+     * The client cannot do this check: FormSettings compares a form's mappings against each other, and the
+     * clash that produces this error is with a mapping belonging to a different form.
+     */
+    private void assertNoDuplicateMapping(FormMapping formMapping) {
+        if (formMapping.isVoided()) return;
+
+        List<FormMapping> duplicates = formMappingRepository.findDuplicateFormMappings(
+                idOf(formMapping.getSubjectType()),
+                idOf(formMapping.getProgram()),
+                idOf(formMapping.getEncounterType()),
+                idOf(formMapping.getTaskType()),
+                formMapping.getForm().getFormType(),
+                formMapping.getId());
+
+        if (duplicates.isEmpty()) return;
+
+        throw new ValidationException(String.format(
+                "%s is already attached to the %s, and a combination can hold only one form of a type.",
+                duplicates.get(0).getForm().getName(), describeCombination(formMapping)));
     }
 
     /**
