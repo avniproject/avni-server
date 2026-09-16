@@ -107,9 +107,18 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
      * a 2xx itself, so it cannot express a refusal.
      */
     private CreateUpdateFormRequest formRequest(String name) {
+        return formRequest(name, FormType.IndividualProfile);
+    }
+
+    /**
+     * The overload exists so a save can be observed. updateMetadata persists the form type as well as the
+     * name, so asking for a different type and finding it afterwards proves the call actually ran - where
+     * asserting on the name alone only restates what was already true before it.
+     */
+    private CreateUpdateFormRequest formRequest(String name, FormType formType) {
         CreateUpdateFormRequest request = new CreateUpdateFormRequest();
         request.setName(name);
-        request.setFormType(FormType.IndividualProfile.name());
+        request.setFormType(formType.name());
         // updateMetadata iterates getFormMappings() unguarded and the field has no default, so a request
         // without this throws a NullPointerException rather than saving.
         request.setFormMappings(new ArrayList<>());
@@ -170,9 +179,27 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         formController.createWeb(formRequest("Household Registration"));
         Form form = liveFormsNamed("Household Registration").get(0);
 
-        formController.updateMetadata(formRequest("Household Registration"), form.getUuid());
+        formController.updateMetadata(formRequest("Household Registration", FormType.Encounter), form.getUuid());
 
+        // The changed type is what shows the save ran. Asserting the name is still there would hold even
+        // if updateMetadata had silently done nothing.
         assertThat(liveFormsNamed("Household Registration")).hasSize(1);
+        assertThat(formRepository.findByUuid(form.getUuid()).getFormType()).isEqualTo(FormType.Encounter);
+    }
+
+    /**
+     * A request omitting the name dereferenced it unguarded, returning 500 with a stack trace and filing a
+     * Bugsnag incident. Nothing covered a null name, which is why it shipped.
+     */
+    @Test
+    public void doesNotFallOverWhenTheRequestOmitsTheName() {
+        formController.createWeb(formRequest("Household Registration"));
+        Form form = liveFormsNamed("Household Registration").get(0);
+        CreateUpdateFormRequest withoutName = formRequest(null, FormType.Encounter);
+
+        formController.updateMetadata(withoutName, form.getUuid());
+
+        assertThat(formRepository.findByUuid(form.getUuid()).getFormType()).isEqualTo(FormType.Encounter);
     }
 
     @Test
@@ -192,13 +219,17 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void allowsReusingTheNameOfAVoidedForm() {
         formController.createWeb(formRequest("Household Registration"));
-        Form form = liveFormsNamed("Household Registration").get(0);
-        form.setVoided(true);
-        formRepository.save(form);
+        Form voided = liveFormsNamed("Household Registration").get(0);
+        voided.setVoided(true);
+        formRepository.save(voided);
 
         formController.createWeb(formRequest("Household Registration"));
 
-        assertThat(liveFormsNamed("Household Registration")).hasSize(1);
+        // hasSize(1) alone would pass without the second create ever succeeding, because the finder
+        // excludes the voided row anyway. The claim is that a *different* form now holds the name.
+        List<Form> live = liveFormsNamed("Household Registration");
+        assertThat(live).hasSize(1);
+        assertThat(live.get(0).getUuid()).isNotEqualTo(voided.getUuid());
     }
 
     /**
@@ -220,9 +251,13 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         second.setName("Shared Name");
         formRepository.save(second);
 
-        formController.updateMetadata(formRequest("Shared Name"), first.getUuid());
+        formController.updateMetadata(formRequest("Shared Name", FormType.Encounter), first.getUuid());
 
+        // The changed type is the assertion that can fail. hasSize(2) was already true before the call, so
+        // on its own it could not tell a successful save from a refusal that left both rows alone - and
+        // this is the guard for the 224 production forms that already share a name.
         assertThat(liveFormsNamed("Shared Name")).hasSize(2);
+        assertThat(formRepository.findByUuid(first.getUuid()).getFormType()).isEqualTo(FormType.Encounter);
     }
 
     @Test
