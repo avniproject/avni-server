@@ -1,8 +1,10 @@
 package org.avni.server.web.api;
 
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.EntityApprovalStatusRepository;
 import org.avni.server.dao.EntityApprovalStatusSearchParams;
 import org.avni.server.domain.EntityApprovalStatus;
+import org.avni.server.service.ConceptService;
 import org.avni.server.service.EntityApprovalStatusService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.response.EntityApprovalStatusResponse;
@@ -28,12 +30,16 @@ public class EntityApprovalStatusApiController {
     private final EntityApprovalStatusRepository entityApprovalStatusRepository;
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final AccessControlService accessControlService;
+    private final ConceptRepository conceptRepository;
+    private final ConceptService conceptService;
 
     @Autowired
-    public EntityApprovalStatusApiController(EntityApprovalStatusRepository entityApprovalStatusRepository, EntityApprovalStatusService entityApprovalStatusService, AccessControlService accessControlService) {
+    public EntityApprovalStatusApiController(EntityApprovalStatusRepository entityApprovalStatusRepository, EntityApprovalStatusService entityApprovalStatusService, AccessControlService accessControlService, ConceptRepository conceptRepository, ConceptService conceptService) {
         this.entityApprovalStatusRepository = entityApprovalStatusRepository;
         this.entityApprovalStatusService = entityApprovalStatusService;
         this.accessControlService = accessControlService;
+        this.conceptRepository = conceptRepository;
+        this.conceptService = conceptService;
     }
 
     @RequestMapping(value = "/api/approvalStatuses", method = RequestMethod.GET)
@@ -47,7 +53,7 @@ public class EntityApprovalStatusApiController {
         Page<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findEntityApprovalStatuses(new EntityApprovalStatusSearchParams(lastModifiedDateTime, now, entityType, entityTypeUuid), pageable);
         accessControlService.checkApprovePrivilegeOnEntityApprovalStatuses(entityApprovalStatuses.getContent());
         ArrayList<EntityApprovalStatusResponse> entityApprovalStatusResponse = new ArrayList<>();
-        entityApprovalStatuses.forEach(entityApprovalStatus -> entityApprovalStatusResponse.add(EntityApprovalStatusResponse.fromEntityApprovalStatus(entityApprovalStatus, entityApprovalStatusService.getEntityUuid(entityApprovalStatus))));
+        entityApprovalStatuses.forEach(entityApprovalStatus -> entityApprovalStatusResponse.add(EntityApprovalStatusResponse.fromEntityApprovalStatus(entityApprovalStatus, entityApprovalStatusService.getEntityUuid(entityApprovalStatus), conceptRepository, conceptService)));
         return new ResponsePage(entityApprovalStatusResponse, entityApprovalStatuses.getNumberOfElements(), entityApprovalStatuses.getTotalPages(), entityApprovalStatuses.getSize());
     }
 }

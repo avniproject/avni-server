@@ -41,6 +41,11 @@ public class FormMappingBuilder {
     	return this;
     }
 
+    public FormMappingBuilder withEnableApproval(boolean enableApproval) {
+        entity.setEnableApproval(enableApproval);
+        return this;
+    }
+
     public FormMapping build() {
         return entity;
     }

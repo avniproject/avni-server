@@ -1,0 +1,24 @@
+-- Approval and Rejection form mappings (#1050).
+--
+-- No statements here on purpose. The change to check_form_mapping_uniqueness lives in
+-- R__Functions.sql, which owns the only live copy of that function. Flyway runs repeatable
+-- migrations after all versioned ones, so a create-or-replace body in this file would be
+-- overwritten seconds later on every fresh database - inert, and one more copy to keep in step.
+-- This file stays as the numbered marker for when the change landed.
+--
+-- What changed in R__Functions.sql, and why:
+--
+-- The form-type-consistency block there is an exclusion list - a form type matching its branch is
+-- REJECTED. Approval and Rejection deliberately have no branch, so all four shapes are permitted:
+-- an approval or rejection form may be attached to a subject type alone, to a programme, to a
+-- visit type, or to a programme and visit type together. The seven existing branches are unchanged;
+-- only a comment and the hint text were added.
+--
+-- Restricting them to combinations where an approval can actually arise is deliberately NOT done in
+-- the database. It depends on sibling rows, and while a CHECK function can read other rows - the
+-- duplicate block in that function does exactly that - doing so is unsound: the result is not stable
+-- under concurrent inserts, and pg_dump restores rows in an order that can fail a check which was
+-- satisfied when the row was written. That rule is planned as application-level validation in
+-- FormMappingService (avniproject/avni-server#1052) and is NOT yet built - today any of the four
+-- shapes is accepted. This is a separate concern from form_mapping.enable_approval, the pre-existing
+-- flag that switches the approval workflow on.

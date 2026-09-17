@@ -348,7 +348,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "formMappings.json":
                 FormMappingContract[] formMappingContracts = convertString(fileData, FormMappingContract[].class);
-                for (FormMappingContract formMappingContract : formMappingContracts) {
+                for (FormMappingContract formMappingContract : approvalDecisionFormsLast(Arrays.asList(formMappingContracts))) {
                     formMappingService.createOrUpdateFormMapping(formMappingContract);
                 }
                 break;
@@ -549,6 +549,27 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     public void deployExtensionFiles(String filePath, byte[] contents) throws IOException {
         if (filePath.contains(OrganisationConfig.Extension.EXTENSION_DIR))
             s3Service.uploadInOrganisation(filePath, contents);
+    }
+
+    /**
+     * Approval and Rejection mappings are only valid once the form they attach to has approval switched on
+     * (FormMappingService#createOrUpdateFormMapping, #1052). Order inside formMappings.json is whatever the
+     * exporting organisation happened to produce, so a bundle could list the Rejection mapping first and
+     * fail the whole import. A stable sort putting approval-decision forms last removes the dependency on
+     * file order while leaving every other relative position untouched.
+     * <p>
+     * The sort reads formType off the contract. OrganisationService#addFormMappingsJson builds contracts
+     * with FormMappingContract#fromFormMapping, which always sets it, and only an organisation already
+     * using this feature can export a bundle containing these mappings - so the field is present on every
+     * bundle that can actually contain one. A hand-written bundle omitting formType keeps its original
+     * position and, if it is out of order, is refused with the guard's validation message rather than
+     * being silently mis-saved.
+     */
+    public static List<FormMappingContract> approvalDecisionFormsLast(List<FormMappingContract> formMappingContracts) {
+        return formMappingContracts.stream()
+                .sorted(Comparator.comparing(contract ->
+                        contract.getFormType() != null && contract.getFormType().isApprovalDecisionForm()))
+                .collect(Collectors.toList());
     }
 
     private <T> T convertString(byte[] data, Class<T> convertTo) throws IOException {

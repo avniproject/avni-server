@@ -1,0 +1,28 @@
+-- Approval and rejection form answers, stored per decision (#1051).
+--
+-- Nullable, no default, no backfill. NULL means the decision carried no answers: either the request
+-- had no observations key at all - which is what every client released before the approval/rejection
+-- form sends, and its stored shape must not change - or it carried a list that retained no entries.
+-- A DEFAULT '{}' would flatten those into the same value as a form that was filled in.
+--
+-- NULL is NOT a reliable "the approver did not fill the form" flag, and the filter behind that is broader
+-- than it looks. ObservationService.createObservations (ObservationService:73-74) discards any answer
+-- whose value stringifies to "null", case-insensitively:
+--
+--     !"null".equalsIgnoreCase(String.valueOf(obsReqAsMap.getValue()))
+--
+-- so a literal null is dropped, but so is an approver who types "null", "NULL" or "Null" as a rejection
+-- note - that answer is silently lost, and if it was the only one the decision stores NULL as though no
+-- form had been filled. A text question cleared to an empty string is retained and stored as
+-- {"<concept uuid>": ""}. That matches visit-form behaviour. A report that needs "no form was filled"
+-- must therefore not read `observations is null` as proof of it.
+--
+-- Answers live on the decision row rather than on the approved entity so that a second rejection
+-- does not overwrite the first one's reasons - each entity_approval_status row keeps its own answers
+-- alongside its own status_date_time.
+--
+-- Shape matches the observations column on the encounter tables: a jsonb object keyed by concept
+-- UUID, whose coded values are answer-concept UUIDs, so reports read approval answers exactly as
+-- they read visit answers.
+alter table entity_approval_status
+    add column observations jsonb;

@@ -46,6 +46,17 @@ public class TestFormService {
         return formMappingRepository.save(formMapping);
     }
 
+    /**
+     * An Approval or Rejection form attached to a subject type, for the combination that has no
+     * programme and no visit type. This is the form a decision's answers are validated against
+     * (EntityApprovalStatusService#save).
+     */
+    public FormMapping createDecisionForm(SubjectType subjectType, FormType formType, String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, formType, null, null, null, null);
+        FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withUuid(UUID.randomUUID().toString()).withForm(form).build();
+        return formMappingRepository.save(formMapping);
+    }
+
     private Form createForm(String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, FormType formType, Concept questionGroupConcept, List<Concept> qgChildConcepts, Concept repeatableQuestionGroupConcept, List<Concept> childRQGConcepts) {
         Form form = new TestFormBuilder().withName(formName).withFormType(formType).withUuid(UUID.randomUUID().toString()).build();
         form = formRepository.save(form);

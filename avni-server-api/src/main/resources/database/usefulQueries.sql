@@ -1113,3 +1113,89 @@ where organisation_id = (select id from organisation where db_user = '<org_db_us
 -- "never synced" is literally "does any Concept row exist" — so a fresh install marks every pending
 -- reset as migrated and never prompts. Costs one full sync.
 -- CLEAR A STUCK RESET SYNC - END
+
+-- MOVE METABASE ORG CONNECTIONS FROM MAIN PROD DB TO PROD READ REPLICA - START
+-- Run against the Metabase application database. Each Avni org's Metabase connection is a row in
+-- metabase_database; details is a JSON text column holding host/user/password. Metabase sometimes
+-- stores the host with a trailing dot, hence the trim.
+
+-- 1. See which connections currently point at the primary
+SELECT id, name, created_at, details::json->>'host' AS host, details::json->>'user' AS db_user,
+       metadata_sync_schedule, cache_field_values_schedule
+FROM metabase_database
+WHERE engine = 'postgres'
+  AND trim(trailing '.' from (details::json->>'host')) = 'serverdb.avniproject.org'
+ORDER BY id;
+
+-- 2. Connections whose sync schedules are NOT already disabled (see "update cron expression" section above).
+--    Expected 0; anything else would start metadata/field-value scans against the replica.
+SELECT count(*) AS rows_that_would_be_blocked
+FROM metabase_database
+WHERE engine = 'postgres'
+  AND trim(trailing '.' from (details::json->>'host')) = 'serverdb.avniproject.org'
+  AND (metadata_sync_schedule <> '0 0 0 1 1 ? 2090'
+    OR cache_field_values_schedule <> '0 0 0 1 1 ? 2090');
+
+-- 3. Back up the table. Table name is built from today's date, e.g. metabase_database_bak_20260914
+DO
+$$
+BEGIN
+    EXECUTE format('CREATE TABLE metabase_database_bak_%s AS SELECT * FROM metabase_database',
+                   to_char(now(), 'YYYYMMDD'));
+END
+$$;
+
+-- 4. Repoint the host
+UPDATE metabase_database
+SET details = jsonb_set(details::jsonb, '{host}', '"serverdb.read.avniproject.org"')::text,
+    updated_at = now()
+WHERE engine = 'postgres'
+  AND trim(trailing '.' from (details::json->>'host')) = 'serverdb.avniproject.org';
+
+-- 5. Verify: primary should no longer appear, replica count should equal step 1's row count
+SELECT trim(trailing '.' from (details::json->>'host')) AS host, count(*) AS connections
+FROM metabase_database WHERE engine = 'postgres' GROUP BY 1 ORDER BY 2 DESC;
+
+-- Rollback, if needed (replace the date with the backup table you created):
+-- UPDATE metabase_database m SET details = b.details, updated_at = now()
+-- FROM metabase_database_bak_20260914 b WHERE b.id = m.id;
+-- MOVE METABASE ORG CONNECTIONS FROM MAIN PROD DB TO PROD READ REPLICA - END
+
+
+-- DISABLE METABASE FOR AN ORG (e.g. on prerelease) - START
+-- Symptom: creating/updating a user, or adding/removing a user from a group, fails outright.
+-- Cause: four write paths call MetabaseService.upsertUsersOnMetabase() synchronously inside a
+-- transaction - UserService.createUser, UserService.updateUser, UserGroupController.addUsersToGroup
+-- and UserGroupController.removeUserFromGroup. Its first statement is
+-- MetabaseGroupRepository.findGroup(), which does not degrade gracefully: any failure reaching
+-- Metabase (connection refused, 401 on a stale METABASE_API_KEY, 502) is rethrown as a
+-- RuntimeException and rolls the whole transaction back. In addUsersToGroup the Metabase call runs
+-- before userGroupRepository.saveAll(), so the membership is never persisted at all.
+
+-- AVNI_REPORTING_METABASE_SELF_SERVICE_ENABLED=false does NOT help. That property is read only by
+-- CannedAnalyticsStatusService, where it just makes /web/metabase/status report NotEnabled. It gates
+-- none of the four write paths.
+
+-- What does gate them is the per-org metabaseSetupEnabled flag in organisation_config.settings,
+-- read via OrganisationConfigService.isMetabaseSetupEnabled().
+
+-- organisation_config is RLS scoped, so connect as the org's db_user or the update silently
+-- matches zero rows.
+set role <org_db_user>;
+
+update organisation_config
+set settings = jsonb_set(settings, '{metabaseSetupEnabled}', 'false'::jsonb, true)
+where settings ->> 'metabaseSetupEnabled' = 'true';
+
+-- Takes effect immediately - OrganisationConfigService reads the row per call, nothing is cached,
+-- no restart needed.
+
+-- This is the non-destructive option: it only breaks the link, leaving the org's Metabase group,
+-- collection and questions intact, so setup can be re-run later. Do NOT use POST /web/metabase/teardown
+-- to achieve the same thing - that also flips the flag to false, but only after
+-- MetabaseService.tearDownMetabase() has deleted the group, the collection and the database
+-- registration.
+
+-- Caveat: anyone pressing Setup in the Admin UI flips the flag back to true
+-- (CannedAnalyticsSetupTasklet), and /web/metabase/setup carries no environment-level check.
+-- DISABLE METABASE FOR AN ORG (e.g. on prerelease) - END
