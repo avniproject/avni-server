@@ -6,7 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 import java.util.Date;
@@ -37,6 +39,10 @@ public class EntityApprovalStatus extends SyncAttributeEntity implements Subject
 
     @Column
     private String approvalStatusComment;
+
+    @Column
+    @Type(value = ObservationCollectionUserType.class)
+    private ObservationCollection observations;
 
     @Column
     private Boolean autoApproved;
@@ -101,6 +107,14 @@ public class EntityApprovalStatus extends SyncAttributeEntity implements Subject
 
     public void setApprovalStatusComment(String approvalStatusComment) {
         this.approvalStatusComment = approvalStatusComment;
+    }
+
+    public ObservationCollection getObservations() {
+        return observations;
+    }
+
+    public void setObservations(ObservationCollection observations) {
+        this.observations = observations;
     }
 
     public Boolean getAutoApproved() {

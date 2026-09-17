@@ -74,10 +74,15 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
     }
 
     //    Registration
-    FormMapping findBySubjectTypeAndProgramNullAndEncounterTypeNullAndImplVersionAndIsVoidedFalse(SubjectType subjectType, int implVersion);
+    //    The form type filter is required, not cosmetic: without it this returns every non-voided
+    //    mapping that has no program and no encounter type, and more than one form type has that
+    //    shape (SubjectEnrolmentEligibility, and now Approval/Rejection). Two matches make Spring
+    //    Data throw IncorrectResultSizeDataAccessException. getAllRegistrationFormMappings below
+    //    filters the same way.
+    FormMapping findBySubjectTypeAndProgramNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(SubjectType subjectType, FormType formType, int implVersion);
 
     default FormMapping getRegistrationFormMapping(SubjectType subjectType) {
-        return this.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndImplVersionAndIsVoidedFalse(subjectType, FormMapping.IMPL_VERSION);
+        return this.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(subjectType, FormType.IndividualProfile, FormMapping.IMPL_VERSION);
     }
 
     //    Program Enrolment
@@ -187,6 +192,49 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "and fm.implVersion = 1 ")
     FormMapping getRequiredFormMapping(String subjectTypeUUID, String programUUID, String encounterTypeUUID, FormType formType);    //left join to fetch eagerly in first select
 
+    /**
+     * Mirrors the check_form_mapping_uniqueness database function, so the same clash can be reported before
+     * the constraint raises it. The database raise is a bare plpgsql error, which arrives as a
+     * JpaSystemException, misses the constraint-violation handler and reaches the administrator as a 500
+     * carrying a stack trace and integer ids.
+     *
+     * The null handling is the part that must match exactly. Unlike getRequiredFormMapping above, where a
+     * null parameter means "any", here a null programme matches only a mapping with no programme - so a
+     * subject-only decision form is not reported as a duplicate of a programme-level one. Joins are left
+     * joins for the same reason: an implicit join through fm.program.id would drop every row whose
+     * programme is null and make that branch unreachable.
+     *
+     * The organisation predicate is explicit and must stay. Row level security does not supply it: the
+     * policy on form_mapping is form_mapping_orgs, which walks parent_organisation_id recursively, so a
+     * read sees the caller's organisation plus every ancestor and org-group member. Without this clause a
+     * child organisation's mapping is refused because a parent organisation holds the same combination -
+     * one the database constraint permits, since it keys on organisation_id.
+     *
+     * formMappingId excludes the row being saved, and is null when it has not been persisted yet.
+     */
+    @Query("select fm from FormMapping fm " +
+            "join fm.form f " +
+            "join fm.subjectType st " +
+            "left join fm.program p " +
+            "left join fm.encounterType et " +
+            "left join fm.taskType tt " +
+            "where fm.organisationId = :organisationId " +
+            "and st.id = :subjectTypeId " +
+            "and (p.id = :programId or (p is null and :programId is null)) " +
+            "and (et.id = :encounterTypeId or (et is null and :encounterTypeId is null)) " +
+            "and (tt.id = :taskTypeId or (tt is null and :taskTypeId is null)) " +
+            "and f.formType = :formType " +
+            "and fm.isVoided = false " +
+            "and fm.implVersion = 1 " +
+            "and (:formMappingId is null or fm.id <> :formMappingId) ")
+    List<FormMapping> findDuplicateFormMappings(@Param("organisationId") Long organisationId,
+                                                @Param("subjectTypeId") Long subjectTypeId,
+                                                @Param("programId") Long programId,
+                                                @Param("encounterTypeId") Long encounterTypeId,
+                                                @Param("taskTypeId") Long taskTypeId,
+                                                @Param("formType") FormType formType,
+                                                @Param("formMappingId") Long formMappingId);
+
     @Query("select fm from FormMapping fm " +
             "left join fetch fm.form f " +
             "left join fetch f.formElementGroups fg " +
@@ -220,6 +268,66 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "  and entity_id notnull \n" +
             "  and observations_type_entity_id notnull", nativeQuery = true)
     List<FormMapping> findByProgramNotNullAndEncounterTypeNotNullAndIsVoidedFalse();
+
+    /**
+     * Every non-voided mapping on exactly this (subject type, programme, visit type) combination whose
+     * approval switch is on. Organisation scoping is left to row level security (V1_398), as with every
+     * other query here - form_mapping is never filtered on organisation_id in Java.
+     *
+     * The left joins are load-bearing. With an implicit join (fm.program.id) Hibernate emits an INNER
+     * JOIN for the whole query, which drops every mapping that has no programme - that is, all of the
+     * subject-type-only and general-encounter shapes. The "is null" branches would not save it, because
+     * the join is applied query-wide rather than per-branch.
+     */
+    @Query("select fm from FormMapping fm " +
+            "left join fm.program p " +
+            "left join fm.encounterType et " +
+            "where fm.subjectType.id = :subjectTypeId " +
+            "and ((:programId is null and p.id is null) or p.id = :programId) " +
+            "and ((:encounterTypeId is null and et.id is null) or et.id = :encounterTypeId) " +
+            "and fm.enableApproval = true " +
+            "and fm.isVoided = false " +
+            "and fm.implVersion = :implVersion")
+    List<FormMapping> findApprovalEnabledMappingsForCombinationAndImplVersion(@Param("subjectTypeId") Long subjectTypeId,
+                                                                             @Param("programId") Long programId,
+                                                                             @Param("encounterTypeId") Long encounterTypeId,
+                                                                             @Param("implVersion") int implVersion);
+
+    default List<FormMapping> findApprovalEnabledMappingsForCombination(Long subjectTypeId, Long programId, Long encounterTypeId) {
+        return findApprovalEnabledMappingsForCombinationAndImplVersion(subjectTypeId, programId, encounterTypeId, FormMapping.IMPL_VERSION);
+    }
+
+    /**
+     * The Approval or Rejection form attached to exactly this (subject type, programme, visit type)
+     * combination, or null if none is. Used to validate the answers on an approval decision against the
+     * form they were captured on (EntityApprovalStatusService#save).
+     *
+     * Both may be attached to one combination, so the form type is part of the lookup rather than
+     * something to filter afterwards. The left joins carry over from
+     * findApprovalEnabledMappingsForCombination above, for the same reason: an implicit join makes the
+     * whole query an INNER JOIN and drops every combination that has no programme.
+     *
+     * check_form_mapping_uniqueness makes at most one non-voided mapping possible per combination and
+     * form type, so a single result is safe to return.
+     */
+    @Query("select fm from FormMapping fm " +
+            "left join fm.program p " +
+            "left join fm.encounterType et " +
+            "where fm.subjectType.id = :subjectTypeId " +
+            "and ((:programId is null and p.id is null) or p.id = :programId) " +
+            "and ((:encounterTypeId is null and et.id is null) or et.id = :encounterTypeId) " +
+            "and fm.form.formType = :formType " +
+            "and fm.isVoided = false " +
+            "and fm.implVersion = :implVersion")
+    FormMapping findDecisionFormMappingForCombinationAndImplVersion(@Param("subjectTypeId") Long subjectTypeId,
+                                                                    @Param("programId") Long programId,
+                                                                    @Param("encounterTypeId") Long encounterTypeId,
+                                                                    @Param("formType") FormType formType,
+                                                                    @Param("implVersion") int implVersion);
+
+    default FormMapping findDecisionFormMappingForCombination(Long subjectTypeId, Long programId, Long encounterTypeId, FormType formType) {
+        return findDecisionFormMappingForCombinationAndImplVersion(subjectTypeId, programId, encounterTypeId, formType, FormMapping.IMPL_VERSION);
+    }
 
     @Query("select st from SubjectType st " +
             "left join FormMapping fm on st.id = fm.subjectType.id " +

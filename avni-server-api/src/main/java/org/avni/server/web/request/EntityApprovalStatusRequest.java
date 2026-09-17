@@ -2,6 +2,8 @@ package org.avni.server.web.request;
 
 import org.joda.time.DateTime;
 
+import java.util.List;
+
 public class EntityApprovalStatusRequest {
 
     private String entityUuid;
@@ -13,6 +15,8 @@ public class EntityApprovalStatusRequest {
     private String approvalStatusUuid;
 
     private String approvalStatusComment;
+
+    private List<ObservationRequest> observations;
 
     private Boolean autoApproved;
 
@@ -52,6 +56,14 @@ public class EntityApprovalStatusRequest {
 
     public void setApprovalStatusComment(String approvalStatusComment) {
         this.approvalStatusComment = approvalStatusComment;
+    }
+
+    public List<ObservationRequest> getObservations() {
+        return observations;
+    }
+
+    public void setObservations(List<ObservationRequest> observations) {
+        this.observations = observations;
     }
 
     public Boolean getAutoApproved() {

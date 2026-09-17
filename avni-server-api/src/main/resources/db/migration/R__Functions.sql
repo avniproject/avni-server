@@ -377,7 +377,21 @@ begin
         return true;
     end if;
     
-    -- Check form type consistency
+    -- Check form type consistency.
+    -- This is an exclusion list - a form type matching its branch here is REJECTED. Form types with
+    -- no branch (including Approval and Rejection) are accepted in every combination of programme
+    -- and visit type, which is intended for those two: an approval or rejection form may be attached
+    -- to a subject type alone, to a programme, to a visit type, or to a programme and visit type
+    -- together.
+    --
+    -- Restricting them to combinations where an approval can actually arise is deliberately NOT
+    -- done here. It depends on sibling rows, and while a CHECK function can read other rows - the
+    -- duplicate block below does exactly that - doing so is unsound: the result is not stable under
+    -- concurrent inserts, and pg_dump restores rows in an order that can fail a check which was
+    -- satisfied when the row was written. That rule is planned as application-level validation in
+    -- FormMappingService (avniproject/avni-server#1052) and is NOT yet built - today any of the
+    -- four shapes is accepted. Note this is a separate concern from form_mapping.enable_approval,
+    -- the pre-existing flag that switches the approval workflow on for a mapping.
     select exists(
         select 1
         from public.form f
@@ -416,15 +430,22 @@ begin
         USING HINT = 'Form type rules: IndividualProfile - no program, no encounter type | ' ||
                    'ProgramEnrolment/Exit - with program, no encounter type | ' ||
                    'ProgramEncounter/Cancellation - with program and encounter type | ' ||
-                   'Encounter/IndividualCancellation - no program, with encounter type';
+                   'Encounter/IndividualCancellation - no program, with encounter type | ' ||
+                   'Approval/Rejection - any combination';
     end if;
 
-    -- Check for duplicate mappings
+    -- Check for duplicate mappings.
+    -- Voided siblings are excluded: the early return above only exempts the row being saved, so
+    -- without this a mapping the administrator has already removed still blocks its replacement.
+    -- Reachable for Approval/Rejection because those go through createOrUpdateFormMapping, which
+    -- keys on the request UUID and creates a new row; registration and enrolment forms reuse the
+    -- existing row via FormMappingService.saveFormMapping and so never hit it.
     select exists(
         select form_mapping.*
         from public.form
                  inner join form_mapping on form_mapping.form_id = form.id
         where form_mapping.organisation_id = organisationId
+          and form_mapping.is_voided = false
           and form_mapping.subject_type_id = subjectTypeId
           and (form_mapping.entity_id = entityId or (form_mapping.entity_id is null and entityId is null))
           and (form_mapping.observations_type_entity_id = observationsTypeEntityId or

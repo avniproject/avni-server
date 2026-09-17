@@ -18,6 +18,7 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.util.ErrorBodyBuilder;
+import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.validation.ValidationException;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
@@ -219,6 +220,24 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formMappingService.createOrUpdateFormMapping(formMappingContract);
         });
         return ResponseEntity.ok(null);
+    }
+
+    /**
+     * Local to this controller rather than changing ErrorInterceptors, which builds a ValidationException's
+     * body with getErrorBody - a full Java stack trace, or an empty string where
+     * avni.exception.in.response is off. Either way the message never reaches App Designer, which is the
+     * whole point of raising one.
+     *
+     * {message: ...} is what ProgramController and the rest of the admin endpoints already return, and what
+     * the webapp reads.
+     *
+     * An @ExceptionHandler rather than a try/catch inside updateMetadata: that method is @Transactional, so
+     * swallowing the exception in its body would commit the form's name and type while the mapping that
+     * failed was rolled back. Letting it propagate rolls the transaction back first, then this formats it.
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<Object> validationFailed(ValidationException e) {
+        return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
     }
 
     private Form validateUpdateMetadata(CreateUpdateFormRequest request, String requestUUID) {

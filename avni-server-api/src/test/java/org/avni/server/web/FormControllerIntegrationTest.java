@@ -90,6 +90,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         assertThat(response.getBody()).contains("{\"rel\":\"lastModifiedBy\"");
     }
 
+
     @Test
     @Ignore("Not Applicable as coded-concepts are created/updated by concept API")
     public void renameOfAnswersViaFormElements() throws IOException {

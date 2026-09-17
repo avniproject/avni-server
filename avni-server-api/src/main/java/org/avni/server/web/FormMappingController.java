@@ -2,6 +2,7 @@ package org.avni.server.web;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.importer.batch.zip.BundleZipFileImporter;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.FormMappingContract;
@@ -27,7 +28,11 @@ public class FormMappingController extends AbstractController<FormMapping> {
     @RequestMapping(value = "/formMappings", method = RequestMethod.POST)
     @Transactional
     void save(@RequestBody List<FormMappingContract> formMappingRequests) {
-        for (FormMappingContract formMappingRequest : formMappingRequests) {
+        // Same reordering bundle import needs, for the same reason: an Approval or Rejection mapping is
+        // only valid once the form it attaches to has approval switched on, and this endpoint applies the
+        // list in request order inside one transaction. A caller listing the decision form first would
+        // otherwise fail the whole POST.
+        for (FormMappingContract formMappingRequest : BundleZipFileImporter.approvalDecisionFormsLast(formMappingRequests)) {
             formMappingService.createOrUpdateFormMapping(formMappingRequest);
         }
     }
