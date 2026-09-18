@@ -67,6 +67,46 @@ class StorageDataClassTest {
     }
 
     @Test
+    void leadingGuidancePrefixIsGuidance() {
+        assertEquals(StorageDataClass.GUIDANCE,
+                StorageDataClass.dataClassForKey("guidance/abc123.png"));
+        assertEquals(StorageDataClass.GUIDANCE,
+                StorageDataClass.dataClassForKey("/guidance/abc123.png"));
+    }
+
+    @Test
+    void orgScopedGuidanceSegmentIsGuidance() {
+        assertEquals(StorageDataClass.GUIDANCE,
+                StorageDataClass.dataClassForKey("orgdir/guidance/abc123.jpg"));
+        assertEquals(StorageDataClass.GUIDANCE,
+                StorageDataClass.dataClassForKey("https://bucket.s3.ap-south-1.amazonaws.com/orgdir/guidance/abc.png"));
+    }
+
+    @Test
+    void substringGuidanceThatIsNotAPathSegmentIsDefault() {
+        assertEquals(StorageDataClass.DEFAULT,
+                StorageDataClass.dataClassForKey("myguidance/abc.png"));
+        assertEquals(StorageDataClass.DEFAULT,
+                StorageDataClass.dataClassForKey("guidance-archive/abc.png"));
+        assertEquals(StorageDataClass.DEFAULT,
+                StorageDataClass.dataClassForKey("orgdir/photo-guidance.png"));
+    }
+
+    @Test
+    void guidanceAndModelsAreDistinctClassesSoTheyRouteSeparately() {
+        assertEquals(StorageDataClass.MODEL, StorageDataClass.dataClassForKey("orgdir/models/abc.bin"));
+        assertEquals(StorageDataClass.GUIDANCE, StorageDataClass.dataClassForKey("orgdir/guidance/abc.png"));
+    }
+
+    @Test
+    void everyRoutableClassHasItsOwnConfigName() {
+        // storageBackends is keyed by config name, so a duplicate would make one class unroutable.
+        assertEquals("model", StorageDataClass.MODEL.getConfigName());
+        assertEquals("guidance", StorageDataClass.GUIDANCE.getConfigName());
+        assertEquals("default", StorageDataClass.DEFAULT.getConfigName());
+    }
+
+    @Test
     void nullKeyIsDefault() {
         assertEquals(StorageDataClass.DEFAULT, StorageDataClass.dataClassForKey(null));
     }
