@@ -235,4 +235,14 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getSql()).contains("selected_al.id in (:addressIds)");
         assertThat(query.getParameters().get("addressIds")).isEqualTo(Arrays.asList(1795, 1796));
     }
+
+    @Test
+    public void ageFilterShouldCompareDateOfBirthDirectlySoThatItsIndexCanBeUsed() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withAgeFilter(new IntegerRange(30, null))
+                .build(subjectType);
+        assertThat(query.getSql()).contains("i.date_of_birth <= cast(now() - make_interval(years => :age) as date)");
+        assertThat(query.getSql()).contains("i.date_of_birth > cast(now() - make_interval(years => :age + 1) as date)");
+        assertThat(query.getSql()).doesNotContain("date_part");
+    }
 }

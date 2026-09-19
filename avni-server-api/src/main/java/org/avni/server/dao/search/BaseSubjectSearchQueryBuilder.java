@@ -179,7 +179,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     public T withAgeFilter(IntegerRange ageRange) {
         if (ageRange == null || ageRange.getMinValue() == null) return (T) this;
         parameters.put("age", ageRange.getMinValue());
-        whereClauses.add("cast(date_part(cast('year' as text), age(now(), cast(i.date_of_birth as timestamp with time zone))) as numeric) = :age");
+        whereClauses.add("i.date_of_birth <= cast(now() - make_interval(years => :age) as date) and i.date_of_birth > cast(now() - make_interval(years => :age + 1) as date)");
         return (T) this;
     }
 
