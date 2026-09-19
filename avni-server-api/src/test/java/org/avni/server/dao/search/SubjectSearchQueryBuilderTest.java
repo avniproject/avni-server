@@ -254,4 +254,14 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getSql()).contains("i.id in (select penc.individual_id from program_encounter penc where penc.organisation_id = ");
         assertThat(query.getSql()).contains("exists (select 1 from program_enrolment penr where penr.id = penc.program_enrolment_id and penr.is_voided is false)");
     }
+
+    @Test
+    public void bothBoundsOfADateRangeShouldApplyToTheSameProgramEncounter() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withProgramEncounterDateFilter(new DateRange("2025-01-01", "2025-12-31"))
+                .build(subjectType);
+        String sql = query.getSql();
+        assertThat(sql.split("from program_encounter penc", -1).length - 1).isEqualTo(1);
+        assertThat(sql).contains("penc.encounter_date_time >= cast(:programEncounterDateMin as date) and penc.encounter_date_time <= cast(:programEncounterDateMax as date)");
+    }
 }

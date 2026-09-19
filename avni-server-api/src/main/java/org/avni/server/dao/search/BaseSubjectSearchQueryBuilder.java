@@ -342,15 +342,19 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
     protected T withRangeFilter(RangeFilter rangeFilter, String parameterPrefix, String minFilter, String maxFilter, String filter) {
         if (rangeFilter == null) return (T) this;
+        List<String> conditions = new ArrayList<>();
         if (rangeFilter.getMinValue() != null) {
             String parameter = parameterPrefix + "Min";
             addParameter(parameter, rangeFilter.getMinValue());
-            whereClauses.add(generateWhereClause(filter, minFilter.replace("rangeParam", parameter)));
+            conditions.add(minFilter.replace("rangeParam", parameter));
         }
         if (rangeFilter.getMaxValue() != null) {
             String parameter = parameterPrefix + "Max";
             addParameter(parameter, rangeFilter.getMaxValue());
-            whereClauses.add(generateWhereClause(filter, maxFilter.replace("rangeParam", parameter)));
+            conditions.add(maxFilter.replace("rangeParam", parameter));
+        }
+        if (!conditions.isEmpty()) {
+            whereClauses.add(generateWhereClause(filter, String.join(" and ", conditions)));
         }
         return (T) this;
     }
