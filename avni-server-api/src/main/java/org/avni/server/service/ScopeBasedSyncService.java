@@ -8,6 +8,7 @@ import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +21,13 @@ import java.util.List;
 public class ScopeBasedSyncService<T extends CHSEntity> {
     private final AddressLevelService addressLevelService;
     private final EntityManager entityManager;
+    private final boolean shouldDisableBitmapScanForSync;
 
-    public ScopeBasedSyncService(AddressLevelService addressLevelService, EntityManager entityManager) {
+    public ScopeBasedSyncService(AddressLevelService addressLevelService, EntityManager entityManager,
+                                 @Value("${avni.sync.disableBitmapScan:true}") boolean shouldDisableBitmapScanForSync) {
         this.addressLevelService = addressLevelService;
         this.entityManager = entityManager;
+        this.shouldDisableBitmapScanForSync = shouldDisableBitmapScanForSync;
     }
 
     public Page<T> getSyncResultsBySubjectTypeRegistrationLocation(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
@@ -63,7 +67,7 @@ public class ScopeBasedSyncService<T extends CHSEntity> {
     }
 
     private SyncParameters withOrderedSyncPlan(SyncParameters syncParameters) {
-        if (syncParameters.isOrganisationOwnedTransactionalEntity()) {
+        if (shouldDisableBitmapScanForSync && syncParameters.isOrganisationOwnedTransactionalEntity()) {
             entityManager.createNativeQuery("set local enable_bitmapscan = off").executeUpdate();
         }
         return syncParameters;

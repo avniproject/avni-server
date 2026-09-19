@@ -30,7 +30,7 @@ public class ScopeBasedSyncServiceTest {
         Query query = mock(Query.class);
         when(entityManager.createNativeQuery(anyString())).thenReturn(query);
         repository = mock(SyncableRepository.class);
-        scopeBasedSyncService = new ScopeBasedSyncService<>(mock(AddressLevelService.class), entityManager);
+        scopeBasedSyncService = new ScopeBasedSyncService<>(mock(AddressLevelService.class), entityManager, true);
     }
 
     @Test
@@ -58,5 +58,14 @@ public class ScopeBasedSyncServiceTest {
         assertThat(syncParameters.getValue().getAfterUuid()).isEqualTo("last-row-uuid");
         assertThat(syncParameters.getValue().getPageable().getOffset()).isZero();
         assertThat(syncParameters.getValue().getPageable().getPageSize()).isEqualTo(1000);
+    }
+
+    @Test
+    public void shouldNotTouchPlannerSettingsWhenTheGuardIsSwitchedOff() {
+        ScopeBasedSyncService<CHSEntity> withoutGuard = new ScopeBasedSyncService<>(mock(AddressLevelService.class), entityManager, false);
+
+        withoutGuard.getSyncResultsByCatchmentAsSlice(repository, user, new DateTime(0), new DateTime(), PageRequest.of(0, 10), SyncEntityName.ProgramEncounter);
+
+        verify(entityManager, never()).createNativeQuery(anyString());
     }
 }
