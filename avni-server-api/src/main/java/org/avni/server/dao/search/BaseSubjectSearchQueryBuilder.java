@@ -29,7 +29,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and e.encounter_date_time is not null and e.is_voided is false\n";
     protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penr.enrolment_date_time is not null and penr.is_voided is false\n";
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penc.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
-    protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
+    protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al join address_level selected_al on al.lineage <@ selected_al.lineage where 1=1\n";
     protected static final String SEARCH_ALL_FILTER = "i.id in (select si.id from individual si join program_enrolment penr on penr.individual_id = si.id and penr.is_voided is false where si.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + "\n";
 
     private String orderByClause = "";
@@ -217,10 +217,8 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
     public T withAddressIdsFilter(List<Integer> addressIds) {
         if (addressIds == null || addressIds.isEmpty()) return (T) this;
-        String addressIdString = addressIds.stream().map(String::valueOf)
-                .collect(Collectors.joining("|"));
-        parameters.put("addressLQuery", String.format("*.%s.*", addressIdString));
-        whereClauses.add(generateWhereClause(ADDRESS_FILTER, "al.lineage ~ cast(:addressLQuery as lquery)"));
+        parameters.put("addressIds", addressIds);
+        whereClauses.add(generateWhereClause(ADDRESS_FILTER, "selected_al.id in (:addressIds)"));
         return (T) this;
     }
 

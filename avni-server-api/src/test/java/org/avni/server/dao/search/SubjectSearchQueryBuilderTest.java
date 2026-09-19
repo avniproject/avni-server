@@ -225,4 +225,14 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(sql).contains("penc.organisation_id = 21");
         assertThat(sql).contains("si.organisation_id = 21");
     }
+
+    @Test
+    public void addressFilterShouldMatchDescendantsOfSelectedAddressesByLineage() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withAddressIdsFilter(Arrays.asList(1795, 1796))
+                .build(subjectType);
+        assertThat(query.getSql()).contains("al.lineage <@ selected_al.lineage");
+        assertThat(query.getSql()).contains("selected_al.id in (:addressIds)");
+        assertThat(query.getParameters().get("addressIds")).isEqualTo(Arrays.asList(1795, 1796));
+    }
 }
