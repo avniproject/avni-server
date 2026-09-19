@@ -39,6 +39,9 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
 
         specification = specification.and(syncDisabledSpecification());
 
+        if (syncParameters.isOrganisationOwnedTransactionalEntity())
+            specification = specification.and(currentOrganisationSpecification());
+
         return specification;
     }
 
@@ -198,5 +201,11 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
             }
             throw dive;
         }
+    }
+
+    default Specification<T> currentOrganisationSpecification() {
+        Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                cb.equal(root.get("organisationId"), organisationId);
     }
 }

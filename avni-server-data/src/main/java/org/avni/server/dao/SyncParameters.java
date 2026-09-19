@@ -107,4 +107,8 @@ public class SyncParameters {
         return this.getSubjectType() == null || !this.getSubjectType().isDirectlyAssignable()
                 || (!this.isParentOrSelfIndividual() && !this.isProgramEncounter() && !this.isEncounter() && !this.isParentOrSelfEnrolment());
     }
+
+    public boolean isOrganisationOwnedTransactionalEntity() {
+        return Arrays.asList(SyncEntityName.Individual, SyncEntityName.ProgramEnrolment, SyncEntityName.Encounter, SyncEntityName.ProgramEncounter).contains(syncEntityName);
+    }
 }
