@@ -199,4 +199,14 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getParameters()).doesNotContainKey("age");
         assertThat(query.getSql()).doesNotContain(":age");
     }
+
+    @Test
+    public void programEncounterDateFilterShouldUseTheProgramEncounterAliasOfItsSubquery() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withProgramEncounterDateFilter(new DateRange("2025-01-01", "2025-12-31"))
+                .build(subjectType);
+        assertThat(query.getSql()).contains("penc.encounter_date_time >= cast(:programEncounterDateMin as date)");
+        assertThat(query.getSql()).contains("penc.encounter_date_time <= cast(:programEncounterDateMax as date)");
+        assertThat(query.getSql()).doesNotContain("pe.encounter_date_time");
+    }
 }

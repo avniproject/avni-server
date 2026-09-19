@@ -84,8 +84,8 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
         if (dateRange == null || dateRange.isEmpty()) return this;
         return withRangeFilter(dateRange,
                         "programEncounterDate",
-                        "pe.encounter_date_time >= cast(:rangeParam as date)",
-                        "pe.encounter_date_time <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
+                        "penc.encounter_date_time >= cast(:rangeParam as date)",
+                        "penc.encounter_date_time <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
