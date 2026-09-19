@@ -41,6 +41,8 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
 
         if (syncParameters.isOrganisationOwnedTransactionalEntity())
             specification = specification.and(currentOrganisationSpecification());
+        if (syncParameters.getAfterUuid() != null)
+            specification = specification.and(afterCursorSpecification(syncParameters.getAfterUuid()));
 
         return specification;
     }
@@ -207,5 +209,22 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 cb.equal(root.get("organisationId"), organisationId);
+    }
+
+    @SuppressWarnings("unchecked")
+    default Specification<T> afterCursorSpecification(String afterUuid) {
+        return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            Class<T> entityClass = (Class<T>) root.getJavaType();
+            Subquery<Date> cursorLastModifiedDateTime = query.subquery(Date.class);
+            Root<T> cursorRowForTime = cursorLastModifiedDateTime.from(entityClass);
+            cursorLastModifiedDateTime.select(cursorRowForTime.get("lastModifiedDateTime")).where(cb.equal(cursorRowForTime.get("uuid"), afterUuid));
+            Subquery<Long> cursorId = query.subquery(Long.class);
+            Root<T> cursorRowForId = cursorId.from(entityClass);
+            cursorId.select(cursorRowForId.get("id")).where(cb.equal(cursorRowForId.get("uuid"), afterUuid));
+            Path<Date> lastModifiedDateTime = root.get("lastModifiedDateTime");
+            return cb.and(
+                    cb.greaterThanOrEqualTo(lastModifiedDateTime, cursorLastModifiedDateTime),
+                    cb.or(cb.greaterThan(lastModifiedDateTime, cursorLastModifiedDateTime), cb.greaterThan(root.get("id"), cursorId)));
+        };
     }
 }

@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
+import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.SyncableRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.User;
@@ -9,8 +10,10 @@ import org.avni.server.domain.sync.SyncEntityName;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.PageRequest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -44,5 +47,16 @@ public class ScopeBasedSyncServiceTest {
 
         verify(entityManager, never()).createNativeQuery(anyString());
         verify(repository).getSyncResultsAsSlice(any());
+    }
+
+    @Test
+    public void cursorPageShouldReadFromTheStartOfTheCursorInsteadOfSkippingRows() {
+        scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(repository, user, new DateTime(0), new DateTime(), 1L, PageRequest.of(7, 1000), null, SyncEntityName.ProgramEncounter, "last-row-uuid");
+
+        ArgumentCaptor<SyncParameters> syncParameters = ArgumentCaptor.forClass(SyncParameters.class);
+        verify(repository).getSyncResultsAsSlice(syncParameters.capture());
+        assertThat(syncParameters.getValue().getAfterUuid()).isEqualTo("last-row-uuid");
+        assertThat(syncParameters.getValue().getPageable().getOffset()).isZero();
+        assertThat(syncParameters.getValue().getPageable().getPageSize()).isEqualTo(1000);
     }
 }

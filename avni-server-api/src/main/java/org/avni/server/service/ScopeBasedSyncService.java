@@ -9,6 +9,7 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -66,5 +67,14 @@ public class ScopeBasedSyncService<T extends CHSEntity> {
             entityManager.createNativeQuery("set local enable_bitmapscan = off").executeUpdate();
         }
         return syncParameters;
+    }
+
+    public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName, String afterUuid) {
+        if (afterUuid == null)
+            return getSyncResultsBySubjectTypeRegistrationLocationAsSlice(repository, user, lastModifiedDateTime, now, typeId, pageable, subjectType, syncEntityName);
+        List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
+        SyncParameters syncParameters = new SyncParameters(lastModifiedDateTime, now, typeId, null, PageRequest.of(0, pageable.getPageSize(), pageable.getSort()), addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment());
+        syncParameters.setAfterUuid(afterUuid);
+        return repository.getSyncResultsAsSlice(withOrderedSyncPlan(syncParameters));
     }
 }

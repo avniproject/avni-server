@@ -21,6 +21,7 @@ public class SyncParameters {
     private final JsonObject syncSettings;
     private final SyncEntityName syncEntityName;
     private final Catchment catchment;
+    private String afterUuid;
 
     public SyncParameters(DateTime lastModifiedDateTime,
                           DateTime now, Long typeId,
@@ -110,5 +111,13 @@ public class SyncParameters {
 
     public boolean isOrganisationOwnedTransactionalEntity() {
         return Arrays.asList(SyncEntityName.Individual, SyncEntityName.ProgramEnrolment, SyncEntityName.Encounter, SyncEntityName.ProgramEncounter).contains(syncEntityName);
+    }
+
+    public String getAfterUuid() {
+        return afterUuid;
+    }
+
+    public void setAfterUuid(String afterUuid) {
+        this.afterUuid = afterUuid;
     }
 }

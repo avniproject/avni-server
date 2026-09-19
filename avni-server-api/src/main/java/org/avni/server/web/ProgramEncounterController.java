@@ -139,6 +139,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programEncounterTypeUuid", required = false) String encounterTypeUuid,
+            @RequestParam(value = "afterUuid", required = false) String afterUuid,
             Pageable pageable) throws Exception {
         if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
@@ -147,7 +148,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         FormMapping formMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for program encounter %s", encounterType.getName()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEncounter));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEncounter, afterUuid));
     }
 
     @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
