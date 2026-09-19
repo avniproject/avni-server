@@ -209,4 +209,20 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getSql()).contains("penc.encounter_date_time <= cast(:programEncounterDateMax as date)");
         assertThat(query.getSql()).doesNotContain("pe.encounter_date_time");
     }
+
+    @Test
+    public void subqueriesShouldBeScopedToTheCurrentOrganisation() {
+        UserContextHolder.getOrganisation().setId(21L);
+        String sql = new SubjectSearchQueryBuilder()
+                .withEncounterDateFilter(new DateRange("2025-01-01", null))
+                .withProgramEnrolmentDateFilter(new DateRange("2025-01-01", null))
+                .withProgramEncounterDateFilter(new DateRange("2025-01-01", null))
+                .withSearchAll("abc")
+                .build(subjectType).getSql();
+        assertThat(sql).doesNotContain(BaseSubjectSearchQueryBuilder.ORGANISATION_ID_PLACEHOLDER);
+        assertThat(sql).contains("e.organisation_id = 21");
+        assertThat(sql).contains("penr.organisation_id = 21");
+        assertThat(sql).contains("penc.organisation_id = 21");
+        assertThat(sql).contains("si.organisation_id = 21");
+    }
 }

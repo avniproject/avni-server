@@ -25,11 +25,12 @@ import java.util.stream.Collectors;
 public class BaseSubjectSearchQueryBuilder<T> {
     private final Logger logger;
 
-    protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.encounter_date_time is not null and e.is_voided is false\n";
-    protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n";
-    protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
+    protected static final String ORGANISATION_ID_PLACEHOLDER = "$ORGANISATION_ID";
+    protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and e.encounter_date_time is not null and e.is_voided is false\n";
+    protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penr.enrolment_date_time is not null and penr.is_voided is false\n";
+    protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penc.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
-    protected static final String SEARCH_ALL_FILTER = "i.id in (select i.id from individual i join program_enrolment penr on penr.individual_id = i.id and penr.is_voided is false\n";
+    protected static final String SEARCH_ALL_FILTER = "i.id in (select si.id from individual si join program_enrolment penr on penr.individual_id = si.id and penr.is_voided is false where si.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + "\n";
 
     private String orderByClause = "";
 
@@ -46,7 +47,8 @@ public class BaseSubjectSearchQueryBuilder<T> {
         StringBuilder query = new StringBuilder();
         query.append(baseQuery);
 
-        query.append(String.format("\n where i.organisation_id = %d and\n", UserContextHolder.getOrganisation().getId()));
+        Long organisationId = UserContextHolder.getOrganisation().getId();
+        query.append(String.format("\n where i.organisation_id = %d and\n", organisationId));
 
         query.append(String.join(" \nand ", whereClauses));
         query.append(groupByClause);
@@ -67,7 +69,8 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     .toString();
         }
         String customFieldString = customFields.isEmpty() ? "" : ",\n".concat(String.join(",\n", customFields));
-        String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString);
+        String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString)
+                .replace(ORGANISATION_ID_PLACEHOLDER, String.valueOf(organisationId));
         logger.trace(parameters.toString());
         return new SqlQuery(queryWithCustomFields, parameters);
     }
