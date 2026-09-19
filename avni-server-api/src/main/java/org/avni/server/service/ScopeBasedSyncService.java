@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.persistence.EntityManager;
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.SyncableRepository;
 import org.avni.server.domain.sync.SyncEntityName;
@@ -17,44 +18,53 @@ import java.util.List;
 @Service
 public class ScopeBasedSyncService<T extends CHSEntity> {
     private final AddressLevelService addressLevelService;
+    private final EntityManager entityManager;
 
-    public ScopeBasedSyncService(AddressLevelService addressLevelService) {
+    public ScopeBasedSyncService(AddressLevelService addressLevelService, EntityManager entityManager) {
         this.addressLevelService = addressLevelService;
+        this.entityManager = entityManager;
     }
 
     public Page<T> getSyncResultsBySubjectTypeRegistrationLocation(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResults(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Page<T> getSyncResultsBySubjectTypeRegistrationLocation(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, String entityTypeUuid, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResults(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Page<T> getSyncResultsByCatchment(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Pageable pageable, SyncEntityName syncEntityName) {
-        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResults(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Page<T> getSyncResultsByCatchment(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
-        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResults(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResultsAsSlice(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, String entityTypeUuid, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResultsAsSlice(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Slice<T> getSyncResultsByCatchmentAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Pageable pageable, SyncEntityName syncEntityName) {
-        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResultsAsSlice(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment())));
     }
 
     public Slice<T> getSyncResultsByCatchmentAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
-        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResultsAsSlice(withOrderedSyncPlan(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, null, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment())));
+    }
+
+    private SyncParameters withOrderedSyncPlan(SyncParameters syncParameters) {
+        if (syncParameters.isOrganisationOwnedTransactionalEntity()) {
+            entityManager.createNativeQuery("set local enable_bitmapscan = off").executeUpdate();
+        }
+        return syncParameters;
     }
 }
