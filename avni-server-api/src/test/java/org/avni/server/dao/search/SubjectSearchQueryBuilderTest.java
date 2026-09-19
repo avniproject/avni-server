@@ -245,4 +245,13 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getSql()).contains("i.date_of_birth > cast(now() - make_interval(years => :age + 1) as date)");
         assertThat(query.getSql()).doesNotContain("date_part");
     }
+
+    @Test
+    public void programEncounterFilterShouldSelectSubjectsFromProgramEncounterDirectly() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withProgramEncounterDateFilter(new DateRange("2025-01-01", null))
+                .build(subjectType);
+        assertThat(query.getSql()).contains("i.id in (select penc.individual_id from program_encounter penc where penc.organisation_id = ");
+        assertThat(query.getSql()).contains("exists (select 1 from program_enrolment penr where penr.id = penc.program_enrolment_id and penr.is_voided is false)");
+    }
 }
