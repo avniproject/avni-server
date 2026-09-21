@@ -4,6 +4,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -31,5 +32,12 @@ public class SampleControllerIntegrationTest extends AbstractControllerIntegrati
         ResponseEntity<String> response = template.getForEntity(base.toString() + "/ping",
                 String.class);
         assertThat(response.getBody(), equalTo("pong"));
+    }
+
+    @Test
+    public void getPingRulesServerWhenRulesServerIsDown() throws Exception {
+        ResponseEntity<String> response = template.getForEntity(base.toString() + "/ping/rules-server",
+                String.class);
+        assertThat(response.getStatusCode(), equalTo(HttpStatus.SERVICE_UNAVAILABLE));
     }
 }
