@@ -22,6 +22,7 @@ public class ResourceProtectionStatus {
             "/precache-manifest*",
             "/service-worker.js",
             "/ping",
+            "/ping/rules-server",
             "/web/media",
             "/config",
             "/api/user/generateToken",

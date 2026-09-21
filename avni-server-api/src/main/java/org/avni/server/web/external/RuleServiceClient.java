@@ -15,14 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,6 +37,10 @@ public class RuleServiceClient {
     @Value("${node.server.url}")
     private String NODE_SERVER_HOST;
     private final Logger logger = LoggerFactory.getLogger(RuleServiceClient.class);
+    private final RestTemplate statusRestTemplate = new RestTemplateBuilder()
+            .setConnectTimeout(Duration.ofSeconds(2))
+            .setReadTimeout(Duration.ofSeconds(2))
+            .build();
 
     @Autowired
     public RuleServiceClient(RestTemplate restTemplate, UserGroupRepository userGroupRepository) {
@@ -83,5 +90,14 @@ public class RuleServiceClient {
         if(authToken != null)
             httpHeaders.add(AuthenticationFilter.AUTH_TOKEN_HEADER, authToken);
         return httpHeaders;
+    }
+
+    public boolean isRulesServerUp() {
+        try {
+            return statusRestTemplate.getForEntity(NODE_SERVER_HOST.concat("/api/status"), String.class).getStatusCode().is2xxSuccessful();
+        } catch (RestClientException e) {
+            logger.warn("rules-server status check failed at {}: {}", NODE_SERVER_HOST, e.getMessage());
+            return false;
+        }
     }
 }

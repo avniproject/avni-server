@@ -26,6 +26,9 @@ public class ResourceProtectionStatusTest {
         request.setServletPath("/bulkuploads/do.md");
         assertThat(isProtected(request), is(equalTo(false)));
 
+        request.setServletPath("/ping/rules-server");
+        assertThat(isProtected(request), is(equalTo(false)));
+
         request.setServletPath("/userInfo");
         assertThat(isProtected(request), is(equalTo(true)));
 
