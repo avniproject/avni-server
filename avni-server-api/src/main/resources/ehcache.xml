@@ -27,7 +27,7 @@
         <expiry>
             <ttl unit="seconds">86400</ttl>
         </expiry>
-        <heap unit="entries">1000</heap>
+        <heap unit="entries">50000</heap>
     </cache>
 
     <cache alias="org.avni.server.domain.AddressLevel">

@@ -55,7 +55,7 @@ public class User implements IdHolder {
     // Audit is not getting used for managing users because, the application goes in a loop managing audit information generically and automatically assigning the user to the entities
     @JsonIgnore
     @JoinColumn(name = "created_by_id")
-    @ManyToOne(targetEntity = User.class)
+    @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
     private User createdBy;
 
     @Convert(converter = JodaDateTimeConverter.class)
@@ -63,7 +63,7 @@ public class User implements IdHolder {
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
-    @ManyToOne(targetEntity = User.class)
+    @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
     private User lastModifiedBy;
 
     @Convert(converter = JodaDateTimeConverter.class)
@@ -89,7 +89,7 @@ public class User implements IdHolder {
     private boolean isAdmin;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "catchment_id")
     private Catchment catchment;
 
