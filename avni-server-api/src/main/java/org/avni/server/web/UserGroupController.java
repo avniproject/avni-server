@@ -95,10 +95,12 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             }
             usersToBeAdded.add(userGroup);
         }
+        // Persist the membership before syncing it, so a Metabase failure cannot cost us the membership.
+        List<UserGroup> savedUserGroups = userGroupRepository.saveAll(usersToBeAdded);
         if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
-            metabaseService.upsertUsersOnMetabase(usersToBeAdded);
+            metabaseService.upsertUsersOnMetabase(savedUserGroups);
         }
-        return ResponseEntity.ok(userGroupRepository.saveAll(usersToBeAdded));
+        return ResponseEntity.ok(savedUserGroups);
     }
 
     @RequestMapping(value = "/userGroup/{id}", method = RequestMethod.POST)
