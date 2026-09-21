@@ -14,6 +14,16 @@ commands:
       - attach_workspace:
           at: ~/artifacts
 
+      - run:
+          name: Fail if deployable does not exist
+          command: |
+            for file in avni-server-0.0.1-SNAPSHOT.jar; do
+              if [ ! -s ~/artifacts/$file ]; then
+                echo "Deployable not present at ~/artifacts/$file. The workspace has probably expired, re-run the build and deploy from that workflow."
+                exit 1
+              fi
+            done
+
       - run: sudo apt-get install make openssl
 
       - run: |
