@@ -7,7 +7,6 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.Individual;
-import org.avni.server.util.DateTimeUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,13 +15,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A Subject, Location or Encounter answer is stored as the referenced record's UUID. Written to the
- * export as it is stored, the column is unreadable and cannot be joined to anything, so resolve it
- * to a readable name. The app labels these from a configurable template that the server does
- * not evaluate, so this is the record's own name rather than that label.
+ * export as it is stored, the column is unreadable. Written as the name alone it becomes readable
+ * but stops identifying anything, since two subjects routinely share a name. So the cell carries
+ * both, as name(uuid).
  * <p>
  * One of these serves one export job. A row's unresolved UUIDs are loaded in a single query per
  * type, and every name is cached for the rest of the job, so a reference that repeats across rows
@@ -47,26 +45,22 @@ public class ExportReferenceResolver {
     static final int DEFAULT_MAX_CACHED_NAMES_PER_TYPE = 50000;
 
     private final int maxCachedNamesPerType;
-    private final String timeZone;
     private final Map<String, Map<String, String>> namesByDataType = new HashMap<>();
 
     public ExportReferenceResolver(IndividualRepository individualRepository,
                                    LocationRepository locationRepository,
-                                   EncounterRepository encounterRepository,
-                                   String timeZone) {
-        this(individualRepository, locationRepository, encounterRepository, timeZone, DEFAULT_MAX_CACHED_NAMES_PER_TYPE);
+                                   EncounterRepository encounterRepository) {
+        this(individualRepository, locationRepository, encounterRepository, DEFAULT_MAX_CACHED_NAMES_PER_TYPE);
     }
 
     ExportReferenceResolver(IndividualRepository individualRepository,
                             LocationRepository locationRepository,
                             EncounterRepository encounterRepository,
-                            String timeZone,
                             int maxCachedNamesPerType) {
         this.maxCachedNamesPerType = maxCachedNamesPerType;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.encounterRepository = encounterRepository;
-        this.timeZone = timeZone;
     }
 
     public static boolean isReferenceType(String dataType) {
@@ -74,11 +68,10 @@ public class ExportReferenceResolver {
     }
 
     /**
-     * The display value for one answer. A multi-select answer holds a list of UUIDs and resolves to
-     * the names joined by {@link #MULTI_VALUE_SEPARATOR}. A reference this export cannot see -
-     * deleted, voided, or outside the exporting user's visibility - resolves to nothing rather than
-     * falling back to the UUID, which would put an unreadable value back in a column the rest of
-     * which reads as names.
+     * The display value for one answer, as name(uuid). A multi-select answer holds a list of UUIDs
+     * and resolves to one such pair per answer, joined by {@link #MULTI_VALUE_SEPARATOR}. A
+     * reference this export cannot see - deleted, voided, or outside the exporting user's
+     * visibility - keeps its UUID on its own, so the row still says which record was chosen.
      */
     public String resolve(String dataType, Object value) {
         List<String> uuids = toUuids(value);
@@ -87,9 +80,12 @@ public class ExportReferenceResolver {
         Map<String, String> cached = namesByDataType.computeIfAbsent(dataType, key -> new HashMap<>());
         Map<String, String> justFetched = fetchMissing(dataType, uuids, cached);
         return uuids.stream()
-                .map(uuid -> justFetched.containsKey(uuid) ? justFetched.get(uuid) : cached.getOrDefault(uuid, ""))
-                .filter(name -> !name.isEmpty())
+                .map(uuid -> label(justFetched.containsKey(uuid) ? justFetched.get(uuid) : cached.getOrDefault(uuid, ""), uuid))
                 .collect(Collectors.joining(MULTI_VALUE_SEPARATOR));
+    }
+
+    private static String label(String name, String uuid) {
+        return name.isEmpty() ? uuid : name + "(" + uuid + ")";
     }
 
     /**
@@ -122,7 +118,7 @@ public class ExportReferenceResolver {
         }
         if (ConceptDataType.matches(ConceptDataType.Encounter, dataType)) {
             return encounterRepository.findAllByUuidIn(uuids).stream()
-                    .collect(Collectors.toMap(Encounter::getUuid, this::encounterName));
+                    .collect(Collectors.toMap(Encounter::getUuid, ExportReferenceResolver::encounterName));
         }
         return Collections.emptyMap();
     }
@@ -136,16 +132,13 @@ public class ExportReferenceResolver {
     }
 
     /**
-     * A general encounter usually carries no name of its own. Falling back to the type alone would
-     * render three visits of the same type as the same word three times, which is less use than the
-     * UUID it replaces, so the visit date goes with it.
+     * A general encounter usually carries no name of its own, in which case the encounter type is
+     * the only label a reader would recognise. Two visits of the same type read alike, which is
+     * why the UUID travels with it.
      */
-    private String encounterName(Encounter encounter) {
+    private static String encounterName(Encounter encounter) {
         if (encounter.getName() != null && !encounter.getName().isEmpty()) return encounter.getName();
-        String typeName = encounter.getEncounterType() == null ? "" : blankIfNull(encounter.getEncounterType().getName());
-        String visitDate = encounter.getEncounterDateTime() == null ? ""
-                : DateTimeUtil.getDateForTimeZone(encounter.getEncounterDateTime(), timeZone).toLocalDate().toString();
-        return Stream.of(typeName, visitDate).filter(part -> !part.isEmpty()).collect(Collectors.joining(" "));
+        return encounter.getEncounterType() == null ? "" : blankIfNull(encounter.getEncounterType().getName());
     }
 
     private static String blankIfNull(String value) {

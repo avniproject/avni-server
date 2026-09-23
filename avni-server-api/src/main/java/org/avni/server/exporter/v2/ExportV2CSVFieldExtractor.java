@@ -92,7 +92,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
         ExportJobParameters exportJobParameters = exportJobParametersRepository.findByUuid(exportJobParamsUUID);
         this.timeZone = exportJobParameters.getTimezone();
-        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, timeZone);
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, timeZone);
         exportOutput.accept(exportFieldsManager);
