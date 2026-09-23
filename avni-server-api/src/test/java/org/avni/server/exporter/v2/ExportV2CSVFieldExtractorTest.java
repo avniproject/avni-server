@@ -136,6 +136,40 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     @Test
+    public void aQuoteInAConceptNameIsEscapedInTheHeaderSoItStaysInStepWithTheRow() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", "yes").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c1")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
+        Concept quoted = new ConceptBuilder().withUuid("c1").withName("Child's \"nickname\"").withDataType(ConceptDataType.Text).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(quoted).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+
+        // The quote is doubled inside the cell, so a CSV reader parses the cell back to the
+        // concept name rather than splitting the header into extra fields.
+        assertTrue(header.contains("\"ST1_Child's \"\"nickname\"\"\""));
+        assertTrue(parseCsvFields(FileUtil.stripUtf8Bom(header)).contains("ST1_Child's \"nickname\""));
+    }
+
+    @Test
     public void aQuoteInAResolvedNameIsEscapedSoTheRowDoesNotShift() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
@@ -272,6 +306,26 @@ public class ExportV2CSVFieldExtractorTest {
                 return extract[i];
         }
         return null;
+    }
+
+    private int getHeaderFieldCount(String header) {
+        return parseCsvFields(FileUtil.stripUtf8Bom(header)).size();
+    }
+
+    private java.util.List<String> parseCsvFields(String line) {
+        java.util.List<String> fields = new java.util.ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') { current.append('"'); i++; }
+                else inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) { fields.add(current.toString()); current.setLength(0); }
+            else current.append(c);
+        }
+        fields.add(current.toString());
+        return fields;
     }
 
     private String[] getHeaderFields(String header) {

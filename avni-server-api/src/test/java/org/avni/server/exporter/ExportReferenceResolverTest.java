@@ -162,6 +162,30 @@ public class ExportReferenceResolverTest {
         assertEquals("", resolver.resolve(LOCATION, "x"));
     }
 
+    @Test
+    public void pastTheCacheCapItKeepsAnsweringCorrectlyAndStopsRemembering() {
+        ExportReferenceResolver capped = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, "Asia/Kolkata", 2);
+        for (String uuid : Arrays.asList("s1", "s2", "s3")) {
+            when(individualRepository.findAllByUuidIn(Collections.singletonList(uuid)))
+                    .thenReturn(Collections.singletonList(subject(uuid, "Name " + uuid)));
+        }
+
+        assertEquals("Name s1", capped.resolve(SUBJECT, "s1"));
+        assertEquals("Name s2", capped.resolve(SUBJECT, "s2"));
+        assertEquals("Name s3", capped.resolve(SUBJECT, "s3"));
+
+        // The two that fitted are still served without a query.
+        assertEquals("Name s1", capped.resolve(SUBJECT, "s1"));
+        assertEquals("Name s2", capped.resolve(SUBJECT, "s2"));
+        verify(individualRepository, times(1)).findAllByUuidIn(Collections.singletonList("s1"));
+        verify(individualRepository, times(1)).findAllByUuidIn(Collections.singletonList("s2"));
+
+        // The one past the cap is answered from what was just fetched, and re-queried next time
+        // rather than copying or scanning the cache.
+        assertEquals("Name s3", capped.resolve(SUBJECT, "s3"));
+        verify(individualRepository, times(2)).findAllByUuidIn(Collections.singletonList("s3"));
+    }
+
     private Individual subject(String uuid, String firstName) {
         Individual individual = new Individual();
         individual.setUuid(uuid);
