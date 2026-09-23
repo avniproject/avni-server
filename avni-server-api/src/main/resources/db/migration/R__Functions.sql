@@ -142,7 +142,7 @@ BEGIN
     IF obs IS NULL OR JSONB_TYPEOF(obs) = 'null' THEN RETURN NULL; END IF;
 
     IF JSONB_TYPEOF(obs) = 'array' THEN
-        SELECT ARRAY_AGG(value) INTO ref_uuids FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) AS t(value);
+        SELECT ARRAY_AGG(value ORDER BY ord) INTO ref_uuids FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) WITH ORDINALITY AS t(value, ord);
     ELSE
         ref_uuids := ARRAY [obs #>> '{}'];
     END IF;
@@ -156,20 +156,22 @@ BEGIN
             SELECT STRING_AGG(TRIM(CONCAT_WS(' ', i.first_name, i.middle_name, i.last_name)), '; ' ORDER BY u.ord)
             INTO result
             FROM UNNEST(ref_uuids) WITH ORDINALITY AS u(ref_uuid, ord)
-                     JOIN individual i ON i.uuid = u.ref_uuid;
+                     JOIN public.individual i ON i.uuid = u.ref_uuid;
         ELSIF reference_type = 'Location' THEN
             SELECT STRING_AGG(a.title, '; ' ORDER BY u.ord)
             INTO result
             FROM UNNEST(ref_uuids) WITH ORDINALITY AS u(ref_uuid, ord)
-                     JOIN address_level a ON a.uuid = u.ref_uuid;
+                     JOIN public.address_level a ON a.uuid = u.ref_uuid;
         ELSIF reference_type = 'Encounter' THEN
-            -- A general encounter usually carries no name of its own, in which case the encounter
-            -- type is the only label a reader would recognise.
-            SELECT STRING_AGG(COALESCE(NULLIF(e.name, ''), et.name), '; ' ORDER BY u.ord)
+            -- A general encounter usually carries no name of its own. Falling back to the type
+            -- alone would render three visits of the same type as the same word three times, which
+            -- is less use than the UUID it replaces, so the visit date goes with it.
+            SELECT STRING_AGG(COALESCE(NULLIF(e.name, ''),
+                              CONCAT_WS(' ', et.name, TO_CHAR(e.encounter_date_time AT TIME ZONE 'asia/kolkata', 'YYYY-MM-DD'))), '; ' ORDER BY u.ord)
             INTO result
             FROM UNNEST(ref_uuids) WITH ORDINALITY AS u(ref_uuid, ord)
-                     JOIN encounter e ON e.uuid = u.ref_uuid
-                     LEFT JOIN encounter_type et ON et.id = e.encounter_type_id;
+                     JOIN public.encounter e ON e.uuid = u.ref_uuid
+                     LEFT JOIN public.encounter_type et ON et.id = e.encounter_type_id;
         ELSE
             RETURN NULL;
         END IF;
