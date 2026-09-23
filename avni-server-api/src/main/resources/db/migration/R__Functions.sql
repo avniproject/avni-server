@@ -124,6 +124,67 @@ END
 $$;
 
 
+-- A Subject, Location or Encounter answer is stored as the referenced record's UUID. The ETL used
+-- to copy that UUID straight into the reporting column, leaving it unreadable and unjoinable.
+-- Resolve it here instead, the way get_coded_string_value resolves a coded answer beside it.
+-- SECURITY INVOKER so the organisation's row level policies still decide what is visible.
+create or replace function get_reference_string_value(obs jsonb, reference_type text)
+    returns character varying
+    language plpgsql
+    SECURITY INVOKER
+    stable
+as
+$$
+DECLARE
+    ref_uuids TEXT[];
+    result    VARCHAR;
+BEGIN
+    IF obs IS NULL OR JSONB_TYPEOF(obs) = 'null' THEN RETURN NULL; END IF;
+
+    IF JSONB_TYPEOF(obs) = 'array' THEN
+        SELECT ARRAY_AGG(value) INTO ref_uuids FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) AS t(value);
+    ELSE
+        ref_uuids := ARRAY [obs #>> '{}'];
+    END IF;
+
+    IF ref_uuids IS NULL OR CARDINALITY(ref_uuids) = 0 THEN RETURN NULL; END IF;
+
+    BEGIN
+        -- Names are joined with a semicolon rather than a comma because a subject's name routinely
+        -- contains a comma of its own, which would make a comma separated list unreadable.
+        IF reference_type = 'Subject' THEN
+            SELECT STRING_AGG(TRIM(CONCAT_WS(' ', i.first_name, i.middle_name, i.last_name)), '; ' ORDER BY u.ord)
+            INTO result
+            FROM UNNEST(ref_uuids) WITH ORDINALITY AS u(ref_uuid, ord)
+                     JOIN individual i ON i.uuid = u.ref_uuid;
+        ELSIF reference_type = 'Location' THEN
+            SELECT STRING_AGG(a.title, '; ' ORDER BY u.ord)
+            INTO result
+            FROM UNNEST(ref_uuids) WITH ORDINALITY AS u(ref_uuid, ord)
+                     JOIN address_level a ON a.uuid = u.ref_uuid;
+        ELSIF reference_type = 'Encounter' THEN
+            -- A general encounter usually carries no name of its own, in which case the encounter
+            -- type is the only label a reader would recognise.
+            SELECT STRING_AGG(COALESCE(NULLIF(e.name, ''), et.name), '; ' ORDER BY u.ord)
+            INTO result
+            FROM UNNEST(ref_uuids) WITH ORDINALITY AS u(ref_uuid, ord)
+                     JOIN encounter e ON e.uuid = u.ref_uuid
+                     LEFT JOIN encounter_type et ON et.id = e.encounter_type_id;
+        ELSE
+            RETURN NULL;
+        END IF;
+        RETURN result;
+    EXCEPTION
+        WHEN OTHERS
+            THEN
+                RAISE NOTICE 'Failed while processing get_reference_string_value(''%'', ''%'')', obs :: TEXT, reference_type;
+                RAISE NOTICE '% %', SQLERRM, SQLSTATE;
+                RETURN NULL;
+    END;
+END
+$$;
+
+
 create or replace function append_manual_update_history(current_value text, text_to_be_added text)
     returns text
     language plpgsql
