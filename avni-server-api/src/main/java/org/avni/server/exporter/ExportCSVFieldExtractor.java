@@ -94,7 +94,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
 
     @PostConstruct
     public void init() {
-        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, timeZone);
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         this.registrationMap = formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, null, null, FormType.IndividualProfile);
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();

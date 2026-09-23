@@ -8,7 +8,6 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -43,7 +42,7 @@ public class ExportReferenceResolverTest {
     @Before
     public void setup() {
         initMocks(this);
-        resolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, "Asia/Kolkata");
+        resolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
     }
 
     @Test
@@ -58,11 +57,11 @@ public class ExportReferenceResolverTest {
     }
 
     @Test
-    public void aSubjectAnswerResolvesToTheSubjectsName() {
+    public void aSubjectAnswerCarriesBothTheNameAndTheIdentifier() {
         when(individualRepository.findAllByUuidIn(Collections.singletonList("s1")))
                 .thenReturn(Collections.singletonList(subject("s1", "GHS Wadagera")));
 
-        assertEquals("GHS Wadagera", resolver.resolve(SUBJECT, "s1"));
+        assertEquals("GHS Wadagera(s1)", resolver.resolve(SUBJECT, "s1"));
     }
 
     @Test
@@ -72,7 +71,7 @@ public class ExportReferenceResolverTest {
 
         String resolved = resolver.resolve(SUBJECT, Arrays.asList("s1", "s2"));
 
-        assertEquals("GHS Wadagera; GHS Manvi", resolved);
+        assertEquals("GHS Wadagera(s1); GHS Manvi(s2)", resolved);
         assertFalse(resolved.startsWith("["));
     }
 
@@ -81,9 +80,9 @@ public class ExportReferenceResolverTest {
         when(individualRepository.findAllByUuidIn(Collections.singletonList("s1")))
                 .thenReturn(Collections.singletonList(subject("s1", "GHS Wadagera")));
 
-        assertEquals("GHS Wadagera", resolver.resolve(SUBJECT, "s1"));
-        assertEquals("GHS Wadagera", resolver.resolve(SUBJECT, "s1"));
-        assertEquals("GHS Wadagera", resolver.resolve(SUBJECT, "s1"));
+        assertEquals("GHS Wadagera(s1)", resolver.resolve(SUBJECT, "s1"));
+        assertEquals("GHS Wadagera(s1)", resolver.resolve(SUBJECT, "s1"));
+        assertEquals("GHS Wadagera(s1)", resolver.resolve(SUBJECT, "s1"));
 
         verify(individualRepository, times(1)).findAllByUuidIn(anyList());
     }
@@ -93,16 +92,16 @@ public class ExportReferenceResolverTest {
         when(individualRepository.findAllByUuidIn(Arrays.asList("s1", "s2", "s3")))
                 .thenReturn(Arrays.asList(subject("s1", "A"), subject("s2", "B"), subject("s3", "C")));
 
-        assertEquals("A; B; C", resolver.resolve(SUBJECT, Arrays.asList("s1", "s2", "s3")));
+        assertEquals("A(s1); B(s2); C(s3)", resolver.resolve(SUBJECT, Arrays.asList("s1", "s2", "s3")));
 
         verify(individualRepository, times(1)).findAllByUuidIn(anyList());
     }
 
     @Test
-    public void aReferenceToARecordThatIsGoneResolvesToNothingRatherThanTheUuid() {
+    public void aReferenceToARecordThisExportCannotSeeKeepsItsIdentifier() {
         when(individualRepository.findAllByUuidIn(anyList())).thenReturn(Collections.emptyList());
 
-        assertEquals("", resolver.resolve(SUBJECT, "deleted-uuid"));
+        assertEquals("deleted-uuid", resolver.resolve(SUBJECT, "deleted-uuid"));
     }
 
     @Test
@@ -134,23 +133,23 @@ public class ExportReferenceResolverTest {
         when(locationRepository.findByUuidIn(Collections.singletonList("l1")))
                 .thenReturn(Collections.singletonList(addressLevel));
 
-        assertEquals("Manvi", resolver.resolve(LOCATION, "l1"));
+        assertEquals("Manvi(l1)", resolver.resolve(LOCATION, "l1"));
     }
 
     @Test
-    public void anEncounterAnswerFallsBackToItsTypeAndDateWhenTheVisitHasNoNameOfItsOwn() {
+    public void anEncounterAnswerFallsBackToItsTypeWhenTheVisitHasNoNameOfItsOwn() {
         when(encounterRepository.findAllByUuidIn(Arrays.asList("e1", "e2")))
                 .thenReturn(Arrays.asList(encounter("e1", "Follow-up 3", "WASH Audit"), encounter("e2", null, "WASH Audit")));
 
-        assertEquals("Follow-up 3; WASH Audit 2026-06-23", resolver.resolve(ENCOUNTER, Arrays.asList("e1", "e2")));
+        assertEquals("Follow-up 3(e1); WASH Audit(e2)", resolver.resolve(ENCOUNTER, Arrays.asList("e1", "e2")));
     }
 
     @Test
-    public void twoUnnamedVisitsOfTheSameTypeDoNotCollapseToOneWord() {
+    public void twoUnnamedVisitsOfTheSameTypeStayTellableApartByTheirIdentifier() {
         when(encounterRepository.findAllByUuidIn(Arrays.asList("e2", "e3")))
-                .thenReturn(Arrays.asList(encounter("e2", null, "WASH Audit"), encounter("e3", null, "WASH Audit", "2026-08-01")));
+                .thenReturn(Arrays.asList(encounter("e2", null, "WASH Audit"), encounter("e3", null, "WASH Audit")));
 
-        assertEquals("WASH Audit 2026-06-23; WASH Audit 2026-08-01", resolver.resolve(ENCOUNTER, Arrays.asList("e2", "e3")));
+        assertEquals("WASH Audit(e2); WASH Audit(e3)", resolver.resolve(ENCOUNTER, Arrays.asList("e2", "e3")));
     }
 
     @Test
@@ -158,31 +157,31 @@ public class ExportReferenceResolverTest {
         when(individualRepository.findAllByUuidIn(anyList())).thenReturn(Collections.singletonList(subject("x", "A subject")));
         when(locationRepository.findByUuidIn(anyList())).thenReturn(Collections.emptyList());
 
-        assertEquals("A subject", resolver.resolve(SUBJECT, "x"));
-        assertEquals("", resolver.resolve(LOCATION, "x"));
+        assertEquals("A subject(x)", resolver.resolve(SUBJECT, "x"));
+        assertEquals("x", resolver.resolve(LOCATION, "x"));
     }
 
     @Test
     public void pastTheCacheCapItKeepsAnsweringCorrectlyAndStopsRemembering() {
-        ExportReferenceResolver capped = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, "Asia/Kolkata", 2);
+        ExportReferenceResolver capped = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, 2);
         for (String uuid : Arrays.asList("s1", "s2", "s3")) {
             when(individualRepository.findAllByUuidIn(Collections.singletonList(uuid)))
                     .thenReturn(Collections.singletonList(subject(uuid, "Name " + uuid)));
         }
 
-        assertEquals("Name s1", capped.resolve(SUBJECT, "s1"));
-        assertEquals("Name s2", capped.resolve(SUBJECT, "s2"));
-        assertEquals("Name s3", capped.resolve(SUBJECT, "s3"));
+        assertEquals("Name s1(s1)", capped.resolve(SUBJECT, "s1"));
+        assertEquals("Name s2(s2)", capped.resolve(SUBJECT, "s2"));
+        assertEquals("Name s3(s3)", capped.resolve(SUBJECT, "s3"));
 
         // The two that fitted are still served without a query.
-        assertEquals("Name s1", capped.resolve(SUBJECT, "s1"));
-        assertEquals("Name s2", capped.resolve(SUBJECT, "s2"));
+        assertEquals("Name s1(s1)", capped.resolve(SUBJECT, "s1"));
+        assertEquals("Name s2(s2)", capped.resolve(SUBJECT, "s2"));
         verify(individualRepository, times(1)).findAllByUuidIn(Collections.singletonList("s1"));
         verify(individualRepository, times(1)).findAllByUuidIn(Collections.singletonList("s2"));
 
         // The one past the cap is answered from what was just fetched, and re-queried next time
         // rather than copying or scanning the cache.
-        assertEquals("Name s3", capped.resolve(SUBJECT, "s3"));
+        assertEquals("Name s3(s3)", capped.resolve(SUBJECT, "s3"));
         verify(individualRepository, times(2)).findAllByUuidIn(Collections.singletonList("s3"));
     }
 
@@ -194,14 +193,9 @@ public class ExportReferenceResolverTest {
     }
 
     private Encounter encounter(String uuid, String name, String encounterTypeName) {
-        return encounter(uuid, name, encounterTypeName, "2026-06-23");
-    }
-
-    private Encounter encounter(String uuid, String name, String encounterTypeName, String visitDate) {
         Encounter encounter = new Encounter();
         encounter.setUuid(uuid);
         encounter.setName(name);
-        encounter.setEncounterDateTime(new DateTime(visitDate + "T10:30:00.000+05:30"), null);
         EncounterType encounterType = new EncounterType();
         encounterType.setName(encounterTypeName);
         encounter.setEncounterType(encounterType);
