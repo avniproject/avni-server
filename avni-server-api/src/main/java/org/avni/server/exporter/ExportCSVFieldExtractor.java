@@ -4,6 +4,8 @@ import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementType;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -68,19 +70,23 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private String encounterTypeName;
     private FormMappingService formMappingService;
     private AddressLevelService addressLevelService;
+    private final ExportReferenceResolver referenceResolver;
 
     public ExportCSVFieldExtractor(SubjectTypeRepository subjectTypeRepository,
                                    EncounterTypeRepository encounterTypeRepository,
                                    EncounterRepository encounterRepository,
                                    ProgramEncounterRepository programEncounterRepository,
                                    FormMappingService formMappingService,
-                                   AddressLevelService addressLevelService) {
+                                   AddressLevelService addressLevelService,
+                                   IndividualRepository individualRepository,
+                                   LocationRepository locationRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.formMappingService = formMappingService;
         this.addressLevelService = addressLevelService;
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
     }
 
     @PostConstruct
@@ -395,6 +401,8 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
                 values.add(processDateObs(val));
             } else if (ConceptDataType.isMedia(dataType)) {
                 values.add(processMediaObs(val));
+            } else if (ExportReferenceResolver.isReferenceType(dataType)) {
+                values.add(QuotedStringValue(referenceResolver.resolve(dataType, val)));
             } else {
                 values.add(QuotedStringValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
             }
