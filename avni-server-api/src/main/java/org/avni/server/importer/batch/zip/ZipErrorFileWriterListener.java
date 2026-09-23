@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -57,7 +58,7 @@ public class ZipErrorFileWriterListener {
     public void writeError(BundleFile bundleFile, Throwable t) {
         try {
             String stackTrace = ExceptionUtil.getFullStackTrace(t);
-            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
+            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), StandardCharsets.UTF_8, true);
             fileWriter.append(bundleFile.getName());
             fileWriter.append(",\"");
             fileWriter.append(t.getMessage() == null ? "" : t.getMessage().replaceAll("\"", "\"\""));

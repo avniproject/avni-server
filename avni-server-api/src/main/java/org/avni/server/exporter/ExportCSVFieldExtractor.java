@@ -10,6 +10,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
+import org.avni.server.util.FileUtil;
 import org.avni.server.web.external.request.export.ReportType;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -347,7 +348,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
 
     @Override
     public void writeHeader(Writer writer) throws IOException {
-        writer.write(this.headers.toString());
+        writer.write(FileUtil.withUtf8Bom(this.headers.toString()));
     }
 
     private void appendObsColumns(StringBuilder sb, String prefix, LinkedHashMap<String, FormElement> map) {
