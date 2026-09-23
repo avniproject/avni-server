@@ -41,4 +41,13 @@ public class FileUtilTest {
     public void stripUtf8BomToleratesNull() {
         assertEquals(null, FileUtil.stripUtf8Bom(null));
     }
+
+    @Test
+    public void onlyTheLeadingMarkerIsStrippedSoContentIsNotSilentlyEdited() {
+        String withInnerMarker = "a" + FileUtil.UTF8_BOM + "b";
+
+        assertEquals(withInnerMarker, FileUtil.stripUtf8Bom(withInnerMarker));
+        assertEquals(withInnerMarker, FileUtil.stripUtf8Bom(FileUtil.UTF8_BOM + withInnerMarker));
+        assertEquals(FileUtil.UTF8_BOM + withInnerMarker, FileUtil.withUtf8Bom(withInnerMarker));
+    }
 }

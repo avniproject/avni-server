@@ -54,7 +54,9 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private List<String> addressLevelTypes = new ArrayList<>();
     private ExportFieldsManager exportFieldsManager;
     private Map<FormElement, Integer> maxNumberOfQuestionGroupObservations;
-    private final ExportReferenceResolver referenceResolver;
+    private final IndividualRepository individualRepository;
+    private final LocationRepository locationRepository;
+    private ExportReferenceResolver referenceResolver;
 
     @Autowired
     public ExportV2CSVFieldExtractor(EncounterRepository encounterRepository,
@@ -81,7 +83,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.exportJobService = exportJobService;
         this.observationService = observationService;
         this.exportJobParametersRepository = exportJobParametersRepository;
-        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
+        this.individualRepository = individualRepository;
+        this.locationRepository = locationRepository;
     }
 
     @PostConstruct
@@ -89,6 +92,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
         ExportJobParameters exportJobParameters = exportJobParametersRepository.findByUuid(exportJobParamsUUID);
         this.timeZone = exportJobParameters.getTimezone();
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, timeZone);
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, timeZone);
         exportOutput.accept(exportFieldsManager);
@@ -317,7 +321,9 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     }
 
     private String getFieldValue(String value) {
-        return String.format("\"%s\"", value);
+        // A quote inside the value has to be doubled or it closes the cell early and shifts every
+        // column after it. Mattered little while these cells held UUIDs; names are free text.
+        return String.format("\"%s\"", value == null ? "" : value.replace("\"", "\"\""));
     }
 
     private String getAnsName(Concept concept, Object val) {

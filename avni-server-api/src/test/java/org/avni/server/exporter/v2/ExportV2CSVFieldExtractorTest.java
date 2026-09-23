@@ -136,6 +136,43 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     @Test
+    public void aQuoteInAResolvedNameIsEscapedSoTheRowDoesNotShift() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", "school-uuid").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c1")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
+        Concept schoolConcept = new ConceptBuilder().withUuid("c1").withName("School Name").withDataType(ConceptDataType.Subject).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(schoolConcept).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+
+        Individual school = new Individual();
+        school.setUuid("school-uuid");
+        school.setFirstName("GHS \"Wadagera\"");
+        when(individualRepository.findAllByUuidIn(Collections.singletonList("school-uuid"))).thenReturn(Collections.singletonList(school));
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+        Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+
+        assertEquals("\"GHS \"\"Wadagera\"\"\"", getExtractValue(header, "\"ST1_School Name\"", extract));
+    }
+
+    @Test
     public void extractIndividualWithQuestionGroup() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");

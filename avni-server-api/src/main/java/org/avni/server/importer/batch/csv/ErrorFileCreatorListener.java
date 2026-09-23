@@ -65,8 +65,11 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
             String headerRow = csvReader.readLine();
             csvReader.close();
 
+            // Append mode: on a job restart this runs again against a file that already has rows,
+            // and a marker belongs at the front of a file or nowhere.
+            boolean startingAFreshFile = !errorFile.exists() || errorFile.length() == 0;
             FileWriter writer = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
-            writer.append(FileUtil.withUtf8Bom(headerRow));
+            writer.append(startingAFreshFile ? FileUtil.withUtf8Bom(headerRow) : FileUtil.stripUtf8Bom(headerRow));
             writer.append(',');
             writer.append("error");
             writer.append('\n');
