@@ -56,6 +56,10 @@ public class ExportV2CSVFieldExtractorTest {
     private ExportJobService exportJobService;
     @Mock
     private ObservationService observationService;
+    @Mock
+    private IndividualRepository individualRepository;
+    @Mock
+    private LocationRepository locationRepository;
 
     private ExportV2CSVFieldExtractor exportV2CSVFieldExtractor;
     private ExportJobParameters exportJobParameters;
@@ -65,7 +69,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void setup() {
         initMocks(this);
 
-        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService, exportJobParametersRepository);
+        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService, exportJobParametersRepository, individualRepository, locationRepository);
         exportOutput = new ExportOutputBuilder().build();
         exportJobParameters = new ExportJobParametersBuilder().withTimezone(TimeZone.getDefault().getDisplayName()).build();
         when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
@@ -92,6 +96,43 @@ public class ExportV2CSVFieldExtractorTest {
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
+    }
+
+    @Test
+    public void aSubjectAnswerIsExportedAsTheSubjectsNameNotItsUuid() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", "school-uuid").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c1")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
+        Concept schoolConcept = new ConceptBuilder().withUuid("c1").withName("School Name").withDataType(ConceptDataType.Subject).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(schoolConcept).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+
+        Individual school = new Individual();
+        school.setUuid("school-uuid");
+        school.setFirstName("GHS Wadagera");
+        when(individualRepository.findAllByUuidIn(Collections.singletonList("school-uuid"))).thenReturn(Collections.singletonList(school));
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+        Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+
+        assertEquals("\"GHS Wadagera\"", getExtractValue(header, "\"ST1_School Name\"", extract));
     }
 
     @Test
