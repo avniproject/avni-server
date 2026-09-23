@@ -166,6 +166,11 @@ BEGIN
             -- A general encounter usually carries no name of its own. Falling back to the type
             -- alone would render three visits of the same type as the same word three times, which
             -- is less use than the UUID it replaces, so the visit date goes with it.
+            -- The timezone is fixed, matching every other date column the ETL generates
+            -- (TransactionDataSyncHelper does the same for Date and DateTime). There is no
+            -- per-organisation timezone to read. An org outside IST therefore sees this date
+            -- agree with the rest of its reporting table and differ by a day from the CSV export,
+            -- which uses the export job's own timezone.
             SELECT STRING_AGG(COALESCE(NULLIF(e.name, ''),
                               CONCAT_WS(' ', et.name, TO_CHAR(e.encounter_date_time AT TIME ZONE 'asia/kolkata', 'YYYY-MM-DD'))), '; ' ORDER BY u.ord)
             INTO result

@@ -185,7 +185,10 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         if (entityTypeIndex != null) fieldHeaderBuilder.append(entityTypeIndex).append("_");
         if (fieldGroup != null) fieldHeaderBuilder.append(fieldGroup).append("_");
         if (repeatableQGIndex != null) fieldHeaderBuilder.append(repeatableQGIndex).append("_");
-        fieldHeaderBuilder.append(fieldName);
+        // A quote inside a concept name has to be doubled for the same reason it does in a data
+        // cell. Now that the rows escape correctly, an unescaped header is the only thing left that
+        // can put the header out of step with the data under it.
+        fieldHeaderBuilder.append(mayContainComma && fieldName != null ? fieldName.replace("\"", "\"\"") : fieldName);
 
         if (mayContainComma) fieldHeaderBuilder.append("\"");
         fieldHeaderBuilder.append(",");
