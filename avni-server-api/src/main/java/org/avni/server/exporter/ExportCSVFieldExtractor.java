@@ -70,7 +70,9 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private String encounterTypeName;
     private FormMappingService formMappingService;
     private AddressLevelService addressLevelService;
-    private final ExportReferenceResolver referenceResolver;
+    private final IndividualRepository individualRepository;
+    private final LocationRepository locationRepository;
+    private ExportReferenceResolver referenceResolver;
 
     public ExportCSVFieldExtractor(SubjectTypeRepository subjectTypeRepository,
                                    EncounterTypeRepository encounterTypeRepository,
@@ -86,11 +88,13 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         this.programEncounterRepository = programEncounterRepository;
         this.formMappingService = formMappingService;
         this.addressLevelService = addressLevelService;
-        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
+        this.individualRepository = individualRepository;
+        this.locationRepository = locationRepository;
     }
 
     @PostConstruct
     public void init() {
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, timeZone);
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         this.registrationMap = formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, null, null, FormType.IndividualProfile);
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
@@ -379,7 +383,9 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private String QuotedStringValue(String text) {
         if (StringUtils.isEmpty(text))
             return text;
-        return "\"".concat(text).concat("\"");
+        // A quote inside the value has to be doubled or it closes the cell early and shifts every
+        // column after it. Mattered little while these cells held UUIDs; names are free text.
+        return "\"".concat(text.replace("\"", "\"\"")).concat("\"");
     }
 
     private List<Object> getObs(ObservationCollection observations, LinkedHashMap<String, FormElement> obsMap) {

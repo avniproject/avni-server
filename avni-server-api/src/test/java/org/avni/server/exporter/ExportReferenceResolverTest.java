@@ -8,6 +8,7 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -42,7 +43,7 @@ public class ExportReferenceResolverTest {
     @Before
     public void setup() {
         initMocks(this);
-        resolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
+        resolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository, "Asia/Kolkata");
     }
 
     @Test
@@ -137,11 +138,19 @@ public class ExportReferenceResolverTest {
     }
 
     @Test
-    public void anEncounterAnswerFallsBackToItsTypeWhenTheVisitHasNoNameOfItsOwn() {
+    public void anEncounterAnswerFallsBackToItsTypeAndDateWhenTheVisitHasNoNameOfItsOwn() {
         when(encounterRepository.findAllByUuidIn(Arrays.asList("e1", "e2")))
                 .thenReturn(Arrays.asList(encounter("e1", "Follow-up 3", "WASH Audit"), encounter("e2", null, "WASH Audit")));
 
-        assertEquals("Follow-up 3; WASH Audit", resolver.resolve(ENCOUNTER, Arrays.asList("e1", "e2")));
+        assertEquals("Follow-up 3; WASH Audit 2026-06-23", resolver.resolve(ENCOUNTER, Arrays.asList("e1", "e2")));
+    }
+
+    @Test
+    public void twoUnnamedVisitsOfTheSameTypeDoNotCollapseToOneWord() {
+        when(encounterRepository.findAllByUuidIn(Arrays.asList("e2", "e3")))
+                .thenReturn(Arrays.asList(encounter("e2", null, "WASH Audit"), encounter("e3", null, "WASH Audit", "2026-08-01")));
+
+        assertEquals("WASH Audit 2026-06-23; WASH Audit 2026-08-01", resolver.resolve(ENCOUNTER, Arrays.asList("e2", "e3")));
     }
 
     @Test
@@ -161,9 +170,14 @@ public class ExportReferenceResolverTest {
     }
 
     private Encounter encounter(String uuid, String name, String encounterTypeName) {
+        return encounter(uuid, name, encounterTypeName, "2026-06-23");
+    }
+
+    private Encounter encounter(String uuid, String name, String encounterTypeName, String visitDate) {
         Encounter encounter = new Encounter();
         encounter.setUuid(uuid);
         encounter.setName(name);
+        encounter.setEncounterDateTime(new DateTime(visitDate + "T10:30:00.000+05:30"), null);
         EncounterType encounterType = new EncounterType();
         encounterType.setName(encounterTypeName);
         encounter.setEncounterType(encounterType);

@@ -22,7 +22,9 @@ public class FileUtil {
     }
 
     public static String stripUtf8Bom(String content) {
-        return content == null ? null : content.replace(UTF8_BOM, "");
+        // Only the leading marker. A U+FEFF further in is content, often pasted in with a concept
+        // name, and deleting it silently would change what the file says.
+        return content == null ? null : content.replaceFirst("^" + UTF8_BOM + "+", "");
     }
 
     public static String readJsonFileFromClasspath(String file) throws IOException {
