@@ -16,6 +16,7 @@ import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentUploadMo
 import org.avni.server.importer.batch.csv.writer.header.GroupMemberHeaders;
 import org.avni.server.importer.batch.csv.writer.header.HouseholdMemberHeaders;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -190,7 +191,7 @@ public class ImportService implements ImportLocationsConstants {
             String locationsSampleFile = getLocationsSampleFile(locationUploadMode, locationHierarchy);
             if (response != null) {
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
-                response.getWriter().write(locationsSampleFile);
+                response.getWriter().write(FileUtil.withUtf8Bom(locationsSampleFile));
             }
         } else if (uploadType.startsWith("Encounter---") || uploadType.startsWith("ProgramEncounter---")) {
             String[] uploadSpec = uploadType.split("---");
@@ -200,7 +201,7 @@ public class ImportService implements ImportLocationsConstants {
             String filename = String.format("%s_%s.csv", uploadType, encounterUploadMode.getValue());
             if (response != null) {
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
-                response.getWriter().write(sampleFile);
+                response.getWriter().write(FileUtil.withUtf8Bom(sampleFile));
             }
         } else if (uploadType.startsWith("Subject---")) {
             if (!StringUtils.hasText(locationHierarchy)) {
@@ -210,13 +211,13 @@ public class ImportService implements ImportLocationsConstants {
             String sampleFile = subjectImportService.generateSampleFile(uploadSpec, locationHierarchy);
             if (response != null) {
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
-                response.getWriter().write(sampleFile);
+                response.getWriter().write(FileUtil.withUtf8Bom(sampleFile));
             }
         } else {
             String sampleFile = getSampleFile(uploadType, programEnrolmentUploadMode);
             if (response != null) {
                 response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
-                response.getWriter().write(sampleFile);
+                response.getWriter().write(FileUtil.withUtf8Bom(sampleFile));
             }
         }
     }

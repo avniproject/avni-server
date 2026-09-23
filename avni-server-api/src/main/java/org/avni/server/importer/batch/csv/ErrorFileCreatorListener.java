@@ -5,6 +5,7 @@ import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.service.ObjectInfo;
 import org.avni.server.service.S3Service;
+import org.avni.server.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -59,12 +61,12 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
     public void beforeJob(JobExecution jobExecution) {
         authService.authenticateByUserId(userId, organisationUUID);
         try {
-            BufferedReader csvReader = new BufferedReader(new InputStreamReader(s3Service.getObjectContent(s3Key)));
+            BufferedReader csvReader = new BufferedReader(new InputStreamReader(s3Service.getObjectContent(s3Key), StandardCharsets.UTF_8));
             String headerRow = csvReader.readLine();
             csvReader.close();
 
-            FileWriter writer = new FileWriter(errorFile, true);
-            writer.append(headerRow);
+            FileWriter writer = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
+            writer.append(FileUtil.withUtf8Bom(headerRow));
             writer.append(',');
             writer.append("error");
             writer.append('\n');

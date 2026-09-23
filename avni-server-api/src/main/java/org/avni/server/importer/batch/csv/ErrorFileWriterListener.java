@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -49,7 +50,7 @@ public class ErrorFileWriterListener {
                 bugsnagReporter.logAndReportToBugsnag(t);
                 readSkipReported = true;
             }
-            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
+            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), StandardCharsets.UTF_8, true);
             fileWriter.append(line);
             fileWriter.append(",\"");
             fileWriter.append(message);
@@ -64,7 +65,7 @@ public class ErrorFileWriterListener {
     public void appendToErrorFile(Row item, Throwable t) {
         try {
             bugsnagReporter.logAndReportToBugsnag(t);
-            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
+            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), StandardCharsets.UTF_8, true);
             fileWriter.append(item.toString());
             fileWriter.append(",\"");
             fileWriter.append(t.getMessage());
