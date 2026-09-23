@@ -19,6 +19,7 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ExportOutputBuilder;
+import org.avni.server.util.FileUtil;
 import org.bouncycastle.util.Strings;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,7 @@ import java.util.*;
 
 import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameConstants.UUID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -195,6 +197,9 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     private String[] getHeaderFields(String header) {
-        return Strings.split(header, ',');
+        // The header leads with a UTF-8 BOM so Excel can tell what it is holding. Every real reader
+        // of this file drops it before looking at the first column name; do the same here.
+        assertTrue(header.startsWith(FileUtil.UTF8_BOM));
+        return Strings.split(FileUtil.stripUtf8Bom(header), ',');
     }
 }
