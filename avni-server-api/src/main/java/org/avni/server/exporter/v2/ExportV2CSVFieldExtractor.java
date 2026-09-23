@@ -368,6 +368,6 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private String QuotedStringValue(String text) {
         if (StringUtils.isEmpty(text))
             return text;
-        return "\"".concat(text).concat("\"");
+        return getFieldValue(text);
     }
 }

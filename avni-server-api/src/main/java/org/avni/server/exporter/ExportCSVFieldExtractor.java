@@ -287,14 +287,16 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         Individual memberSubject = group.getMemberSubject();
         row.add(groupSubject.getId());
         row.add(groupSubject.getUuid());
-        row.add(groupSubject.getFirstName());
+        // Names here went in raw, unlike every other name in this class, so a member recorded as
+        // "Devi, Sunita" shifted every column after it in that row.
+        row.add(QuotedStringValue(groupSubject.getFirstName()));
         row.add(memberSubject.getId());
         row.add(memberSubject.getUuid());
-        row.add(memberSubject.getFirstName());
+        row.add(QuotedStringValue(memberSubject.getFirstName()));
         if (memberSubject.getSubjectType().isAllowMiddleName())
-            row.add(memberSubject.getMiddleName());
-        row.add(memberSubject.getLastName());
-        row.add(group.getGroupRole().getRole());
+            row.add(QuotedStringValue(memberSubject.getMiddleName()));
+        row.add(QuotedStringValue(memberSubject.getLastName()));
+        row.add(QuotedStringValue(group.getGroupRole().getRole()));
         row.add(getDateForTimeZone(group.getMembershipStartDate()));
         row.add(getDateForTimeZone(group.getMembershipEndDate()));
         addAuditFields(group, row);

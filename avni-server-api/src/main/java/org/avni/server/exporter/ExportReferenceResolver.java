@@ -30,8 +30,8 @@ import java.util.stream.Stream;
  */
 public class ExportReferenceResolver {
     /**
-     * A subject's name routinely contains a comma, so a list of them cannot be comma separated
-     * without depending on the caller quoting the cell correctly.
+     * A subject's name routinely contains a comma of its own, so a comma separated list of them
+     * cannot be split back apart by whoever reads the file, however correctly the cell is quoted.
      */
     static final String MULTI_VALUE_SEPARATOR = "; ";
 
@@ -44,8 +44,9 @@ public class ExportReferenceResolver {
      * cache must not grow without limit. Past the cap it simply stops remembering; a high
      * cardinality column then costs a query per row, which is what it cost before any caching.
      */
-    static final int MAX_CACHED_NAMES_PER_TYPE = 50000;
+    static final int DEFAULT_MAX_CACHED_NAMES_PER_TYPE = 50000;
 
+    private final int maxCachedNamesPerType;
     private final String timeZone;
     private final Map<String, Map<String, String>> namesByDataType = new HashMap<>();
 
@@ -53,6 +54,15 @@ public class ExportReferenceResolver {
                                    LocationRepository locationRepository,
                                    EncounterRepository encounterRepository,
                                    String timeZone) {
+        this(individualRepository, locationRepository, encounterRepository, timeZone, DEFAULT_MAX_CACHED_NAMES_PER_TYPE);
+    }
+
+    ExportReferenceResolver(IndividualRepository individualRepository,
+                            LocationRepository locationRepository,
+                            EncounterRepository encounterRepository,
+                            String timeZone,
+                            int maxCachedNamesPerType) {
+        this.maxCachedNamesPerType = maxCachedNamesPerType;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.encounterRepository = encounterRepository;
@@ -74,29 +84,31 @@ public class ExportReferenceResolver {
         List<String> uuids = toUuids(value);
         if (uuids.isEmpty()) return "";
 
-        Map<String, String> names = load(dataType, uuids);
+        Map<String, String> cached = namesByDataType.computeIfAbsent(dataType, key -> new HashMap<>());
+        Map<String, String> justFetched = fetchMissing(dataType, uuids, cached);
         return uuids.stream()
-                .map(uuid -> names.getOrDefault(uuid, ""))
+                .map(uuid -> justFetched.containsKey(uuid) ? justFetched.get(uuid) : cached.getOrDefault(uuid, ""))
                 .filter(name -> !name.isEmpty())
                 .collect(Collectors.joining(MULTI_VALUE_SEPARATOR));
     }
 
-    private Map<String, String> load(String dataType, List<String> uuids) {
-        Map<String, String> names = namesByDataType.computeIfAbsent(dataType, key -> new HashMap<>());
-        List<String> missing = uuids.stream().filter(uuid -> !names.containsKey(uuid)).distinct().collect(Collectors.toList());
-        if (missing.isEmpty()) return names;
+    /**
+     * Fetches whatever this answer needs and is not already known, and remembers it unless the cache
+     * is full. Returns only what was fetched now; the caller reads that first and the cache second,
+     * so nothing is ever copied and a full cache costs one query for the row rather than a scan.
+     */
+    private Map<String, String> fetchMissing(String dataType, List<String> uuids, Map<String, String> cached) {
+        List<String> missing = uuids.stream().filter(uuid -> !cached.containsKey(uuid)).distinct().collect(Collectors.toList());
+        if (missing.isEmpty()) return Collections.emptyMap();
 
-        Map<String, String> fetched = fetchNames(dataType, missing);
-        if (names.size() + missing.size() > MAX_CACHED_NAMES_PER_TYPE) {
-            Map<String, String> thisRowOnly = new HashMap<>(names);
-            missing.forEach(uuid -> thisRowOnly.put(uuid, ""));
-            thisRowOnly.putAll(fetched);
-            return thisRowOnly;
-        }
-        // A miss is cached as an empty name so a reference this export cannot see is looked up once.
-        missing.forEach(uuid -> names.put(uuid, ""));
-        fetched.forEach(names::put);
-        return names;
+        Map<String, String> fetched = new HashMap<>();
+        // A reference this export cannot see is recorded as an empty name, so it is looked up once
+        // rather than on every row that carries it.
+        missing.forEach(uuid -> fetched.put(uuid, ""));
+        fetched.putAll(fetchNames(dataType, missing));
+
+        if (cached.size() + fetched.size() <= maxCachedNamesPerType) cached.putAll(fetched);
+        return fetched;
     }
 
     private Map<String, String> fetchNames(String dataType, List<String> uuids) {

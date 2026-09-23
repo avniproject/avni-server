@@ -69,7 +69,8 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
             // and a marker belongs at the front of a file or nowhere.
             boolean startingAFreshFile = !errorFile.exists() || errorFile.length() == 0;
             FileWriter writer = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
-            writer.append(startingAFreshFile ? FileUtil.withUtf8Bom(headerRow) : FileUtil.stripUtf8Bom(headerRow));
+            String header = headerRow == null ? "" : headerRow;
+            writer.append(startingAFreshFile ? FileUtil.withUtf8Bom(header) : FileUtil.stripUtf8Bom(header));
             writer.append(',');
             writer.append("error");
             writer.append('\n');
