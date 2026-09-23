@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "individual", path = "individual", exported = false)
 public interface IndividualRepository extends TransactionalDataRepository<Individual>, OperatingIndividualScopeAwareRepository<Individual>, SubjectTreeItemRepository {
+    List<Individual> findAllByUuidIn(List<String> uuids);
+
     @Override
     default Specification<Individual> syncTypeIdSpecification(Long typeId) {
         return (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
