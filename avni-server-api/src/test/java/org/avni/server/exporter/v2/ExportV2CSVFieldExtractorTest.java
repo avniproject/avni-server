@@ -99,7 +99,7 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     @Test
-    public void aSubjectAnswerIsExportedAsTheSubjectsNameNotItsUuid() throws IOException {
+    public void aSubjectAnswerIsExportedAsTheNameWithItsIdentifier() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
         SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
@@ -132,7 +132,7 @@ public class ExportV2CSVFieldExtractorTest {
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
-        assertEquals("\"GHS Wadagera\"", getExtractValue(header, "\"ST1_School Name\"", extract));
+        assertEquals("\"GHS Wadagera(school-uuid)\"", getExtractValue(header, "\"ST1_School Name\"", extract));
     }
 
     @Test
@@ -203,7 +203,7 @@ public class ExportV2CSVFieldExtractorTest {
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
-        assertEquals("\"GHS \"\"Wadagera\"\"\"", getExtractValue(header, "\"ST1_School Name\"", extract));
+        assertEquals("\"GHS \"\"Wadagera\"\"(school-uuid)\"", getExtractValue(header, "\"ST1_School Name\"", extract));
     }
 
     @Test
