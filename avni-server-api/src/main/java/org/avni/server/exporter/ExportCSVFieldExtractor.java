@@ -141,6 +141,10 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         headers.append(",").append("member.id");
         headers.append(",").append("member.uuid");
         headers.append(",").append("member.first_name");
+        // Always declared, and always written below, because a group's members can be of more than
+        // one subject type and only some of those allow a middle name. Deciding per row made the
+        // row longer than the heading for any organisation that records one.
+        headers.append(",").append("member.middle_name");
         headers.append(",").append("member.last_name");
         headers.append(",").append("member.role");
         headers.append(",").append("member.membership_start_date");
@@ -206,18 +210,20 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         addVoidedColumnIfRequired(headers, "ind");
     }
 
+    // These two take the same prefix as the visit columns beside them, which carries the visit type
+    // name, so they need the same quoting. A no-op for the fixed prefixes ind, enl and member.
     private void addVoidedColumnIfRequired(StringBuilder headers, String prefix) {
         if (Boolean.parseBoolean(includeVoided)) {
-            headers.append(",").append(format("%s.voided", prefix));
+            headers.append(",").append(CsvCell.quoteIfNeeded(format("%s.voided", prefix), false));
         }
     }
 
 
     private void addAuditColumns(StringBuilder headers, String prefix) {
-        headers.append(",").append(format("%s_created_by", prefix));
-        headers.append(",").append(format("%s_created_date_time", prefix));
-        headers.append(",").append(format("%s_modified_by", prefix));
-        headers.append(",").append(format("%s_modified_date_time", prefix));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_created_by", prefix), false));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_created_date_time", prefix), false));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_modified_by", prefix), false));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_modified_date_time", prefix), false));
     }
 
     private void setEnrolmentMappings() {
@@ -296,8 +302,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         row.add(memberSubject.getId());
         row.add(memberSubject.getUuid());
         row.add(QuotedStringValue(memberSubject.getFirstName()));
-        if (memberSubject.getSubjectType().isAllowMiddleName())
-            row.add(QuotedStringValue(memberSubject.getMiddleName()));
+        row.add(memberSubject.getSubjectType().isAllowMiddleName() ? QuotedStringValue(memberSubject.getMiddleName()) : "");
         row.add(QuotedStringValue(memberSubject.getLastName()));
         row.add(QuotedStringValue(group.getGroupRole().getRole()));
         row.add(getDateForTimeZone(group.getMembershipStartDate()));

@@ -57,6 +57,14 @@ public class ZipErrorFileWriterListenerTest {
         assertTrue(contents.contains("bad \"\"name\"\" here"));
     }
 
+    @Test
+    public void aCommaInTheBundleFileNameDoesNotSplitTheRow() throws Exception {
+        listener.writeError(bundleFile("forms/Home visit, routine.json"), new RuntimeException("bad"));
+
+        String contents = new String(Files.readAllBytes(errorFile.toPath()), StandardCharsets.UTF_8);
+        assertTrue(contents.contains("\"forms/Home visit, routine.json\","));
+    }
+
     private BundleFile bundleFile(String name) {
         return new BundleFile(name, new byte[0]);
     }
