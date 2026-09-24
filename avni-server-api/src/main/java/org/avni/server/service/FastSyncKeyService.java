@@ -3,6 +3,8 @@ package org.avni.server.service;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.UserGroupRepository;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,36 +16,62 @@ import static java.lang.String.format;
 public class FastSyncKeyService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final GroupRepository groupRepository;
+    private final UserGroupRepository userGroupRepository;
 
     @Autowired
-    public FastSyncKeyService(SubjectTypeRepository subjectTypeRepository, GroupRepository groupRepository) {
+    public FastSyncKeyService(SubjectTypeRepository subjectTypeRepository, GroupRepository groupRepository,
+                              UserGroupRepository userGroupRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.groupRepository = groupRepository;
+        this.userGroupRepository = userGroupRepository;
     }
 
     /**
-     * Whether this organisation narrows a sync by anything other than the catchment, so that two users
-     * in one catchment can legitimately hold different data and a shared catchment dump would hand
-     * one of them rows they must not have.
+     * Whether this user's sync is narrowed by anything other than their catchment, so that a shared
+     * catchment dump would hand them rows they must not have, or hand their catchment peers rows only
+     * they may see.
      * <p>
-     * Every term is an organisation property rather than a property of any one user, because the axis
-     * being present is enough: a User-type or directly-assignable subject type filters each user's
-     * sync by their own rows, a subject type with a usable sync registration concept is filtered by
-     * that user's sync attribute values, and a non-default group means SyncDetailsService gates the
-     * syncable items on that user's group privileges. A user holding none of them today would still
-     * share a dump with users who do, so the answer is the same for every user in the organisation.
-     * Terms are ordered cheapest query first and short-circuit.
+     * The subject-type terms are organisation-level: a User-type or directly-assignable subject type
+     * filters each user's sync by their own rows, and a subject type with a usable sync registration
+     * concept is filtered by that user's sync attribute values. The axis being present is enough,
+     * because a user holding none of those rows today would still share a dump with users who do.
+     * <p>
+     * The group term is per user, because group privileges differ between users of one organisation
+     * and SyncDetailsService gates the syncable items on the privileges of the requesting user. Doing
+     * it org-level would both miss the privilege differences it is meant to catch and cost every
+     * field worker the shared dump because one colleague is an administrator.
+     * <p>
+     * Terms are ordered cheapest query first and short-circuit. A wrong true only costs the shared
+     * dump; a wrong false is a privilege breach, so anything unrecognised counts as differing.
      */
-    public boolean isPerUserOrganisation() {
+    public boolean isPerUser(User user) {
+        return organisationFiltersRowsPerUser() || userHasANonBaselineGroup(user);
+    }
+
+    private boolean organisationFiltersRowsPerUser() {
         return subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User) != null
                 || !subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue().isEmpty()
-                || hasANonDefaultGroup()
                 || hasASubjectTypeWithASyncConcept();
     }
 
-    private boolean hasANonDefaultGroup() {
-        return groupRepository.findByIsVoidedFalse().stream()
-                .anyMatch(group -> !group.isOneOfTheDefaultGroups());
+    // Everyone is attached to every non-super-admin user and can never be detached, and SQLite
+    // Migration only marks the migration, so those two are the privilege baseline every user shares.
+    private boolean userHasANonBaselineGroup(User user) {
+        Long everyoneGroupId = everyoneGroupId(user);
+        return userGroupRepository.findByUser_IdAndIsVoidedFalse(user.getId()).stream()
+                .anyMatch(userGroup -> !isBaseline(userGroup.getGroup(), everyoneGroupId));
+    }
+
+    private boolean isBaseline(Group group, Long everyoneGroupId) {
+        return everyoneGroupId.equals(group.getId())
+                || Group.SQLITE_MIGRATION_UUID.equals(group.getUuid());
+    }
+
+    // By id and uuid, never by name: groups is unique on (uuid, organisation_id) only and a custom
+    // group can be renamed to a baseline name, which would hide it from this test. A missing Everyone
+    // group throws rather than degrading to the shared key.
+    private Long everyoneGroupId(User user) {
+        return groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId()).getId();
     }
 
     private boolean hasASubjectTypeWithASyncConcept() {

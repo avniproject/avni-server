@@ -273,15 +273,15 @@ public class MediaControllerRoutingTest {
 
     private void inMigrationGroup() {
         Group group = new Group();
-        group.setName("SQLite Migration");
-        when(groupRepository.findByNameAndOrganisationId(eq("SQLite Migration"), any()))
+        group.setName(Group.SQLITE_MIGRATION);
+        when(groupRepository.findByNameAndOrganisationId(eq(Group.SQLITE_MIGRATION), any()))
                 .thenReturn(group);
         when(userGroupRepository.findByUserAndGroupAndIsVoidedFalse(any(User.class), eq(group)))
                 .thenReturn(new UserGroup());
     }
 
     private void anArtifactExists() {
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(true);
+        when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(true);
         when(fastSyncKeyService.perUserKey(any(User.class))).thenReturn(PER_USER_KEY);
         when(defaultS3Service.fileExists(PER_USER_KEY)).thenReturn(true);
     }
