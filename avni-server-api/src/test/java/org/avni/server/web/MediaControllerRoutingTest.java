@@ -12,6 +12,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.factory.TestOrganisationBuilder;
 import org.avni.server.domain.factory.UserContextBuilder;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.FastSyncKeyService;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.storage.StorageServiceProvider;
@@ -63,6 +64,8 @@ public class MediaControllerRoutingTest {
     private GroupRepository groupRepository;
     @Mock
     private UserGroupRepository userGroupRepository;
+    @Mock
+    private FastSyncKeyService fastSyncKeyService;
 
     private MediaController controller;
 
@@ -70,7 +73,7 @@ public class MediaControllerRoutingTest {
     public void setUp() throws Exception {
         initMocks(this);
         controller = new MediaController(defaultS3Service, storageServiceProvider, accessControlService,
-                errorBodyBuilder, groupRepository, userGroupRepository);
+                errorBodyBuilder, groupRepository, userGroupRepository, fastSyncKeyService);
 
         when(storageServiceProvider.forDataClass(StorageDataClass.MODEL)).thenReturn(modelBackend);
         when(storageServiceProvider.forDataClass(StorageDataClass.DEFAULT)).thenReturn(defaultS3Service);

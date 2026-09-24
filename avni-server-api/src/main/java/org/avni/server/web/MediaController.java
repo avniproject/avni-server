@@ -12,6 +12,7 @@ import org.avni.server.domain.StorageDataClass;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.FastSyncKeyService;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.domain.MediaFolder;
@@ -61,17 +62,20 @@ public class MediaController {
     private final ErrorBodyBuilder errorBodyBuilder;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
+    private final FastSyncKeyService fastSyncKeyService;
 
     @Autowired
     public MediaController(S3Service s3Service, StorageServiceProvider storageServiceProvider,
                            AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder,
-                           GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
+                           GroupRepository groupRepository, UserGroupRepository userGroupRepository,
+                           FastSyncKeyService fastSyncKeyService) {
         this.s3Service = s3Service;
         this.storageServiceProvider = storageServiceProvider;
         this.accessControlService = accessControlService;
         this.errorBodyBuilder = errorBodyBuilder;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
+        this.fastSyncKeyService = fastSyncKeyService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -206,6 +210,44 @@ public class MediaController {
     private String sqliteSnapshotRelativeKey() {
         User user = UserContextHolder.getUserContext().getUser();
         return format("snapshots/%s/snapshot.db", user.getUsername());
+    }
+
+    // Static and parameterised so the key decision is testable without a Spring context or a
+    // UserContextHolder. The route below supplies the authenticated user and their catchment.
+    // Throws BadRequestError rather than ValidationException because the latter is checked, which
+    // a static helper cannot raise without forcing a throws clause on every caller.
+    static String fastSyncUploadKeyFor(User user, String catchmentUuid, FastSyncKeyService keyService) {
+        if (keyService.isPerUser(user)) {
+            return keyService.perUserKey(user);
+        }
+        // Only the catchment branch needs it, so a per-user user with no catchment is still fine.
+        if (catchmentUuid == null) {
+            throw new BadRequestError("NoCatchmentFound");
+        }
+        return format("MobileDbBackupSqlite-%s", catchmentUuid);
+    }
+
+    private String fastSyncUploadKey() {
+        User user = UserContextHolder.getUserContext().getUser();
+        String catchmentUuid = user.getCatchment() == null ? null : user.getCatchment().getUuid();
+        return fastSyncUploadKeyFor(user, catchmentUuid, fastSyncKeyService);
+    }
+
+    @RequestMapping(value = "/media/fastSyncUpload", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> generateFastSyncUploadUrl() {
+        logger.info("getting fast sync upload url");
+        try {
+            if (!currentUserIsInSqliteMigrationGroup()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("NotInSqliteMigrationGroup");
+            }
+            return getFileUrlResponse(fastSyncUploadKey(), HttpMethod.PUT);
+        } catch (BadRequestError e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/media/signedUrl", method = RequestMethod.GET)
