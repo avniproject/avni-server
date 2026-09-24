@@ -153,4 +153,15 @@ public class MediaControllerFastSyncTest {
         // Review Focus 5. Must be a clean false so the client proceeds to a full sync.
         assertFalse(MediaController.fastSyncEligible(true, java.util.Optional.empty()));
     }
+
+    @Test
+    public void aSqliteUserIsNotOfferedTheRealmDump() {
+        // #1059. Reachable via LoginActions.restoreDump falling through to restoreRealmDump.
+        assertFalse(MediaController.realmDumpIsOfferable(true));
+    }
+
+    @Test
+    public void aRealmUserIsStillOfferedTheRealmDump() {
+        assertTrue(MediaController.realmDumpIsOfferable(false));
+    }
 }

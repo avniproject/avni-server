@@ -142,6 +142,12 @@ public class MediaController {
         return format("MobileDbBackup-%s", catchmentUuid);
     }
 
+    // A migrated user must never be offered the Realm dump: the client's restoreDump falls through
+    // to the Realm path whenever no SQLite artifact exists, and the file is the wrong format.
+    static boolean realmDumpIsOfferable(boolean inSqliteMigrationGroup) {
+        return !inSqliteMigrationGroup;
+    }
+
     @RequestMapping(value = "/media/mobileDatabaseBackupUrl/download", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
@@ -160,7 +166,9 @@ public class MediaController {
     public ResponseEntity<String> mobileDatabaseBackupExists() {
         logger.info("checking whether mobile database backup url exists");
         try {
-            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(s3Service.fileExists(mobileDatabaseBackupFile())));
+            boolean offerable = realmDumpIsOfferable(currentUserIsInSqliteMigrationGroup())
+                    && s3Service.fileExists(mobileDatabaseBackupFile());
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(offerable));
         } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
