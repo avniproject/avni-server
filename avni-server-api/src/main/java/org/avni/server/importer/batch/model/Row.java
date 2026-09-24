@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
+import org.avni.server.util.CsvCell;
 
 public class Row extends HashMap<String, String> {
     public static final Pattern TRUE_VALUE = Pattern.compile("y|yes|true|1", Pattern.CASE_INSENSITIVE);
@@ -79,10 +80,15 @@ public class Row extends HashMap<String, String> {
         return this.nullSafeTrim(s);
     }
 
+    /**
+     * The uploader's own row, written back into the error file they download to fix their upload.
+     * A quote they typed used to close the cell early and shift everything after it, and a missing
+     * value came back as the word null.
+     */
     @Override
     public String toString() {
         return IntStream.range(0, originalHeaders.length)
-                .mapToObj(index -> index < originalValues.length ? format("\"%s\"", originalValues[index]) : "\"\"")
+                .mapToObj(index -> CsvCell.quoted(index < originalValues.length ? originalValues[index] : ""))
                 .reduce((c1, c2) -> format("%s,%s", c1, c2))
                 .orElse("");
     }

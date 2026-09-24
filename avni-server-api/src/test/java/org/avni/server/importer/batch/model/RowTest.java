@@ -74,4 +74,25 @@ public class RowTest {
         Row extraValues = new Row(new String[]{"A", "B"}, new String[]{"AA", "BB", "CC"});
         assertEquals(List.of(3), extraValues.getOrphanedValueColumns());
     }
+
+    @Test
+    public void toStringEscapesAQuoteTheUploaderTyped() {
+        Row row = new Row(new String[]{"Name", "Note"}, new String[]{"GHS \"Wadagera\"", "fine"});
+
+        assertEquals("\"GHS \"\"Wadagera\"\"\",\"fine\"", row.toString());
+    }
+
+    @Test
+    public void toStringWritesAnEmptyCellRatherThanTheWordNullForAMissingValue() {
+        Row row = new Row(new String[]{"Name", "Note", "Extra"}, new String[]{"GHS", null});
+
+        assertEquals("\"GHS\",\"\",\"\"", row.toString());
+    }
+
+    @Test
+    public void toStringKeepsACommaInsideItsOwnCell() {
+        Row row = new Row(new String[]{"Name"}, new String[]{"Devi, Sunita"});
+
+        assertEquals("\"Devi, Sunita\"", row.toString());
+    }
 }

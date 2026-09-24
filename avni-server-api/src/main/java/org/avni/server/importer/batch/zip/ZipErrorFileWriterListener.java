@@ -68,7 +68,7 @@ public class ZipErrorFileWriterListener {
             boolean startingAFreshFile = !errorFile.exists() || errorFile.length() == 0;
             FileWriter fileWriter = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
             if (startingAFreshFile) fileWriter.append(FileUtil.UTF8_BOM);
-            fileWriter.append(bundleFile.getName());
+            fileWriter.append(CsvCell.quoteIfNeeded(bundleFile.getName(), false));
             fileWriter.append(",");
             fileWriter.append(CsvCell.quoted((t.getMessage() == null ? "" : t.getMessage()) + "\n" + stackTrace));
             fileWriter.append("\n");
