@@ -52,7 +52,6 @@ import static java.lang.String.format;
 
 @RestController
 public class MediaController {
-    private static final String SQLITE_MIGRATION_GROUP = "SQLite Migration";
     private static final Pattern MODEL_FILE_NAME = Pattern.compile("^[0-9a-f]{64}\\.bin$");
     private static final Pattern MODEL_RELATIVE_KEY = Pattern.compile("^models/[0-9a-f]{64}\\.bin$");
     private final Logger logger;
@@ -208,7 +207,7 @@ public class MediaController {
 
     private boolean currentUserIsInSqliteMigrationGroup() {
         User user = UserContextHolder.getUserContext().getUser();
-        Group group = groupRepository.findByNameAndOrganisationId(SQLITE_MIGRATION_GROUP, UserContextHolder.getUserContext().getOrganisationId());
+        Group group = groupRepository.findByNameAndOrganisationId(Group.SQLITE_MIGRATION, UserContextHolder.getUserContext().getOrganisationId());
         if (group == null) {
             return false;
         }
@@ -233,7 +232,7 @@ public class MediaController {
     // BadRequestError carries the 400 the caller should see; ValidationException is mapped to a 500
     // by the routes in this controller.
     static String fastSyncUploadKeyFor(User user, String catchmentUuid, FastSyncKeyService keyService) {
-        if (keyService.isPerUserOrganisation()) {
+        if (keyService.isPerUser(user)) {
             return keyService.perUserKey(user);
         }
         // Only the catchment branch needs it, so a per-user user with no catchment is still fine.
@@ -273,7 +272,7 @@ public class MediaController {
                                                              FastSyncKeyService keyService,
                                                              java.util.function.Predicate<String> present) {
         java.util.List<String> candidates = new java.util.ArrayList<>();
-        if (keyService.isPerUserOrganisation()) {
+        if (keyService.isPerUser(user)) {
             candidates.add(keyService.perUserKey(user));
         } else if (catchmentUuid != null) {
             // With a null catchment the key would be "MobileDbBackupSqlite-null", a real and

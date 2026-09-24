@@ -25,7 +25,7 @@ public class MediaControllerFastSyncTest {
     public void perUserUserUploadsToTheirOwnKey() {
         User user = new User();
         user.setUsername("aw@org");
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(true);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(true);
         when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
 
         assertEquals("fastsync/aw@org/fastsync.db", MediaController.fastSyncUploadKeyFor(user, "cat-uuid", fastSyncKeyService));
@@ -35,7 +35,7 @@ public class MediaControllerFastSyncTest {
     public void locationScopedUserUploadsToTheSqliteCatchmentKey() {
         User user = new User();
         user.setUsername("aw@org");
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(false);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
 
         assertEquals("MobileDbBackupSqlite-cat-uuid",
                 MediaController.fastSyncUploadKeyFor(user, "cat-uuid", fastSyncKeyService));
@@ -45,7 +45,7 @@ public class MediaControllerFastSyncTest {
     public void theSqliteCatchmentKeyIsNeverTheRealmOne() {
         User user = new User();
         user.setUsername("aw@org");
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(false);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
 
         String key = MediaController.fastSyncUploadKeyFor(user, "cat-uuid", fastSyncKeyService);
         assertEquals("MobileDbBackupSqlite-cat-uuid", key);
@@ -61,7 +61,7 @@ public class MediaControllerFastSyncTest {
         // route already produces.
         User user = new User();
         user.setUsername("aw@org");
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(false);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
 
         org.avni.server.util.BadRequestError e = org.junit.Assert.assertThrows(
                 org.avni.server.util.BadRequestError.class,
@@ -73,7 +73,7 @@ public class MediaControllerFastSyncTest {
     public void aPerUserUserWithNoCatchmentIsFineBecauseTheKeyDoesNotUseIt() {
         User user = new User();
         user.setUsername("aw@org");
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(true);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(true);
         when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
 
         assertEquals("fastsync/aw@org/fastsync.db",
@@ -86,7 +86,7 @@ public class MediaControllerFastSyncTest {
 
     private java.util.Optional<String> resolve(User user, boolean perUser, String catchmentUuid,
                                                java.util.Set<String> present) {
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(perUser);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(perUser);
         when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
         return MediaController.fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, present::contains);
     }
@@ -188,7 +188,7 @@ public class MediaControllerFastSyncTest {
     public void theSnapshotKeyIsSanitisedLikeTheFastSyncKey() {
         User user = new User();
         user.setUsername("a/../b");
-        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(false);
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
 
         org.junit.Assert.assertThrows(IllegalArgumentException.class,
                 () -> MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, key -> false));
