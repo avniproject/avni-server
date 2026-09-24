@@ -1,7 +1,9 @@
 package org.avni.server.service;
 
 import org.avni.server.application.Subject;
+import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,29 +13,41 @@ import static java.lang.String.format;
 @Service
 public class FastSyncKeyService {
     private final SubjectTypeRepository subjectTypeRepository;
+    private final GroupRepository groupRepository;
 
     @Autowired
-    public FastSyncKeyService(SubjectTypeRepository subjectTypeRepository) {
+    public FastSyncKeyService(SubjectTypeRepository subjectTypeRepository, GroupRepository groupRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
+        this.groupRepository = groupRepository;
     }
 
     /**
-     * Whether this user's sync is narrowed by anything other than their catchment. Three of the
-     * four axes in OperatingIndividualScopeAwareRepository.addSyncStrategyPredicates are per-user,
-     * and two of those are organisation properties: when a directly-assignable or User-type subject
-     * type exists, every user's sync for it is filtered by their own rows, whether or not they hold
-     * any today. A shared catchment dump is wrong for the whole organisation in that case.
+     * Whether a user's sync is narrowed by anything other than their catchment, so that two users
+     * in one catchment can legitimately hold different data and a shared catchment dump would hand
+     * one of them rows they must not have.
+     * <p>
+     * Every term is an organisation property rather than a property of this user, because the axis
+     * being present is enough: a User-type or directly-assignable subject type filters each user's
+     * sync by their own rows, a subject type with a usable sync registration concept is filtered by
+     * that user's sync attribute values, and a non-default group means SyncDetailsService gates the
+     * syncable items on that user's group privileges. A user holding none of them today would still
+     * share a dump with users who do. Terms are ordered cheapest query first and short-circuit.
      */
     public boolean isPerUser(User user) {
-        return hasSyncAttributes(user)
+        return subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User) != null
                 || !subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue().isEmpty()
-                || subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User) != null;
+                || hasANonDefaultGroup()
+                || hasASubjectTypeWithASyncConcept();
     }
 
-    private boolean hasSyncAttributes(User user) {
-        if (user.getSyncSettings() == null) return false;
-        return user.getSyncSettings().get(User.SyncSettingKeys.syncAttribute1.name()) != null
-                || user.getSyncSettings().get(User.SyncSettingKeys.syncAttribute2.name()) != null;
+    private boolean hasANonDefaultGroup() {
+        return groupRepository.findByIsVoidedFalse().stream()
+                .anyMatch(group -> !group.isOneOfTheDefaultGroups());
+    }
+
+    private boolean hasASubjectTypeWithASyncConcept() {
+        return subjectTypeRepository.findByIsVoidedFalse().stream()
+                .anyMatch(SubjectType::isAnySyncRegistrationConceptUsable);
     }
 
     public String perUserKey(User user) {
@@ -42,7 +56,7 @@ public class FastSyncKeyService {
 
     // Usernames are interpolated into an S3 key. A separator or traversal segment would place the
     // object outside the caller's prefix, which is the whole protection here.
-    private String safeSegment(String username) {
+    public static String safeSegment(String username) {
         if (username == null || username.isEmpty()
                 || username.contains("/") || username.contains("\\") || username.contains("..")) {
             throw new IllegalArgumentException("Username is not usable as a storage key segment");

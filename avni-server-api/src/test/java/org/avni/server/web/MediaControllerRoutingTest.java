@@ -5,8 +5,10 @@ import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.StorageDataClass;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.factory.TestOrganisationBuilder;
@@ -261,5 +263,93 @@ public class MediaControllerRoutingTest {
         assertEquals("https://s3/put", response.getBody());
         verify(accessControlService, never()).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         verify(defaultS3Service).generateMediaUploadUrl("somefile.png", HttpMethod.PUT);
+    }
+
+    // --- the SQLite Migration group gate on the three fast-sync routes ---
+    // The gate is what makes "removed from the SQLite group" work. Each route is exercised with a
+    // user outside the group AND with one inside it, so deleting the gate turns a test red.
+
+    private static final String PER_USER_KEY = "fastsync/device-user@org/fastsync.db";
+
+    private void inMigrationGroup() {
+        Group group = new Group();
+        group.setName("SQLite Migration");
+        when(groupRepository.findByNameAndOrganisationId(eq("SQLite Migration"), any()))
+                .thenReturn(group);
+        when(userGroupRepository.findByUserAndGroupAndIsVoidedFalse(any(User.class), eq(group)))
+                .thenReturn(new UserGroup());
+    }
+
+    private void anArtifactExists() {
+        when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(true);
+        when(fastSyncKeyService.perUserKey(any(User.class))).thenReturn(PER_USER_KEY);
+        when(defaultS3Service.fileExists(PER_USER_KEY)).thenReturn(true);
+    }
+
+    @Test
+    public void fastSyncUploadIsRefusedOutsideTheMigrationGroup() {
+        anArtifactExists();
+
+        ResponseEntity<String> response = controller.generateFastSyncUploadUrl();
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertEquals("NotInSqliteMigrationGroup", response.getBody());
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void fastSyncUploadIsSignedInsideTheMigrationGroup() {
+        anArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<String> response = controller.generateFastSyncUploadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("https://s3/put", response.getBody());
+        verify(defaultS3Service).generateMediaUploadUrl(PER_USER_KEY, HttpMethod.PUT);
+    }
+
+    @Test
+    public void fastSyncDownloadIsRefusedOutsideTheMigrationGroup() {
+        anArtifactExists();
+
+        ResponseEntity<String> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertEquals("NotInSqliteMigrationGroup", response.getBody());
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void fastSyncDownloadIsSignedInsideTheMigrationGroup() {
+        anArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<String> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("https://s3/put", response.getBody());
+        verify(defaultS3Service).generateMediaUploadUrl(PER_USER_KEY, HttpMethod.GET);
+    }
+
+    @Test
+    public void fastSyncExistsIsFalseOutsideTheMigrationGroupEvenWhenTheArtifactIsThere() {
+        anArtifactExists();
+
+        ResponseEntity<String> response = controller.fastSyncDownloadExists();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("false", response.getBody());
+    }
+
+    @Test
+    public void fastSyncExistsIsTrueInsideTheMigrationGroupWhenTheArtifactIsThere() {
+        anArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<String> response = controller.fastSyncDownloadExists();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("true", response.getBody());
     }
 }

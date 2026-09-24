@@ -81,9 +81,14 @@ public class MediaControllerFastSyncTest {
     }
 
     private java.util.Optional<String> resolve(User user, boolean perUser, java.util.Set<String> present) {
+        return resolve(user, perUser, "cat-uuid", present);
+    }
+
+    private java.util.Optional<String> resolve(User user, boolean perUser, String catchmentUuid,
+                                               java.util.Set<String> present) {
         when(fastSyncKeyService.isPerUser(user)).thenReturn(perUser);
         when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
-        return MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, present::contains);
+        return MediaController.fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, present::contains);
     }
 
     private User aUser() {
@@ -163,5 +168,29 @@ public class MediaControllerFastSyncTest {
     @Test
     public void aRealmUserIsStillOfferedTheRealmDump() {
         assertTrue(MediaController.realmDumpIsOfferable(false));
+    }
+
+    @Test
+    public void aCatchmentlessUserNeverProbesTheNullCatchmentKey() {
+        // "MobileDbBackupSqlite-null" is a real, writable key shared by every catchmentless user.
+        assertEquals(java.util.Optional.empty(),
+                resolve(aUser(), false, null, java.util.Set.of("MobileDbBackupSqlite-null")));
+    }
+
+    @Test
+    public void aCatchmentlessUserStillFallsThroughToTheGeneratedSnapshot() {
+        // Download degrades to the next tier rather than erroring, unlike upload.
+        assertEquals(java.util.Optional.of("snapshots/aw@org/snapshot.db"),
+                resolve(aUser(), false, null, java.util.Set.of("snapshots/aw@org/snapshot.db")));
+    }
+
+    @Test
+    public void theSnapshotKeyIsSanitisedLikeTheFastSyncKey() {
+        User user = new User();
+        user.setUsername("a/../b");
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
+
+        org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                () -> MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, key -> false));
     }
 }
