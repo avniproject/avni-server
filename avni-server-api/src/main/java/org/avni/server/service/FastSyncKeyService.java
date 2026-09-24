@@ -22,18 +22,19 @@ public class FastSyncKeyService {
     }
 
     /**
-     * Whether a user's sync is narrowed by anything other than their catchment, so that two users
+     * Whether this organisation narrows a sync by anything other than the catchment, so that two users
      * in one catchment can legitimately hold different data and a shared catchment dump would hand
      * one of them rows they must not have.
      * <p>
-     * Every term is an organisation property rather than a property of this user, because the axis
+     * Every term is an organisation property rather than a property of any one user, because the axis
      * being present is enough: a User-type or directly-assignable subject type filters each user's
      * sync by their own rows, a subject type with a usable sync registration concept is filtered by
      * that user's sync attribute values, and a non-default group means SyncDetailsService gates the
      * syncable items on that user's group privileges. A user holding none of them today would still
-     * share a dump with users who do. Terms are ordered cheapest query first and short-circuit.
+     * share a dump with users who do, so the answer is the same for every user in the organisation.
+     * Terms are ordered cheapest query first and short-circuit.
      */
-    public boolean isPerUser(User user) {
+    public boolean isPerUserOrganisation() {
         return subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User) != null
                 || !subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue().isEmpty()
                 || hasANonDefaultGroup()

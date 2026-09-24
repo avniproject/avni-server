@@ -233,7 +233,7 @@ public class MediaController {
     // BadRequestError carries the 400 the caller should see; ValidationException is mapped to a 500
     // by the routes in this controller.
     static String fastSyncUploadKeyFor(User user, String catchmentUuid, FastSyncKeyService keyService) {
-        if (keyService.isPerUser(user)) {
+        if (keyService.isPerUserOrganisation()) {
             return keyService.perUserKey(user);
         }
         // Only the catchment branch needs it, so a per-user user with no catchment is still fine.
@@ -273,7 +273,7 @@ public class MediaController {
                                                              FastSyncKeyService keyService,
                                                              java.util.function.Predicate<String> present) {
         java.util.List<String> candidates = new java.util.ArrayList<>();
-        if (keyService.isPerUser(user)) {
+        if (keyService.isPerUserOrganisation()) {
             candidates.add(keyService.perUserKey(user));
         } else if (catchmentUuid != null) {
             // With a null catchment the key would be "MobileDbBackupSqlite-null", a real and

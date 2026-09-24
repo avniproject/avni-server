@@ -4,7 +4,6 @@ import org.avni.server.application.Subject;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Group;
-import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.junit.Before;
@@ -39,10 +38,9 @@ public class FastSyncKeyServiceTest {
         when(groupRepository.findByIsVoidedFalse()).thenReturn(Collections.emptyList());
     }
 
-    private User userWithSyncSettings(JsonObject syncSettings) {
+    private User aUser() {
         User user = new User();
         user.setUsername("aw@org");
-        user.setSyncSettings(syncSettings);
         return user;
     }
 
@@ -60,7 +58,7 @@ public class FastSyncKeyServiceTest {
 
     @Test
     public void plainLocationScopedUserIsNotPerUser() {
-        assertFalse(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertFalse(service.isPerUserOrganisation());
     }
 
     @Test
@@ -68,13 +66,13 @@ public class FastSyncKeyServiceTest {
         // The sync attribute values live per user on that subject type, so the catchment dump is
         // a union of what different users in the catchment may see.
         when(subjectTypeRepository.findByIsVoidedFalse()).thenReturn(List.of(subjectTypeWithASyncConcept()));
-        assertTrue(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertTrue(service.isPerUserOrganisation());
     }
 
     @Test
     public void orgWhoseSubjectTypesDeclareNoSyncConceptIsNotPerUserOnThatCount() {
         when(subjectTypeRepository.findByIsVoidedFalse()).thenReturn(List.of(new SubjectType(), new SubjectType()));
-        assertFalse(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertFalse(service.isPerUserOrganisation());
     }
 
     @Test
@@ -82,13 +80,13 @@ public class FastSyncKeyServiceTest {
         // Review Focus 3. Org shape is the test, not whether this user holds assignments today.
         when(subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue())
                 .thenReturn(List.of(new SubjectType()));
-        assertTrue(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertTrue(service.isPerUserOrganisation());
     }
 
     @Test
     public void orgWithAUserSubjectTypeMakesEveryUserPerUser() {
         when(subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User)).thenReturn(new SubjectType());
-        assertTrue(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertTrue(service.isPerUserOrganisation());
     }
 
     @Test
@@ -96,7 +94,7 @@ public class FastSyncKeyServiceTest {
         // SyncDetailsService gates every syncable item on the group privileges of the requesting
         // user, so two users in one catchment sync different entity types.
         when(groupRepository.findByIsVoidedFalse()).thenReturn(List.of(group("Field Supervisors")));
-        assertTrue(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertTrue(service.isPerUserOrganisation());
     }
 
     @Test
@@ -106,12 +104,12 @@ public class FastSyncKeyServiceTest {
         when(groupRepository.findByIsVoidedFalse()).thenReturn(List.of(
                 group(Group.Administrators), group(Group.Everyone),
                 group(Group.METABASE_USERS), group(Group.SQLITE_MIGRATION)));
-        assertFalse(service.isPerUser(userWithSyncSettings(new JsonObject())));
+        assertFalse(service.isPerUserOrganisation());
     }
 
     @Test
     public void perUserKeyIsNamespacedByUsername() {
-        assertEquals("fastsync/aw@org/fastsync.db", service.perUserKey(userWithSyncSettings(new JsonObject())));
+        assertEquals("fastsync/aw@org/fastsync.db", service.perUserKey(aUser()));
     }
 
     @Test
