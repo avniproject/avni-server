@@ -7,8 +7,11 @@ import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.domain.UserGroup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -45,7 +48,7 @@ public class FastSyncKeyService {
      * dump; a wrong false is a privilege breach, so anything unrecognised counts as differing.
      */
     public boolean isPerUser(User user) {
-        return organisationFiltersRowsPerUser() || userHasANonBaselineGroup(user);
+        return organisationFiltersRowsPerUser() || userMayDifferFromBaseline(user);
     }
 
     private boolean organisationFiltersRowsPerUser() {
@@ -54,12 +57,20 @@ public class FastSyncKeyService {
                 || hasASubjectTypeWithASyncConcept();
     }
 
-    // Everyone is attached to every non-super-admin user and can never be detached, and SQLite
-    // Migration only marks the migration, so those two are the privilege baseline every user shares.
-    private boolean userHasANonBaselineGroup(User user) {
+    // Everyone plus SQLite Migration is the privilege baseline every ordinary user shares. A user
+    // is only known to hold it when Everyone is actually attached: POST /userGroup/{id} voids any
+    // membership by id with no Everyone guard, and User.getUserGroups() filters voided rows out of
+    // every repair path, so the detachment is permanent. Such a user holds no privileges at all, so
+    // treating "no extra groups" as baseline would hand them a dump full of rows their own sync
+    // would never fetch. That also covers an empty membership list, whatever produced it.
+    private boolean userMayDifferFromBaseline(User user) {
         Long everyoneGroupId = everyoneGroupId(user);
-        return userGroupRepository.findByUser_IdAndIsVoidedFalse(user.getId()).stream()
-                .anyMatch(userGroup -> !isBaseline(userGroup.getGroup(), everyoneGroupId));
+        List<UserGroup> memberships = userGroupRepository.findByUser_IdAndIsVoidedFalse(user.getId());
+        boolean holdsBaseline = memberships.stream()
+                .anyMatch(membership -> everyoneGroupId.equals(membership.getGroup().getId()));
+        boolean holdsExtras = memberships.stream()
+                .anyMatch(membership -> !isBaseline(membership.getGroup(), everyoneGroupId));
+        return !holdsBaseline || holdsExtras;
     }
 
     private boolean isBaseline(Group group, Long everyoneGroupId) {
