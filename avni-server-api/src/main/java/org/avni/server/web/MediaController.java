@@ -221,7 +221,7 @@ public class MediaController {
     }
 
     private static String snapshotKeyFor(User user) {
-        return format("snapshots/%s/snapshot.db", user.getUsername());
+        return format("snapshots/%s/snapshot.db", FastSyncKeyService.safeSegment(user.getUsername()));
     }
 
     private static String sqliteCatchmentKey(String catchmentUuid) {
@@ -230,8 +230,8 @@ public class MediaController {
 
     // Static and parameterised so the key decision is testable without a Spring context or a
     // UserContextHolder. The route below supplies the authenticated user and their catchment.
-    // Throws BadRequestError rather than ValidationException because the latter is checked, which
-    // a static helper cannot raise without forcing a throws clause on every caller.
+    // BadRequestError carries the 400 the caller should see; ValidationException is mapped to a 500
+    // by the routes in this controller.
     static String fastSyncUploadKeyFor(User user, String catchmentUuid, FastSyncKeyService keyService) {
         if (keyService.isPerUser(user)) {
             return keyService.perUserKey(user);
@@ -272,9 +272,16 @@ public class MediaController {
     static java.util.Optional<String> fastSyncDownloadKeyFor(User user, String catchmentUuid,
                                                              FastSyncKeyService keyService,
                                                              java.util.function.Predicate<String> present) {
-        java.util.List<String> candidates = keyService.isPerUser(user)
-                ? java.util.List.of(keyService.perUserKey(user), snapshotKeyFor(user))
-                : java.util.List.of(sqliteCatchmentKey(catchmentUuid), snapshotKeyFor(user));
+        java.util.List<String> candidates = new java.util.ArrayList<>();
+        if (keyService.isPerUser(user)) {
+            candidates.add(keyService.perUserKey(user));
+        } else if (catchmentUuid != null) {
+            // With a null catchment the key would be "MobileDbBackupSqlite-null", a real and
+            // writable object shared by every catchmentless user. Download degrades to the next
+            // tier rather than erroring, unlike upload.
+            candidates.add(sqliteCatchmentKey(catchmentUuid));
+        }
+        candidates.add(snapshotKeyFor(user));
         return candidates.stream().filter(present).findFirst();
     }
 
