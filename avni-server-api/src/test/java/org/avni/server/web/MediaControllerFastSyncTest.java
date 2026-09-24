@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -77,5 +78,79 @@ public class MediaControllerFastSyncTest {
 
         assertEquals("fastsync/aw@org/fastsync.db",
                 MediaController.fastSyncUploadKeyFor(user, null, fastSyncKeyService));
+    }
+
+    private java.util.Optional<String> resolve(User user, boolean perUser, java.util.Set<String> present) {
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(perUser);
+        when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
+        return MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, present::contains);
+    }
+
+    private User aUser() {
+        User user = new User();
+        user.setUsername("aw@org");
+        return user;
+    }
+
+    @Test
+    public void perUserUserPrefersTheirOwnUploadOverTheGeneratedSnapshot() {
+        java.util.Set<String> present = java.util.Set.of(
+                "fastsync/aw@org/fastsync.db", "snapshots/aw@org/snapshot.db");
+        assertEquals(java.util.Optional.of("fastsync/aw@org/fastsync.db"), resolve(aUser(), true, present));
+    }
+
+    @Test
+    public void perUserUserFallsBackToTheGeneratedSnapshot() {
+        assertEquals(java.util.Optional.of("snapshots/aw@org/snapshot.db"),
+                resolve(aUser(), true, java.util.Set.of("snapshots/aw@org/snapshot.db")));
+    }
+
+    @Test
+    public void perUserUserIsNeverOfferedTheSharedCatchmentDump() {
+        // Falling back to the catchment union would reopen #956 by a different route.
+        assertEquals(java.util.Optional.empty(),
+                resolve(aUser(), true, java.util.Set.of("MobileDbBackupSqlite-cat-uuid")));
+    }
+
+    @Test
+    public void locationScopedUserPrefersTheCatchmentDumpOverTheGeneratedSnapshot() {
+        java.util.Set<String> present = java.util.Set.of(
+                "MobileDbBackupSqlite-cat-uuid", "snapshots/aw@org/snapshot.db");
+        assertEquals(java.util.Optional.of("MobileDbBackupSqlite-cat-uuid"), resolve(aUser(), false, present));
+    }
+
+    @Test
+    public void locationScopedUserFallsBackToTheGeneratedSnapshot() {
+        assertEquals(java.util.Optional.of("snapshots/aw@org/snapshot.db"),
+                resolve(aUser(), false, java.util.Set.of("snapshots/aw@org/snapshot.db")));
+    }
+
+    @Test
+    public void nothingPresentResolvesToEmptySoTheClientDoesAFullSync() {
+        assertEquals(java.util.Optional.empty(), resolve(aUser(), false, java.util.Set.of()));
+    }
+
+    @Test
+    public void theRealmDumpIsNeverResolvedForASqliteUser() {
+        assertEquals(java.util.Optional.empty(),
+                resolve(aUser(), false, java.util.Set.of("MobileDbBackup-cat-uuid")));
+    }
+
+    @Test
+    public void aUserOutsideTheMigrationGroupIsNotEligibleEvenWhenAnArtifactExists() {
+        // Review Focus 4. The group gate is what makes "removed from the SQLite group" work: the
+        // client must get false here so it falls through to the Realm path, not someone's SQLite file.
+        assertFalse(MediaController.fastSyncEligible(false, java.util.Optional.of("fastsync/aw@org/fastsync.db")));
+    }
+
+    @Test
+    public void aGroupMemberWithAnArtifactIsEligible() {
+        assertTrue(MediaController.fastSyncEligible(true, java.util.Optional.of("fastsync/aw@org/fastsync.db")));
+    }
+
+    @Test
+    public void aGroupMemberWithNoArtifactIsNotEligible() {
+        // Review Focus 5. Must be a clean false so the client proceeds to a full sync.
+        assertFalse(MediaController.fastSyncEligible(true, java.util.Optional.empty()));
     }
 }

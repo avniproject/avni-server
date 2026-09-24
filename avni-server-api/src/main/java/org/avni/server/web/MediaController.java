@@ -209,7 +209,15 @@ public class MediaController {
 
     private String sqliteSnapshotRelativeKey() {
         User user = UserContextHolder.getUserContext().getUser();
+        return snapshotKeyFor(user);
+    }
+
+    private static String snapshotKeyFor(User user) {
         return format("snapshots/%s/snapshot.db", user.getUsername());
+    }
+
+    private static String sqliteCatchmentKey(String catchmentUuid) {
+        return format("MobileDbBackupSqlite-%s", catchmentUuid);
     }
 
     // Static and parameterised so the key decision is testable without a Spring context or a
@@ -224,7 +232,7 @@ public class MediaController {
         if (catchmentUuid == null) {
             throw new BadRequestError("NoCatchmentFound");
         }
-        return format("MobileDbBackupSqlite-%s", catchmentUuid);
+        return sqliteCatchmentKey(catchmentUuid);
     }
 
     private String fastSyncUploadKey() {
@@ -247,6 +255,68 @@ public class MediaController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // The order is the whole contract, so it is expressed once, here, and both routes use it.
+    // `present` is injected rather than calling s3Service directly so the ordering is testable
+    // without stubbing storage.
+    static java.util.Optional<String> fastSyncDownloadKeyFor(User user, String catchmentUuid,
+                                                             FastSyncKeyService keyService,
+                                                             java.util.function.Predicate<String> present) {
+        java.util.List<String> candidates = keyService.isPerUser(user)
+                ? java.util.List.of(keyService.perUserKey(user), snapshotKeyFor(user))
+                : java.util.List.of(sqliteCatchmentKey(catchmentUuid), snapshotKeyFor(user));
+        return candidates.stream().filter(present).findFirst();
+    }
+
+    private java.util.Optional<String> resolveFastSyncDownloadKey() {
+        User user = UserContextHolder.getUserContext().getUser();
+        String catchmentUuid = user.getCatchment() == null ? null : user.getCatchment().getUuid();
+        return fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, s3Service::fileExists);
+    }
+
+    // Extracted so the group gate is tested independently of storage and UserContextHolder.
+    static boolean fastSyncEligible(boolean inSqliteMigrationGroup, java.util.Optional<String> resolvedKey) {
+        return inSqliteMigrationGroup && resolvedKey.isPresent();
+    }
+
+    @RequestMapping(value = "/media/fastSyncDownload/exists", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> fastSyncDownloadExists() {
+        logger.info("checking whether a fast sync database exists");
+        try {
+            boolean eligible = fastSyncEligible(
+                    currentUserIsInSqliteMigrationGroup(), resolveFastSyncDownloadKey());
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(eligible));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
+    }
+
+    @RequestMapping(value = "/media/fastSyncDownload", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> generateFastSyncDownloadUrl() {
+        logger.info("getting fast sync download url");
+        try {
+            if (!currentUserIsInSqliteMigrationGroup()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("NotInSqliteMigrationGroup");
+            }
+            java.util.Optional<String> key = resolveFastSyncDownloadKey();
+            if (key.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("NoFastSyncDatabase");
+            }
+            URL url = s3Service.generateMediaUploadUrl(key.get(), HttpMethod.GET);
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }
 
