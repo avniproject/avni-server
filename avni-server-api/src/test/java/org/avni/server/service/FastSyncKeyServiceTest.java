@@ -172,6 +172,22 @@ public class FastSyncKeyServiceTest {
     }
 
     @Test
+    public void userWhoseEveryoneMembershipWasDetachedIsPerUser() {
+        // POST /userGroup/{id} voids any membership by id with no Everyone guard, and
+        // User.getUserGroups() filters voided rows out so no repair path ever re-attaches it. Such
+        // a user holds no privileges at all, so a shared catchment dump would hand them rows their
+        // own sync would never fetch. Absence of extra groups is not proof of the baseline.
+        memberOf(group(Group.SQLITE_MIGRATION, 101L, Group.SQLITE_MIGRATION_UUID));
+        assertTrue(service.isPerUser(aUser()));
+    }
+
+    @Test
+    public void userWithNoMembershipsAtAllIsPerUser() {
+        when(userGroupRepository.findByUser_IdAndIsVoidedFalse(USER_ID)).thenReturn(Collections.emptyList());
+        assertTrue(service.isPerUser(aUser()));
+    }
+
+    @Test
     public void perUserKeyIsNamespacedByUsername() {
         assertEquals("fastsync/aw@org/fastsync.db", service.perUserKey(aUser()));
     }
