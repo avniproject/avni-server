@@ -43,6 +43,28 @@ public class ErrorFileWriterListenerTest {
     }
 
     @Test
+    public void aQuoteInTheFailureMessageIsEscapedSoTheRowDoesNotShift() throws Exception {
+        FlatFileParseException parseException = new FlatFileParseException("Parsing error at line: 3",
+                new RuntimeException("Unknown header \"School Name\" in file"), "v1,v2,v3", 3);
+
+        listener.onSkipInRead(parseException);
+
+        List<String> lines = Files.readAllLines(errorFile.toPath());
+        assertEquals("v1,v2,v3,\"Unknown header \"\"School Name\"\" in file\"", lines.get(0));
+    }
+
+    @Test
+    public void aFailureWithNoMessageLeavesTheCellEmptyRatherThanSayingNull() throws Exception {
+        FlatFileParseException parseException = new FlatFileParseException("Parsing error at line: 3",
+                new RuntimeException((String) null), "v1,v2,v3", 3);
+
+        listener.onSkipInRead(parseException);
+
+        List<String> lines = Files.readAllLines(errorFile.toPath());
+        assertEquals("v1,v2,v3,\"\"", lines.get(0));
+    }
+
+    @Test
     public void readSkipsReportToBugsnagOncePerExecution() {
         FlatFileParseException parseException = new FlatFileParseException("Parsing error",
                 new RuntimeException("Column(s) 2 have values but no header"), "v1,v2", 3);

@@ -4,6 +4,7 @@ import org.avni.server.application.FormElement;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.util.CsvCell;
 import org.avni.server.domain.*;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportEntityTypeVisitor;
@@ -179,20 +180,16 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
 
     private String getFieldHeader(String fieldName, String fieldGroup, String entityType, Integer entityTypeIndex, Integer repeatableQGIndex, boolean mayContainComma) {
         StringBuilder fieldHeaderBuilder = new StringBuilder();
-        if (mayContainComma) fieldHeaderBuilder.append("\"");
-
         fieldHeaderBuilder.append(entityType).append("_");
         if (entityTypeIndex != null) fieldHeaderBuilder.append(entityTypeIndex).append("_");
         if (fieldGroup != null) fieldHeaderBuilder.append(fieldGroup).append("_");
         if (repeatableQGIndex != null) fieldHeaderBuilder.append(repeatableQGIndex).append("_");
-        // A quote inside a concept name has to be doubled for the same reason it does in a data
-        // cell. Now that the rows escape correctly, an unescaped header is the only thing left that
-        // can put the header out of step with the data under it.
-        fieldHeaderBuilder.append(mayContainComma && fieldName != null ? fieldName.replace("\"", "\"\"") : fieldName);
+        fieldHeaderBuilder.append(fieldName);
 
-        if (mayContainComma) fieldHeaderBuilder.append("\"");
-        fieldHeaderBuilder.append(",");
-        return fieldHeaderBuilder.toString();
+        // Every part of this is a name someone typed: the subject type, the programme, the visit
+        // type and the question. Quoting and escaping only the question left the rest able to split
+        // the heading, which put it out of step with the data under it.
+        return CsvCell.quoteIfNeeded(fieldHeaderBuilder.toString(), mayContainComma) + ",";
     }
 
     @Override
@@ -203,7 +200,9 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         headerBuilder.append(getAddressLevelHeaders(addressLevelTypes, subjectType));
 
         if (subjectType.isGroup()) {
-            this.getFieldHeader("total_members", null, subjectType.getName(), null, null, false);
+            // The row always carries the member count. Without appending this, the heading was
+            // built and thrown away, and every column name after it sat over the wrong column.
+            headerBuilder.append(this.getFieldHeader("total_members", null, subjectType.getName(), null, null, false));
         }
 
         appendForm(subjectType.getName(), null, exportFieldsManager.getMainFields(subject), maxRepeatableQuestionGroupObservation);

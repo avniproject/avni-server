@@ -12,6 +12,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
+import org.avni.server.util.CsvCell;
 import org.avni.server.util.FileUtil;
 import org.avni.server.web.external.request.export.ReportType;
 import org.joda.time.DateTime;
@@ -152,17 +153,19 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         int visit = 0;
         while (visit < maxVisitCount) {
             visit++;
+            // encounterTypeName is a name someone typed, and these headings were neither quoted
+            // nor escaped, so a comma in it silently added a column with no data under it.
             String prefix = encounterTypeName + "_" + visit;
-            headers.append(",").append(prefix).append(".id");
-            headers.append(",").append(prefix).append(".uuid");
-            headers.append(",").append(prefix).append(".name");
-            headers.append(",").append(prefix).append(".earliest_visit_date_time");
-            headers.append(",").append(prefix).append(".max_visit_date_time");
-            headers.append(",").append(prefix).append(".encounter_date_time");
-            headers.append(",").append(prefix).append(".encounter_location");
-            headers.append(",").append(prefix).append(".cancel_location");
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".id", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".uuid", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".name", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".earliest_visit_date_time", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".max_visit_date_time", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".encounter_date_time", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".encounter_location", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".cancel_location", false));
             appendObsColumns(headers, prefix, programUUID != null ? programEncounterMap : encounterMap);
-            headers.append(",").append(prefix).append(".cancel_date_time");
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".cancel_date_time", false));
             appendObsColumns(headers, prefix, programUUID != null ? programEncounterCancelMap : encounterCancelMap);
             addAuditColumns(headers, prefix);
             addVoidedColumnIfRequired(headers, prefix);
@@ -368,16 +371,13 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
             if (ConceptDataType.isQuestionGroup(fe.getConcept().getDataType())) return;
             Concept concept = fe.getConcept();
             String groupPrefix = fe.getGroup() != null ? fe.getGroup().getConcept().getName() + "_" : "";
+            // A question name is free text, so quoting it without doubling a quote inside it lets
+            // the heading split where the row beneath it does not.
             if (concept.getDataType().equals(ConceptDataType.Coded.toString()) && fe.getType().equals(FormElementType.MultiSelect.toString())) {
                 concept.getSortedAnswers().map(ca -> ca.getAnswerConcept().getName()).forEach(can ->
-                        sb.append(",\"")
-                                .append(prefix)
-                                .append("_")
-                                .append(groupPrefix)
-                                .append(concept.getName())
-                                .append("_").append(can).append("\""));
+                        sb.append(",").append(CsvCell.quoted(prefix + "_" + groupPrefix + concept.getName() + "_" + can)));
             } else {
-                sb.append(",\"").append(prefix).append("_").append(groupPrefix).append(concept.getName()).append("\"");
+                sb.append(",").append(CsvCell.quoted(prefix + "_" + groupPrefix + concept.getName()));
             }
         });
     }
@@ -385,9 +385,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private String QuotedStringValue(String text) {
         if (StringUtils.isEmpty(text))
             return text;
-        // A quote inside the value has to be doubled or it closes the cell early and shifts every
-        // column after it. Mattered little while these cells held UUIDs; names are free text.
-        return "\"".concat(text.replace("\"", "\"\"")).concat("\"");
+        return CsvCell.quoted(text);
     }
 
     private List<Object> getObs(ObservationCollection observations, LinkedHashMap<String, FormElement> obsMap) {
