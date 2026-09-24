@@ -94,6 +94,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
     }
@@ -131,6 +132,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("\"GHS Wadagera(school-uuid)\"", getExtractValue(header, "\"ST1_School Name\"", extract));
     }
@@ -202,6 +204,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("\"GHS \"\"Wadagera\"\"(school-uuid)\"", getExtractValue(header, "\"ST1_School Name\"", extract));
     }
@@ -243,6 +246,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
         assertEquals("\"2\"", getExtractValue(header, "\"ST1_C1_C2\"", extract));
@@ -291,6 +295,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
         assertEquals("\"21\"", getExtractValue(header, "\"ST1_C1_1_C2\"", extract));
@@ -308,8 +313,13 @@ public class ExportV2CSVFieldExtractorTest {
         return null;
     }
 
-    private int getHeaderFieldCount(String header) {
-        return parseCsvFields(FileUtil.stripUtf8Bom(header)).size();
+    /**
+     * A heading that declares a different number of columns from the row under it is the shape that
+     * produced most of this card's findings, so every test here asserts against it.
+     */
+    private void assertHeaderLinesUpWithRow(String header, Object[] extract) {
+        assertEquals("heading and row must declare the same number of columns",
+                parseCsvFields(FileUtil.stripUtf8Bom(header)).size(), extract.length);
     }
 
     private java.util.List<String> parseCsvFields(String line) {

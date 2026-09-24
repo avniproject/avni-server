@@ -232,7 +232,12 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         this.addEncounterHeaders(exportFieldsManager.getMaxEntityCount(exportEntityType), encounterType, exportEntityType, maxRepeatableQuestionGroupObservation);
     }
 
+    /**
+     * Each cell is built with its own trailing separator, so the assembled heading carries one more
+     * than it has cells. Left on, it declared a column the rows never fill.
+     */
     public String getHeader() {
-        return headerBuilder.toString();
+        String header = headerBuilder.toString();
+        return header.endsWith(",") ? header.substring(0, header.length() - 1) : header;
     }
 }
