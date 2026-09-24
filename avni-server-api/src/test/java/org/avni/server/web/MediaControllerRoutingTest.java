@@ -281,7 +281,7 @@ public class MediaControllerRoutingTest {
     }
 
     private void anArtifactExists() {
-        when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(true);
+        when(fastSyncKeyService.isPerUserOrganisation()).thenReturn(true);
         when(fastSyncKeyService.perUserKey(any(User.class))).thenReturn(PER_USER_KEY);
         when(defaultS3Service.fileExists(PER_USER_KEY)).thenReturn(true);
     }
