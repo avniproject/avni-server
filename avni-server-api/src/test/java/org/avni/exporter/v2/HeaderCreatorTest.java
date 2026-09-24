@@ -177,6 +177,35 @@ public class HeaderCreatorTest {
         assertEquals("ENC_1_id,ENC_1_created_by,ENC_1_created_date_time,ENC_1_last_modified_by,ENC_1_last_modified_date_time,\"ENC_1_C1\",ENC_2_id,ENC_2_created_by,ENC_2_created_date_time,ENC_2_last_modified_by,ENC_2_last_modified_date_time,\"ENC_2_C1\",", headerCreator.getHeader());
     }
 
+    @Test
+    public void aGroupGetsAHeadingForTheMemberCountItsRowsAlreadyCarry() {
+        SubjectType subjectType = getSubjectType("Family", Subject.Group);
+        subjectType.setGroup(true);
+
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(exportFieldsManager.getCoreFields(any())).thenReturn(Arrays.asList(ID, UUID));
+        when(exportFieldsManager.getMainFields(any())).thenReturn(new LinkedHashMap<>());
+
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, Collections.emptyList(), new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+        headerCreator.visitSubject(new ExportEntityTypeBuilder().build());
+
+        assertEquals("Family_id,Family_uuid,Family_total_members,", headerCreator.getHeader());
+    }
+
+    @Test
+    public void aSubjectTypeNamedWithACommaDoesNotAddAColumnOfItsOwn() {
+        SubjectType subjectType = getSubjectType("School, Govt", Subject.Person);
+
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(exportFieldsManager.getCoreFields(any())).thenReturn(Arrays.asList(ID, UUID));
+        when(exportFieldsManager.getMainFields(any())).thenReturn(new LinkedHashMap<>());
+
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, Collections.singletonList("Village"), new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+        headerCreator.visitSubject(new ExportEntityTypeBuilder().build());
+
+        assertEquals("\"School, Govt_id\",\"School, Govt_uuid\",\"School, Govt_Village\",", headerCreator.getHeader());
+    }
+
     private SubjectType getSubjectType(String name, Subject type) {
         SubjectType subjectType = new SubjectType();
         subjectType.setName(name);

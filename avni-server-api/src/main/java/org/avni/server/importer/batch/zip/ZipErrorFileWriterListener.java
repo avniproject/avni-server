@@ -14,6 +14,10 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import org.avni.server.util.CsvCell;
+import org.avni.server.util.FileUtil;
+
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -58,13 +62,16 @@ public class ZipErrorFileWriterListener {
     public void writeError(BundleFile bundleFile, Throwable t) {
         try {
             String stackTrace = ExceptionUtil.getFullStackTrace(t);
-            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), StandardCharsets.UTF_8, true);
+            File errorFile = bulkUploadS3Service.getLocalErrorFile(uuid);
+            // This file has no header row to lead with the marker, and nothing else writes to it,
+            // so the marker goes ahead of whichever failure happens to be recorded first.
+            boolean startingAFreshFile = !errorFile.exists() || errorFile.length() == 0;
+            FileWriter fileWriter = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
+            if (startingAFreshFile) fileWriter.append(FileUtil.UTF8_BOM);
             fileWriter.append(bundleFile.getName());
-            fileWriter.append(",\"");
-            fileWriter.append(t.getMessage() == null ? "" : t.getMessage().replaceAll("\"", "\"\""));
+            fileWriter.append(",");
+            fileWriter.append(CsvCell.quoted((t.getMessage() == null ? "" : t.getMessage()) + "\n" + stackTrace));
             fileWriter.append("\n");
-            fileWriter.append(stackTrace);
-            fileWriter.append("\"\n");
             fileWriter.close();
         } catch (IOException e) {
             logger.error("Error recording error", e);

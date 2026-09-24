@@ -10,6 +10,7 @@ import org.avni.server.exporter.ExportReferenceResolver;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ObservationService;
+import org.avni.server.util.CsvCell;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.FileUtil;
 import org.avni.server.web.external.request.export.ExportEntityType;
@@ -321,9 +322,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     }
 
     private String getFieldValue(String value) {
-        // A quote inside the value has to be doubled or it closes the cell early and shifts every
-        // column after it. Mattered little while these cells held UUIDs; names are free text.
-        return String.format("\"%s\"", value == null ? "" : value.replace("\"", "\"\""));
+        return CsvCell.quoted(value);
     }
 
     private String getAnsName(Concept concept, Object val) {
