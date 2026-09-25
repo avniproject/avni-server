@@ -6,6 +6,8 @@ import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.StorageDataClass;
 import org.avni.server.domain.Group;
+import org.avni.server.web.response.FastSyncTier;
+import org.avni.server.web.response.FastSyncDownloadResponse;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.UserGroup;
@@ -313,7 +315,7 @@ public class MediaControllerRoutingTest {
     public void fastSyncDownloadIsRefusedOutsideTheMigrationGroup() {
         anArtifactExists();
 
-        ResponseEntity<String> response = controller.generateFastSyncDownloadUrl();
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertEquals("NotInSqliteMigrationGroup", response.getBody());
@@ -325,10 +327,10 @@ public class MediaControllerRoutingTest {
         anArtifactExists();
         inMigrationGroup();
 
-        ResponseEntity<String> response = controller.generateFastSyncDownloadUrl();
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("https://s3/put", response.getBody());
+        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.PER_USER), response.getBody());
         verify(defaultS3Service).generateMediaUploadUrl(PER_USER_KEY, HttpMethod.GET);
     }
 

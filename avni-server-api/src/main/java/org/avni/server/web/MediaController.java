@@ -13,6 +13,8 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.FastSyncKeyService;
+import org.avni.server.web.response.FastSyncTier;
+import org.avni.server.web.response.FastSyncDownloadResponse;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.domain.MediaFolder;
@@ -265,34 +267,40 @@ public class MediaController {
         }
     }
 
+    // The key and the tier travel together so they cannot drift: the tier is bound to a candidate
+    // when it is built, not re-derived from the winning key afterwards.
+    record FastSyncArtifact(String key, FastSyncTier tier) {
+    }
+
     // The order is the whole contract, so it is expressed once, here, and both routes use it.
     // `present` is injected rather than calling s3Service directly so the ordering is testable
     // without stubbing storage.
-    static java.util.Optional<String> fastSyncDownloadKeyFor(User user, String catchmentUuid,
-                                                             FastSyncKeyService keyService,
-                                                             java.util.function.Predicate<String> present) {
-        java.util.List<String> candidates = new java.util.ArrayList<>();
+    static java.util.Optional<FastSyncArtifact> fastSyncDownloadKeyFor(User user, String catchmentUuid,
+                                                                       FastSyncKeyService keyService,
+                                                                       java.util.function.Predicate<String> present) {
+        java.util.List<FastSyncArtifact> candidates = new java.util.ArrayList<>();
         if (keyService.isPerUser(user)) {
-            candidates.add(keyService.perUserKey(user));
+            candidates.add(new FastSyncArtifact(keyService.perUserKey(user), FastSyncTier.PER_USER));
         } else if (catchmentUuid != null) {
             // With a null catchment the key would be "MobileDbBackupSqlite-null", a real and
             // writable object shared by every catchmentless user. Download degrades to the next
             // tier rather than erroring, unlike upload.
-            candidates.add(sqliteCatchmentKey(catchmentUuid));
+            candidates.add(new FastSyncArtifact(sqliteCatchmentKey(catchmentUuid), FastSyncTier.CATCHMENT));
         }
-        candidates.add(snapshotKeyFor(user));
-        return candidates.stream().filter(present).findFirst();
+        candidates.add(new FastSyncArtifact(snapshotKeyFor(user), FastSyncTier.SNAPSHOT));
+        return candidates.stream().filter(candidate -> present.test(candidate.key())).findFirst();
     }
 
-    private java.util.Optional<String> resolveFastSyncDownloadKey() {
+    private java.util.Optional<FastSyncArtifact> resolveFastSyncDownloadKey() {
         User user = UserContextHolder.getUserContext().getUser();
         String catchmentUuid = user.getCatchment() == null ? null : user.getCatchment().getUuid();
         return fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, s3Service::fileExists);
     }
 
     // Extracted so the group gate is tested independently of storage and UserContextHolder.
-    static boolean fastSyncEligible(boolean inSqliteMigrationGroup, java.util.Optional<String> resolvedKey) {
-        return inSqliteMigrationGroup && resolvedKey.isPresent();
+    static boolean fastSyncEligible(boolean inSqliteMigrationGroup,
+                                    java.util.Optional<FastSyncArtifact> resolved) {
+        return inSqliteMigrationGroup && resolved.isPresent();
     }
 
     @RequestMapping(value = "/media/fastSyncDownload/exists", method = RequestMethod.GET)
@@ -313,18 +321,19 @@ public class MediaController {
     @RequestMapping(value = "/media/fastSyncDownload", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<String> generateFastSyncDownloadUrl() {
+    public ResponseEntity<?> generateFastSyncDownloadUrl() {
         logger.info("getting fast sync download url");
         try {
             if (!currentUserIsInSqliteMigrationGroup()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("NotInSqliteMigrationGroup");
             }
-            java.util.Optional<String> key = resolveFastSyncDownloadKey();
-            if (key.isEmpty()) {
+            java.util.Optional<FastSyncArtifact> artifact = resolveFastSyncDownloadKey();
+            if (artifact.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("NoFastSyncDatabase");
             }
-            URL url = s3Service.generateMediaUploadUrl(key.get(), HttpMethod.GET);
-            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
+            URL url = s3Service.generateMediaUploadUrl(artifact.get().key(), HttpMethod.GET);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                    .body(new FastSyncDownloadResponse(url.toString(), artifact.get().tier()));
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
