@@ -115,6 +115,18 @@ public abstract class StorageService implements S3Service {
     }
 
     @Override
+    public Optional<Date> getLastModified(String fileName) {
+        authorizeUser();
+        String objectKey = getS3KeyForMediaUpload(fileName);
+        try {
+            return Optional.ofNullable(s3Client.getObjectMetadata(bucketName, objectKey).getLastModified());
+        } catch (Exception e) {
+            logger.error(String.format("Error while accessing file %s", objectKey), e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public ObjectInfo uploadFile(File tempSourceFile, String destFileName, String directory) throws IOException {
         String suggestedS3Key = getS3Key(destFileName, directory);
         long noOfLines = Files.lines(Paths.get(tempSourceFile.getAbsolutePath())).count();

@@ -13,6 +13,7 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.FastSyncKeyService;
+import org.avni.server.service.ResetSyncService;
 import org.avni.server.web.response.FastSyncTier;
 import org.avni.server.web.response.FastSyncDownloadResponse;
 import org.avni.server.service.S3Service;
@@ -64,12 +65,13 @@ public class MediaController {
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
     private final FastSyncKeyService fastSyncKeyService;
+    private final ResetSyncService resetSyncService;
 
     @Autowired
     public MediaController(S3Service s3Service, StorageServiceProvider storageServiceProvider,
                            AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder,
                            GroupRepository groupRepository, UserGroupRepository userGroupRepository,
-                           FastSyncKeyService fastSyncKeyService) {
+                           FastSyncKeyService fastSyncKeyService, ResetSyncService resetSyncService) {
         this.s3Service = s3Service;
         this.storageServiceProvider = storageServiceProvider;
         this.accessControlService = accessControlService;
@@ -77,6 +79,7 @@ public class MediaController {
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
         this.fastSyncKeyService = fastSyncKeyService;
+        this.resetSyncService = resetSyncService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -158,6 +161,26 @@ public class MediaController {
             return getFileUrlResponse(mobileDatabaseBackupFile(), HttpMethod.GET);
         } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // The Realm download route returns a bare signed URL that every released app parses as a plain
+    // string, so the uuids get a sibling route instead of a wider response body there.
+    @RequestMapping(value = "/media/mobileDatabaseBackupUrl/supersededResets", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<String>> mobileDatabaseBackupSupersededResets() {
+        logger.info("getting the reset syncs the mobile database backup supersedes");
+        try {
+            User user = UserContextHolder.getUserContext().getUser();
+            java.util.Optional<java.util.Date> lastModified = s3Service.getLastModified(mobileDatabaseBackupFile());
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                    .body(resetSyncService.getSupersededResetSyncUuids(user, lastModified.orElse(null)));
+        } catch (Exception e) {
+            // A user with no catchment, or an unreadable artifact, must not break the restore they
+            // are in the middle of. Nothing superseded simply leaves every reset in force.
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(java.util.Collections.emptyList());
         }
     }
 
@@ -268,16 +291,21 @@ public class MediaController {
     }
 
     // The key and the tier travel together so they cannot drift: the tier is bound to a candidate
-    // when it is built, not re-derived from the winning key afterwards.
-    record FastSyncArtifact(String key, FastSyncTier tier) {
+    // when it is built, not re-derived from the winning key afterwards. lastModified rides along
+    // because the probe that established existence already knew it.
+    record FastSyncArtifact(String key, FastSyncTier tier, java.util.Date lastModified) {
+        FastSyncArtifact(String key, FastSyncTier tier) {
+            this(key, tier, null);
+        }
     }
 
     // The order is the whole contract, so it is expressed once, here, and both routes use it.
-    // `present` is injected rather than calling s3Service directly so the ordering is testable
-    // without stubbing storage.
+    // `lastModifiedOf` is injected rather than calling s3Service directly so the ordering is
+    // testable without stubbing storage. It answers existence and timestamp in one HEAD, so the
+    // winning object is not probed twice.
     static java.util.Optional<FastSyncArtifact> fastSyncDownloadKeyFor(User user, String catchmentUuid,
                                                                        FastSyncKeyService keyService,
-                                                                       java.util.function.Predicate<String> present) {
+                                                                       java.util.function.Function<String, java.util.Optional<java.util.Date>> lastModifiedOf) {
         java.util.List<FastSyncArtifact> candidates = new java.util.ArrayList<>();
         if (keyService.isPerUser(user)) {
             candidates.add(new FastSyncArtifact(keyService.perUserKey(user), FastSyncTier.PER_USER));
@@ -288,13 +316,19 @@ public class MediaController {
             candidates.add(new FastSyncArtifact(sqliteCatchmentKey(catchmentUuid), FastSyncTier.CATCHMENT));
         }
         candidates.add(new FastSyncArtifact(snapshotKeyFor(user), FastSyncTier.SNAPSHOT));
-        return candidates.stream().filter(candidate -> present.test(candidate.key())).findFirst();
+        for (FastSyncArtifact candidate : candidates) {
+            java.util.Optional<java.util.Date> lastModified = lastModifiedOf.apply(candidate.key());
+            if (lastModified.isPresent()) {
+                return java.util.Optional.of(new FastSyncArtifact(candidate.key(), candidate.tier(), lastModified.get()));
+            }
+        }
+        return java.util.Optional.empty();
     }
 
     private java.util.Optional<FastSyncArtifact> resolveFastSyncDownloadKey() {
         User user = UserContextHolder.getUserContext().getUser();
         String catchmentUuid = user.getCatchment() == null ? null : user.getCatchment().getUuid();
-        return fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, s3Service::fileExists);
+        return fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, s3Service::getLastModified);
     }
 
     // Extracted so the group gate is tested independently of storage and UserContextHolder.
@@ -332,8 +366,10 @@ public class MediaController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("NoFastSyncDatabase");
             }
             URL url = s3Service.generateMediaUploadUrl(artifact.get().key(), HttpMethod.GET);
+            List<String> supersededResetSyncUuids = resetSyncService.getSupersededResetSyncUuids(
+                    UserContextHolder.getUserContext().getUser(), artifact.get().lastModified());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                    .body(new FastSyncDownloadResponse(url.toString(), artifact.get().tier()));
+                    .body(new FastSyncDownloadResponse(url.toString(), artifact.get().tier(), supersededResetSyncUuids));
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));

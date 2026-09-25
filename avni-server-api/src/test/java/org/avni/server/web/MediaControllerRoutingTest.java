@@ -16,7 +16,9 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.factory.TestOrganisationBuilder;
 import org.avni.server.domain.factory.UserContextBuilder;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.domain.Catchment;
 import org.avni.server.service.FastSyncKeyService;
+import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.storage.StorageServiceProvider;
@@ -70,6 +72,8 @@ public class MediaControllerRoutingTest {
     private UserGroupRepository userGroupRepository;
     @Mock
     private FastSyncKeyService fastSyncKeyService;
+    @Mock
+    private ResetSyncService resetSyncService;
 
     private MediaController controller;
 
@@ -77,7 +81,7 @@ public class MediaControllerRoutingTest {
     public void setUp() throws Exception {
         initMocks(this);
         controller = new MediaController(defaultS3Service, storageServiceProvider, accessControlService,
-                errorBodyBuilder, groupRepository, userGroupRepository, fastSyncKeyService);
+                errorBodyBuilder, groupRepository, userGroupRepository, fastSyncKeyService, resetSyncService);
 
         when(storageServiceProvider.forDataClass(StorageDataClass.MODEL)).thenReturn(modelBackend);
         when(storageServiceProvider.forDataClass(StorageDataClass.DEFAULT)).thenReturn(defaultS3Service);
@@ -282,10 +286,12 @@ public class MediaControllerRoutingTest {
                 .thenReturn(new UserGroup());
     }
 
+    private static final java.util.Date DUMP_TAKEN_AT = new java.util.Date(1_700_000_000_000L);
+
     private void anArtifactExists() {
         when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(true);
         when(fastSyncKeyService.perUserKey(any(User.class))).thenReturn(PER_USER_KEY);
-        when(defaultS3Service.fileExists(PER_USER_KEY)).thenReturn(true);
+        when(defaultS3Service.getLastModified(PER_USER_KEY)).thenReturn(java.util.Optional.of(DUMP_TAKEN_AT));
     }
 
     @Test
@@ -330,7 +336,8 @@ public class MediaControllerRoutingTest {
         ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.PER_USER), response.getBody());
+        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.PER_USER, java.util.List.of()),
+                response.getBody());
         verify(defaultS3Service).generateMediaUploadUrl(PER_USER_KEY, HttpMethod.GET);
     }
 
@@ -353,5 +360,92 @@ public class MediaControllerRoutingTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("true", response.getBody());
+    }
+
+    // --- the reset syncs a restore of the artifact already satisfies ---
+
+    private User theUser() {
+        return UserContextHolder.getUserContext().getUser();
+    }
+
+    private void withCatchment(String uuid) {
+        Catchment catchment = new Catchment();
+        catchment.setUuid(uuid);
+        theUser().setCatchment(catchment);
+    }
+
+    @Test
+    public void theSqliteDownloadCarriesTheResetsTheDumpSupersedes() {
+        anArtifactExists();
+        inMigrationGroup();
+        when(resetSyncService.getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT))
+                .thenReturn(java.util.List.of("reset-a", "reset-b"));
+
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.PER_USER,
+                java.util.List.of("reset-a", "reset-b")), response.getBody());
+    }
+
+    @Test
+    public void theSqliteDownloadAsksAboutTheWinningArtifactsOwnTimestamp() {
+        // The two artifacts are different objects with different LastModified, so the answer must
+        // come from the one actually being handed out, not from any other probe.
+        anArtifactExists();
+        inMigrationGroup();
+
+        controller.generateFastSyncDownloadUrl();
+
+        verify(resetSyncService).getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT);
+        verify(defaultS3Service, never()).fileExists(anyString());
+    }
+
+    @Test
+    public void theRealmSiblingRouteAnswersForTheRealmArtifact() {
+        withCatchment("cat-uuid");
+        java.util.Date realmDumpTakenAt = new java.util.Date(1_600_000_000_000L);
+        when(defaultS3Service.getLastModified("MobileDbBackup-cat-uuid"))
+                .thenReturn(java.util.Optional.of(realmDumpTakenAt));
+        when(resetSyncService.getSupersededResetSyncUuids(theUser(), realmDumpTakenAt))
+                .thenReturn(java.util.List.of("reset-a"));
+
+        ResponseEntity<java.util.List<String>> response = controller.mobileDatabaseBackupSupersededResets();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(java.util.List.of("reset-a"), response.getBody());
+        verify(defaultS3Service).getLastModified("MobileDbBackup-cat-uuid");
+    }
+
+    @Test
+    public void theRealmSiblingRouteReturnsAnEmptyListWhenThereIsNoArtifact() {
+        withCatchment("cat-uuid");
+        when(defaultS3Service.getLastModified("MobileDbBackup-cat-uuid")).thenReturn(java.util.Optional.empty());
+        when(resetSyncService.getSupersededResetSyncUuids(theUser(), null)).thenReturn(java.util.List.of());
+
+        ResponseEntity<java.util.List<String>> response = controller.mobileDatabaseBackupSupersededResets();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(java.util.List.of(), response.getBody());
+    }
+
+    @Test
+    public void theRealmSiblingRouteReturnsAnEmptyListForACatchmentlessUser() {
+        // mobileDatabaseBackupFile() throws for these; a 500 here would break a restore that works.
+        ResponseEntity<java.util.List<String>> response = controller.mobileDatabaseBackupSupersededResets();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(java.util.List.of(), response.getBody());
+    }
+
+    @Test
+    public void theRealmDownloadUrlIsStillABareString() {
+        // Every released app parses this body as a plain URL, so the uuids must not land in it.
+        withCatchment("cat-uuid");
+
+        ResponseEntity<String> response = controller.generateMobileDatabaseBackupDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("https://s3/put", response.getBody());
     }
 }

@@ -15,6 +15,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class MediaControllerFastSyncTest {
+    private static final java.util.Date DUMP_TAKEN_AT = new java.util.Date(1_700_000_000_000L);
+
     @Mock
     private FastSyncKeyService fastSyncKeyService;
 
@@ -96,7 +98,8 @@ public class MediaControllerFastSyncTest {
             User user, boolean perUser, String catchmentUuid, java.util.Set<String> present) {
         when(fastSyncKeyService.isPerUser(user)).thenReturn(perUser);
         when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
-        return MediaController.fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, present::contains);
+        return MediaController.fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService,
+                key -> present.contains(key) ? java.util.Optional.of(DUMP_TAKEN_AT) : java.util.Optional.empty());
     }
 
     private FastSyncTier tierOf(User user, boolean perUser, java.util.Set<String> present) {
@@ -111,8 +114,9 @@ public class MediaControllerFastSyncTest {
         assertEquals("\"perUser\"", mapper.writeValueAsString(FastSyncTier.PER_USER));
         assertEquals("\"catchment\"", mapper.writeValueAsString(FastSyncTier.CATCHMENT));
         assertEquals("\"snapshot\"", mapper.writeValueAsString(FastSyncTier.SNAPSHOT));
-        assertEquals("{\"url\":\"https://s3/get\",\"tier\":\"catchment\"}",
-                mapper.writeValueAsString(new FastSyncDownloadResponse("https://s3/get", FastSyncTier.CATCHMENT)));
+        assertEquals("{\"url\":\"https://s3/get\",\"tier\":\"catchment\",\"supersededResetSyncUuids\":[\"reset-uuid\"]}",
+                mapper.writeValueAsString(new FastSyncDownloadResponse("https://s3/get", FastSyncTier.CATCHMENT,
+                        java.util.List.of("reset-uuid"))));
     }
 
     @Test
@@ -237,6 +241,28 @@ public class MediaControllerFastSyncTest {
         when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
 
         org.junit.Assert.assertThrows(IllegalArgumentException.class,
-                () -> MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, key -> false));
+                () -> MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, key -> java.util.Optional.empty()));
+    }
+
+    @Test
+    public void theResolvedArtifactCarriesTheTimestampTheProbeReturned() {
+        // The reset rule needs the dump's LastModified. Carrying it out of the probe is what keeps
+        // the download path to one HEAD per candidate instead of a second call for the winner.
+        assertEquals(DUMP_TAKEN_AT,
+                resolveArtifact(aUser(), true, "cat-uuid", java.util.Set.of("fastsync/aw@org/fastsync.db"))
+                        .orElseThrow().lastModified());
+    }
+
+    @Test
+    public void everyCandidateIsProbedAtMostOnce() {
+        User user = aUser();
+        when(fastSyncKeyService.isPerUser(user)).thenReturn(false);
+        java.util.List<String> probed = new java.util.ArrayList<>();
+        MediaController.fastSyncDownloadKeyFor(user, "cat-uuid", fastSyncKeyService, key -> {
+            probed.add(key);
+            return key.equals("MobileDbBackupSqlite-cat-uuid")
+                    ? java.util.Optional.of(DUMP_TAKEN_AT) : java.util.Optional.empty();
+        });
+        assertEquals(java.util.List.of("MobileDbBackupSqlite-cat-uuid"), probed);
     }
 }

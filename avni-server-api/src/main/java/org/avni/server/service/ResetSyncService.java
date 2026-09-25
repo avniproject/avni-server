@@ -10,6 +10,8 @@ import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.avni.server.web.request.webapp.SubjectTypeContractWeb;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +19,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
 public class ResetSyncService {
+    private static final Logger logger = LoggerFactory.getLogger(ResetSyncService.class);
     private final ResetSyncRepository resetSyncRepository;
     private final UserRepository userRepository;
     private final IndividualRepository individualRepository;
@@ -163,5 +167,42 @@ public class ResetSyncService {
 
     public Page<ResetSync> getByLastModifiedForUser(DateTime lastModifiedDateTime, DateTime now, User user, Pageable pageable) {
         return resetSyncRepository.findAllByUserIsNullOrUserAndLastModifiedDateTimeBetweenOrderByLastModifiedDateTimeAscIdAsc(user, lastModifiedDateTime.toDate(), now.toDate(), pageable);
+    }
+
+    // The device has no timestamps on its own ResetSync rows, so it cannot tell a redundant reset
+    // from a real one; the server can, and answers with the ones a restore of this artifact already
+    // satisfies. Never fails the caller: an empty list just leaves every reset in force.
+    public List<String> getSupersededResetSyncUuids(User user, Date artifactLastModified) {
+        try {
+            if (user == null || user.getCatchment() == null) {
+                return Collections.emptyList();
+            }
+            if (!supersedesCatchmentResets(artifactLastModified, user.getCatchment().getLastModifiedDateTime())) {
+                return Collections.emptyList();
+            }
+            return resetSyncRepository.findAllByUserAndIsVoidedFalse(user).stream()
+                    .filter(ResetSyncService::isCatchmentScoped)
+                    .map(CHSBaseEntity::getUuid)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Could not work out which reset syncs the fast sync artifact supersedes", e);
+            return Collections.emptyList();
+        }
+    }
+
+    // Compared against the catchment rather than against the reset itself: a peer's dump taken after
+    // the catchment last changed already holds the data a later reset would make the device
+    // re-download, while a dump older than that change genuinely predates it.
+    static boolean supersedesCatchmentResets(Date artifactLastModified, DateTime catchmentLastModified) {
+        if (artifactLastModified == null || catchmentLastModified == null) {
+            return false;
+        }
+        return artifactLastModified.after(catchmentLastModified.toDate());
+    }
+
+    // recordSyncAttributeChange / recordSyncAttributeValueChangeForUser raise subject-type scoped
+    // resets, which mean a sync attribute definition moved. No catchment artifact can satisfy those.
+    static boolean isCatchmentScoped(ResetSync resetSync) {
+        return resetSync.getSubjectType() == null;
     }
 }

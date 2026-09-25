@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface ResetSyncRepository extends TransactionalDataRepository<ResetSync> {
@@ -17,4 +18,6 @@ public interface ResetSyncRepository extends TransactionalDataRepository<ResetSy
             Date now,
             Pageable pageable
     );
+
+    List<ResetSync> findAllByUserAndIsVoidedFalse(User user);
 }

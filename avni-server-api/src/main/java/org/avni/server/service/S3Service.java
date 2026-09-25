@@ -31,6 +31,9 @@ public interface S3Service {
 
     boolean fileExists(String fileName);
 
+    // A single HEAD that answers existence and, for a caller that needs it, when the object was last written.
+    Optional<Date> getLastModified(String fileName);
+
     URL generateMediaDownloadUrl(String url);
 
     ObjectInfo uploadFile(File tempSourceFile, String destFileName, String directory) throws IOException;
