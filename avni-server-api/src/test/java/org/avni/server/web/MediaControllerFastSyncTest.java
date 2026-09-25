@@ -1,6 +1,8 @@
 package org.avni.server.web;
 
 import org.avni.server.domain.User;
+import org.avni.server.web.response.FastSyncDownloadResponse;
+import org.avni.server.web.response.FastSyncTier;
 import org.avni.server.service.FastSyncKeyService;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,9 +88,53 @@ public class MediaControllerFastSyncTest {
 
     private java.util.Optional<String> resolve(User user, boolean perUser, String catchmentUuid,
                                                java.util.Set<String> present) {
+        return resolveArtifact(user, perUser, catchmentUuid, present)
+                .map(MediaController.FastSyncArtifact::key);
+    }
+
+    private java.util.Optional<MediaController.FastSyncArtifact> resolveArtifact(
+            User user, boolean perUser, String catchmentUuid, java.util.Set<String> present) {
         when(fastSyncKeyService.isPerUser(user)).thenReturn(perUser);
         when(fastSyncKeyService.perUserKey(user)).thenReturn("fastsync/aw@org/fastsync.db");
         return MediaController.fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, present::contains);
+    }
+
+    private FastSyncTier tierOf(User user, boolean perUser, java.util.Set<String> present) {
+        return resolveArtifact(user, perUser, "cat-uuid", present).orElseThrow().tier();
+    }
+
+    @Test
+    public void theTierSerialisesWithTheExactSpellingTheClientBranchesOn() throws Exception {
+        // The client switches restore behaviour on these three strings. Renaming an enum constant
+        // must not change what goes on the wire, which is what @JsonValue is there to guarantee.
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        assertEquals("\"perUser\"", mapper.writeValueAsString(FastSyncTier.PER_USER));
+        assertEquals("\"catchment\"", mapper.writeValueAsString(FastSyncTier.CATCHMENT));
+        assertEquals("\"snapshot\"", mapper.writeValueAsString(FastSyncTier.SNAPSHOT));
+        assertEquals("{\"url\":\"https://s3/get\",\"tier\":\"catchment\"}",
+                mapper.writeValueAsString(new FastSyncDownloadResponse("https://s3/get", FastSyncTier.CATCHMENT)));
+    }
+
+    @Test
+    public void theArtifactCarriesTheTierOfTheKeyThatActuallyWon() {
+        // The client picks assert-identity vs overwrite-identity from this, so the tier is bound to
+        // the key when the candidate is built rather than recomputed afterwards, where it could drift.
+        assertEquals(FastSyncTier.PER_USER,
+                tierOf(aUser(), true, java.util.Set.of("fastsync/aw@org/fastsync.db")));
+        assertEquals(FastSyncTier.CATCHMENT,
+                tierOf(aUser(), false, java.util.Set.of("MobileDbBackupSqlite-cat-uuid")));
+        assertEquals(FastSyncTier.SNAPSHOT,
+                tierOf(aUser(), true, java.util.Set.of("snapshots/aw@org/snapshot.db")));
+    }
+
+    @Test
+    public void aPerUserUserFallingThroughToTheSnapshotIsTaggedSnapshotNotPerUser() {
+        // The dangerous confusion: the client must not overwrite identity on a snapshot, nor assert
+        // it on a catchment dump. Falling through must change the tier, not just the key.
+        assertEquals(FastSyncTier.SNAPSHOT,
+                tierOf(aUser(), true, java.util.Set.of("snapshots/aw@org/snapshot.db")));
+        assertEquals(FastSyncTier.SNAPSHOT,
+                tierOf(aUser(), false, java.util.Set.of("snapshots/aw@org/snapshot.db")));
     }
 
     private User aUser() {
@@ -145,12 +191,12 @@ public class MediaControllerFastSyncTest {
     public void aUserOutsideTheMigrationGroupIsNotEligibleEvenWhenAnArtifactExists() {
         // Review Focus 4. The group gate is what makes "removed from the SQLite group" work: the
         // client must get false here so it falls through to the Realm path, not someone's SQLite file.
-        assertFalse(MediaController.fastSyncEligible(false, java.util.Optional.of("fastsync/aw@org/fastsync.db")));
+        assertFalse(MediaController.fastSyncEligible(false, java.util.Optional.of(new MediaController.FastSyncArtifact("fastsync/aw@org/fastsync.db", FastSyncTier.PER_USER))));
     }
 
     @Test
     public void aGroupMemberWithAnArtifactIsEligible() {
-        assertTrue(MediaController.fastSyncEligible(true, java.util.Optional.of("fastsync/aw@org/fastsync.db")));
+        assertTrue(MediaController.fastSyncEligible(true, java.util.Optional.of(new MediaController.FastSyncArtifact("fastsync/aw@org/fastsync.db", FastSyncTier.PER_USER))));
     }
 
     @Test
