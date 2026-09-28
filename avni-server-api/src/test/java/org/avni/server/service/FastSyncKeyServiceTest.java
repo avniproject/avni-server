@@ -1,55 +1,39 @@
 package org.avni.server.service;
 
 import org.avni.server.application.Subject;
-import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.UserGroupRepository;
-import org.avni.server.domain.Group;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
-import org.avni.server.domain.UserGroup;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.Mockito.when;
 
 public class FastSyncKeyServiceTest {
     private static final Long ORGANISATION_ID = 1L;
     private static final Long USER_ID = 11L;
-    private static final Long EVERYONE_GROUP_ID = 100L;
 
     @Mock
     private SubjectTypeRepository subjectTypeRepository;
-    @Mock
-    private GroupRepository groupRepository;
-    @Mock
-    private UserGroupRepository userGroupRepository;
     private FastSyncKeyService service;
-    private Group everyone;
 
     @Before
     public void setUp() {
         initMocks(this);
-        service = new FastSyncKeyService(subjectTypeRepository, groupRepository, userGroupRepository);
-        when(subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue())
-                .thenReturn(Collections.emptyList());
+        service = new FastSyncKeyService(subjectTypeRepository);
         when(subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User)).thenReturn(null);
         when(subjectTypeRepository.findByIsVoidedFalse()).thenReturn(Collections.emptyList());
-
-        everyone = group(Group.Everyone, EVERYONE_GROUP_ID, UUID.randomUUID().toString());
-        when(groupRepository.findByNameAndOrganisationId(Group.Everyone, ORGANISATION_ID)).thenReturn(everyone);
-        memberOf(everyone, group(Group.SQLITE_MIGRATION, 101L, Group.SQLITE_MIGRATION_UUID));
+        when(subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue())
+                .thenReturn(Collections.emptyList());
     }
 
     private User aUser() {
@@ -66,34 +50,40 @@ public class FastSyncKeyServiceTest {
         return subjectType;
     }
 
-    private Group group(String name, Long id, String uuid) {
-        Group group = new Group();
-        group.setName(name);
-        group.setId(id);
-        group.setUuid(uuid);
-        return group;
-    }
-
-    private Group customGroup(String name) {
-        return group(name, 200L, UUID.randomUUID().toString());
-    }
-
-    private void memberOf(Group... groups) {
-        List<UserGroup> memberships = java.util.Arrays.stream(groups)
-                .map(group -> UserGroup.createMembership(aUser(), group))
-                .collect(java.util.stream.Collectors.toList());
-        when(userGroupRepository.findByUser_IdAndIsVoidedFalse(USER_ID)).thenReturn(memberships);
+    // Both finders answer for the same org, so the stub cannot pretend a directly assignable
+    // subject type exists for one query and not the other.
+    private SubjectType orgHasADirectlyAssignableSubjectType(SubjectType... alsoPresent) {
+        SubjectType subjectType = new SubjectType();
+        subjectType.setType(Subject.Person);
+        subjectType.setDirectlyAssignable(true);
+        List<SubjectType> all = new java.util.ArrayList<>();
+        all.add(subjectType);
+        all.addAll(List.of(alsoPresent));
+        when(subjectTypeRepository.findByIsVoidedFalse()).thenReturn(all);
+        when(subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue())
+                .thenReturn(List.of(subjectType));
+        return subjectType;
     }
 
     @Test
-    public void plainLocationScopedUserIsNotPerUser() {
+    public void plainLocationScopedUserGetsTheCatchmentKey() {
         assertFalse(service.isPerUser(aUser()));
     }
 
     @Test
+    public void orgWithAUserSubjectTypeMakesEveryUserPerUser() {
+        // One subject per field worker, joined to that worker's own user_subject row and never
+        // scoped by location, so a catchment dump carries every peer's. The restoring device keeps
+        // them: it asks syncDetails with includeUserSubjectType=true, so the type is in its own
+        // allowlist and clearEntitiesOutsidePrivileges leaves its rows alone.
+        when(subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User)).thenReturn(new SubjectType());
+        assertTrue(service.isPerUser(aUser()));
+    }
+
+    @Test
     public void orgWithASubjectTypeDeclaringASyncConceptMakesEveryUserPerUser() {
-        // The sync attribute values live per user on that subject type, so the catchment dump is
-        // a union of what different users in the catchment may see.
+        // Filtered by each user's own syncAttribute values, which is a per-row distinction, and
+        // reconciliation on the device works by entity type. avniproject/avni-client#2153.
         when(subjectTypeRepository.findByIsVoidedFalse()).thenReturn(List.of(subjectTypeWithASyncConcept()));
         assertTrue(service.isPerUser(aUser()));
     }
@@ -105,86 +95,39 @@ public class FastSyncKeyServiceTest {
     }
 
     @Test
-    public void orgWithADirectlyAssignableSubjectTypeMakesEveryUserPerUser() {
-        // Review Focus 3. Org shape is the test, not whether this user holds assignments today.
-        when(subjectTypeRepository.findAllByIsVoidedFalseAndIsDirectlyAssignableTrue())
-                .thenReturn(List.of(new SubjectType()));
-        assertTrue(service.isPerUser(aUser()));
+    public void orgWithADirectlyAssignableSubjectTypeGetsTheCatchmentKey() {
+        // clearDirectlyAssignedSubjects deletes the uploader's caseload after a restore and resets
+        // the affected checkpoints, so the next sync re-pulls only what this user is assigned.
+        orgHasADirectlyAssignableSubjectType();
+        assertFalse(service.isPerUser(aUser()));
     }
 
     @Test
-    public void orgWithAUserSubjectTypeMakesEveryUserPerUser() {
+    public void aUserSubjectTypeStillCostsTheKeyAlongsideADirectlyAssignableOne() {
         when(subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User)).thenReturn(new SubjectType());
+        orgHasADirectlyAssignableSubjectType();
         assertTrue(service.isPerUser(aUser()));
     }
 
     @Test
-    public void userInOnlyTheBaselineGroupsIsNotPerUser() {
-        // This is the case that keeps the shared catchment tier alive. Everyone is attached to every
-        // user and cannot be detached, and SQLite Migration only marks the migration, so a user with
-        // nothing else holds exactly the baseline privilege set that their catchment peers hold.
+    public void aSyncConceptStillCostsTheKeyAlongsideADirectlyAssignableOne() {
+        orgHasADirectlyAssignableSubjectType(subjectTypeWithASyncConcept());
+        assertTrue(service.isPerUser(aUser()));
+    }
+
+    @Test
+    public void theKeyIsDecidedWithoutReadingTheUsersGroupMemberships() {
+        // Group privileges used to make the key per user. They no longer do:
+        // clearEntitiesOutsidePrivileges fetches the restoring user's own syncable items and removes
+        // every subject type they do not name. The service is now built from the subject type
+        // repository alone, so no group state can reach this decision - that is what this pins, and
+        // reinstating the group term cannot satisfy it.
+        List<Class<?>> collaborators = java.util.Arrays.stream(FastSyncKeyService.class.getDeclaredFields())
+                .filter(field -> !field.isSynthetic() && !java.lang.reflect.Modifier.isStatic(field.getModifiers()))
+                .map(java.lang.reflect.Field::getType)
+                .collect(java.util.stream.Collectors.toList());
+        assertEquals(List.of(SubjectTypeRepository.class), collaborators);
         assertFalse(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void userInACustomGroupIsPerUser() {
-        // SyncDetailsService gates every syncable item on the group privileges of the requesting
-        // user, so two users in one catchment sync different entity types.
-        memberOf(everyone, customGroup("Field Supervisors"));
-        assertTrue(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void userInAdministratorsIsPerUser() {
-        // Administrators is a default group but hasAllPrivileges short-circuits to every privilege,
-        // so an admin's dump is a superset of what their catchment peers may see.
-        memberOf(everyone, customGroup(Group.Administrators));
-        assertTrue(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void userInMetabaseUsersIsPerUser() {
-        memberOf(everyone, customGroup(Group.METABASE_USERS));
-        assertTrue(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void aVoidedMembershipDoesNotMakeTheUserPerUser() {
-        verify(userGroupRepository, org.mockito.Mockito.never()).findByUser_IdAndIsVoidedFalse(USER_ID);
-        assertFalse(service.isPerUser(aUser()));
-        // Voided memberships are excluded by the finder itself, so reading memberships any other way
-        // would let a detached custom group keep costing the user the shared dump.
-        verify(userGroupRepository).findByUser_IdAndIsVoidedFalse(USER_ID);
-    }
-
-    @Test
-    public void aCustomGroupRenamedToEveryoneStillMakesTheUserPerUser() {
-        // groups is unique on (uuid, organisation_id) only, and updateGroup does not block renaming
-        // a group TO a default name, so the baseline cannot be matched by name.
-        memberOf(everyone, customGroup(Group.Everyone));
-        assertTrue(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void aCustomGroupRenamedToSqliteMigrationStillMakesTheUserPerUser() {
-        memberOf(everyone, customGroup(Group.SQLITE_MIGRATION));
-        assertTrue(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void userWhoseEveryoneMembershipWasDetachedIsPerUser() {
-        // POST /userGroup/{id} voids any membership by id with no Everyone guard, and
-        // User.getUserGroups() filters voided rows out so no repair path ever re-attaches it. Such
-        // a user holds no privileges at all, so a shared catchment dump would hand them rows their
-        // own sync would never fetch. Absence of extra groups is not proof of the baseline.
-        memberOf(group(Group.SQLITE_MIGRATION, 101L, Group.SQLITE_MIGRATION_UUID));
-        assertTrue(service.isPerUser(aUser()));
-    }
-
-    @Test
-    public void userWithNoMembershipsAtAllIsPerUser() {
-        when(userGroupRepository.findByUser_IdAndIsVoidedFalse(USER_ID)).thenReturn(Collections.emptyList());
-        assertTrue(service.isPerUser(aUser()));
     }
 
     @Test
@@ -194,7 +137,6 @@ public class FastSyncKeyServiceTest {
 
     @Test
     public void rejectsAUsernameThatCouldEscapeThePrefix() {
-        // Review Focus 2. The segment is interpolated into an S3 key.
         User user = new User();
         user.setUsername("a/../b");
         assertThrows(IllegalArgumentException.class, () -> service.perUserKey(user));
