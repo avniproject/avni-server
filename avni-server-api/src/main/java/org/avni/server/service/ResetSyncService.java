@@ -7,6 +7,7 @@ import org.avni.server.domain.*;
 import org.avni.server.util.JsonObjectUtil;
 import org.avni.server.web.request.CatchmentContract;
 import org.avni.server.web.request.UserContract;
+import org.avni.server.web.response.FastSyncTier;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.avni.server.web.request.webapp.SubjectTypeContractWeb;
 import org.joda.time.DateTime;
@@ -172,9 +173,9 @@ public class ResetSyncService {
     // The device has no timestamps on its own ResetSync rows, so it cannot tell a redundant reset
     // from a real one; the server can, and answers with the ones a restore of this artifact already
     // satisfies. Never fails the caller: an empty list just leaves every reset in force.
-    public List<String> getSupersededResetSyncUuids(User user, Date artifactLastModified) {
+    public List<String> getSupersededResetSyncUuids(User user, Date artifactLastModified, FastSyncTier tier) {
         try {
-            if (user == null || user.getCatchment() == null) {
+            if (!tierMaySupersede(tier) || user == null || user.getCatchment() == null) {
                 return Collections.emptyList();
             }
             if (!supersedesCatchmentResets(artifactLastModified, user.getCatchment().getLastModifiedDateTime())) {
@@ -198,6 +199,15 @@ public class ResetSyncService {
             return false;
         }
         return artifactLastModified.after(catchmentLastModified.toDate());
+    }
+
+    // Only the catchment artifact's key is derived from the user's current catchment, so only it
+    // necessarily delivers current-scope data. A perUser key is derived from the username and does
+    // not move when the user does: a dump they uploaded from their old catchment is still newer than
+    // the new catchment, and superseding on that alone would leave them running on the old
+    // catchment's rows. Nothing about a snapshot establishes that it postdates the assignment either.
+    static boolean tierMaySupersede(FastSyncTier tier) {
+        return tier == FastSyncTier.CATCHMENT;
     }
 
     // recordSyncAttributeChange / recordSyncAttributeValueChangeForUser raise subject-type scoped

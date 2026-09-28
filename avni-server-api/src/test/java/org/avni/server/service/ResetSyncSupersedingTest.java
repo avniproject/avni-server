@@ -9,6 +9,7 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.ResetSync;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.web.response.FastSyncTier;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,7 +89,7 @@ public class ResetSyncSupersedingTest {
         theUserHas(aUserScopedReset("reset-b"));
 
         assertEquals(Collections.singletonList("reset-b"),
-                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -98,7 +99,7 @@ public class ResetSyncSupersedingTest {
         theUserHas(aUserScopedReset("reset-b"));
 
         assertEquals(Collections.emptyList(),
-                service.getSupersededResetSyncUuids(user, DUMP_BEFORE_THE_CHANGE));
+                service.getSupersededResetSyncUuids(user, DUMP_BEFORE_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -108,7 +109,7 @@ public class ResetSyncSupersedingTest {
         theUserHas(aUserScopedReset("reset-b"));
 
         assertEquals(Collections.emptyList(),
-                service.getSupersededResetSyncUuids(user, CATCHMENT_CHANGED_AT.toDate()));
+                service.getSupersededResetSyncUuids(user, CATCHMENT_CHANGED_AT.toDate(), FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -126,7 +127,7 @@ public class ResetSyncSupersedingTest {
         theUserHas(aSubjectTypeScopedReset("reset-sync-attribute"));
 
         assertEquals(Collections.emptyList(),
-                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -136,7 +137,7 @@ public class ResetSyncSupersedingTest {
                 aUserScopedReset("reset-catchment-2"));
 
         assertEquals(Arrays.asList("reset-catchment-1", "reset-catchment-2"),
-                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -146,7 +147,7 @@ public class ResetSyncSupersedingTest {
         theUserHas(aUserScopedReset("reset-1"), aUserScopedReset("reset-2"), aUserScopedReset("reset-3"));
 
         assertEquals(Arrays.asList("reset-1", "reset-2", "reset-3"),
-                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -154,7 +155,7 @@ public class ResetSyncSupersedingTest {
         theUserHas();
 
         assertEquals(Collections.emptyList(),
-                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -163,7 +164,7 @@ public class ResetSyncSupersedingTest {
         catchmentless.setUsername("no-catchment@org");
 
         assertEquals(Collections.emptyList(),
-                service.getSupersededResetSyncUuids(catchmentless, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(catchmentless, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
         verify(resetSyncRepository, never()).findAllByUserAndIsVoidedFalse(any(User.class));
     }
 
@@ -171,13 +172,13 @@ public class ResetSyncSupersedingTest {
     public void noArtifactMeansNoTimestampAndSoAnEmptyList() {
         theUserHas(aUserScopedReset("reset-b"));
 
-        assertEquals(Collections.emptyList(), service.getSupersededResetSyncUuids(user, null));
+        assertEquals(Collections.emptyList(), service.getSupersededResetSyncUuids(user, null, FastSyncTier.CATCHMENT));
     }
 
     @Test
     public void aNullUserGetsAnEmptyList() {
         assertEquals(Collections.emptyList(),
-                service.getSupersededResetSyncUuids(null, DUMP_AFTER_THE_CHANGE));
+                service.getSupersededResetSyncUuids(null, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
     }
 
     @Test
@@ -185,7 +186,7 @@ public class ResetSyncSupersedingTest {
         when(resetSyncRepository.findAllByUserAndIsVoidedFalse(user))
                 .thenThrow(new RuntimeException("connection reset"));
 
-        List<String> uuids = service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE);
+        List<String> uuids = service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT);
 
         assertEquals(Collections.emptyList(), uuids);
     }
@@ -195,9 +196,64 @@ public class ResetSyncSupersedingTest {
         // Read-only: the client decides what to mark, the server only reports.
         theUserHas(aUserScopedReset("reset-b"));
 
-        service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE);
+        service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT);
 
         verify(resetSyncRepository, never()).save(any(ResetSync.class));
         verify(resetSyncRepository, never()).saveAll(any());
+    }
+
+    // --- only a catchment-keyed artifact may supersede ---
+
+    @Test
+    public void aPerUserDumpNeverSupersedesBecauseItsKeyDoesNotFollowTheUsersCatchment() {
+        // T1 B, then in catchment X, uploads fastsync/B/fastsync.db. T2 B is moved into C and a
+        // reset is raised. T3 B restores and is served that same T1 object, still full of X's rows.
+        // The dump is newer than C, so the timestamp rule alone would call the reset redundant and
+        // leave B running on another catchment's data.
+        theUserHas(aUserScopedReset("reset-b"));
+
+        assertEquals(Collections.emptyList(),
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.PER_USER));
+        verify(resetSyncRepository, never()).findAllByUserAndIsVoidedFalse(any(User.class));
+
+        // Positive control on the identical fixture: the emptiness above is the tier and nothing
+        // else. A broken fixture or a swallowed exception would make this line empty too.
+        assertEquals(Collections.singletonList("reset-b"),
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
+    }
+
+    @Test
+    public void aSnapshotNeverSupersedesBecauseNothingSaysItPostdatesTheCatchmentAssignment() {
+        theUserHas(aUserScopedReset("reset-b"));
+
+        assertEquals(Collections.emptyList(),
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.SNAPSHOT));
+        verify(resetSyncRepository, never()).findAllByUserAndIsVoidedFalse(any(User.class));
+
+        assertEquals(Collections.singletonList("reset-b"),
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
+    }
+
+    @Test
+    public void anUnknownTierNeverSupersedes() {
+        theUserHas(aUserScopedReset("reset-b"));
+
+        assertEquals(Collections.emptyList(),
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, null));
+
+        assertEquals(Collections.singletonList("reset-b"),
+                service.getSupersededResetSyncUuids(user, DUMP_AFTER_THE_CHANGE, FastSyncTier.CATCHMENT));
+    }
+
+    @Test
+    public void theCatchmentIsTheOnlyTierWhoseKeyGuaranteesCurrentScope() {
+        assertTrue("a catchment dump's key is the user's current catchment",
+                ResetSyncService.tierMaySupersede(FastSyncTier.CATCHMENT));
+        assertFalse("a perUser dump's key is the username and outlives a catchment move",
+                ResetSyncService.tierMaySupersede(FastSyncTier.PER_USER));
+        assertFalse("nothing says a snapshot postdates the catchment assignment",
+                ResetSyncService.tierMaySupersede(FastSyncTier.SNAPSHOT));
+        assertFalse("an unrecognised tier is not known to be safe",
+                ResetSyncService.tierMaySupersede(null));
     }
 }

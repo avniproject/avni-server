@@ -175,7 +175,7 @@ public class MediaController {
             User user = UserContextHolder.getUserContext().getUser();
             java.util.Optional<java.util.Date> lastModified = s3Service.getLastModified(mobileDatabaseBackupFile());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                    .body(resetSyncService.getSupersededResetSyncUuids(user, lastModified.orElse(null)));
+                    .body(resetSyncService.getSupersededResetSyncUuids(user, lastModified.orElse(null), FastSyncTier.CATCHMENT));
         } catch (Exception e) {
             // A user with no catchment, or an unreadable artifact, must not break the restore they
             // are in the middle of. Nothing superseded simply leaves every reset in force.
@@ -367,7 +367,7 @@ public class MediaController {
             }
             URL url = s3Service.generateMediaUploadUrl(artifact.get().key(), HttpMethod.GET);
             List<String> supersededResetSyncUuids = resetSyncService.getSupersededResetSyncUuids(
-                    UserContextHolder.getUserContext().getUser(), artifact.get().lastModified());
+                    UserContextHolder.getUserContext().getUser(), artifact.get().lastModified(), artifact.get().tier());
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                     .body(new FastSyncDownloadResponse(url.toString(), artifact.get().tier(), supersededResetSyncUuids));
         } catch (AccessDeniedException e) {

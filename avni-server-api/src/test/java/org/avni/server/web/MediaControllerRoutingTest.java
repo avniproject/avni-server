@@ -374,17 +374,25 @@ public class MediaControllerRoutingTest {
         theUser().setCatchment(catchment);
     }
 
+    private static final String CATCHMENT_KEY = "MobileDbBackupSqlite-cat-uuid";
+
+    private void aCatchmentArtifactExists() {
+        withCatchment("cat-uuid");
+        when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(false);
+        when(defaultS3Service.getLastModified(CATCHMENT_KEY)).thenReturn(java.util.Optional.of(DUMP_TAKEN_AT));
+    }
+
     @Test
     public void theSqliteDownloadCarriesTheResetsTheDumpSupersedes() {
-        anArtifactExists();
+        aCatchmentArtifactExists();
         inMigrationGroup();
-        when(resetSyncService.getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT))
+        when(resetSyncService.getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT, FastSyncTier.CATCHMENT))
                 .thenReturn(java.util.List.of("reset-a", "reset-b"));
 
         ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.PER_USER,
+        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.CATCHMENT,
                 java.util.List.of("reset-a", "reset-b")), response.getBody());
     }
 
@@ -395,10 +403,50 @@ public class MediaControllerRoutingTest {
         anArtifactExists();
         inMigrationGroup();
 
-        controller.generateFastSyncDownloadUrl();
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
 
-        verify(resetSyncService).getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(resetSyncService).getSupersededResetSyncUuids(eq(theUser()), eq(DUMP_TAKEN_AT), any());
         verify(defaultS3Service, never()).fileExists(anyString());
+    }
+
+    @Test
+    public void theSqliteDownloadTellsTheResetRuleThatAPerUserDumpWon() {
+        // A perUser key is derived from the username, so it survives its owner being moved between
+        // catchments and can still hold the old catchment's rows. The rule must see which tier won.
+        anArtifactExists();
+        withCatchment("cat-uuid");
+        inMigrationGroup();
+
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(resetSyncService).getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT, FastSyncTier.PER_USER);
+    }
+
+    @Test
+    public void theSqliteDownloadTellsTheResetRuleThatACatchmentDumpWon() {
+        aCatchmentArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(resetSyncService).getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT, FastSyncTier.CATCHMENT);
+    }
+
+    @Test
+    public void theSqliteDownloadTellsTheResetRuleThatASnapshotWon() {
+        withCatchment("cat-uuid");
+        when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(false);
+        when(defaultS3Service.getLastModified("snapshots/device-user@org/snapshot.db"))
+                .thenReturn(java.util.Optional.of(DUMP_TAKEN_AT));
+        inMigrationGroup();
+
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(resetSyncService).getSupersededResetSyncUuids(theUser(), DUMP_TAKEN_AT, FastSyncTier.SNAPSHOT);
     }
 
     @Test
@@ -407,7 +455,7 @@ public class MediaControllerRoutingTest {
         java.util.Date realmDumpTakenAt = new java.util.Date(1_600_000_000_000L);
         when(defaultS3Service.getLastModified("MobileDbBackup-cat-uuid"))
                 .thenReturn(java.util.Optional.of(realmDumpTakenAt));
-        when(resetSyncService.getSupersededResetSyncUuids(theUser(), realmDumpTakenAt))
+        when(resetSyncService.getSupersededResetSyncUuids(theUser(), realmDumpTakenAt, FastSyncTier.CATCHMENT))
                 .thenReturn(java.util.List.of("reset-a"));
 
         ResponseEntity<java.util.List<String>> response = controller.mobileDatabaseBackupSupersededResets();
@@ -418,10 +466,30 @@ public class MediaControllerRoutingTest {
     }
 
     @Test
+    public void theRealmSiblingRouteStillSupersedesBecauseItsKeyIsAlwaysTheCatchmentUuid() {
+        // Why the Realm route keeps the timestamp rule: MobileDbBackup-<catchmentUuid> is the only
+        // Realm key there is. mobileDatabaseBackupFile() builds it from the user's current catchment
+        // and CatchmentController probes and deletes that same key. There is no per-user variant, so
+        // moving the user moves the object they are served, unlike the SQLite perUser tier.
+        withCatchment("cat-x");
+        java.util.Date realmDumpTakenAt = new java.util.Date(1_600_000_000_000L);
+        when(defaultS3Service.getLastModified(anyString())).thenReturn(java.util.Optional.of(realmDumpTakenAt));
+
+        controller.mobileDatabaseBackupSupersededResets();
+        verify(defaultS3Service).getLastModified("MobileDbBackup-cat-x");
+        verify(resetSyncService).getSupersededResetSyncUuids(theUser(), realmDumpTakenAt, FastSyncTier.CATCHMENT);
+
+        withCatchment("cat-c");
+        controller.mobileDatabaseBackupSupersededResets();
+        verify(defaultS3Service).getLastModified("MobileDbBackup-cat-c");
+    }
+
+    @Test
     public void theRealmSiblingRouteReturnsAnEmptyListWhenThereIsNoArtifact() {
         withCatchment("cat-uuid");
         when(defaultS3Service.getLastModified("MobileDbBackup-cat-uuid")).thenReturn(java.util.Optional.empty());
-        when(resetSyncService.getSupersededResetSyncUuids(theUser(), null)).thenReturn(java.util.List.of());
+        when(resetSyncService.getSupersededResetSyncUuids(theUser(), null, FastSyncTier.CATCHMENT))
+                .thenReturn(java.util.List.of());
 
         ResponseEntity<java.util.List<String>> response = controller.mobileDatabaseBackupSupersededResets();
 
