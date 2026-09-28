@@ -139,8 +139,7 @@ public class MediaController {
         if (user.getCatchment() == null) {
             throw new ValidationException("NoCatchmentFound");
         }
-        String catchmentUuid = user.getCatchment().getUuid();
-        return format("MobileDbBackup-%s", catchmentUuid);
+        return FastSyncKeyService.realmCatchmentKey(user.getCatchment().getUuid());
     }
 
     // A migrated user must never be offered the Realm dump: the client's restoreDump falls through
@@ -225,10 +224,6 @@ public class MediaController {
         return format("snapshots/%s/snapshot.db", FastSyncKeyService.safeSegment(user.getUsername()));
     }
 
-    private static String sqliteCatchmentKey(String catchmentUuid) {
-        return format("MobileDbBackupSqlite-%s", catchmentUuid);
-    }
-
     // Static and parameterised so the key decision is testable without a Spring context or a
     // UserContextHolder. The route below supplies the authenticated user and their catchment.
     // BadRequestError carries the 400 the caller should see; ValidationException is mapped to a 500
@@ -241,7 +236,7 @@ public class MediaController {
         if (catchmentUuid == null) {
             throw new BadRequestError("NoCatchmentFound");
         }
-        return sqliteCatchmentKey(catchmentUuid);
+        return FastSyncKeyService.sqliteCatchmentKey(catchmentUuid);
     }
 
     private String fastSyncUploadKey() {
@@ -285,7 +280,7 @@ public class MediaController {
             // With a null catchment the key would be "MobileDbBackupSqlite-null", a real and
             // writable object shared by every catchmentless user. Download degrades to the next
             // tier rather than erroring, unlike upload.
-            candidates.add(new FastSyncArtifact(sqliteCatchmentKey(catchmentUuid), FastSyncTier.CATCHMENT));
+            candidates.add(new FastSyncArtifact(FastSyncKeyService.sqliteCatchmentKey(catchmentUuid), FastSyncTier.CATCHMENT));
         }
         candidates.add(new FastSyncArtifact(snapshotKeyFor(user), FastSyncTier.SNAPSHOT));
         return candidates.stream().filter(candidate -> present.test(candidate.key())).findFirst();

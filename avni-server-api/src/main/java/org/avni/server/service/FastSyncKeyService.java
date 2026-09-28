@@ -94,6 +94,21 @@ public class FastSyncKeyService {
         return format("fastsync/%s/fastsync.db", safeSegment(user.getUsername()));
     }
 
+    public static String realmCatchmentKey(String catchmentUuid) {
+        return format("MobileDbBackup-%s", catchmentUuid);
+    }
+
+    public static String sqliteCatchmentKey(String catchmentUuid) {
+        return format("MobileDbBackupSqlite-%s", catchmentUuid);
+    }
+
+    // One catchment has one dump per database backend. The admin screen's existence check and its
+    // "delete fast sync" must cover the same set as the media routes write, or a dump outlives the
+    // locations it was taken from and is restored by a peer who must not see them.
+    public static List<String> catchmentKeys(String catchmentUuid) {
+        return List.of(realmCatchmentKey(catchmentUuid), sqliteCatchmentKey(catchmentUuid));
+    }
+
     // Usernames are interpolated into an S3 key. A separator or traversal segment would place the
     // object outside the caller's prefix, which is the whole protection here.
     public static String safeSegment(String username) {
