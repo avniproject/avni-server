@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.avni.server.application.KeyType;
 import org.avni.server.application.KeyValues;
 import org.avni.server.framework.hibernate.ConceptMediaListUserType;
 import org.avni.server.framework.hibernate.KeyValuesUserType;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.Type;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,6 +26,7 @@ import java.util.stream.Stream;
 public class Concept extends OrganisationAwareEntity {
     private static final int POSTGRES_MAX_COLUMN_NAME_LENGTH = 63;
     private static final int NUMBER_OF_CHARACTERS_TO_ACCOMMODATE_HASHCODE = 14;
+    private static final Pattern JSON_TRUE = Pattern.compile("[ \\t\\n\\r]*true[ \\t\\n\\r]*");
 
     @NotNull
     private String name;
@@ -273,5 +276,12 @@ public class Concept extends OrganisationAwareEntity {
 
     public void removeAnswer(ConceptAnswer conceptAnswer) {
         this.conceptAnswers.remove(conceptAnswer);
+    }
+
+    @JsonIgnore
+    public boolean isHidden() {
+        if (keyValues == null || !keyValues.containsKey(KeyType.hidden)) return false;
+        Object value = keyValues.get(KeyType.hidden).getValue();
+        return Boolean.TRUE.equals(value) || (value instanceof String && JSON_TRUE.matcher((String) value).matches());
     }
 }

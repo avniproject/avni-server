@@ -1,5 +1,8 @@
 package org.avni.server.domain;
 
+import org.avni.server.application.KeyType;
+import org.avni.server.application.KeyValue;
+import org.avni.server.application.KeyValues;
 import org.junit.Test;
 
 import java.util.*;
@@ -38,6 +41,62 @@ public class ConceptTest {
     private Concept createConcept(String name) {
         Concept concept = new Concept();
         concept.setName(name);
+        return concept;
+    }
+
+    @Test
+    public void hiddenKeyIsNamedAsTheFormDesignerWritesItAndThePhoneReadsIt() {
+        assertEquals("hidden", KeyType.hidden.toString());
+    }
+
+    @Test
+    public void isHiddenWhenTheHiddenValueIsTrue() {
+        assertTrue(conceptWithHiddenValue(true).isHidden());
+    }
+
+    @Test
+    public void isHiddenWhenTheHiddenValueIsTheTextTrueWithWhitespaceThePhoneAllows() {
+        assertTrue(conceptWithHiddenValue("true").isHidden());
+        assertTrue(conceptWithHiddenValue(" \t\ntrue\r ").isHidden());
+    }
+
+    @Test
+    public void isNotHiddenForAValueThePhoneDoesNotReadAsTrue() {
+        assertFalse(conceptWithHiddenValue(false).isHidden());
+        assertFalse(conceptWithHiddenValue("false").isHidden());
+        assertFalse(conceptWithHiddenValue("TRUE").isHidden());
+        assertFalse(conceptWithHiddenValue("yes").isHidden());
+        assertFalse(conceptWithHiddenValue(1).isHidden());
+        assertFalse(conceptWithHiddenValue("\u000Btrue").isHidden());
+        assertFalse(conceptWithHiddenValue(null).isHidden());
+    }
+
+    @Test
+    public void isNotHiddenWithoutAHiddenKey() {
+        assertFalse(createConcept("No key-values").isHidden());
+
+        Concept concept = createConcept("Other key-values");
+        KeyValues keyValues = new KeyValues();
+        keyValues.add(new KeyValue(KeyType.contact_number, "yes"));
+        concept.setKeyValues(keyValues);
+        assertFalse(concept.isHidden());
+    }
+
+    @Test
+    public void theFirstHiddenEntryDecidesAsOnThePhone() {
+        Concept concept = createConcept("Two hidden entries");
+        KeyValues keyValues = new KeyValues();
+        keyValues.add(new KeyValue(KeyType.hidden, "no"));
+        keyValues.add(new KeyValue(KeyType.hidden, true));
+        concept.setKeyValues(keyValues);
+        assertFalse(concept.isHidden());
+    }
+
+    private Concept conceptWithHiddenValue(Object value) {
+        Concept concept = createConcept("AI verdict");
+        KeyValues keyValues = new KeyValues();
+        keyValues.add(new KeyValue(KeyType.hidden, value));
+        concept.setKeyValues(keyValues);
         return concept;
     }
 }
