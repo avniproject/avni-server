@@ -129,7 +129,9 @@ public class BaseSubjectSearchQueryBuilder<T> {
             List<SearchResultConcepts> searchResultConcepts = sf.getSearchResultConcepts();
             searchResultConcepts.forEach(c -> {
                 org.avni.server.domain.Concept concept = conceptRepository.findByUuid(c.getUuid());
-                addCustomFields(concept);
+                if (!concept.isHidden()) {
+                    addCustomFields(concept);
+                }
             });
         });
         return (T) this;
