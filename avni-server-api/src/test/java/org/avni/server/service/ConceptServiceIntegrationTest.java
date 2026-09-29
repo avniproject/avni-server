@@ -1,5 +1,8 @@
 package org.avni.server.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.avni.server.application.KeyType;
 import org.avni.server.application.KeyValue;
 import org.avni.server.application.KeyValues;
 import org.avni.server.common.AbstractControllerIntegrationTest;
@@ -8,9 +11,11 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ConceptMedia;
+import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.ConceptContract;
+import org.avni.server.web.request.webapp.ConceptExport;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -34,6 +39,9 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
     @Autowired
     private ConceptRepository conceptRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public void setUp() throws Exception {
@@ -965,5 +973,22 @@ public class ConceptServiceIntegrationTest extends AbstractControllerIntegration
 
         assertTrue(mediaMap.containsKey("video1.mp4"));
         assertEquals(ConceptMedia.MediaType.Video, mediaMap.get("video1.mp4"));
+    }
+
+    @Test
+    public void aHiddenConceptInABundleFileIsSavedStillHidden() throws Exception {
+        KeyValues keyValues = new KeyValues();
+        keyValues.add(new KeyValue(KeyType.hidden, true));
+        Concept source = new ConceptBuilder().withName("AI verdict").withDataType(ConceptDataType.Text)
+                .withKeyValues(keyValues).build();
+        String conceptsJson = mapper.writeValueAsString(List.of(ConceptExport.fromConcept(source)));
+        ConceptContract[] fromBundle = mapper.readValue(conceptsJson, ConceptContract[].class);
+
+        conceptService.saveOrUpdateConcepts(Arrays.asList(fromBundle), ConceptContract.RequestType.Bundle);
+        entityManager.flush();
+        entityManager.clear();
+        entityManager.getEntityManagerFactory().getCache().evictAll();
+
+        assertTrue(conceptRepository.findByUuid(source.getUuid()).isHidden());
     }
 }
