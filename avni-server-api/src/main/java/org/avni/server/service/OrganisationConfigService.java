@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.KeyType;
@@ -118,7 +119,7 @@ public class OrganisationConfigService implements NonScopeAwareService {
     public LinkedHashMap<String, Object> getOrganisationSettings(Long organisationId) {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
         // strip server-only keys so the webapp never receives storage routing/target metadata
-        JsonObject settings = OrganisationConfig.withoutServerOnlyKeys(new JsonObject(organisationConfig.getSettings()));
+        JsonObject settings = withoutHiddenSearchResultConcepts(OrganisationConfig.withoutServerOnlyKeys(new JsonObject(organisationConfig.getSettings())));
         LinkedHashMap<String, Object> organisationSettingsConceptListMap = new LinkedHashMap<>();
         List<String> conceptUuidList = new ArrayList<>();
         JsonObject searchFilters = new JsonObject().with("searchFilters", settings.getOrDefault("searchFilters", Collections.emptyList()));
@@ -143,6 +144,74 @@ public class OrganisationConfigService implements NonScopeAwareService {
         organisationSettingsConceptListMap.put("conceptList", conceptList);
         organisationSettingsConceptListMap.put("isNewImplementation", subjectTypeRepository.findAllOperational().isEmpty());
         return organisationSettingsConceptListMap;
+    }
+
+    /**
+     * A hidden concept (avniproject/avni-product#1905) configured as a search result column is left out of
+     * the settings a client receives, so neither the browser nor the phone draws the column. The stored
+     * setting is not changed: the admin screen reads it through /organisationConfig and keeps the entry,
+     * so the column comes back if the concept is ever unhidden. Returns a new object; the input is untouched.
+     */
+    public JsonObject withoutHiddenSearchResultConcepts(JsonObject settings) {
+        if (settings == null) return null;
+        List<Map<String, Object>> searchResultFields = searchResultFields(settings);
+        if (searchResultFields.isEmpty()) return settings;
+        Set<String> hiddenConceptUuids = conceptRepository.getAllConceptByUuidIn(searchResultConceptUuids(searchResultFields)).stream()
+                .filter(Concept::isHidden)
+                .map(Concept::getUuid)
+                .collect(Collectors.toSet());
+        if (hiddenConceptUuids.isEmpty()) return settings;
+        List<Map<String, Object>> filtered = searchResultFields.stream().map(searchResultField -> {
+            Map<String, Object> copy = new LinkedHashMap<>(searchResultField);
+            copy.put(SEARCH_RESULT_CONCEPTS, searchResultConcepts(searchResultField).stream()
+                    .filter(concept -> !hiddenConceptUuids.contains(concept.get(UUID)))
+                    .collect(Collectors.toList()));
+            return copy;
+        }).collect(Collectors.toList());
+        JsonObject result = new JsonObject(settings);
+        result.put(OrganisationConfigSettingKey.searchResultFields.name(), filtered);
+        return result;
+    }
+
+    /**
+     * The phone draws its search result columns from its synced copy of this config, and re-pulls the
+     * config only when this row changes. Saving a concept that is configured as a column therefore marks
+     * the row modified, so a concept marked hidden stops being drawn on the phone at its next sync.
+     */
+    @Transactional
+    public void markModifiedIfSearchResultColumn(Collection<String> conceptUuids) {
+        OrganisationConfig organisationConfig = getCurrentOrganisationConfig();
+        if (organisationConfig == null || organisationConfig.getSettings() == null) return;
+        List<String> configured = searchResultConceptUuids(searchResultFields(organisationConfig.getSettings()));
+        if (conceptUuids.stream().noneMatch(configured::contains)) return;
+        organisationConfig.updateLastModifiedDateTime();
+        organisationConfigRepository.save(organisationConfig);
+    }
+
+    private static final String SEARCH_RESULT_CONCEPTS = "searchResultConcepts";
+
+    private List<Map<String, Object>> searchResultFields(JsonObject settings) {
+        Object configured = settings.get(OrganisationConfigSettingKey.searchResultFields.name());
+        if (!(configured instanceof List) || ((List<?>) configured).isEmpty()) return Collections.emptyList();
+        return objectMapper.convertValue(configured, new TypeReference<List<Map<String, Object>>>() {
+        });
+    }
+
+    private List<Map<String, Object>> searchResultConcepts(Map<String, Object> searchResultField) {
+        Object concepts = searchResultField.get(SEARCH_RESULT_CONCEPTS);
+        if (!(concepts instanceof List)) return Collections.emptyList();
+        return objectMapper.convertValue(concepts, new TypeReference<List<Map<String, Object>>>() {
+        });
+    }
+
+    private List<String> searchResultConceptUuids(List<Map<String, Object>> searchResultFields) {
+        return searchResultFields.stream()
+                .flatMap(searchResultField -> searchResultConcepts(searchResultField).stream())
+                .map(concept -> concept.get(UUID))
+                .filter(uuid -> uuid instanceof String)
+                .map(uuid -> (String) uuid)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     public JsonObject getOrganisationSettingsJson(Long organisationId) {
