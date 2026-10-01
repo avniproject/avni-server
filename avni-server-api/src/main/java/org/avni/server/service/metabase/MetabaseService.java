@@ -39,6 +39,7 @@ public class MetabaseService {
     private final MetabaseGroupRepository metabaseGroupRepository;
     private final MetabaseUserRepository metabaseUserRepository;
     private final UserRepository userRepository;
+    private final boolean avniReportingMetabaseSelfServiceEnabled;
 
     private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
     private static final long EACH_SLEEP_DURATION = 3;
@@ -53,7 +54,8 @@ public class MetabaseService {
                            MetabaseDashboardRepository metabaseDashboardRepository,
                            MetabaseGroupRepository metabaseGroupRepository,
                            MetabaseUserRepository metabaseUserRepository, MetabaseDatabaseRepository metabaseDatabaseRepository,
-                           SelfServiceBatchConfig selfServiceBatchConfig, UserRepository userRepository) {
+                           SelfServiceBatchConfig selfServiceBatchConfig, UserRepository userRepository,
+                           @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
@@ -66,6 +68,7 @@ public class MetabaseService {
         this.metabaseDatabaseRepository = metabaseDatabaseRepository;
         this.selfServiceBatchConfig = selfServiceBatchConfig;
         this.userRepository = userRepository;
+        this.avniReportingMetabaseSelfServiceEnabled = avniReportingMetabaseSelfServiceEnabled;
     }
 
     private boolean setupDatabase() {
@@ -167,7 +170,24 @@ public class MetabaseService {
     }
 
     public void upsertUsersOnMetabase(List<UserGroup> userGroups) {
-        Group group = metabaseGroupRepository.findGroup(UserContextHolder.getOrganisation().getName());
+        if (!avniReportingMetabaseSelfServiceEnabled) return;
+
+        String organisationName = UserContextHolder.getOrganisation().getName();
+        try {
+            syncUsersToMetabaseGroup(userGroups, organisationName);
+        } catch (Exception e) {
+            // A reporting outage must not roll back the caller's transaction - all four call sites
+            // (UserService.createUser/updateUser, UserGroupController.addUsersToGroup/removeUserFromGroup)
+            // save the user or the membership inside one. The users below are left out of the Metabase
+            // group until something re-syncs them, so log enough to recover by hand.
+            logger.error("[{}] Metabase user sync failed; these users are not in the Metabase group: {}",
+                    organisationName,
+                    userGroups.stream().map(ug -> ug.getUser().getEmail()).toList(), e);
+        }
+    }
+
+    private void syncUsersToMetabaseGroup(List<UserGroup> userGroups, String organisationName) {
+        Group group = metabaseGroupRepository.findGroup(organisationName);
         List<UserGroup> changesToMetabaseUsersGroup = userGroups.stream().filter(ug -> ug.getGroupName().equals(METABASE_USERS)).toList();
         if (group != null) {
             for (UserGroup value : changesToMetabaseUsersGroup) {

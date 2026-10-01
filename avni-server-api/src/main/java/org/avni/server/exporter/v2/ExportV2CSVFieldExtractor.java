@@ -6,10 +6,13 @@ import org.avni.server.application.FormElementType;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.exporter.ExportJobService;
+import org.avni.server.exporter.ExportReferenceResolver;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ObservationService;
+import org.avni.server.util.CsvCell;
 import org.avni.server.util.DateTimeUtil;
+import org.avni.server.util.FileUtil;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.external.request.export.ExportOutput;
@@ -52,6 +55,9 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private List<String> addressLevelTypes = new ArrayList<>();
     private ExportFieldsManager exportFieldsManager;
     private Map<FormElement, Integer> maxNumberOfQuestionGroupObservations;
+    private final IndividualRepository individualRepository;
+    private final LocationRepository locationRepository;
+    private ExportReferenceResolver referenceResolver;
 
     @Autowired
     public ExportV2CSVFieldExtractor(EncounterRepository encounterRepository,
@@ -64,7 +70,9 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                                      EncounterTypeRepository encounterTypeRepository,
                                      ExportJobService exportJobService,
                                      ObservationService observationService,
-                                     ExportJobParametersRepository exportJobParametersRepository) {
+                                     ExportJobParametersRepository exportJobParametersRepository,
+                                     IndividualRepository individualRepository,
+                                     LocationRepository locationRepository) {
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.formMappingService = formMappingService;
@@ -76,6 +84,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.exportJobService = exportJobService;
         this.observationService = observationService;
         this.exportJobParametersRepository = exportJobParametersRepository;
+        this.individualRepository = individualRepository;
+        this.locationRepository = locationRepository;
     }
 
     @PostConstruct
@@ -83,6 +93,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
         ExportJobParameters exportJobParameters = exportJobParametersRepository.findByUuid(exportJobParamsUUID);
         this.timeZone = exportJobParameters.getTimezone();
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, timeZone);
         exportOutput.accept(exportFieldsManager);
@@ -95,7 +106,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     @Override
     public void writeHeader(Writer writer) throws IOException {
         exportOutput.accept(headerCreator);
-        writer.write(this.headerCreator.getHeader());
+        writer.write(FileUtil.withUtf8Bom(this.headerCreator.getHeader()));
     }
 
     public ExportOutput getExportOutput() {
@@ -276,6 +287,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
             values.add(processDateObs(val));
         } else if (ConceptDataType.isMedia(dataType)) {
             values.add(processMediaObs(val));
+        } else if (ExportReferenceResolver.isReferenceType(dataType)) {
+            values.add(getFieldValue(referenceResolver.resolve(dataType, val)));
         } else {
             values.add(getFieldValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
         }
@@ -309,7 +322,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     }
 
     private String getFieldValue(String value) {
-        return String.format("\"%s\"", value);
+        return CsvCell.quoted(value);
     }
 
     private String getAnsName(Concept concept, Object val) {
@@ -354,6 +367,6 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private String QuotedStringValue(String text) {
         if (StringUtils.isEmpty(text))
             return text;
-        return "\"".concat(text).concat("\"");
+        return getFieldValue(text);
     }
 }

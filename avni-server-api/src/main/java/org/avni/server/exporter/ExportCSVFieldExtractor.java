@@ -4,12 +4,16 @@ import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementType;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
+import org.avni.server.util.CsvCell;
+import org.avni.server.util.FileUtil;
 import org.avni.server.web.external.request.export.ReportType;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -67,23 +71,31 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private String encounterTypeName;
     private FormMappingService formMappingService;
     private AddressLevelService addressLevelService;
+    private final IndividualRepository individualRepository;
+    private final LocationRepository locationRepository;
+    private ExportReferenceResolver referenceResolver;
 
     public ExportCSVFieldExtractor(SubjectTypeRepository subjectTypeRepository,
                                    EncounterTypeRepository encounterTypeRepository,
                                    EncounterRepository encounterRepository,
                                    ProgramEncounterRepository programEncounterRepository,
                                    FormMappingService formMappingService,
-                                   AddressLevelService addressLevelService) {
+                                   AddressLevelService addressLevelService,
+                                   IndividualRepository individualRepository,
+                                   LocationRepository locationRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.formMappingService = formMappingService;
         this.addressLevelService = addressLevelService;
+        this.individualRepository = individualRepository;
+        this.locationRepository = locationRepository;
     }
 
     @PostConstruct
     public void init() {
+        this.referenceResolver = new ExportReferenceResolver(individualRepository, locationRepository, encounterRepository);
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         this.registrationMap = formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, null, null, FormType.IndividualProfile);
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
@@ -129,6 +141,10 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         headers.append(",").append("member.id");
         headers.append(",").append("member.uuid");
         headers.append(",").append("member.first_name");
+        // Always declared, and always written below, because a group's members can be of more than
+        // one subject type and only some of those allow a middle name. Deciding per row made the
+        // row longer than the heading for any organisation that records one.
+        headers.append(",").append("member.middle_name");
         headers.append(",").append("member.last_name");
         headers.append(",").append("member.role");
         headers.append(",").append("member.membership_start_date");
@@ -141,17 +157,19 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         int visit = 0;
         while (visit < maxVisitCount) {
             visit++;
+            // encounterTypeName is a name someone typed, and these headings were neither quoted
+            // nor escaped, so a comma in it silently added a column with no data under it.
             String prefix = encounterTypeName + "_" + visit;
-            headers.append(",").append(prefix).append(".id");
-            headers.append(",").append(prefix).append(".uuid");
-            headers.append(",").append(prefix).append(".name");
-            headers.append(",").append(prefix).append(".earliest_visit_date_time");
-            headers.append(",").append(prefix).append(".max_visit_date_time");
-            headers.append(",").append(prefix).append(".encounter_date_time");
-            headers.append(",").append(prefix).append(".encounter_location");
-            headers.append(",").append(prefix).append(".cancel_location");
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".id", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".uuid", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".name", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".earliest_visit_date_time", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".max_visit_date_time", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".encounter_date_time", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".encounter_location", false));
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".cancel_location", false));
             appendObsColumns(headers, prefix, programUUID != null ? programEncounterMap : encounterMap);
-            headers.append(",").append(prefix).append(".cancel_date_time");
+            headers.append(",").append(CsvCell.quoteIfNeeded(prefix + ".cancel_date_time", false));
             appendObsColumns(headers, prefix, programUUID != null ? programEncounterCancelMap : encounterCancelMap);
             addAuditColumns(headers, prefix);
             addVoidedColumnIfRequired(headers, prefix);
@@ -192,18 +210,20 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         addVoidedColumnIfRequired(headers, "ind");
     }
 
+    // These two take the same prefix as the visit columns beside them, which carries the visit type
+    // name, so they need the same quoting. A no-op for the fixed prefixes ind, enl and member.
     private void addVoidedColumnIfRequired(StringBuilder headers, String prefix) {
         if (Boolean.parseBoolean(includeVoided)) {
-            headers.append(",").append(format("%s.voided", prefix));
+            headers.append(",").append(CsvCell.quoteIfNeeded(format("%s.voided", prefix), false));
         }
     }
 
 
     private void addAuditColumns(StringBuilder headers, String prefix) {
-        headers.append(",").append(format("%s_created_by", prefix));
-        headers.append(",").append(format("%s_created_date_time", prefix));
-        headers.append(",").append(format("%s_modified_by", prefix));
-        headers.append(",").append(format("%s_modified_date_time", prefix));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_created_by", prefix), false));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_created_date_time", prefix), false));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_modified_by", prefix), false));
+        headers.append(",").append(CsvCell.quoteIfNeeded(format("%s_modified_date_time", prefix), false));
     }
 
     private void setEnrolmentMappings() {
@@ -276,14 +296,15 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         Individual memberSubject = group.getMemberSubject();
         row.add(groupSubject.getId());
         row.add(groupSubject.getUuid());
-        row.add(groupSubject.getFirstName());
+        // Names here went in raw, unlike every other name in this class, so a member recorded as
+        // "Devi, Sunita" shifted every column after it in that row.
+        row.add(QuotedStringValue(groupSubject.getFirstName()));
         row.add(memberSubject.getId());
         row.add(memberSubject.getUuid());
-        row.add(memberSubject.getFirstName());
-        if (memberSubject.getSubjectType().isAllowMiddleName())
-            row.add(memberSubject.getMiddleName());
-        row.add(memberSubject.getLastName());
-        row.add(group.getGroupRole().getRole());
+        row.add(QuotedStringValue(memberSubject.getFirstName()));
+        row.add(memberSubject.getSubjectType().isAllowMiddleName() ? QuotedStringValue(memberSubject.getMiddleName()) : "");
+        row.add(QuotedStringValue(memberSubject.getLastName()));
+        row.add(QuotedStringValue(group.getGroupRole().getRole()));
         row.add(getDateForTimeZone(group.getMembershipStartDate()));
         row.add(getDateForTimeZone(group.getMembershipEndDate()));
         addAuditFields(group, row);
@@ -347,7 +368,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
 
     @Override
     public void writeHeader(Writer writer) throws IOException {
-        writer.write(this.headers.toString());
+        writer.write(FileUtil.withUtf8Bom(this.headers.toString()));
     }
 
     private void appendObsColumns(StringBuilder sb, String prefix, LinkedHashMap<String, FormElement> map) {
@@ -355,16 +376,13 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
             if (ConceptDataType.isQuestionGroup(fe.getConcept().getDataType())) return;
             Concept concept = fe.getConcept();
             String groupPrefix = fe.getGroup() != null ? fe.getGroup().getConcept().getName() + "_" : "";
+            // A question name is free text, so quoting it without doubling a quote inside it lets
+            // the heading split where the row beneath it does not.
             if (concept.getDataType().equals(ConceptDataType.Coded.toString()) && fe.getType().equals(FormElementType.MultiSelect.toString())) {
                 concept.getSortedAnswers().map(ca -> ca.getAnswerConcept().getName()).forEach(can ->
-                        sb.append(",\"")
-                                .append(prefix)
-                                .append("_")
-                                .append(groupPrefix)
-                                .append(concept.getName())
-                                .append("_").append(can).append("\""));
+                        sb.append(",").append(CsvCell.quoted(prefix + "_" + groupPrefix + concept.getName() + "_" + can)));
             } else {
-                sb.append(",\"").append(prefix).append("_").append(groupPrefix).append(concept.getName()).append("\"");
+                sb.append(",").append(CsvCell.quoted(prefix + "_" + groupPrefix + concept.getName()));
             }
         });
     }
@@ -372,7 +390,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private String QuotedStringValue(String text) {
         if (StringUtils.isEmpty(text))
             return text;
-        return "\"".concat(text).concat("\"");
+        return CsvCell.quoted(text);
     }
 
     private List<Object> getObs(ObservationCollection observations, LinkedHashMap<String, FormElement> obsMap) {
@@ -394,6 +412,8 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
                 values.add(processDateObs(val));
             } else if (ConceptDataType.isMedia(dataType)) {
                 values.add(processMediaObs(val));
+            } else if (ExportReferenceResolver.isReferenceType(dataType)) {
+                values.add(QuotedStringValue(referenceResolver.resolve(dataType, val)));
             } else {
                 values.add(QuotedStringValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
             }

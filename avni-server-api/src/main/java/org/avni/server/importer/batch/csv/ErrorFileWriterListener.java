@@ -12,8 +12,11 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import org.avni.server.util.CsvCell;
+
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -49,11 +52,11 @@ public class ErrorFileWriterListener {
                 bugsnagReporter.logAndReportToBugsnag(t);
                 readSkipReported = true;
             }
-            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
+            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), StandardCharsets.UTF_8, true);
             fileWriter.append(line);
-            fileWriter.append(",\"");
-            fileWriter.append(message);
-            fileWriter.append("\"\n");
+            fileWriter.append(",");
+            fileWriter.append(CsvCell.quoted(message));
+            fileWriter.append("\n");
             fileWriter.close();
         } catch (IOException e) {
             logger.error("Error recording error", e);
@@ -64,11 +67,11 @@ public class ErrorFileWriterListener {
     public void appendToErrorFile(Row item, Throwable t) {
         try {
             bugsnagReporter.logAndReportToBugsnag(t);
-            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
+            FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), StandardCharsets.UTF_8, true);
             fileWriter.append(item.toString());
-            fileWriter.append(",\"");
-            fileWriter.append(t.getMessage());
-            fileWriter.append("\"\n");
+            fileWriter.append(",");
+            fileWriter.append(CsvCell.quoted(t.getMessage()));
+            fileWriter.append("\n");
             fileWriter.close();
         } catch (IOException e) {
             logger.error("Error recording error", e);

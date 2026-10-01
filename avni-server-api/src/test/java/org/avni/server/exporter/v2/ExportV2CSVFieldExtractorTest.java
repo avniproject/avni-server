@@ -19,6 +19,7 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ExportOutputBuilder;
+import org.avni.server.util.FileUtil;
 import org.bouncycastle.util.Strings;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,7 @@ import java.util.*;
 
 import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameConstants.UUID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -54,6 +56,10 @@ public class ExportV2CSVFieldExtractorTest {
     private ExportJobService exportJobService;
     @Mock
     private ObservationService observationService;
+    @Mock
+    private IndividualRepository individualRepository;
+    @Mock
+    private LocationRepository locationRepository;
 
     private ExportV2CSVFieldExtractor exportV2CSVFieldExtractor;
     private ExportJobParameters exportJobParameters;
@@ -63,7 +69,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void setup() {
         initMocks(this);
 
-        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService, exportJobParametersRepository);
+        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService, exportJobParametersRepository, individualRepository, locationRepository);
         exportOutput = new ExportOutputBuilder().build();
         exportJobParameters = new ExportJobParametersBuilder().withTimezone(TimeZone.getDefault().getDisplayName()).build();
         when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
@@ -88,8 +94,119 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
+    }
+
+    @Test
+    public void aSubjectAnswerIsExportedAsTheNameWithItsIdentifier() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", "school-uuid").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c1")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
+        Concept schoolConcept = new ConceptBuilder().withUuid("c1").withName("School Name").withDataType(ConceptDataType.Subject).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(schoolConcept).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+
+        Individual school = new Individual();
+        school.setUuid("school-uuid");
+        school.setFirstName("GHS Wadagera");
+        when(individualRepository.findAllByUuidIn(Collections.singletonList("school-uuid"))).thenReturn(Collections.singletonList(school));
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+        Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
+
+        assertEquals("\"GHS Wadagera(school-uuid)\"", getExtractValue(header, "\"ST1_School Name\"", extract));
+    }
+
+    @Test
+    public void aQuoteInAConceptNameIsEscapedInTheHeaderSoItStaysInStepWithTheRow() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", "yes").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c1")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
+        Concept quoted = new ConceptBuilder().withUuid("c1").withName("Child's \"nickname\"").withDataType(ConceptDataType.Text).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(quoted).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+
+        // The quote is doubled inside the cell, so a CSV reader parses the cell back to the
+        // concept name rather than splitting the header into extra fields.
+        assertTrue(header.contains("\"ST1_Child's \"\"nickname\"\"\""));
+        assertTrue(parseCsvFields(FileUtil.stripUtf8Bom(header)).contains("ST1_Child's \"nickname\""));
+    }
+
+    @Test
+    public void aQuoteInAResolvedNameIsEscapedSoTheRowDoesNotShift() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", "school-uuid").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c1")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
+        Concept schoolConcept = new ConceptBuilder().withUuid("c1").withName("School Name").withDataType(ConceptDataType.Subject).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(schoolConcept).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+
+        Individual school = new Individual();
+        school.setUuid("school-uuid");
+        school.setFirstName("GHS \"Wadagera\"");
+        when(individualRepository.findAllByUuidIn(Collections.singletonList("school-uuid"))).thenReturn(Collections.singletonList(school));
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+        Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
+
+        assertEquals("\"GHS \"\"Wadagera\"\"(school-uuid)\"", getExtractValue(header, "\"ST1_School Name\"", extract));
     }
 
     @Test
@@ -129,6 +246,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
         assertEquals("\"2\"", getExtractValue(header, "\"ST1_C1_C2\"", extract));
@@ -177,6 +295,7 @@ public class ExportV2CSVFieldExtractorTest {
         exportV2CSVFieldExtractor.writeHeader(writer);
         String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+        assertHeaderLinesUpWithRow(header, extract);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
         assertEquals("\"21\"", getExtractValue(header, "\"ST1_C1_1_C2\"", extract));
@@ -194,7 +313,35 @@ public class ExportV2CSVFieldExtractorTest {
         return null;
     }
 
+    /**
+     * A heading that declares a different number of columns from the row under it is the shape that
+     * produced most of this card's findings, so every test here asserts against it.
+     */
+    private void assertHeaderLinesUpWithRow(String header, Object[] extract) {
+        assertEquals("heading and row must declare the same number of columns",
+                parseCsvFields(FileUtil.stripUtf8Bom(header)).size(), extract.length);
+    }
+
+    private java.util.List<String> parseCsvFields(String line) {
+        java.util.List<String> fields = new java.util.ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') { current.append('"'); i++; }
+                else inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) { fields.add(current.toString()); current.setLength(0); }
+            else current.append(c);
+        }
+        fields.add(current.toString());
+        return fields;
+    }
+
     private String[] getHeaderFields(String header) {
-        return Strings.split(header, ',');
+        // The header leads with a UTF-8 BOM so Excel can tell what it is holding. Every real reader
+        // of this file drops it before looking at the first column name; do the same here.
+        assertTrue(header.startsWith(FileUtil.UTF8_BOM));
+        return Strings.split(FileUtil.stripUtf8Bom(header), ',');
     }
 }

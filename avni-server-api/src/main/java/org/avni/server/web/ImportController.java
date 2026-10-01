@@ -32,6 +32,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
@@ -174,7 +176,7 @@ public class ImportController {
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
         return ResponseEntity.ok()
-                .contentType(TEXT_PLAIN)
+                .contentType(new MediaType(TEXT_PLAIN, StandardCharsets.UTF_8))
                 .cacheControl(CacheControl.noCache())
                 .header("Content-Disposition", "attachment; ")
                 .body(new InputStreamResource(file));
@@ -188,7 +190,7 @@ public class ImportController {
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         InputStream file = bulkUploadS3Service.downloadInputFile(filePath);
         return ResponseEntity.ok()
-                .contentType(TEXT_PLAIN)
+                .contentType(new MediaType(TEXT_PLAIN, StandardCharsets.UTF_8))
                 .cacheControl(CacheControl.noCache())
                 .header("Content-Disposition", "attachment; ")
                 .body(new InputStreamResource(file));

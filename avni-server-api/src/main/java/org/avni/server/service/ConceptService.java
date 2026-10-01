@@ -49,10 +49,12 @@ public class ConceptService implements NonScopeAwareService {
     private final FormElementRepository formElementRepository;
     private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
     private final LocationRepository locationRepository;
+    private final OrganisationConfigService organisationConfigService;
 
     @Autowired
-    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
+    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository, OrganisationConfigService organisationConfigService) {
         this.formElementRepository = formElementRepository;
+        this.organisationConfigService = organisationConfigService;
         this.answerConceptMigrationRepository = answerConceptMigrationRepository;
         this.locationRepository = locationRepository;
         logger = LoggerFactory.getLogger(this.getClass());
@@ -283,9 +285,13 @@ public class ConceptService implements NonScopeAwareService {
             concepts.add(conceptRepository.save(concept));
             addToMigrationIfRequired(conceptRequest);
         }
-        return concepts.stream()
+        List<String> savedConceptUuids = concepts.stream()
                 .map(Concept::getUuid)
                 .collect(Collectors.toList());
+        // A concept marked hidden stops being a search result column on the phone only once the phone
+        // re-syncs the organisation config, which it does when that row changes.
+        organisationConfigService.markModifiedIfSearchResultColumn(savedConceptUuids);
+        return savedConceptUuids;
     }
 
     private void assertNotDuplicate(ConceptContract conceptRequest) {

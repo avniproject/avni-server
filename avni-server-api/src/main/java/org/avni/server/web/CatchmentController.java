@@ -12,6 +12,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.CatchmentService;
+import org.avni.server.service.FastSyncKeyService;
 import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -82,7 +83,8 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
             throw new EntityNotFoundException(String.format("Catchment not found with id %d", id));
         }
         CatchmentContract catchmentContract = CatchmentContract.fromEntity(catchment);
-        boolean fastSyncExists = s3Service.fileExists(String.format("MobileDbBackup-%s", catchment.getUuid()));
+        boolean fastSyncExists = FastSyncKeyService.catchmentKeys(catchment.getUuid()).stream()
+                .anyMatch(s3Service::fileExists);
         catchmentContract.setFastSyncExists(fastSyncExists);
         return EntityModel.of(catchmentContract);
     }
@@ -142,7 +144,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
         catchment.updateAudit();
         catchmentRepository.save(catchment);
         if (catchmentContract.isFastSyncExists() && catchmentContract.isDeleteFastSync()) {
-            s3Service.deleteObject(String.format("MobileDbBackup-%s", catchment.getUuid()));
+            FastSyncKeyService.catchmentKeys(catchment.getUuid()).forEach(s3Service::deleteObject);
         }
         return new ResponseEntity<>(catchment, HttpStatus.OK);
     }

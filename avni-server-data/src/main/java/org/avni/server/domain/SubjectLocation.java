@@ -45,6 +45,16 @@ public class SubjectLocation implements Serializable {
         this.accuracy = accuracy;
     }
 
+    /**
+     * The export writes this straight into a cell, so without this it read as
+     * org.avni.server.domain.SubjectLocation@403522bf. Matches registration_location, which renders
+     * through Point and has always been readable.
+     */
+    @Override
+    public String toString() {
+        return coordinates == null ? "" : coordinates.toString();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

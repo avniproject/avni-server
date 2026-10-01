@@ -5,6 +5,7 @@ import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.service.ObjectInfo;
 import org.avni.server.service.S3Service;
+import org.avni.server.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import static java.lang.String.format;
 
@@ -59,12 +61,16 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
     public void beforeJob(JobExecution jobExecution) {
         authService.authenticateByUserId(userId, organisationUUID);
         try {
-            BufferedReader csvReader = new BufferedReader(new InputStreamReader(s3Service.getObjectContent(s3Key)));
+            BufferedReader csvReader = new BufferedReader(new InputStreamReader(s3Service.getObjectContent(s3Key), StandardCharsets.UTF_8));
             String headerRow = csvReader.readLine();
             csvReader.close();
 
-            FileWriter writer = new FileWriter(errorFile, true);
-            writer.append(headerRow);
+            // Append mode: on a job restart this runs again against a file that already has rows,
+            // and a marker belongs at the front of a file or nowhere.
+            boolean startingAFreshFile = !errorFile.exists() || errorFile.length() == 0;
+            FileWriter writer = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
+            String header = headerRow == null ? "" : headerRow;
+            writer.append(startingAFreshFile ? FileUtil.withUtf8Bom(header) : FileUtil.stripUtf8Bom(header));
             writer.append(',');
             writer.append("error");
             writer.append('\n');

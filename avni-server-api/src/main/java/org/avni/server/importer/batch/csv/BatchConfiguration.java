@@ -29,6 +29,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.Arrays;
@@ -59,8 +60,8 @@ public class BatchConfiguration {
     @StepScope
     public FlatFileItemReader<Row> csvFileItemReader(@Value("#{jobParameters['s3Key']}") String s3Key) throws IOException {
         byte[] bytes = IOUtils.toByteArray(s3Service.getObjectContent(s3Key));
-        String[] headers = this.getHeaders(new StringReader(new String(bytes)));
-        int numberOfLinesToSkip = this.getNumberOfLinesToSkip(new StringReader(new String(bytes)));
+        String[] headers = this.getHeaders(new StringReader(new String(bytes, StandardCharsets.UTF_8)));
+        int numberOfLinesToSkip = this.getNumberOfLinesToSkip(new StringReader(new String(bytes, StandardCharsets.UTF_8)));
         DefaultLineMapper<Row> lineMapper = new DefaultLineMapper<>();
         lineMapper.setLineTokenizer(new DelimitedLineTokenizer());
         lineMapper.setFieldSetMapper(fieldSet -> mapRow(headers, fieldSet.getValues()));
