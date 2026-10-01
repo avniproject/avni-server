@@ -12,6 +12,9 @@ import org.avni.server.domain.StorageDataClass;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.FastSyncKeyService;
+import org.avni.server.web.response.FastSyncTier;
+import org.avni.server.web.response.FastSyncDownloadResponse;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.domain.ManagedContentNamespace;
@@ -52,7 +55,6 @@ import static java.lang.String.format;
 
 @RestController
 public class MediaController {
-    private static final String SQLITE_MIGRATION_GROUP = "SQLite Migration";
     private final Logger logger;
     private final S3Service s3Service;
     private final StorageServiceProvider storageServiceProvider;
@@ -60,17 +62,20 @@ public class MediaController {
     private final ErrorBodyBuilder errorBodyBuilder;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
+    private final FastSyncKeyService fastSyncKeyService;
 
     @Autowired
     public MediaController(S3Service s3Service, StorageServiceProvider storageServiceProvider,
                            AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder,
-                           GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
+                           GroupRepository groupRepository, UserGroupRepository userGroupRepository,
+                           FastSyncKeyService fastSyncKeyService) {
         this.s3Service = s3Service;
         this.storageServiceProvider = storageServiceProvider;
         this.accessControlService = accessControlService;
         this.errorBodyBuilder = errorBodyBuilder;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
+        this.fastSyncKeyService = fastSyncKeyService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -139,8 +144,13 @@ public class MediaController {
         if (user.getCatchment() == null) {
             throw new ValidationException("NoCatchmentFound");
         }
-        String catchmentUuid = user.getCatchment().getUuid();
-        return format("MobileDbBackup-%s", catchmentUuid);
+        return FastSyncKeyService.realmCatchmentKey(user.getCatchment().getUuid());
+    }
+
+    // A migrated user must never be offered the Realm dump: the client's restoreDump falls through
+    // to the Realm path whenever no SQLite artifact exists, and the file is the wrong format.
+    static boolean realmDumpIsOfferable(boolean inSqliteMigrationGroup) {
+        return !inSqliteMigrationGroup;
     }
 
     @RequestMapping(value = "/media/mobileDatabaseBackupUrl/download", method = RequestMethod.GET)
@@ -161,7 +171,9 @@ public class MediaController {
     public ResponseEntity<String> mobileDatabaseBackupExists() {
         logger.info("checking whether mobile database backup url exists");
         try {
-            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(s3Service.fileExists(mobileDatabaseBackupFile())));
+            boolean offerable = realmDumpIsOfferable(currentUserIsInSqliteMigrationGroup())
+                    && s3Service.fileExists(mobileDatabaseBackupFile());
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(offerable));
         } catch (ValidationException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
@@ -201,7 +213,7 @@ public class MediaController {
 
     private boolean currentUserIsInSqliteMigrationGroup() {
         User user = UserContextHolder.getUserContext().getUser();
-        Group group = groupRepository.findByNameAndOrganisationId(SQLITE_MIGRATION_GROUP, UserContextHolder.getUserContext().getOrganisationId());
+        Group group = groupRepository.findByNameAndOrganisationId(Group.SQLITE_MIGRATION, UserContextHolder.getUserContext().getOrganisationId());
         if (group == null) {
             return false;
         }
@@ -210,7 +222,125 @@ public class MediaController {
 
     private String sqliteSnapshotRelativeKey() {
         User user = UserContextHolder.getUserContext().getUser();
-        return format("snapshots/%s/snapshot.db", user.getUsername());
+        return snapshotKeyFor(user);
+    }
+
+    private static String snapshotKeyFor(User user) {
+        return format("snapshots/%s/snapshot.db", FastSyncKeyService.safeSegment(user.getUsername()));
+    }
+
+    // Static and parameterised so the key decision is testable without a Spring context or a
+    // UserContextHolder. The route below supplies the authenticated user and their catchment.
+    // BadRequestError carries the 400 the caller should see; ValidationException is mapped to a 500
+    // by the routes in this controller.
+    static String fastSyncUploadKeyFor(User user, String catchmentUuid, FastSyncKeyService keyService) {
+        if (keyService.isPerUser(user)) {
+            return keyService.perUserKey(user);
+        }
+        // Only the catchment branch needs it, so a per-user user with no catchment is still fine.
+        if (catchmentUuid == null) {
+            throw new BadRequestError("NoCatchmentFound");
+        }
+        return FastSyncKeyService.sqliteCatchmentKey(catchmentUuid);
+    }
+
+    private String fastSyncUploadKey() {
+        User user = UserContextHolder.getUserContext().getUser();
+        String catchmentUuid = user.getCatchment() == null ? null : user.getCatchment().getUuid();
+        return fastSyncUploadKeyFor(user, catchmentUuid, fastSyncKeyService);
+    }
+
+    @RequestMapping(value = "/media/fastSyncUpload", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> generateFastSyncUploadUrl() {
+        logger.info("getting fast sync upload url");
+        try {
+            if (!currentUserIsInSqliteMigrationGroup()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("NotInSqliteMigrationGroup");
+            }
+            return getFileUrlResponse(fastSyncUploadKey(), HttpMethod.PUT);
+        } catch (BadRequestError e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // The key and the tier travel together so they cannot drift: the tier is bound to a candidate
+    // when it is built, not re-derived from the winning key afterwards.
+    record FastSyncArtifact(String key, FastSyncTier tier) {
+    }
+
+    // The order is the whole contract, so it is expressed once, here, and both routes use it.
+    // `present` is injected rather than calling s3Service directly so the ordering is testable
+    // without stubbing storage.
+    static java.util.Optional<FastSyncArtifact> fastSyncDownloadKeyFor(User user, String catchmentUuid,
+                                                                       FastSyncKeyService keyService,
+                                                                       java.util.function.Predicate<String> present) {
+        java.util.List<FastSyncArtifact> candidates = new java.util.ArrayList<>();
+        if (keyService.isPerUser(user)) {
+            candidates.add(new FastSyncArtifact(keyService.perUserKey(user), FastSyncTier.PER_USER));
+        } else if (catchmentUuid != null) {
+            // With a null catchment the key would be "MobileDbBackupSqlite-null", a real and
+            // writable object shared by every catchmentless user. Download degrades to the next
+            // tier rather than erroring, unlike upload.
+            candidates.add(new FastSyncArtifact(FastSyncKeyService.sqliteCatchmentKey(catchmentUuid), FastSyncTier.CATCHMENT));
+        }
+        candidates.add(new FastSyncArtifact(snapshotKeyFor(user), FastSyncTier.SNAPSHOT));
+        return candidates.stream().filter(candidate -> present.test(candidate.key())).findFirst();
+    }
+
+    private java.util.Optional<FastSyncArtifact> resolveFastSyncDownloadKey() {
+        User user = UserContextHolder.getUserContext().getUser();
+        String catchmentUuid = user.getCatchment() == null ? null : user.getCatchment().getUuid();
+        return fastSyncDownloadKeyFor(user, catchmentUuid, fastSyncKeyService, s3Service::fileExists);
+    }
+
+    // Extracted so the group gate is tested independently of storage and UserContextHolder.
+    static boolean fastSyncEligible(boolean inSqliteMigrationGroup,
+                                    java.util.Optional<FastSyncArtifact> resolved) {
+        return inSqliteMigrationGroup && resolved.isPresent();
+    }
+
+    @RequestMapping(value = "/media/fastSyncDownload/exists", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> fastSyncDownloadExists() {
+        logger.info("checking whether a fast sync database exists");
+        try {
+            boolean eligible = fastSyncEligible(
+                    currentUserIsInSqliteMigrationGroup(), resolveFastSyncDownloadKey());
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(eligible));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
+    }
+
+    @RequestMapping(value = "/media/fastSyncDownload", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> generateFastSyncDownloadUrl() {
+        logger.info("getting fast sync download url");
+        try {
+            if (!currentUserIsInSqliteMigrationGroup()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("NotInSqliteMigrationGroup");
+            }
+            java.util.Optional<FastSyncArtifact> artifact = resolveFastSyncDownloadKey();
+            if (artifact.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("NoFastSyncDatabase");
+            }
+            URL url = s3Service.generateMediaUploadUrl(artifact.get().key(), HttpMethod.GET);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                    .body(new FastSyncDownloadResponse(url.toString(), artifact.get().tier()));
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
+        }
     }
 
     @RequestMapping(value = "/media/signedUrl", method = RequestMethod.GET)

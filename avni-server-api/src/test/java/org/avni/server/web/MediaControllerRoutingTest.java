@@ -5,13 +5,18 @@ import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.StorageDataClass;
+import org.avni.server.domain.Group;
+import org.avni.server.web.response.FastSyncTier;
+import org.avni.server.web.response.FastSyncDownloadResponse;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.factory.TestOrganisationBuilder;
 import org.avni.server.domain.factory.UserContextBuilder;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.FastSyncKeyService;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.storage.StorageServiceProvider;
@@ -63,6 +68,8 @@ public class MediaControllerRoutingTest {
     private GroupRepository groupRepository;
     @Mock
     private UserGroupRepository userGroupRepository;
+    @Mock
+    private FastSyncKeyService fastSyncKeyService;
 
     private MediaController controller;
 
@@ -70,7 +77,7 @@ public class MediaControllerRoutingTest {
     public void setUp() throws Exception {
         initMocks(this);
         controller = new MediaController(defaultS3Service, storageServiceProvider, accessControlService,
-                errorBodyBuilder, groupRepository, userGroupRepository);
+                errorBodyBuilder, groupRepository, userGroupRepository, fastSyncKeyService);
 
         when(storageServiceProvider.forDataClass(StorageDataClass.MODEL)).thenReturn(modelBackend);
         when(storageServiceProvider.forDataClass(StorageDataClass.DEFAULT)).thenReturn(defaultS3Service);
@@ -258,5 +265,93 @@ public class MediaControllerRoutingTest {
         assertEquals("https://s3/put", response.getBody());
         verify(accessControlService, never()).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         verify(defaultS3Service).generateMediaUploadUrl("somefile.png", HttpMethod.PUT);
+    }
+
+    // --- the SQLite Migration group gate on the three fast-sync routes ---
+    // The gate is what makes "removed from the SQLite group" work. Each route is exercised with a
+    // user outside the group AND with one inside it, so deleting the gate turns a test red.
+
+    private static final String PER_USER_KEY = "fastsync/device-user@org/fastsync.db";
+
+    private void inMigrationGroup() {
+        Group group = new Group();
+        group.setName(Group.SQLITE_MIGRATION);
+        when(groupRepository.findByNameAndOrganisationId(eq(Group.SQLITE_MIGRATION), any()))
+                .thenReturn(group);
+        when(userGroupRepository.findByUserAndGroupAndIsVoidedFalse(any(User.class), eq(group)))
+                .thenReturn(new UserGroup());
+    }
+
+    private void anArtifactExists() {
+        when(fastSyncKeyService.isPerUser(any(User.class))).thenReturn(true);
+        when(fastSyncKeyService.perUserKey(any(User.class))).thenReturn(PER_USER_KEY);
+        when(defaultS3Service.fileExists(PER_USER_KEY)).thenReturn(true);
+    }
+
+    @Test
+    public void fastSyncUploadIsRefusedOutsideTheMigrationGroup() {
+        anArtifactExists();
+
+        ResponseEntity<String> response = controller.generateFastSyncUploadUrl();
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertEquals("NotInSqliteMigrationGroup", response.getBody());
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void fastSyncUploadIsSignedInsideTheMigrationGroup() {
+        anArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<String> response = controller.generateFastSyncUploadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("https://s3/put", response.getBody());
+        verify(defaultS3Service).generateMediaUploadUrl(PER_USER_KEY, HttpMethod.PUT);
+    }
+
+    @Test
+    public void fastSyncDownloadIsRefusedOutsideTheMigrationGroup() {
+        anArtifactExists();
+
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertEquals("NotInSqliteMigrationGroup", response.getBody());
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void fastSyncDownloadIsSignedInsideTheMigrationGroup() {
+        anArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<?> response = controller.generateFastSyncDownloadUrl();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(new FastSyncDownloadResponse("https://s3/put", FastSyncTier.PER_USER), response.getBody());
+        verify(defaultS3Service).generateMediaUploadUrl(PER_USER_KEY, HttpMethod.GET);
+    }
+
+    @Test
+    public void fastSyncExistsIsFalseOutsideTheMigrationGroupEvenWhenTheArtifactIsThere() {
+        anArtifactExists();
+
+        ResponseEntity<String> response = controller.fastSyncDownloadExists();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("false", response.getBody());
+    }
+
+    @Test
+    public void fastSyncExistsIsTrueInsideTheMigrationGroupWhenTheArtifactIsThere() {
+        anArtifactExists();
+        inMigrationGroup();
+
+        ResponseEntity<String> response = controller.fastSyncDownloadExists();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("true", response.getBody());
     }
 }
