@@ -10,6 +10,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.framework.security.AuthenticationFilter;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.builder.TestConceptService;
@@ -24,10 +25,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.hateoas.server.core.Relation;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +106,39 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
                 .as("the phone reads _embedded.organisationConfig").isEqualTo("organisationConfig");
     }
 
+    // The direct call above cannot see what the phone sees: only a request over HTTP runs the real filter chain.
+    // Without @ResponseBody on the handler, the page it returns is taken for a view name, the forward re-enters
+    // the security filters, and the sync interceptor's cast fails. The phone got a 500 on 1 Oct 2026; this is
+    // the test that would have failed first.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void thePhoneSyncRouteAnswersOverHttpWithTheConfigBody() {
+        template.getRestTemplate().setInterceptors(Collections.singletonList((request, body, execution) -> {
+            request.getHeaders().add(AuthenticationFilter.USER_NAME_HEADER, "demo-admin");
+            return execution.execute(request, body);
+        }));
+        String path = UriComponentsBuilder.fromPath("/organisationConfig/search/lastModified")
+                .queryParam("lastModifiedDateTime", "1900-01-01T00:00:00.000Z")
+                .queryParam("now", "2100-01-01T00:00:00.000Z")
+                .queryParam("size", "100")
+                .queryParam("page", "0")
+                .toUriString();
+
+        ResponseEntity<LinkedHashMap> response = template.getForEntity(path, LinkedHashMap.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Map<String, Object> embedded = (Map<String, Object>) response.getBody().get("_embedded");
+        List<Map<String, Object>> configs = (List<Map<String, Object>>) embedded.get("organisationConfig");
+        // Row-level security lets this organisation's role read its parent organisation's row too, so pick
+        // out this organisation's config rather than counting rows.
+        String storedUuid = storedConfig().getUuid();
+        Map<String, Object> config = configs.stream()
+                .filter(served -> storedUuid.equals(served.get("uuid")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("this organisation's config was not served"));
+        assertThat(columnUuids((Map<String, Object>) config.get("settings"))).containsExactly(seen.getUuid());
+    }
+
     @Test
     public void theStoredSettingStillListsTheHiddenColumn() throws Exception {
         mockMvc.perform(get("/web/organisationConfig").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
@@ -157,7 +195,7 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
     }
 
     @SuppressWarnings("unchecked")
-    private List<String> columnUuids(JsonObject settings) {
+    private List<String> columnUuids(Map<String, Object> settings) {
         List<Map<String, Object>> fields = (List<Map<String, Object>>) settings.get(OrganisationConfigSettingKey.searchResultFields.name());
         List<Map<String, Object>> columns = (List<Map<String, Object>>) fields.get(0).get("searchResultConcepts");
         return columns.stream().map(column -> (String) column.get("uuid")).collect(Collectors.toList());
