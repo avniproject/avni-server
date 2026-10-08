@@ -81,10 +81,10 @@ public class OrganisationConfigController implements RestControllerResourceProce
 
     /**
      * The phone syncs the organisation config from here. It is served through OrganisationConfigResponse so
-     * that a hidden concept (avniproject/avni-product#1905) configured as a search result column is left out,
-     * as it is for the browser at /web/organisationConfig. The stored row is not changed, and the collection
-     * at GET /organisationConfig, which the admin screens read and write back, still carries the setting as
-     * configured.
+     * that a hidden concept (avniproject/avni-product#1905) configured as a search result column or a filter is
+     * left out, as it is for the browser at /web/organisationConfig. The stored row is not changed, and the
+     * collection at GET /organisationConfig, which the admin screens read and write back, still carries the
+     * settings as configured.
      */
     @RequestMapping(value = "/organisationConfig/search/lastModified", method = RequestMethod.GET)
     @ResponseBody
@@ -97,7 +97,7 @@ public class OrganisationConfigController implements RestControllerResourceProce
                 CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable);
         List<EntityModel<OrganisationConfigResponse>> resources = page.getContent().stream()
                 .map(organisationConfig -> OrganisationConfigResponse.from(organisationConfig,
-                        organisationConfigService.withoutHiddenSearchResultConcepts(organisationConfig.getSettingsForSerialization())))
+                        organisationConfigService.withoutHiddenColumnsAndFilters(organisationConfig.getSettingsForSerialization())))
                 .map(EntityModel::of)
                 .collect(Collectors.toList());
         return PagedModel.of(resources, new PagedModel.PageMetadata(page.getSize(), page.getNumber(), page.getTotalElements(), page.getTotalPages()));

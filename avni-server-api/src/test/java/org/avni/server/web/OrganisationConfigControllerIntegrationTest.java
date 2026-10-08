@@ -45,9 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * A hidden concept (avniproject/avni-product#1905) configured as a subject search result column is left out of
- * the organisation config served to the browser and to the phone, while the stored setting is left as
- * configured. See avniproject/avni-server#1074.
+ * A hidden concept (avniproject/avni-product#1905) configured as a subject search result column, a search filter
+ * or a My Dashboard filter is left out of the organisation config served to the browser and to the phone, while
+ * the stored setting is left as configured. See avniproject/avni-server#1074.
  */
 @Sql(value = {"/tear-down.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -63,6 +63,7 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
     @Autowired
     private OrganisationConfigController organisationConfigController;
 
+    private KeyValues hiddenMarker;
     private Concept hidden;
     private Concept seen;
 
@@ -70,7 +71,7 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
     public void setUp() throws Exception {
         super.setUp();
         setUser("demo-admin");
-        KeyValues hiddenMarker = new KeyValues();
+        hiddenMarker = new KeyValues();
         hiddenMarker.add(new KeyValue(KeyType.hidden, true));
         hidden = testConceptService.createConceptWithKeyValues("AI verdict", ConceptDataType.Text, hiddenMarker);
         seen = testConceptService.createConcept("Seen answer", ConceptDataType.Text);
@@ -111,32 +112,59 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
     // the security filters, and the sync interceptor's cast fails. The phone got a 500 on 1 Oct 2026; this is
     // the test that would have failed first.
     @Test
-    @SuppressWarnings("unchecked")
     public void thePhoneSyncRouteAnswersOverHttpWithTheConfigBody() {
-        template.getRestTemplate().setInterceptors(Collections.singletonList((request, body, execution) -> {
-            request.getHeaders().add(AuthenticationFilter.USER_NAME_HEADER, "demo-admin");
-            return execution.execute(request, body);
-        }));
-        String path = UriComponentsBuilder.fromPath("/organisationConfig/search/lastModified")
-                .queryParam("lastModifiedDateTime", "1900-01-01T00:00:00.000Z")
-                .queryParam("now", "2100-01-01T00:00:00.000Z")
-                .queryParam("size", "100")
-                .queryParam("page", "0")
-                .toUriString();
+        assertThat(columnUuids(settingsSyncedOverHttp())).containsExactly(seen.getUuid());
+    }
 
-        ResponseEntity<LinkedHashMap> response = template.getForEntity(path, LinkedHashMap.class);
+    // The QA finding on avniproject/avni-server#1074 (8 Oct 2026): a hidden concept set up as a search filter was
+    // still offered as a filter on both the phone's and the browser's search screen.
+    @Test
+    public void theBrowserIsServedTheConfigWithoutTheHiddenFilters() throws Exception {
+        configureAsFilters(OrganisationConfigSettingKey.searchFilters, hidden, seen);
+        configureAsFilters(OrganisationConfigSettingKey.myDashboardFilters, hidden, seen);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Map<String, Object> embedded = (Map<String, Object>) response.getBody().get("_embedded");
-        List<Map<String, Object>> configs = (List<Map<String, Object>>) embedded.get("organisationConfig");
-        // Row-level security lets this organisation's role read its parent organisation's row too, so pick
-        // out this organisation's config rather than counting rows.
-        String storedUuid = storedConfig().getUuid();
-        Map<String, Object> config = configs.stream()
-                .filter(served -> storedUuid.equals(served.get("uuid")))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("this organisation's config was not served"));
-        assertThat(columnUuids((Map<String, Object>) config.get("settings"))).containsExactly(seen.getUuid());
+        mockMvc.perform(get("/web/organisationConfig").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.organisationConfig.searchFilters[*].titleKey", contains("Name", seen.getName())))
+                .andExpect(jsonPath("$.organisationConfig.myDashboardFilters[*].titleKey", contains("Name", seen.getName())))
+                .andExpect(jsonPath("$.conceptList[*].uuid", contains(seen.getUuid())));
+    }
+
+    @Test
+    public void thePhoneSyncRouteAnswersOverHttpWithoutTheHiddenFilters() {
+        configureAsFilters(OrganisationConfigSettingKey.searchFilters, hidden, seen);
+        configureAsFilters(OrganisationConfigSettingKey.myDashboardFilters, hidden, seen);
+
+        Map<String, Object> settings = settingsSyncedOverHttp();
+
+        assertThat(filterTitles(settings, OrganisationConfigSettingKey.searchFilters)).containsExactly("Name", seen.getName());
+        assertThat(filterTitles(settings, OrganisationConfigSettingKey.myDashboardFilters)).containsExactly("Name", seen.getName());
+    }
+
+    @Test
+    public void theStoredSettingStillListsTheHiddenFilters() throws Exception {
+        configureAsFilters(OrganisationConfigSettingKey.searchFilters, hidden, seen);
+
+        mockMvc.perform(get("/web/organisationConfig").accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+
+        // The filter and column screens in the app designer read GET /organisationConfig and save what they read.
+        // If that route ever trimmed hidden concepts too, their next save would delete the filter and the column.
+        Map<String, Object> settings = settingsOverHttp("/organisationConfig");
+        assertThat(filterTitles(settings, OrganisationConfigSettingKey.searchFilters))
+                .containsExactly("Name", hidden.getName(), seen.getName());
+        assertThat(columnUuids(settings)).containsExactly(hidden.getUuid(), seen.getUuid());
+    }
+
+    @Test
+    public void savingAConceptThatIsAFilterMarksTheConfigModifiedSoThePhoneReSyncsIt() throws Exception {
+        Concept filterOnly = testConceptService.createConceptWithKeyValues("Hidden filter", ConceptDataType.Text, hiddenMarker);
+        configureAsFilters(OrganisationConfigSettingKey.searchFilters, filterOnly);
+        DateTime before = storedConfig().getLastModifiedDateTime();
+        Thread.sleep(20);
+
+        conceptService.saveOrUpdateConcepts(List.of(contractFor(filterOnly)), ConceptContract.RequestType.Bundle);
+
+        assertThat(storedConfig().getLastModifiedDateTime().isAfter(before)).isTrue();
     }
 
     @Test
@@ -174,6 +202,40 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
         return organisationConfigRepository.findByOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
     }
 
+    // The settings this organisation's phone receives from its sync route, called over HTTP as the phone calls it.
+    private Map<String, Object> settingsSyncedOverHttp() {
+        return settingsOverHttp(UriComponentsBuilder.fromPath("/organisationConfig/search/lastModified")
+                .queryParam("lastModifiedDateTime", "1900-01-01T00:00:00.000Z")
+                .queryParam("now", "2100-01-01T00:00:00.000Z")
+                .queryParam("size", "100")
+                .queryParam("page", "0")
+                .toUriString());
+    }
+
+    // This organisation's settings from a route that answers with _embedded.organisationConfig. Called over HTTP:
+    // under MockMvc the sync interceptor's cast to the request wrapper fails on these routes.
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> settingsOverHttp(String path) {
+        template.getRestTemplate().setInterceptors(Collections.singletonList((request, body, execution) -> {
+            request.getHeaders().add(AuthenticationFilter.USER_NAME_HEADER, "demo-admin");
+            return execution.execute(request, body);
+        }));
+
+        ResponseEntity<LinkedHashMap> response = template.getForEntity(path, LinkedHashMap.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Map<String, Object> embedded = (Map<String, Object>) response.getBody().get("_embedded");
+        List<Map<String, Object>> configs = (List<Map<String, Object>>) embedded.get("organisationConfig");
+        // Row-level security lets this organisation's role read its parent organisation's row too, so pick
+        // out this organisation's config rather than counting rows.
+        String storedUuid = storedConfig().getUuid();
+        Map<String, Object> config = configs.stream()
+                .filter(served -> storedUuid.equals(served.get("uuid")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("this organisation's config was not served"));
+        return (Map<String, Object>) config.get("settings");
+    }
+
     // The setting as the app designer stores it: one entry per subject type, concepts in display order.
     private void configureAsColumns(Concept... concepts) {
         List<Map<String, Object>> resultConcepts = new ArrayList<>();
@@ -192,6 +254,38 @@ public class OrganisationConfigControllerIntegrationTest extends AbstractControl
         config.getSettings().put(OrganisationConfigSettingKey.searchResultFields.name(), List.of(searchField));
         config.updateLastModifiedDateTime();
         organisationConfigRepository.save(config);
+    }
+
+    // A filter on the subject's name, which names no concept, ahead of one concept filter per concept given,
+    // as the app designer stores them.
+    private void configureAsFilters(OrganisationConfigSettingKey filterSetting, Concept... concepts) {
+        List<Map<String, Object>> filters = new ArrayList<>();
+        Map<String, Object> nameFilter = new LinkedHashMap<>();
+        nameFilter.put("type", "Name");
+        nameFilter.put("titleKey", "Name");
+        nameFilter.put("subjectTypeUUID", "st-uuid");
+        filters.add(nameFilter);
+        for (Concept concept : concepts) {
+            Map<String, Object> filter = new LinkedHashMap<>();
+            filter.put("type", "Concept");
+            filter.put("scope", "registration");
+            filter.put("titleKey", concept.getName());
+            filter.put("conceptName", concept.getName());
+            filter.put("conceptUUID", concept.getUuid());
+            filter.put("conceptDataType", "Text");
+            filter.put("subjectTypeUUID", "st-uuid");
+            filters.add(filter);
+        }
+        OrganisationConfig config = storedConfig();
+        config.getSettings().put(filterSetting.name(), filters);
+        config.updateLastModifiedDateTime();
+        organisationConfigRepository.save(config);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> filterTitles(Map<String, Object> settings, OrganisationConfigSettingKey filterSetting) {
+        List<Map<String, Object>> filters = (List<Map<String, Object>>) settings.get(filterSetting.name());
+        return filters.stream().map(filter -> (String) filter.get("titleKey")).collect(Collectors.toList());
     }
 
     @SuppressWarnings("unchecked")
