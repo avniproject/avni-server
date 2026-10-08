@@ -16,6 +16,9 @@ import java.util.Map;
 
 @Service
 public class DownloadableContentService implements NonScopeAwareService {
+    private static final String GUIDANCE_IMAGE_CATEGORY = "guidanceImage";
+    private static final String GUIDANCE_SEQUENCE = "sequence";
+    private static final String GUIDANCE_KIND = "kind";
 
     private final DownloadableContentRepository downloadableContentRepository;
 
@@ -46,6 +49,10 @@ public class DownloadableContentService implements NonScopeAwareService {
             }
         }
         assertNameIsUnique(name, content);
+        JsonObject payload = toPayload(request.getPayload());
+        if (!request.isVoided()) {
+            assertGuidancePositionIsFree(category, payload, content);
+        }
 
         content.setName(name);
         content.setCategory(category);
@@ -55,7 +62,7 @@ public class DownloadableContentService implements NonScopeAwareService {
         content.setContentKey(contentKey);
         content.setSha256(sha256);
         content.setNeedsKey(request.isNeedsKey());
-        content.setPayload(toPayload(request.getPayload()));
+        content.setPayload(payload);
         content.setVoided(request.isVoided());
         return downloadableContentRepository.save(content);
     }
@@ -101,6 +108,38 @@ public class DownloadableContentService implements NonScopeAwareService {
             throw new BadRequestError("DownloadableContent with uuid '%s' not found", uuid);
         }
         return content;
+    }
+
+    // A rule finds a guidance picture by its position and picture type, and the phone takes the first match, so a
+    // second record for the same pair could show a stale picture in its place (avniproject/avni-webapp#1798). The
+    // admin screen checks this too, but only against the records it last fetched.
+    private void assertGuidancePositionIsFree(String category, JsonObject payload, DownloadableContent current) {
+        if (!GUIDANCE_IMAGE_CATEGORY.equals(category) || payload == null) {
+            return;
+        }
+        Object sequence = payload.get(GUIDANCE_SEQUENCE);
+        Object kind = payload.get(GUIDANCE_KIND);
+        if (sequence == null || kind == null) {
+            return;
+        }
+        downloadableContentRepository.findAllByCategoryAndIsVoidedFalse(GUIDANCE_IMAGE_CATEGORY).stream()
+                .filter(existing -> !existing.getUuid().equals(current.getUuid()))
+                .filter(existing -> existing.getPayload() != null
+                        && samePosition(existing.getPayload().get(GUIDANCE_SEQUENCE), sequence)
+                        && kind.equals(existing.getPayload().get(GUIDANCE_KIND)))
+                .findFirst()
+                .ifPresent(existing -> {
+                    throw new BadRequestError("Guidance picture \"%s\" already has position %s and this picture type. Edit that record instead.",
+                            existing.getName(), sequence);
+                });
+    }
+
+    // A stored payload and a request can carry the same whole number as different Number types.
+    private static boolean samePosition(Object stored, Object requested) {
+        if (stored instanceof Number && requested instanceof Number) {
+            return ((Number) stored).doubleValue() == ((Number) requested).doubleValue();
+        }
+        return requested.equals(stored);
     }
 
     private void assertNameIsUnique(String name, DownloadableContent current) {
