@@ -71,10 +71,10 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return count(syncEntityChangedAuditSpecification(syncParameters)
+        return existsIgnoringOrder(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
                 .and(syncDisabledSpecification())
-        ) > 0;
+        );
     }
 
     List<IndividualRelationship> findByIndividualaAndIndividualBAndIsVoidedFalse(Individual individualA, Individual individualB);

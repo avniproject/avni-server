@@ -32,10 +32,10 @@ public interface CommentThreadRepository extends TransactionalDataRepository<Com
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters){
-        return count(syncEntityChangedAuditSpecification(syncParameters)
+        return existsIgnoringOrder(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
                 .and(syncDisabledSpecification())
-        ) > 0;
+        );
     }
 
     List<CommentThread> findDistinctByIsVoidedFalseAndCommentsIsVoidedFalseAndComments_SubjectOrderByOpenDateTimeDescIdDesc(Individual subject);

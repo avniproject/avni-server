@@ -44,13 +44,13 @@ public interface SessionRepository extends TransactionalDataRepository<Session>,
                                         @Param("now") Date now,
                                         Pageable pageable);
 
-    @Query(value = "select count(*) from session s" + SESSION_SCOPE_CLAUSE +
-            "  and s.last_modified_date_time > :lastModifiedDateTime",
+    @Query(value = "select exists(select 1 from session s" + SESSION_SCOPE_CLAUSE +
+            "  and s.last_modified_date_time > :lastModifiedDateTime)",
             nativeQuery = true)
-    Long getSessionChangedRowCount(@Param("catchmentId") long catchmentId,
-                                   @Param("organisationId") long organisationId,
-                                   @Param("subjectTypeId") long subjectTypeId,
-                                   @Param("lastModifiedDateTime") Date lastModifiedDateTime);
+    boolean hasChangedSession(@Param("catchmentId") long catchmentId,
+                              @Param("organisationId") long organisationId,
+                              @Param("subjectTypeId") long subjectTypeId,
+                              @Param("lastModifiedDateTime") Date lastModifiedDateTime);
 
     @Override
     default Page<Session> getSyncResults(SyncParameters syncParameters) {
@@ -70,10 +70,10 @@ public interface SessionRepository extends TransactionalDataRepository<Session>,
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return getSessionChangedRowCount(
+        return hasChangedSession(
                 syncParameters.getCatchment().getId(),
                 syncParameters.getCatchment().getOrganisationId(),
                 syncParameters.getTypeId(),
-                syncParameters.getLastModifiedDateTime().toDate()) > 0;
+                syncParameters.getLastModifiedDateTime().toDate());
     }
 }

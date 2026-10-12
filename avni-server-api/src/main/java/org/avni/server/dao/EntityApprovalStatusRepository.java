@@ -83,7 +83,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return count(syncDisabledSpecification()) > 0;
+        return existsIgnoringOrder(syncDisabledSpecification());
     }
 
     @Modifying(clearAutomatically = true)

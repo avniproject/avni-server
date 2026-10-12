@@ -37,11 +37,11 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters){
-        return count(syncEntityChangedAuditSpecification(syncParameters)
+        return existsIgnoringOrder(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                 .and(syncStrategySpecification(syncParameters))
                 .and(syncDisabledSpecification())
-        ) > 0;
+        );
     }
 
     @Query(value = "select count(enc.id) as count " +

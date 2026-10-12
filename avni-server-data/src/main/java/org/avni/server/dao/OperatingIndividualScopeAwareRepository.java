@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -198,5 +199,13 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
             }
             throw dive;
         }
+    }
+
+    default boolean existsIgnoringOrder(Specification<T> specification) {
+        return exists((Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            Predicate predicate = specification.toPredicate(root, query, cb);
+            query.orderBy(Collections.emptyList());
+            return predicate;
+        });
     }
 }

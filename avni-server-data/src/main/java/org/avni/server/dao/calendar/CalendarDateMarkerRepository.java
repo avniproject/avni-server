@@ -55,12 +55,12 @@ public interface CalendarDateMarkerRepository extends ReferenceDataRepository<Ca
                                                   @Param("now") Date now,
                                                   Pageable pageable);
 
-    @Query(value = "select count(*) from calendar_date_marker cdm" + MARKER_SCOPE_CLAUSE +
-            "  and cdm.last_modified_date_time > :lastModifiedDateTime",
+    @Query(value = "select exists(select 1 from calendar_date_marker cdm" + MARKER_SCOPE_CLAUSE +
+            "  and cdm.last_modified_date_time > :lastModifiedDateTime)",
             nativeQuery = true)
-    Long getMarkerChangedRowCount(@Param("catchmentId") long catchmentId,
-                                  @Param("organisationId") long organisationId,
-                                  @Param("lastModifiedDateTime") Date lastModifiedDateTime);
+    boolean hasChangedCalendarDateMarker(@Param("catchmentId") long catchmentId,
+                                         @Param("organisationId") long organisationId,
+                                         @Param("lastModifiedDateTime") Date lastModifiedDateTime);
 
     @Override
     default Page<CalendarDateMarker> getSyncResults(SyncParameters syncParameters) {
@@ -74,9 +74,9 @@ public interface CalendarDateMarkerRepository extends ReferenceDataRepository<Ca
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return getMarkerChangedRowCount(
+        return hasChangedCalendarDateMarker(
                 syncParameters.getCatchment().getId(),
                 syncParameters.getCatchment().getOrganisationId(),
-                syncParameters.getLastModifiedDateTime().toDate()) > 0;
+                syncParameters.getLastModifiedDateTime().toDate());
     }
 }

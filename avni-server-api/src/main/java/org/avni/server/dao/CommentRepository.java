@@ -32,10 +32,10 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters){
-        return count(syncEntityChangedAuditSpecification(syncParameters)
+        return existsIgnoringOrder(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
                 .and(syncDisabledSpecification())
-        ) > 0;
+        );
     }
 
     @Modifying

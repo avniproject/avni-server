@@ -47,14 +47,14 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "order by al1.last_modified_date_time asc, al1.id asc", nativeQuery = true)
     Page<AddressLevel> getSyncResults(long catchmentId, Date lastModifiedDateTime, Date now, long organisationId, Pageable pageable);
 
-    @Query(value = "select count(*)\n" +
+    @Query(value = "select exists(select 1\n" +
             "from catchment c\n" +
             "         inner join catchment_address_mapping cam on c.id = cam.catchment_id\n" +
             "         inner join address_level al on cam.addresslevel_id = al.id\n" +
             "         inner join address_level al1 on al.lineage @> al1.lineage \n" +
             "where c.id = :catchmentId\n" +
-            "  and al1.last_modified_date_time > :lastModifiedDateTime\n", nativeQuery = true)
-    Long getChangedRowCount(long catchmentId, Date lastModifiedDateTime);
+            "  and al1.last_modified_date_time > :lastModifiedDateTime)\n", nativeQuery = true)
+    boolean hasChangedLocation(long catchmentId, Date lastModifiedDateTime);
 
 
     AddressLevel findByTitleAndCatchmentsUuid(String title, String uuid);
@@ -123,7 +123,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return getChangedRowCount(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate()) > 0;
+        return hasChangedLocation(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate());
     }
 
     default AddressLevel findByName(String name) {
