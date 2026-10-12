@@ -474,4 +474,16 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         assertNotNull(exitValue, "Shared concept must have an exit-observation value");
         assertNotEquals(enrolmentValue, exitValue, "Shared concept must hold independent values across the two observation sets");
     }
+
+    @Test
+    public void exitedEnrolment_allowedWhenSubjectHasActiveEnrolmentInSingleEnrolmentProgram() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        success(validHeader(), validDataRowWithNoIdFromPreviousSystem());
+
+        programEnrolmentRowCreator.create(new Row(validExitedEnrolmentHeader(), validExitedEnrolmentDataRow()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+
+        ProgramEnrolment exitedEnrolment = programEnrolmentRepository.findByLegacyId("EXIT-ENR-001");
+        assertNotNull(exitedEnrolment);
+        assertNotNull(exitedEnrolment.getProgramExitDateTime());
+    }
 }

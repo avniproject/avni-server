@@ -81,7 +81,7 @@ public class ProgramEnrolmentRowCreator {
         }
         ValidationUtil.handleErrors(allErrorMsgs);
 
-        if (!program.isAllowMultipleEnrolments() && programEnrolmentService.alreadyEnrolled(individual, program)) {
+        if (effectiveMode != ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT && !program.isAllowMultipleEnrolments() && programEnrolmentService.alreadyEnrolled(individual, program)) {
             allErrorMsgs.add(String.format("Subject '%s' is already enrolled in program '%s' and the program doesn't allow for multiple enrolments", providedSubjectId, program.getName()));
             ValidationUtil.handleErrors(allErrorMsgs);
         }
