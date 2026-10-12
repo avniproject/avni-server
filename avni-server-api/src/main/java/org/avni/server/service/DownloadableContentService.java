@@ -12,13 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class DownloadableContentService implements NonScopeAwareService {
     private static final String GUIDANCE_IMAGE_CATEGORY = "guidanceImage";
     private static final String GUIDANCE_SEQUENCE = "sequence";
+    private static final String GUIDANCE_SITE = "site";
     private static final String GUIDANCE_KIND = "kind";
+    private static final List<String> GUIDANCE_KINDS = List.of("reckoner", "overlay");
 
     private final DownloadableContentRepository downloadableContentRepository;
 
@@ -50,8 +54,9 @@ public class DownloadableContentService implements NonScopeAwareService {
         }
         assertNameIsUnique(name, content);
         JsonObject payload = toPayload(request.getPayload());
-        if (!request.isVoided()) {
-            assertGuidancePositionIsFree(category, payload, content);
+        if (!request.isVoided() && GUIDANCE_IMAGE_CATEGORY.equals(category)) {
+            assertGuidanceDetailsAreValid(payload);
+            assertGuidancePositionIsFree(payload, content);
         }
 
         content.setName(name);
@@ -110,18 +115,45 @@ public class DownloadableContentService implements NonScopeAwareService {
         return content;
     }
 
+    // The phone finds a guidance picture by an exact match on position and picture type, and labels the photo row with
+    // the site, so details the admin screen would refuse save a picture no rule can find. They slip past the duplicate
+    // check below as well: a position sent as the text "91" never equals the number 91 (avniproject/avni-webapp#1798).
+    // Worded as the screen words the same checks.
+    private void assertGuidanceDetailsAreValid(JsonObject payload) {
+        JsonObject details = payload == null ? new JsonObject() : payload;
+        List<String> problems = new ArrayList<>();
+        if (!isWholeNumberFromOne(details.get(GUIDANCE_SEQUENCE))) {
+            problems.add("position (a whole number, 1 or more)");
+        }
+        Object site = details.get(GUIDANCE_SITE);
+        if (!(site instanceof String) || !StringUtils.hasText((String) site)) {
+            problems.add("site name (a non-empty string)");
+        }
+        Object kind = details.get(GUIDANCE_KIND);
+        if (!(kind instanceof String) || !GUIDANCE_KINDS.contains(kind)) {
+            problems.add("picture type (Reference photo or Framing outline)");
+        }
+        if (!problems.isEmpty()) {
+            throw new BadRequestError("Guidance details are missing or invalid: %s.", String.join(", ", problems));
+        }
+    }
+
+    // JSON brings a number in as an Integer, a Long or a Double depending on how it was written, and 91.0 is the same
+    // position as 91 to the phone.
+    private static boolean isWholeNumberFromOne(Object value) {
+        if (!(value instanceof Number)) {
+            return false;
+        }
+        double number = ((Number) value).doubleValue();
+        return number >= 1 && !Double.isInfinite(number) && number == Math.rint(number);
+    }
+
     // A rule finds a guidance picture by its position and picture type, and the phone takes the first match, so a
     // second record for the same pair could show a stale picture in its place (avniproject/avni-webapp#1798). The
     // admin screen checks this too, but only against the records it last fetched.
-    private void assertGuidancePositionIsFree(String category, JsonObject payload, DownloadableContent current) {
-        if (!GUIDANCE_IMAGE_CATEGORY.equals(category) || payload == null) {
-            return;
-        }
-        Object sequence = payload.get(GUIDANCE_SEQUENCE);
+    private void assertGuidancePositionIsFree(JsonObject payload, DownloadableContent current) {
+        Number sequence = (Number) payload.get(GUIDANCE_SEQUENCE);
         Object kind = payload.get(GUIDANCE_KIND);
-        if (sequence == null || kind == null) {
-            return;
-        }
         downloadableContentRepository.findAllByCategoryAndIsVoidedFalse(GUIDANCE_IMAGE_CATEGORY).stream()
                 .filter(existing -> !existing.getUuid().equals(current.getUuid()))
                 .filter(existing -> existing.getPayload() != null
@@ -135,11 +167,8 @@ public class DownloadableContentService implements NonScopeAwareService {
     }
 
     // A stored payload and a request can carry the same whole number as different Number types.
-    private static boolean samePosition(Object stored, Object requested) {
-        if (stored instanceof Number && requested instanceof Number) {
-            return ((Number) stored).doubleValue() == ((Number) requested).doubleValue();
-        }
-        return requested.equals(stored);
+    private static boolean samePosition(Object stored, Number requested) {
+        return stored instanceof Number && ((Number) stored).doubleValue() == requested.doubleValue();
     }
 
     private void assertNameIsUnique(String name, DownloadableContent current) {

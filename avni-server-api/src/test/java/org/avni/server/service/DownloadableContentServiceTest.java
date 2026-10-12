@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -296,7 +298,84 @@ public class DownloadableContentServiceTest {
         verify(downloadableContentRepository, times(0)).findAllByCategoryAndIsVoidedFalse(anyString());
     }
 
-    private DownloadableContent guidanceRecord(String uuid, String name, Number sequence, String kind) {
+    // QA's case on 9 Oct: the text "91" never equals the number 91, so a second Reference photo for 91 saved. The phone
+    // matches a position exactly too, so a picture saved with a text position is one no rule can ever find.
+    @Test
+    public void aGuidancePictureWithItsPositionAsTextIsRefused() {
+        DownloadableContent existing = guidanceRecord("existing-uuid", "QA1798 91 reckoner", 91, "reckoner");
+        when(downloadableContentRepository.findAllByCategoryAndIsVoidedFalse("guidanceImage")).thenReturn(List.of(existing));
+
+        assertGuidanceRefused(guidanceRequest(null, "QA dup text position", "91", "reckoner"), "position (a whole number, 1 or more)");
+    }
+
+    @Test
+    public void aGuidancePictureWithItsPositionAsTextIsRefusedWhenThePositionIsFree() {
+        assertGuidanceRefused(guidanceRequest(null, "Left buccal mucosa - reference", "3", "reckoner"), "position (a whole number, 1 or more)");
+    }
+
+    @Test
+    public void aPositionThatIsNotAWholeNumberFromOneIsRefused() {
+        // JSON 1e400 arrives as an infinite Double, which the JSON column would store as the text "Infinity".
+        for (Object position : Arrays.asList(2.5, 0, -1, "abc", null, Double.POSITIVE_INFINITY, Double.NaN)) {
+            assertGuidanceRefused(guidanceRequest(null, "Left buccal mucosa - reference", position, "reckoner"), "position (a whole number, 1 or more)");
+        }
+    }
+
+    // 91.0 is the same position as 91 to the phone.
+    @Test
+    public void aPositionWrittenAsAWholeDecimalIsSaved() {
+        DownloadableContent saved = service.createOrUpdate(guidanceRequest(null, "Left buccal mucosa - reference", 91.0, "reckoner"));
+
+        assertEquals(91.0, saved.getPayload().get("sequence"));
+    }
+
+    @Test
+    public void aPositionWrittenAsAWholeDecimalCollidesWithThatWholeNumber() {
+        DownloadableContent existing = guidanceRecord("existing-uuid", "QA1798 91 reckoner", 91, "reckoner");
+        when(downloadableContentRepository.findAllByCategoryAndIsVoidedFalse("guidanceImage")).thenReturn(List.of(existing));
+
+        assertGuidanceRefused(guidanceRequest(null, "Left buccal mucosa - again", 91.0, "reckoner"), "QA1798 91 reckoner");
+    }
+
+    @Test
+    public void aBlankMissingOrNonTextSiteNameIsRefused() {
+        for (Object site : Arrays.asList("   ", null, 5)) {
+            Map<String, Object> payload = guidancePayload(3, "reckoner");
+            payload.put("site", site);
+            assertGuidanceRefused(guidanceRequest(null, "Left buccal mucosa - reference", payload), "site name (a non-empty string)");
+        }
+    }
+
+    // Matched exactly on the phone and in the duplicate check, so "Reckoner" would slip past both.
+    @Test
+    public void aPictureTypeOtherThanReferencePhotoOrFramingOutlineIsRefused() {
+        for (Object kind : Arrays.asList("Reckoner", "photo", null, 1)) {
+            assertGuidanceRefused(guidanceRequest(null, "Left buccal mucosa - reference", 3, kind), "picture type (Reference photo or Framing outline)");
+        }
+    }
+
+    @Test
+    public void aGuidancePictureWithNoDetailsIsRefusedInTheScreensWords() {
+        try {
+            service.createOrUpdate(guidanceRequest(null, "Left buccal mucosa - reference", new LinkedHashMap<>()));
+            fail("Expected BadRequestError for a guidance picture with no details");
+        } catch (BadRequestError e) {
+            assertEquals("Guidance details are missing or invalid: position (a whole number, 1 or more), "
+                    + "site name (a non-empty string), picture type (Reference photo or Framing outline).", e.getMessage());
+        }
+        verify(downloadableContentRepository, never()).save(any(DownloadableContent.class));
+    }
+
+    // A record saved with bad details through the API can still be voided.
+    @Test
+    public void voidingAGuidancePictureWithBadDetailsIsAllowed() {
+        DownloadableContentRequest request = guidanceRequest(null, "QA dup text position", "91", "reckoner");
+        request.setVoided(true);
+
+        assertTrue(service.createOrUpdate(request).isVoided());
+    }
+
+    private DownloadableContent guidanceRecord(String uuid, String name, Object sequence, Object kind) {
         DownloadableContent content = new DownloadableContent();
         content.setUuid(uuid);
         content.setName(name);
@@ -305,7 +384,11 @@ public class DownloadableContentServiceTest {
         return content;
     }
 
-    private DownloadableContentRequest guidanceRequest(String uuid, String name, Number sequence, String kind) {
+    private DownloadableContentRequest guidanceRequest(String uuid, String name, Object sequence, Object kind) {
+        return guidanceRequest(uuid, name, guidancePayload(sequence, kind));
+    }
+
+    private DownloadableContentRequest guidanceRequest(String uuid, String name, Map<String, Object> payload) {
         String sha256 = String.join("", Collections.nCopies(64, "a"));
         DownloadableContentRequest request = new DownloadableContentRequest();
         request.setUuid(uuid);
@@ -314,16 +397,26 @@ public class DownloadableContentServiceTest {
         request.setContentKey("guidance/" + sha256 + ".png");
         request.setSha256(sha256);
         request.setNeedsKey(false);
-        request.setPayload(guidancePayload(sequence, kind));
+        request.setPayload(payload);
         return request;
     }
 
-    private Map<String, Object> guidancePayload(Number sequence, String kind) {
+    private Map<String, Object> guidancePayload(Object sequence, Object kind) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sequence", sequence);
         payload.put("site", "Left buccal mucosa");
         payload.put("kind", kind);
         return payload;
+    }
+
+    private void assertGuidanceRefused(DownloadableContentRequest request, String expectedProblem) {
+        try {
+            service.createOrUpdate(request);
+            fail("Expected BadRequestError naming " + expectedProblem);
+        } catch (BadRequestError e) {
+            assertTrue(e.getMessage(), e.getMessage().contains(expectedProblem));
+        }
+        verify(downloadableContentRepository, never()).save(any(DownloadableContent.class));
     }
 
     private DownloadableContentRequest buildRequest(String uuid, String name, String category, Map<String, Object> payload) {
