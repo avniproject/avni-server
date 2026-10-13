@@ -37,11 +37,11 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         Specification<Individual> audit = syncEntityChangedAuditSpecification(syncParameters);
         Specification<Individual> subjectType = syncTypeIdSpecification(syncParameters.getTypeId());
         Specification<Individual> location_AndDirectAssignment_AndSyncAttributes = syncStrategySpecification(syncParameters);
-        return existsIgnoringOrder(audit
+        return count(audit
                 .and(subjectType)
                 .and(location_AndDirectAssignment_AndSyncAttributes)
                 .and(syncDisabledSpecification())
-        );
+        ) > 0;
     }
 
     default Specification<Individual> getFilterSpecForVoid(Boolean includeVoided) {

@@ -46,13 +46,13 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
                                                 @Param("now") Date now,
                                                 Pageable pageable);
 
-    @Query(value = "select exists(select 1 from attendance_record ar" + ATTENDANCE_RECORD_SCOPE_CLAUSE +
-            "  and ar.last_modified_date_time > :lastModifiedDateTime)",
+    @Query(value = "select count(*) from attendance_record ar" + ATTENDANCE_RECORD_SCOPE_CLAUSE +
+            "  and ar.last_modified_date_time > :lastModifiedDateTime",
             nativeQuery = true)
-    boolean hasChangedAttendanceRecord(@Param("catchmentId") long catchmentId,
-                                       @Param("organisationId") long organisationId,
-                                       @Param("subjectTypeId") long subjectTypeId,
-                                       @Param("lastModifiedDateTime") Date lastModifiedDateTime);
+    Long getRecordChangedRowCount(@Param("catchmentId") long catchmentId,
+                                  @Param("organisationId") long organisationId,
+                                  @Param("subjectTypeId") long subjectTypeId,
+                                  @Param("lastModifiedDateTime") Date lastModifiedDateTime);
 
     @Override
     default Page<AttendanceRecord> getSyncResults(SyncParameters syncParameters) {
@@ -72,10 +72,10 @@ public interface AttendanceRecordRepository extends TransactionalDataRepository<
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return hasChangedAttendanceRecord(
+        return getRecordChangedRowCount(
                 syncParameters.getCatchment().getId(),
                 syncParameters.getCatchment().getOrganisationId(),
                 syncParameters.getTypeId(),
-                syncParameters.getLastModifiedDateTime().toDate());
+                syncParameters.getLastModifiedDateTime().toDate()) > 0;
     }
 }

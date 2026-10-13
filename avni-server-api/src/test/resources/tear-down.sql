@@ -1,8 +1,3 @@
-DELETE FROM attendance_record where 1 = 1;
-DELETE FROM session where 1 = 1;
-DELETE FROM attendance_type where 1 = 1;
-DELETE FROM calendar_date_marker where 1 = 1;
-DELETE FROM calendar where 1 = 1;
 DELETE FROM non_applicable_form_element where 1 = 1;
 DELETE FROM form_element where 1 = 1;
 DELETE FROM form_element_group where 1 = 1;

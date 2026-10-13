@@ -57,10 +57,10 @@ public interface SubjectProgramEligibilityRepository extends TransactionalDataRe
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return existsIgnoringOrder(syncEntityChangedAuditSpecification(syncParameters)
+        return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
                 .and(syncDisabledSpecification())
-        );
+        ) > 0;
     }
 
     @Modifying

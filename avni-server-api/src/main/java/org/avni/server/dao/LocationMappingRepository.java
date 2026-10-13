@@ -35,15 +35,15 @@ public interface LocationMappingRepository extends ReferenceDataRepository<Paren
             Pageable pageable
     );
 
-    @Query(value = "select exists(select 1\n" +
+    @Query(value = "select count(*)\n" +
             "from catchment c\n" +
             "         inner join catchment_address_mapping cam on c.id = cam.catchment_id\n" +
             "         inner join address_level al on cam.addresslevel_id = al.id\n" +
             "         inner join address_level al1 on al.lineage @> al1.lineage and al.id <> al1.id\n" +
             "         inner join location_location_mapping llm on al1.id = llm.location_id\n" +
             "where c.id = :catchmentId \n" +
-            "  and llm.last_modified_date_time > :lastModifiedDateTime)", nativeQuery = true)
-    boolean hasChangedLocationMapping(long catchmentId, Date lastModifiedDateTime);
+            "  and llm.last_modified_date_time > :lastModifiedDateTime ;", nativeQuery = true)
+    Long getChangedRowCount(long catchmentId, Date lastModifiedDateTime);
 
     @Override
     default Page<ParentLocationMapping> getSyncResults(SyncParameters syncParameters) {
@@ -53,7 +53,7 @@ public interface LocationMappingRepository extends ReferenceDataRepository<Paren
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return hasChangedLocationMapping(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate());
+        return getChangedRowCount(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate()) > 0;
     }
 
     default ParentLocationMapping findByName(String name) {

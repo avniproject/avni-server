@@ -83,11 +83,11 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return existsIgnoringOrder(syncEntityChangedAuditSpecification(syncParameters)
+        return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                 .and(syncStrategySpecification(syncParameters))
                 .and(syncDisabledSpecification())
-        );
+        ) > 0;
     }
 
     @Modifying(clearAutomatically = true)

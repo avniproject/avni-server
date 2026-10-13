@@ -38,12 +38,12 @@ public interface CalendarRepository extends ReferenceDataRepository<Calendar>, F
                                           @Param("now") Date now,
                                           Pageable pageable);
 
-    @Query(value = "select exists(select 1 from calendar c" + CALENDAR_SCOPE_CLAUSE +
-            "  and c.last_modified_date_time > :lastModifiedDateTime)",
+    @Query(value = "select count(*) from calendar c" + CALENDAR_SCOPE_CLAUSE +
+            "  and c.last_modified_date_time > :lastModifiedDateTime",
             nativeQuery = true)
-    boolean hasChangedCalendar(@Param("catchmentId") long catchmentId,
-                               @Param("organisationId") long organisationId,
-                               @Param("lastModifiedDateTime") Date lastModifiedDateTime);
+    Long getCalendarChangedRowCount(@Param("catchmentId") long catchmentId,
+                                    @Param("organisationId") long organisationId,
+                                    @Param("lastModifiedDateTime") Date lastModifiedDateTime);
 
     @Override
     default Page<Calendar> getSyncResults(SyncParameters syncParameters) {
@@ -57,10 +57,10 @@ public interface CalendarRepository extends ReferenceDataRepository<Calendar>, F
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return hasChangedCalendar(
+        return getCalendarChangedRowCount(
                 syncParameters.getCatchment().getId(),
                 syncParameters.getCatchment().getOrganisationId(),
-                syncParameters.getLastModifiedDateTime().toDate());
+                syncParameters.getLastModifiedDateTime().toDate()) > 0;
     }
 
     @Modifying(clearAutomatically = true)
