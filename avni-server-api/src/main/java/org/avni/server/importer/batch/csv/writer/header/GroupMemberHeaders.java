@@ -3,6 +3,8 @@ package org.avni.server.importer.batch.csv.writer.header;
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.SubjectType;
 
+import java.util.Arrays;
+
 public class GroupMemberHeaders implements HeaderCreator {
     private final SubjectType memberSubjectType;
     public String groupId = "Group Id"; //default dummy value. Is set to the group name + Id in the sample.
@@ -10,6 +12,7 @@ public class GroupMemberHeaders implements HeaderCreator {
     public final static String role = "Role";
     public final static String membershipStartDate = "Membership Start Date";
     public final static String membershipEndDate = "Membership End Date";
+    public final static String removalReason = "Removal Reason";
 
     public GroupMemberHeaders(SubjectType memberSubjectType) {
         this.memberSubjectType = memberSubjectType;
@@ -17,7 +20,7 @@ public class GroupMemberHeaders implements HeaderCreator {
 
     @Override
     public String[] getAllHeaders() {
-        return new String[]{groupId, memberId, role, membershipStartDate, membershipEndDate};
+        return new String[]{groupId, memberId, role, membershipStartDate, membershipEndDate, removalReason};
     }
 
     @Override
@@ -27,7 +30,7 @@ public class GroupMemberHeaders implements HeaderCreator {
 
     @Override
     public String[] getAllMandatoryHeaders(FormMapping formMapping, Object mode) {
-        return getAllHeaders(formMapping, mode);
+        return Arrays.stream(getAllHeaders(formMapping, mode)).filter(header -> !header.equals(removalReason)).toArray(String[]::new);
     }
 
     @Override
