@@ -1,13 +1,19 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import org.avni.server.application.SubjectTypeSettingKey;
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
+import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.importer.batch.csv.creator.DateCreator;
@@ -26,7 +32,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
@@ -37,6 +45,7 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
     private final IndividualRelationshipRepository individualRelationshipRepository;
     private final HouseholdService householdService;
     private final GroupSubjectService groupSubjectService;
+    private final ConceptRepository conceptRepository;
 
     @Autowired
     public GroupSubjectWriter(GroupSubjectRepository groupSubjectRepository,
@@ -44,7 +53,8 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
                               IndividualRepository individualRepository,
                               IndividualRelationRepository individualRelationRepository,
                               IndividualRelationshipRepository individualRelationshipRepository,
-                              HouseholdService householdService, GroupSubjectService groupSubjectService) {
+                              HouseholdService householdService, GroupSubjectService groupSubjectService,
+                              ConceptRepository conceptRepository) {
         this.groupSubjectRepository = groupSubjectRepository;
         this.groupRoleRepository = groupRoleRepository;
         this.individualRepository = individualRepository;
@@ -52,6 +62,7 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
         this.individualRelationshipRepository = individualRelationshipRepository;
         this.householdService = householdService;
         this.groupSubjectService = groupSubjectService;
+        this.conceptRepository = conceptRepository;
     }
 
     @Override
@@ -80,6 +91,11 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
         LocalDate membershipStartDate = dateCreator.getDate(row, GroupMemberHeaders.membershipStartDate, allErrorMsgs, null);
         LocalDate membershipEndDate = dateCreator.getDate(row, GroupMemberHeaders.membershipEndDate, allErrorMsgs, null);
         validateMembershipDates(membershipStartDate, membershipEndDate, allErrorMsgs);
+        String removalReason = row.get(GroupMemberHeaders.removalReason);
+        boolean hasRemovalReason = removalReason != null && !removalReason.isEmpty();
+        if (hasRemovalReason && membershipEndDate == null) {
+            allErrorMsgs.add(String.format("%s is given only with %s", GroupMemberHeaders.removalReason, GroupMemberHeaders.membershipEndDate));
+        }
         if (allErrorMsgs.size() > 0) {
             throw new Exception(String.join(", ", allErrorMsgs));
         }
@@ -94,13 +110,18 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
                 throw new Exception("Role differs from the existing membership. Change it in the app.");
             }
             if (membershipEndDate != null && !matchingGroupSubject.isVoided()) {
-                endMembership(matchingGroupSubject, membershipEndDate);
+                String removalReasonConceptUUID = getRemovalReasonConceptUUID(groupSubject.getGroupSubject().getSubjectType(), removalReason, hasRemovalReason, allErrorMsgs);
+                if (allErrorMsgs.size() > 0) {
+                    throw new Exception(String.join(", ", allErrorMsgs));
+                }
+                endMembership(matchingGroupSubject, membershipEndDate, removalReasonConceptUUID);
                 groupSubjectService.save(matchingGroupSubject);
             }
             return;
         }
 
         groupSubject.setGroupRole(groupRole);
+        String removalReasonConceptUUID = membershipEndDate == null ? null : getRemovalReasonConceptUUID(groupSubject.getGroupSubject().getSubjectType(), removalReason, hasRemovalReason, allErrorMsgs);
         IndividualRelationship individualRelationship = null;
         if (isHousehold && membershipEndDate == null) {
             if (groupRole.getRole().equals("Member")) {
@@ -122,7 +143,7 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
 
         groupSubject.setMembershipStartDate(membershipStartDate != null ? membershipStartDate.toDateTimeAtStartOfDay() : LocalDate.now().toDateTimeAtCurrentTime());
         if (membershipEndDate != null) {
-            endMembership(groupSubject, membershipEndDate);
+            endMembership(groupSubject, membershipEndDate, removalReasonConceptUUID);
         }
         groupSubject.assignUUIDIfRequired();
         groupSubjectService.save(groupSubject);
@@ -290,9 +311,37 @@ public class GroupSubjectWriter implements ItemWriter<Row>, Serializable {
         return dateTime.withZone(DateTimeUtil.IST).toLocalDate();
     }
 
-    private void endMembership(GroupSubject groupSubject, LocalDate membershipEndDate) {
+    private void endMembership(GroupSubject groupSubject, LocalDate membershipEndDate, String removalReasonConceptUUID) {
         groupSubject.setMembershipEndDate(membershipEndDate.toDateTimeAtStartOfDay());
+        groupSubject.setRemovalReasonConceptUUID(removalReasonConceptUUID);
         groupSubject.setVoided(true);
+    }
+
+    private String getRemovalReasonConceptUUID(SubjectType groupSubjectType, String removalReason, boolean hasRemovalReason, List<String> errorMsgs) {
+        JsonObject settings = groupSubjectType.getSettings();
+        Object removalReasonConceptUuid = settings == null ? null : settings.get(String.valueOf(SubjectTypeSettingKey.removalReasonConceptUuid));
+        Concept removalReasonConcept = removalReasonConceptUuid == null ? null : conceptRepository.findByUuid(removalReasonConceptUuid.toString());
+        if (removalReasonConcept == null) {
+            if (hasRemovalReason) {
+                errorMsgs.add(String.format("%s is not asked for this group type", GroupMemberHeaders.removalReason));
+            }
+            return null;
+        }
+        if (!hasRemovalReason) {
+            errorMsgs.add(String.format("%s is required for this group type", GroupMemberHeaders.removalReason));
+            return null;
+        }
+        List<Concept> allowedRemovalReasons = removalReasonConcept.getConceptAnswers().stream()
+                .filter(conceptAnswer -> !conceptAnswer.isVoided() && !conceptAnswer.getAnswerConcept().isVoided())
+                .sorted(Comparator.comparingDouble(ConceptAnswer::getOrder).thenComparing(conceptAnswer -> conceptAnswer.getAnswerConcept().getName()))
+                .map(ConceptAnswer::getAnswerConcept)
+                .toList();
+        Concept chosenRemovalReason = allowedRemovalReasons.stream().filter(concept -> concept.getName().equalsIgnoreCase(removalReason)).findFirst().orElse(null);
+        if (chosenRemovalReason == null) {
+            errorMsgs.add(String.format("%s '%s' is not one of: %s", GroupMemberHeaders.removalReason, removalReason, allowedRemovalReasons.stream().map(Concept::getName).collect(Collectors.joining(", "))));
+            return null;
+        }
+        return chosenRemovalReason.getUuid();
     }
 
 }

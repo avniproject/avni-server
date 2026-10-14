@@ -1,6 +1,7 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.Subject;
+import org.avni.server.application.SubjectTypeSettingKey;
 import org.avni.server.dao.*;
 import org.avni.server.dao.individualRelationship.IndividualRelationGenderMappingRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
@@ -19,6 +20,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.GroupSubjectService;
 import org.avni.server.service.UserSubjectAssignmentService;
+import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.avni.server.util.DateTimeUtil;
@@ -31,6 +33,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +47,7 @@ public class GroupSubjectWriterIntegrationTest extends BaseCSVImportTest {
     private static final String HOUSEHOLD_ID = "Household Id";
     private static final String HEAD_OF_HOUSEHOLD = "Is head of household (yes|no)";
     private static final String RELATION = "Relation name with Head of Household";
+    private static final String REMOVAL_REASON = "Removal Reason";
 
     @Autowired
     private TestDataSetupService testDataSetupService;
@@ -75,6 +79,12 @@ public class GroupSubjectWriterIntegrationTest extends BaseCSVImportTest {
     private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
+    @Autowired
+    private TestConceptService testConceptService;
+    @Autowired
+    private SubjectTypeRepository subjectTypeRepository;
+    @Autowired
+    private ConceptRepository conceptRepository;
 
     private TransactionTemplate transactionTemplate;
     private TestDataSetupService.TestCatchmentData catchment;
@@ -471,10 +481,13 @@ public class GroupSubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     private Row row(String[] cells) {
-        String[] headers = cells.length == 5
-                ? header(GROUP_ID, "Member Id", "Role", "Membership Start Date", "Membership End Date")
-                : header(HOUSEHOLD_ID, "Member Id", HEAD_OF_HOUSEHOLD, RELATION, "Membership Start Date", "Membership End Date");
-        return new Row(headers, dataRow(cells));
+        List<String> headers = new ArrayList<>(cells[0].startsWith("HH")
+                ? List.of(HOUSEHOLD_ID, "Member Id", HEAD_OF_HOUSEHOLD, RELATION, "Membership Start Date", "Membership End Date")
+                : List.of(GROUP_ID, "Member Id", "Role", "Membership Start Date", "Membership End Date"));
+        if (cells.length > headers.size()) {
+            headers.add(REMOVAL_REASON);
+        }
+        return new Row(header(headers.toArray(new String[0])), dataRow(cells));
     }
 
     private void succeeds(String[] cells) {
@@ -602,5 +615,103 @@ public class GroupSubjectWriterIntegrationTest extends BaseCSVImportTest {
         RowFailedException(Exception cause) {
             super(cause);
         }
+    }
+
+    @Test
+    public void removalReason_isRequiredOnAnEndingRow_whereTheGroupTypeAsksForOne() {
+        Individual anganwadi = groupWithRemovalReasons();
+
+        fails(reasonRow("ANGAN-1", "RAVI", "2025-03-01", "2025-05-24", ""), "Removal Reason is required for this group type");
+        fails(groupRow("RAVI", "Child", "2025-03-01", "2025-05-24", "ANGAN-1"), "Removal Reason is required for this group type");
+        assertEquals(List.of(), memberships(anganwadi, ravi));
+    }
+
+    @Test
+    public void removalReason_givenByName_isSavedOnTheEndedMembership() {
+        Individual anganwadi = groupWithRemovalReasons();
+        Individual asha = subject(memberType, "ASHA");
+
+        succeeds(reasonRow("ANGAN-1", "RAVI", "2025-03-01", "2025-05-24", "moved AWAY"));
+        succeeds(reasonRow("ANGAN-1", "ASHA", "2025-08-01", ""));
+        succeeds(reasonRow("ANGAN-1", "ASHA", "2025-08-01", "2025-09-01", "Lost contact"));
+
+        assertEquals(List.of("2025-03-01 2025-05-24 Moved away"), removalReasons(anganwadi, ravi));
+        assertEquals(List.of("2025-08-01 2025-09-01 Lost contact"), removalReasons(anganwadi, asha));
+    }
+
+    @Test
+    public void removalReason_notOfferedByTheGroupType_isRejected_listingTheAllowedAnswers() {
+        Individual anganwadi = groupWithRemovalReasons();
+
+        fails(reasonRow("ANGAN-1", "RAVI", "2025-03-01", "2025-05-24", "Married"), "Removal Reason 'Married' is not one of: Lost contact, Moved away");
+        assertEquals(List.of(), memberships(anganwadi, ravi));
+    }
+
+    @Test
+    public void removalReason_onARowWithNoEndDate_isRejected() {
+        Individual anganwadi = groupWithRemovalReasons();
+        String error = "Removal Reason is given only with Membership End Date";
+
+        fails(reasonRow("ANGAN-1", "RAVI", "2025-08-01", "", "Moved away"), error);
+        fails(reasonRow("PHUL-1", "RAVI", "2025-08-01", "", "Moved away"), error);
+        assertEquals(List.of(), memberships(anganwadi, ravi));
+        assertEquals(List.of(), memberships(phulwari, ravi));
+    }
+
+    @Test
+    public void removalReason_whereTheGroupTypeDoesNotAskForOne_mayBeBlank_andIsRejectedWhenGiven() {
+        fails(reasonRow("PHUL-1", "RAVI", "2025-03-01", "2025-05-24", "Moved away"), "Removal Reason is not asked for this group type");
+        succeeds(reasonRow("PHUL-1", "RAVI", "2025-03-01", "2025-05-24", ""));
+        fails(new String[]{"HH-1", "SON", "no", "", "2020-01-01", "2024-12-31", "Moved away"}, "Removal Reason is not asked for this group type");
+        succeeds(new String[]{"HH-1", "SON", "no", "", "2020-01-01", "2024-12-31", ""});
+
+        assertEquals(List.of("2025-03-01 2025-05-24 none"), removalReasons(phulwari, ravi));
+        assertEquals(List.of("2020-01-01 2024-12-31 none"), removalReasons(household, son));
+    }
+
+    @Test
+    public void removalReason_isIgnoredOnAnExactMatch() {
+        Individual anganwadi = groupWithRemovalReasons();
+        succeeds(reasonRow("ANGAN-1", "RAVI", "2025-03-01", "2025-05-24", "Moved away"));
+        List<String> versionsAfterFirstUpload = versions(anganwadi, ravi);
+
+        succeeds(reasonRow("ANGAN-1", "RAVI", "2025-03-01", "2025-05-24", "Lost contact"));
+        succeeds(reasonRow("ANGAN-1", "RAVI", "2025-03-01", "2025-05-24", ""));
+        succeeds(groupRow("RAVI", "Child", "2025-03-01", "2025-05-24", "ANGAN-1"));
+
+        assertEquals(versionsAfterFirstUpload, versions(anganwadi, ravi));
+        assertEquals(List.of("2025-03-01 2025-05-24 Moved away"), removalReasons(anganwadi, ravi));
+    }
+
+    private String[] reasonRow(String groupId, String memberId, String startDate, String endDate, String... removalReason) {
+        List<String> cells = new ArrayList<>(List.of(groupId, memberId, "Child", startDate, endDate));
+        cells.addAll(List.of(removalReason.length == 0 ? new String[]{""} : removalReason));
+        return cells.toArray(new String[0]);
+    }
+
+    private String[] groupRow(String memberId, String role, String startDate, String endDate, String groupId) {
+        return new String[]{groupId, memberId, role, startDate, endDate};
+    }
+
+    private Individual groupWithRemovalReasons() {
+        Concept removalReason = testConceptService.createCodedConcept("Anganwadi Removal Reason", "Moved away", "Lost contact");
+        SubjectType anganwadiType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setName("Anganwadi").setUuid("st_Anganwadi").setType(Subject.Group).setGroup(true).build());
+        JsonObject settings = anganwadiType.getSettings() == null ? new JsonObject() : anganwadiType.getSettings();
+        settings.put(String.valueOf(SubjectTypeSettingKey.removalReasonConceptUuid), removalReason.getUuid());
+        anganwadiType.setSettings(settings);
+        anganwadiType = subjectTypeRepository.save(anganwadiType);
+        groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withRole("Child").withGroupSubjectType(anganwadiType).withMemberSubjectType(memberType).build());
+        return subject(anganwadiType, "ANGAN-1");
+    }
+
+    private List<String> removalReasons(Individual group, Individual member) {
+        return inTransaction(() -> groupSubjectRepository.findAllByMemberSubject(member).stream()
+                .filter(groupSubject -> groupSubject.getGroupSubject().getId().equals(group.getId()))
+                .map(groupSubject -> String.format("%s %s %s",
+                        day(groupSubject.getMembershipStartDate()),
+                        groupSubject.getMembershipEndDate() == null ? "open" : day(groupSubject.getMembershipEndDate()),
+                        groupSubject.getRemovalReasonConceptUUID() == null ? "none" : conceptRepository.findByUuid(groupSubject.getRemovalReasonConceptUUID()).getName()))
+                .sorted()
+                .toList());
     }
 }
