@@ -10,6 +10,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.TxnDataHeaderValidator;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
@@ -149,15 +150,15 @@ public class ProgramEnrolmentRowCreator {
         if (programEnrolment.getIndividual().isVoided()) {
             allErrorMsgs.add(String.format("The subject of program enrolment '%s' is voided", enrolmentId));
         }
-        String programName = programEnrolment.getProgram().getName();
-        String uploadProgramName = enrolmentFormMapping.getProgram().getName();
-        if (!programName.equals(uploadProgramName)) {
-            allErrorMsgs.add(String.format("Program enrolment '%s' is in program '%s', not '%s'", enrolmentId, programName, uploadProgramName));
+        Program program = programEnrolment.getProgram();
+        Program uploadProgram = enrolmentFormMapping.getProgram();
+        if (!program.getId().equals(uploadProgram.getId())) {
+            allErrorMsgs.add(String.format("Program enrolment '%s' is in program '%s', not '%s'", enrolmentId, program.getName(), uploadProgram.getName()));
         }
-        String subjectTypeName = programEnrolment.getIndividual().getSubjectType().getName();
-        String uploadSubjectTypeName = enrolmentFormMapping.getSubjectType().getName();
-        if (!subjectTypeName.equals(uploadSubjectTypeName)) {
-            allErrorMsgs.add(String.format("Program enrolment '%s' is for subject type '%s', not '%s'", enrolmentId, subjectTypeName, uploadSubjectTypeName));
+        SubjectType subjectType = programEnrolment.getIndividual().getSubjectType();
+        SubjectType uploadSubjectType = enrolmentFormMapping.getSubjectType();
+        if (!subjectType.getId().equals(uploadSubjectType.getId())) {
+            allErrorMsgs.add(String.format("Program enrolment '%s' is for subject type '%s', not '%s'", enrolmentId, subjectType.getName(), uploadSubjectType.getName()));
         }
         if (programEnrolment.isExited()) {
             allErrorMsgs.add(String.format("Program enrolment '%s' is already exited (exit date %s)", enrolmentId, programEnrolment.getProgramExitDateTime().toLocalDate()));
