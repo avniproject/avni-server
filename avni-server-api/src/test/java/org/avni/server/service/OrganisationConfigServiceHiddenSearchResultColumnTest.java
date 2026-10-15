@@ -102,7 +102,7 @@ public class OrganisationConfigServiceHiddenSearchResultColumnTest {
         when(organisationConfigRepository.findByOrganisationId(ORGANISATION_ID)).thenReturn(config);
 
         service.getOrganisationSettings(ORGANISATION_ID);
-        service.withoutHiddenSearchResultConcepts(config.getSettings());
+        service.withoutHiddenColumnsAndFilters(config.getSettings());
 
         assertThat(config.getSettings().toString()).isEqualTo(before);
         assertThat(columnUuids(config.getSettings())).containsExactly("c-verdict", "c-seen");
@@ -112,8 +112,8 @@ public class OrganisationConfigServiceHiddenSearchResultColumnTest {
     public void settingsWithNoColumnsConfiguredComeBackAsTheyAre() {
         JsonObject settings = new JsonObject().with("languages", new String[]{"en"});
 
-        assertThat(service.withoutHiddenSearchResultConcepts(settings)).isSameAs(settings);
-        assertThat(service.withoutHiddenSearchResultConcepts(null)).isNull();
+        assertThat(service.withoutHiddenColumnsAndFilters(settings)).isSameAs(settings);
+        assertThat(service.withoutHiddenColumnsAndFilters(null)).isNull();
     }
 
     @Test
@@ -121,7 +121,7 @@ public class OrganisationConfigServiceHiddenSearchResultColumnTest {
         when(conceptRepository.getAllConceptByUuidIn(anyList())).thenReturn(Collections.singletonList(seen));
         JsonObject settings = configWithColumns(seen).getSettings();
 
-        assertThat(service.withoutHiddenSearchResultConcepts(settings)).isSameAs(settings);
+        assertThat(service.withoutHiddenColumnsAndFilters(settings)).isSameAs(settings);
     }
 
     @Test
@@ -130,7 +130,7 @@ public class OrganisationConfigServiceHiddenSearchResultColumnTest {
         Concept missing = concept("c-missing", "Deleted since", null);
         JsonObject settings = configWithColumns(hidden, missing).getSettings();
 
-        assertThat(columnUuids(service.withoutHiddenSearchResultConcepts(settings))).containsExactly("c-missing");
+        assertThat(columnUuids(service.withoutHiddenColumnsAndFilters(settings))).containsExactly("c-missing");
     }
 
     @Test
@@ -140,7 +140,7 @@ public class OrganisationConfigServiceHiddenSearchResultColumnTest {
         config.setLastModifiedDateTime(before);
         when(organisationConfigRepository.findByOrganisationId(ORGANISATION_ID)).thenReturn(config);
 
-        service.markModifiedIfSearchResultColumn(Arrays.asList("c-other", "c-verdict"));
+        service.markModifiedIfConfiguredAsColumnOrFilter(Arrays.asList("c-other", "c-verdict"));
 
         assertThat(config.getLastModifiedDateTime().isAfter(before)).isTrue();
         verify(organisationConfigRepository).save(config);
@@ -151,7 +151,7 @@ public class OrganisationConfigServiceHiddenSearchResultColumnTest {
         OrganisationConfig config = configWithColumns(hidden, seen);
         when(organisationConfigRepository.findByOrganisationId(ORGANISATION_ID)).thenReturn(config);
 
-        service.markModifiedIfSearchResultColumn(Collections.singletonList("c-other"));
+        service.markModifiedIfConfiguredAsColumnOrFilter(Collections.singletonList("c-other"));
 
         verify(organisationConfigRepository, never()).save(config);
     }

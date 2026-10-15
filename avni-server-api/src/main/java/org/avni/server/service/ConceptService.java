@@ -288,9 +288,9 @@ public class ConceptService implements NonScopeAwareService {
         List<String> savedConceptUuids = concepts.stream()
                 .map(Concept::getUuid)
                 .collect(Collectors.toList());
-        // A concept marked hidden stops being a search result column on the phone only once the phone
-        // re-syncs the organisation config, which it does when that row changes.
-        organisationConfigService.markModifiedIfSearchResultColumn(savedConceptUuids);
+        // A concept marked hidden stops being a search result column or a filter on the phone only once the
+        // phone re-syncs the organisation config, which it does when that row changes.
+        organisationConfigService.markModifiedIfConfiguredAsColumnOrFilter(savedConceptUuids);
         return savedConceptUuids;
     }
 

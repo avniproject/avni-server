@@ -40,8 +40,6 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
         throw new UnsupportedOperationException("No field 'name' in GroupSubject");
     }
 
-    GroupSubject findByGroupSubjectAndMemberSubjectAndIsVoidedFalse(Individual groupSubject, Individual memberSubject);
-
     @Query("select gs from GroupSubject gs " +
             "where gs.memberSubject.id = :individualId or gs.groupSubject.id = :individualId " )
     List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Long individualId);
@@ -53,6 +51,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
 
     List<GroupSubject> findAllByGroupSubjectAndIsVoidedFalse(Individual groupSubject);
     List<GroupSubject> findAllByMemberSubjectAndIsVoidedFalse(Individual memberSubject);
+    List<GroupSubject> findAllByGroupSubjectAndMemberSubject(Individual groupSubject, Individual memberSubject);
 
     List<GroupSubject> findAllByMemberSubjectAndGroupRoleIsVoidedFalseAndIsVoidedFalse(Individual memberSubject);
 

@@ -197,4 +197,37 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
                 "Descriptions array should match headers array length");
     }
 
+    @Test
+    public void exitEnrolment_headersAreExactlyFixedThenExitFormFields() throws InvalidConfigurationException {
+        Concept enrolmentDecision = testConceptService.createCodedConcept("Weight for Age status", "Normal", "Moderate", "Severe");
+        testFormService.addDecisionConcepts(formMapping.getForm().getId(), enrolmentDecision);
+        Concept exitReason = testConceptService.createCodedConcept("Exit Reason", "Migrated", "Deceased");
+        Concept exitDecision = testConceptService.createCodedConcept("Exit Reason status", "Confirmed", "Unconfirmed");
+        FormMapping exitFormMapping = testFormService.createProgramExitForm(
+                formMapping.getSubjectType(), program, "Program Exit Form " + UUID.randomUUID(),
+                Collections.singletonList(exitReason.getName()), Collections.emptyList());
+        testFormService.addDecisionConcepts(exitFormMapping.getForm().getId(), exitDecision);
+
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, ProgramEnrolmentUploadMode.EXIT_ENROLMENT);
+
+        assertEquals(Arrays.asList("Program Enrolment Id", "Exit Date", "Exit Coordinates", "\"Exit Reason\"", "\"Exit Reason status\""),
+                Arrays.asList(headers));
+    }
+
+    @Test
+    public void exitEnrolment_exitDateNoteMentionsEnrolmentDateAndVisits() throws InvalidConfigurationException {
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, ProgramEnrolmentUploadMode.EXIT_ENROLMENT);
+        String[] descriptions = programEnrolmentHeadersCreator.getAllDescriptions(formMapping, ProgramEnrolmentUploadMode.EXIT_ENROLMENT);
+
+        assertEquals("Mandatory. Date the enrolment was exited; not in future and on or after the enrolment date; scheduled visits are not cancelled. Format: DD-MM-YYYY or YYYY-MM-DD.",
+                descriptions[Arrays.asList(headers).indexOf("Exit Date")]);
+    }
+
+    @Test
+    public void exitEnrolment_noExitForm_onlyThreeFixedHeaders() throws InvalidConfigurationException {
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, ProgramEnrolmentUploadMode.EXIT_ENROLMENT);
+
+        assertEquals(Arrays.asList("Program Enrolment Id", "Exit Date", "Exit Coordinates"), Arrays.asList(headers));
+    }
+
 }

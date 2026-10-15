@@ -8,7 +8,7 @@ import org.springframework.hateoas.server.core.Relation;
 /**
  * The organisation config as the phone syncs it. Served instead of the entity so that the settings can be
  * trimmed for the client: a hidden concept (avniproject/avni-product#1905) configured as a search result
- * column is left out, and the stored row is untouched. Carries the fields the phone reads: settings,
+ * column or a filter is left out, and the stored row is untouched. Carries the fields the phone reads: settings,
  * worklistUpdationRule, and lastModifiedDateTime for the next sync.
  */
 @Relation(collectionRelation = "organisationConfig")

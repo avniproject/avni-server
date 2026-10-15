@@ -6,6 +6,7 @@ import org.avni.server.config.InvalidConfigurationException;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentUploadMode;
 import org.avni.server.util.S;
 
 import java.util.*;
@@ -72,6 +73,8 @@ public class TxnDataHeaderValidator {
             boolean isCancelledVisitMode = mode == EncounterUploadMode.UPLOAD_CANCELLED_VISIT;
             if (isScheduleVisitMode) {
                 allErrorMsgs.add(String.format("Form fields found in schedule visit CSV: %s. These fields are not needed when scheduling a visit.", String.join(", ", filteredUnknownHeaders)));
+            } else if (mode == ProgramEnrolmentUploadMode.EXIT_ENROLMENT) {
+                allErrorMsgs.add(String.format("Unexpected fields found in exit enrolments CSV: %s. This upload accepts only Program Enrolment Id, Exit Date, Exit Coordinates and the exit form questions.", String.join(", ", filteredUnknownHeaders)));
             } else if (isCancelledVisitMode) {
                 allErrorMsgs.add(String.format("Unexpected fields found in cancelled visit CSV: %s. Cancelled visits accept only cancellation form concepts (visit observations and Visit Date are not allowed).", String.join(", ", filteredUnknownHeaders)));
             } else {

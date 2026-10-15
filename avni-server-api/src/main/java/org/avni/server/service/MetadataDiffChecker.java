@@ -60,9 +60,16 @@ public class MetadataDiffChecker {
                         objectChangeReport.addFieldReport(FieldChangeReport.objectModified(candidateFieldName, subObjectReport), existingObject);
                     }
                 } else if (candidateFieldValue instanceof List && existingFieldValue instanceof List) {
-                    ObjectCollectionChangeReport collectionChangeReport = findArrayDifferences((List<Object>) candidateFieldValue, (List<Object>) existingFieldValue);
-                    if (!collectionChangeReport.hasNoChange()) {
-                        objectChangeReport.addFieldReport(FieldChangeReport.collectionModified(candidateFieldName, collectionChangeReport), existingObject);
+                    List<Object> candidateList = (List<Object>) candidateFieldValue;
+                    List<Object> existingList = (List<Object>) existingFieldValue;
+                    if (isIdentifiedByUuid(candidateList) && isIdentifiedByUuid(existingList)) {
+                        ObjectCollectionChangeReport collectionChangeReport = findArrayDifferences(candidateList, existingList);
+                        if (!collectionChangeReport.hasNoChange()) {
+                            objectChangeReport.addFieldReport(FieldChangeReport.collectionModified(candidateFieldName, collectionChangeReport), existingObject);
+                        }
+                    } else if (!candidateList.equals(existingList)) {
+                        // Lists whose items are not all maps carrying a uuid, such as a concept's key-values, are compared whole, order included.
+                        objectChangeReport.addFieldReport(FieldChangeReport.modified(candidateFieldName, existingFieldValue, candidateFieldValue), existingObject);
                     }
                 } else if (!Objects.equals(candidateFieldValue, existingFieldValue)) {
                     objectChangeReport.addFieldReport(FieldChangeReport.modified(candidateFieldName, existingFieldValue, candidateFieldValue), existingObject);
@@ -94,5 +101,9 @@ public class MetadataDiffChecker {
                 .collect(Collectors.toMap(getUuid, Function.identity(), (e1, e2) -> e1));
 
         return this.findCollectionDifference(candidateObjects, existingObjects);
+    }
+
+    private static boolean isIdentifiedByUuid(List<Object> items) {
+        return items.stream().allMatch(item -> item instanceof Map && ((Map<?, ?>) item).get("uuid") != null);
     }
 }

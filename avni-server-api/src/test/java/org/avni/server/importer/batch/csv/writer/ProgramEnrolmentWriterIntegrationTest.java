@@ -8,6 +8,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
+import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.csv.creator.ProgramEnrolmentRowCreator;
@@ -18,7 +19,12 @@ import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestFormService;
 import org.avni.server.service.builder.TestLocationService;
+import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.ProgramImportService;
+import org.avni.server.util.BadRequestError;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.springframework.batch.item.Chunk;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
@@ -60,6 +67,14 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     private OperationalProgramRepository operationalProgramRepository;
     @Autowired
     private ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
+    @Autowired
+    private ConceptRepository conceptRepository;
+    @Autowired
+    private ProgramImportService programImportService;
+    @Autowired
+    private OrganisationConfigService organisationConfigService;
+
+    private TestDataSetupService.TestOrganisationData organisationData;
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -138,7 +153,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
 
     @Override
     public void setUp() throws Exception {
-        testDataSetupService.setupOrganisation("example", "User Group 1");
+        organisationData = testDataSetupService.setupOrganisation("example", "User Group 1");
         AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID())
                 .build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
@@ -473,5 +488,252 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         assertNotNull(enrolmentValue, "Shared concept must have a regular-observation value");
         assertNotNull(exitValue, "Shared concept must have an exit-observation value");
         assertNotEquals(enrolmentValue, exitValue, "Shared concept must hold independent values across the two observation sets");
+    }
+
+    @Test
+    public void exitedEnrolment_allowedWhenSubjectHasActiveEnrolmentInSingleEnrolmentProgram() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        success(validHeader(), validDataRowWithNoIdFromPreviousSystem());
+
+        programEnrolmentRowCreator.create(new Row(validExitedEnrolmentHeader(), validExitedEnrolmentDataRow()), ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT);
+
+        ProgramEnrolment exitedEnrolment = programEnrolmentRepository.findByLegacyId("EXIT-ENR-001");
+        assertNotNull(exitedEnrolment);
+        assertNotNull(exitedEnrolment.getProgramExitDateTime());
+    }
+
+    private static final String EXIT_ENROLMENTS_UPLOAD_TYPE = "ProgramEnrolment---Program1---SubjectType1";
+
+    private String[] exitEnrolmentHeader() {
+        return header("Program Enrolment Id", "Exit Date", "Exit Coordinates", "\"Exit Reason\"");
+    }
+
+    private String[] exitEnrolmentRow(String enrolmentId, String exitDate) {
+        return dataRow(enrolmentId, exitDate, "22.5135243,86.6731848", "Exit Reason Answer 1");
+    }
+
+    private FormMapping program1EnrolmentFormMapping() {
+        return programImportService.getFormMapping(EXIT_ENROLMENTS_UPLOAD_TYPE.split("---"));
+    }
+
+    private ProgramEnrolment existingEnrolment(String legacyId, DateTime enrolmentDateTime) {
+        return existingEnrolment(legacyId, enrolmentDateTime, enrolment -> {});
+    }
+
+    private ProgramEnrolment existingEnrolment(String legacyId, DateTime enrolmentDateTime, Consumer<ProgramEnrolment> adjust) {
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        ProgramEnrolment enrolment = new ProgramEnrolmentBuilder()
+                .setProgram(programRepository.findByName("Program1"))
+                .setIndividual(subject)
+                .withMandatoryFieldsForNewEntity()
+                .setEnrolmentDateTime(enrolmentDateTime)
+                .setLegacyId(legacyId)
+                .build();
+        adjust.accept(enrolment);
+        return programEnrolmentRepository.save(enrolment);
+    }
+
+    private void assertExitedByUploadingUser(ProgramEnrolment before, String exitedById) {
+        ProgramEnrolment after = programEnrolmentRepository.findByLegacyIdOrUuid(exitedById);
+        assertEquals(new LocalDate(2020, 6, 1), after.getProgramExitDateTime().toLocalDate());
+        assertNotNull(after.getExitLocation(), "Exit location must be persisted");
+        String answerUuid = conceptRepository.findByName("Exit Reason Answer 1").getUuid();
+        Object exitReason = after.getProgramExitObservations().get(conceptRepository.findByName("Exit Reason").getUuid());
+        assertNotNull(exitReason, "Exit form answer must be persisted");
+        assertTrue(exitReason.toString().contains(answerUuid), exitReason.toString());
+        assertTrue(after.getLastModifiedDateTime().isAfter(before.getLastModifiedDateTime()), "Last modified time must move so the exit syncs to devices");
+        assertEquals(organisationData.getUser2().getId(), after.getLastModifiedBy().getId());
+    }
+
+    @Test
+    public void exitEnrolment_byUuid_exitsExistingEnrolment() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        ProgramEnrolment before = existingEnrolment(null, new DateTime(2020, 1, 1, 0, 0));
+        long enrolmentCount = programEnrolmentRepository.count();
+        setUser(organisationData.getUser2());
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), exitEnrolmentRow(before.getUuid(), "2020-06-01")), program1EnrolmentFormMapping());
+
+        assertEquals(enrolmentCount, programEnrolmentRepository.count(), "No new enrolment is created");
+        assertExitedByUploadingUser(before, before.getUuid());
+    }
+
+    @Test
+    public void exitEnrolment_byLegacyId_exitsExistingEnrolment() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        ProgramEnrolment before = existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        setUser(organisationData.getUser2());
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01")), program1EnrolmentFormMapping());
+
+        assertExitedByUploadingUser(before, "PENR-001");
+    }
+
+    private ProgramEnrolmentWriter writer(String mode) {
+        return new ProgramEnrolmentWriter(programEnrolmentRowCreator, organisationConfigService, programImportService, mode, EXIT_ENROLMENTS_UPLOAD_TYPE);
+    }
+
+    @Test
+    public void writer_exitEnrolmentsMode_exitsTheEnrolmentNamedInTheRow() throws Exception {
+        createProgramExitFormForTests();
+        ProgramEnrolment enrolment = existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+
+        writer("exit_enrolments").write(new Chunk<>(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01"))));
+
+        assertNotNull(programEnrolmentRepository.findByLegacyIdOrUuid(enrolment.getUuid()).getProgramExitDateTime());
+    }
+
+    @Test
+    public void writer_unknownMode_rejectsTheRow() {
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+
+        assertThrows(BadRequestError.class, () -> writer("bogus").write(new Chunk<>(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01")))));
+        assertNull(programEnrolmentRepository.findByLegacyId("PENR-001").getProgramExitDateTime());
+    }
+
+    private void exitRejected(String[] header, String[] row, String expectedMessage) {
+        ValidationException e = assertThrows(ValidationException.class,
+                () -> programEnrolmentRowCreator.exit(new Row(header, row), program1EnrolmentFormMapping()));
+        assertEquals(expectedMessage, e.getMessage());
+    }
+
+    private void exitRejected(String[] row, String expectedMessage) {
+        exitRejected(exitEnrolmentHeader(), row, expectedMessage);
+    }
+
+    @Test
+    public void exitEnrolment_rejects_missingId() {
+        createProgramExitFormForTests();
+        exitRejected(exitEnrolmentRow("", "2020-06-01"), "'Program Enrolment Id' is required");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_unknownId() {
+        createProgramExitFormForTests();
+        exitRejected(exitEnrolmentRow("NO-SUCH-ENROLMENT", "2020-06-01"), "'Program Enrolment Id' id 'NO-SUCH-ENROLMENT' not found in database");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_voidedEnrolment() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0), enrolment -> enrolment.setVoided(true));
+
+        exitRejected(exitEnrolmentRow("PENR-001", "2020-06-01"), "Program enrolment 'PENR-001' is voided");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_voidedSubject() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        subject.setVoided(true);
+        individualRepository.save(subject);
+
+        exitRejected(exitEnrolmentRow("PENR-001", "2020-06-01"), "The subject of program enrolment 'PENR-001' is voided");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_otherProgram() {
+        createProgramExitFormForTests();
+        Program otherProgram = createProgramWithEnrolmentForm("Program2", "Program2 Enrolment Form", List.of("Single Select Coded"));
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0), enrolment -> enrolment.setProgram(otherProgram));
+
+        exitRejected(exitEnrolmentRow("PENR-001", "2020-06-01"), "Program enrolment 'PENR-001' is in program 'Program2', not 'Program1'");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_otherSubjectType() {
+        createProgramExitFormForTests();
+        SubjectType otherSubjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
+                .setMandatoryFieldsForNewEntity()
+                .setType(Subject.Person)
+                .setName("SubjectType2").build());
+        operationalSubjectTypeRepository.save(OperationalSubjectType.fromSubjectType(otherSubjectType, UUID.randomUUID().toString()));
+        Individual otherSubject = individualRepository.save(new SubjectBuilder()
+                .withRegistrationDate(LocalDate.now())
+                .withSubjectType(otherSubjectType)
+                .withFirstName("Jane")
+                .withLegacyId("WXYZ")
+                .build());
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0), enrolment -> enrolment.setIndividual(otherSubject));
+
+        exitRejected(exitEnrolmentRow("PENR-001", "2020-06-01"), "Program enrolment 'PENR-001' is for subject type 'SubjectType2', not 'SubjectType1'");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_alreadyExited() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0), enrolment -> enrolment.setProgramExitDateTime(new DateTime(2020, 3, 1, 0, 0)));
+
+        exitRejected(exitEnrolmentRow("PENR-001", "2020-06-01"), "Program enrolment 'PENR-001' is already exited (exit date 2020-03-01)");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_reuploadSameRow() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01")), program1EnrolmentFormMapping());
+
+        exitRejected(exitEnrolmentRow("PENR-001", "2020-07-01"), "Program enrolment 'PENR-001' is already exited (exit date 2020-06-01)");
+        assertEquals(new LocalDate(2020, 6, 1), programEnrolmentRepository.findByLegacyId("PENR-001").getProgramExitDateTime().toLocalDate());
+    }
+
+    @Test
+    public void exitEnrolment_rejects_exitDateMissing() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        exitRejected(exitEnrolmentRow("PENR-001", ""), "'Exit Date' is mandatory for exited enrolments");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_exitDateUnparseable() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        exitRejected(exitEnrolmentRow("PENR-001", "31/31/2020"), "Invalid date format for 'Exit Date'. Expected format: DD-MM-YYYY or YYYY-MM-DD");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_exitDateInFuture() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        exitRejected(exitEnrolmentRow("PENR-001", LocalDate.now().plusDays(2).toString("yyyy-MM-dd")), "'Exit Date' cannot be in future");
+    }
+
+    @Test
+    public void exitEnrolment_rejects_exitDateBeforeEnrolment() {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 10, 0));
+        exitRejected(exitEnrolmentRow("PENR-001", "2019-12-31"), "'Exit Date' needs to be on or after the enrolment date (2020-01-01)");
+    }
+
+    @Test
+    public void exitEnrolment_sameDayAsEnrolment_isAllowed() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 10, 0));
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-01-01")), program1EnrolmentFormMapping());
+
+        assertNotNull(programEnrolmentRepository.findByLegacyId("PENR-001").getProgramExitDateTime());
+    }
+
+    @Test
+    public void exitEnrolment_rejects_enrolmentSampleHeaders() {
+        createProgramExitFormForTests();
+        ValidationException e = assertThrows(ValidationException.class,
+                () -> programEnrolmentRowCreator.exit(new Row(validHeader(), validDataRow()), program1EnrolmentFormMapping()));
+        assertTrue(e.getMessage().contains("Unexpected fields found in exit enrolments CSV: "), e.getMessage());
+        assertTrue(e.getMessage().contains("This upload accepts only Program Enrolment Id, Exit Date, Exit Coordinates and the exit form questions."), e.getMessage());
+    }
+
+    @Test
+    public void exitEnrolment_blankMandatoryExitQuestion_loads() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests(); // Exit Reason is a mandatory question on this exit form
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), dataRow("PENR-001", "2020-06-01", "", "")), program1EnrolmentFormMapping());
+
+        ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("PENR-001");
+        assertNotNull(enrolment.getProgramExitDateTime());
+        assertTrue(enrolment.getProgramExitObservations().isEmpty());
     }
 }

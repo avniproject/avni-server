@@ -14,7 +14,7 @@ public class HouseholdMemberHeaders extends GroupMemberHeaders implements Header
 
     @Override
     public String[] getAllHeaders() {
-        return new String[]{groupId, memberId, isHeadOfHousehold, relationshipWithHeadOfHousehold, membershipStartDate, membershipEndDate};
+        return new String[]{groupId, memberId, isHeadOfHousehold, relationshipWithHeadOfHousehold, membershipStartDate, membershipEndDate, removalReason};
     }
 
     @Override

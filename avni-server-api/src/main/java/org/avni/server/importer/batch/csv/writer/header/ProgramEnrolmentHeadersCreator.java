@@ -32,6 +32,10 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
                 ? (ProgramEnrolmentUploadMode) mode
                 : ProgramEnrolmentUploadMode.UPLOAD_ENROLMENT;
 
+        if (enrolmentMode == ProgramEnrolmentUploadMode.EXIT_ENROLMENT) {
+            return buildExitEnrolmentFields(enrolmentFormMapping);
+        }
+
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
@@ -56,6 +60,24 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
             }
         }
 
+        return fields;
+    }
+
+    // Exits enrolments already in Avni. The file names the enrolment, so it carries no enrolment-form columns,
+    // and its exit-form columns take no prefix because nothing else in the file could clash with them.
+    private List<HeaderField> buildExitEnrolmentFields(FormMapping enrolmentFormMapping) {
+        List<HeaderField> fields = new ArrayList<>();
+        fields.add(new HeaderField(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID, "Mention identifier from previous system or UUID of the program enrolment. UUID can be identified from address bar in Data Entry App or Longitudinal export file.", true, null, null, null));
+        fields.add(new HeaderField(exitDate, "Date the enrolment was exited; not in future and on or after the enrolment date; scheduled visits are not cancelled", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
+        fields.add(new HeaderField(exitCoordinates, "", false, null, "Format: latitude,longitude in decimal degrees (e.g., 19.8188,83.9172)", null));
+
+        FormMapping programExitFormMapping = formMappingRepository.getProgramExitFormMapping(
+                enrolmentFormMapping.getSubjectType(),
+                enrolmentFormMapping.getProgram());
+        if (programExitFormMapping != null) {
+            fields.addAll(generateConceptFields(programExitFormMapping, false));
+            fields.addAll(generateDecisionConceptFields(programExitFormMapping.getForm()));
+        }
         return fields;
     }
 }

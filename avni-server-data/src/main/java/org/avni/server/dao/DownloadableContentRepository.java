@@ -17,6 +17,8 @@ public interface DownloadableContentRepository extends ReferenceDataRepository<D
 
     DownloadableContent findByNameIgnoreCaseAndIsVoidedFalse(String name);
 
+    List<DownloadableContent> findAllByCategoryAndIsVoidedFalse(String category);
+
     Page<DownloadableContent> findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
             Date lastModifiedDateTime, Date now, Pageable pageable);
 }

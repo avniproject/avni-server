@@ -44,6 +44,9 @@ public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
     }
 
     private void assignMemberToTheAssigneeOfGroup(GroupSubject groupSubject) {
+        if (groupSubject.isVoided()) {
+            return;
+        }
         if (groupSubject.getGroupSubject().getSubjectType().isDirectlyAssignable()) {
             List<UserSubjectAssignment> groupAssignments = userSubjectAssignmentRepository.findAllBySubjectAndIsVoidedFalse(groupSubject.getGroupSubject());
             List<UserSubjectAssignment> memberAssignments = userSubjectAssignmentRepository.findAllBySubject(groupSubject.getMemberSubject());

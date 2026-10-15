@@ -12,6 +12,7 @@ DELETE FROM subject_migration where 1 = 1;
 delete from group_subject where 1 = 1;
 delete from public.user_subject_assignment where 1 = 1;
 DELETE FROM entity_approval_status where 1 = 1;
+DELETE FROM individual_relationship where 1 = 1;
 DELETE FROM individual where 1 = 1;
 DELETE
 FROM operational_program
