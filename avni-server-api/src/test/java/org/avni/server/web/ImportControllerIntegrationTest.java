@@ -79,4 +79,18 @@ public class ImportControllerIntegrationTest extends AbstractControllerIntegrati
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals(UNKNOWN_MODE_MESSAGE, response.getBody());
     }
+
+    @Test
+    public void sampleDownload_exitEnrolmentsMode_startsWithTheFixedExitColumns() throws Exception {
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        importController.getSampleImportFile(programEnrolmentUploadType, null, null, null, "exit_enrolments", response);
+        String sample = response.getContentAsString().replace("\uFEFF", "");
+        assertTrue(sample.startsWith("Program Enrolment Id,Exit Date,Exit Coordinates\n"), sample);
+    }
+
+    @Test
+    public void sampleCheck_otherUploadType_ignoresProgramEnrolmentMode() {
+        ResponseEntity<ImportSampleCheckResponse> response = importController.checkSampleImportFileIsDownloadable("usersAndCatchments", null, null, null, "bogus", null);
+        assertTrue(response.getBody().success(), response.getBody().message());
+    }
 }
