@@ -127,7 +127,10 @@ public class ProgramEnrolmentRowCreator {
         List<String> allErrorMsgs = new ArrayList<>();
         TxnDataHeaderValidator.validateHeaders(row.getHeaders(), enrolmentFormMapping, programEnrolmentHeadersCreator, ProgramEnrolmentUploadMode.EXIT_ENROLMENT, allErrorMsgs);
 
-        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID), EncounterHeadersCreator.PROGRAM_ENROLMENT_ID, allErrorMsgs);
+        String enrolmentId = row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
+        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(enrolmentId, EncounterHeadersCreator.PROGRAM_ENROLMENT_ID, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
+        checkEnrolmentCanBeExited(programEnrolment, enrolmentId, enrolmentFormMapping, allErrorMsgs);
         ValidationUtil.handleErrors(allErrorMsgs);
 
         LocalDate enrolmentDate = programEnrolment.getEnrolmentDateTime().toLocalDate();
@@ -135,6 +138,30 @@ public class ProgramEnrolmentRowCreator {
 
         ValidationUtil.handleErrors(allErrorMsgs);
         programEnrolmentService.save(programEnrolment);
+    }
+
+    // The enrolment lookup does not filter voided rows, and voiding a subject leaves its enrolments live.
+    // Rejecting an already exited enrolment is what makes uploading the same file twice safe.
+    private static void checkEnrolmentCanBeExited(ProgramEnrolment programEnrolment, String enrolmentId, FormMapping enrolmentFormMapping, List<String> allErrorMsgs) {
+        if (programEnrolment.isVoided()) {
+            allErrorMsgs.add(String.format("Program enrolment '%s' is voided", enrolmentId));
+        }
+        if (programEnrolment.getIndividual().isVoided()) {
+            allErrorMsgs.add(String.format("The subject of program enrolment '%s' is voided", enrolmentId));
+        }
+        String programName = programEnrolment.getProgram().getName();
+        String uploadProgramName = enrolmentFormMapping.getProgram().getName();
+        if (!programName.equals(uploadProgramName)) {
+            allErrorMsgs.add(String.format("Program enrolment '%s' is in program '%s', not '%s'", enrolmentId, programName, uploadProgramName));
+        }
+        String subjectTypeName = programEnrolment.getIndividual().getSubjectType().getName();
+        String uploadSubjectTypeName = enrolmentFormMapping.getSubjectType().getName();
+        if (!subjectTypeName.equals(uploadSubjectTypeName)) {
+            allErrorMsgs.add(String.format("Program enrolment '%s' is for subject type '%s', not '%s'", enrolmentId, subjectTypeName, uploadSubjectTypeName));
+        }
+        if (programEnrolment.isExited()) {
+            allErrorMsgs.add(String.format("Program enrolment '%s' is already exited (exit date %s)", enrolmentId, programEnrolment.getProgramExitDateTime().toLocalDate()));
+        }
     }
 
     private void applyExitFields(Row row,
@@ -149,7 +176,7 @@ public class ProgramEnrolmentRowCreator {
         if (!StringUtils.hasText(exitDateStr)) {
             allErrorMsgs.add(String.format("'%s' is mandatory for exited enrolments", ProgramEnrolmentHeadersCreator.exitDate));
         } else {
-            LocalDate exitDate = DateTimeUtil.parseFlexibleDate(exitDateStr);
+            LocalDate exitDate = parseExitDate(exitDateStr);
             if (exitDate == null) {
                 allErrorMsgs.add(String.format("Invalid date format for '%s'. Expected format: DD-MM-YYYY or YYYY-MM-DD", ProgramEnrolmentHeadersCreator.exitDate));
             } else {
@@ -157,7 +184,11 @@ public class ProgramEnrolmentRowCreator {
                     allErrorMsgs.add(String.format("'%s' cannot be in future", ProgramEnrolmentHeadersCreator.exitDate));
                 }
                 if (enrolmentDate != null && exitDate.isBefore(enrolmentDate)) {
-                    allErrorMsgs.add(String.format("'%s' needs to be on or after '%s'", ProgramEnrolmentHeadersCreator.exitDate, ProgramEnrolmentHeadersCreator.enrolmentDate));
+                    // A historical exited enrolment row carries its own Enrolment Date column; an exit of an existing
+                    // enrolment does not, so it names the enrolment's own date instead.
+                    allErrorMsgs.add(prefixedExitColumns
+                            ? String.format("'%s' needs to be on or after '%s'", ProgramEnrolmentHeadersCreator.exitDate, ProgramEnrolmentHeadersCreator.enrolmentDate)
+                            : String.format("'%s' needs to be on or after the enrolment date (%s)", ProgramEnrolmentHeadersCreator.exitDate, enrolmentDate));
                 }
                 programEnrolment.setProgramExitDateTime(exitDate.toDateTimeAtStartOfDay());
             }
@@ -175,6 +206,14 @@ public class ProgramEnrolmentRowCreator {
             exitObservations = observationCreator.getObservations(exitObservationsRow, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramExit, programEnrolment.getProgramExitObservations(), programExitFormMapping);
         }
         programEnrolment.setProgramExitObservations(exitObservations);
+    }
+
+    private static LocalDate parseExitDate(String exitDateStr) {
+        try {
+            return DateTimeUtil.parseFlexibleDate(exitDateStr);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private void rejectMisplacedExitPrefixHeaders(Row row, List<String> allErrorMsgs) {
