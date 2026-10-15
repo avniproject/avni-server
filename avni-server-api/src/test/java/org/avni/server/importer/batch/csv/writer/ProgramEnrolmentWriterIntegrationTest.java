@@ -8,6 +8,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
+import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.csv.creator.ProgramEnrolmentRowCreator;
@@ -18,7 +19,12 @@ import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestFormService;
 import org.avni.server.service.builder.TestLocationService;
+import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.ProgramImportService;
+import org.avni.server.util.BadRequestError;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.springframework.batch.item.Chunk;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +66,14 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     private OperationalProgramRepository operationalProgramRepository;
     @Autowired
     private ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
+    @Autowired
+    private ConceptRepository conceptRepository;
+    @Autowired
+    private ProgramImportService programImportService;
+    @Autowired
+    private OrganisationConfigService organisationConfigService;
+
+    private TestDataSetupService.TestOrganisationData organisationData;
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -138,7 +152,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
 
     @Override
     public void setUp() throws Exception {
-        testDataSetupService.setupOrganisation("example", "User Group 1");
+        organisationData = testDataSetupService.setupOrganisation("example", "User Group 1");
         AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID())
                 .build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID())
@@ -485,5 +499,88 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         ProgramEnrolment exitedEnrolment = programEnrolmentRepository.findByLegacyId("EXIT-ENR-001");
         assertNotNull(exitedEnrolment);
         assertNotNull(exitedEnrolment.getProgramExitDateTime());
+    }
+
+    private static final String EXIT_ENROLMENTS_UPLOAD_TYPE = "ProgramEnrolment---Program1---SubjectType1";
+
+    private String[] exitEnrolmentHeader() {
+        return header("Program Enrolment Id", "Exit Date", "Exit Coordinates", "\"Exit Reason\"");
+    }
+
+    private String[] exitEnrolmentRow(String enrolmentId, String exitDate) {
+        return dataRow(enrolmentId, exitDate, "22.5135243,86.6731848", "Exit Reason Answer 1");
+    }
+
+    private FormMapping program1EnrolmentFormMapping() {
+        return programImportService.getFormMapping(EXIT_ENROLMENTS_UPLOAD_TYPE.split("---"));
+    }
+
+    private ProgramEnrolment existingEnrolment(String legacyId, DateTime enrolmentDateTime) {
+        Individual subject = individualRepository.findByLegacyId("ABCD");
+        return programEnrolmentRepository.save(new ProgramEnrolmentBuilder()
+                .setProgram(programRepository.findByName("Program1"))
+                .setIndividual(subject)
+                .withMandatoryFieldsForNewEntity()
+                .setEnrolmentDateTime(enrolmentDateTime)
+                .setLegacyId(legacyId)
+                .build());
+    }
+
+    private void assertExitedByUploadingUser(ProgramEnrolment before, String exitedById) {
+        ProgramEnrolment after = programEnrolmentRepository.findByLegacyIdOrUuid(exitedById);
+        assertEquals(new LocalDate(2020, 6, 1), after.getProgramExitDateTime().toLocalDate());
+        assertNotNull(after.getExitLocation(), "Exit location must be persisted");
+        String answerUuid = conceptRepository.findByName("Exit Reason Answer 1").getUuid();
+        Object exitReason = after.getProgramExitObservations().get(conceptRepository.findByName("Exit Reason").getUuid());
+        assertNotNull(exitReason, "Exit form answer must be persisted");
+        assertTrue(exitReason.toString().contains(answerUuid), exitReason.toString());
+        assertTrue(after.getLastModifiedDateTime().isAfter(before.getLastModifiedDateTime()), "Last modified time must move so the exit syncs to devices");
+        assertEquals(organisationData.getUser2().getId(), after.getLastModifiedBy().getId());
+    }
+
+    @Test
+    public void exitEnrolment_byUuid_exitsExistingEnrolment() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        ProgramEnrolment before = existingEnrolment(null, new DateTime(2020, 1, 1, 0, 0));
+        long enrolmentCount = programEnrolmentRepository.count();
+        setUser(organisationData.getUser2());
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), exitEnrolmentRow(before.getUuid(), "2020-06-01")), program1EnrolmentFormMapping());
+
+        assertEquals(enrolmentCount, programEnrolmentRepository.count(), "No new enrolment is created");
+        assertExitedByUploadingUser(before, before.getUuid());
+    }
+
+    @Test
+    public void exitEnrolment_byLegacyId_exitsExistingEnrolment() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests();
+        ProgramEnrolment before = existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+        setUser(organisationData.getUser2());
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01")), program1EnrolmentFormMapping());
+
+        assertExitedByUploadingUser(before, "PENR-001");
+    }
+
+    private ProgramEnrolmentWriter writer(String mode) {
+        return new ProgramEnrolmentWriter(programEnrolmentRowCreator, organisationConfigService, programImportService, mode, EXIT_ENROLMENTS_UPLOAD_TYPE);
+    }
+
+    @Test
+    public void writer_exitEnrolmentsMode_exitsTheEnrolmentNamedInTheRow() throws Exception {
+        createProgramExitFormForTests();
+        ProgramEnrolment enrolment = existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+
+        writer("exit_enrolments").write(new Chunk<>(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01"))));
+
+        assertNotNull(programEnrolmentRepository.findByLegacyIdOrUuid(enrolment.getUuid()).getProgramExitDateTime());
+    }
+
+    @Test
+    public void writer_unknownMode_rejectsTheRow() {
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+
+        assertThrows(BadRequestError.class, () -> writer("bogus").write(new Chunk<>(new Row(exitEnrolmentHeader(), exitEnrolmentRow("PENR-001", "2020-06-01")))));
+        assertNull(programEnrolmentRepository.findByLegacyId("PENR-001").getProgramExitDateTime());
     }
 }

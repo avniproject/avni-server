@@ -12,6 +12,7 @@ import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.TxnDataHeaderValidator;
+import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentUploadMode;
 import org.avni.server.importer.batch.model.Row;
@@ -35,6 +36,7 @@ public class ProgramEnrolmentRowCreator {
     private final ProgramEnrolmentService programEnrolmentService;
     private final ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
     private final ProgramRepository programRepository;
+    private final ProgramEnrolmentCreator programEnrolmentCreator;
 
     @Autowired
     public ProgramEnrolmentRowCreator(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -43,7 +45,8 @@ public class ProgramEnrolmentRowCreator {
                                       ObservationCreator observationCreator,
                                       ProgramEnrolmentService programEnrolmentService,
                                       ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator,
-                                      ProgramRepository programRepository) {
+                                      ProgramRepository programRepository,
+                                      ProgramEnrolmentCreator programEnrolmentCreator) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.subjectCreator = subjectCreator;
         this.formMappingRepository = formMappingRepository;
@@ -51,6 +54,7 @@ public class ProgramEnrolmentRowCreator {
         this.programEnrolmentService = programEnrolmentService;
         this.programEnrolmentHeadersCreator = programEnrolmentHeadersCreator;
         this.programRepository = programRepository;
+        this.programEnrolmentCreator = programEnrolmentCreator;
     }
 
     public void create(Row row, ProgramEnrolmentUploadMode mode) throws ValidationException, InvalidConfigurationException {
@@ -108,8 +112,26 @@ public class ProgramEnrolmentRowCreator {
         programEnrolment.setObservations(observationCreator.getObservations(enrolmentObservationsRow, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations(), enrolmentFormMapping));
 
         if (effectiveMode == ProgramEnrolmentUploadMode.UPLOAD_EXITED_ENROLMENT) {
-            applyExitFields(row, programEnrolment, enrolmentDate, allErrorMsgs, locationCreator, individual, program);
+            applyExitFields(row, programEnrolment, enrolmentDate, allErrorMsgs, locationCreator, individual, program, true);
         }
+
+        ValidationUtil.handleErrors(allErrorMsgs);
+        programEnrolmentService.save(programEnrolment);
+    }
+
+    /**
+     * Exits an enrolment that is already in Avni. The row names the enrolment, so the program and subject type
+     * come from the upload type picked on the upload screen, carried here as its enrolment form mapping.
+     */
+    public void exit(Row row, FormMapping enrolmentFormMapping) throws ValidationException, InvalidConfigurationException {
+        List<String> allErrorMsgs = new ArrayList<>();
+        TxnDataHeaderValidator.validateHeaders(row.getHeaders(), enrolmentFormMapping, programEnrolmentHeadersCreator, ProgramEnrolmentUploadMode.EXIT_ENROLMENT, allErrorMsgs);
+
+        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID), EncounterHeadersCreator.PROGRAM_ENROLMENT_ID, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
+
+        LocalDate enrolmentDate = programEnrolment.getEnrolmentDateTime().toLocalDate();
+        applyExitFields(row, programEnrolment, enrolmentDate, allErrorMsgs, new LocationCreator(), programEnrolment.getIndividual(), programEnrolment.getProgram(), false);
 
         ValidationUtil.handleErrors(allErrorMsgs);
         programEnrolmentService.save(programEnrolment);
@@ -121,7 +143,8 @@ public class ProgramEnrolmentRowCreator {
                                  List<String> allErrorMsgs,
                                  LocationCreator locationCreator,
                                  Individual individual,
-                                 Program program) throws ValidationException {
+                                 Program program,
+                                 boolean prefixedExitColumns) throws ValidationException {
         String exitDateStr = row.get(ProgramEnrolmentHeadersCreator.exitDate);
         if (!StringUtils.hasText(exitDateStr)) {
             allErrorMsgs.add(String.format("'%s' is mandatory for exited enrolments", ProgramEnrolmentHeadersCreator.exitDate));
@@ -146,7 +169,9 @@ public class ProgramEnrolmentRowCreator {
         if (programExitFormMapping == null) {
             exitObservations = new ObservationCollection();
         } else {
-            Row exitObservationsRow = rowOfExitConcepts(row, ProgramEnrolmentHeadersCreator.EXIT_CONCEPT_PREFIX);
+            // Historical exited enrolments carry both forms in one row, so their exit columns are prefixed. Exiting an
+            // existing enrolment carries only the exit form, unprefixed, and answers are matched by the form's questions.
+            Row exitObservationsRow = prefixedExitColumns ? rowOfExitConcepts(row, ProgramEnrolmentHeadersCreator.EXIT_CONCEPT_PREFIX) : row;
             exitObservations = observationCreator.getObservations(exitObservationsRow, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramExit, programEnrolment.getProgramExitObservations(), programExitFormMapping);
         }
         programEnrolment.setProgramExitObservations(exitObservations);
