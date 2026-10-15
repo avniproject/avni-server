@@ -86,6 +86,14 @@ public class ImportController {
         logger = LoggerFactory.getLogger(getClass());
     }
 
+    // Only program enrolment uploads reject a mode they do not know; other upload types ignore this parameter.
+    private static ProgramEnrolmentUploadMode programEnrolmentUploadMode(String uploadType, String programEnrolmentUploadMode) {
+        if (uploadType != null && uploadType.startsWith("ProgramEnrolment---")) {
+            return ProgramEnrolmentUploadMode.parseOrDefault(programEnrolmentUploadMode);
+        }
+        return ProgramEnrolmentUploadMode.fromString(programEnrolmentUploadMode);
+    }
+
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public void getSampleImportFile(@RequestParam String uploadType,
@@ -95,7 +103,7 @@ public class ImportController {
                                     @RequestParam(value = "programEnrolmentUploadMode", required = false) String programEnrolmentUploadMode,
                                     HttpServletResponse response) throws IOException, InvalidConfigurationException {
         response.setContentType("text/csv; charset=UTF-8");
-        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, EncounterUploadMode.fromString(encounterUploadMode), ProgramEnrolmentUploadMode.fromString(programEnrolmentUploadMode), response);
+        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, EncounterUploadMode.fromString(encounterUploadMode), programEnrolmentUploadMode(uploadType, programEnrolmentUploadMode), response);
     }
 
     @RequestMapping(value = "/web/importSampleDownloadable", method = RequestMethod.GET)
@@ -109,7 +117,7 @@ public class ImportController {
 
         try {
             importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode,
-                    EncounterUploadMode.fromString(encounterUploadMode), ProgramEnrolmentUploadMode.fromString(programEnrolmentUploadMode), null);
+                    EncounterUploadMode.fromString(encounterUploadMode), programEnrolmentUploadMode(uploadType, programEnrolmentUploadMode), null);
             return ResponseEntity.ok(new ImportSampleCheckResponse(true, "Sample import file is downloadable"));
         } catch (Exception e) {
             return ResponseEntity.ok(new ImportSampleCheckResponse(false, e.getMessage()));
@@ -136,6 +144,7 @@ public class ImportController {
         try {
             assertTrue(!StringUtils.isEmpty(type), "File type not provided");
             validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
+            programEnrolmentUploadMode(type, programEnrolmentUploadMode);
         } catch (BadRequestError e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
