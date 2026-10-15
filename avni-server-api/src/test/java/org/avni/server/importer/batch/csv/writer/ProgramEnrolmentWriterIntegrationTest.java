@@ -724,4 +724,16 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         assertTrue(e.getMessage().contains("Unexpected fields found in exit enrolments CSV: "), e.getMessage());
         assertTrue(e.getMessage().contains("This upload accepts only Program Enrolment Id, Exit Date, Exit Coordinates and the exit form questions."), e.getMessage());
     }
+
+    @Test
+    public void exitEnrolment_blankMandatoryExitQuestion_loads() throws ValidationException, InvalidConfigurationException {
+        createProgramExitFormForTests(); // Exit Reason is a mandatory question on this exit form
+        existingEnrolment("PENR-001", new DateTime(2020, 1, 1, 0, 0));
+
+        programEnrolmentRowCreator.exit(new Row(exitEnrolmentHeader(), dataRow("PENR-001", "2020-06-01", "", "")), program1EnrolmentFormMapping());
+
+        ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("PENR-001");
+        assertNotNull(enrolment.getProgramExitDateTime());
+        assertTrue(enrolment.getProgramExitObservations().isEmpty());
+    }
 }
