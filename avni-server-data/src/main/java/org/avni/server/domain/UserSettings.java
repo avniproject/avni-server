@@ -16,6 +16,7 @@ public class UserSettings {
     public static final String TRACK_LOCATION = "trackLocation";
     public static final String IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API = "isAllowedToInvokeTokenGenerationAPI";
     public static final String DISABLE_AUTO_SYNC = "disableAutoSync";
+    public static final String ABHA_HIP_ID = "abhaHipId";
     public static final String DEFAULT_DATE_PICKER_MODE = "calendar";
     public static final String SPINNER_DATE_PICKER_MODE = "spinner";
     public static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList(DEFAULT_DATE_PICKER_MODE, SPINNER_DATE_PICKER_MODE);
@@ -41,6 +42,22 @@ public class UserSettings {
 
     public static Boolean createEnableBeneficiaryMode(Boolean enableBeneficiaryMode) {
         return enableBeneficiaryMode != null && enableBeneficiaryMode;
+    }
+
+    /**
+     * Whole-settings writes replace everything, but a user's health centre is set elsewhere (the upload column, the
+     * admin app field) and must survive a write that does not carry it. An empty string clears it.
+     */
+    public static JsonObject mergeKeepingAbhaHipId(JsonObject existing, JsonObject incoming) {
+        JsonObject merged = incoming == null ? new JsonObject() : new JsonObject(incoming);
+        if (!merged.containsKey(ABHA_HIP_ID)) {
+            if (existing != null && existing.containsKey(ABHA_HIP_ID)) {
+                merged.put(ABHA_HIP_ID, existing.get(ABHA_HIP_ID));
+            }
+        } else if ("".equals(merged.get(ABHA_HIP_ID))) {
+            merged.remove(ABHA_HIP_ID);
+        }
+        return merged;
     }
 
     public String getIdPrefix() {
