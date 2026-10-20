@@ -18,8 +18,6 @@ import org.avni.server.web.response.EkaConfigResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -40,19 +38,16 @@ public class AbhaAdminService {
     private final UserRepository userRepository;
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
     private final EkaCredentialCipher ekaCredentialCipher;
-    private final EkaTokenService ekaTokenService;
 
     @Autowired
     public AbhaAdminService(OrganisationRepository organisationRepository,
                             UserRepository userRepository,
                             ExternalSystemConfigRepository externalSystemConfigRepository,
-                            EkaCredentialCipher ekaCredentialCipher,
-                            EkaTokenService ekaTokenService) {
+                            EkaCredentialCipher ekaCredentialCipher) {
         this.organisationRepository = organisationRepository;
         this.userRepository = userRepository;
         this.externalSystemConfigRepository = externalSystemConfigRepository;
         this.ekaCredentialCipher = ekaCredentialCipher;
-        this.ekaTokenService = ekaTokenService;
     }
 
     @Transactional
@@ -90,7 +85,6 @@ public class AbhaAdminService {
                 .with(ENCRYPTED_WEBHOOK_SIGNING_KEY, encryptOrKeep(request.getWebhookSigningKey(), stored.getString(ENCRYPTED_WEBHOOK_SIGNING_KEY))));
         row.setVoided(false);
         ExternalSystemConfig saved = externalSystemConfigRepository.save(row);
-        evictTokenAfterCommit(organisationId);
         return new EkaConfigResponse(organisationUUID, new EkaSystemConfig(saved));
     }
 
@@ -157,19 +151,5 @@ public class AbhaAdminService {
 
     private String encryptOrKeep(String plaintext, String storedEncrypted) {
         return StringUtils.hasText(plaintext) ? ekaCredentialCipher.encrypt(plaintext) : storedEncrypted;
-    }
-
-    // Evicting before the commit would let a concurrent login read the old settings and cache a token made from them.
-    private void evictTokenAfterCommit(Long organisationId) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            ekaTokenService.evict(organisationId);
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                ekaTokenService.evict(organisationId);
-            }
-        });
     }
 }

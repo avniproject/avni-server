@@ -16,7 +16,6 @@ import static org.junit.Assert.fail;
 
 public class EkaRestClientTest {
     private static final String LOGIN_PATH = "/connect-auth/v1/account/login";
-    private static final String REFRESH_PATH = "/connect-auth/v1/account/refresh-token";
 
     private WireMockServer eka;
     private String baseUrl;
@@ -43,28 +42,22 @@ public class EkaRestClientTest {
         EkaToken token = client.login(baseUrl, "client-1", "secret-1");
 
         assertEquals("access-1", token.getAccessToken());
-        assertEquals("refresh-1", token.getRefreshToken());
         assertWithinTwoSeconds(before.plusSeconds(1800), token.getExpiresAt());
-        assertWithinTwoSeconds(before.plusSeconds(3600), token.getRefreshExpiresAt());
         eka.verify(postRequestedFor(urlEqualTo(LOGIN_PATH))
                 .withHeader("Content-Type", containing("application/json"))
                 .withRequestBody(equalToJson("{\"client_id\":\"client-1\",\"client_secret\":\"secret-1\"}")));
     }
 
+    // A gateway that refuses chunked bodies would fail every login for every organisation.
     @Test
-    public void refreshSendsBearerAndClientIdHeaders() {
-        eka.stubFor(post(urlEqualTo(REFRESH_PATH)).willReturn(okJson(
-                "{\"access_token\":\"access-2\",\"expires_in\":1800,\"refresh_token\":\"refresh-2\",\"refresh_expires_in\":3600}")));
-        EkaToken current = new EkaToken("access-1", Instant.now().plusSeconds(30), "refresh-1", Instant.now().plusSeconds(3000));
+    public void loginSendsContentLengthNotChunked() {
+        eka.stubFor(post(urlEqualTo(LOGIN_PATH)).willReturn(okJson("{\"access_token\":\"access-1\",\"expires_in\":1800}")));
 
-        EkaToken token = client.refresh(baseUrl, "client-1", current);
+        client.login(baseUrl, "client-1", "secret-1");
 
-        assertEquals("access-2", token.getAccessToken());
-        assertEquals("refresh-2", token.getRefreshToken());
-        eka.verify(postRequestedFor(urlEqualTo(REFRESH_PATH))
-                .withHeader("Authorization", equalTo("Bearer access-1"))
-                .withHeader("Client-Id", equalTo("client-1"))
-                .withRequestBody(equalToJson("{\"refresh_token\":\"refresh-1\",\"access_token\":\"access-1\"}")));
+        eka.verify(postRequestedFor(urlEqualTo(LOGIN_PATH))
+                .withHeader("Content-Length", matching("[0-9]+"))
+                .withoutHeader("Transfer-Encoding"));
     }
 
     @Test
@@ -99,6 +92,19 @@ public class EkaRestClientTest {
         Duration waited = Duration.between(start, Instant.now());
 
         assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(9)) >= 0);
+    }
+
+    // Headers arrive at once and the body trickles in over 15 s: the deadline must cover the body too.
+    @Test
+    public void failsWhenTheBodyStallsPastTenSeconds() {
+        eka.stubFor(post(urlEqualTo(LOGIN_PATH)).willReturn(okJson(
+                "{\"access_token\":\"access-1\",\"expires_in\":1800}").withChunkedDribbleDelay(5, 15000)));
+
+        Instant start = Instant.now();
+        assertLoginFails();
+        Duration waited = Duration.between(start, Instant.now());
+
+        assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(13)) < 0);
     }
 
     private void assertLoginFails() {

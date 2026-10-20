@@ -29,7 +29,6 @@ import static org.mockito.Mockito.when;
 public class EkaTokenServiceTest {
     private static final String KEY = "W+6wNuSHHVCnO6tqN2EK5CE0kRa+0mcn/fNmDifSkEU=";
     private static final String LOGIN_PATH = "/connect-auth/v1/account/login";
-    private static final String REFRESH_PATH = "/connect-auth/v1/account/refresh-token";
     private static final Long ORG = 1L;
     private static final Long OTHER_ORG = 2L;
 
@@ -54,7 +53,7 @@ public class EkaTokenServiceTest {
 
     @Test
     public void reusesTokenWithinLifetime() throws Exception {
-        stubLogin("client-1", "access-1", 1800, 3600, 0);
+        stubLogin("client-1", "access-1", 1800, 0);
 
         EkaToken first = service.getAccessToken(ORG);
         EkaToken second = service.getAccessToken(ORG);
@@ -65,38 +64,35 @@ public class EkaTokenServiceTest {
     }
 
     @Test
-    public void refreshesWhenUnderOneMinuteLeft() throws Exception {
-        stubLogin("client-1", "access-1", 30, 3600, 0);
-        eka.stubFor(post(urlEqualTo(REFRESH_PATH)).willReturn(okJson(tokenJson("access-2", 1800, 3600))));
+    public void renewsByLoggingInWhenUnderOneMinuteLeft() throws Exception {
+        stubLogin("client-1", "access-1", 30, 0);
 
-        assertEquals("access-1", service.getAccessToken(ORG).getAccessToken());
-        assertEquals("access-2", service.getAccessToken(ORG).getAccessToken());
+        service.getAccessToken(ORG);
+        service.getAccessToken(ORG);
+
+        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    @Test
+    public void failedLoginIsNotRetriedForTenSeconds() throws Exception {
+        eka.stubFor(post(urlEqualTo(LOGIN_PATH)).willReturn(aResponse().withStatus(401)));
+
+        assertLoginFails(ORG);
+        assertLoginFails(ORG);
 
         eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
-        eka.verify(1, postRequestedFor(urlEqualTo(REFRESH_PATH)).withHeader("Authorization", equalTo("Bearer access-1")));
     }
 
     @Test
-    public void logsInWhenRefreshFails() throws Exception {
-        stubLogin("client-1", "access-1", 30, 3600, 0);
-        eka.stubFor(post(urlEqualTo(REFRESH_PATH)).willReturn(aResponse().withStatus(401)));
+    public void changedSettingsRetryAtOnceAfterAFailure() throws Exception {
+        eka.stubFor(post(urlEqualTo(LOGIN_PATH)).withRequestBody(matchingJsonPath("$.client_id", equalTo("client-1")))
+                .willReturn(aResponse().withStatus(401)));
+        assertLoginFails(ORG);
 
-        service.getAccessToken(ORG);
-        service.getAccessToken(ORG);
+        configure(ORG, "client-9", "secret-9");
+        stubLogin("client-9", "access-9", 1800, 0);
 
-        eka.verify(1, postRequestedFor(urlEqualTo(REFRESH_PATH)));
-        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
-    }
-
-    @Test
-    public void logsInWhenRefreshTokenExpired() throws Exception {
-        stubLogin("client-1", "access-1", 30, 30, 0);
-
-        service.getAccessToken(ORG);
-        service.getAccessToken(ORG);
-
-        eka.verify(0, postRequestedFor(urlEqualTo(REFRESH_PATH)));
-        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+        assertEquals("access-9", service.getAccessToken(ORG).getAccessToken());
     }
 
     @Test(expected = EkaNotConfiguredException.class)
@@ -122,7 +118,7 @@ public class EkaTokenServiceTest {
 
     @Test
     public void concurrentCallersLogInOnce() throws Exception {
-        stubLogin("client-1", "access-1", 1800, 3600, 500);
+        stubLogin("client-1", "access-1", 1800, 500);
         ExecutorService pool = Executors.newFixedThreadPool(4);
         CountDownLatch start = new CountDownLatch(1);
         List<Future<EkaToken>> results = new ArrayList<>();
@@ -132,19 +128,22 @@ public class EkaTokenServiceTest {
                 return service.getAccessToken(ORG);
             }));
         }
+        Instant begun = Instant.now();
         start.countDown();
 
         for (Future<EkaToken> result : results) {
-            assertEquals("access-1", result.get(10, TimeUnit.SECONDS).getAccessToken());
+            assertEquals("access-1", result.get(30, TimeUnit.SECONDS).getAccessToken());
         }
+        Duration waited = Duration.between(begun, Instant.now());
         pool.shutdown();
+        assertTrue("a 0.5 s login took " + waited, waited.compareTo(Duration.ofSeconds(5)) < 0);
         eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
     @Test
     public void slowLoginForOneOrganisationDoesNotHoldUpAnother() throws Exception {
-        stubLogin("client-1", "access-1", 1800, 3600, 3000);
-        stubLogin("client-2", "access-2", 1800, 3600, 0);
+        stubLogin("client-1", "access-1", 1800, 3000);
+        stubLogin("client-2", "access-2", 1800, 0);
         ExecutorService pool = Executors.newSingleThreadExecutor();
         Future<EkaToken> slow = pool.submit(() -> service.getAccessToken(ORG));
         Thread.sleep(300);
@@ -158,31 +157,64 @@ public class EkaTokenServiceTest {
         pool.shutdown();
     }
 
+    // Every call compares the stored settings with those the cached token was made from, so a save takes effect on
+    // the next call, on every server instance.
     @Test
-    public void evictForcesFreshLogin() throws Exception {
-        stubLogin("client-1", "access-1", 1800, 3600, 0);
+    public void changedSettingsGetANewTokenOnTheNextCall() throws Exception {
+        stubLogin("client-1", "access-1", 1800, 0);
+        assertEquals("access-1", service.getAccessToken(ORG).getAccessToken());
 
-        service.getAccessToken(ORG);
-        service.evict(ORG);
-        service.getAccessToken(ORG);
+        configure(ORG, "client-9", "secret-9");
+        stubLogin("client-9", "access-9", 1800, 0);
 
+        assertEquals("access-9", service.getAccessToken(ORG).getAccessToken());
+        assertEquals("access-9", service.getAccessToken(ORG).getAccessToken());
         eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
     @Test
-    public void evictDuringLoginDropsTheTokenThatLoginBringsBack() throws Exception {
-        stubLogin("client-1", "access-1", 1800, 3600, 1000);
+    public void loginUnderWayWithOldSettingsIsReplacedOnTheNextCall() throws Exception {
+        stubLogin("client-1", "access-1", 1800, 1000);
         ExecutorService pool = Executors.newSingleThreadExecutor();
         Future<EkaToken> inFlight = pool.submit(() -> service.getAccessToken(ORG));
         Thread.sleep(300);
 
         configure(ORG, "client-9", "secret-9");
-        stubLogin("client-9", "access-9", 1800, 3600, 0);
-        service.evict(ORG);
+        stubLogin("client-9", "access-9", 1800, 0);
 
+        assertEquals("the token from the old settings must not be served", "access-9", service.getAccessToken(ORG).getAccessToken());
         assertEquals("access-1", inFlight.get(10, TimeUnit.SECONDS).getAccessToken());
-        assertEquals("the token from the old settings must not survive the eviction", "access-9", service.getAccessToken(ORG).getAccessToken());
         pool.shutdown();
+    }
+
+    // While Eka is slow, callers queued behind a login share its failure instead of each waiting out their own.
+    @Test
+    public void concurrentCallersShareOneFailedLogin() throws Exception {
+        stubLogin("client-1", "access-1", 1800, 11000);
+        ExecutorService pool = Executors.newFixedThreadPool(4);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<EkaToken>> results = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            results.add(pool.submit(() -> {
+                start.await();
+                return service.getAccessToken(ORG);
+            }));
+        }
+        Instant begun = Instant.now();
+        start.countDown();
+
+        for (Future<EkaToken> result : results) {
+            try {
+                result.get(30, TimeUnit.SECONDS);
+                fail("expected the login to fail");
+            } catch (ExecutionException e) {
+                assertTrue(e.getCause().toString(), e.getCause() instanceof EkaAuthException);
+            }
+        }
+        Duration waited = Duration.between(begun, Instant.now());
+        pool.shutdown();
+        assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(13)) < 0);
+        eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
     @Test
@@ -194,25 +226,26 @@ public class EkaTokenServiceTest {
         root.addAppender(appender);
         root.setLevel(Level.DEBUG);
         try {
-            stubLogin("client-1", "access-1", 30, 3600, 0);
-            eka.stubFor(post(urlEqualTo(REFRESH_PATH)).willReturn(okJson(tokenJson("access-2", 1800, 3600))));
+            stubLogin("client-1", "access-1", 30, 0);
             service.getAccessToken(ORG);
             service.getAccessToken(ORG);
-            eka.stubFor(post(urlEqualTo(REFRESH_PATH)).willReturn(aResponse().withStatus(401)));
-            service.evict(ORG);
-            stubLogin("client-1", "access-3", 30, 3600, 0);
-            service.getAccessToken(ORG);
-            service.getAccessToken(ORG);
+            configure(ORG, "client-2", "secret-2");
+            eka.stubFor(post(urlEqualTo(LOGIN_PATH)).withRequestBody(matchingJsonPath("$.client_id", equalTo("client-2")))
+                    .willReturn(aResponse().withStatus(401)));
+            assertLoginFails(ORG);
         } finally {
             root.detachAppender(appender);
             root.setLevel(originalLevel);
         }
 
-        assertFalse("nothing was captured, so the check proves nothing", appender.list.isEmpty());
+        assertTrue("the issued-token line must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().equals(EkaTokenService.class.getName()) && e.getLevel() == Level.INFO));
+        assertTrue("the failed-login line must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().equals(EkaTokenService.class.getName()) && e.getLevel() == Level.WARN));
         for (ILoggingEvent event : appender.list) {
             if (isStubServer(event.getLoggerName())) continue;
             String text = event.getFormattedMessage() + throwableText(event.getThrowableProxy());
-            for (String secret : new String[]{"secret-1", "access-1", "access-2", "access-3", "refresh-1", "refresh-access-1"}) {
+            for (String secret : new String[]{"secret-1", "secret-2", "access-1"}) {
                 assertFalse(event.getLoggerName() + " logged " + secret + ": " + text, text.contains(secret));
             }
         }
@@ -243,14 +276,17 @@ public class EkaTokenServiceTest {
         return "http://localhost:" + eka.port();
     }
 
-    private void stubLogin(String clientId, String accessToken, int expiresIn, int refreshExpiresIn, int delayMillis) {
+    private void stubLogin(String clientId, String accessToken, int expiresIn, int delayMillis) {
         eka.stubFor(post(urlEqualTo(LOGIN_PATH))
                 .withRequestBody(matchingJsonPath("$.client_id", equalTo(clientId)))
-                .willReturn(okJson(tokenJson(accessToken, expiresIn, refreshExpiresIn)).withFixedDelay(delayMillis)));
+                .willReturn(okJson("{\"access_token\":\"" + accessToken + "\",\"expires_in\":" + expiresIn + "}").withFixedDelay(delayMillis)));
     }
 
-    private static String tokenJson(String accessToken, int expiresIn, int refreshExpiresIn) {
-        return "{\"access_token\":\"" + accessToken + "\",\"expires_in\":" + expiresIn
-                + ",\"refresh_token\":\"refresh-" + accessToken + "\",\"refresh_expires_in\":" + refreshExpiresIn + "}";
+    private void assertLoginFails(Long organisationId) throws EkaNotConfiguredException {
+        try {
+            service.getAccessToken(organisationId);
+            fail("expected EkaAuthException");
+        } catch (EkaAuthException expected) {
+        }
     }
 }
