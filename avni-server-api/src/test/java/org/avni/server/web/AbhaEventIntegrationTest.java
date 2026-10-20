@@ -23,6 +23,7 @@ import org.avni.server.domain.factory.access.TestGroupBuilder;
 import org.avni.server.domain.factory.access.TestGroupPrivilegeBuilder;
 import org.avni.server.domain.factory.access.TestUserGroupBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.service.abha.AbhaEventService;
 import org.avni.server.service.abha.EkaCredentialCipher;
 import org.avni.server.service.builder.TestGroupService;
 import org.junit.Before;
@@ -69,6 +70,8 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
     private EkaCredentialCipher ekaCredentialCipher;
     @Autowired
     private DataSource dataSource;
+    @Autowired
+    private AbhaEventService abhaEventService;
 
     @Before
     public void createSubjectTypesAndPrivileges() {
@@ -247,6 +250,37 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
                 assertFalse(event.getLoggerName() + " logged " + secret + ": " + text, text.contains(secret));
             }
         }
+    }
+
+    // Written by the server when a sync removes a subject's ABHA or voids the subject (story 4 calls this).
+    @Test
+    public void removedRowNamesTheSavingUserAndTheirHealthCentre() {
+        setHealthCentre(REGISTRAR, "HIP-2");
+        setUser(REGISTRAR);
+
+        abhaEventService.recordRemoved("subject-9");
+
+        Map<String, Object> row = onlyRow();
+        assertEquals("removed", row.get("action"));
+        assertEquals("unknown", row.get("route"));
+        assertEquals("subject-9", row.get("subject_uuid"));
+        assertEquals("HIP-2", row.get("hip_id"));
+        assertEquals(userRepository.findByUsername(REGISTRAR).getId().longValue(), ((Number) row.get("user_id")).longValue());
+        assertEquals(DEMO_ID.longValue(), ((Number) row.get("organisation_id")).longValue());
+        assertNotNull(row.get("uuid"));
+        assertNotNull(row.get("occurred_at"));
+        assertNull(row.get("abha_number"));
+    }
+
+    // An upload by an admin with no health centre still leaves the record.
+    @Test
+    public void removedRowForUserWithNoHealthCentreHasEmptyHipId() {
+        clearHealthCentre("demo-admin");
+        setUser("demo-admin");
+
+        abhaEventService.recordRemoved("subject-9");
+
+        assertEquals("", onlyRow().get("hip_id"));
     }
 
     private void readyFor(String username, String hipId) {

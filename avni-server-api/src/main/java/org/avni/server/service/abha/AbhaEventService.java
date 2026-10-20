@@ -70,6 +70,25 @@ public class AbhaEventService {
         return true;
     }
 
+    // Written by the server, not the phone, when a sync removes a subject's ABHA or voids the subject. It names the user
+    // whose save carried the change; no health centre is checked, so an admin's upload without one still leaves the record.
+    public void recordRemoved(String subjectUuid) {
+        UserContext userContext = UserContextHolder.getUserContext();
+        User user = userContext.getUser();
+        String hipId = user.getSettings() == null ? null : user.getSettings().getString(UserSettings.ABHA_HIP_ID);
+        AbhaEvent event = new AbhaEvent();
+        event.assignUUID();
+        event.setOrganisationId(userContext.getOrganisationId());
+        event.setSubjectUuid(subjectUuid);
+        event.setUserId(user.getId());
+        event.setHipId(hipId == null ? "" : hipId);
+        event.setAction(REMOVED);
+        event.setRoute(UNKNOWN_ROUTE);
+        event.setOccurredAt(Instant.now());
+        abhaEventRepository.save(event);
+        logger.info("ABHA event {} recorded, action {}", event.getUuid(), event.getAction());
+    }
+
     private static String digitsOf(String abhaNumber) {
         if (!StringUtils.hasText(abhaNumber)) {
             return null;
