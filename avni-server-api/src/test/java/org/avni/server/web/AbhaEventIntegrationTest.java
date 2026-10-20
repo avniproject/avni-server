@@ -25,6 +25,7 @@ import org.avni.server.domain.factory.access.TestUserGroupBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.abha.AbhaEventService;
 import org.avni.server.service.abha.EkaCredentialCipher;
+import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupService;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,6 +71,8 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
     private EkaCredentialCipher ekaCredentialCipher;
     @Autowired
     private DataSource dataSource;
+    @Autowired
+    private TestDataSetupService testDataSetupService;
     @Autowired
     private AbhaEventService abhaEventService;
 
@@ -281,6 +284,30 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
         abhaEventService.recordRemoved("subject-9");
 
         assertEquals("", onlyRow().get("hip_id"));
+    }
+
+    // Per-patient audit data of one organisation: a child organisation must not read its parent's rows, which the
+    // reference-table policy would allow. Raw SQL under the organisation's role, so only the policy decides.
+    @Test
+    public void childOrganisationCannotSeeParentsEvents() {
+        TestDataSetupService.TestOrganisationData parent = testDataSetupService.setupOrganisation("abhaparent");
+        TestDataSetupService.TestOrganisationData child = testDataSetupService.setupOrganisation("abhachild");
+        setUser(userRepository.getDefaultSuperAdmin());
+        JdbcTemplate admin = new JdbcTemplate(dataSource);
+        admin.update("update public.organisation set parent_organisation_id = ? where id = ?", parent.getOrganisationId(), child.getOrganisationId());
+        admin.update("insert into public.abha_event (uuid, organisation_id, subject_uuid, user_id, hip_id, action, route, occurred_at, " +
+                        "created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values ('rls-probe', ?, 's', ?, 'H', 'created', 'unknown', now(), ?, ?, now(), now())",
+                parent.getOrganisationId(), parent.getUser().getId(), parent.getUser().getId(), parent.getUser().getId());
+
+        setUser(parent.getUser());
+        assertEquals(Integer.valueOf(1), countProbe());
+        setUser(child.getUser());
+        assertEquals("a child organisation must not see its parent's ABHA events", Integer.valueOf(0), countProbe());
+    }
+
+    private Integer countProbe() {
+        return new JdbcTemplate(dataSource).queryForObject("select count(*) from public.abha_event where uuid = 'rls-probe'", Integer.class);
     }
 
     private void readyFor(String username, String hipId) {
