@@ -11,6 +11,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.service.abha.AbhaHealthCentreService;
 import org.avni.server.util.*;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
@@ -44,6 +45,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
     private final ConceptService conceptService;
     private final Pattern compoundHeaderPattern;
     private final ResetSyncService resetSyncService;
+    private final AbhaHealthCentreService abhaHealthCentreService;
 
     private static final String ERR_MSG_MANDATORY_OR_INVALID_FIELD = "Invalid or Empty value specified for mandatory field %s.";
     private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations '%s'.";
@@ -64,7 +66,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
                                   UserRepository userRepository,
                                   OrganisationConfigService organisationConfigService,
                                   IdpServiceFactory idpServiceFactory,
-                                  SubjectTypeService subjectTypeService, ConceptService conceptService, ResetSyncService resetSyncService) {
+                                  SubjectTypeService subjectTypeService, ConceptService conceptService, ResetSyncService resetSyncService,
+                                  AbhaHealthCentreService abhaHealthCentreService) {
         this.catchmentService = catchmentService;
         this.locationRepository = locationRepository;
         this.userService = userService;
@@ -74,6 +77,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         this.subjectTypeService = subjectTypeService;
         this.conceptService = conceptService;
         this.resetSyncService = resetSyncService;
+        this.abhaHealthCentreService = abhaHealthCentreService;
         this.compoundHeaderPattern = Pattern.compile("^(?<subjectTypeName>.*?)->(?<conceptName>.*)$");
     }
 
@@ -134,6 +138,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
         Boolean active = row.getBool(ACTIVE);
+        String abhaHipId = StringUtils.hasText(row.get(ABHA_HEALTH_FACILITY_ID)) ? row.get(ABHA_HEALTH_FACILITY_ID).trim() : null;
         boolean inferredActiveValue = BooleanUtil.getBoolean(active, true);
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
@@ -141,7 +146,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
-        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE), active, row.get(ACTIVE));
+        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE), active, row.get(ACTIVE), organisation.getId(), abhaHipId);
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
@@ -160,12 +165,15 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         user.setOperatingIndividualScope(ByCatchment);
         user.setSyncSettings(syncSettings);
 
-        user.setSettings(new JsonObject()
+        JsonObject settings = new JsonObject()
                 .with(UserSettings.LOCALE, locale)
                 .with(UserSettings.TRACK_LOCATION, UserSettings.createTrackLocation(trackLocation))
                 .withEmptyCheckAndTrim(UserSettings.DATE_PICKER_MODE, UserSettings.createDatePickerMode(datePickerMode))
                 .with(UserSettings.ENABLE_BENEFICIARY_MODE, UserSettings.createEnableBeneficiaryMode(beneficiaryMode))
-                .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix));
+                .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix);
+        // A blank or missing cell leaves the user's health centre as it was; clearing it is done in the admin app.
+        if (abhaHipId != null) settings.put(UserSettings.ABHA_HIP_ID, abhaHipId);
+        user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), settings));
 
         boolean newActiveUser = isNewUser && inferredActiveValue;
         boolean newInactiveUser = isNewUser && !inferredActiveValue;
@@ -194,7 +202,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         }
     }
 
-    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser, Boolean active, String activeValueProvidedByUser) {
+    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser, Boolean active, String activeValueProvidedByUser, Long organisationId, String abhaHipId) {
         addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, CATCHMENT_NAME));
         if (!addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, USERNAME)))
             extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
@@ -212,6 +220,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
         addErrMsgIfValidationFails(trackLocation == null && !StringUtils.isEmpty(trackLocationValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_TRACK_LOCATION, trackLocationValueProvidedByUser));
         addErrMsgIfValidationFails(beneficiaryMode == null && !StringUtils.isEmpty(beneficiaryModeValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE, beneficiaryModeValueProvidedByUser));
         addErrMsgIfValidationFails(active == null && !StringUtils.isEmpty(activeValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_ACTIVE_VALUE, activeValueProvidedByUser));
+
+        addErrMsgIfValidationFails(abhaHipId != null && !abhaHealthCentreService.isHealthCentreOf(organisationId, abhaHipId), rowValidationErrorMsgs, AbhaHealthCentreService.notAHealthCentreMessage(abhaHipId));
 
         if (!rowValidationErrorMsgs.isEmpty()) {
             throw new RuntimeException(createMultiErrorMessage(rowValidationErrorMsgs));

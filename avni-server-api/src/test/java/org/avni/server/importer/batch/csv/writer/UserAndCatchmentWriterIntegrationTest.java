@@ -2,6 +2,11 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
+import org.avni.server.domain.extenalSystem.SystemName;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
@@ -39,6 +44,8 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
     private UserRepository userRepository;
     @Autowired
     private CatchmentRepository catchmentRepository;
+    @Autowired
+    private ExternalSystemConfigRepository externalSystemConfigRepository;
 
     @Override
     public void setUp() {
@@ -323,5 +330,90 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
         treatAsDescriptor(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept", "Active"),
                 dataRow("Mandatory field. Can be found from Admin -> Locations -> Click Export", "Mandatory field", "Mandatory field", "Mandatory field", "Mandatory field", "Mandatory field. Prefix the mobile number with country code", "Allowed values: {English, Hindi}. Only single value allowed. Default: English", "Allowed values: yes, no. Default: no", "Allowed values: calendar, spinner. Default: calendar", "Allowed values: yes, no. Default: no", "", "Allowed values: {Administrators, Everyone}", "Allowed values: yes, no. Default: yes"));
+    }
+
+    private static final String[] ABHA_HEADER = {"Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept", "ABHA Health Facility ID"};
+    private static final String[] HEADER_WITHOUT_ABHA = Arrays.copyOf(ABHA_HEADER, ABHA_HEADER.length - 1);
+
+    private void organisationHasEkaHealthCentres(String... hipIds) {
+        ExternalSystemConfig row = new ExternalSystemConfig();
+        row.setSystemName(SystemName.Eka);
+        row.assignUUIDIfRequired();
+        row.setOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
+        row.setConfig(new JsonObject().with(EkaSystemConfig.HIP_IDS, Arrays.asList(hipIds)));
+        externalSystemConfigRepository.save(row);
+    }
+
+    private String[] abhaRow(String username, String hipId) {
+        return dataRow("Bihar, District1, Block11", "Catchment 1", username, "User", username.replace("@example", "") + "@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1", hipId);
+    }
+
+    private String[] rowWithoutAbhaColumn(String username) {
+        return Arrays.copyOf(abhaRow(username, ""), HEADER_WITHOUT_ABHA.length);
+    }
+
+    private String hipIdOf(String username) {
+        return userRepository.findByUsername(username).getSettings().getString(UserSettings.ABHA_HIP_ID);
+    }
+
+    @Test
+    public void uploadSetsAbhaHealthFacilityId() throws IDPException {
+        organisationHasEkaHealthCentres("hip-1", "hip-2");
+
+        success(header(ABHA_HEADER), abhaRow("abha1@example", " hip-2 "), true, true);
+
+        assertEquals("hip-2", hipIdOf("abha1@example"));
+    }
+
+    @Test
+    public void reuploadWithoutColumnKeepsIt() throws IDPException {
+        organisationHasEkaHealthCentres("hip-1");
+        success(header(ABHA_HEADER), abhaRow("abha2@example", "hip-1"), true, true);
+
+        success(header(HEADER_WITHOUT_ABHA), rowWithoutAbhaColumn("abha2@example"), false, false);
+
+        assertEquals("hip-1", hipIdOf("abha2@example"));
+    }
+
+    @Test
+    public void reuploadWithBlankCellKeepsIt() throws IDPException {
+        organisationHasEkaHealthCentres("hip-1");
+        success(header(ABHA_HEADER), abhaRow("abha3@example", "hip-1"), true, true);
+
+        success(header(ABHA_HEADER), abhaRow("abha3@example", "  "), false, false);
+
+        assertEquals("hip-1", hipIdOf("abha3@example"));
+    }
+
+    @Test
+    public void reuploadWithNewValueReplacesIt() throws IDPException {
+        organisationHasEkaHealthCentres("hip-1", "hip-2");
+        success(header(ABHA_HEADER), abhaRow("abha4@example", "hip-1"), true, true);
+
+        success(header(ABHA_HEADER), abhaRow("abha4@example", "hip-2"), false, false);
+
+        assertEquals("hip-2", hipIdOf("abha4@example"));
+    }
+
+    @Test
+    public void unknownIdIsRowError() throws IDPException {
+        organisationHasEkaHealthCentres("hip-1");
+
+        failure(header(ABHA_HEADER), abhaRow("abha5@example", "hip-9"),
+                has(error("ABHA Health Facility ID 'hip-9' is not one of this organisation's health centres")));
+        assertNull(userRepository.findByUsername("abha5@example"));
+    }
+
+    @Test
+    public void organisationWithNoEkaSettingsRefusesAnyValue() throws IDPException {
+        failure(header(ABHA_HEADER), abhaRow("abha6@example", "hip-1"),
+                has(error("ABHA Health Facility ID 'hip-1' is not one of this organisation's health centres")));
+    }
+
+    @Test
+    public void organisationWithNoEkaSettingsAcceptsBlankColumn() throws IDPException {
+        success(header(ABHA_HEADER), abhaRow("abha7@example", ""), true, true);
+
+        assertNull(hipIdOf("abha7@example"));
     }
 }

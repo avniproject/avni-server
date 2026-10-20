@@ -20,12 +20,13 @@ public class UsersAndCatchmentsHeaders implements HeaderCreator {
     public static final String IDENTIFIER_PREFIX = "Identifier Prefix";
     public static final String USER_GROUPS = "User Groups";
     public static final String ACTIVE = "Active";
+    public static final String ABHA_HEALTH_FACILITY_ID = "ABHA Health Facility ID";
 
-    private static final List<String> OPTIONAL_HEADERS = Arrays.asList(ENABLE_BENEFICIARY_MODE, TRACK_LOCATION, PREFERRED_LANGUAGE, DATE_PICKER_MODE, IDENTIFIER_PREFIX, USER_GROUPS, ACTIVE);
+    private static final List<String> OPTIONAL_HEADERS = Arrays.asList(ENABLE_BENEFICIARY_MODE, TRACK_LOCATION, PREFERRED_LANGUAGE, DATE_PICKER_MODE, IDENTIFIER_PREFIX, USER_GROUPS, ACTIVE, ABHA_HEALTH_FACILITY_ID);
 
     @Override
     public String[] getAllHeaders() {
-        List<String> headers = new ArrayList<>(Arrays.asList(LOCATION_WITH_FULL_HIERARCHY, CATCHMENT_NAME, USERNAME, FULL_NAME_OF_USER, EMAIL_ADDRESS, MOBILE_NUMBER, PREFERRED_LANGUAGE, TRACK_LOCATION, DATE_PICKER_MODE, ENABLE_BENEFICIARY_MODE, IDENTIFIER_PREFIX, USER_GROUPS, ACTIVE));
+        List<String> headers = new ArrayList<>(Arrays.asList(LOCATION_WITH_FULL_HIERARCHY, CATCHMENT_NAME, USERNAME, FULL_NAME_OF_USER, EMAIL_ADDRESS, MOBILE_NUMBER, PREFERRED_LANGUAGE, TRACK_LOCATION, DATE_PICKER_MODE, ENABLE_BENEFICIARY_MODE, IDENTIFIER_PREFIX, USER_GROUPS, ACTIVE, ABHA_HEALTH_FACILITY_ID));
         return headers.toArray(new String[0]);
     }
 
