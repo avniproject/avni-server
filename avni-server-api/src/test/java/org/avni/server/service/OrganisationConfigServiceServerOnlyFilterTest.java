@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -73,5 +74,19 @@ public class OrganisationConfigServiceServerOnlyFilterTest {
 
         assertTrue("server-side settings must retain the routing config",
                 config.getSettings().containsKey(OrganisationConfigSettingKey.storageBackends.name()));
+    }
+
+    @Test
+    public void webOrganisationConfigCarriesEnableAbhaToClients() {
+        JsonObject settings = new JsonObject();
+        settings.put(OrganisationConfigSettingKey.enableAbha.name(), true);
+        OrganisationConfig config = new OrganisationConfig();
+        config.setSettings(settings);
+        when(organisationConfigRepository.findByOrganisationId(1L)).thenReturn(config);
+
+        JsonObject webSettings = (JsonObject) service.getOrganisationSettings(1L).get("organisationConfig");
+
+        assertEquals(true, webSettings.get(OrganisationConfigSettingKey.enableAbha.name()));
+        assertEquals(true, config.getSettingsForSerialization().get(OrganisationConfigSettingKey.enableAbha.name()));
     }
 }

@@ -387,6 +387,10 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return isFeatureEnabled(OrganisationConfigSettingKey.enableMessaging.name());
     }
 
+    public boolean isAbhaEnabled() {
+        return isFeatureEnabled(OrganisationConfigSettingKey.enableAbha.name());
+    }
+
     public boolean isFailOnValidationErrorEnabled() {
         return isFeatureEnabled(OrganisationConfigSettingKey.failOnValidationError.name());
     }

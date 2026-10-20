@@ -63,6 +63,28 @@ public class OrganisationConfigServiceTest {
     }
 
     @Test
+    public void shouldCheckIfAbhaFeatureEnabled() {
+        OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
+        long organisationId = 26L;
+        UserContext context = new UserContext();
+        Organisation organisation = new Organisation();
+        organisation.setId(organisationId);
+        context.setOrganisation(organisation);
+        UserContextHolder.create(context);
+
+        OrganisationConfig withoutAbha = new OrganisationConfig();
+        withoutAbha.setSettings(new JsonObject());
+        OrganisationConfig withAbha = new OrganisationConfig();
+        withAbha.setSettings(new JsonObject().with(OrganisationConfigSettingKey.enableAbha.name(), true));
+        when(organisationConfigRepository.findByOrganisationId(organisationId)).thenReturn(null).thenReturn(withoutAbha).thenReturn(withAbha);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null, null);
+
+        assertThat(organisationConfigService.isAbhaEnabled(), is(false));
+        assertThat(organisationConfigService.isAbhaEnabled(), is(false));
+        assertThat(organisationConfigService.isAbhaEnabled(), is(true));
+    }
+
+    @Test
     public void shouldRemoveVoidedAddressLevelTypeFromCustomRegistrationLocations() {
         // Setup
         OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
