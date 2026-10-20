@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,6 +26,9 @@ public interface OrganisationRepository extends AvniCrudRepository<Organisation,
     List<Organisation> findByAccount_AccountAdmin_User_Id(Long userId);
 
     Organisation findByIdAndAccount_AccountAdmin_User_Id(Long id, Long userId);
+
+    @RestResource(exported = false)
+    Organisation findByUuidAndAccount_AccountAdmin_User_Id(String uuid, Long userId);
 
     Page<Organisation> findAllByIdInAndIsVoidedFalse(Long[] ids, Pageable pageable);
 }
