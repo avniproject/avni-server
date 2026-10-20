@@ -170,6 +170,22 @@ public class EkaTokenServiceTest {
     }
 
     @Test
+    public void evictDuringLoginDropsTheTokenThatLoginBringsBack() throws Exception {
+        stubLogin("client-1", "access-1", 1800, 3600, 1000);
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        Future<EkaToken> inFlight = pool.submit(() -> service.getAccessToken(ORG));
+        Thread.sleep(300);
+
+        configure(ORG, "client-9", "secret-9");
+        stubLogin("client-9", "access-9", 1800, 3600, 0);
+        service.evict(ORG);
+
+        assertEquals("access-1", inFlight.get(10, TimeUnit.SECONDS).getAccessToken());
+        assertEquals("the token from the old settings must not survive the eviction", "access-9", service.getAccessToken(ORG).getAccessToken());
+        pool.shutdown();
+    }
+
+    @Test
     public void tokenNeverLogged() throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
         Level originalLevel = root.getLevel();

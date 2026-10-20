@@ -39,16 +39,18 @@ public class EkaTokenService {
         if (isFresh(cached)) {
             return cached;
         }
-        EkaSystemConfig config = externalSystemConfigRepository.getEkaSystemConfig(organisationId);
-        if (!StringUtils.hasText(config.getClientId()) || !StringUtils.hasText(config.getEncryptedClientSecret())) {
-            throw new EkaNotConfiguredException("Eka client id or secret not set for organisation with id: " + organisationId);
-        }
-        String clientSecret = ekaCredentialCipher.decrypt(config.getEncryptedClientSecret());
         synchronized (locks.computeIfAbsent(organisationId, id -> new Object())) {
             EkaToken current = tokens.get(organisationId);
             if (isFresh(current)) {
                 return current;
             }
+            // Read under the lock: evict() after a settings save takes this lock too, so no token made from the
+            // old settings outlives the eviction. Only this organisation's callers wait, and they would anyway.
+            EkaSystemConfig config = externalSystemConfigRepository.getEkaSystemConfig(organisationId);
+            if (!StringUtils.hasText(config.getClientId()) || !StringUtils.hasText(config.getEncryptedClientSecret())) {
+                throw new EkaNotConfiguredException("Eka client id or secret not set for organisation with id: " + organisationId);
+            }
+            String clientSecret = ekaCredentialCipher.decrypt(config.getEncryptedClientSecret());
             EkaToken renewed = renew(organisationId, config, clientSecret, current);
             tokens.put(organisationId, renewed);
             logger.info("Eka access token issued for organisation {}", organisationId);
