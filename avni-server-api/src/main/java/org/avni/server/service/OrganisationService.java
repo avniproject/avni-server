@@ -81,6 +81,7 @@ public class OrganisationService {
     private final AttendanceTypeRepository attendanceTypeRepository;
     private final SessionRepository sessionRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final AbhaLinkRepository abhaLinkRepository;
 
     private final FormRepository formRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
@@ -291,7 +292,8 @@ public class OrganisationService {
                                DashboardMapper dashboardMapper,
                                GroupDashboardService groupDashboardService, CustomQueryService customQueryService, StorageManagementConfigRepository storageManagementConfigRepository, LocationService locationService, CatchmentService catchmentService, CustomCardConfigRepository customCardConfigRepository, DownloadableContentRepository downloadableContentRepository, ModelKeyRepository modelKeyRepository, OrgStorageCredentialRepository orgStorageCredentialRepository,
                                CalendarRepository calendarRepository, CalendarDateMarkerRepository calendarDateMarkerRepository, AttendanceTypeRepository attendanceTypeRepository,
-                               SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository) {
+                               SessionRepository sessionRepository, AttendanceRecordRepository attendanceRecordRepository,
+                               AbhaLinkRepository abhaLinkRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -402,6 +404,7 @@ public class OrganisationService {
         this.attendanceTypeRepository = attendanceTypeRepository;
         this.sessionRepository = sessionRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
+        this.abhaLinkRepository = abhaLinkRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -453,6 +456,7 @@ public class OrganisationService {
                 taskUnAssignmentRepository,
                 taskRepository,
                 userSubjectRepository,
+                abhaLinkRepository,
                 individualRepository,
                 resetSyncRepository,
         };
@@ -484,6 +488,7 @@ public class OrganisationService {
                 "task_unassignment",
                 "task",
                 "user_subject",
+                "abha_link",
                 "individual",
                 "reset_sync"
         );

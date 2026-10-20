@@ -15,7 +15,9 @@ import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.service.IndividualService;
+import org.avni.server.service.OrganisationService;
 import org.avni.server.service.builder.TestConceptService;
+import org.avni.server.service.builder.TestDataSetupService;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
@@ -32,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,6 +59,10 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
     private IndividualService individualService;
     @Autowired
     private AbhaLinkService abhaLinkService;
+    @Autowired
+    private OrganisationService organisationService;
+    @Autowired
+    private TestDataSetupService testDataSetupService;
     @Autowired
     private TestConceptService testConceptService;
     @Autowired
@@ -207,6 +214,47 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Collections.singletonList(hyphenated.getUuid()), abhaLinkService.findSubjectUUIDs("12 3456 7856 8912"));
         assertEquals(Collections.singletonList(spaced.getUuid()), abhaLinkService.findSubjectUUIDs("91-1111-2222-3333"));
         assertEquals(Collections.singletonList(plain.getUuid()), abhaLinkService.findSubjectUUIDs("55-5556-6666-7777"));
+    }
+
+    // Delete data, for a trial organisation, deletes its subjects. Their links go first, or the delete stops on them.
+    // An organisation with a parent has its rows deleted through the repositories.
+    @Test
+    public void deletingTransactionalDataDeletesLinks() {
+        assertDeleteDataRemovesLinkAndSubject("abhadeletechild", true);
+    }
+
+    // An organisation with no parent has its rows deleted table by table.
+    @Test
+    public void deletingTransactionalDataOfAnOrganisationWithoutParentDeletesLinks() {
+        assertDeleteDataRemovesLinkAndSubject("abhadelete", false);
+    }
+
+    // A fresh organisation, since test-data.sql's demo subjects are tied to other organisations' enrolments.
+    private void assertDeleteDataRemovesLinkAndSubject(String organisationSuffix, boolean withParent) {
+        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation(organisationSuffix);
+        long organisationId = organisation.getOrganisationId();
+        setUser(userRepository.getDefaultSuperAdmin());
+        String subjectUUID = UUID.randomUUID().toString();
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        if (withParent) {
+            jdbc.update("update public.organisation set parent_organisation_id = 1 where id = ?", organisationId);
+        }
+        jdbc.update("insert into public.individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, " +
+                        "gender_id, organisation_id, subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time, " +
+                        "last_modified_date_time) values (?, 1, 1, current_date, false, 'ABHA', 'Holder', 1, ?, " +
+                        "(select id from public.subject_type where uuid = ?), '{}'::jsonb, 1, 1, now(), now())",
+                subjectUUID, organisationId, SUBJECT_TYPE);
+        jdbc.update("insert into public.abha_link (uuid, organisation_id, individual_id, abha_number, created_by_id, last_modified_by_id, " +
+                        "created_date_time, last_modified_date_time) values (?, ?, (select id from public.individual where uuid = ?), ?, 1, 1, now(), now())",
+                UUID.randomUUID().toString(), organisationId, subjectUUID, ABHA_DIGITS);
+        setUser(organisation.getUser());
+
+        new TransactionTemplate(transactionManager).executeWithoutResult(status ->
+                organisationService.deleteTransactionalData(organisationRepository.findOne(organisationId)));
+
+        setUser(userRepository.getDefaultSuperAdmin());
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from public.abha_link where organisation_id = ?", Integer.class, organisationId));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from public.individual where uuid = ?", Integer.class, subjectUUID));
     }
 
     // The app's route: a registration pushed by sync.
