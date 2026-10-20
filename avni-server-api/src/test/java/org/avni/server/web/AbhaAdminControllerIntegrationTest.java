@@ -16,6 +16,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import javax.sql.DataSource;
 import java.util.*;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
 
@@ -131,10 +132,10 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         Map<String, Object> withoutSecrets = config("TANUH");
         withoutSecrets.remove("clientSecret");
         withoutSecrets.remove("webhookSigningKey");
-        withoutSecrets.put("clientId", "client-2");
+        withoutSecrets.put("hipIds", Arrays.asList("TANUH", "TANUH-3"));
         assertEquals(HttpStatus.OK, put(DEMO, withoutSecrets, null).getStatusCode());
         EkaSystemConfig second = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
-        assertEquals("client-2", second.getClientId());
+        assertEquals(Arrays.asList("TANUH", "TANUH-3"), second.getHipIds());
         assertEquals(first.getEncryptedClientSecret(), second.getEncryptedClientSecret());
         assertEquals(first.getEncryptedWebhookSigningKey(), second.getEncryptedWebhookSigningKey());
 
@@ -145,6 +146,83 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
         assertEquals(Integer.valueOf(1), new JdbcTemplate(dataSource).queryForObject(
                 "select count(*) from public.external_system_config where system_name = 'Eka' and organisation_id = ?", Integer.class, DEMO_ID));
+    }
+
+    // The stored secret belongs to the stored client and environment; keeping it for another would fail every login at Eka.
+    @Test
+    public void changingClientOrEnvironmentWithoutSecretIs400() {
+        put(DEMO, config("TANUH"), null);
+
+        Map<String, Object> otherClient = config("TANUH");
+        otherClient.remove("clientSecret");
+        otherClient.put("clientId", "client-2");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherClient, null).getStatusCode());
+
+        Map<String, Object> otherEnvironment = config("TANUH");
+        otherEnvironment.remove("clientSecret");
+        otherEnvironment.put("environment", "production");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherEnvironment, null).getStatusCode());
+
+        Map<String, Object> otherClientWithSecret = config("TANUH");
+        otherClientWithSecret.put("clientId", "client-2");
+        assertEquals(HttpStatus.OK, put(DEMO, otherClientWithSecret, null).getStatusCode());
+    }
+
+    @Test
+    public void omittedAvniSystemUserKeepsStoredValue() throws Exception {
+        put(DEMO, config("TANUH"), null);
+
+        Map<String, Object> withoutUser = config("TANUH");
+        withoutUser.remove("avniSystemUser");
+        assertEquals(HttpStatus.OK, put(DEMO, withoutUser, null).getStatusCode());
+
+        assertEquals("demo-admin", externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID).getAvniSystemUser());
+    }
+
+    @Test
+    public void missingEnvironmentIs400() {
+        Map<String, Object> request = config("TANUH");
+        request.remove("environment");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, request, null).getStatusCode());
+    }
+
+    // Two first saves at once, a retried request say, must not leave two rows: every later read of the organisation's
+    // Eka settings would then fail.
+    @Test
+    public void concurrentFirstSavesMakeOneRow() throws Exception {
+        User superAdmin = userRepository.getDefaultSuperAdmin();
+        ExecutorService pool = Executors.newFixedThreadPool(6);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<HttpStatusCode>> results = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            results.add(pool.submit(() -> {
+                start.await();
+                return put(DEMO, config("TANUH"), null).getStatusCode();
+            }));
+        }
+        start.countDown();
+        for (Future<HttpStatusCode> result : results) {
+            assertEquals(HttpStatus.OK, result.get(60, TimeUnit.SECONDS));
+        }
+        pool.shutdown();
+
+        assertEquals(Integer.valueOf(1), new JdbcTemplate(dataSource).queryForObject(
+                "select count(*) from public.external_system_config where system_name = 'Eka' and organisation_id = ?", Integer.class, DEMO_ID));
+    }
+
+    // The Spring Data REST export would hand any of the organisation's users, field users included, the encrypted secrets.
+    @Test
+    public void ekaRowIsNotExposedOverSpringDataRest() {
+        put(DEMO, config("TANUH"), null);
+        setUser("demo-admin");
+
+        ResponseEntity<String> collection = template.getForEntity("/externalSystemConfigs", String.class);
+        ResponseEntity<String> search = template.getForEntity("/externalSystemConfigs/search/findBySystemName?systemName=Eka", String.class);
+
+        assertNotEquals(String.valueOf(collection.getBody()), HttpStatus.OK, collection.getStatusCode());
+        assertNotEquals(String.valueOf(search.getBody()), HttpStatus.OK, search.getStatusCode());
+        assertFalse(String.valueOf(collection.getBody()).contains("encryptedClientSecret"));
+        assertFalse(String.valueOf(search.getBody()).contains("encryptedClientSecret"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package org.avni.server.service.abha;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
@@ -33,17 +34,21 @@ import static org.avni.server.domain.extenalSystem.EkaSystemConfig.*;
 @Service
 public class AbhaAdminService {
     private static final Set<String> ENVIRONMENTS = Set.of("sandbox", "production");
+    private static final long EKA_SETTINGS_SAVE_LOCK = 1087_000_001L;
 
+    private final EntityManager entityManager;
     private final OrganisationRepository organisationRepository;
     private final UserRepository userRepository;
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
     private final EkaCredentialCipher ekaCredentialCipher;
 
     @Autowired
-    public AbhaAdminService(OrganisationRepository organisationRepository,
+    public AbhaAdminService(EntityManager entityManager,
+                            OrganisationRepository organisationRepository,
                             UserRepository userRepository,
                             ExternalSystemConfigRepository externalSystemConfigRepository,
                             EkaCredentialCipher ekaCredentialCipher) {
+        this.entityManager = entityManager;
         this.organisationRepository = organisationRepository;
         this.userRepository = userRepository;
         this.externalSystemConfigRepository = externalSystemConfigRepository;
@@ -54,15 +59,15 @@ public class AbhaAdminService {
     public EkaConfigResponse saveEkaConfig(String organisationUUID, EkaConfigRequest request) {
         Organisation organisation = findOrganisation(organisationUUID);
         Long organisationId = organisation.getId();
-        if (!ENVIRONMENTS.contains(request.getEnvironment())) {
+        if (request.getEnvironment() == null || !ENVIRONMENTS.contains(request.getEnvironment())) {
             throw new BadRequestError("environment must be sandbox or production, not %s", request.getEnvironment());
         }
         if (!StringUtils.hasText(request.getClientId())) {
             throw new BadRequestError("clientId is required");
         }
         List<String> hipIds = validHipIds(request.getHipIds());
+        lockEkaSettingsSaves();
         assertNoHipIdListedElsewhere(organisationId, hipIds);
-        String avniSystemUser = userOfOrganisation(request.getAvniSystemUser(), organisationId);
 
         ExternalSystemConfig row = externalSystemConfigRepository.findBySystemNameAndOrganisationId(SystemName.Eka, organisationId);
         if (row == null) {
@@ -72,13 +77,23 @@ public class AbhaAdminService {
             row.setOrganisationId(organisationId);
         }
         JsonObject stored = row.getConfig() == null ? new JsonObject() : row.getConfig();
-        String encryptedClientSecret = encryptOrKeep(request.getClientSecret(), stored.getString(ENCRYPTED_CLIENT_SECRET));
-        if (encryptedClientSecret == null) {
-            throw new BadRequestError("clientSecret is required when Eka is first set up for an organisation");
+        String clientId = request.getClientId().trim();
+        if (!StringUtils.hasText(request.getClientSecret())) {
+            if (stored.getString(ENCRYPTED_CLIENT_SECRET) == null) {
+                throw new BadRequestError("clientSecret is required when Eka is first set up for an organisation");
+            }
+            // The stored secret belongs to the stored client and environment; it would fail every login for another.
+            if (!clientId.equals(stored.getString(CLIENT_ID)) || !request.getEnvironment().equals(stored.getString(ENVIRONMENT))) {
+                throw new BadRequestError("clientSecret is required when clientId or environment changes");
+            }
         }
+        String encryptedClientSecret = encryptOrKeep(request.getClientSecret(), stored.getString(ENCRYPTED_CLIENT_SECRET));
+        String avniSystemUser = StringUtils.hasText(request.getAvniSystemUser())
+                ? userOfOrganisation(request.getAvniSystemUser(), organisationId)
+                : stored.getString(AVNI_SYSTEM_USER);
         row.setConfig(new JsonObject()
                 .with(ENVIRONMENT, request.getEnvironment())
-                .with(CLIENT_ID, request.getClientId().trim())
+                .with(CLIENT_ID, clientId)
                 .with(ENCRYPTED_CLIENT_SECRET, encryptedClientSecret)
                 .with(HIP_IDS, hipIds)
                 .with(AVNI_SYSTEM_USER, avniSystemUser)
@@ -137,11 +152,17 @@ public class AbhaAdminService {
         }
     }
 
-    // Optional until the check-in story needs it; when given, it must be a user of this organisation.
+    // Saves of Eka settings run one at a time, across organisations, until commit: two first saves cannot make two rows,
+    // and two organisations cannot claim one HIP ID at once.
+    private void lockEkaSettingsSaves() {
+        entityManager.createNativeQuery("select count(*) from pg_advisory_xact_lock(:key)")
+                .setParameter("key", EKA_SETTINGS_SAVE_LOCK)
+                .getSingleResult();
+    }
+
+    // Optional until the check-in story needs it, and kept when a later save leaves it out; when given, it must be a
+    // user of this organisation.
     private String userOfOrganisation(String username, Long organisationId) {
-        if (!StringUtils.hasText(username)) {
-            return null;
-        }
         User user = userRepository.findByUsernameIgnoreCaseAndIsVoidedFalse(username.trim());
         if (user == null || !organisationId.equals(user.getOrganisationId())) {
             throw new BadRequestError("avniSystemUser %s is not a user of this organisation", username);

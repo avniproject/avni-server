@@ -7,18 +7,20 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
 import org.avni.server.domain.extenalSystem.SystemName;
 import org.avni.server.service.abha.EkaNotConfiguredException;
-import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+// Not exported over Spring Data REST: rows hold Eka's encrypted secrets and Glific's password, and any user of the
+// organisation could read them there.
 @Repository
+@RepositoryRestResource(exported = false)
 public interface ExternalSystemConfigRepository extends AvniCrudRepository<ExternalSystemConfig, Long> {
     ExternalSystemConfig findBySystemName(SystemName systemName);
 
     ExternalSystemConfig findBySystemNameAndOrganisationId(SystemName systemName, Long organisationId);
 
-    @RestResource(exported = false)
     List<ExternalSystemConfig> findAllBySystemNameAndIsVoidedFalse(SystemName systemName);
 
     default GlificSystemConfig getGlificSystemConfig(Long organisationId) throws GlificNotConfiguredException {
