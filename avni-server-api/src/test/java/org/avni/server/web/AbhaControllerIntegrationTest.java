@@ -58,6 +58,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -369,6 +370,67 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, "1234567856891", HttpStatus.BAD_REQUEST, "ABHA_NUMBER_INVALID");
         assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, "123456785689123", HttpStatus.BAD_REQUEST, "ABHA_NUMBER_INVALID");
         assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, null, HttpStatus.BAD_REQUEST, "ABHA_NUMBER_INVALID");
+    }
+
+    // An ABHA number is a health identifier. Captured as staging and live run (org.avni's additivity off), with
+    // everything at DEBUG, Spring's request handling included, and written both ways the app or a person may send it.
+    @Test
+    public void abhaNumberNeverLogged() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+        linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+
+        Logger avni = (Logger) LoggerFactory.getLogger("org.avni");
+        boolean avniAdditive = avni.isAdditive();
+        List<Logger> loggers = Arrays.asList((Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME), avni,
+                (Logger) LoggerFactory.getLogger("org.springframework"));
+        List<Level> originalLevels = new ArrayList<>();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        for (Logger logger : loggers) {
+            originalLevels.add(logger.getLevel());
+            logger.setLevel(Level.DEBUG);
+        }
+        loggers.get(0).addAppender(appender);
+        avni.addAppender(appender);
+        avni.setAdditive(false);
+        try {
+            ResponseEntity<String> hyphenated = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, "12-3456-7856-8912");
+            ResponseEntity<String> digits = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
+            assertEquals(hyphenated.getBody(), HttpStatus.OK, hyphenated.getStatusCode());
+            assertEquals(digits.getBody(), HttpStatus.OK, digits.getStatusCode());
+        } finally {
+            loggers.get(0).detachAppender(appender);
+            avni.detachAppender(appender);
+            for (int i = 0; i < loggers.size(); i++) {
+                loggers.get(i).setLevel(originalLevels.get(i));
+            }
+            avni.setAdditive(avniAdditive);
+        }
+
+        assertTrue("Spring's line about reading the request body must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().startsWith("org.springframework.web") && e.getFormattedMessage().startsWith("Read ")));
+        for (ILoggingEvent event : appender.list) {
+            // The test's own HTTP client, which runs in this JVM beside the server, logs the body it sends.
+            if (event.getLoggerName().startsWith("org.springframework.web.client") || event.getLoggerName().startsWith("org.apache.hc.client5")) continue;
+            String text = event.getFormattedMessage() + throwableText(event.getThrowableProxy());
+            assertFalse(event.getLoggerName() + " logged the ABHA number: " + text, text.contains(ABHA_DIGITS) || text.contains("12-3456-7856-8912"));
+        }
+    }
+
+    // Spring Data REST exports every repository unless told not to, which would hand any user of the organisation every
+    // patient's ABHA number.
+    @Test
+    public void abhaLinksNotExportedOverSpringDataRest() {
+        String holder = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        setUser("demo-admin");
+
+        ResponseEntity<String> collection = template.getForEntity("/abhaLinks", String.class);
+        ResponseEntity<String> search = template.getForEntity("/abhaLinks/search/findLiveSubjectUUIDs?organisationId=" + DEMO_ID + "&abhaNumber=" + ABHA_DIGITS, String.class);
+
+        assertNotEquals(String.valueOf(collection.getBody()), HttpStatus.OK, collection.getStatusCode());
+        assertNotEquals(String.valueOf(search.getBody()), HttpStatus.OK, search.getStatusCode());
+        assertFalse(String.valueOf(collection.getBody()).contains(ABHA_DIGITS));
+        assertFalse(String.valueOf(search.getBody()).contains(holder));
     }
 
     private void allowSearch(String username) {
