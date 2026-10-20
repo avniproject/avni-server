@@ -1,5 +1,8 @@
 package org.avni.server.web;
 
+import org.avni.server.service.abha.AbhaEventInvalidException;
+import org.avni.server.service.abha.AbhaEventRequest;
+import org.avni.server.service.abha.AbhaEventService;
 import org.avni.server.service.abha.AbhaRefusal;
 import org.avni.server.service.abha.AbhaRefusedException;
 import org.avni.server.service.abha.AbhaService;
@@ -11,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +26,8 @@ import java.util.Map;
 @RestController
 public class AbhaController {
     private final AbhaService abhaService;
+    @Autowired
+    private AbhaEventService abhaEventService;
 
     @Autowired
     public AbhaController(AbhaService abhaService) {
@@ -32,6 +39,19 @@ public class AbhaController {
     @Transactional(readOnly = true)
     public AbhaSession getSession(@RequestParam(value = "subjectTypeUUID", required = false) String subjectTypeUUID) {
         return abhaService.createSession(subjectTypeUUID);
+    }
+
+    // 201 when stored, 200 when this uuid was already stored.
+    @PostMapping("/abha/events")
+    @PreAuthorize("hasAnyAuthority('user')")
+    @Transactional
+    public ResponseEntity<Void> recordEvent(@RequestBody AbhaEventRequest request) {
+        return ResponseEntity.status(abhaEventService.recordEvent(request) ? HttpStatus.CREATED : HttpStatus.OK).build();
+    }
+
+    @ExceptionHandler(AbhaEventInvalidException.class)
+    public ResponseEntity<Map<String, String>> invalidEvent(AbhaEventInvalidException e) {
+        return ResponseEntity.badRequest().body(Collections.singletonMap("code", "ABHA_EVENT_INVALID"));
     }
 
     @ExceptionHandler(AbhaRefusedException.class)
