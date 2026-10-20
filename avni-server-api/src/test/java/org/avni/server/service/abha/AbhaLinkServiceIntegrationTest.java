@@ -84,6 +84,67 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Collections.emptyList(), links());
     }
 
+    // Updated in place: the subject keeps one row, which now holds the new number.
+    @Test
+    public void changedAnswerUpdatesLink() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        subject.getObservations().put(abhaNumber.getUuid(), "91-1111-2222-3333");
+        subject.getObservations().put(abhaAddress.getUuid(), "ramesh.g@abdm");
+        save(subject);
+
+        assertEquals(Collections.singletonList(live(subject, "91111122223333", "ramesh.g@abdm")), links());
+    }
+
+    @Test
+    public void removedAnswerVoidsLink() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        subject.getObservations().remove(abhaNumber.getUuid());
+        subject.getObservations().remove(abhaAddress.getUuid());
+        save(subject);
+
+        assertEquals(Collections.singletonList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
+    }
+
+    // DELETE /web/subject/{uuid} and the external API void through IndividualService.voidSubject.
+    @Test
+    public void voidedSubjectVoidsLink() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        new TransactionTemplate(transactionManager).execute(status -> individualService.voidSubject(subject));
+
+        assertEquals(Collections.singletonList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
+    }
+
+    // The app voids a subject by pushing it with voided set, through save.
+    @Test
+    public void subjectVoidedBySyncVoidsLink() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        subject.setVoided(true);
+        save(subject);
+
+        assertEquals(Collections.singletonList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
+    }
+
+    @Test
+    public void restoredSubjectRelinks() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+        subject.setVoided(true);
+        save(subject);
+
+        subject.setVoided(false);
+        save(subject);
+
+        assertEquals(Arrays.asList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS), live(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
+    }
+
     // The app's route: a registration pushed by sync.
     @Test
     public void syncPushWithAnswerCreatesLink() {
@@ -127,6 +188,10 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
 
     private static String live(Individual subject, String number, String address) {
         return subject.getUuid() + " " + number + " " + address + " org " + DEMO_ID + " live";
+    }
+
+    private static String voided(Individual subject, String number, String address) {
+        return subject.getUuid() + " " + number + " " + address + " org " + DEMO_ID + " voided";
     }
 
     // Every row, live or voided, as "<subject uuid> <number> <address> org <id> live|voided", in creation order.

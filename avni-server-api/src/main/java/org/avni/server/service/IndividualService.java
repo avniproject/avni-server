@@ -351,7 +351,9 @@ public class IndividualService implements ScopeAwareService<Individual> {
     @Messageable(EntityType.Subject)
     public Individual voidSubject(Individual individual) {
         individual.setVoided(true);
-        return individualRepository.saveEntity(individual);
+        Individual savedIndividual = individualRepository.saveEntity(individual);
+        abhaLinkService.syncLink(savedIndividual);
+        return savedIndividual;
     }
 
     @Override

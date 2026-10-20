@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Objects;
+import java.util.Optional;
+
 // Keeps abha_link, which subject holds which ABHA number, in step with the subject's "ABHA Number" and "ABHA Address"
 // answers. Never logs the number or the address.
 @Service
@@ -28,20 +31,34 @@ public class AbhaLinkService {
         this.abhaLinkRepository = abhaLinkRepository;
     }
 
-    // Called after every save of a subject. Organisations with ABHA off pay one look at their settings and nothing more.
+    // Called after every save or void of a subject. Organisations with ABHA off pay one look at their settings and
+    // nothing more. A voided subject, or one with no ABHA Number answer, has no live link; otherwise its one live link
+    // holds the current answers, updated in place when they change.
     public void syncLink(Individual individual) {
         if (!organisationConfigService.isAbhaEnabled()) {
             return;
         }
-        String number = digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
+        Optional<AbhaLink> liveLink = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId());
+        String number = individual.isVoided() ? "" : digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
         if (number.isEmpty()) {
+            liveLink.ifPresent(link -> {
+                link.setVoided(true);
+                abhaLinkRepository.save(link);
+            });
             return;
         }
-        AbhaLink link = new AbhaLink();
-        link.assignUUID();
-        link.setIndividual(individual);
+        String address = answer(individual, ABHA_ADDRESS_CONCEPT);
+        AbhaLink link = liveLink.orElseGet(() -> {
+            AbhaLink newLink = new AbhaLink();
+            newLink.assignUUID();
+            newLink.setIndividual(individual);
+            return newLink;
+        });
+        if (link.getId() != null && number.equals(link.getAbhaNumber()) && Objects.equals(address, link.getAbhaAddress())) {
+            return;
+        }
         link.setAbhaNumber(number);
-        link.setAbhaAddress(answer(individual, ABHA_ADDRESS_CONCEPT));
+        link.setAbhaAddress(address);
         abhaLinkRepository.save(link);
     }
 
