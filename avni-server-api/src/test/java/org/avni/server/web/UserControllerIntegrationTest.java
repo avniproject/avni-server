@@ -2,6 +2,11 @@ package org.avni.server.web;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.*;
+import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
+import org.avni.server.domain.extenalSystem.SystemName;
+import org.junit.After;
 import org.avni.server.domain.*;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.domain.factory.UserBuilder;
@@ -18,6 +23,8 @@ public class UserControllerIntegrationTest extends AbstractControllerIntegration
 
     @Autowired
     private CatchmentRepository catchmentRepository;
+    @Autowired
+    private ExternalSystemConfigRepository externalSystemConfigRepository;
     private Organisation testOrganisation;
     private Catchment testCatchment;
 
@@ -220,6 +227,110 @@ public class UserControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals("Updated Name", updatedUser.getName());
     }
 
+
+    @After
+    public void removeEkaSettings() {
+        ExternalSystemConfig row = externalSystemConfigRepository.findBySystemNameAndOrganisationId(SystemName.Eka, 2L);
+        if (row != null) externalSystemConfigRepository.delete(row);
+    }
+
+    private void demoHasEkaHealthCentres(String... hipIds) {
+        ExternalSystemConfig row = new ExternalSystemConfig();
+        row.setSystemName(SystemName.Eka);
+        row.assignUUIDIfRequired();
+        row.setOrganisationId(2L);
+        row.setConfig(new JsonObject().with(EkaSystemConfig.HIP_IDS, java.util.Arrays.asList(hipIds)));
+        externalSystemConfigRepository.save(row);
+    }
+
+    private void demoAdminHasHealthCentre(String hipId) {
+        User demoAdmin = userRepository.findByUsername("demo-admin");
+        demoAdmin.setSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, hipId).with(UserSettings.LOCALE, "en"));
+        userRepository.save(demoAdmin);
+    }
+
+    private ResponseEntity<String> putDemoAdminWithSettings(JsonObject settings) {
+        UserContract contract = createValidUserContract("demo-admin", "Demo Admin");
+        contract.setId(userRepository.findByUsername("demo-admin").getId());
+        contract.setEmail("demo-admin@test.com");
+        contract.setSettings(settings);
+        return template.exchange(base + "/user/" + contract.getId(), HttpMethod.PUT, new HttpEntity<>(contract), String.class);
+    }
+
+    private String demoAdminHipId() {
+        return userRepository.findByUsername("demo-admin").getSettings().getString(UserSettings.ABHA_HIP_ID);
+    }
+
+    @Test
+    public void adminSaveWithoutAbhaHipIdKeepsIt() {
+        demoHasEkaHealthCentres("hip-1");
+        demoAdminHasHealthCentre("hip-1");
+
+        ResponseEntity<String> response = putDemoAdminWithSettings(new JsonObject().with(UserSettings.LOCALE, "hi"));
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("hip-1", demoAdminHipId());
+        assertEquals("hi", userRepository.findByUsername("demo-admin").getSettings().getString(UserSettings.LOCALE));
+    }
+
+    @Test
+    public void adminSaveWithNewAbhaHipIdReplacesIt() {
+        demoHasEkaHealthCentres("hip-1", "hip-2");
+        demoAdminHasHealthCentre("hip-1");
+
+        ResponseEntity<String> response = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-2"));
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("hip-2", demoAdminHipId());
+    }
+
+    @Test
+    public void adminSaveWithEmptyAbhaHipIdClearsIt() {
+        demoHasEkaHealthCentres("hip-1");
+        demoAdminHasHealthCentre("hip-1");
+
+        ResponseEntity<String> response = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, ""));
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNull(demoAdminHipId());
+    }
+
+    @Test
+    public void adminSaveWithIdNotInTheOrganisationsListIsRefused() {
+        demoHasEkaHealthCentres("hip-1");
+        demoAdminHasHealthCentre("hip-1");
+
+        ResponseEntity<String> response = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-9"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody(), response.getBody().contains("ABHA Health Facility ID 'hip-9' is not one of this organisation's health centres"));
+        assertEquals("hip-1", demoAdminHipId());
+    }
+
+    @Test
+    public void organisationWithNoEkaSettingsRefusesAnyValueOnUpdateAndCreate() {
+        ResponseEntity<String> update = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-1"));
+        assertEquals(HttpStatus.BAD_REQUEST, update.getStatusCode());
+        assertTrue(update.getBody(), update.getBody().contains("'hip-1' is not one of this organisation's health centres"));
+
+        UserContract create = createValidUserContract("withhip@test", "With Hip");
+        create.setSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-1"));
+        ResponseEntity<String> created = template.postForEntity(base + "/user", create, String.class);
+        assertEquals(HttpStatus.BAD_REQUEST, created.getStatusCode());
+        assertNull(userRepository.findByUsername("withhip@test"));
+    }
+
+    @Test
+    public void adminCreateWithListedIdSetsIt() {
+        demoHasEkaHealthCentres("hip-1");
+        UserContract create = createValidUserContract("withhip2@test", "With Hip Two");
+        create.setSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-1"));
+
+        ResponseEntity<String> created = template.postForEntity(base + "/user", create, String.class);
+
+        assertEquals(created.getBody(), HttpStatus.CREATED, created.getStatusCode());
+        assertEquals("hip-1", userRepository.findByUsername("withhip2@test").getSettings().getString(UserSettings.ABHA_HIP_ID));
+    }
 
     private UserContract createValidUserContract(String username, String name) {
         UserContract userContract = new UserContract();

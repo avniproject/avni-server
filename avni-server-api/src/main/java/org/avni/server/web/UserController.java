@@ -15,6 +15,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
+import org.avni.server.service.abha.AbhaHealthCentreService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
@@ -56,6 +57,7 @@ public class UserController {
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
+    private final AbhaHealthCentreService abhaHealthCentreService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -68,7 +70,8 @@ public class UserController {
                           AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService) {
+                          AccessControlService accessControlService,
+                          AbhaHealthCentreService abhaHealthCentreService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -79,6 +82,7 @@ public class UserController {
         this.resetSyncService = resetSyncService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.accessControlService = accessControlService;
+        this.abhaHealthCentreService = abhaHealthCentreService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -204,7 +208,6 @@ public class UserController {
         }
 
         user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
-        user.setSettings(userContract.getSettings());
         user.setIgnoreSyncSettingsInDEA(userContract.isIgnoreSyncSettingsInDEA());
         user.setSyncSettings(UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
         User currentUser = userService.getCurrentUser();
@@ -213,8 +216,19 @@ public class UserController {
             organisationId = userContract.getOrganisationId() == null ? UserContextHolder.getUserContext().getOrganisationId() : userContract.getOrganisationId();
         }
         user.setOrganisationId(organisationId);
+        assertHealthCentreIsOneOfTheOrganisations(userContract.getSettings(), organisationId);
+        user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), userContract.getSettings()));
         user.setAuditInfo(currentUser);
         return user;
+    }
+
+    private void assertHealthCentreIsOneOfTheOrganisations(JsonObject settings, Long organisationId) {
+        if (settings == null) return;
+        Object hipId = settings.get(UserSettings.ABHA_HIP_ID);
+        // An empty string clears the setting. Anything else is stored as sent, so it must match a health centre exactly.
+        if (hipId instanceof String && !((String) hipId).isEmpty() && !abhaHealthCentreService.isHealthCentreOf(organisationId, (String) hipId)) {
+            throw new ValidationException(AbhaHealthCentreService.notAHealthCentreMessage((String) hipId));
+        }
     }
 
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
