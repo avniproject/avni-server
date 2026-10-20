@@ -12,6 +12,8 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -20,6 +22,7 @@ import java.util.Arrays;
 
 @Service
 public class AbhaService {
+    private static final Logger logger = LoggerFactory.getLogger(AbhaService.class);
     private final OrganisationConfigService organisationConfigService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
@@ -85,6 +88,8 @@ public class AbhaService {
             // EkaTokenService has logged it, without the key.
             throw new AbhaRefusedException(AbhaRefusal.ABHA_EKA_UNAVAILABLE);
         }
+        // The key is a bearer credential for the organisation at Eka; never log it.
+        logger.info("ABHA session key issued to user {} of organisation {}", access.getUser().getId(), access.getOrganisationId());
         return new AbhaSession(token.getAccessToken(), token.getExpiresAt(), access.getEkaSystemConfig().getEnvironment(), access.getHipId());
     }
 }

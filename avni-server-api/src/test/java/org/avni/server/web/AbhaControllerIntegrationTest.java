@@ -1,5 +1,10 @@
 package org.avni.server.web;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupRepository;
@@ -31,6 +36,7 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.builder.TestGroupService;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,10 +47,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import javax.sql.DataSource;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -217,6 +227,62 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
 
         assertEquals(response.getContentAsString(), 502, response.getStatus());
         assertEquals("ABHA_EKA_UNAVAILABLE", mapper.readTree(response.getContentAsString()).path("code").asText());
+    }
+
+    // Runs as staging and live do, with org.avni's additivity off, so the server's own lines stop at org.avni and never
+    // reach ROOT. Captures at both, with everything at DEBUG, Spring's own request handling included.
+    @Test
+    public void tokenNeverLogged() throws Exception {
+        enableAbha();
+        storeEkaSettings();
+        setHealthCentre(REGISTRAR, "HIP-2");
+        Long registrarId = userRepository.findByUsername(REGISTRAR).getId();
+        when(standInEka.getAccessToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00Z")));
+
+        Logger avni = (Logger) LoggerFactory.getLogger("org.avni");
+        boolean avniAdditive = avni.isAdditive();
+        List<Logger> loggers = Arrays.asList((Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME), avni,
+                (Logger) LoggerFactory.getLogger("org.springframework"));
+        List<Level> originalLevels = new ArrayList<>();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        for (Logger logger : loggers) {
+            originalLevels.add(logger.getLevel());
+            logger.setLevel(Level.DEBUG);
+        }
+        loggers.get(0).addAppender(appender);
+        avni.addAppender(appender);
+        avni.setAdditive(false);
+        try {
+            MockHttpServletResponse response = getSessionWithStandInEka(REGISTRAR, SUBJECT_TYPE_A);
+            assertEquals(response.getContentAsString(), 200, response.getStatus());
+            assertTrue(response.getContentAsString().contains("eka-key-for-demo"));
+        } finally {
+            loggers.get(0).detachAppender(appender);
+            avni.detachAppender(appender);
+            for (int i = 0; i < loggers.size(); i++) {
+                loggers.get(i).setLevel(originalLevels.get(i));
+            }
+            avni.setAdditive(avniAdditive);
+        }
+
+        assertTrue("the issued-key line must name the user and the organisation",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().equals(AbhaService.class.getName()) && e.getLevel() == Level.INFO
+                        && e.getFormattedMessage().contains("user " + registrarId) && e.getFormattedMessage().contains("organisation " + DEMO_ID)));
+        assertTrue("Spring's line about writing the response must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().startsWith("org.springframework.web") && e.getFormattedMessage().startsWith("Writing [")));
+        for (ILoggingEvent event : appender.list) {
+            String text = event.getFormattedMessage() + throwableText(event.getThrowableProxy());
+            assertFalse(event.getLoggerName() + " logged the key: " + text, text.contains("eka-key-for-demo"));
+        }
+    }
+
+    private static String throwableText(IThrowableProxy proxy) {
+        StringBuilder text = new StringBuilder();
+        for (IThrowableProxy p = proxy; p != null; p = p.getCause()) {
+            text.append(' ').append(p.getMessage());
+        }
+        return text.toString();
     }
 
     private MockHttpServletResponse getSessionWithStandInEka(String username, String subjectTypeUUID) throws Exception {
