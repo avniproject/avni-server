@@ -5,17 +5,23 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class EkaRestClientTest {
     private static final String LOGIN_PATH = "/connect-auth/v1/account/login";
+    private static final String CARD_PATH = "/abdm/v1/profile/asset/card";
+    // A PNG signature and then text standing in for the picture. Never a real card.
+    private static final byte[] CARD = png("stand-in-card-image".getBytes(StandardCharsets.US_ASCII));
 
     private WireMockServer eka;
     private String baseUrl;
@@ -105,6 +111,128 @@ public class EkaRestClientTest {
         Duration waited = Duration.between(start, Instant.now());
 
         assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(13)) < 0);
+    }
+
+    @Test
+    public void cardRequestCarriesTheEkaIdTokenAndHealthCentre() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200).withHeader("Content-Type", "image/png").withBody(CARD)));
+
+        byte[] card = client.getAbhaCard(baseUrl, "access-1", "oid-1", "HIP-1");
+
+        assertArrayEquals(CARD, card);
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH))
+                .withQueryParam("oid", equalTo("oid-1"))
+                .withHeader("Authorization", equalTo("Bearer access-1"))
+                .withHeader("X-Pt-Id", equalTo("oid-1"))
+                .withHeader("X-Hip-Id", equalTo("HIP-1"))
+                .withHeader("Accept", equalTo("image/png")));
+    }
+
+    // An Eka ID holding characters that mean something in a URL still names the one patient.
+    @Test
+    public void ekaIdIsEncodedInTheQuery() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200).withBody(CARD)));
+
+        client.getAbhaCard(baseUrl, "access-1", "oid 1&oid=2", "HIP-1");
+
+        eka.verify(getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid 1&oid=2")));
+    }
+
+    // The Eka ID comes from the phone. One that cannot travel in a header fails as Eka failing would, not as a server error.
+    @Test
+    public void ekaIdThatCannotBeAHeaderThrowsWithoutCallingEka() {
+        try {
+            client.getAbhaCard(baseUrl, "access-1", "oid-1\r\nX-Injected: 1", "HIP-1");
+            fail("expected EkaCardException");
+        } catch (EkaCardException e) {
+            assertTrue(e.getMessage(), !e.getMessage().contains("access-1") && !e.getMessage().contains("oid-1"));
+        }
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)));
+    }
+
+    // Eka answers its errors as JSON. None of it is the card, and none of it is read.
+    @Test
+    public void cardRefusedByEkaThrows() {
+        for (int status : new int[]{400, 401, 403, 404, 500, 503}) {
+            eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(status)
+                    .withHeader("Content-Type", "application/json").withBody("{\"code\":" + status + ",\"error\":\"no\"}")));
+            assertCardFails();
+        }
+    }
+
+    // The app is told it gets a PNG. Anything else, such as an error written with 200, is not served as one.
+    @Test
+    public void answerThatIsNotAPngThrows() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(okJson("{\"error\":\"not a card\"}")));
+        assertCardFails();
+
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200)));
+        assertCardFails();
+    }
+
+    @Test
+    public void cardUpToTheCapIsAccepted() {
+        byte[] largest = png(new byte[EkaRestClient.MAX_CARD_BYTES - 8]);
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200).withBody(largest)));
+
+        assertEquals(EkaRestClient.MAX_CARD_BYTES, client.getAbhaCard(baseUrl, "access-1", "oid-1", "HIP-1").length);
+    }
+
+    // Declared with a Content-Length: refused on the length alone.
+    @Test
+    public void cardDeclaredLargerThanTheCapThrows() {
+        byte[] tooLarge = png(new byte[EkaRestClient.MAX_CARD_BYTES - 7]);
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200)
+                .withHeader("Content-Length", String.valueOf(tooLarge.length)).withBody(tooLarge)));
+        assertCardFails();
+    }
+
+    // Sent in chunks with no length declared: the cap stops it as it arrives.
+    @Test
+    public void chunkedCardLargerThanTheCapThrows() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200)
+                .withBody(png(new byte[EkaRestClient.MAX_CARD_BYTES])).withChunkedDribbleDelay(20, 200)));
+        assertCardFails();
+    }
+
+    @Test
+    public void cardFailsAfterTenSecondsWithoutAnswer() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200).withBody(CARD).withFixedDelay(11000)));
+
+        Instant start = Instant.now();
+        assertCardFails();
+        Duration waited = Duration.between(start, Instant.now());
+
+        assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(9)) >= 0 && waited.compareTo(Duration.ofSeconds(11)) < 0);
+    }
+
+    // Headers arrive at once and the picture trickles in over 15 s: the deadline must cover the body too.
+    @Test
+    public void cardFailsWhenTheBodyStallsPastTenSeconds() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(200).withBody(CARD).withChunkedDribbleDelay(5, 15000)));
+
+        Instant start = Instant.now();
+        assertCardFails();
+        Duration waited = Duration.between(start, Instant.now());
+
+        assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(13)) < 0);
+    }
+
+    // The token is a bearer credential and the Eka ID names a patient: neither goes into a message that may be logged.
+    private void assertCardFails() {
+        try {
+            client.getAbhaCard(baseUrl, "access-1", "oid-1", "HIP-1");
+            fail("expected EkaCardException");
+        } catch (EkaCardException e) {
+            assertTrue(e.getMessage(), !e.getMessage().contains("access-1") && !e.getMessage().contains("oid-1"));
+        }
+    }
+
+    private static byte[] png(byte[] content) {
+        byte[] signature = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+        byte[] png = Arrays.copyOf(signature, signature.length + content.length);
+        System.arraycopy(content, 0, png, signature.length, content.length);
+        return png;
     }
 
     private void assertLoginFails() {
