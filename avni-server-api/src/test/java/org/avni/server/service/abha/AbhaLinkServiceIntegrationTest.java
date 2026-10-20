@@ -1,5 +1,9 @@
 package org.avni.server.service.abha;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -14,6 +18,7 @@ import org.avni.server.service.IndividualService;
 import org.avni.server.service.builder.TestConceptService;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
@@ -21,6 +26,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Not @Transactional: each save runs in its own committed transaction, as it does on the server, and the organisation
@@ -145,6 +153,47 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Arrays.asList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS), live(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
     }
 
+    // An ABHA number is 14 digits. Anything else is no ABHA number: no link, and the save goes through, since sync is
+    // never refused. The warning names the subject, not the answer.
+    @Test
+    public void answerNotFourteenDigitsLinksNothing() {
+        enableAbha();
+        ListAppender<ILoggingEvent> log = captureLog();
+        Individual tooLong;
+        Individual tooShort;
+        try {
+            tooLong = save(subjectWith("12-3456-7856-8912-77", ABHA_ADDRESS));
+            tooShort = save(subjectWith("12-3456-7856-891", null));
+        } finally {
+            stopCapturing(log);
+        }
+
+        assertEquals(Collections.emptyList(), links());
+        assertEquals(2, countSubjects(tooLong, tooShort));
+        assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(tooLong.getUuid())));
+        assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(tooShort.getUuid())));
+        assertNothingLoggedCarries(log, "12345678568912", "1234567856891");
+    }
+
+    // A duplicate from an upload, another system or a second phone is never refused. Both stay linked, and the
+    // warning names both subjects, never the number.
+    @Test
+    public void twoSubjectsSameNumberBothLiveAndWarned() {
+        enableAbha();
+        Individual first = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+        ListAppender<ILoggingEvent> log = captureLog();
+        Individual second;
+        try {
+            second = save(subjectWith(ABHA_DIGITS, null));
+        } finally {
+            stopCapturing(log);
+        }
+
+        assertEquals(Arrays.asList(live(first, ABHA_DIGITS, ABHA_ADDRESS), live(second, ABHA_DIGITS, null)), links());
+        assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(first.getUuid()) && w.contains(second.getUuid())));
+        assertNothingLoggedCarries(log, ABHA_DIGITS, ABHA_NUMBER, ABHA_ADDRESS);
+    }
+
     // The app's route: a registration pushed by sync.
     @Test
     public void syncPushWithAnswerCreatesLink() {
@@ -201,6 +250,41 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
                         "join public.individual i on i.id = l.individual_id order by l.id",
                 (rs, rowNum) -> rs.getString(1) + " " + rs.getString(2) + " " + rs.getString(3) + " org " + rs.getLong(4)
                         + (rs.getBoolean(5) ? " voided" : " live"));
+    }
+
+    private int countSubjects(Individual... subjects) {
+        int count = 0;
+        for (Individual subject : subjects) {
+            count += new JdbcTemplate(dataSource).queryForObject("select count(*) from public.individual where uuid = ?", Integer.class, subject.getUuid());
+        }
+        return count;
+    }
+
+    private static ListAppender<ILoggingEvent> captureLog() {
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        ((Logger) LoggerFactory.getLogger(AbhaLinkService.class)).addAppender(appender);
+        return appender;
+    }
+
+    private static void stopCapturing(ListAppender<ILoggingEvent> appender) {
+        ((Logger) LoggerFactory.getLogger(AbhaLinkService.class)).detachAppender(appender);
+    }
+
+    private static List<String> warnings(ListAppender<ILoggingEvent> appender) {
+        List<String> warnings = new ArrayList<>();
+        for (ILoggingEvent event : appender.list) {
+            if (event.getLevel() == Level.WARN) warnings.add(event.getFormattedMessage());
+        }
+        return warnings;
+    }
+
+    private static void assertNothingLoggedCarries(ListAppender<ILoggingEvent> appender, String... values) {
+        for (ILoggingEvent event : appender.list) {
+            for (String value : values) {
+                assertFalse("logged " + value + ": " + event.getFormattedMessage(), event.getFormattedMessage().contains(value));
+            }
+        }
     }
 
     private void enableAbha() {

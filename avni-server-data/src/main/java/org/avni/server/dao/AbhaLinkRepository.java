@@ -1,14 +1,27 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.AbhaLink;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 // Not exported over Spring Data REST: every row carries a patient's ABHA number.
 @Repository
 @RepositoryRestResource(exported = false)
 public interface AbhaLinkRepository extends TransactionalDataRepository<AbhaLink> {
+    // Served by abha_link_org_number_live, a partial index on (organisation_id, abha_number) for live rows, then the
+    // individual's primary key. A subject voided in bulk (a location's subjects, by SQL) keeps a live row; the join
+    // keeps it out of the answer.
+    String LIVE_SUBJECT_UUIDS = "select i.uuid from public.abha_link l join public.individual i on i.id = l.individual_id " +
+            "where l.organisation_id = :organisationId and l.abha_number = :abhaNumber " +
+            "and l.is_voided = false and i.is_voided = false order by i.uuid";
+
     Optional<AbhaLink> findByIndividualIdAndIsVoidedFalse(Long individualId);
+
+    @Query(value = LIVE_SUBJECT_UUIDS, nativeQuery = true)
+    List<String> findLiveSubjectUUIDs(@Param("organisationId") Long organisationId, @Param("abhaNumber") String abhaNumber);
 }

@@ -5,11 +5,15 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.AbhaLink;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -19,6 +23,8 @@ import java.util.Optional;
 public class AbhaLinkService {
     public static final String ABHA_NUMBER_CONCEPT = "ABHA Number";
     public static final String ABHA_ADDRESS_CONCEPT = "ABHA Address";
+    public static final int ABHA_NUMBER_DIGITS = 14;
+    private static final Logger logger = LoggerFactory.getLogger(AbhaLinkService.class);
 
     private final OrganisationConfigService organisationConfigService;
     private final ConceptRepository conceptRepository;
@@ -40,6 +46,11 @@ public class AbhaLinkService {
         }
         Optional<AbhaLink> liveLink = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId());
         String number = individual.isVoided() ? "" : digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
+        if (!number.isEmpty() && number.length() != ABHA_NUMBER_DIGITS) {
+            // Not an ABHA number, and too long for the column: linking it would refuse the save.
+            logger.warn("ABHA Number answer of subject {} is not {} digits; no ABHA link kept", individual.getUuid(), ABHA_NUMBER_DIGITS);
+            number = "";
+        }
         if (number.isEmpty()) {
             liveLink.ifPresent(link -> {
                 link.setVoided(true);
@@ -57,9 +68,22 @@ public class AbhaLinkService {
         if (link.getId() != null && number.equals(link.getAbhaNumber()) && Objects.equals(address, link.getAbhaAddress())) {
             return;
         }
+        boolean numberChanged = !number.equals(link.getAbhaNumber());
         link.setAbhaNumber(number);
         link.setAbhaAddress(address);
         abhaLinkRepository.save(link);
+        if (numberChanged) {
+            warnIfHeldByOthers(number);
+        }
+    }
+
+    // Sync is never refused for a duplicate: the app blocks one when the ABHA is found, and other routes (an upload,
+    // another system) are left to the warning.
+    private void warnIfHeldByOthers(String number) {
+        List<String> holders = abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), number);
+        if (holders.size() > 1) {
+            logger.warn("One ABHA number is held by {} live subjects: {}", holders.size(), holders);
+        }
     }
 
     // Eka writes 12-3456-7856-8912; a person may type the 14 digits with spaces or nothing between them.
