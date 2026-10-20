@@ -1,36 +1,44 @@
 package org.avni.server.service.abha;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.*;
 
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-// Logs in to Eka Care. Builds its own RestTemplate: the shared builder adds an interceptor that logs request headers,
-// which would print the bearer token. Never log a request or response body here; both carry secrets.
+// Logs in to Eka Care. Every choice below keeps the client secret and tokens out of the logs at any log level:
+// - its own RestTemplate, because the shared builder adds an interceptor that logs request headers (the bearer token);
+// - the JDK HTTP client, because Apache HttpClient's wire logger prints request bodies at DEBUG;
+// - the JSON body written here, because RestTemplate's exchange() logs the body it serialises at DEBUG.
+// Never log a request or response body here; both carry secrets.
 @Service
 public class EkaRestClient {
     private static final String LOGIN_PATH = "/connect-auth/v1/account/login";
     private static final String REFRESH_PATH = "/connect-auth/v1/account/refresh-token";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final TypeReference<Map<String, Object>> RESPONSE_TYPE = new TypeReference<Map<String, Object>>() {
+    };
 
     private final RestTemplate restTemplate = new RestTemplateBuilder()
-            .setConnectTimeout(Duration.ofSeconds(5))
-            .setReadTimeout(Duration.ofSeconds(10))
+            .requestFactory(EkaRestClient::requestFactory)
             .build();
 
     public EkaToken login(String baseUrl, String clientId, String clientSecret) {
         Map<String, String> body = new HashMap<>();
         body.put("client_id", clientId);
         body.put("client_secret", clientSecret);
-        return post(baseUrl + LOGIN_PATH, new HttpEntity<>(body, jsonHeaders()), "login");
+        return post(baseUrl + LOGIN_PATH, body, jsonHeaders(), "login");
     }
 
     public EkaToken refresh(String baseUrl, String clientId, EkaToken current) {
@@ -40,14 +48,19 @@ public class EkaRestClient {
         HttpHeaders headers = jsonHeaders();
         headers.setBearerAuth(current.getAccessToken());
         headers.set("Client-Id", clientId);
-        return post(baseUrl + REFRESH_PATH, new HttpEntity<>(body, headers), "refresh");
+        return post(baseUrl + REFRESH_PATH, body, headers, "refresh");
     }
 
-    private EkaToken post(String url, HttpEntity<Map<String, String>> request, String call) {
+    private EkaToken post(String url, Map<String, String> body, HttpHeaders headers, String call) {
+        byte[] json = toJson(body);
+        RequestCallback writeBody = request -> {
+            request.getHeaders().putAll(headers);
+            request.getBody().write(json);
+        };
+        ResponseExtractor<Map<String, Object>> readBody = response -> objectMapper.readValue(response.getBody(), RESPONSE_TYPE);
         Map<String, Object> response;
         try {
-            response = restTemplate.exchange(url, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {
-            }).getBody();
+            response = restTemplate.execute(url, HttpMethod.POST, writeBody, readBody);
         } catch (HttpStatusCodeException e) {
             throw new EkaAuthException("Eka " + call + " failed with HTTP " + e.getStatusCode().value());
         } catch (ResourceAccessException e) {
@@ -73,6 +86,24 @@ public class EkaRestClient {
                 now.plusSeconds(((Number) expiresIn).longValue()),
                 refreshToken instanceof String ? (String) refreshToken : null,
                 refreshExpiresIn instanceof Number ? now.plusSeconds(((Number) refreshExpiresIn).longValue()) : null);
+    }
+
+    private static ClientHttpRequestFactory requestFactory() {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofSeconds(10));
+        return factory;
+    }
+
+    private static byte[] toJson(Map<String, String> body) {
+        try {
+            return objectMapper.writeValueAsBytes(body);
+        } catch (JsonProcessingException e) {
+            throw new EkaAuthException("Could not write the Eka request body", e);
+        }
     }
 
     private static HttpHeaders jsonHeaders() {
