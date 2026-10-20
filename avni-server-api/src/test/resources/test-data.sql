@@ -8,6 +8,7 @@ DELETE FROM encounter;
 DELETE FROM program_encounter;
 DELETE FROM program_enrolment;
 DELETE FROM subject_migration;
+DELETE FROM abha_link;
 DELETE FROM individual;
 DELETE FROM operational_program;
 DELETE FROM program;

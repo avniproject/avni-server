@@ -21,6 +21,7 @@ import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.abha.AbhaLinkService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.PhoneNumberUtil;
@@ -56,12 +57,13 @@ public class IndividualService implements ScopeAwareService<Individual> {
     private final ConceptService conceptService;
     private final ObjectMapper objectMapper;
     private final AccessControlService accessControlService;
+    private final AbhaLinkService abhaLinkService;
 
     private final List<SubjectTreeItemRepository> subjectTreeItemRepositories;
     private static final Logger logger = LoggerFactory.getLogger(IndividualService.class);
 
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository, CommentThreadRepository commentThreadRepository) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository, CommentThreadRepository commentThreadRepository, AbhaLinkService abhaLinkService) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -74,6 +76,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         this.addressLevelService = addressLevelService;
         this.conceptService = conceptService;
         this.accessControlService = accessControlService;
+        this.abhaLinkService = abhaLinkService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
 
         subjectTreeItemRepositories = Arrays.asList(individualRepository, encounterRepository, programEnrolmentRepository, programEncounterRepository, checklistItemRepository, checklistRepository, entityApprovalStatusRepository, subjectProgramEligibilityRepository, subjectMigrationRepository, individualRelationshipRepository, commentRepository, groupSubjectRepository, commentThreadRepository);
@@ -379,7 +382,9 @@ public class IndividualService implements ScopeAwareService<Individual> {
     @Messageable(EntityType.Subject)
     public Individual save(Individual individual) {
         individual.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
-        return individualRepository.saveEntity(individual);
+        Individual savedIndividual = individualRepository.saveEntity(individual);
+        abhaLinkService.syncLink(savedIndividual);
+        return savedIndividual;
     }
 
     public String findPhoneNumber(long subjectId) {
