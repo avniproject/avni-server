@@ -55,6 +55,8 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
     @Autowired
     private IndividualService individualService;
     @Autowired
+    private AbhaLinkService abhaLinkService;
+    @Autowired
     private TestConceptService testConceptService;
     @Autowired
     private SubjectTypeRepository subjectTypeRepository;
@@ -192,6 +194,19 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Arrays.asList(live(first, ABHA_DIGITS, ABHA_ADDRESS), live(second, ABHA_DIGITS, null)), links());
         assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(first.getUuid()) && w.contains(second.getUuid())));
         assertNothingLoggedCarries(log, ABHA_DIGITS, ABHA_NUMBER, ABHA_ADDRESS);
+    }
+
+    @Test
+    public void hyphenatedAndPlainNumbersMatch() {
+        enableAbha();
+        Individual hyphenated = save(subjectWith("12-3456-7856-8912", null));
+        Individual spaced = save(subjectWith("91 1111 2222 3333", null));
+        Individual plain = save(subjectWith("55555666667777", null));
+
+        assertEquals(Collections.singletonList(hyphenated.getUuid()), abhaLinkService.findSubjectUUIDs("12345678568912"));
+        assertEquals(Collections.singletonList(hyphenated.getUuid()), abhaLinkService.findSubjectUUIDs("12 3456 7856 8912"));
+        assertEquals(Collections.singletonList(spaced.getUuid()), abhaLinkService.findSubjectUUIDs("91-1111-2222-3333"));
+        assertEquals(Collections.singletonList(plain.getUuid()), abhaLinkService.findSubjectUUIDs("55-5556-6666-7777"));
     }
 
     // The app's route: a registration pushed by sync.

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class AbhaService {
@@ -29,6 +30,7 @@ public class AbhaService {
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
     private final AbhaHealthCentreService abhaHealthCentreService;
     private final EkaTokenService ekaTokenService;
+    private final AbhaLinkService abhaLinkService;
 
     @Autowired
     public AbhaService(OrganisationConfigService organisationConfigService,
@@ -36,13 +38,15 @@ public class AbhaService {
                        AccessControlService accessControlService,
                        ExternalSystemConfigRepository externalSystemConfigRepository,
                        AbhaHealthCentreService abhaHealthCentreService,
-                       EkaTokenService ekaTokenService) {
+                       EkaTokenService ekaTokenService,
+                       AbhaLinkService abhaLinkService) {
         this.organisationConfigService = organisationConfigService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.accessControlService = accessControlService;
         this.externalSystemConfigRepository = externalSystemConfigRepository;
         this.abhaHealthCentreService = abhaHealthCentreService;
         this.ekaTokenService = ekaTokenService;
+        this.abhaLinkService = abhaLinkService;
     }
 
     // The checks behind every /abha endpoint, in order: ABHA on, a known subject type, the right to register or edit
@@ -91,5 +95,14 @@ public class AbhaService {
         // The key is a bearer credential for the organisation at Eka; never log it.
         logger.info("ABHA session key issued to user {} of organisation {}", access.getUser().getId(), access.getOrganisationId());
         return new AbhaSession(token.getAccessToken(), token.getExpiresAt(), access.getEkaSystemConfig().getEnvironment(), access.getHipId());
+    }
+
+    // The patients in the organisation holding an ABHA number, after the checks of /abha/session. Never logs the number.
+    public List<String> findSubjectUUIDs(String subjectTypeUUID, String abhaNumber) {
+        checkAccess(subjectTypeUUID);
+        if (AbhaLinkService.digitsOnly(abhaNumber).length() != AbhaLinkService.ABHA_NUMBER_DIGITS) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_NUMBER_INVALID);
+        }
+        return abhaLinkService.findSubjectUUIDs(abhaNumber);
     }
 }

@@ -86,6 +86,11 @@ public class AbhaLinkService {
         }
     }
 
+    // The live subjects in the user's organisation holding this number, however it is written.
+    public List<String> findSubjectUUIDs(String abhaNumber) {
+        return abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), digitsOnly(abhaNumber));
+    }
+
     // Eka writes 12-3456-7856-8912; a person may type the 14 digits with spaces or nothing between them.
     static String digitsOnly(String value) {
         return value == null ? "" : value.replaceAll("[^0-9]", "");

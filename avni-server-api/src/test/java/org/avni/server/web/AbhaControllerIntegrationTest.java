@@ -26,6 +26,7 @@ import org.avni.server.domain.factory.access.TestUserGroupBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.abha.AbhaHealthCentreService;
+import org.avni.server.service.abha.AbhaLinkService;
 import org.avni.server.service.abha.AbhaService;
 import org.avni.server.service.abha.EkaAuthException;
 import org.avni.server.service.abha.EkaCredentialCipher;
@@ -50,7 +51,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -78,6 +82,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     // Both start in the No Access group; the fixtures add one privilege each, on subject type A only.
     private static final String REGISTRAR = "user-no-access";
     private static final String EDITOR = "demouser@demo";
+    private static final String ABHA_DIGITS = "12345678568912";
 
     @Autowired
     private SubjectTypeRepository subjectTypeRepository;
@@ -99,6 +104,8 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     private AccessControlService accessControlService;
     @Autowired
     private AbhaHealthCentreService abhaHealthCentreService;
+    @Autowired
+    private AbhaLinkService abhaLinkService;
 
     private final EkaTokenService standInEka = mock(EkaTokenService.class);
 
@@ -277,6 +284,143 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         }
     }
 
+    // The app sends the number as digits. The answer is the UUIDs of the live subjects in the organisation holding it,
+    // and nothing else about them; an empty list when nobody does.
+    @Test
+    public void searchReturnsLiveHoldersOnly() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+        String first = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        String second = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        linkedSubject(DEMO_ID, ABHA_DIGITS, true, false);
+        linkedSubject(DEMO_ID, "91111122223333", false, false);
+
+        ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
+
+        assertEquals(response.getBody(), HttpStatus.OK, response.getStatusCode());
+        JsonNode body = mapper.readTree(response.getBody());
+        assertEquals(response.getBody(), 1, body.size());
+        List<String> expected = new ArrayList<>(Arrays.asList(first, second));
+        Collections.sort(expected);
+        assertEquals(expected, uuids(body.path("subjectUUIDs")));
+
+        ResponseEntity<String> nobody = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, "55555666667777");
+        assertEquals(nobody.getBody(), HttpStatus.OK, nobody.getStatusCode());
+        assertEquals("{\"subjectUUIDs\":[]}", nobody.getBody());
+    }
+
+    // OpenCHS (org 1) is demo's parent and a-demo (org 3) its sibling. Neither's patients are demo's.
+    @Test
+    public void otherOrganisationsSubjectNotReturned() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+        String demos = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        linkedSubject(1L, ABHA_DIGITS, false, false);
+        linkedSubject(3L, ABHA_DIGITS, false, false);
+
+        ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
+
+        assertEquals(response.getBody(), HttpStatus.OK, response.getStatusCode());
+        assertEquals(Collections.singletonList(demos), uuids(mapper.readTree(response.getBody()).path("subjectUUIDs")));
+    }
+
+    // Voiding a location's subjects voids them in bulk, by SQL, and leaves their link rows live.
+    @Test
+    public void subjectVoidedInBulkNotReturned() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+        linkedSubject(DEMO_ID, ABHA_DIGITS, false, true);
+
+        ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
+
+        assertEquals(response.getBody(), HttpStatus.OK, response.getStatusCode());
+        assertEquals(Collections.emptyList(), uuids(mapper.readTree(response.getBody()).path("subjectUUIDs")));
+    }
+
+    // Each check of /abha/session, in its order, refuses a search with the same status and code.
+    @Test
+    public void searchRefusedForTheSameReasonsAsSession() throws Exception {
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, HttpStatus.FORBIDDEN, "ABHA_DISABLED");
+        enableAbha();
+        assertSearchRefused(ALL_PRIVILEGES_USER, "f00dfeed-0000-4000-8000-000000000000", HttpStatus.BAD_REQUEST, "ABHA_UNKNOWN_SUBJECT_TYPE");
+        assertSearchRefused(ALL_PRIVILEGES_USER, null, HttpStatus.BAD_REQUEST, "ABHA_UNKNOWN_SUBJECT_TYPE");
+        assertSearchRefused(REGISTRAR, SUBJECT_TYPE_B, HttpStatus.FORBIDDEN, "ABHA_NO_PRIVILEGE");
+        assertSearchRefused(EDITOR, SUBJECT_TYPE_B, HttpStatus.FORBIDDEN, "ABHA_NO_PRIVILEGE");
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, HttpStatus.CONFLICT, "ABHA_NOT_CONFIGURED");
+        storeEkaSettings();
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, HttpStatus.FORBIDDEN, "ABHA_NO_HEALTH_CENTRE");
+        setHealthCentre(ALL_PRIVILEGES_USER, "HIP-9");
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, HttpStatus.FORBIDDEN, "ABHA_NO_HEALTH_CENTRE");
+    }
+
+    @Test
+    public void editOnlyPrivilegeMaySearch() throws Exception {
+        allowSearch(EDITOR);
+        String holder = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+
+        ResponseEntity<String> response = search(EDITOR, SUBJECT_TYPE_A, ABHA_DIGITS);
+
+        assertEquals(response.getBody(), HttpStatus.OK, response.getStatusCode());
+        assertEquals(Collections.singletonList(holder), uuids(mapper.readTree(response.getBody()).path("subjectUUIDs")));
+    }
+
+    // An ABHA number is 14 digits. Anything else cannot be checked, and an empty answer would read as "nobody holds it".
+    @Test
+    public void searchNumberNotFourteenDigitsIs400() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, "1234567856891", HttpStatus.BAD_REQUEST, "ABHA_NUMBER_INVALID");
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, "123456785689123", HttpStatus.BAD_REQUEST, "ABHA_NUMBER_INVALID");
+        assertSearchRefused(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, null, HttpStatus.BAD_REQUEST, "ABHA_NUMBER_INVALID");
+    }
+
+    private void allowSearch(String username) {
+        enableAbha();
+        storeEkaSettings();
+        setHealthCentre(username, "HIP-1");
+    }
+
+    private ResponseEntity<String> search(String username, String subjectTypeUUID, String abhaNumber) {
+        setUser(username);
+        Map<String, String> request = new HashMap<>();
+        request.put("subjectTypeUUID", subjectTypeUUID);
+        request.put("abhaNumber", abhaNumber);
+        return template.postForEntity("/abha/subjects/search", request, String.class);
+    }
+
+    private void assertSearchRefused(String username, String subjectTypeUUID, HttpStatus status, String code) throws Exception {
+        assertSearchRefused(username, subjectTypeUUID, ABHA_DIGITS, status, code);
+    }
+
+    private void assertSearchRefused(String username, String subjectTypeUUID, String abhaNumber, HttpStatus status, String code) throws Exception {
+        ResponseEntity<String> response = search(username, subjectTypeUUID, abhaNumber);
+        assertEquals(response.getBody(), status, response.getStatusCode());
+        assertEquals(response.getBody(), code, mapper.readTree(response.getBody()).path("code").asText());
+    }
+
+    private static List<String> uuids(JsonNode array) {
+        assertTrue(String.valueOf(array), array.isArray());
+        List<String> uuids = new ArrayList<>();
+        array.forEach(node -> uuids.add(node.asText()));
+        return uuids;
+    }
+
+    // A subject of the default subject type holding an ABHA number, written as the server's openchs role, which row-level
+    // security does not filter, so that any organisation's rows can be made.
+    private String linkedSubject(Long organisationId, String abhaNumber, boolean linkVoided, boolean subjectVoided) {
+        setUser(userRepository.getDefaultSuperAdmin());
+        String uuid = UUID.randomUUID().toString();
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("insert into public.individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, " +
+                        "gender_id, organisation_id, subject_type_id, observations, is_voided, created_by_id, last_modified_by_id, " +
+                        "created_date_time, last_modified_date_time) " +
+                        "values (?, 1, 1, current_date, false, 'ABHA', 'Holder', 1, ?, " +
+                        "(select id from public.subject_type where uuid = '9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3'), '{}'::jsonb, ?, 1, 1, now(), now())",
+                uuid, organisationId, subjectVoided);
+        jdbc.update("insert into public.abha_link (uuid, organisation_id, individual_id, abha_number, is_voided, created_by_id, " +
+                        "last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values (?, ?, (select id from public.individual where uuid = ?), ?, ?, 1, 1, now(), now())",
+                UUID.randomUUID().toString(), organisationId, uuid, abhaNumber, linkVoided);
+        return uuid;
+    }
+
     private static String throwableText(IThrowableProxy proxy) {
         StringBuilder text = new StringBuilder();
         for (IThrowableProxy p = proxy; p != null; p = p.getCause()) {
@@ -287,7 +431,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
 
     private MockHttpServletResponse getSessionWithStandInEka(String username, String subjectTypeUUID) throws Exception {
         AbhaService abhaService = new AbhaService(organisationConfigService, subjectTypeRepository, accessControlService,
-                externalSystemConfigRepository, abhaHealthCentreService, standInEka);
+                externalSystemConfigRepository, abhaHealthCentreService, standInEka, abhaLinkService);
         setUser(username);
         return MockMvcBuilders.standaloneSetup(new AbhaController(abhaService)).build()
                 .perform(get("/abha/session").param("subjectTypeUUID", subjectTypeUUID))

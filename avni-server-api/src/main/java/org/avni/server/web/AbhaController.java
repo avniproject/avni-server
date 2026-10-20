@@ -4,6 +4,8 @@ import org.avni.server.service.abha.AbhaRefusal;
 import org.avni.server.service.abha.AbhaRefusedException;
 import org.avni.server.service.abha.AbhaService;
 import org.avni.server.service.abha.AbhaSession;
+import org.avni.server.web.request.AbhaSubjectSearchRequest;
+import org.avni.server.web.response.AbhaSubjectSearchResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,6 +38,15 @@ public class AbhaController {
         return abhaService.createSession(subjectTypeUUID);
     }
 
+    // POST, though it only reads: the number travels in the body, because a URL lands in the app's request log and the
+    // server's access log, and an ABHA number is a health identifier.
+    @PostMapping("/abha/subjects/search")
+    @PreAuthorize("hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public AbhaSubjectSearchResponse searchSubjects(@RequestBody AbhaSubjectSearchRequest request) {
+        return new AbhaSubjectSearchResponse(abhaService.findSubjectUUIDs(request.getSubjectTypeUUID(), request.getAbhaNumber()));
+    }
+
     @ExceptionHandler(AbhaRefusedException.class)
     public ResponseEntity<Map<String, String>> refused(AbhaRefusedException e) {
         return ResponseEntity.status(statusOf(e.getRefusal())).body(Collections.singletonMap("code", e.getRefusal().name()));
@@ -42,7 +55,7 @@ public class AbhaController {
     // No default: a new refusal does not compile until it is given a status.
     private static HttpStatus statusOf(AbhaRefusal refusal) {
         return switch (refusal) {
-            case ABHA_UNKNOWN_SUBJECT_TYPE -> HttpStatus.BAD_REQUEST;
+            case ABHA_UNKNOWN_SUBJECT_TYPE, ABHA_NUMBER_INVALID -> HttpStatus.BAD_REQUEST;
             case ABHA_DISABLED, ABHA_NO_PRIVILEGE, ABHA_NO_HEALTH_CENTRE -> HttpStatus.FORBIDDEN;
             case ABHA_NOT_CONFIGURED -> HttpStatus.CONFLICT;
             case ABHA_EKA_UNAVAILABLE -> HttpStatus.BAD_GATEWAY;
