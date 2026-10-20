@@ -101,6 +101,7 @@ delete from dashboard where 1 = 1;
 DELETE FROM groups where 1 = 1;
 delete from storage_management_config where 1 = 1;
 delete from org_storage_credential where 1 = 1;
+delete from abha_event where 1 = 1;
 delete from downloadable_content where 1 = 1;
 delete from model_key where 1 = 1;
 DELETE FROM users where username <> 'admin';

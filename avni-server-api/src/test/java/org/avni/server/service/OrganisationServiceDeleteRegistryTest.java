@@ -27,6 +27,12 @@ public class OrganisationServiceDeleteRegistryTest {
                 list.indexOf("session") < list.indexOf("individual"));
     }
 
+    // abha_event holds foreign keys to users, so deleting an organisation fails unless its rows go first.
+    @Test
+    public void txJpaTableListContainsAbhaEventForOrgDeleteAndReset() throws Exception {
+        assertTrue("abha_event must be in the transactional table list", invokeTableList("getTxJpaTableList").contains("abha_event"));
+    }
+
     @Test
     public void metadataJpaTableListContainsCalendarAndAttendanceTypeInFkSafeOrder() throws Exception {
         List<String> list = invokeTableList("getMetadataJpaTableList");
