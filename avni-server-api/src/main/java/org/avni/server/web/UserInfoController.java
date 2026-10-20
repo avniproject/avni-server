@@ -149,7 +149,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     @Transactional
     public void saveMyProfile(@RequestBody UserInfoContract userInfo) {
         User user = userService.getCurrentUser();
-        user.setSettings(userInfo.getSettings());
+        user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), userInfo.getSettings()));
         user.setLastModifiedBy(user);
         user.setLastModifiedDateTime(DateTime.now());
         userRepository.save(user);
@@ -176,7 +176,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             Long organisationId = getOrganisationId(userContract);
             user.setOrganisationId(organisationId);
             user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
-            user.setSettings(userContract.getSettings());
+            user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), userContract.getSettings()));
             userService.setPhoneNumber(userContract.getPhoneNumber(), user, RegionUtil.getCurrentUserRegion());
             user.setEmail(userContract.getEmail());
             user.setDisabledInCognito(false);
