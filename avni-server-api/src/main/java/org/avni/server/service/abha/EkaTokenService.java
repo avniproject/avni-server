@@ -12,13 +12,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
-// One Eka access token per organisation, held in memory and renewed by a fresh login when under a minute remains.
+// One Eka access token per organisation, held in memory and renewed by a fresh login when under 15 minutes remain.
+// The app is handed the same key for a whole ABHA flow, so it must outlast one; Eka's keys last 30 minutes.
 // Each cached token carries the settings it was made from, and every call compares them with the stored settings,
 // so a saved change takes effect on the next call on every server instance, with nothing to evict.
 @Service
 public class EkaTokenService {
     private static final Logger logger = LoggerFactory.getLogger(EkaTokenService.class);
-    private static final Duration RENEW_BEFORE = Duration.ofSeconds(60);
+    private static final Duration RENEW_BEFORE = Duration.ofMinutes(15);
     private static final Duration RETRY_AFTER_FAILURE = Duration.ofSeconds(10);
 
     private final ExternalSystemConfigRepository externalSystemConfigRepository;

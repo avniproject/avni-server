@@ -74,6 +74,28 @@ public class EkaTokenServiceTest {
         eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
+    // The app is handed this key for a whole ABHA flow (an Aadhaar OTP can take minutes), so a key with ten minutes left
+    // is already too short to hand out.
+    @Test
+    public void renewsWhenUnderFifteenMinutesLeft() throws Exception {
+        stubLogin("client-1", "access-1", 600, 0);
+
+        service.getAccessToken(ORG);
+        service.getAccessToken(ORG);
+
+        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    @Test
+    public void reusesTokenWithMoreThanFifteenMinutesLeft() throws Exception {
+        stubLogin("client-1", "access-1", 1000, 0);
+
+        service.getAccessToken(ORG);
+        service.getAccessToken(ORG);
+
+        eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
     @Test
     public void failedLoginIsNotRetriedForTenSeconds() throws Exception {
         eka.stubFor(post(urlEqualTo(LOGIN_PATH)).willReturn(aResponse().withStatus(401)));
