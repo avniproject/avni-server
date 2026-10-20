@@ -29,12 +29,15 @@ public class AbhaLinkService {
     private final OrganisationConfigService organisationConfigService;
     private final ConceptRepository conceptRepository;
     private final AbhaLinkRepository abhaLinkRepository;
+    private final AbhaRemovedEventWriter abhaRemovedEventWriter;
 
     @Autowired
-    public AbhaLinkService(OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AbhaLinkRepository abhaLinkRepository) {
+    public AbhaLinkService(OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AbhaLinkRepository abhaLinkRepository,
+                           AbhaRemovedEventWriter abhaRemovedEventWriter) {
         this.organisationConfigService = organisationConfigService;
         this.conceptRepository = conceptRepository;
         this.abhaLinkRepository = abhaLinkRepository;
+        this.abhaRemovedEventWriter = abhaRemovedEventWriter;
     }
 
     // Called after every save or void of a subject. Organisations with ABHA off pay one look at their settings and
@@ -55,6 +58,7 @@ public class AbhaLinkService {
             liveLink.ifPresent(link -> {
                 link.setVoided(true);
                 abhaLinkRepository.save(link);
+                abhaRemovedEventWriter.recordRemoved(individual.getUuid());
             });
             return;
         }

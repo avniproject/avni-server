@@ -126,6 +126,45 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Collections.singletonList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
     }
 
+    // Story 13: the server records the removal, naming the user whose save carried it.
+    @Test
+    public void removedRowOnAnswerRemoval() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        subject.getObservations().remove(abhaNumber.getUuid());
+        subject.getObservations().remove(abhaAddress.getUuid());
+        save(subject);
+
+        assertEquals(Collections.singletonList("removed by demo-user"), removedEvents(subject));
+    }
+
+    @Test
+    public void removedRowOnSubjectVoid() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        new TransactionTemplate(transactionManager).execute(status -> individualService.voidSubject(subject));
+
+        assertEquals(Collections.singletonList("removed by demo-user"), removedEvents(subject));
+    }
+
+    @Test
+    public void noRemovedRowWhenThereWasNoLink() {
+        enableAbha();
+        Individual subject = save(subjectWith(null, null));
+
+        new TransactionTemplate(transactionManager).execute(status -> individualService.voidSubject(subject));
+
+        assertEquals(Collections.emptyList(), removedEvents(subject));
+    }
+
+    private List<String> removedEvents(Individual subject) {
+        return new JdbcTemplate(dataSource).queryForList(
+                "select e.action || ' by ' || u.username from public.abha_event e join public.users u on u.id = e.user_id " +
+                        "where e.subject_uuid = ? and e.action = 'removed' order by e.id", String.class, subject.getUuid());
+    }
+
     // DELETE /web/subject/{uuid} and the external API void through IndividualService.voidSubject.
     @Test
     public void voidedSubjectVoidsLink() {

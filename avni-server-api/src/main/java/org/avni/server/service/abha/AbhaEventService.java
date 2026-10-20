@@ -2,10 +2,6 @@ package org.avni.server.service.abha;
 
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.domain.AbhaEvent;
-import org.avni.server.domain.User;
-import org.avni.server.domain.UserContext;
-import org.avni.server.domain.UserSettings;
-import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +27,13 @@ public class AbhaEventService {
 
     private final AbhaService abhaService;
     private final AbhaEventRepository abhaEventRepository;
+    private final AbhaRemovedEventWriter abhaRemovedEventWriter;
 
     @Autowired
-    public AbhaEventService(AbhaService abhaService, AbhaEventRepository abhaEventRepository) {
+    public AbhaEventService(AbhaService abhaService, AbhaEventRepository abhaEventRepository, AbhaRemovedEventWriter abhaRemovedEventWriter) {
         this.abhaService = abhaService;
         this.abhaEventRepository = abhaEventRepository;
+        this.abhaRemovedEventWriter = abhaRemovedEventWriter;
     }
 
     // True when stored now, false when this uuid was already stored.
@@ -73,20 +71,7 @@ public class AbhaEventService {
     // Written by the server, not the phone, when a sync removes a subject's ABHA or voids the subject. It names the user
     // whose save carried the change; no health centre is checked, so an admin's upload without one still leaves the record.
     public void recordRemoved(String subjectUuid) {
-        UserContext userContext = UserContextHolder.getUserContext();
-        User user = userContext.getUser();
-        String hipId = user.getSettings() == null ? null : user.getSettings().getString(UserSettings.ABHA_HIP_ID);
-        AbhaEvent event = new AbhaEvent();
-        event.assignUUID();
-        event.setOrganisationId(userContext.getOrganisationId());
-        event.setSubjectUuid(subjectUuid);
-        event.setUserId(user.getId());
-        event.setHipId(hipId == null ? "" : hipId);
-        event.setAction(REMOVED);
-        event.setRoute(UNKNOWN_ROUTE);
-        event.setOccurredAt(Instant.now());
-        abhaEventRepository.save(event);
-        logger.info("ABHA event {} recorded, action {}", event.getUuid(), event.getAction());
+        abhaRemovedEventWriter.recordRemoved(subjectUuid);
     }
 
     private static String digitsOf(String abhaNumber) {
