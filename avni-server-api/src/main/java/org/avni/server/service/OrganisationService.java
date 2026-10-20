@@ -177,6 +177,7 @@ public class OrganisationService {
     private final ManualMessageRepository manualMessageRepository;
     private final MessageRuleRepository messageRuleRepository;
     private final ResetSyncRepository resetSyncRepository;
+    private final AbhaEventRepository abhaEventRepository;
     private final RuleFailureLogRepository ruleFailureLogRepository;
     private final TaskStatusRepository taskStatusRepository;
     private final TaskTypeRepository taskTypeRepository;
@@ -282,6 +283,7 @@ public class OrganisationService {
                                ManualMessageRepository manualMessageRepository,
                                MessageRuleRepository messageRuleRepository,
                                ResetSyncRepository resetSyncRepository,
+                               AbhaEventRepository abhaEventRepository,
                                RuleFailureLogRepository ruleFailureLogRepository,
                                TaskStatusRepository taskStatusRepository,
                                TaskTypeRepository taskTypeRepository,
@@ -384,6 +386,7 @@ public class OrganisationService {
         this.manualMessageRepository = manualMessageRepository;
         this.messageRuleRepository = messageRuleRepository;
         this.resetSyncRepository = resetSyncRepository;
+        this.abhaEventRepository = abhaEventRepository;
         this.ruleFailureLogRepository = ruleFailureLogRepository;
         this.taskStatusRepository = taskStatusRepository;
         this.taskTypeRepository = taskTypeRepository;
@@ -459,6 +462,7 @@ public class OrganisationService {
                 abhaLinkRepository,
                 individualRepository,
                 resetSyncRepository,
+                abhaEventRepository,
         };
         return transactionalRepositories;
     }
@@ -490,7 +494,8 @@ public class OrganisationService {
                 "user_subject",
                 "abha_link",
                 "individual",
-                "reset_sync"
+                "reset_sync",
+                "abha_event"
         );
     }
 

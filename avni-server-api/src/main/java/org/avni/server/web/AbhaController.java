@@ -1,5 +1,8 @@
 package org.avni.server.web;
 
+import org.avni.server.service.abha.AbhaEventInvalidException;
+import org.avni.server.service.abha.AbhaEventRequest;
+import org.avni.server.service.abha.AbhaEventService;
 import org.avni.server.service.abha.AbhaRefusal;
 import org.avni.server.service.abha.AbhaRefusedException;
 import org.avni.server.service.abha.AbhaService;
@@ -25,6 +28,8 @@ import java.util.Map;
 @RestController
 public class AbhaController {
     private final AbhaService abhaService;
+    @Autowired
+    private AbhaEventService abhaEventService;
 
     @Autowired
     public AbhaController(AbhaService abhaService) {
@@ -45,6 +50,19 @@ public class AbhaController {
     @Transactional(readOnly = true)
     public AbhaSubjectSearchResponse searchSubjects(@RequestBody AbhaSubjectSearchRequest request) {
         return new AbhaSubjectSearchResponse(abhaService.findSubjectUUIDs(request.getSubjectTypeUUID(), request.getAbhaNumber()));
+    }
+
+    // 201 when stored, 200 when this uuid was already stored.
+    @PostMapping("/abha/events")
+    @PreAuthorize("hasAnyAuthority('user')")
+    @Transactional
+    public ResponseEntity<Void> recordEvent(@RequestBody AbhaEventRequest request) {
+        return ResponseEntity.status(abhaEventService.recordEvent(request) ? HttpStatus.CREATED : HttpStatus.OK).build();
+    }
+
+    @ExceptionHandler(AbhaEventInvalidException.class)
+    public ResponseEntity<Map<String, String>> invalidEvent(AbhaEventInvalidException e) {
+        return ResponseEntity.badRequest().body(Collections.singletonMap("code", "ABHA_EVENT_INVALID"));
     }
 
     @ExceptionHandler(AbhaRefusedException.class)
