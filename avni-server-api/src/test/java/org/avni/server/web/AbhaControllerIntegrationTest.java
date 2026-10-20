@@ -22,6 +22,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.abha.AbhaHealthCentreService;
 import org.avni.server.service.abha.AbhaService;
+import org.avni.server.service.abha.EkaAuthException;
 import org.avni.server.service.abha.EkaCredentialCipher;
 import org.avni.server.service.abha.EkaNotConfiguredException;
 import org.avni.server.service.abha.EkaToken;
@@ -201,6 +202,21 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
 
         assertEquals(response.getContentAsString(), 409, response.getStatus());
         assertEquals("ABHA_NOT_CONFIGURED", mapper.readTree(response.getContentAsString()).path("code").asText());
+    }
+
+    // Eka refusing the organisation's login, or not answering within 10 s, is Eka's fault, not the worker's or the
+    // server's: the app can say so and offer to try again.
+    @Test
+    public void ekaFailureIs502() throws Exception {
+        enableAbha();
+        storeEkaSettings();
+        setHealthCentre(REGISTRAR, "HIP-1");
+        when(standInEka.getAccessToken(DEMO_ID)).thenThrow(new EkaAuthException("Eka login did not answer within 10 s"));
+
+        MockHttpServletResponse response = getSessionWithStandInEka(REGISTRAR, SUBJECT_TYPE_A);
+
+        assertEquals(response.getContentAsString(), 502, response.getStatus());
+        assertEquals("ABHA_EKA_UNAVAILABLE", mapper.readTree(response.getContentAsString()).path("code").asText());
     }
 
     private MockHttpServletResponse getSessionWithStandInEka(String username, String subjectTypeUUID) throws Exception {

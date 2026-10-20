@@ -39,14 +39,13 @@ public class AbhaController {
         return ResponseEntity.status(statusOf(e.getRefusal())).body(Collections.singletonMap("code", e.getRefusal().name()));
     }
 
+    // No default: a new refusal does not compile until it is given a status.
     private static HttpStatus statusOf(AbhaRefusal refusal) {
-        switch (refusal) {
-            case ABHA_UNKNOWN_SUBJECT_TYPE:
-                return HttpStatus.BAD_REQUEST;
-            case ABHA_NOT_CONFIGURED:
-                return HttpStatus.CONFLICT;
-            default:
-                return HttpStatus.FORBIDDEN;
-        }
+        return switch (refusal) {
+            case ABHA_UNKNOWN_SUBJECT_TYPE -> HttpStatus.BAD_REQUEST;
+            case ABHA_DISABLED, ABHA_NO_PRIVILEGE, ABHA_NO_HEALTH_CENTRE -> HttpStatus.FORBIDDEN;
+            case ABHA_NOT_CONFIGURED -> HttpStatus.CONFLICT;
+            case ABHA_EKA_UNAVAILABLE -> HttpStatus.BAD_GATEWAY;
+        };
     }
 }

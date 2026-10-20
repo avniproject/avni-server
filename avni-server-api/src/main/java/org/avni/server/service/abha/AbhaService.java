@@ -81,6 +81,9 @@ public class AbhaService {
             token = ekaTokenService.getAccessToken(access.getOrganisationId());
         } catch (EkaNotConfiguredException e) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_CONFIGURED);
+        } catch (EkaAuthException e) {
+            // EkaTokenService has logged it, without the key.
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_EKA_UNAVAILABLE);
         }
         return new AbhaSession(token.getAccessToken(), token.getExpiresAt(), access.getEkaSystemConfig().getEnvironment(), access.getHipId());
     }
