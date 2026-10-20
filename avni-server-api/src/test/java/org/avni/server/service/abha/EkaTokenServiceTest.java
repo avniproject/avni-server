@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -217,14 +218,22 @@ public class EkaTokenServiceTest {
         eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
+    // Runs as staging and live do, with org.avni's additivity off, so the server's own lines stop at org.avni and never
+    // reach ROOT. Captures at both, with everything at DEBUG.
     @Test
     public void tokenNeverLogged() throws Exception {
-        Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-        Level originalLevel = root.getLevel();
+        Logger avni = (Logger) LoggerFactory.getLogger("org.avni");
+        boolean avniAdditive = avni.isAdditive();
+        List<Logger> loggers = Arrays.asList((Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME), avni);
+        List<Level> originalLevels = new ArrayList<>();
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
-        root.addAppender(appender);
-        root.setLevel(Level.DEBUG);
+        for (Logger logger : loggers) {
+            originalLevels.add(logger.getLevel());
+            logger.addAppender(appender);
+            logger.setLevel(Level.DEBUG);
+        }
+        avni.setAdditive(false);
         try {
             stubLogin("client-1", "access-1", 30, 0);
             service.getAccessToken(ORG);
@@ -234,11 +243,14 @@ public class EkaTokenServiceTest {
                     .willReturn(aResponse().withStatus(401)));
             assertLoginFails(ORG);
         } finally {
-            root.detachAppender(appender);
-            root.setLevel(originalLevel);
+            for (int i = 0; i < loggers.size(); i++) {
+                loggers.get(i).detachAppender(appender);
+                loggers.get(i).setLevel(originalLevels.get(i));
+            }
+            avni.setAdditive(avniAdditive);
         }
 
-        assertTrue("the issued-token line must be captured, or the check proves nothing",
+        assertTrue("the issued-token line must be captured, or the check proves nothing. " + loggingState(),
                 appender.list.stream().anyMatch(e -> e.getLoggerName().equals(EkaTokenService.class.getName()) && e.getLevel() == Level.INFO));
         assertTrue("the failed-login line must be captured, or the check proves nothing",
                 appender.list.stream().anyMatch(e -> e.getLoggerName().equals(EkaTokenService.class.getName()) && e.getLevel() == Level.WARN));
@@ -249,6 +261,17 @@ public class EkaTokenServiceTest {
                 assertFalse(event.getLoggerName() + " logged " + secret + ": " + text, text.contains(secret));
             }
         }
+    }
+
+    private static String loggingState() {
+        ch.qos.logback.classic.LoggerContext context = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
+        StringBuilder out = new StringBuilder("turboFilters=" + context.getTurboFilterList() + " started=" + context.isStarted() + " chain=");
+        for (String name : new String[]{EkaTokenService.class.getName(), "org.avni.server.service.abha", "org.avni.server.service", "org.avni.server", "org.avni", org.slf4j.Logger.ROOT_LOGGER_NAME}) {
+            Logger logger = context.getLogger(name);
+            out.append(name).append("[level=").append(logger.getLevel()).append(",effective=").append(logger.getEffectiveLevel())
+                    .append(",additive=").append(logger.isAdditive()).append("] ");
+        }
+        return out.toString();
     }
 
     // WireMock is the stand-in for Eka; what it logs about the requests it receives is not the server's logging.
