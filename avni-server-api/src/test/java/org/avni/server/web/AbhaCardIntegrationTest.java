@@ -412,6 +412,39 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         }
     }
 
+    // A patient's ABHA login at Eka lapses about 30 minutes after it, and Eka then refuses their card with its own 491.
+    // That is no outage: the app asks for the ABHA to be verified again rather than for another try.
+    @Test
+    public void lapsedPatientLoginAtEkaIs409SessionExpired() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-1", "created", Instant.now().minus(Duration.ofHours(1)));
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(491)
+                .withHeader("Content-Type", "application/json").withBody("{\"error\":\"SessionExpiredTryAgain\",\"code\":491}")));
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject);
+
+        assertEquals(response.getContentAsString(), 409, response.getStatus());
+        assertEquals("ABHA_SESSION_EXPIRED", mapper.readTree(response.getContentAsString()).path("code").asText());
+    }
+
+    // Verifying the ABHA again from its card renews the patient's login at Eka, and the record it leaves names the Eka ID
+    // the card is fetched with from then on.
+    @Test
+    public void verifiedAgainRecordIsTheCurrentAbha() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-old", "created", now.minus(Duration.ofDays(10)));
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-new", "verified", now.minus(Duration.ofMinutes(1)));
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject);
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-new")));
+    }
+
     @Test
     public void ekaTimeoutFailsCleanly() throws Exception {
         readyFor(VIEWER, "HIP-1");

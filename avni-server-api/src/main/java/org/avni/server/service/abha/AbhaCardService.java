@@ -59,6 +59,10 @@ public class AbhaCardService {
             logger.info("ABHA card of subject {} fetched from Eka for user {} of organisation {}, {} bytes",
                     subjectUUID, access.getUser().getId(), access.getOrganisationId(), card.length);
             return card;
+        } catch (EkaSessionExpiredException e) {
+            logger.info("ABHA card of subject {} not fetched from Eka for user {} of organisation {}: the patient's ABHA login at Eka has lapsed",
+                    subjectUUID, access.getUser().getId(), access.getOrganisationId());
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_SESSION_EXPIRED);
         } catch (EkaCardException e) {
             logger.warn("ABHA card of subject {} not fetched from Eka for user {} of organisation {}: {}",
                     subjectUUID, access.getUser().getId(), access.getOrganisationId(), e.getMessage());

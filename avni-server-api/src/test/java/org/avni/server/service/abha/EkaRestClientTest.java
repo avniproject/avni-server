@@ -14,6 +14,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -160,6 +161,20 @@ public class EkaRestClientTest {
         }
     }
 
+    // Eka's own status for a patient whose ABHA login at Eka has lapsed, about 30 minutes after it. The body,
+    // {"error":"SessionExpiredTryAgain","code":491}, is not read: the status alone says it.
+    @Test
+    public void cardForAPatientWhoseLoginAtEkaLapsedThrowsSessionExpired() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(491)
+                .withHeader("Content-Type", "application/json").withBody("{\"error\":\"SessionExpiredTryAgain\",\"code\":491}")));
+        try {
+            client.getAbhaCard(baseUrl, "access-1", "oid-1", "HIP-1");
+            fail("expected EkaSessionExpiredException");
+        } catch (EkaSessionExpiredException e) {
+            assertTrue(e.getMessage(), !e.getMessage().contains("access-1") && !e.getMessage().contains("oid-1"));
+        }
+    }
+
     // The app is told it gets a PNG. Anything else, such as an error written with 200, is not served as one.
     @Test
     public void answerThatIsNotAPngThrows() {
@@ -225,6 +240,7 @@ public class EkaRestClientTest {
             fail("expected EkaCardException");
         } catch (EkaCardException e) {
             assertTrue(e.getMessage(), !e.getMessage().contains("access-1") && !e.getMessage().contains("oid-1"));
+            assertFalse("only Eka's 491 says the patient's login lapsed", e instanceof EkaSessionExpiredException);
         }
     }
 

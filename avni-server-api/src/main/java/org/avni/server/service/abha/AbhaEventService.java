@@ -23,8 +23,10 @@ public class AbhaEventService {
     public static final String CREATED = "created";
     public static final String LINKED = "linked";
     public static final String REMOVED = "removed";
+    // The ABHA verified again from its card, once the patient's login at Eka had lapsed.
+    public static final String VERIFIED = "verified";
     public static final String UNKNOWN_ROUTE = "unknown";
-    private static final List<String> PHONE_ACTIONS = Arrays.asList(CREATED, LINKED);
+    private static final List<String> PHONE_ACTIONS = Arrays.asList(CREATED, LINKED, VERIFIED);
     private static final List<String> ROUTES = Arrays.asList("aadhaar", "mobile", "abha_number", "abha_address", UNKNOWN_ROUTE);
 
     private final AbhaService abhaService;
@@ -45,7 +47,7 @@ public class AbhaEventService {
     public boolean recordEvent(AbhaEventRequest request) {
         AbhaAccess access = abhaService.checkAccess(request.getSubjectTypeUUID());
         if (!PHONE_ACTIONS.contains(request.getAction())) {
-            throw new AbhaEventInvalidException("action must be created or linked");
+            throw new AbhaEventInvalidException("action must be created, linked or verified");
         }
         if (!StringUtils.hasText(request.getUuid()) || !StringUtils.hasText(request.getSubjectUUID())) {
             throw new AbhaEventInvalidException("uuid and subjectUUID are required");

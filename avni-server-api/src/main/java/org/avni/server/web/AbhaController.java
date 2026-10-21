@@ -95,7 +95,7 @@ public class AbhaController {
             case ABHA_UNKNOWN_SUBJECT_TYPE, ABHA_NUMBER_INVALID -> HttpStatus.BAD_REQUEST;
             case ABHA_DISABLED, ABHA_NO_PRIVILEGE, ABHA_NO_HEALTH_CENTRE, ABHA_NOT_YOURS -> HttpStatus.FORBIDDEN;
             case ABHA_NO_CARD -> HttpStatus.NOT_FOUND;
-            case ABHA_NOT_CONFIGURED -> HttpStatus.CONFLICT;
+            case ABHA_NOT_CONFIGURED, ABHA_SESSION_EXPIRED -> HttpStatus.CONFLICT;
             case ABHA_EKA_UNAVAILABLE -> HttpStatus.BAD_GATEWAY;
         };
     }

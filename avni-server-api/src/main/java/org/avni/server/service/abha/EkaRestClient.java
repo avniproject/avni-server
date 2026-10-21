@@ -39,6 +39,9 @@ import java.util.function.BiFunction;
 public class EkaRestClient {
     private static final String LOGIN_PATH = "/connect-auth/v1/account/login";
     private static final String CARD_PATH = "/abdm/v1/profile/asset/card";
+    // Eka's own status, with {"error":"SessionExpiredTryAgain"}, for a card asked for after the patient's ABHA login at
+    // Eka has lapsed, about 30 minutes after their ABHA was found, created or verified.
+    private static final int PATIENT_LOGIN_LAPSED = 491;
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     private static final Duration ANSWER_TIMEOUT = Duration.ofSeconds(10);
     // An ABHA card is one picture; anything larger is not one, and is not held in memory to find out.
@@ -86,6 +89,9 @@ public class EkaRestClient {
             throw new EkaCardException("Eka card request not sent: the Eka ID or health centre cannot be sent in a header");
         }
         HttpResponse<byte[]> response = send(request, EkaRestClient::cardBody, "Eka card request", (message, cause) -> new EkaCardException(message));
+        if (response.statusCode() == PATIENT_LOGIN_LAPSED) {
+            throw new EkaSessionExpiredException("Eka card request refused: the patient's ABHA login at Eka has lapsed (HTTP 491)");
+        }
         if (response.statusCode() < 200 || response.statusCode() > 299) {
             throw new EkaCardException("Eka card request failed with HTTP " + response.statusCode());
         }

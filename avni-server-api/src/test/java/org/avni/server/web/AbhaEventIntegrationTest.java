@@ -176,6 +176,17 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals(0, rows().size());
     }
 
+    // Verifying an ABHA again from its card, once the patient's login at Eka has lapsed, is an ABHA action of its own.
+    @Test
+    public void verifiedAgainActionIsRecorded() {
+        readyFor(REGISTRAR, "HIP-1");
+
+        ResponseEntity<String> response = post(REGISTRAR, event(UUID.randomUUID().toString(), "verified"));
+
+        assertEquals(response.getBody(), HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("verified", onlyRow().get("action"));
+    }
+
     @Test
     public void removedActionFromPhoneRejected() {
         readyFor(REGISTRAR, "HIP-1");
