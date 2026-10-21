@@ -292,6 +292,41 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         assertRefused(ALL_PRIVILEGES_USER, unsynced, HttpStatus.FORBIDDEN, "ABHA_NOT_YOURS");
     }
 
+    // An unsynced patient's ID is only a UUID anyone may post a record for, so the recorder is served their own record
+    // only, never a later one another worker sent for the same UUID.
+    @Test
+    public void unsyncedSubjectServesTheRecordersOwnRecordNotAnotherWorkersLaterOne() throws Exception {
+        readyFor(ALL_PRIVILEGES_USER, "HIP-1");
+        String unsynced = UUID.randomUUID().toString();
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, unsynced, ALL_PRIVILEGES_USER, "oid-mine", "created", now.minus(Duration.ofMinutes(10)));
+        recordEvent(DEMO_ID, unsynced, OTHER_WORKER, "oid-theirs", "linked", now.minus(Duration.ofMinutes(2)));
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(ALL_PRIVILEGES_USER, unsynced);
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-mine")));
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-theirs")));
+    }
+
+    // The recorder's own latest record decides, with the rule of a synced patient: none without an Eka ID on it.
+    @Test
+    public void unsyncedSubjectRecordersLatestWithoutEkaIdHasNoCardWhateverAnotherWorkerSent() throws Exception {
+        readyFor(ALL_PRIVILEGES_USER, "HIP-1");
+        String unsynced = UUID.randomUUID().toString();
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, unsynced, ALL_PRIVILEGES_USER, null, "linked", now.minus(Duration.ofMinutes(10)));
+        recordEvent(DEMO_ID, unsynced, OTHER_WORKER, "oid-theirs", "linked", now.minus(Duration.ofMinutes(2)));
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(ALL_PRIVILEGES_USER, unsynced);
+
+        assertEquals(response.getContentAsString(), 404, response.getStatus());
+        assertEquals("ABHA_NO_CARD", mapper.readTree(response.getContentAsString()).path("code").asText());
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)));
+    }
+
     @Test
     public void unsyncedSubjectRefusedToRecorderAfter30Minutes() throws Exception {
         readyFor(ALL_PRIVILEGES_USER, "HIP-1");

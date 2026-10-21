@@ -21,7 +21,8 @@ public interface AbhaEventRepository extends CHSRepository<AbhaEvent>, CustomCHS
     @RestResource(exported = false)
     Optional<AbhaEvent> findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(String subjectUuid);
 
-    // Story 14: did this user's record for the subject reach the server lately.
+    // Story 14: a patient the server does not have yet. Only the user's own records count, since anyone may post a record
+    // naming a UUID the server does not have; the latest of them the server received since the given time.
     @RestResource(exported = false)
-    boolean existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter(String subjectUuid, Long userId, Date after);
+    Optional<AbhaEvent> findFirstBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(String subjectUuid, Long userId, Date after);
 }

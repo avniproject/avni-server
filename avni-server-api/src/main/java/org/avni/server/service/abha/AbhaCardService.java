@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 // A patient's ABHA card, fetched from Eka on every request and kept nowhere on the server: the card is a picture of
 // the patient's identity. Nothing here logs the card, the organisation's Eka token or the patient's Eka ID.
@@ -47,10 +48,9 @@ public class AbhaCardService {
     // this patient; then an ABHA with an Eka ID recorded for them; then Eka.
     public byte[] getCard(String subjectUUID) {
         AbhaAccess access = abhaService.checkOrganisationAccess();
-        checkMayViewCard(subjectUUID, access.getUser());
         // The card of the patient's current ABHA only: none after a removal, and none when the latest ABHA has no Eka ID,
         // rather than the card of the ABHA before it.
-        AbhaEvent event = abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID)
+        AbhaEvent event = latestRecordTheUserMaySee(subjectUUID, access.getUser())
                 .filter(latest -> !AbhaEventService.REMOVED.equals(latest.getAction()) && StringUtils.hasText(latest.getEkaOid()))
                 .orElseThrow(() -> new AbhaRefusedException(AbhaRefusal.ABHA_NO_CARD));
         EkaToken token = abhaService.ekaAccessToken(access.getOrganisationId());
@@ -67,16 +67,20 @@ public class AbhaCardService {
     }
 
     // A patient on the server: the user's right to view their subject type, and the patient within what the user's
-    // phone may hold (catchment, direct assignment, sync attributes). A patient the server does not have, or cannot show
-    // this organisation: only the user who recorded their ABHA in the last 30 minutes, straight after a registration
-    // that has not synced. Otherwise anyone in the organisation who learnt a patient's ID could fetch their card.
-    private void checkMayViewCard(String subjectUUID, User user) {
+    // phone may hold (catchment, direct assignment, sync attributes); then the latest record the server received for
+    // them, from whichever worker. A patient the server does not have, or cannot show this organisation: only the user's
+    // own latest record, received in the last 30 minutes, straight after a registration that has not synced. Anyone may
+    // post a record naming a UUID the server does not have, so another worker's record for it is never served; and
+    // without the 30 minutes anyone in the organisation who learnt a patient's ID could fetch their card.
+    private Optional<AbhaEvent> latestRecordTheUserMaySee(String subjectUUID, User user) {
         Individual individual = StringUtils.hasText(subjectUUID) ? individualRepository.findByUuid(subjectUUID) : null;
         if (individual == null) {
-            if (!abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter(subjectUUID, user.getId(), Date.from(Instant.now().minus(RECORDED_WITHIN)))) {
+            Optional<AbhaEvent> own = abhaEventRepository.findFirstBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(
+                    subjectUUID, user.getId(), Date.from(Instant.now().minus(RECORDED_WITHIN)));
+            if (own.isEmpty()) {
                 throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_YOURS);
             }
-            return;
+            return own;
         }
         try {
             accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
@@ -84,5 +88,6 @@ public class AbhaCardService {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
         }
         abhaService.checkSubjectWithinReach(individual);
+        return abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID);
     }
 }

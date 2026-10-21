@@ -77,7 +77,7 @@ public class AbhaEventService {
     // The latest record names the Eka ID whose card everyone who may see the patient is served. So a patient already on
     // the server must be of the subject type the user's privilege was checked on, and within what their phone may hold;
     // otherwise a worker could put any Eka ID on a patient they cannot see. A patient the server does not have yet, a
-    // registration that has not synced, is accepted.
+    // registration that has not synced, is accepted: its card is served only from the user's own records.
     private void checkSubjectOnServer(AbhaEventRequest request) {
         Individual individual = individualRepository.findByUuid(request.getSubjectUUID());
         if (individual == null) {

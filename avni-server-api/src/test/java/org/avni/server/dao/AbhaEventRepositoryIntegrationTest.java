@@ -84,15 +84,20 @@ public class AbhaEventRepositoryIntegrationTest extends AbstractControllerIntegr
     }
 
     @Test
-    public void whetherThisUsersRecordReachedTheServerSince() {
+    public void thisUsersLatestRecordReceivedSince() {
         Long me = UserContextHolder.getUserContext().getUser().getId();
-        abhaEventRepository.saveAndFlush(event("subject-1", "created", "oid-1", NOW.minusSeconds(7200)));
+        abhaEventRepository.saveAndFlush(event("subject-1", "created", "oid-old", NOW));
+        abhaEventRepository.saveAndFlush(event("subject-1", "linked", "oid-new", NOW.minusSeconds(7200)));
         Date halfAnHourAgo = new Date(System.currentTimeMillis() - 1_800_000);
 
-        assertTrue("received just now, whatever the phone's time", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-1", me, halfAnHourAgo));
-        assertFalse("not since a moment from now", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-1", me, new Date(System.currentTimeMillis() + 60_000)));
-        assertFalse("another subject", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-2", me, halfAnHourAgo));
-        assertFalse("another user", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-1", me + 1000, halfAnHourAgo));
+        assertEquals("received last, whatever the phone's time", "oid-new", ownLatestSince("subject-1", me, halfAnHourAgo).orElseThrow().getEkaOid());
+        assertFalse("not since a moment from now", ownLatestSince("subject-1", me, new Date(System.currentTimeMillis() + 60_000)).isPresent());
+        assertFalse("another subject", ownLatestSince("subject-2", me, halfAnHourAgo).isPresent());
+        assertFalse("another user", ownLatestSince("subject-1", me + 1000, halfAnHourAgo).isPresent());
+    }
+
+    private Optional<AbhaEvent> ownLatestSince(String subjectUuid, Long userId, Date after) {
+        return abhaEventRepository.findFirstBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(subjectUuid, userId, after);
     }
 
     private AbhaEvent event(String subjectUuid, String action, String ekaOid, Instant occurredAt) {
