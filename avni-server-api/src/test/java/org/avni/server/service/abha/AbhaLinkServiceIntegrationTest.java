@@ -94,6 +94,49 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Collections.singletonList(live(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
     }
 
+    // OpenCHS is demo's parent. A parent that adds the questions after its child defined them must not break the child's
+    // saves: the organisation's own question is the one its subjects answer.
+    @Test
+    public void parentDefiningTheQuestionsTooLeavesTheOrganisationsOwnInUse() {
+        enableAbha();
+        String parentsNumber = parentDefinesConcept("ABHA Number");
+        parentDefinesConcept("ABHA Address");
+        setUser("demo-user");
+        ObservationCollection observations = new ObservationCollection();
+        observations.put(abhaNumber.getUuid(), ABHA_NUMBER);
+        observations.put(abhaAddress.getUuid(), ABHA_ADDRESS);
+        observations.put(parentsNumber, "91-1111-2222-3333");
+
+        Individual subject = save(subjectWith(observations));
+
+        assertEquals(Collections.singletonList(live(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
+    }
+
+    // A question only an ancestor defines is still found.
+    @Test
+    public void questionDefinedOnlyByTheParentIsUsed() {
+        enableAbha();
+        setUser(userRepository.getDefaultSuperAdmin());
+        new JdbcTemplate(dataSource).update("update public.concept set name = name || ' (demo, retired)' where uuid in (?, ?)", abhaNumber.getUuid(), abhaAddress.getUuid());
+        String parentsNumber = parentDefinesConcept("ABHA Number");
+        setUser("demo-user");
+        ObservationCollection observations = new ObservationCollection();
+        observations.put(parentsNumber, ABHA_NUMBER);
+
+        Individual subject = save(subjectWith(observations));
+
+        assertEquals(Collections.singletonList(live(subject, ABHA_DIGITS, null)), links());
+    }
+
+    // A text question of OpenCHS's, written as the server's openchs role, which row-level security does not filter.
+    private String parentDefinesConcept(String name) {
+        setUser(userRepository.getDefaultSuperAdmin());
+        String uuid = UUID.randomUUID().toString();
+        new JdbcTemplate(dataSource).update("insert into public.concept (name, data_type, uuid, version, organisation_id, created_by_id, " +
+                "last_modified_by_id, created_date_time, last_modified_date_time) values (?, 'Text', ?, 1, 1, 1, 1, now(), now())", name, uuid);
+        return uuid;
+    }
+
     @Test
     public void abhaDisabledCreatesNothing() {
         save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
@@ -328,6 +371,10 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         ObservationCollection observations = new ObservationCollection();
         if (number != null) observations.put(abhaNumber.getUuid(), number);
         if (address != null) observations.put(abhaAddress.getUuid(), address);
+        return subjectWith(observations);
+    }
+
+    private Individual subjectWith(ObservationCollection observations) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(SUBJECT_TYPE);
         AddressLevel location = locationRepository.findByUuid(LOCATION);
         return new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(location)

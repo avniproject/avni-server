@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -96,13 +97,25 @@ public class AbhaLinkService {
         return abhaLinkRepository.findLiveSubjectUUIDsOfType(UserContextHolder.getUserContext().getOrganisationId(), digitsOnly(abhaNumber), subjectType.getId());
     }
 
+    // The organisation's own question, else its parent's, and so on up. Never one query across them all, which expects
+    // a single answer: a parent that adds the question after its child defined it would make every save in the child fail.
+    private Concept nearestConcept(String conceptName) {
+        for (Long organisationId : conceptRepository.buildOrganisationIdList()) {
+            Concept concept = conceptRepository.findByNameAndOrganisationId(conceptName, Collections.singletonList(organisationId));
+            if (concept != null) {
+                return concept;
+            }
+        }
+        return null;
+    }
+
     // Eka writes 12-3456-7856-8912; a person may type the 14 digits with spaces or nothing between them.
     static String digitsOnly(String value) {
         return value == null ? "" : value.replaceAll("[^0-9]", "");
     }
 
     private String answer(Individual individual, String conceptName) {
-        Concept concept = conceptRepository.findByName(conceptName);
+        Concept concept = nearestConcept(conceptName);
         if (concept == null || individual.getObservations() == null) {
             return null;
         }
