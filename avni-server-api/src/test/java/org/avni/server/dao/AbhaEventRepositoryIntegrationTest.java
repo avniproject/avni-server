@@ -56,16 +56,17 @@ public class AbhaEventRepositoryIntegrationTest extends AbstractControllerIntegr
         assertEquals(NOW, reRead.getOccurredAt());
     }
 
-    // A failed insert aborts the test's own transaction, so the constraint is read from the catalogue instead.
+    // A failed insert aborts the test's own transaction, so the constraint is read from the catalogue instead. Events are
+    // found by subject; nothing reads them by user and phone time, so no index is kept for that.
     @Test
-    public void uuidIsUniqueWithinAnOrganisationAndEventsAreIndexedBySubjectAndByUser() {
+    public void uuidIsUniqueWithinAnOrganisationAndEventsAreIndexedBySubject() {
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "select count(*) from pg_constraint where conrelid = 'public.abha_event'::regclass and contype = 'u' " +
                         "and pg_get_constraintdef(oid) = 'UNIQUE (uuid, organisation_id)'", Integer.class));
         assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
                 "select count(*) from pg_indexes where tablename = 'abha_event' and indexdef like '%(organisation_id, subject_uuid)'", Integer.class));
-        assertEquals(Integer.valueOf(1), jdbcTemplate.queryForObject(
-                "select count(*) from pg_indexes where tablename = 'abha_event' and indexdef like '%(organisation_id, user_id, occurred_at)'", Integer.class));
+        assertEquals(Integer.valueOf(0), jdbcTemplate.queryForObject(
+                "select count(*) from pg_indexes where tablename = 'abha_event' and indexdef like '%occurred_at%'", Integer.class));
         assertEquals(Boolean.TRUE, jdbcTemplate.queryForObject(
                 "select relrowsecurity from pg_class where oid = 'public.abha_event'::regclass", Boolean.class));
     }

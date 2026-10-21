@@ -27,9 +27,8 @@ create table abha_event
 alter table abha_event
     add constraint abha_event_uuid_org_uniq unique (uuid, organisation_id);
 
+-- Every read is by subject: its latest event, or the user's own latest for it, by the server's receipt time.
 create index abha_event_org_subject on abha_event (organisation_id, subject_uuid);
--- The card story asks whether this user recorded an event for a subject in the last 30 minutes.
-create index abha_event_org_user_occurred on abha_event (organisation_id, user_id, occurred_at);
 
 -- Per-patient audit data of one organisation: the transaction policy, so a child organisation cannot read its parent's rows.
 select enable_rls_on_tx_table('abha_event');
