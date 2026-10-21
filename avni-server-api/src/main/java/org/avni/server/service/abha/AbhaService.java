@@ -52,12 +52,7 @@ public class AbhaService {
     // The checks behind every /abha endpoint, in order: ABHA on, a known subject type, the right to register or edit
     // it, Eka settings stored, and the user's health centre among the organisation's.
     public AbhaAccess checkAccess(String subjectTypeUUID) {
-        UserContext userContext = UserContextHolder.getUserContext();
-        User user = userContext.getUser();
-        Long organisationId = userContext.getOrganisationId();
-        if (!organisationConfigService.isAbhaEnabled()) {
-            throw new AbhaRefusedException(AbhaRefusal.ABHA_DISABLED);
-        }
+        requireAbhaEnabled();
         SubjectType subjectType = StringUtils.hasText(subjectTypeUUID) ? subjectTypeRepository.findByUuid(subjectTypeUUID) : null;
         if (subjectType == null) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_UNKNOWN_SUBJECT_TYPE);
@@ -68,6 +63,26 @@ public class AbhaService {
         } catch (AvniAccessException e) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
         }
+        return checkEkaSettingsAndHealthCentre();
+    }
+
+    // The checks of checkAccess that name no subject type, for an endpoint that checks the patient itself: ABHA on, Eka
+    // settings stored, and the user's health centre among the organisation's.
+    public AbhaAccess checkOrganisationAccess() {
+        requireAbhaEnabled();
+        return checkEkaSettingsAndHealthCentre();
+    }
+
+    private void requireAbhaEnabled() {
+        if (!organisationConfigService.isAbhaEnabled()) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_DISABLED);
+        }
+    }
+
+    private AbhaAccess checkEkaSettingsAndHealthCentre() {
+        UserContext userContext = UserContextHolder.getUserContext();
+        User user = userContext.getUser();
+        Long organisationId = userContext.getOrganisationId();
         EkaSystemConfig ekaSystemConfig;
         try {
             ekaSystemConfig = externalSystemConfigRepository.getEkaSystemConfig(organisationId);
@@ -81,17 +96,22 @@ public class AbhaService {
         return new AbhaAccess(user, organisationId, ekaSystemConfig, hipId);
     }
 
-    public AbhaSession createSession(String subjectTypeUUID) {
-        AbhaAccess access = checkAccess(subjectTypeUUID);
-        EkaToken token;
+    // The organisation's Eka access token, or the refusal the app reads. The token is a bearer credential for the
+    // organisation at Eka; never log it.
+    public EkaToken ekaAccessToken(Long organisationId) {
         try {
-            token = ekaTokenService.getAccessToken(access.getOrganisationId());
+            return ekaTokenService.getAccessToken(organisationId);
         } catch (EkaNotConfiguredException e) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_CONFIGURED);
         } catch (EkaAuthException e) {
             // EkaTokenService has logged it, without the key.
             throw new AbhaRefusedException(AbhaRefusal.ABHA_EKA_UNAVAILABLE);
         }
+    }
+
+    public AbhaSession createSession(String subjectTypeUUID) {
+        AbhaAccess access = checkAccess(subjectTypeUUID);
+        EkaToken token = ekaAccessToken(access.getOrganisationId());
         // The key is a bearer credential for the organisation at Eka; never log it.
         logger.info("ABHA session key issued to user {} of organisation {}", access.getUser().getId(), access.getOrganisationId());
         return new AbhaSession(token.getAccessToken(), token.getExpiresAt(), access.getEkaSystemConfig().getEnvironment(), access.getHipId());

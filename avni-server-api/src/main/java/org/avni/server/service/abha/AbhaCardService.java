@@ -1,0 +1,86 @@
+package org.avni.server.service.abha;
+
+import org.avni.server.dao.AbhaEventRepository;
+import org.avni.server.dao.IndividualRepository;
+import org.avni.server.domain.AbhaEvent;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.AvniAccessException;
+import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.accessControl.SubjectPartitionData;
+import org.avni.server.service.accessControl.AccessControlService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.time.Duration;
+import java.time.Instant;
+
+// A patient's ABHA card, fetched from Eka on every request and kept nowhere on the server: the card is a picture of
+// the patient's identity. Nothing here logs the card, the organisation's Eka token or the patient's Eka ID.
+@Service
+public class AbhaCardService {
+    private static final Logger logger = LoggerFactory.getLogger(AbhaCardService.class);
+    // A registration the phone has not synced yet: its card goes only to the user who recorded its ABHA this recently.
+    static final Duration RECORDED_WITHIN = Duration.ofMinutes(30);
+
+    private final AbhaService abhaService;
+    private final IndividualRepository individualRepository;
+    private final AccessControlService accessControlService;
+    private final AbhaEventRepository abhaEventRepository;
+    private final EkaRestClient ekaRestClient;
+
+    @Autowired
+    public AbhaCardService(AbhaService abhaService, IndividualRepository individualRepository, AccessControlService accessControlService,
+                           AbhaEventRepository abhaEventRepository, EkaRestClient ekaRestClient) {
+        this.abhaService = abhaService;
+        this.individualRepository = individualRepository;
+        this.accessControlService = accessControlService;
+        this.abhaEventRepository = abhaEventRepository;
+        this.ekaRestClient = ekaRestClient;
+    }
+
+    // In order: ABHA on, Eka settings stored and the user's health centre (as /abha/session); then the user's right to
+    // this patient; then an ABHA with an Eka ID recorded for them; then Eka.
+    public byte[] getCard(String subjectUUID) {
+        AbhaAccess access = abhaService.checkOrganisationAccess();
+        checkMayViewCard(subjectUUID, access.getUser());
+        AbhaEvent event = abhaEventRepository.findFirstBySubjectUuidAndEkaOidIsNotNullOrderByOccurredAtDesc(subjectUUID)
+                .orElseThrow(() -> new AbhaRefusedException(AbhaRefusal.ABHA_NO_CARD));
+        EkaToken token = abhaService.ekaAccessToken(access.getOrganisationId());
+        try {
+            byte[] card = ekaRestClient.getAbhaCard(access.getEkaSystemConfig().getBaseUrl(), token.getAccessToken(), event.getEkaOid(), access.getHipId());
+            logger.info("ABHA card of subject {} fetched from Eka for user {} of organisation {}, {} bytes",
+                    subjectUUID, access.getUser().getId(), access.getOrganisationId(), card.length);
+            return card;
+        } catch (EkaCardException e) {
+            logger.warn("ABHA card of subject {} not fetched from Eka for user {} of organisation {}: {}",
+                    subjectUUID, access.getUser().getId(), access.getOrganisationId(), e.getMessage());
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_EKA_UNAVAILABLE);
+        }
+    }
+
+    // A patient on the server: the user's right to view their subject type, and the patient within what the user's
+    // phone may hold (catchment, direct assignment, sync attributes). A patient the server does not have, or cannot show
+    // this organisation: only the user who recorded their ABHA in the last 30 minutes, straight after a registration
+    // that has not synced. Otherwise anyone in the organisation who learnt a patient's ID could fetch their card.
+    private void checkMayViewCard(String subjectUUID, User user) {
+        Individual individual = StringUtils.hasText(subjectUUID) ? individualRepository.findByUuid(subjectUUID) : null;
+        if (individual == null) {
+            if (!abhaEventRepository.existsBySubjectUuidAndUserIdAndOccurredAtAfter(subjectUUID, user.getId(), Instant.now().minus(RECORDED_WITHIN))) {
+                throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_YOURS);
+            }
+            return;
+        }
+        try {
+            accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
+        } catch (AvniAccessException e) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
+        }
+        if (!accessControlService.checkSubjectAccess(individual, SubjectPartitionData.create(individual)).isPassed()) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
+        }
+    }
+}

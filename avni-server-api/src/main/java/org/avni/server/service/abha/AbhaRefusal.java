@@ -8,5 +8,9 @@ public enum AbhaRefusal {
     ABHA_NOT_CONFIGURED,
     ABHA_NO_HEALTH_CENTRE,
     ABHA_EKA_UNAVAILABLE,
-    ABHA_NUMBER_INVALID
+    ABHA_NUMBER_INVALID,
+    // The card of a patient not on the server, asked for by someone who did not record their ABHA in the last 30 minutes.
+    ABHA_NOT_YOURS,
+    // No ABHA with an Eka ID is recorded for the patient, so there is no card to fetch.
+    ABHA_NO_CARD
 }
