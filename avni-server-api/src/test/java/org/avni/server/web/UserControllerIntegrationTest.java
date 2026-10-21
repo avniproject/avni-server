@@ -307,8 +307,24 @@ public class UserControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals("hip-1", demoAdminHipId());
     }
 
+    // A health centre dropped from the Eka list must not lock the user's record: the admin app sends the stored ID back
+    // with every save, even when the field is hidden because ABHA is off.
+    @Test
+    public void unchangedHealthCentreNoLongerListedStillSaves() {
+        demoHasEkaHealthCentres("hip-2");
+        demoAdminHasHealthCentre("hip-1");
+
+        ResponseEntity<String> response = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-1").with(UserSettings.LOCALE, "hi"));
+
+        assertEquals(response.getBody(), HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("hip-1", demoAdminHipId());
+        assertEquals("hi", userRepository.findByUsername("demo-admin").getSettings().getString(UserSettings.LOCALE));
+    }
+
     @Test
     public void organisationWithNoEkaSettingsRefusesAnyValueOnUpdateAndCreate() {
+        // Users are not reset between tests here; start from a different stored ID so hip-1 is a change.
+        demoAdminHasHealthCentre("hip-0");
         ResponseEntity<String> update = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-1"));
         assertEquals(HttpStatus.BAD_REQUEST, update.getStatusCode());
         assertTrue(update.getBody(), update.getBody().contains("'hip-1' is not one of this organisation's health centres"));
