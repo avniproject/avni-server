@@ -1,5 +1,10 @@
 package org.avni.server.web;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.core.read.ListAppender;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.AbhaEventRepository;
@@ -37,6 +42,7 @@ import org.avni.server.service.builder.TestGroupService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +61,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -67,6 +74,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -347,6 +355,88 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         assertEquals("ABHA_NOT_CONFIGURED", mapper.readTree(notSet.getContentAsString()).path("code").asText());
 
         eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)));
+    }
+
+    // The token is the organisation's bearer credential at Eka, the card a picture of the patient's identity, and the
+    // Eka ID names the patient at Eka. Runs as staging and live do, with org.avni's additivity off, so the server's own
+    // lines stop at org.avni and never reach ROOT; captures at both, everything at DEBUG, Spring's own handling included.
+    // A card served, and a card refused by Eka whose error body echoes all three.
+    @Test
+    public void cardTokenAndEkaIdNeverLogged() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String served = subjectOnServer(IN_CATCHMENT);
+        recordEvent(DEMO_ID, served, OTHER_WORKER, "oid-served-1", "created", Instant.now());
+        String refused = subjectOnServer(IN_CATCHMENT);
+        recordEvent(DEMO_ID, refused, OTHER_WORKER, "oid-refused-2", "created", Instant.now());
+        stubCard();
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-refused-2")).willReturn(aResponse().withStatus(500)
+                .withHeader("Content-Type", "application/json")
+                .withBody("{\"code\":500,\"error\":\"oid-refused-2 eka-key-for-demo stand-in-card-image\"}")));
+
+        Logger avni = (Logger) LoggerFactory.getLogger("org.avni");
+        boolean avniAdditive = avni.isAdditive();
+        List<Logger> loggers = Arrays.asList((Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME), avni,
+                (Logger) LoggerFactory.getLogger("org.springframework"));
+        List<Level> originalLevels = new ArrayList<>();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        for (Logger logger : loggers) {
+            originalLevels.add(logger.getLevel());
+            logger.setLevel(Level.DEBUG);
+        }
+        loggers.get(0).addAppender(appender);
+        avni.addAppender(appender);
+        avni.setAdditive(false);
+        try {
+            MockHttpServletResponse card = getCardWithEkaOnWireMock(VIEWER, served);
+            assertEquals(card.getContentAsString(), 200, card.getStatus());
+            assertArrayEquals(CARD, card.getContentAsByteArray());
+            assertEkaUnavailable(getCardWithEkaOnWireMock(VIEWER, refused));
+        } finally {
+            loggers.get(0).detachAppender(appender);
+            avni.detachAppender(appender);
+            for (int i = 0; i < loggers.size(); i++) {
+                loggers.get(i).setLevel(originalLevels.get(i));
+            }
+            avni.setAdditive(avniAdditive);
+        }
+
+        assertTrue("the card-fetched line must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().equals(AbhaCardService.class.getName()) && e.getLevel() == Level.INFO
+                        && e.getFormattedMessage().contains(served)));
+        assertTrue("the card-not-fetched line must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().equals(AbhaCardService.class.getName()) && e.getLevel() == Level.WARN
+                        && e.getFormattedMessage().contains("HTTP 500")));
+        assertTrue("Spring's line about writing the response must be captured, or the check proves nothing",
+                appender.list.stream().anyMatch(e -> e.getLoggerName().startsWith("org.springframework.web") && e.getFormattedMessage().startsWith("Writing [")));
+        String[] secrets = {"eka-key-for-demo", "oid-served-1", "oid-refused-2", "stand-in-card-image", Base64.getEncoder().encodeToString(CARD)};
+        for (ILoggingEvent event : appender.list) {
+            if (isStubServer(event.getLoggerName()) || isOrmValueTrace(event.getLoggerName())) continue;
+            String text = event.getFormattedMessage() + throwableText(event.getThrowableProxy());
+            for (String secret : secrets) {
+                assertFalse(event.getLoggerName() + " logged " + secret + ": " + text, text.contains(secret));
+            }
+        }
+    }
+
+    // WireMock is the stand-in for Eka; what it logs about the requests it receives is not the server's logging.
+    private static boolean isStubServer(String loggerName) {
+        return loggerName.startsWith("com.github.tomakehurst") || loggerName.startsWith("wiremock") || loggerName.startsWith("org.eclipse.jetty");
+    }
+
+    // Hibernate at DEBUG prints every value it reads or binds, for every entity: a patient's name as much as an Eka ID.
+    // It is off wherever the server runs (logback-spring.xml leaves org.hibernate at Spring Boot's INFO in staging and
+    // live), and no line of ABHA code can change it.
+    private static boolean isOrmValueTrace(String loggerName) {
+        return loggerName.startsWith("org.hibernate.orm.results") || loggerName.startsWith("org.hibernate.orm.jdbc");
+    }
+
+    private static String throwableText(IThrowableProxy proxy) {
+        StringBuilder text = new StringBuilder();
+        for (IThrowableProxy p = proxy; p != null; p = p.getCause()) {
+            text.append(' ').append(p.getMessage());
+        }
+        return text.toString();
     }
 
     private void assertEkaUnavailable(MockHttpServletResponse response) throws Exception {
