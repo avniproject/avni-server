@@ -149,7 +149,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     @Transactional
     public void saveMyProfile(@RequestBody UserInfoContract userInfo) {
         User user = userService.getCurrentUser();
-        user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), userInfo.getSettings()));
+        user.setSettings(UserSettings.mergeKeepingStoredAbhaHipId(user.getSettings(), userInfo.getSettings()));
         user.setLastModifiedBy(user);
         user.setLastModifiedDateTime(DateTime.now());
         userRepository.save(user);

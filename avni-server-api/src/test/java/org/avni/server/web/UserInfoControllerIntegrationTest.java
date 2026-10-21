@@ -45,6 +45,38 @@ public class UserInfoControllerIntegrationTest extends AbstractControllerIntegra
         assertEquals("hip-1", savedHipId());
     }
 
+    // The phone posts its whole stored copy of the settings when the user changes, say, the language. A stale copy must
+    // not undo an admin's reassignment, and a field user never sets their own health centre.
+    @Test
+    public void postingAnotherAbhaHipIdKeepsTheStoredOne() {
+        ResponseEntity<String> response = template.postForEntity(base + "/me", Map.of("settings", Map.of("locale", "hi", UserSettings.ABHA_HIP_ID, "hip-2")), String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("hi", userRepository.findByUsername("demo-admin").getSettings().getString(UserSettings.LOCALE));
+        assertEquals("hip-1", savedHipId());
+    }
+
+    @Test
+    public void postingAnEmptyAbhaHipIdKeepsTheStoredOne() {
+        ResponseEntity<String> response = template.postForEntity(base + "/me", Map.of("settings", Map.of("locale", "hi", UserSettings.ABHA_HIP_ID, "")), String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("hip-1", savedHipId());
+    }
+
+    @Test
+    public void postingAnAbhaHipIdWhenNoneIsStoredSetsNone() {
+        User user = userRepository.findByUsername("demo-admin");
+        user.setSettings(new JsonObject().with(UserSettings.LOCALE, "en"));
+        userRepository.save(user);
+
+        ResponseEntity<String> response = template.postForEntity(base + "/me", Map.of("settings", Map.of("locale", "hi", UserSettings.ABHA_HIP_ID, "hip-2")), String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("hi", userRepository.findByUsername("demo-admin").getSettings().getString(UserSettings.LOCALE));
+        assertFalse(userRepository.findByUsername("demo-admin").getSettings().containsKey(UserSettings.ABHA_HIP_ID));
+    }
+
     @Test
     public void bulkSaveWithoutAbhaHipIdKeepsIt() {
         User user = userRepository.findByUsername("demo-admin");

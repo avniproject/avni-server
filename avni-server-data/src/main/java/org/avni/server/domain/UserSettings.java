@@ -60,6 +60,20 @@ public class UserSettings {
         return merged;
     }
 
+    /**
+     * A user's own settings write, from the phone: the whole stored copy the phone holds, sent whenever the user changes,
+     * say, the language. The health centre is set only by an admin, so the stored one is always kept and an incoming
+     * one, set, changed or empty, is ignored; a stale copy must not undo an admin's reassignment.
+     */
+    public static JsonObject mergeKeepingStoredAbhaHipId(JsonObject existing, JsonObject incoming) {
+        JsonObject merged = incoming == null ? new JsonObject() : new JsonObject(incoming);
+        merged.remove(ABHA_HIP_ID);
+        if (existing != null && existing.containsKey(ABHA_HIP_ID)) {
+            merged.put(ABHA_HIP_ID, existing.get(ABHA_HIP_ID));
+        }
+        return merged;
+    }
+
     public String getIdPrefix() {
         return UserSettings.getIdPrefix(this.jsonObject);
     }

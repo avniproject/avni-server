@@ -67,4 +67,27 @@ public class UserSettingsTest {
         assertFalse(incoming.containsKey(UserSettings.ABHA_HIP_ID));
         assertEquals("hip-1", existing.getString(UserSettings.ABHA_HIP_ID));
     }
+
+    // The user's own write (POST /me): the stored health centre always wins, whatever the phone sends.
+    @Test
+    public void ownWriteKeepsTheStoredHealthCentreWhateverIsSent() {
+        JsonObject existing = new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-1").with(UserSettings.LOCALE, "en");
+
+        for (Object sent : new Object[]{"hip-2", "", "hip-1"}) {
+            JsonObject merged = UserSettings.mergeKeepingStoredAbhaHipId(existing, new JsonObject().with(UserSettings.ABHA_HIP_ID, sent).with(UserSettings.LOCALE, "hi"));
+            assertEquals(String.valueOf(sent), "hip-1", merged.getString(UserSettings.ABHA_HIP_ID));
+            assertEquals("hi", merged.getString(UserSettings.LOCALE));
+        }
+        assertEquals("hip-1", UserSettings.mergeKeepingStoredAbhaHipId(existing, new JsonObject().with(UserSettings.LOCALE, "hi")).getString(UserSettings.ABHA_HIP_ID));
+        assertEquals("hip-1", UserSettings.mergeKeepingStoredAbhaHipId(existing, null).getString(UserSettings.ABHA_HIP_ID));
+    }
+
+    @Test
+    public void ownWriteSetsNoHealthCentreWhenNoneIsStored() {
+        JsonObject incoming = new JsonObject().with(UserSettings.ABHA_HIP_ID, "hip-2").with(UserSettings.LOCALE, "hi");
+
+        assertFalse(UserSettings.mergeKeepingStoredAbhaHipId(new JsonObject(), incoming).containsKey(UserSettings.ABHA_HIP_ID));
+        assertFalse(UserSettings.mergeKeepingStoredAbhaHipId(null, incoming).containsKey(UserSettings.ABHA_HIP_ID));
+        assertEquals("the phone's own copy is not changed", "hip-2", incoming.getString(UserSettings.ABHA_HIP_ID));
+    }
 }
