@@ -134,6 +134,18 @@ public class UserInfoControllerIntegrationTest extends AbstractControllerIntegra
         assertEquals("HIP-2", savedHipId());
     }
 
+    // Only text is a health centre. A number would be stored, and every later save by that user would then fail on it.
+    @Test
+    public void bulkSaveWithANumberAsAbhaHipIdIsRefused() {
+        demoHasEkaHealthCentres("HIP-1", "HIP-2");
+
+        ResponseEntity<String> response = bulkSaveDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, 12345));
+
+        assertEquals(response.getBody(), HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody(), response.getBody().contains("ABHA Health Facility ID must be text"));
+        assertEquals("hip-1", savedHipId());
+    }
+
     // Checked only when it changes, as in the admin app: a health centre since dropped from Eka's list does not block the save.
     @Test
     public void bulkSaveWithTheStoredHealthCentreUnchangedIsNotChecked() {

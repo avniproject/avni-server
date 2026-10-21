@@ -307,6 +307,19 @@ public class UserControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals("hip-1", demoAdminHipId());
     }
 
+    // Only text is a health centre. A number would be stored, and every later save by that user would then fail on it.
+    @Test
+    public void adminSaveWithANumberAsAbhaHipIdIsRefused() {
+        demoHasEkaHealthCentres("hip-1");
+        demoAdminHasHealthCentre("hip-1");
+
+        ResponseEntity<String> response = putDemoAdminWithSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, 12345));
+
+        assertEquals(response.getBody(), HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody(), response.getBody().contains("ABHA Health Facility ID must be text"));
+        assertEquals("hip-1", demoAdminHipId());
+    }
+
     // A health centre dropped from the Eka list must not lock the user's record: the admin app sends the stored ID back
     // with every save, even when the field is hidden because ABHA is off.
     @Test

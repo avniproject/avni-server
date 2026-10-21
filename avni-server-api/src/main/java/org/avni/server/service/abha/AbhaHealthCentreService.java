@@ -39,10 +39,15 @@ public class AbhaHealthCentreService {
         if (settings == null) return;
         Object hipId = settings.get(UserSettings.ABHA_HIP_ID);
         Object storedHipId = storedSettings == null ? null : storedSettings.get(UserSettings.ABHA_HIP_ID);
-        if (hipId != null && hipId.equals(storedHipId)) return;
+        // Read as text wherever the user works; anything else stored here would fail every later save of theirs.
+        if (hipId != null && !(hipId instanceof String)) {
+            throw new ValidationException("ABHA Health Facility ID must be text");
+        }
+        if (hipId == null || hipId.equals(storedHipId)) return;
         // An empty string clears the setting. Anything else is stored as sent, so it must match a health centre exactly.
-        if (hipId instanceof String && !((String) hipId).isEmpty() && !isHealthCentreOf(organisationId, (String) hipId)) {
-            throw new ValidationException(notAHealthCentreMessage((String) hipId));
+        String id = (String) hipId;
+        if (!id.isEmpty() && !isHealthCentreOf(organisationId, id)) {
+            throw new ValidationException(notAHealthCentreMessage(id));
         }
     }
 
