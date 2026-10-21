@@ -216,23 +216,10 @@ public class UserController {
             organisationId = userContract.getOrganisationId() == null ? UserContextHolder.getUserContext().getOrganisationId() : userContract.getOrganisationId();
         }
         user.setOrganisationId(organisationId);
-        assertHealthCentreIsOneOfTheOrganisations(userContract.getSettings(), user.getSettings(), organisationId);
+        abhaHealthCentreService.assertHealthCentreIsOneOfTheOrganisations(userContract.getSettings(), user.getSettings(), organisationId);
         user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), userContract.getSettings()));
         user.setAuditInfo(currentUser);
         return user;
-    }
-
-    // Only a changed ID is checked: the admin app sends the stored one back with every save, and a health centre since
-    // dropped from the Eka list must not stop the rest of the user's record from saving.
-    private void assertHealthCentreIsOneOfTheOrganisations(JsonObject settings, JsonObject storedSettings, Long organisationId) {
-        if (settings == null) return;
-        Object hipId = settings.get(UserSettings.ABHA_HIP_ID);
-        Object storedHipId = storedSettings == null ? null : storedSettings.get(UserSettings.ABHA_HIP_ID);
-        if (hipId != null && hipId.equals(storedHipId)) return;
-        // An empty string clears the setting. Anything else is stored as sent, so it must match a health centre exactly.
-        if (hipId instanceof String && !((String) hipId).isEmpty() && !abhaHealthCentreService.isHealthCentreOf(organisationId, (String) hipId)) {
-            throw new ValidationException(AbhaHealthCentreService.notAHealthCentreMessage((String) hipId));
-        }
     }
 
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)

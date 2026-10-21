@@ -13,6 +13,7 @@
     import org.avni.server.service.IdpServiceFactory;
     import org.avni.server.service.OrganisationConfigService;
     import org.avni.server.service.UserService;
+    import org.avni.server.service.abha.AbhaHealthCentreService;
     import org.avni.server.service.accessControl.AccessControlService;
     import org.avni.server.service.accessControl.GroupPrivilegeService;
     import org.avni.server.util.RegionUtil;
@@ -54,11 +55,12 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     private final GroupPrivilegeService groupPrivilegeService;
     private final AccessControlService accessControlService;
     private final UserGroupRepository userGroupRepository;
+    private final AbhaHealthCentreService abhaHealthCentreService;
 
     @Autowired
     public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService,
                               IdpServiceFactory idpServiceFactory, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService, AccessControlService accessControlService,
-                              UserGroupRepository userGroupRepository) {
+                              UserGroupRepository userGroupRepository, AbhaHealthCentreService abhaHealthCentreService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -68,6 +70,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         this.groupPrivilegeService = groupPrivilegeService;
         this.accessControlService = accessControlService;
         this.userGroupRepository = userGroupRepository;
+        this.abhaHealthCentreService = abhaHealthCentreService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -176,6 +179,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             Long organisationId = getOrganisationId(userContract);
             user.setOrganisationId(organisationId);
             user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
+            abhaHealthCentreService.assertHealthCentreIsOneOfTheOrganisations(userContract.getSettings(), user.getSettings(), organisationId);
             user.setSettings(UserSettings.mergeKeepingAbhaHipId(user.getSettings(), userContract.getSettings()));
             userService.setPhoneNumber(userContract.getPhoneNumber(), user, RegionUtil.getCurrentUserRegion());
             user.setEmail(userContract.getEmail());
