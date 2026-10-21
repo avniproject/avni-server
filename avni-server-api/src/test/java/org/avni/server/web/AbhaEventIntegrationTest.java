@@ -53,7 +53,11 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
     private static final Long DEMO_ID = 2L;
     private static final String SUBJECT_TYPE_A = "a1b2c3d4-0000-4000-8000-00000000000a";
     private static final String SUBJECT_TYPE_B = "a1b2c3d4-0000-4000-8000-00000000000b";
+    // Given RegisterSubject on A only. Catchment X, which holds Naya Gaon (address level 2).
     private static final String REGISTRAR = "user-no-access";
+    private static final long IN_CATCHMENT = 2L;
+    // GP1, a location of demo's in no catchment of these users.
+    private static final long OUT_OF_CATCHMENT = 3L;
     private static final String ALL_PRIVILEGES_USER = "demo-user";
     private static final String ABHA_NUMBER = "12-3456-7856-8912";
 
@@ -135,6 +139,41 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals(HttpStatus.CREATED, post(REGISTRAR, body).getStatusCode());
 
         assertEquals(body.get("subjectUUID"), onlyRow().get("subject_uuid"));
+    }
+
+    // A patient on the server is checked as the card is: a record naming them reaches everyone who may see them.
+    @Test
+    public void eventForSubjectInUsersCatchmentStored() {
+        readyFor(REGISTRAR, "HIP-1");
+        Map<String, Object> body = event(UUID.randomUUID().toString(), "created");
+        body.put("subjectUUID", subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT));
+
+        ResponseEntity<String> response = post(REGISTRAR, body);
+
+        assertEquals(response.getBody(), HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(body.get("subjectUUID"), onlyRow().get("subject_uuid"));
+    }
+
+    // Otherwise a worker could put any Eka ID on a patient they cannot see, and its card would be served to those who can.
+    @Test
+    public void eventForSubjectOutsideUsersCatchmentRefusedAndNotStored() throws Exception {
+        readyFor(REGISTRAR, "HIP-1");
+        Map<String, Object> body = event(UUID.randomUUID().toString(), "created");
+        body.put("subjectUUID", subjectOnServer(SUBJECT_TYPE_A, OUT_OF_CATCHMENT));
+
+        assertRefused(body, HttpStatus.FORBIDDEN, "ABHA_NO_PRIVILEGE");
+        assertEquals(0, rows().size());
+    }
+
+    // The privilege checked is on the subject type the request names, so the patient must be of that type.
+    @Test
+    public void eventNamingSubjectOfAnotherTypeRefusedAndNotStored() throws Exception {
+        readyFor(REGISTRAR, "HIP-1");
+        Map<String, Object> body = event(UUID.randomUUID().toString(), "created");
+        body.put("subjectUUID", subjectOnServer(SUBJECT_TYPE_B, IN_CATCHMENT));
+
+        assertRefused(body, HttpStatus.FORBIDDEN, "ABHA_NO_PRIVILEGE");
+        assertEquals(0, rows().size());
     }
 
     @Test
@@ -340,10 +379,27 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
     private void assertRefused(HttpStatus status, String code, String subjectTypeUUID) throws Exception {
         Map<String, Object> body = event(UUID.randomUUID().toString(), "created");
         body.put("subjectTypeUUID", subjectTypeUUID);
+        assertRefused(body, status, code);
+    }
+
+    private void assertRefused(Map<String, Object> body, HttpStatus status, String code) throws Exception {
         ResponseEntity<String> response = post(REGISTRAR, body);
         assertEquals(response.getBody(), status, response.getStatusCode());
         JsonNode json = mapper.readTree(response.getBody());
         assertEquals(response.getBody(), code, json.path("code").asText());
+    }
+
+    // A subject in demo, written as the server's openchs role, which row-level security does not filter.
+    private String subjectOnServer(String subjectTypeUUID, long addressLevelId) {
+        setUser(userRepository.getDefaultSuperAdmin());
+        String uuid = UUID.randomUUID().toString();
+        new JdbcTemplate(dataSource).update("insert into public.individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, " +
+                        "first_name, last_name, gender_id, organisation_id, subject_type_id, observations, is_voided, created_by_id, " +
+                        "last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values (?, ?, 1, current_date, false, 'ABHA', 'Holder', 1, ?, (select id from public.subject_type where uuid = ?), " +
+                        "'{}'::jsonb, false, 1, 1, now(), now())",
+                uuid, addressLevelId, DEMO_ID, subjectTypeUUID);
+        return uuid;
     }
 
     private List<Map<String, Object>> rows() {

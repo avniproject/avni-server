@@ -1,7 +1,9 @@
 package org.avni.server.service.abha;
 
 import org.avni.server.dao.AbhaEventRepository;
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.AbhaEvent;
+import org.avni.server.domain.Individual;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +30,15 @@ public class AbhaEventService {
     private final AbhaService abhaService;
     private final AbhaEventRepository abhaEventRepository;
     private final AbhaRemovedEventWriter abhaRemovedEventWriter;
+    private final IndividualRepository individualRepository;
 
     @Autowired
-    public AbhaEventService(AbhaService abhaService, AbhaEventRepository abhaEventRepository, AbhaRemovedEventWriter abhaRemovedEventWriter) {
+    public AbhaEventService(AbhaService abhaService, AbhaEventRepository abhaEventRepository, AbhaRemovedEventWriter abhaRemovedEventWriter,
+                            IndividualRepository individualRepository) {
         this.abhaService = abhaService;
         this.abhaEventRepository = abhaEventRepository;
         this.abhaRemovedEventWriter = abhaRemovedEventWriter;
+        this.individualRepository = individualRepository;
     }
 
     // True when stored now, false when this uuid was already stored.
@@ -45,6 +50,7 @@ public class AbhaEventService {
         if (!StringUtils.hasText(request.getUuid()) || !StringUtils.hasText(request.getSubjectUUID())) {
             throw new AbhaEventInvalidException("uuid and subjectUUID are required");
         }
+        checkSubjectOnServer(request);
         if (abhaEventRepository.findByUuid(request.getUuid()) != null) {
             return false;
         }
@@ -66,6 +72,21 @@ public class AbhaEventService {
         abhaEventRepository.save(event);
         logger.info("ABHA event {} recorded, action {}", event.getUuid(), event.getAction());
         return true;
+    }
+
+    // The latest record names the Eka ID whose card everyone who may see the patient is served. So a patient already on
+    // the server must be of the subject type the user's privilege was checked on, and within what their phone may hold;
+    // otherwise a worker could put any Eka ID on a patient they cannot see. A patient the server does not have yet, a
+    // registration that has not synced, is accepted.
+    private void checkSubjectOnServer(AbhaEventRequest request) {
+        Individual individual = individualRepository.findByUuid(request.getSubjectUUID());
+        if (individual == null) {
+            return;
+        }
+        if (!individual.getSubjectType().getUuid().equals(request.getSubjectTypeUUID())) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
+        }
+        abhaService.checkSubjectWithinReach(individual);
     }
 
     // Written by the server, not the phone, when a sync removes a subject's ABHA or voids the subject. It names the user

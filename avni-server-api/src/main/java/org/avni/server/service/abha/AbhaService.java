@@ -2,12 +2,14 @@ package org.avni.server.service.abha;
 
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.UserSettings;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.accessControl.SubjectPartitionData;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
@@ -71,6 +73,13 @@ public class AbhaService {
     public AbhaAccess checkOrganisationAccess() {
         requireAbhaEnabled();
         return checkEkaSettingsAndHealthCentre();
+    }
+
+    // A patient on the server within what the user's phone may hold: catchment, direct assignment, sync attributes.
+    public void checkSubjectWithinReach(Individual individual) {
+        if (!accessControlService.checkSubjectAccess(individual, SubjectPartitionData.create(individual)).isPassed()) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
+        }
     }
 
     private void requireAbhaEnabled() {

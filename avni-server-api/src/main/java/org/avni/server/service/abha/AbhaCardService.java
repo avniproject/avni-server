@@ -7,7 +7,6 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.domain.accessControl.SubjectPartitionData;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,8 +83,6 @@ public class AbhaCardService {
         } catch (AvniAccessException e) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
         }
-        if (!accessControlService.checkSubjectAccess(individual, SubjectPartitionData.create(individual)).isPassed()) {
-            throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
-        }
+        abhaService.checkSubjectWithinReach(individual);
     }
 }
