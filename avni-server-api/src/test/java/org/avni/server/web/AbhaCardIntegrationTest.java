@@ -197,15 +197,14 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         assertEquals("no-store", response.getHeader("Cache-Control"));
     }
 
-    // A re-linked patient shows the newest ABHA. The server's "removed" record carries no Eka ID and is passed over.
+    // The card is the patient's current ABHA: the latest record the server received for them.
     @Test
-    public void newestEventWithAnEkaIdIsUsed() throws Exception {
+    public void latestAbhaIsUsed() throws Exception {
         readyFor(VIEWER, "HIP-1");
         String subject = subjectOnServer(IN_CATCHMENT);
         Instant now = Instant.now();
         recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-old", "created", now.minus(Duration.ofDays(10)));
         recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-new", "linked", now.minus(Duration.ofDays(2)));
-        recordEvent(DEMO_ID, subject, OTHER_WORKER, null, "removed", now.minus(Duration.ofDays(1)));
         stubCard();
 
         MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject);
@@ -213,6 +212,60 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         assertEquals(response.getContentAsString(), 200, response.getStatus());
         eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-new")));
         eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-old")));
+    }
+
+    // An ABHA taken off the patient no longer has a card here.
+    @Test
+    public void removedAbhaHasNoCard() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-1", "created", now.minus(Duration.ofDays(2)));
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, null, "removed", now.minus(Duration.ofDays(1)));
+
+        assertRefused(VIEWER, subject, HttpStatus.NOT_FOUND, "ABHA_NO_CARD");
+    }
+
+    @Test
+    public void relinkedAfterRemovalShowsTheNewCard() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-old", "created", now.minus(Duration.ofDays(10)));
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, null, "removed", now.minus(Duration.ofDays(5)));
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-new", "linked", now.minus(Duration.ofDays(1)));
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject);
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-new")));
+    }
+
+    // A later ABHA without an Eka ID must not bring back the card of the ABHA before it.
+    @Test
+    public void latestAbhaWithoutEkaIdHasNoCard() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-old", "created", now.minus(Duration.ofDays(10)));
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, null, "linked", now.minus(Duration.ofDays(1)));
+
+        assertRefused(VIEWER, subject, HttpStatus.NOT_FOUND, "ABHA_NO_CARD");
+    }
+
+    // The phone's clock can be wrong; the 30 minutes run from when the server received the record.
+    @Test
+    public void recorderWithSlowPhoneClockGetsCardWithin30MinutesOfReceipt() throws Exception {
+        readyFor(ALL_PRIVILEGES_USER, "HIP-1");
+        String unsynced = UUID.randomUUID().toString();
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, unsynced, ALL_PRIVILEGES_USER, "oid-1", "created", now.minus(Duration.ofHours(2)), now.minus(Duration.ofMinutes(5)));
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(ALL_PRIVILEGES_USER, unsynced);
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
     }
 
     // Straight after a registration that has not synced: the worker who recorded the ABHA sees the card.
@@ -548,12 +601,19 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         return uuid;
     }
 
+    // Received by the server when it happened on the phone.
     private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt) {
+        recordEvent(organisationId, subjectUUID, username, ekaOid, action, occurredAt, occurredAt);
+    }
+
+    // occurredAt is the phone's time; receivedAt is the server's (created_date_time).
+    private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt, Instant receivedAt) {
         setUser(userRepository.getDefaultSuperAdmin());
         new JdbcTemplate(dataSource).update("insert into public.abha_event (uuid, organisation_id, subject_uuid, user_id, hip_id, action, " +
                         "route, eka_oid, occurred_at, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
-                        "values (?, ?, ?, (select id from public.users where username = ?), 'HIP-1', ?, 'aadhaar', ?, ?, 1, 1, now(), now())",
-                UUID.randomUUID().toString(), organisationId, subjectUUID, username, action, ekaOid, Timestamp.from(occurredAt));
+                        "values (?, ?, ?, (select id from public.users where username = ?), 'HIP-1', ?, 'aadhaar', ?, ?, 1, 1, ?, ?)",
+                UUID.randomUUID().toString(), organisationId, subjectUUID, username, action, ekaOid, Timestamp.from(occurredAt),
+                Timestamp.from(receivedAt), Timestamp.from(receivedAt));
     }
 
     private static byte[] png(String content) {

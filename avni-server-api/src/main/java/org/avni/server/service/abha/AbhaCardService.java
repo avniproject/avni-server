@@ -17,13 +17,15 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Date;
 
 // A patient's ABHA card, fetched from Eka on every request and kept nowhere on the server: the card is a picture of
 // the patient's identity. Nothing here logs the card, the organisation's Eka token or the patient's Eka ID.
 @Service
 public class AbhaCardService {
     private static final Logger logger = LoggerFactory.getLogger(AbhaCardService.class);
-    // A registration the phone has not synced yet: its card goes only to the user who recorded its ABHA this recently.
+    // A registration the phone has not synced yet: its card goes only to the user whose ABHA record reached the server
+    // this recently, by the server's clock.
     static final Duration RECORDED_WITHIN = Duration.ofMinutes(30);
 
     private final AbhaService abhaService;
@@ -47,7 +49,10 @@ public class AbhaCardService {
     public byte[] getCard(String subjectUUID) {
         AbhaAccess access = abhaService.checkOrganisationAccess();
         checkMayViewCard(subjectUUID, access.getUser());
-        AbhaEvent event = abhaEventRepository.findFirstBySubjectUuidAndEkaOidIsNotNullOrderByOccurredAtDesc(subjectUUID)
+        // The card of the patient's current ABHA only: none after a removal, and none when the latest ABHA has no Eka ID,
+        // rather than the card of the ABHA before it.
+        AbhaEvent event = abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID)
+                .filter(latest -> !AbhaEventService.REMOVED.equals(latest.getAction()) && StringUtils.hasText(latest.getEkaOid()))
                 .orElseThrow(() -> new AbhaRefusedException(AbhaRefusal.ABHA_NO_CARD));
         EkaToken token = abhaService.ekaAccessToken(access.getOrganisationId());
         try {
@@ -69,7 +74,7 @@ public class AbhaCardService {
     private void checkMayViewCard(String subjectUUID, User user) {
         Individual individual = StringUtils.hasText(subjectUUID) ? individualRepository.findByUuid(subjectUUID) : null;
         if (individual == null) {
-            if (!abhaEventRepository.existsBySubjectUuidAndUserIdAndOccurredAtAfter(subjectUUID, user.getId(), Instant.now().minus(RECORDED_WITHIN))) {
+            if (!abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter(subjectUUID, user.getId(), Date.from(Instant.now().minus(RECORDED_WITHIN)))) {
                 throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_YOURS);
             }
             return;

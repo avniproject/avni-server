@@ -12,6 +12,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -69,28 +70,29 @@ public class AbhaEventRepositoryIntegrationTest extends AbstractControllerIntegr
                 "select relrowsecurity from pg_class where oid = 'public.abha_event'::regclass", Boolean.class));
     }
 
+    // The server stamps the receipt time when it saves, so the record saved last is the latest, whatever the phone's time.
     @Test
-    public void newestEventWithAnEkaIdForASubject() {
-        abhaEventRepository.save(event("subject-1", "created", "oid-old", NOW.minusSeconds(3600)));
-        abhaEventRepository.save(event("subject-1", "linked", null, NOW.plusSeconds(60)));
-        abhaEventRepository.save(event("subject-1", "linked", "oid-new", NOW));
-        abhaEventRepository.save(event("subject-2", "created", "oid-other", NOW.plusSeconds(600)));
+    public void latestEventReceivedForASubject() {
+        abhaEventRepository.saveAndFlush(event("subject-1", "created", "oid-old", NOW.plusSeconds(3600)));
+        abhaEventRepository.saveAndFlush(event("subject-1", "linked", "oid-new", NOW));
+        abhaEventRepository.saveAndFlush(event("subject-2", "created", "oid-other", NOW.plusSeconds(600)));
 
-        Optional<AbhaEvent> latest = abhaEventRepository.findFirstBySubjectUuidAndEkaOidIsNotNullOrderByOccurredAtDesc("subject-1");
+        Optional<AbhaEvent> latest = abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1");
 
         assertEquals("oid-new", latest.orElseThrow().getEkaOid());
-        assertFalse(abhaEventRepository.findFirstBySubjectUuidAndEkaOidIsNotNullOrderByOccurredAtDesc("subject-3").isPresent());
+        assertFalse(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-3").isPresent());
     }
 
     @Test
-    public void whetherThisUserRecordedAnEventSince() {
+    public void whetherThisUsersRecordReachedTheServerSince() {
         Long me = UserContextHolder.getUserContext().getUser().getId();
-        abhaEventRepository.save(event("subject-1", "created", "oid-1", NOW));
+        abhaEventRepository.saveAndFlush(event("subject-1", "created", "oid-1", NOW.minusSeconds(7200)));
+        Date halfAnHourAgo = new Date(System.currentTimeMillis() - 1_800_000);
 
-        assertTrue(abhaEventRepository.existsBySubjectUuidAndUserIdAndOccurredAtAfter("subject-1", me, NOW.minusSeconds(1800)));
-        assertFalse("too long ago", abhaEventRepository.existsBySubjectUuidAndUserIdAndOccurredAtAfter("subject-1", me, NOW.plusSeconds(1)));
-        assertFalse("another subject", abhaEventRepository.existsBySubjectUuidAndUserIdAndOccurredAtAfter("subject-2", me, NOW.minusSeconds(1800)));
-        assertFalse("another user", abhaEventRepository.existsBySubjectUuidAndUserIdAndOccurredAtAfter("subject-1", me + 1000, NOW.minusSeconds(1800)));
+        assertTrue("received just now, whatever the phone's time", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-1", me, halfAnHourAgo));
+        assertFalse("not since a moment from now", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-1", me, new Date(System.currentTimeMillis() + 60_000)));
+        assertFalse("another subject", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-2", me, halfAnHourAgo));
+        assertFalse("another user", abhaEventRepository.existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter("subject-1", me + 1000, halfAnHourAgo));
     }
 
     private AbhaEvent event(String subjectUuid, String action, String ekaOid, Instant occurredAt) {

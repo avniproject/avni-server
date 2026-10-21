@@ -5,7 +5,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 
 // Audit rows are read on the server only; none of this is exposed over REST or sync.
@@ -16,11 +16,12 @@ public interface AbhaEventRepository extends CHSRepository<AbhaEvent>, CustomCHS
     @RestResource(exported = false)
     <S extends AbhaEvent> S save(S entity);
 
-    // Story 14: the Eka ID to fetch a card with.
+    // Story 14: the patient's current ABHA is the latest record the server received for them. Ordered by the server's
+    // receipt time, since phones' clocks differ and the server writes the "removed" records itself.
     @RestResource(exported = false)
-    Optional<AbhaEvent> findFirstBySubjectUuidAndEkaOidIsNotNullOrderByOccurredAtDesc(String subjectUuid);
+    Optional<AbhaEvent> findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(String subjectUuid);
 
-    // Story 14: did this user record an ABHA event for the subject lately.
+    // Story 14: did this user's record for the subject reach the server lately.
     @RestResource(exported = false)
-    boolean existsBySubjectUuidAndUserIdAndOccurredAtAfter(String subjectUuid, Long userId, Instant after);
+    boolean existsBySubjectUuidAndUserIdAndCreatedDateTimeAfter(String subjectUuid, Long userId, Date after);
 }
