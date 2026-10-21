@@ -67,6 +67,30 @@ public class AbhaLinkLookupPlanIntegrationTest extends AbstractControllerIntegra
         });
     }
 
+    // Deleting any subject, in any organisation, makes Postgres look in abha_link for rows naming it, voided ones too.
+    // The live-only unique index cannot answer that, so without a plain index on individual_id each delete would read
+    // the whole table. This is the query Postgres runs for the foreign key.
+    @Test
+    public void subjectDeleteFindsItsLinksByIndex() {
+        inRolledBackTransaction(statement -> {
+            statement.execute("set local enable_seqscan = off");
+
+            JsonNode plan;
+            try (ResultSet rs = statement.executeQuery("explain (costs off, format json) select 1 from only public.abha_link x where individual_id = 1 for key share of x")) {
+                rs.next();
+                try {
+                    plan = MAPPER.readTree(rs.getString(1)).get(0).get("Plan");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            JsonNode link = indexRead(scanOf(plan, "abha_link"));
+            assertTrue(plan.toString(), link.has("Index Name"));
+            assertTrue(plan.toString(), link.path("Index Cond").asText().contains("individual_id"));
+        });
+    }
+
     // The card's measure: a million subjects in one organisation, answered within half a second, with the planner
     // left to choose. About a minute to seed, so it runs only when asked: AVNI_SCALE_TESTS=1 ./gradlew
     // :avni-server-api:test --tests '*AbhaLinkLookupPlanIntegrationTest'. The plan is printed to the test's output.

@@ -28,6 +28,10 @@ alter table abha_link
 create unique index abha_link_individual_live
     on abha_link (individual_id) where is_voided = false;
 
+-- For the foreign key: deleting any subject looks here for rows naming it, voided ones too, which the live-only index
+-- above cannot answer. Without this, every subject delete in any organisation reads the whole table.
+create index abha_link_individual on abha_link (individual_id);
+
 create index abha_link_org_number_live
     on abha_link (organisation_id, abha_number) where is_voided = false;
 
