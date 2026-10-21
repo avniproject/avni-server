@@ -5,6 +5,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.AbhaLink;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.slf4j.Logger;
@@ -90,9 +91,9 @@ public class AbhaLinkService {
         }
     }
 
-    // The live subjects in the user's organisation holding this number, however it is written.
-    public List<String> findSubjectUUIDs(String abhaNumber) {
-        return abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), digitsOnly(abhaNumber));
+    // The live subjects of this subject type in the user's organisation holding this number, however it is written.
+    public List<String> findSubjectUUIDs(SubjectType subjectType, String abhaNumber) {
+        return abhaLinkRepository.findLiveSubjectUUIDsOfType(UserContextHolder.getUserContext().getOrganisationId(), digitsOnly(abhaNumber), subjectType.getId());
     }
 
     // Eka writes 12-3456-7856-8912; a person may type the 14 digits with spaces or nothing between them.

@@ -13,15 +13,24 @@ import java.util.Optional;
 @Repository
 @RepositoryRestResource(exported = false)
 public interface AbhaLinkRepository extends TransactionalDataRepository<AbhaLink> {
-    // Served by abha_link_org_number_live, a partial index on (organisation_id, abha_number) for live rows, then the
-    // individual's primary key. A subject voided in bulk (a location's subjects, by SQL) keeps a live row; the join
+    // Both served by abha_link_org_number_live, a partial index on (organisation_id, abha_number) for live rows, then
+    // the individual's primary key. A subject voided in bulk (a location's subjects, by SQL) keeps a live row; the join
     // keeps it out of the answer.
+    // Every live holder in the organisation, whatever their subject type: for the warning when a number is held twice.
     String LIVE_SUBJECT_UUIDS = "select i.uuid from public.abha_link l join public.individual i on i.id = l.individual_id " +
             "where l.organisation_id = :organisationId and l.abha_number = :abhaNumber " +
             "and l.is_voided = false and i.is_voided = false order by i.uuid";
+    // The live holders of one subject type: the search's answer, since its privilege is checked on that type.
+    String LIVE_SUBJECT_UUIDS_OF_TYPE = "select i.uuid from public.abha_link l join public.individual i on i.id = l.individual_id " +
+            "where l.organisation_id = :organisationId and l.abha_number = :abhaNumber " +
+            "and l.is_voided = false and i.is_voided = false and i.subject_type_id = :subjectTypeId order by i.uuid";
 
     Optional<AbhaLink> findByIndividualIdAndIsVoidedFalse(Long individualId);
 
     @Query(value = LIVE_SUBJECT_UUIDS, nativeQuery = true)
     List<String> findLiveSubjectUUIDs(@Param("organisationId") Long organisationId, @Param("abhaNumber") String abhaNumber);
+
+    @Query(value = LIVE_SUBJECT_UUIDS_OF_TYPE, nativeQuery = true)
+    List<String> findLiveSubjectUUIDsOfType(@Param("organisationId") Long organisationId, @Param("abhaNumber") String abhaNumber,
+                                            @Param("subjectTypeId") Long subjectTypeId);
 }

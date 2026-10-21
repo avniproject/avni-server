@@ -126,12 +126,14 @@ public class AbhaService {
         return new AbhaSession(token.getAccessToken(), token.getExpiresAt(), access.getEkaSystemConfig().getEnvironment(), access.getHipId());
     }
 
-    // The patients in the organisation holding an ABHA number, after the checks of /abha/session. Never logs the number.
+    // The patients of the subject type in the organisation holding an ABHA number, after the checks of /abha/session,
+    // whose privilege is on that subject type only. Never logs the number.
     public List<String> findSubjectUUIDs(String subjectTypeUUID, String abhaNumber) {
         checkAccess(subjectTypeUUID);
         if (AbhaLinkService.digitsOnly(abhaNumber).length() != AbhaLinkService.ABHA_NUMBER_DIGITS) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NUMBER_INVALID);
         }
-        return abhaLinkService.findSubjectUUIDs(abhaNumber);
+        // Found: checkAccess refuses a subject type it cannot find.
+        return abhaLinkService.findSubjectUUIDs(subjectTypeRepository.findByUuid(subjectTypeUUID), abhaNumber);
     }
 }

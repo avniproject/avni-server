@@ -290,10 +290,10 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void searchReturnsLiveHoldersOnly() throws Exception {
         allowSearch(ALL_PRIVILEGES_USER);
-        String first = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
-        String second = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
-        linkedSubject(DEMO_ID, ABHA_DIGITS, true, false);
-        linkedSubject(DEMO_ID, "91111122223333", false, false);
+        String first = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
+        String second = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
+        linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, true, false);
+        linkedSubject(SUBJECT_TYPE_A, DEMO_ID, "91111122223333", false, false);
 
         ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
 
@@ -313,9 +313,9 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void otherOrganisationsSubjectNotReturned() throws Exception {
         allowSearch(ALL_PRIVILEGES_USER);
-        String demos = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
-        linkedSubject(1L, ABHA_DIGITS, false, false);
-        linkedSubject(3L, ABHA_DIGITS, false, false);
+        String demos = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
+        linkedSubject(SUBJECT_TYPE_A, 1L, ABHA_DIGITS, false, false);
+        linkedSubject(SUBJECT_TYPE_A, 3L, ABHA_DIGITS, false, false);
 
         ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
 
@@ -323,11 +323,27 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals(Collections.singletonList(demos), uuids(mapper.readTree(response.getBody()).path("subjectUUIDs")));
     }
 
+    // The privilege is checked on the subject type asked about, so the answer is only subjects of that type.
+    @Test
+    public void searchAnswersOnlySubjectsOfTheRequestedType() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+        String typeA = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
+        String typeB = linkedSubject(SUBJECT_TYPE_B, DEMO_ID, ABHA_DIGITS, false, false);
+
+        ResponseEntity<String> askedA = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
+        ResponseEntity<String> askedB = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_B, ABHA_DIGITS);
+
+        assertEquals(askedA.getBody(), HttpStatus.OK, askedA.getStatusCode());
+        assertEquals(Collections.singletonList(typeA), uuids(mapper.readTree(askedA.getBody()).path("subjectUUIDs")));
+        assertEquals(askedB.getBody(), HttpStatus.OK, askedB.getStatusCode());
+        assertEquals(Collections.singletonList(typeB), uuids(mapper.readTree(askedB.getBody()).path("subjectUUIDs")));
+    }
+
     // Voiding a location's subjects voids them in bulk, by SQL, and leaves their link rows live.
     @Test
     public void subjectVoidedInBulkNotReturned() throws Exception {
         allowSearch(ALL_PRIVILEGES_USER);
-        linkedSubject(DEMO_ID, ABHA_DIGITS, false, true);
+        linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, true);
 
         ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, ABHA_DIGITS);
 
@@ -354,7 +370,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void editOnlyPrivilegeMaySearch() throws Exception {
         allowSearch(EDITOR);
-        String holder = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        String holder = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
 
         ResponseEntity<String> response = search(EDITOR, SUBJECT_TYPE_A, ABHA_DIGITS);
 
@@ -377,7 +393,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     @Test
     public void abhaNumberNeverLogged() throws Exception {
         allowSearch(ALL_PRIVILEGES_USER);
-        linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
 
         Logger avni = (Logger) LoggerFactory.getLogger("org.avni");
         boolean avniAdditive = avni.isAdditive();
@@ -421,7 +437,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     // patient's ABHA number.
     @Test
     public void abhaLinksNotExportedOverSpringDataRest() {
-        String holder = linkedSubject(DEMO_ID, ABHA_DIGITS, false, false);
+        String holder = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
         setUser("demo-admin");
 
         ResponseEntity<String> collection = template.getForEntity("/abhaLinks", String.class);
@@ -464,9 +480,9 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         return uuids;
     }
 
-    // A subject of the default subject type holding an ABHA number, written as the server's openchs role, which row-level
+    // A subject of the given subject type holding an ABHA number, written as the server's openchs role, which row-level
     // security does not filter, so that any organisation's rows can be made.
-    private String linkedSubject(Long organisationId, String abhaNumber, boolean linkVoided, boolean subjectVoided) {
+    private String linkedSubject(String subjectTypeUUID, Long organisationId, String abhaNumber, boolean linkVoided, boolean subjectVoided) {
         setUser(userRepository.getDefaultSuperAdmin());
         String uuid = UUID.randomUUID().toString();
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
@@ -474,8 +490,8 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
                         "gender_id, organisation_id, subject_type_id, observations, is_voided, created_by_id, last_modified_by_id, " +
                         "created_date_time, last_modified_date_time) " +
                         "values (?, 1, 1, current_date, false, 'ABHA', 'Holder', 1, ?, " +
-                        "(select id from public.subject_type where uuid = '9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3'), '{}'::jsonb, ?, 1, 1, now(), now())",
-                uuid, organisationId, subjectVoided);
+                        "(select id from public.subject_type where uuid = ?), '{}'::jsonb, ?, 1, 1, now(), now())",
+                uuid, organisationId, subjectTypeUUID, subjectVoided);
         jdbc.update("insert into public.abha_link (uuid, organisation_id, individual_id, abha_number, is_voided, created_by_id, " +
                         "last_modified_by_id, created_date_time, last_modified_date_time) " +
                         "values (?, ?, (select id from public.individual where uuid = ?), ?, ?, 1, 1, now(), now())",

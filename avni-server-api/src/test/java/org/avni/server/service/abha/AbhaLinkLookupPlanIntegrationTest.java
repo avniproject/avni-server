@@ -39,26 +39,31 @@ public class AbhaLinkLookupPlanIntegrationTest extends AbstractControllerIntegra
     @Autowired
     private DataSource dataSource;
 
-    // The shape: with sequential scans priced out, the query can be served by abha_link_org_number_live on both of its
+    // The shape: with sequential scans priced out, each query can be served by abha_link_org_number_live on both of its
     // columns, and the subject by an index. A query that stopped matching the partial index's predicate, or lost the
-    // organisation or number condition, fails here.
+    // organisation or number condition, fails here. Both the search's query, of one subject type, and the warning's,
+    // across all of them.
     @Test
     public void lookupIsAnIndexReadOnTheLiveNumberIndex() {
         inRolledBackTransaction(statement -> {
             seed(statement, 1000);
             statement.execute("analyze public.individual");
             statement.execute("analyze public.abha_link");
+            long subjectTypeId = subjectTypeId(statement);
             statement.execute("set local enable_seqscan = off");
             statement.execute("set local role " + DEMO_ROLE);
+            String number = someLiveNumber(statement);
 
-            JsonNode plan = explainJson(statement, someLiveNumber(statement));
+            for (String query : new String[]{AbhaLinkRepository.LIVE_SUBJECT_UUIDS_OF_TYPE, AbhaLinkRepository.LIVE_SUBJECT_UUIDS}) {
+                JsonNode plan = explainJson(statement, sql(query, number, subjectTypeId));
 
-            // An Index Scan carries the index itself; a Bitmap Heap Scan has it on its Bitmap Index Scan child.
-            JsonNode link = indexRead(scanOf(plan, "abha_link"));
-            assertEquals(plan.toString(), "abha_link_org_number_live", link.path("Index Name").asText());
-            assertTrue(plan.toString(), link.path("Index Cond").asText().contains("abha_number"));
-            assertTrue(plan.toString(), link.path("Index Cond").asText().contains("organisation_id"));
-            assertFalse(plan.toString(), scanOf(plan, "individual").path("Node Type").asText().contains("Seq Scan"));
+                // An Index Scan carries the index itself; a Bitmap Heap Scan has it on its Bitmap Index Scan child.
+                JsonNode link = indexRead(scanOf(plan, "abha_link"));
+                assertEquals(plan.toString(), "abha_link_org_number_live", link.path("Index Name").asText());
+                assertTrue(plan.toString(), link.path("Index Cond").asText().contains("abha_number"));
+                assertTrue(plan.toString(), link.path("Index Cond").asText().contains("organisation_id"));
+                assertFalse(plan.toString(), scanOf(plan, "individual").path("Node Type").asText().contains("Seq Scan"));
+            }
         });
     }
 
@@ -74,18 +79,19 @@ public class AbhaLinkLookupPlanIntegrationTest extends AbstractControllerIntegra
             System.out.println("Seeded 1,000,000 subjects and their links in " + (System.currentTimeMillis() - seedingStarted) / 1000 + " s");
             statement.execute("analyze public.individual");
             statement.execute("analyze public.abha_link");
+            long subjectTypeId = subjectTypeId(statement);
             statement.execute("set local role " + DEMO_ROLE);
-            String number = someLiveNumber(statement);
+            String sql = sql(AbhaLinkRepository.LIVE_SUBJECT_UUIDS_OF_TYPE, someLiveNumber(statement), subjectTypeId);
 
             long started = System.nanoTime();
             List<String> holders = new ArrayList<>();
-            try (ResultSet rs = statement.executeQuery(sql(number))) {
+            try (ResultSet rs = statement.executeQuery(sql)) {
                 while (rs.next()) holders.add(rs.getString(1));
             }
             long millis = (System.nanoTime() - started) / 1_000_000;
 
             StringBuilder analyzed = new StringBuilder();
-            try (ResultSet rs = statement.executeQuery("explain (analyze, buffers) " + sql(number))) {
+            try (ResultSet rs = statement.executeQuery("explain (analyze, buffers) " + sql)) {
                 while (rs.next()) analyzed.append(rs.getString(1)).append('\n');
             }
             System.out.println("ABHA lookup over 1,000,000 subjects in one organisation: " + millis + " ms, " + holders.size() + " holder(s)\n" + analyzed);
@@ -126,14 +132,23 @@ public class AbhaLinkLookupPlanIntegrationTest extends AbstractControllerIntegra
         }
     }
 
-    private static String sql(String number) {
-        return AbhaLinkRepository.LIVE_SUBJECT_UUIDS
-                .replace(":organisationId", String.valueOf(DEMO_ID))
-                .replace(":abhaNumber", "'" + number + "'");
+    private static long subjectTypeId(Statement statement) throws SQLException {
+        try (ResultSet rs = statement.executeQuery("select id from public.subject_type where uuid = '" + SUBJECT_TYPE + "'")) {
+            assertTrue("no subject type " + SUBJECT_TYPE, rs.next());
+            return rs.getLong(1);
+        }
     }
 
-    private static JsonNode explainJson(Statement statement, String number) throws SQLException {
-        try (ResultSet rs = statement.executeQuery("explain (costs off, format json) " + sql(number))) {
+    // The repository's own SQL with its parameters written in.
+    private static String sql(String query, String number, long subjectTypeId) {
+        return query
+                .replace(":organisationId", String.valueOf(DEMO_ID))
+                .replace(":abhaNumber", "'" + number + "'")
+                .replace(":subjectTypeId", String.valueOf(subjectTypeId));
+    }
+
+    private static JsonNode explainJson(Statement statement, String sql) throws SQLException {
+        try (ResultSet rs = statement.executeQuery("explain (costs off, format json) " + sql)) {
             rs.next();
             try {
                 return MAPPER.readTree(rs.getString(1)).get(0).get("Plan");
