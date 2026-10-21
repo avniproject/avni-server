@@ -26,6 +26,8 @@ public class AbhaLinkService {
     public static final String ABHA_NUMBER_CONCEPT = "ABHA Number";
     public static final String ABHA_ADDRESS_CONCEPT = "ABHA Address";
     public static final int ABHA_NUMBER_DIGITS = 14;
+    // abha_link.abha_address is varchar(255).
+    static final int ABHA_ADDRESS_MAX_LENGTH = 255;
     private static final Logger logger = LoggerFactory.getLogger(AbhaLinkService.class);
 
     private final OrganisationConfigService organisationConfigService;
@@ -65,6 +67,11 @@ public class AbhaLinkService {
             return;
         }
         String address = answer(individual, ABHA_ADDRESS_CONCEPT);
+        if (address != null && address.length() > ABHA_ADDRESS_MAX_LENGTH) {
+            // Too long for the column: linking it would refuse the save, and every retry of it. The number is still linked.
+            logger.warn("ABHA Address answer of subject {} is longer than {} characters; linked without it", individual.getUuid(), ABHA_ADDRESS_MAX_LENGTH);
+            address = null;
+        }
         AbhaLink link = liveLink.orElseGet(() -> {
             AbhaLink newLink = new AbhaLink();
             newLink.assignUUID();

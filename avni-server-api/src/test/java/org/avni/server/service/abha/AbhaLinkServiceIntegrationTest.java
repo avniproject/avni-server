@@ -266,6 +266,25 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertNothingLoggedCarries(log, "12345678568912", "1234567856891");
     }
 
+    // The link keeps an address of at most 255 characters. A longer answer would fail the save, and every retry of it:
+    // the number is linked without the address, and the warning names the subject, not the answer.
+    @Test
+    public void addressLongerThan255LinksTheNumberWithoutIt() {
+        enableAbha();
+        String longAddress = "x".repeat(252) + "@sbx";
+        ListAppender<ILoggingEvent> log = captureLog();
+        Individual subject;
+        try {
+            subject = save(subjectWith(ABHA_NUMBER, longAddress));
+        } finally {
+            stopCapturing(log);
+        }
+
+        assertEquals(Collections.singletonList(live(subject, ABHA_DIGITS, null)), links());
+        assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(subject.getUuid())));
+        assertNothingLoggedCarries(log, longAddress, ABHA_DIGITS, ABHA_NUMBER);
+    }
+
     // A duplicate from an upload, another system or a second phone is never refused. Both stay linked, and the
     // warning names both subjects, never the number.
     @Test
