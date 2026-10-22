@@ -82,6 +82,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     public ResponseEntity addUsersToGroup(@RequestBody List<UserGroupContract> request) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         List<UserGroup> usersToBeAdded = new ArrayList<>();
+        List<UserGroup> newMetabaseUsers = new ArrayList<>();
 
         for (UserGroupContract userGroupContract : request) {
             User user = userRepository.findOne(userGroupContract.getUserId());
@@ -92,11 +93,14 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             UserGroup userGroup = userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group);
             if (userGroup == null) {
                 userGroup = UserGroup.createMembership(user, group);
+                if (group.getName().equals(Group.METABASE_USERS)) {
+                    newMetabaseUsers.add(userGroup);
+                }
             }
             usersToBeAdded.add(userGroup);
         }
-        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
-            metabaseService.upsertUsersOnMetabase(usersToBeAdded);
+        if (!newMetabaseUsers.isEmpty() && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+            metabaseService.upsertUsersOnMetabase(newMetabaseUsers);
         }
         return ResponseEntity.ok(userGroupRepository.saveAll(usersToBeAdded));
     }
@@ -109,9 +113,10 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         if (userGroup == null)
             return ResponseEntity.badRequest().body(String.format("UserGroup with id '%d' not found", id));
 
+        boolean wasVoided = userGroup.isVoided();
         userGroup.setVoided(true);
         userGroupRepository.save(userGroup);
-        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+        if (!wasVoided && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 userGroup.getGroupName().contains(Group.METABASE_USERS)) {
             metabaseService.upsertUsersOnMetabase(List.of(userGroup));
         }
