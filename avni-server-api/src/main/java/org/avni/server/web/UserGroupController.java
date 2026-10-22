@@ -113,9 +113,10 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         if (userGroup == null)
             return ResponseEntity.badRequest().body(String.format("UserGroup with id '%d' not found", id));
 
+        boolean wasVoided = userGroup.isVoided();
         userGroup.setVoided(true);
         userGroupRepository.save(userGroup);
-        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+        if (!wasVoided && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 userGroup.getGroupName().contains(Group.METABASE_USERS)) {
             metabaseService.upsertUsersOnMetabase(List.of(userGroup));
         }

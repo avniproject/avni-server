@@ -50,7 +50,7 @@ public class UserGroupControllerTest {
         userContext.setOrganisation(new Organisation());
         UserContextHolder.create(userContext);
 
-        user = new UserBuilder().withDefaultValuesForNewEntity().build();
+        user = new UserBuilder().id(1L).withDefaultValuesForNewEntity().build();
         when(userRepository.findOne(1L)).thenReturn(user);
         when(organisationConfigService.isMetabaseSetupEnabled(any())).thenReturn(true);
         when(userGroupRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -93,8 +93,32 @@ public class UserGroupControllerTest {
         verify(metabaseService).upsertUsersOnMetabase(anyList());
     }
 
+    @Test
+    public void removeUserFromGroup_doesNotCallMetabaseWhenAlreadyRemoved() {
+        UserGroup userGroup = UserGroup.createMembership(user, group(Group.METABASE_USERS));
+        userGroup.setId(5L);
+        userGroup.setVoided(true);
+        when(userGroupRepository.findOne(5L)).thenReturn(userGroup);
+
+        userGroupController.removeUserFromGroup(5L);
+
+        verifyNoInteractions(metabaseService);
+    }
+
+    @Test
+    public void removeUserFromGroup_syncsRemovalFromMetabaseUsers() {
+        UserGroup userGroup = UserGroup.createMembership(user, group(Group.METABASE_USERS));
+        userGroup.setId(5L);
+        when(userGroupRepository.findOne(5L)).thenReturn(userGroup);
+
+        userGroupController.removeUserFromGroup(5L);
+
+        verify(metabaseService).upsertUsersOnMetabase(List.of(userGroup));
+    }
+
     private Group group(String name) {
         Group group = new Group();
+        group.setId(2L);
         group.setName(name);
         return group;
     }
