@@ -253,11 +253,12 @@ public class UserService implements NonScopeAwareService {
         idpServiceFactory.getIdpService(user, isAdmin(user)).updateUser(user);
         User savedUser = save(user);
         accountAdminService.syncAccountAdmins(savedUser, accountIds);
+        boolean wasMetabaseUser = savedUser.isPartOfUserGroup(Group.METABASE_USERS);
         List<UserGroup> userGroups = associateUserToGroups(savedUser, groupIds);
         if (savedUser.getOrganisationId() != null
-                && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())
                 && userGroups != null
-                && userGroups.stream().anyMatch(userGroup -> userGroup.getGroupName().contains(Group.METABASE_USERS))) {
+                && wasMetabaseUser != userGroups.stream().anyMatch(userGroup -> !userGroup.isVoided() && userGroup.getGroupName().equals(Group.METABASE_USERS))
+                && organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
             metabaseService.upsertUsersOnMetabase(userGroups);
         }
         return savedUser;
