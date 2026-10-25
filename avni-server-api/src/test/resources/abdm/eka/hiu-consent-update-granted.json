@@ -1,0 +1,18 @@
+{
+  "service": "abha",
+  "event": "abha.consent_update",
+  "event_time": 1749822309,
+  "transaction_id": "webhook-tx-0",
+  "timestamp": 1749825214,
+  "business_id": "biz-1",
+  "client_id": "client-1",
+  "data": {
+    "timestamp": "2026-10-25T10:05:00.000Z",
+    "status": "GRANTED",
+    "notification": {
+      "consentRequestId": "init-1",
+      "status": "GRANTED",
+      "consentArtefacts": { "id": "artefact-1" }
+    }
+  }
+}

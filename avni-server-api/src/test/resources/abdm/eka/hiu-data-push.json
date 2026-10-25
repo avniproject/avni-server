@@ -1,0 +1,37 @@
+{
+  "service": "abdm",
+  "event": "abha.hiu_data_push",
+  "event_time": 1749822309,
+  "transaction_id": "webhook-tx-1",
+  "timestamp": 1749825214,
+  "business_id": "biz-1",
+  "client_id": "client-1",
+  "data": {
+    "abha_address": "shyam@sbx",
+    "abha_number": "",
+    "hip_id": "HIP-X",
+    "oid": "oid-1",
+    "partner_patient_id": "subject-1",
+    "consent_id": "artefact-1",
+    "transaction_id": "dtx-1",
+    "entries": [
+      {
+        "care_context_id": "cc-1",
+        "checksum": "CHECKSUM",
+        "content": "CONTENT",
+        "media": "application/fhir+json",
+        "content_ref": "ref-1"
+      }
+    ],
+    "key_information": {
+      "crypto_alg": "ECDH",
+      "curve": "Curve25519",
+      "dh_public_key": {
+        "expiry": "2026-10-26T10:00:00.000Z",
+        "key_value": "HIP_PUBLIC_KEY",
+        "parameters": "Curve25519/32byte random key"
+      },
+      "nonce": "HIP_NONCE"
+    }
+  }
+}

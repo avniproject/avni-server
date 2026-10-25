@@ -1,7 +1,9 @@
 package org.avni.server.service.abdm.hiu;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abdm.hip.AbdmTestSupport;
@@ -9,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,11 +39,30 @@ public class AbdmHiuConsentServiceTest {
     private final AbdmHiuStore store = mock(AbdmHiuStore.class);
     private final AbdmGatewayClient gateway = mock(AbdmGatewayClient.class);
     private final AbdmHiuDataService dataService = mock(AbdmHiuDataService.class);
+    @SuppressWarnings("unchecked")
+    private final ObjectProvider<EkaHiuService> ekaProvider = mock(ObjectProvider.class);
     private AbdmHiuConsentService service;
 
     @Before
     public void setUp() {
-        service = new AbdmHiuConsentService(AbdmTestSupport.config(), store, gateway, dataService, AbdmTestSupport.noWaitRetry());
+        service = new AbdmHiuConsentService(AbdmTestSupport.config(), store, gateway, dataService, AbdmTestSupport.noWaitRetry(), ekaProvider);
+    }
+
+    @Test
+    public void inEkaModeAConsentRequestGoesThroughEka() {
+        AbdmConfig cfg = AbdmTestSupport.config();
+        when(cfg.isEka()).thenReturn(true);
+        EkaHiuService eka = mock(EkaHiuService.class);
+        when(ekaProvider.getObject()).thenReturn(eka);
+        Map<String, Object> ekaAnswer = Map.of("uuid", "u-1", "status", "REQUESTED");
+        when(eka.requestConsent("ramesh.gond", null, null, List.of("OPConsultation"), "CAREMGT", "Dr. A")).thenReturn(ekaAnswer);
+        service = new AbdmHiuConsentService(cfg, store, gateway, dataService, AbdmTestSupport.noWaitRetry(), ekaProvider);
+
+        Map<String, Object> answer = service.requestConsent("ramesh.gond", null, null, List.of("OPConsultation"), "CAREMGT", "Dr. A");
+
+        assertEquals(ekaAnswer, answer);
+        verifyNoInteractions(gateway);
+        verify(store, never()).insertConsentRequest(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
