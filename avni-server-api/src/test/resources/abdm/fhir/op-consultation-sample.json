@@ -1,0 +1,235 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000001",
+  "meta" : {
+    "versionId" : "1",
+    "lastUpdated" : "2026-10-26T05:30:00.000Z",
+    "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/DocumentBundle" ]
+  },
+  "identifier" : {
+    "system" : "http://hip.in",
+    "value" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000001"
+  },
+  "type" : "document",
+  "timestamp" : "2026-10-26T05:30:00.000Z",
+  "entry" : [ {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000002",
+    "resource" : {
+      "resourceType" : "Composition",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000002",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/OPConsultRecord" ]
+      },
+      "status" : "final",
+      "type" : {
+        "coding" : [ {
+          "system" : "http://snomed.info/sct",
+          "code" : "371530004",
+          "display" : "Clinical consultation report"
+        } ],
+        "text" : "Clinical consultation report"
+      },
+      "subject" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003",
+        "display" : "Lakshmi Devi"
+      },
+      "encounter" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000006"
+      },
+      "date" : "2026-10-20T04:45:00.000Z",
+      "author" : [ {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000004",
+        "display" : "Kavya R"
+      } ],
+      "title" : "Hypertension Screening — TANUH Health Centre",
+      "custodian" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000005",
+        "display" : "TANUH Health Centre"
+      },
+      "section" : [ {
+        "title" : "Findings",
+        "code" : {
+          "coding" : [ {
+            "system" : "http://snomed.info/sct",
+            "code" : "425044008",
+            "display" : "Physical exam section"
+          } ],
+          "text" : "Physical exam section"
+        },
+        "entry" : [ {
+          "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000007"
+        }, {
+          "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000008"
+        }, {
+          "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000009"
+        } ]
+      } ]
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000003",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Patient" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code" : "MR",
+            "display" : "Medical record number"
+          } ],
+          "text" : "ABHA Number"
+        },
+        "system" : "https://healthid.ndhm.gov.in",
+        "value" : "91-5555-0000-0042"
+      }, {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code" : "MR",
+            "display" : "Medical record number"
+          } ],
+          "text" : "ABHA Address"
+        },
+        "system" : "https://healthid.ndhm.gov.in",
+        "value" : "lakshmi.devi@sbx"
+      } ],
+      "name" : [ {
+        "text" : "Lakshmi Devi"
+      } ],
+      "gender" : "female",
+      "birthDate" : "1968-03-12"
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000004",
+    "resource" : {
+      "resourceType" : "Practitioner",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000004",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Practitioner" ]
+      },
+      "name" : [ {
+        "text" : "Kavya R"
+      } ]
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000005",
+    "resource" : {
+      "resourceType" : "Organization",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000005",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Organization" ]
+      },
+      "identifier" : [ {
+        "type" : {
+          "coding" : [ {
+            "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code" : "PRN",
+            "display" : "Provider number"
+          } ],
+          "text" : "Provider number"
+        },
+        "system" : "https://facility.ndhm.gov.in",
+        "value" : "TANUH"
+      } ],
+      "name" : "TANUH Health Centre"
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000006",
+    "resource" : {
+      "resourceType" : "Encounter",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000006",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Encounter" ]
+      },
+      "status" : "finished",
+      "class" : {
+        "system" : "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        "code" : "AMB",
+        "display" : "ambulatory"
+      },
+      "type" : [ {
+        "text" : "Hypertension Screening"
+      } ],
+      "subject" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003"
+      },
+      "period" : {
+        "start" : "2026-10-20T04:45:00.000Z"
+      }
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Observation" ]
+      },
+      "status" : "final",
+      "code" : {
+        "text" : "Systolic blood pressure"
+      },
+      "subject" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003"
+      },
+      "encounter" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000006"
+      },
+      "effectiveDateTime" : "2026-10-20T04:45:00.000Z",
+      "valueQuantity" : {
+        "value" : 130,
+        "unit" : "mmHg"
+      }
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000008",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000008",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Observation" ]
+      },
+      "status" : "final",
+      "code" : {
+        "text" : "Diastolic blood pressure"
+      },
+      "subject" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003"
+      },
+      "encounter" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000006"
+      },
+      "effectiveDateTime" : "2026-10-20T04:45:00.000Z",
+      "valueQuantity" : {
+        "value" : 85,
+        "unit" : "mmHg"
+      }
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000009",
+    "resource" : {
+      "resourceType" : "Observation",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000009",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Observation" ]
+      },
+      "status" : "final",
+      "code" : {
+        "text" : "Tobacco use"
+      },
+      "subject" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003"
+      },
+      "encounter" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000006"
+      },
+      "effectiveDateTime" : "2026-10-20T04:45:00.000Z",
+      "valueCodeableConcept" : {
+        "text" : "Yes"
+      }
+    }
+  } ]
+}

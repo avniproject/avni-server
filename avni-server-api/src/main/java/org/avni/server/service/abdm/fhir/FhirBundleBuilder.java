@@ -1,13 +1,333 @@
 package org.avni.server.service.abdm.fhir;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.AbdmTime;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 // DEMO-ONLY abdm-hackathon: never merged.
-// A care context as an ABDM OPConsultation FHIR R4 document bundle, built with Jackson (no HAPI).
+// A care context as an ABDM OPConsultation FHIR R4 document bundle, built with Jackson (no HAPI). Composition first,
+// then Patient, Practitioner, Organization, Encounter and one Observation per answer. Never writes a null: a missing
+// value leaves its field out. Not validated against the NRCES profiles.
 @Component
 public class FhirBundleBuilder {
-    public ObjectNode build(CareContextDocument document) {
-        throw new UnsupportedOperationException("abdm-hackathon: not built yet");
+    static final String NRCES = "https://nrces.in/ndhm/fhir/r4/StructureDefinition/";
+    static final String SNOMED = "http://snomed.info/sct";
+    static final String V2_0203 = "http://terminology.hl7.org/CodeSystem/v2-0203";
+    static final String ABHA_SYSTEM = "https://healthid.ndhm.gov.in";
+    static final String FACILITY_SYSTEM = "https://facility.ndhm.gov.in";
+    private static final ZoneId AVNI_DATE_ZONE = ZoneId.of("Asia/Kolkata");
+    // DEMO-ONLY: media, references to other records and nested groups are not shared.
+    private static final Set<String> NOT_SHARED = Set.of("Image", "ImageV2", "Video", "Audio", "File", "Subject", "Location", "Id",
+            "QuestionGroup", "Encounter", "GroupAffiliation");
+
+    private final Supplier<String> idSupplier;
+    private final Clock clock;
+
+    public FhirBundleBuilder() {
+        this(() -> UUID.randomUUID().toString(), Clock.systemUTC());
+    }
+
+    public FhirBundleBuilder(Supplier<String> idSupplier) {
+        this(idSupplier, Clock.systemUTC());
+    }
+
+    public FhirBundleBuilder(Supplier<String> idSupplier, Clock clock) {
+        this.idSupplier = idSupplier;
+        this.clock = clock;
+    }
+
+    public ObjectNode build(CareContextDocument d) {
+        String now = AbdmTime.format(clock.instant());
+        String visitTime = d.encounterDateTime() == null ? now : AbdmTime.format(d.encounterDateTime());
+
+        String bundleId = idSupplier.get();
+        String compositionId = idSupplier.get();
+        String patientId = idSupplier.get();
+        String practitionerId = idSupplier.get();
+        String organisationId = idSupplier.get();
+        String encounterId = idSupplier.get();
+
+        List<ObjectNode> observations = new ArrayList<>();
+        for (CareContextDocument.Item item : Optional.ofNullable(d.items()).orElse(List.of())) {
+            ObjectNode observation = observation(item, patientId, encounterId, visitTime);
+            if (observation != null) observations.add(observation);
+        }
+
+        ObjectNode bundle = AbdmJson.obj();
+        bundle.put("resourceType", "Bundle");
+        bundle.put("id", bundleId);
+        ObjectNode meta = bundle.putObject("meta");
+        meta.put("versionId", "1");
+        meta.put("lastUpdated", now);
+        meta.putArray("profile").add(NRCES + "DocumentBundle");
+        ObjectNode identifier = bundle.putObject("identifier");
+        identifier.put("system", "http://hip.in");
+        identifier.put("value", bundleId);
+        bundle.put("type", "document");
+        bundle.put("timestamp", now);
+
+        ArrayNode entries = bundle.putArray("entry");
+        entries.add(entry(composition(d, compositionId, patientId, practitionerId, organisationId, encounterId, visitTime, observations)));
+        entries.add(entry(patient(d, patientId)));
+        entries.add(entry(practitioner(d, practitionerId)));
+        entries.add(entry(organisation(d, organisationId)));
+        entries.add(entry(encounter(d, encounterId, patientId, visitTime)));
+        observations.forEach(o -> entries.add(entry(o)));
+        return bundle;
+    }
+
+    private ObjectNode composition(CareContextDocument d, String id, String patientId, String practitionerId, String organisationId,
+                                   String encounterId, String visitTime, List<ObjectNode> observations) {
+        ObjectNode c = resource("Composition", id, "OPConsultRecord");
+        c.put("status", "final");
+        c.set("type", codeable(SNOMED, "371530004", "Clinical consultation report"));
+        c.set("subject", reference(patientId, d.patientName()));
+        c.set("encounter", reference(encounterId, null));
+        c.put("date", visitTime);
+        c.putArray("author").add(reference(practitionerId, practitionerName(d)));
+        c.put("title", title(d));
+        c.set("custodian", reference(organisationId, d.hipName()));
+
+        ObjectNode section = c.putArray("section").addObject();
+        section.put("title", "Findings");
+        // DEMO-ONLY coding: every answer goes under one physical-examination section, whatever the form asked.
+        section.set("code", codeable(SNOMED, "425044008", "Physical exam section"));
+        if (observations.isEmpty()) {
+            section.set("emptyReason", codeable("http://terminology.hl7.org/CodeSystem/list-empty-reason", "nilknown", "Nil Known"));
+        } else {
+            ArrayNode refs = section.putArray("entry");
+            observations.forEach(o -> refs.add(reference(o.get("id").asText(), null)));
+        }
+        return c;
+    }
+
+    private ObjectNode patient(CareContextDocument d, String id) {
+        ObjectNode p = resource("Patient", id, "Patient");
+        ArrayNode identifiers = AbdmJson.arr();
+        if (hasText(d.abhaNumber())) identifiers.add(abhaIdentifier("ABHA Number", d.abhaNumber()));
+        // DEMO-ONLY: the ABHA address under the same system as the number, told apart by type, as NRCES samples do.
+        if (hasText(d.abhaAddress())) identifiers.add(abhaIdentifier("ABHA Address", d.abhaAddress()));
+        if (!identifiers.isEmpty()) p.set("identifier", identifiers);
+        if (hasText(d.patientName())) p.putArray("name").addObject().put("text", d.patientName());
+        p.put("gender", fhirGender(d.gender()));
+        if (d.dateOfBirth() != null) p.put("birthDate", d.dateOfBirth().toString("yyyy-MM-dd"));
+        return p;
+    }
+
+    private ObjectNode practitioner(CareContextDocument d, String id) {
+        ObjectNode p = resource("Practitioner", id, "Practitioner");
+        p.putArray("name").addObject().put("text", practitionerName(d));
+        return p;
+    }
+
+    private ObjectNode organisation(CareContextDocument d, String id) {
+        ObjectNode o = resource("Organization", id, "Organization");
+        if (hasText(d.hipId())) {
+            ObjectNode identifier = o.putArray("identifier").addObject();
+            identifier.set("type", codeable(V2_0203, "PRN", "Provider number"));
+            identifier.put("system", FACILITY_SYSTEM);
+            identifier.put("value", d.hipId());
+        }
+        if (hasText(d.hipName())) o.put("name", d.hipName());
+        return o;
+    }
+
+    private ObjectNode encounter(CareContextDocument d, String id, String patientId, String visitTime) {
+        ObjectNode e = resource("Encounter", id, "Encounter");
+        e.put("status", "finished");
+        ObjectNode cls = e.putObject("class");
+        cls.put("system", "http://terminology.hl7.org/CodeSystem/v3-ActCode");
+        cls.put("code", "AMB");
+        cls.put("display", "ambulatory");
+        if (hasText(d.encounterTypeName())) e.putArray("type").addObject().put("text", d.encounterTypeName());
+        e.set("subject", reference(patientId, null));
+        e.putObject("period").put("start", visitTime);
+        return e;
+    }
+
+    // Null when the answer is not shared or has no usable value.
+    private ObjectNode observation(CareContextDocument.Item item, String patientId, String encounterId, String visitTime) {
+        if (item == null || !hasText(item.name()) || item.value() == null) return null;
+        String dataType = item.dataType() == null ? "Text" : item.dataType();
+        if (NOT_SHARED.contains(dataType)) return null; // DEMO-ONLY: media not shared
+
+        ObjectNode value = AbdmJson.obj();
+        boolean hasValue = switch (dataType) {
+            case "Numeric" -> putNumeric(value, item.value(), item.unit());
+            case "Coded" -> putCoded(value, item.value());
+            case "Date" -> putDate(value, item.value());
+            case "DateTime" -> putDateTime(value, item.value());
+            default -> putString(value, item.value());
+        };
+        if (!hasValue) return null;
+
+        ObjectNode o = resource("Observation", idSupplier.get(), "Observation");
+        o.put("status", "final");
+        o.putObject("code").put("text", item.name()); // DEMO-ONLY: the question's name, no SNOMED/LOINC coding
+        o.set("subject", reference(patientId, null));
+        o.set("encounter", reference(encounterId, null));
+        o.put("effectiveDateTime", visitTime);
+        o.setAll(value);
+        return o;
+    }
+
+    private static boolean putNumeric(ObjectNode target, Object value, String unit) {
+        BigDecimal number;
+        try {
+            number = value instanceof Number n ? new BigDecimal(n.toString()) : new BigDecimal(value.toString().trim());
+        } catch (NumberFormatException e) {
+            return putString(target, value);
+        }
+        ObjectNode quantity = target.putObject("valueQuantity");
+        if (number.signum() == 0 || number.stripTrailingZeros().scale() <= 0) {
+            quantity.put("value", number.longValue());
+        } else {
+            quantity.put("value", number.doubleValue());
+        }
+        if (hasText(unit)) quantity.put("unit", unit);
+        return true;
+    }
+
+    private static boolean putCoded(ObjectNode target, Object value) {
+        String text;
+        if (value instanceof Collection<?> c) {
+            text = join(c);
+        } else if (value instanceof Object[] a) {
+            text = join(Arrays.asList(a));
+        } else if (value instanceof Iterable<?> i) {
+            text = join(StreamSupport.stream(i.spliterator(), false).collect(Collectors.toList()));
+        } else if (value instanceof Map) {
+            return false;
+        } else {
+            text = value.toString();
+        }
+        if (!hasText(text)) return false;
+        target.putObject("valueCodeableConcept").put("text", text);
+        return true;
+    }
+
+    private static boolean putDate(ObjectNode target, Object value) {
+        String date = null;
+        if (value instanceof org.joda.time.LocalDate jl) date = jl.toString("yyyy-MM-dd");
+        else if (value instanceof LocalDate l) date = l.toString();
+        else if (value instanceof org.joda.time.DateTime jdt) date = Instant.ofEpochMilli(jdt.getMillis()).atZone(AVNI_DATE_ZONE).toLocalDate().toString();
+        else if (value instanceof Instant i) date = i.atZone(AVNI_DATE_ZONE).toLocalDate().toString();
+        else if (value instanceof Date dt) date = dt.toInstant().atZone(AVNI_DATE_ZONE).toLocalDate().toString();
+        else if (value instanceof String s) {
+            String trimmed = s.trim();
+            if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                date = trimmed;
+            } else {
+                // Avni keeps a Date answer as an instant; its calendar day is the day in India (as DateTimeUtil.toDateString).
+                Instant instant = AbdmTime.parse(trimmed);
+                if (instant != null) date = instant.atZone(AVNI_DATE_ZONE).toLocalDate().toString();
+            }
+        }
+        if (date == null) return putString(target, value);
+        target.put("valueDateTime", date);
+        return true;
+    }
+
+    private static boolean putDateTime(ObjectNode target, Object value) {
+        Instant instant = null;
+        if (value instanceof Instant i) instant = i;
+        else if (value instanceof org.joda.time.DateTime jdt) instant = Instant.ofEpochMilli(jdt.getMillis());
+        else if (value instanceof Date dt) instant = dt.toInstant();
+        else if (value instanceof String s) instant = AbdmTime.parse(s.trim());
+        if (instant == null) return putString(target, value);
+        target.put("valueDateTime", AbdmTime.format(instant));
+        return true;
+    }
+
+    private static boolean putString(ObjectNode target, Object value) {
+        if (value instanceof Map || value instanceof Collection || value instanceof Object[]) return false;
+        String text = value.toString();
+        if (!hasText(text)) return false;
+        target.put("valueString", text);
+        return true;
+    }
+
+    static String fhirGender(String gender) {
+        if (gender == null) return "unknown";
+        return switch (gender.trim().toLowerCase(Locale.ROOT)) {
+            case "m", "male" -> "male";
+            case "f", "female" -> "female";
+            case "o", "other" -> "other";
+            default -> "unknown";
+        };
+    }
+
+    private static String title(CareContextDocument d) {
+        String type = hasText(d.encounterTypeName()) ? d.encounterTypeName() : "Consultation";
+        return hasText(d.hipName()) ? type + " — " + d.hipName() : type;
+    }
+
+    private static String practitionerName(CareContextDocument d) {
+        return hasText(d.practitionerName()) ? d.practitionerName() : "Health worker";
+    }
+
+    private static ObjectNode resource(String type, String id, String nrcesProfile) {
+        ObjectNode r = AbdmJson.obj();
+        r.put("resourceType", type);
+        r.put("id", id);
+        r.putObject("meta").putArray("profile").add(NRCES + nrcesProfile);
+        return r;
+    }
+
+    private static ObjectNode entry(ObjectNode resource) {
+        ObjectNode e = AbdmJson.obj();
+        e.put("fullUrl", "urn:uuid:" + resource.get("id").asText());
+        e.set("resource", resource);
+        return e;
+    }
+
+    private static ObjectNode reference(String id, String display) {
+        ObjectNode r = AbdmJson.obj();
+        r.put("reference", "urn:uuid:" + id);
+        if (hasText(display)) r.put("display", display);
+        return r;
+    }
+
+    private static ObjectNode codeable(String system, String code, String display) {
+        ObjectNode c = AbdmJson.obj();
+        ObjectNode coding = c.putArray("coding").addObject();
+        coding.put("system", system);
+        coding.put("code", code);
+        coding.put("display", display);
+        c.put("text", display);
+        return c;
+    }
+
+    private static ObjectNode abhaIdentifier(String label, String value) {
+        ObjectNode identifier = AbdmJson.obj();
+        ObjectNode type = identifier.putObject("type");
+        ObjectNode coding = type.putArray("coding").addObject();
+        coding.put("system", V2_0203);
+        coding.put("code", "MR");
+        coding.put("display", "Medical record number");
+        type.put("text", label);
+        identifier.put("system", ABHA_SYSTEM);
+        identifier.put("value", value);
+        return identifier;
+    }
+
+    private static String join(Collection<?> values) {
+        return values.stream().filter(Objects::nonNull).map(Object::toString).filter(FhirBundleBuilder::hasText).collect(Collectors.joining(", "));
+    }
+
+    private static boolean hasText(String s) {
+        return s != null && !s.isBlank();
     }
 }
