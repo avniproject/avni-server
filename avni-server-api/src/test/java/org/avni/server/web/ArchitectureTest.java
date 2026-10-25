@@ -29,7 +29,12 @@ public class ArchitectureTest {
 
     private static final Map<String, Set<String>> GET_WRITE_EXCLUSIONS = Map.of(
             "org.avni.server.web.IdentifierAssignmentController", Set.of(),
-            "org.avni.server.web.FormController", Set.of("getFormIdentifiers")
+            "org.avni.server.web.FormController", Set.of("getFormIdentifiers"),
+            // DEMO-ONLY abdm-hackathon: these GETs call ABDM or Eka and write a traffic-log row; never merged.
+            "org.avni.server.web.abdm.AbdmAdminController", Set.of(),
+            "org.avni.server.web.abdm.AbdmHipController", Set.of(),
+            "org.avni.server.web.abdm.AbdmHiuController", Set.of(),
+            "org.avni.server.web.abdm.MockConsentManagerController", Set.of()
     );
 
     @ArchTest
