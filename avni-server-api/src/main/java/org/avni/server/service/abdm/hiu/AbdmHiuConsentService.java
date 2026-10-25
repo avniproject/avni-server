@@ -8,12 +8,14 @@ import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmPaths;
 import org.avni.server.service.abdm.AbdmTime;
+import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abdm.hip.AbdmRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -52,18 +54,22 @@ public class AbdmHiuConsentService {
     private final AbdmGatewayClient gateway;
     private final AbdmHiuDataService dataService;
     private final AbdmRetry retry;
+    private final ObjectProvider<EkaHiuService> ekaHiuService;
 
     public AbdmHiuConsentService(AbdmConfig cfg, AbdmHiuStore store, AbdmGatewayClient gateway, AbdmHiuDataService dataService,
-                                 AbdmRetry retry) {
+                                 AbdmRetry retry, ObjectProvider<EkaHiuService> ekaHiuService) {
         this.cfg = cfg;
         this.store = store;
         this.gateway = gateway;
         this.dataService = dataService;
         this.retry = retry;
+        this.ekaHiuService = ekaHiuService;
     }
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
                                               String purposeCode, String requesterName) {
+        // Eka mode: the same request through Eka Care; list() and the records read the same tables either way.
+        if (cfg.isEka()) return ekaHiuService.getObject().requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName);
         String address = AbdmFlows.withSuffix(abhaAddress, cfg.getAbhaAddressSuffix());
         if (address == null) throw AbdmRequestException.badRequest("abhaAddress is required");
         LocalDate today = LocalDate.now(ZoneOffset.UTC);

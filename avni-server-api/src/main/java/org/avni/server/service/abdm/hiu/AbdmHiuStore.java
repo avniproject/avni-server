@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,6 +54,10 @@ public class AbdmHiuStore {
 
     public record Record(String careContextReference, String hipId, String transactionId, Instant receivedAt,
                          Boolean checksumMatched, JsonNode bundle) {
+    }
+
+    // Eka mode: a patient's Eka OID and subject, from the M1 abha_event table.
+    public record EkaPatientRow(String ekaOid, String subjectUuid) {
     }
 
     // ---- consent requests
@@ -187,6 +192,13 @@ public class AbdmHiuStore {
                 params().addValue("req", requestId, Types.VARCHAR), DATA_FLOW));
     }
 
+    // Newest first. Eka mode keeps its HIU keysets as flows of a consent id of their own (EkaHiuService.KEYSET_CONSENT_ID).
+    public List<DataFlow> findDataFlowsByConsent(String consentId) {
+        if (consentId == null) return new ArrayList<>();
+        return jdbc.query("select * from abdm_data_flow where organisation_id = :org and role = 'HIU' and consent_id = :consentId order by id desc",
+                params().addValue("consentId", consentId, Types.VARCHAR), DATA_FLOW);
+    }
+
     public Optional<DataFlow> findDataFlowByTransaction(String transactionId) {
         if (transactionId == null) return Optional.empty();
         return one(jdbc.query("select * from abdm_data_flow where organisation_id = :org and role = 'HIU' and transaction_id = :tx order by id desc",
@@ -217,6 +229,27 @@ public class AbdmHiuStore {
                         .addValue("consentId", consentId, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
                         .addValue("ref", careContextReference, Types.VARCHAR).addValue("matched", checksumMatched, Types.BOOLEAN)
                         .addValue("bundle", fhirBundleJson, Types.VARCHAR));
+    }
+
+    // Eka mode: a webhook delivered twice, or a push in several parts, keeps one record per care context.
+    public boolean hasHealthInformation(String transactionId, String careContextReference) {
+        if (transactionId == null) return false;
+        Integer count = jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = :org and transaction_id = :tx " +
+                        "and care_context_reference is not distinct from :ref",
+                params().addValue("tx", transactionId, Types.VARCHAR).addValue("ref", careContextReference, Types.VARCHAR), Integer.class);
+        return count != null && count > 0;
+    }
+
+    // Eka mode, read-only: the Eka OID of the latest live ABHA event (M1) naming one of these ABHA addresses.
+    public Optional<EkaPatientRow> findEkaPatientByAbhaAddress(Collection<String> abhaAddresses) {
+        List<String> addresses = abhaAddresses == null ? List.of() : abhaAddresses.stream().filter(a -> a != null && !a.isBlank())
+                .map(a -> a.trim().toLowerCase(Locale.ROOT)).distinct().toList();
+        if (addresses.isEmpty()) return Optional.empty();
+        return one(jdbc.query("select eka_oid, subject_uuid from abha_event where organisation_id = :org and is_voided = false " +
+                        "and eka_oid is not null and action <> 'removed' and lower(abha_address) in (:addresses) " +
+                        "order by created_date_time desc, id desc limit 1",
+                params().addValue("addresses", addresses),
+                (rs, n) -> new EkaPatientRow(rs.getString("eka_oid"), rs.getString("subject_uuid"))));
     }
 
     // Every record received under the consent request's artefacts.
