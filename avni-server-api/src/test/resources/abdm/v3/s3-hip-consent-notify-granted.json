@@ -1,0 +1,28 @@
+{
+  "notification": {
+    "status": "GRANTED",
+    "consentId": "consent-hip-1",
+    "consentDetail": {
+      "schemaVersion": "v3",
+      "consentId": "consent-hip-1",
+      "createdAt": "2026-10-25T10:00:00.000Z",
+      "patient": {"id": "ramesh.gond@sbx"},
+      "careContexts": [
+        {"patientReference": "subject-1", "careContextReference": "enc-1"},
+        {"patientReference": "subject-1", "careContextReference": "enc-2"}
+      ],
+      "purpose": {"text": "Care Management", "code": "CAREMGT", "refUri": "http://terminology.hl7.org/ValueSet/v3-PurposeOfUse"},
+      "hip": {"id": "TANUH"},
+      "hiu": {"id": "TANUH-HIU"},
+      "consentManager": {"id": "sbx"},
+      "hiTypes": ["OPConsultation"],
+      "permission": {
+        "accessMode": "VIEW",
+        "dateRange": {"from": "2026-01-01T00:00:00.000Z", "to": "2026-10-25T23:59:59.999Z"},
+        "dataEraseAt": "2026-11-25T00:00:00.000Z",
+        "frequency": {"unit": "HOUR", "value": 1, "repeats": 0}
+      }
+    },
+    "signature": "sig"
+  }
+}

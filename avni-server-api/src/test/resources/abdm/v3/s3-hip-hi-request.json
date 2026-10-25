@@ -1,0 +1,14 @@
+{
+  "transactionId": "tx-1",
+  "hiRequest": {
+    "consent": {"id": "consent-hip-1"},
+    "dateRange": {"from": "2026-01-01T00:00:00.000Z", "to": "2026-10-25T23:59:59.999Z"},
+    "dataPushUrl": "https://hiu.example/api/v3/hiu/health-information/transfer",
+    "keyMaterial": {
+      "cryptoAlg": "ECDH",
+      "curve": "Curve25519",
+      "dhPublicKey": {"expiry": "2026-10-26T10:00:00.000Z", "parameters": "Curve25519/32byte random key", "keyValue": "requester-public-key"},
+      "nonce": "requester-nonce"
+    }
+  }
+}

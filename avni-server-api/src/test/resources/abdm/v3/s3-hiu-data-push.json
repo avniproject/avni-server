@@ -1,0 +1,14 @@
+{
+  "pageNumber": 1,
+  "pageCount": 1,
+  "transactionId": "tx-1",
+  "entries": [
+    {"content": "cipher-1", "media": "application/fhir+json", "checksum": "CHECKSUM", "careContextReference": "enc-1"}
+  ],
+  "keyMaterial": {
+    "cryptoAlg": "ECDH",
+    "curve": "Curve25519",
+    "dhPublicKey": {"expiry": "2026-10-26T10:00:00.000Z", "parameters": "Curve25519/32byte random key", "keyValue": "hip-public-key"},
+    "nonce": "hip-nonce"
+  }
+}
