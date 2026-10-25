@@ -120,7 +120,9 @@ public class EkaAbdmClient {
             throw e;
         } finally {
             try {
-                messageLog.outgoing(method, "eka:" + path, requestId, body, status);
+                // The query string can carry the patient's Eka ID (?oid=): the traffic log keeps the path only.
+                int query = path.indexOf('?');
+                messageLog.outgoing(method, "eka:" + (query < 0 ? path : path.substring(0, query)), requestId, body, status);
             } catch (RuntimeException e) {
                 logger.warn("ABDM message log failed for {}: {}", call, e.getClass().getSimpleName());
             }
