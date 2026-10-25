@@ -1,0 +1,25 @@
+{
+  "service": "abdm",
+  "event": "abha.hiu_data_push",
+  "event_time": 1761370000,
+  "transaction_id": "wh-push-1",
+  "timestamp": 1761370005,
+  "business_id": "demo-business",
+  "client_id": "demo-client",
+  "data": {
+    "abha_address": "demo.patient@sbx",
+    "abha_number": "",
+    "hip_id": "OTHER-HIP",
+    "oid": "eka-oid-0001",
+    "partner_patient_id": "subject-1",
+    "consent_id": "artefact-1",
+    "transaction_id": "flow-tx-9",
+    "entries": [],
+    "key_information": {
+      "crypto_alg": "ECDH",
+      "curve": "Curve25519",
+      "dh_public_key": {"expiry": "2026-10-26T12:00:00.000Z", "key_value": "SENDER_PUBLIC_KEY", "parameters": "Curve25519/32byte random key"},
+      "nonce": "SENDER_NONCE"
+    }
+  }
+}

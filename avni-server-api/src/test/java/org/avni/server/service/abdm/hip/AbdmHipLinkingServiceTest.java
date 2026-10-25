@@ -8,7 +8,9 @@ import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Gender;
 import org.avni.server.domain.Individual;
+import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abha.EkaCredentialCipher;
@@ -19,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -55,12 +58,18 @@ public class AbdmHipLinkingServiceTest {
     private final IndividualRepository individualRepository = mock(IndividualRepository.class);
     private final AbhaLinkRepository abhaLinkRepository = mock(AbhaLinkRepository.class);
     private final EkaCredentialCipher cipher = mock(EkaCredentialCipher.class);
+    private final EkaHipService ekaHipService = mock(EkaHipService.class);
+    private AbdmConfig cfg;
     private AbdmHipLinkingService service;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() {
-        service = new AbdmHipLinkingService(AbdmTestSupport.config(), store, gateway, AbdmTestSupport.orgContext(),
-                individualRepository, abhaLinkRepository, cipher, AbdmTestSupport.noWaitRetry());
+        cfg = AbdmTestSupport.config();
+        ObjectProvider<EkaHipService> ekaProvider = mock(ObjectProvider.class);
+        when(ekaProvider.getObject()).thenReturn(ekaHipService);
+        service = new AbdmHipLinkingService(cfg, store, gateway, AbdmTestSupport.orgContext(),
+                individualRepository, abhaLinkRepository, cipher, AbdmTestSupport.noWaitRetry(), ekaProvider);
         Individual individual = individual();
         when(individualRepository.findByUuid("subject-1")).thenReturn(individual);
         AbhaLink link = new AbhaLink();
@@ -224,6 +233,25 @@ public class AbdmHipLinkingServiceTest {
 
         verify(store).markByLinkRequest(eq("req-link-1"), eq("FAILED"), contains("ABDM-1091"));
         verify(store).clearLinkToken(INDIVIDUAL_ID, HIP_ID);
+    }
+
+    @Test
+    public void inEkaModeLinkingGoesThroughEkaAndNotTheGateway() {
+        when(cfg.isEka()).thenReturn(true);
+        List<Map<String, Object>> fromEka = List.of(Map.of("reference", "enc-2", "status", "LINK_REQUESTED"));
+        when(ekaHipService.linkCareContexts("subject-1")).thenReturn(fromEka);
+
+        assertEquals(fromEka, service.linkCareContexts("subject-1"));
+
+        verifyNoInteractions(gateway, individualRepository);
+        verify(store, never()).ensureCareContexts(any(Long.class), anyString(), anyString(), anyString(), any());
+    }
+
+    @Test
+    public void outsideEkaModeEkaIsNotUsed() {
+        service.linkCareContexts("subject-1");
+
+        verifyNoInteractions(ekaHipService);
     }
 
     @Test

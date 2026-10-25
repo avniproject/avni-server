@@ -1,0 +1,19 @@
+{
+  "service": "abdm",
+  "event": "abha.link_care_context",
+  "event_time": 1761370000,
+  "transaction_id": "wh-link-1",
+  "timestamp": 1761370005,
+  "business_id": "demo-business",
+  "client_id": "demo-client",
+  "data": {
+    "abha_address": "demo.patient@sbx",
+    "hip_id": "TANUH",
+    "care_context_id": "enc-1",
+    "status": "LINKED",
+    "error": null,
+    "retry_count": 0,
+    "oid": "eka-oid-0001",
+    "partner_patient_id": "subject-1"
+  }
+}
