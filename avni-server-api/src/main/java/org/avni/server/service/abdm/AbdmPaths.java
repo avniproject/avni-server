@@ -22,6 +22,8 @@ public final class AbdmPaths {
     public static final String IN_HIU_HEALTH_INFORMATION_ON_REQUEST = "/api/v3/hiu/health-information/on-request";
     // Our dataPushUrl: an HIP posts encrypted records here. Not a gateway path.
     public static final String IN_HIU_DATA_PUSH = "/api/v3/hiu/health-information/transfer";
+    // Eka mode: Eka Care posts every ABDM event (link status, data fetch, consent update, data push) here, signed.
+    public static final String IN_EKA_WEBHOOK = "/api/v3/eka/webhook";
 
     // Paths we call on the gateway, relative to AbdmConfig.gatewayBaseUrl(). The session path is config.
     public static final String OUT_BRIDGE_URL = "/api/hiecm/gateway/v3/bridge/url";

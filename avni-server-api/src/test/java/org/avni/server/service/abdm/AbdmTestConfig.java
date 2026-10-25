@@ -25,6 +25,6 @@ public final class AbdmTestConfig {
         return new AbdmConfig(environment, mode, sandboxBaseUrl, "/api/hiecm/gateway/v3/sessions", "/api/hiecm/gateway/v3/certs",
                 "sbx", CLIENT_ID, clientSecret, verifyJwt, "", "TANUH", "TANUH Health Centre", "TANUH-HIU", "",
                 "", "123456", "@sbx", callbackDelayMs, "https://facilitysbx.abdm.gov.in", "", "",
-                "https://hpridsbx.abdm.gov.in", "");
+                "https://hpridsbx.abdm.gov.in", "", "", "", "Dr. Demo", true, "log");
     }
 }

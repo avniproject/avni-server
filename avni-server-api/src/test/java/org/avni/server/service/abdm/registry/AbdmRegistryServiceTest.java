@@ -30,7 +30,7 @@ public class AbdmRegistryServiceTest {
     private static AbdmConfig config(String mode, String hfrSearchPath) {
         return new AbdmConfig(new MockEnvironment(), mode, "https://dev.abdm.gov.in", "/api/hiecm/gateway/v3/sessions",
                 "/api/hiecm/gateway/v3/certs", "sbx", "client", "", "log", "", "TANUH", "TANUH Health Centre", "TANUH-HIU", "", "",
-                "123456", "@sbx", 300, HFR + "/", hfrSearchPath, HFR_SUBMIT, HPR, HPR_SEARCH);
+                "123456", "@sbx", 300, HFR + "/", hfrSearchPath, HFR_SUBMIT, HPR, HPR_SEARCH, "", "", "Dr. Demo", true, "log");
     }
 
     private AbdmRegistryService service(String mode) {

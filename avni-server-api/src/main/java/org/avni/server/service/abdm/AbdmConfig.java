@@ -10,7 +10,7 @@ import org.springframework.util.StringUtils;
 // which serves the same paths as NHA's gateway, so the HIP and HIU code is the same in both modes.
 @Component
 public class AbdmConfig {
-    public enum Mode {MOCK, SANDBOX}
+    public enum Mode {MOCK, SANDBOX, EKA}
 
     public static final String MOCK_PREFIX = "/mock-abdm";
 
@@ -37,6 +37,11 @@ public class AbdmConfig {
     private final String hfrSubmitPath;
     private final String hprBaseUrl;
     private final String hprSearchPath;
+    private final String ekaClinicId;
+    private final String ekaDoctorOid;
+    private final String ekaRequesterName;
+    private final boolean ekaSendData;
+    private final String ekaWebhookVerify;
 
     public AbdmConfig(Environment environment,
                       @Value("${abdm.gateway.mode:mock}") String mode,
@@ -60,7 +65,12 @@ public class AbdmConfig {
                       @Value("${abdm.m4.hfr-search-path:}") String hfrSearchPath,
                       @Value("${abdm.m4.hfr-submit-path:}") String hfrSubmitPath,
                       @Value("${abdm.m4.hpr-base-url:https://hpridsbx.abdm.gov.in}") String hprBaseUrl,
-                      @Value("${abdm.m4.hpr-search-path:}") String hprSearchPath) {
+                      @Value("${abdm.m4.hpr-search-path:}") String hprSearchPath,
+                      @Value("${abdm.eka.clinic-id:}") String ekaClinicId,
+                      @Value("${abdm.eka.doctor-oid:}") String ekaDoctorOid,
+                      @Value("${abdm.eka.requester-name:Dr. Demo}") String ekaRequesterName,
+                      @Value("${abdm.eka.send-data:true}") boolean ekaSendData,
+                      @Value("${abdm.eka.webhook-verify:log}") String ekaWebhookVerify) {
         this.environment = environment;
         this.mode = mode;
         this.sandboxBaseUrl = sandboxBaseUrl;
@@ -84,14 +94,27 @@ public class AbdmConfig {
         this.hfrSubmitPath = hfrSubmitPath;
         this.hprBaseUrl = hprBaseUrl;
         this.hprSearchPath = hprSearchPath;
+        this.ekaClinicId = ekaClinicId;
+        this.ekaDoctorOid = ekaDoctorOid;
+        this.ekaRequesterName = ekaRequesterName;
+        this.ekaSendData = ekaSendData;
+        this.ekaWebhookVerify = ekaWebhookVerify;
     }
 
     public Mode getMode() {
-        return "sandbox".equalsIgnoreCase(mode) ? Mode.SANDBOX : Mode.MOCK;
+        if ("sandbox".equalsIgnoreCase(mode)) return Mode.SANDBOX;
+        if ("eka".equalsIgnoreCase(mode)) return Mode.EKA;
+        return Mode.MOCK;
     }
 
     public boolean isMock() {
         return getMode() == Mode.MOCK;
+    }
+
+    // M2/M3/M4 through Eka Care's ABDM Connect API, with the organisation's Eka settings and token (the M1 ones),
+    // instead of NHA's gateway. Eka calls us back on one webhook, AbdmPaths.IN_EKA_WEBHOOK.
+    public boolean isEka() {
+        return getMode() == Mode.EKA;
     }
 
     // Where outgoing gateway calls go.
@@ -147,4 +170,9 @@ public class AbdmConfig {
     public String getHfrSubmitPath() { return hfrSubmitPath; }
     public String getHprBaseUrl() { return trimSlash(hprBaseUrl); }
     public String getHprSearchPath() { return hprSearchPath; }
+    public String getEkaClinicId() { return ekaClinicId; }
+    public String getEkaDoctorOid() { return ekaDoctorOid; }
+    public String getEkaRequesterName() { return ekaRequesterName; }
+    public boolean isEkaSendData() { return ekaSendData; }
+    public String getEkaWebhookVerify() { return ekaWebhookVerify; }
 }
