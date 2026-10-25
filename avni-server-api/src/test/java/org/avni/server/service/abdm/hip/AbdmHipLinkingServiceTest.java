@@ -157,6 +157,32 @@ public class AbdmHipLinkingServiceTest {
         verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-1", "enc-2")), eq("FAILED"), contains("bad"));
     }
 
+    // The mock gateway keeps its links in memory, so after a restart it has forgotten visits our table still calls
+    // LINKED; without this, a consent approved there would carry no care contexts.
+    @Test
+    public void inMockModeVisitsAlreadyLinkedAreLinkedAgain() {
+        when(cfg.isMock()).thenReturn(true);
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "LINKED", null), row("enc-2", "LINKED", null)));
+        when(store.findPatientLink(INDIVIDUAL_ID, HIP_ID)).thenReturn(Optional.of(new AbdmHipStore.PatientLink(3, INDIVIDUAL_ID,
+                HIP_ID, DIGITS, "asha.devi@sbx", "LINKED", "req-old", "enc:tok-9", null)));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(gateway).post(eq(AbdmPaths.OUT_LINK_CARE_CONTEXT), anyString(), body.capture(), any());
+        assertEquals(2, body.getValue().get("patient").get(0).get("careContexts").size());
+    }
+
+    @Test
+    public void outsideMockModeVisitsAlreadyLinkedAreNotSentAgain() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "LINKED", null), row("enc-2", "LINKED", null)));
+
+        service.linkCareContexts("subject-1");
+
+        verify(gateway, never()).post(eq(AbdmPaths.OUT_LINK_CARE_CONTEXT), anyString(), any(), any());
+        verify(gateway, never()).post(eq(AbdmPaths.OUT_GENERATE_TOKEN), anyString(), any(), any());
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     public void onGenerateTokenKeepsTheTokenThenLinksTheUnlinkedVisitsWithIt() {

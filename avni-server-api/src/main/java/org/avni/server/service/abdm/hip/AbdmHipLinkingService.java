@@ -117,7 +117,10 @@ public class AbdmHipLinkingService {
         String hipId = cfg.getHipId();
         store.ensureCareContexts(patient.individualId(), hipId, patient.uuid(), HI_TYPE,
                 patient.visits().stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
-        List<AbdmHipStore.CareContext> toLink = notLinked(store.findCareContexts(patient.individualId(), hipId));
+        List<AbdmHipStore.CareContext> rows = store.findCareContexts(patient.individualId(), hipId);
+        // DEMO-ONLY: the mock gateway keeps its links in memory, so after a restart it has forgotten visits this table still
+        // calls LINKED. In mock mode every visit is linked again.
+        List<AbdmHipStore.CareContext> toLink = cfg.isMock() ? rows : notLinked(rows);
         if (toLink.isEmpty()) return view(patient);
 
         Optional<AbdmHipStore.PatientLink> link = store.findPatientLink(patient.individualId(), hipId);

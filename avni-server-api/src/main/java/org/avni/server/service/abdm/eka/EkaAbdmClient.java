@@ -91,6 +91,11 @@ public class EkaAbdmClient {
         return baseUrlOf(config(organisationId()));
     }
 
+    // The organisation's Eka client ID (not a secret), for the admin screen.
+    public String clientId() {
+        return config(organisationId()).getClientId();
+    }
+
     // Throws when no Eka token can be had for the organisation; for the admin screen.
     public void checkToken() {
         token(organisationId());

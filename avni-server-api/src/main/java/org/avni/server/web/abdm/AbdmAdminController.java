@@ -67,11 +67,19 @@ public class AbdmAdminController {
         status.put("gatewayBaseUrl", cfg.isEka() ? ekaBaseUrl() : cfg.gatewayBaseUrl());
         status.put("publicBaseUrl", cfg.publicBaseUrl());
         if (cfg.isEka()) status.put("webhookUrl", cfg.callbackUrl(AbdmPaths.IN_EKA_WEBHOOK));
-        status.put("clientId", cfg.getClientId());
+        status.put("clientId", cfg.isEka() ? ekaClientId() : cfg.getClientId());
         status.put("hipId", cfg.getHipId());
         status.put("hiuId", cfg.getHiuId());
         status.put("session", sessionState);
         return status;
+    }
+
+    private String ekaClientId() {
+        try {
+            return ekaClient.clientId();
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     private String ekaBaseUrl() {
