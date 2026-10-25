@@ -7,6 +7,7 @@ import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
@@ -26,6 +27,8 @@ import java.util.Map;
 // The bridge's own screen: is the session up, register our callback address with the gateway, what the gateway knows
 // about us, and the message traffic. Organisation administrators only (EditOrganisationConfiguration).
 // Gateway refusals come back as 200 with the error, so the screen can show them next to the button that caused them.
+// In Eka mode the "session" is an Eka access token for the organisation, the gateway is Eka's base URL, and webhookUrl
+// is the address to give Eka for its webhooks.
 @RestController
 public class AbdmAdminController {
     private final AccessControlService accessControlService;
@@ -33,15 +36,17 @@ public class AbdmAdminController {
     private final AbdmSessionService session;
     private final AbdmGatewayClient client;
     private final AbdmMessageLog messageLog;
+    private final EkaAbdmClient ekaClient;
 
     @Autowired
     public AbdmAdminController(AccessControlService accessControlService, AbdmConfig cfg, AbdmSessionService session,
-                               AbdmGatewayClient client, AbdmMessageLog messageLog) {
+                               AbdmGatewayClient client, AbdmMessageLog messageLog, EkaAbdmClient ekaClient) {
         this.accessControlService = accessControlService;
         this.cfg = cfg;
         this.session = session;
         this.client = client;
         this.messageLog = messageLog;
+        this.ekaClient = ekaClient;
     }
 
     @GetMapping("/web/abdm/status")
@@ -49,7 +54,8 @@ public class AbdmAdminController {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         Map<String, Object> sessionState = new LinkedHashMap<>();
         try {
-            session.accessToken();
+            if (cfg.isEka()) ekaClient.checkToken();
+            else session.accessToken();
             sessionState.put("ok", true);
             sessionState.put("error", null);
         } catch (RuntimeException e) {
@@ -57,14 +63,23 @@ public class AbdmAdminController {
             sessionState.put("error", e.getMessage());
         }
         Map<String, Object> status = new LinkedHashMap<>();
-        status.put("mode", cfg.isMock() ? "mock" : "sandbox");
-        status.put("gatewayBaseUrl", cfg.gatewayBaseUrl());
+        status.put("mode", cfg.isMock() ? "mock" : cfg.isEka() ? "eka" : "sandbox");
+        status.put("gatewayBaseUrl", cfg.isEka() ? ekaBaseUrl() : cfg.gatewayBaseUrl());
         status.put("publicBaseUrl", cfg.publicBaseUrl());
+        if (cfg.isEka()) status.put("webhookUrl", cfg.callbackUrl(AbdmPaths.IN_EKA_WEBHOOK));
         status.put("clientId", cfg.getClientId());
         status.put("hipId", cfg.getHipId());
         status.put("hiuId", cfg.getHiuId());
         status.put("session", sessionState);
         return status;
+    }
+
+    private String ekaBaseUrl() {
+        try {
+            return ekaClient.baseUrl();
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     @PostMapping("/web/abdm/bridge-url")

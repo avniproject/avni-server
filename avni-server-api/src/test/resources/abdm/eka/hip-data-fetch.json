@@ -1,0 +1,28 @@
+{
+  "service": "abdm",
+  "event": "abha.hip_data_fetch",
+  "event_time": 1761370000,
+  "transaction_id": "wh-fetch-1",
+  "timestamp": 1761370005,
+  "business_id": "demo-business",
+  "client_id": "demo-client",
+  "data": {
+    "abha_address": "demo.patient@sbx",
+    "oid": "eka-oid-0001",
+    "partner_patient_id": "subject-1",
+    "hip_id": "TANUH",
+    "transaction_id": "flow-tx-1",
+    "care_contexts": ["enc-1", "enc-2"],
+    "key_information": {
+      "crypto_alg": "ECDH",
+      "curve": "Curve25519",
+      "dh_public_key": {
+        "expiry": "2026-10-26T12:00:00.000Z",
+        "parameters": "Curve25519/32byte random key",
+        "key_value": "REQUESTER_PUBLIC_KEY"
+      },
+      "nonce": "REQUESTER_NONCE"
+    },
+    "hi_types": ["OPConsultation"]
+  }
+}

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
@@ -26,6 +27,7 @@ public class AbdmRegistryServiceTest {
     private static final String HPR_SEARCH = "/api/v1/search/searchHealthProfessional";
 
     private AbdmGatewayClient gatewayClient;
+    private EkaAbdmClient ekaClient;
 
     private static AbdmConfig config(String mode, String hfrSearchPath) {
         return new AbdmConfig(new MockEnvironment(), mode, "https://dev.abdm.gov.in", "/api/hiecm/gateway/v3/sessions",
@@ -34,7 +36,17 @@ public class AbdmRegistryServiceTest {
     }
 
     private AbdmRegistryService service(String mode) {
-        return new AbdmRegistryService(config(mode, HFR_SEARCH), gatewayClient);
+        return new AbdmRegistryService(config(mode, HFR_SEARCH), gatewayClient, ekaClient);
+    }
+
+    private static AbdmConfig ekaConfig(String clinicId) {
+        return new AbdmConfig(new MockEnvironment(), "eka", "https://dev.abdm.gov.in", "/api/hiecm/gateway/v3/sessions",
+                "/api/hiecm/gateway/v3/certs", "sbx", "client", "", "log", "", "TANUH", "TANUH Health Centre", "TANUH-HIU", "", "",
+                "123456", "@sbx", 300, HFR, HFR_SEARCH, HFR_SUBMIT, HPR, HPR_SEARCH, clinicId, "", "Dr. Demo", true, "log");
+    }
+
+    private AbdmRegistryService eka(String clinicId) {
+        return new AbdmRegistryService(ekaConfig(clinicId), gatewayClient, ekaClient);
     }
 
     private static ObjectNode criteria(String field, String value) {
@@ -46,6 +58,7 @@ public class AbdmRegistryServiceTest {
     @Before
     public void setUp() {
         gatewayClient = mock(AbdmGatewayClient.class);
+        ekaClient = mock(EkaAbdmClient.class);
     }
 
     @Test
@@ -158,10 +171,109 @@ public class AbdmRegistryServiceTest {
 
     @Test
     public void sandboxWithoutAConfiguredPathSaysSoAndCallsNothing() {
-        JsonNode answer = new AbdmRegistryService(config("sandbox", ""), gatewayClient).searchFacilities(AbdmJson.obj());
+        JsonNode answer = new AbdmRegistryService(config("sandbox", ""), gatewayClient, ekaClient).searchFacilities(AbdmJson.obj());
 
         assertEquals("sandbox", answer.get("mode").asText());
         assertTrue(answer.get("error").asText().contains("abdm.m4.hfr-search-path"));
         verifyNoInteractions(gatewayClient);
+    }
+
+    // ---- Eka mode
+
+    @Test
+    public void ekaFacilitySearchLooksTheHfrIdUpAtEka() {
+        when(ekaClient.get(anyString(), anyMap())).thenReturn(new AbdmGatewayResponse("r1", 200, AbdmJson.read(
+                "{\"data\":{\"facilityId\":\"IN2910000001\",\"facilityName\":\"Hoskote PHC\"},\"error\":{},\"success\":true}")));
+
+        JsonNode answer = eka("").searchFacilities(criteria("facilityId", " IN2910000001 "));
+
+        assertEquals("eka", answer.get("mode").asText());
+        assertEquals(200, answer.get("status").asInt());
+        assertEquals("IN2910000001", answer.at("/results/facilities/0/facilityId").asText());
+        assertEquals(1, answer.at("/results/totalFacilities").asInt());
+        verify(ekaClient).get("/abdm/nhpr/v1/hfr/search/IN2910000001", Map.of(EkaAbdmClient.H_HIP_ID, "TANUH"));
+        verifyNoInteractions(gatewayClient);
+    }
+
+    @Test
+    public void ekaFacilitySearchWithoutAnHfrIdSaysSoAndCallsNothing() {
+        JsonNode answer = eka("").searchFacilities(criteria("name", "Hoskote"));
+
+        assertEquals("eka", answer.get("mode").asText());
+        assertTrue(answer.get("error").asText(), answer.get("error").asText().contains("Eka searches facilities by HFR ID"));
+        verifyNoInteractions(ekaClient, gatewayClient);
+    }
+
+    @Test
+    public void ekaProfessionalSearchChecksTheHprId() {
+        when(ekaClient.post(anyString(), any(), anyMap())).thenReturn(new AbdmGatewayResponse("r1", 200, AbdmJson.read(
+                "{\"data\":{\"available\":false},\"error\":{},\"success\":true}")));
+
+        JsonNode answer = eka("").searchProfessionals(criteria("hprId", "dr.rao@hpr"));
+
+        assertEquals("eka", answer.get("mode").asText());
+        JsonNode professional = answer.at("/results/professionals/0");
+        assertEquals("dr.rao@hpr", professional.get("hprId").asText());
+        assertTrue(professional.get("registered").asBoolean());
+        verify(ekaClient).post(eq("/abdm/nhpr/v1/hpr/aadhaar/check/available"), eq(criteria("hprId", "dr.rao@hpr")),
+                eq(Map.of(EkaAbdmClient.H_HIP_ID, "TANUH")));
+    }
+
+    @Test
+    public void ekaProfessionalSearchWithoutAnHprIdIsNotAvailable() {
+        JsonNode answer = eka("").searchProfessionals(criteria("name", "Rao"));
+
+        assertTrue(answer.get("error").asText(), answer.get("error").asText().contains("not available via Eka"));
+        verifyNoInteractions(ekaClient, gatewayClient);
+    }
+
+    @Test
+    public void ekaSubmitOnboardsTheHipAtEka() {
+        when(ekaClient.post(anyString(), any(), anyMap())).thenReturn(new AbdmGatewayResponse("r1", 200, AbdmJson.read(
+                "{\"hip_id\":\"TANUH\",\"hip_name\":\"TANUH Health Centre\",\"hip_code\":\"C-77\",\"scan_share_url\":\"https://example.org/s/C-77\"}")));
+
+        JsonNode answer = eka("clinic-1").submitFacility(criteria("facilityName", "TANUH Hoskote"));
+
+        assertEquals("eka", answer.get("mode").asText());
+        assertEquals("C-77", answer.at("/results/hip_code").asText());
+        assertEquals("https://example.org/s/C-77", answer.at("/results/scan_share_url").asText());
+        verify(ekaClient).post(eq("/abdm/v1/hip/onboard"),
+                eq(AbdmJson.read("{\"hip_id\":\"TANUH\",\"name\":\"TANUH Hoskote\",\"clinic_id\":\"clinic-1\"}")), eq(Map.of()));
+        verifyNoInteractions(gatewayClient);
+    }
+
+    @Test
+    public void ekaSubmitTakesTheHipIdFromTheFormAndTheNameFromSettingsWhenMissing() {
+        when(ekaClient.post(anyString(), any(), anyMap())).thenReturn(new AbdmGatewayResponse("r1", 200, AbdmJson.obj()));
+
+        eka("").submitFacility(criteria("hipId", "TANUH-2"));
+
+        verify(ekaClient).post(eq("/abdm/v1/hip/onboard"),
+                eq(AbdmJson.read("{\"hip_id\":\"TANUH-2\",\"name\":\"TANUH Health Centre\"}")), eq(Map.of()));
+    }
+
+    @Test
+    public void ekaRefusalIsReturnedNotThrown() {
+        when(ekaClient.get(anyString(), anyMap())).thenThrow(new AbdmGatewayException(400, "ABDM-1035", "Eka GET refused with HTTP 400 ABDM-1035"));
+
+        JsonNode answer = eka("").searchFacilities(criteria("hfrId", "IN2910000001"));
+
+        assertEquals("eka", answer.get("mode").asText());
+        assertEquals(400, answer.get("status").asInt());
+        assertEquals("ABDM-1035", answer.get("abdmCode").asText());
+        assertTrue(answer.get("error").asText().contains("HTTP 400"));
+        assertFalse(answer.has("results"));
+    }
+
+    @Test
+    public void ekaEnvelopeSayingNoSuccessIsAnError() {
+        when(ekaClient.get(anyString(), anyMap())).thenReturn(new AbdmGatewayResponse("r1", 200, AbdmJson.read(
+                "{\"data\":null,\"error\":{\"code\":\"HFR-404\",\"message\":\"Facility not found\"},\"success\":false}")));
+
+        JsonNode answer = eka("").searchFacilities(criteria("facilityId", "IN0000000000"));
+
+        assertEquals("Facility not found", answer.get("error").asText());
+        assertEquals("HFR-404", answer.get("abdmCode").asText());
+        assertEquals(200, answer.get("status").asInt());
     }
 }

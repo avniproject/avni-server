@@ -13,6 +13,7 @@ import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abha.EkaCredentialCipher;
 import org.joda.time.DateTimeZone;
@@ -20,6 +21,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -58,10 +60,12 @@ public class AbdmHipLinkingService {
     private final AbhaLinkRepository abhaLinkRepository;
     private final EkaCredentialCipher cipher;
     private final AbdmRetry retry;
+    // Eka mode links through Eka instead. Lazy: EkaHipService reuses this service's patient loading and view.
+    private final ObjectProvider<EkaHipService> ekaHipService;
 
     public AbdmHipLinkingService(AbdmConfig cfg, AbdmHipStore store, AbdmGatewayClient gateway, AbdmOrgContext orgContext,
                                  IndividualRepository individualRepository, AbhaLinkRepository abhaLinkRepository,
-                                 EkaCredentialCipher cipher, AbdmRetry retry) {
+                                 EkaCredentialCipher cipher, AbdmRetry retry, ObjectProvider<EkaHipService> ekaHipService) {
         this.cfg = cfg;
         this.store = store;
         this.gateway = gateway;
@@ -70,6 +74,7 @@ public class AbdmHipLinkingService {
         this.abhaLinkRepository = abhaLinkRepository;
         this.cipher = cipher;
         this.retry = retry;
+        this.ekaHipService = ekaHipService;
     }
 
     // One visit that can be shared: an encounter's uuid, its display and when it happened.
@@ -104,6 +109,7 @@ public class AbdmHipLinkingService {
 
     // Links every completed visit not yet linked; answers at once with the statuses, the gateway answers later.
     public List<Map<String, Object>> linkCareContexts(String subjectUuid) {
+        if (cfg.isEka()) return ekaHipService.getObject().linkCareContexts(subjectUuid);
         Patient patient = loadPatient(subjectUuid);
         if (patient.abhaNumber() == null) {
             throw AbdmRequestException.conflict("This subject has no ABHA number");
