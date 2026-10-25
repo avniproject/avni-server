@@ -1,0 +1,5 @@
+{
+  "abhaAddress": "ramesh.gond@sbx",
+  "error": {"code": "ABDM-1204", "message": "Patient details do not match"},
+  "response": {"requestId": "req-token-1"}
+}

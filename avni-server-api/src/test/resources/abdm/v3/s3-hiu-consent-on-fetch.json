@@ -1,0 +1,23 @@
+{
+  "consent": {
+    "status": "GRANTED",
+    "consentDetail": {
+      "schemaVersion": "v3",
+      "consentId": "artefact-1",
+      "patient": {"id": "ramesh.gond@sbx"},
+      "careContexts": [{"patientReference": "subject-1", "careContextReference": "enc-1"}],
+      "purpose": {"text": "Care Management", "code": "CAREMGT"},
+      "hip": {"id": "TANUH"},
+      "hiu": {"id": "TANUH-HIU"},
+      "hiTypes": ["OPConsultation"],
+      "permission": {
+        "accessMode": "VIEW",
+        "dateRange": {"from": "2026-01-01T00:00:00.000Z", "to": "2026-10-25T23:59:59.999Z"},
+        "dataEraseAt": "2026-11-25T00:00:00.000Z",
+        "frequency": {"unit": "HOUR", "value": 1, "repeats": 0}
+      }
+    },
+    "signature": "sig"
+  },
+  "response": {"requestId": "req-fetch-1"}
+}

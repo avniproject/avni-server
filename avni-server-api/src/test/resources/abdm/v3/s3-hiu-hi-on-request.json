@@ -1,0 +1,4 @@
+{
+  "hiRequest": {"transactionId": "tx-1", "sessionStatus": "ACKNOWLEDGED"},
+  "response": {"requestId": "req-hi-1"}
+}

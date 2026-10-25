@@ -1,0 +1,4 @@
+{
+  "error": {"code": "ABDM-1100", "message": "Patient not found"},
+  "response": {"requestId": "req-init-1"}
+}
