@@ -71,6 +71,8 @@ dependencies {
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
     implementation 'com.auth0:jwks-rsa:0.3.0'
     implementation 'com.auth0:java-jwt:3.3.0'
+    // DEMO-ONLY abdm-hackathon: Fidelius (ECDH on Curve25519, HKDF, AES-GCM) for ABDM health-information transfer
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.77'
     implementation 'com.bugsnag:bugsnag:3.+'
     implementation 'com.amazonaws:aws-java-sdk-s3'
     implementation 'com.amazonaws:aws-java-sdk-cognitoidp'

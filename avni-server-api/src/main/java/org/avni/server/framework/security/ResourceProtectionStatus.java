@@ -27,7 +27,11 @@ public class ResourceProtectionStatus {
             "/config",
             "/api/user/generateToken",
             "/open",
-            "/.well-known/**"
+            "/.well-known/**",
+            // DEMO-ONLY abdm-hackathon: ABDM gateway callbacks and the in-process stand-in gateway carry no Avni user;
+            // the callbacks are checked by AbdmCallbackVerifier instead.
+            "/api/v3/**",
+            "/mock-abdm/**"
     );
 
     public static boolean isProtected(HttpServletRequest request) {
