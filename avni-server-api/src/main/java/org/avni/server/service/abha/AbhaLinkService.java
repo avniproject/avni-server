@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 // Keeps abha_link, which subject holds which ABHA number, in step with the subject's "ABHA Number" and "ABHA Address"
 // answers. Never logs the number or the address.
@@ -90,13 +91,28 @@ public class AbhaLinkService {
         }
     }
 
-    // Sync is never refused for a duplicate: the app blocks one when the ABHA is found, and other routes (an upload,
-    // another system) are left to the warning.
+    // Sync is never refused for a duplicate: the app blocks one when the ABHA is found, a bulk upload refuses one before it
+    // saves (otherLiveHolders), and other routes (another system) are left to the warning.
     private void warnIfHeldByOthers(String number) {
         List<String> holders = abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), number);
         if (holders.size() > 1) {
             logger.warn("One ABHA number is held by {} live subjects: {}", holders.size(), holders);
         }
+    }
+
+    // Who else, live in the user's organisation, already holds the ABHA number this subject answers. Empty with ABHA off,
+    // or when the answer is not an ABHA number. A bulk upload refuses its row on this (SubjectWriter); sync never asks.
+    public List<String> otherLiveHolders(Individual individual) {
+        if (!organisationConfigService.isAbhaEnabled()) {
+            return Collections.emptyList();
+        }
+        String number = digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
+        if (number.length() != ABHA_NUMBER_DIGITS) {
+            return Collections.emptyList();
+        }
+        return abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), number).stream()
+                .filter(uuid -> !uuid.equals(individual.getUuid()))
+                .collect(Collectors.toList());
     }
 
     // The live subjects of this subject type in the user's organisation holding this number, however it is written.
