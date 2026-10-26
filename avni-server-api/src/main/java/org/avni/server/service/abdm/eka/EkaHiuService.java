@@ -125,6 +125,11 @@ public class EkaHiuService implements EkaHiuEvents {
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
                                               String purposeCode, String requesterName) {
+        return requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName, null);
+    }
+
+    public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
+                                              String purposeCode, String requesterName, LocalDate expiryDate) {
         String address = AbdmFlows.withSuffix(abhaAddress, cfg.getAbhaAddressSuffix());
         if (address == null) throw AbdmRequestException.badRequest("abhaAddress is required");
         if (!isAbhaAddress(address, cfg.getAbhaAddressSuffix())) {
@@ -137,6 +142,12 @@ public class EkaHiuService implements EkaHiuEvents {
         if (toDate.isBefore(fromDate)) throw AbdmRequestException.badRequest("'to' is before 'from'");
         List<String> types = hiTypes == null || hiTypes.isEmpty() ? List.of("OPConsultation") : hiTypes;
         String purpose = purposeCode == null || purposeCode.isBlank() ? "CAREMGT" : purposeCode.trim();
+        if (!PURPOSES.containsKey(purpose.toUpperCase(Locale.ROOT)) && !PURPOSES.containsValue(purpose)) {
+            throw AbdmRequestException.badRequest("Purpose " + purpose + " cannot be asked through Eka; use one of " + String.join(", ", PURPOSES.keySet()));
+        }
+        if (expiryDate != null && !expiryDate.isAfter(LocalDate.now(ZoneOffset.UTC))) {
+            throw AbdmRequestException.badRequest("'expiry' must be after today");
+        }
         String requester = StringUtils.hasText(requesterName) ? requesterName
                 : StringUtils.hasText(cfg.getEkaRequesterName()) ? cfg.getEkaRequesterName() : "Dr. Demo";
 
@@ -145,7 +156,9 @@ public class EkaHiuService implements EkaHiuEvents {
         Instant endOfTo = toDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusSeconds(1);
         // Never a range ending in the future (ABDM-1063).
         Instant periodTo = endOfTo.isAfter(now) ? now : endOfTo;
-        Instant expiry = now.plus(30, ChronoUnit.DAYS);
+        // The end of the expiry day asked for, else 30 days from now.
+        Instant expiry = expiryDate != null ? expiryDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusSeconds(1)
+                : now.plus(30, ChronoUnit.DAYS);
         String uuid = UUID.randomUUID().toString();
         String initRequestId = UUID.randomUUID().toString();
         // Persist first, as the NHA route does: the request is on the HIU screen whatever Eka says.
@@ -326,7 +339,34 @@ public class EkaHiuService implements EkaHiuEvents {
         for (String consentId : artefacts) {
             store.upsertArtefact(consentRequestId, consentId, abhaAddress, hiuId, GRANTED, null);
         }
+        keepGrantedTerms(consentRequestId, abhaAddress);
         logger.info("Eka consent request {} {} with {} artefact(s)", consentRequestId, status, artefacts.size());
+    }
+
+    // The patient may narrow the dates, record types or expiry when granting (HIU_FLOW_106). Eka's consent list carries
+    // what was granted; that is what the HIU shows and keeps to. Left as asked when the list does not answer.
+    private void keepGrantedTerms(String consentRequestId, String abhaAddress) {
+        if (abhaAddress == null) return;
+        EkaPatient patient = findPatient(abhaAddress, abhaAddress);
+        if (patient.oid() == null) return;
+        JsonNode consents = consentList(patient, abhaAddress);
+        if (consents == null) return;
+        for (JsonNode c : consents) {
+            if (!consentRequestId.equals(AbdmJson.text(c, "consent_id"))) continue;
+            List<String> types = AbdmFlows.texts(AbdmJson.at(c, "hi_types"), null);
+            store.setGrantedTerms(consentRequestId, types == null || types.isEmpty() ? null : String.join(",", types),
+                    instantOf(AbdmJson.text(c, "period.from")), instantOf(AbdmJson.text(c, "period.to")), instantOf(AbdmJson.text(c, "period.expiry")));
+            return;
+        }
+    }
+
+    private static Instant instantOf(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Instant.parse(value);
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
     }
 
     // Updates parked for this id before it was matched, oldest first.
@@ -442,6 +482,9 @@ public class EkaHiuService implements EkaHiuEvents {
                     }
                 } catch (AbdmGatewayException e) {
                     problem = "Entry not fetched from Eka: " + describe(e);
+                } catch (org.avni.server.service.abdm.hiu.AbdmRecordCipher.NoKeyException e) {
+                    problem = "Not kept: no key to store received records";
+                    logger.error("Eka HIU data push {}: {}", transactionId, e.getMessage());
                 } catch (RuntimeException e) {
                     problem = "Could not decrypt or read the record";
                     logger.warn("Eka HIU data push {}: care context {} unreadable: {}", transactionId, careContextId, e.getClass().getSimpleName());

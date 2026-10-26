@@ -33,6 +33,7 @@ import java.util.Optional;
 // transaction id, then take the HIP's encrypted push, decrypt each entry and keep the FHIR bundle.
 @Service
 public class AbdmHiuDataService {
+    private static final java.util.Set<String> ENDED = java.util.Set.of("REVOKED", "EXPIRED", "DENIED");
     private static final Logger logger = LoggerFactory.getLogger(AbdmHiuDataService.class);
 
     private final AbdmConfig cfg;
@@ -189,12 +190,26 @@ public class AbdmHiuDataService {
         }
     }
 
-    // [{careContextReference, hipId, transactionId, receivedAt, checksumMatched, bundle}]
+    // Hourly (AbdmHousekeepingJob): consents past their erase date expire, and records no live grant covers are deleted.
+    public void expireAndErase() {
+        int expired = store.expireOverdueConsents();
+        int erased = store.eraseRecordsOfEndedConsents();
+        if (expired > 0 || erased > 0) logger.info("ABDM HIU: {} consent request(s) expired, {} record(s) erased", expired, erased);
+    }
+
+    // [{careContextReference, hipId, transactionId, receivedAt, checksumMatched, bundle}]. Nothing once the consent is
+    // withdrawn, refused or expired, or past its erase date, and only records under an artefact still granted, whether or
+    // not the hourly erase has run yet (HIU_FLOW_202, HIU_FLOW_301).
     public List<Map<String, Object>> records(String consentRequestUuid) {
         AbdmHiuStore.Consent request = store.findConsentRequestByUuid(consentRequestUuid)
                 .orElseThrow(() -> AbdmRequestException.notFound("Consent request not found"));
         List<Map<String, Object>> out = new ArrayList<>();
+        if (ENDED.contains(request.status())) return out;
+        if (request.dataEraseAt() != null && !request.dataEraseAt().isAfter(java.time.Instant.now())) return out;
+        java.util.Set<String> granted = store.findArtefacts(List.of(request.consentRequestId())).stream()
+                .filter(a -> "GRANTED".equals(a.status())).map(AbdmHiuStore.Artefact::consentId).collect(java.util.stream.Collectors.toSet());
         for (AbdmHiuStore.Record r : store.records(request.consentRequestId())) {
+            if (!granted.contains(r.consentId())) continue;
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("careContextReference", r.careContextReference());
             m.put("hipId", r.hipId());

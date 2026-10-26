@@ -68,8 +68,13 @@ public class AbdmHiuConsentService {
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
                                               String purposeCode, String requesterName) {
+        return requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName, null);
+    }
+
+    public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
+                                              String purposeCode, String requesterName, LocalDate expiry) {
         // Eka mode: the same request through Eka Care; list() and the records read the same tables either way.
-        if (cfg.isEka()) return ekaHiuService.getObject().requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName);
+        if (cfg.isEka()) return ekaHiuService.getObject().requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName, expiry);
         String address = AbdmFlows.withSuffix(abhaAddress, cfg.getAbhaAddressSuffix());
         if (address == null) throw AbdmRequestException.badRequest("abhaAddress is required");
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -82,7 +87,8 @@ public class AbdmHiuConsentService {
 
         Instant dateFrom = fromDate.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant dateTo = toDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusMillis(1);
-        Instant dataEraseAt = Instant.now().plus(30, ChronoUnit.DAYS);
+        Instant dataEraseAt = expiry != null ? expiry.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().minusMillis(1)
+                : Instant.now().plus(30, ChronoUnit.DAYS);
         String uuid = UUID.randomUUID().toString();
         String requestId = AbdmGatewayClient.newRequestId();
         // Persist before send: on-init can arrive before post() returns.
@@ -227,19 +233,42 @@ public class AbdmHiuConsentService {
         if (!GRANTED.equals(status)) store.setArtefactStatus(artefacts, status);
     }
 
-    // [{uuid, abhaAddress, consentRequestId, status, error, createdAt, artefacts:[{consentId, status, dataFlowStatus, records}]}]
+    // [{uuid, abhaAddress, patientName, abhaNumber (masked), consentRequestId, purposeCode, hiTypes, from, to, expiry,
+    //   status, statusHistory:[{status, at}], error, createdAt, artefacts:[{consentId, status, dataFlowStatus, records}]}]
+    // NHA's list (HIU_FLOW_104): the patient, the ABHA number, the record types, the dates, the expiry, and when each
+    // status came. The dates and expiry are what the patient granted once granted (EkaHiuService), else what was asked.
     public List<Map<String, Object>> list() {
         List<AbdmHiuStore.Consent> requests = store.listConsentRequests();
-        Map<String, List<AbdmHiuStore.Artefact>> artefacts = store.findArtefacts(requests.stream().map(AbdmHiuStore.Consent::consentRequestId)
-                        .filter(id -> id != null).collect(Collectors.toList()))
+        List<String> requestIds = requests.stream().map(AbdmHiuStore.Consent::consentRequestId).filter(id -> id != null).collect(Collectors.toList());
+        Map<String, List<AbdmHiuStore.Artefact>> artefacts = store.findArtefacts(requestIds)
                 .stream().collect(Collectors.groupingBy(AbdmHiuStore.Artefact::consentRequestId));
+        Map<String, AbdmHiuStore.Patient> patients = store.patientsByAbhaAddress(requests.stream().map(AbdmHiuStore.Consent::abhaAddress)
+                .filter(a -> a != null).distinct().collect(Collectors.toList()));
+        Map<String, List<Map<String, Object>>> history = new LinkedHashMap<>();
+        for (AbdmHiuStore.StatusChange c : store.statusHistory(requestIds)) {
+            if (c.consentId() != null) continue;
+            Map<String, Object> h = new LinkedHashMap<>();
+            h.put("status", c.status());
+            h.put("at", AbdmFlows.iso(c.at()));
+            history.computeIfAbsent(c.consentRequestId(), k -> new ArrayList<>()).add(h);
+        }
         List<Map<String, Object>> out = new ArrayList<>();
         for (AbdmHiuStore.Consent r : requests) {
             Map<String, Object> m = new LinkedHashMap<>();
+            AbdmHiuStore.Patient patient = r.abhaAddress() == null || patients == null ? null : patients.get(r.abhaAddress());
             m.put("uuid", r.uuid());
             m.put("abhaAddress", r.abhaAddress());
+            m.put("patientName", patient == null ? null : patient.name());
+            m.put("abhaNumber", patient == null ? null : AbdmFlows.maskedAbhaNumber(patient.abhaNumber()));
             m.put("consentRequestId", r.consentRequestId());
+            m.put("purposeCode", r.purposeCode());
+            m.put("hiTypes", r.hiTypes() == null ? List.of() : java.util.Arrays.stream(r.hiTypes().split(",")).map(String::trim)
+                    .filter(t -> !t.isEmpty()).collect(Collectors.toList()));
+            m.put("from", AbdmFlows.iso(r.dateFrom()));
+            m.put("to", AbdmFlows.iso(r.dateTo()));
+            m.put("expiry", AbdmFlows.iso(r.dataEraseAt()));
             m.put("status", r.status());
+            m.put("statusHistory", r.consentRequestId() == null ? List.of() : history.getOrDefault(r.consentRequestId(), List.of()));
             m.put("error", r.error());
             m.put("createdAt", AbdmFlows.iso(r.createdAt()));
             List<Map<String, Object>> list = new ArrayList<>();

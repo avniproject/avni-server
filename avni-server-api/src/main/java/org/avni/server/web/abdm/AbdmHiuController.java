@@ -38,14 +38,14 @@ public class AbdmHiuController {
         this.accessControlService = accessControlService;
     }
 
-    // {abhaAddress, from:"YYYY-MM-DD", to:"YYYY-MM-DD", hiTypes:[...], purposeCode, requesterName} -> {uuid, status}
+    // {abhaAddress, from:"YYYY-MM-DD", to:"YYYY-MM-DD", expiry:"YYYY-MM-DD", hiTypes:[...], purposeCode, requesterName} -> {uuid, status}
     @PostMapping("/web/abdm/hiu/consent-requests")
     @PreAuthorize("hasAnyAuthority('user')")
     public Map<String, Object> requestConsent(@RequestBody JsonNode body) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         return consentService.requestConsent(AbdmJson.text(body, "abhaAddress"), date(body, "from"), date(body, "to"),
                 AbdmFlows.texts(AbdmJson.at(body, "hiTypes"), null), AbdmJson.text(body, "purposeCode"),
-                AbdmJson.text(body, "requesterName"));
+                AbdmJson.text(body, "requesterName"), date(body, "expiry"));
     }
 
     @GetMapping("/web/abdm/hiu/consent-requests")

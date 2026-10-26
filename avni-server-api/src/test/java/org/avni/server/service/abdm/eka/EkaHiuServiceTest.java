@@ -51,6 +51,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 // DEMO-ONLY abdm-hackathon: Avni as HIU through Eka Care (Eka mode). Real Fidelius crypto, everything else mocked.
@@ -223,7 +224,9 @@ public class EkaHiuServiceTest {
 
         verify(store).setConsentRequestStatus("init-1", "GRANTED");
         verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
-        verifyNoInteractions(eka);
+        // Only the consent list, for the terms granted (HIU_FLOW_106).
+        verify(eka).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
+        verifyNoMoreInteractions(eka);
     }
 
     @Test
@@ -295,6 +298,40 @@ public class EkaHiuServiceTest {
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
         verify(store).resolveParked(77L);
+    }
+
+    // HIU_FLOW_102: the consent's expiry is asked for, not fixed at 30 days.
+    @Test
+    public void theExpiryAskedForIsSentAndKept() {
+        LocalDate expiry = LocalDate.now().plusDays(10);
+        service.requestConsent("shyam", null, null, null, null, null, expiry);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
+        Instant end = expiry.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().minusSeconds(1);
+        assertEquals(end.toString(), body.getValue().at("/period/expiry").asText());
+        verify(store).insertConsentRequest(anyString(), eq("shyam@sbx"), eq(HIU_ID), eq("CAREMGT"), eq("OPConsultation"), any(), any(),
+                eq(end), anyString(), eq("REQUESTED"));
+    }
+
+    @Test
+    public void anExpiryThatHasPassedOrAPurposeEkaCannotCarryIsRefused() {
+        assertThrows(AbdmRequestException.class, () -> service.requestConsent("shyam", null, null, null, null, null, LocalDate.now().minusDays(1)));
+        assertThrows(AbdmRequestException.class, () -> service.requestConsent("shyam", null, null, null, "BTG", null, null));
+        verify(store, never()).insertConsentRequest(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    // HIU_FLOW_106: the patient may narrow the dates, types or expiry when granting; those are what the HIU keeps to.
+    @Test
+    public void aGrantedUpdateKeepsTheTermsThePatientGrantedFromEkasList() {
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\",\"status\":\"GRANTED\",\"hi_types\":[\"OPConsultation\"]," +
+                "\"period\":{\"from\":\"2026-03-01T00:00:00Z\",\"to\":\"2026-10-01T00:00:00Z\",\"expiry\":\"2026-11-01T00:00:00Z\"}}");
+
+        service.consentUpdate(grantedUpdate("abdm-A"));
+
+        verify(store).setGrantedTerms("abdm-A", "OPConsultation", Instant.parse("2026-03-01T00:00:00Z"),
+                Instant.parse("2026-10-01T00:00:00Z"), Instant.parse("2026-11-01T00:00:00Z"));
     }
 
     // AVNI-23: a name and a pasted command were sent to Eka as ABHA addresses.

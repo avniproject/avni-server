@@ -55,10 +55,11 @@ public class AbdmHiuConsentServiceTest {
         EkaHiuService eka = mock(EkaHiuService.class);
         when(ekaProvider.getObject()).thenReturn(eka);
         Map<String, Object> ekaAnswer = Map.of("uuid", "u-1", "status", "REQUESTED");
-        when(eka.requestConsent("ramesh.gond", null, null, List.of("OPConsultation"), "CAREMGT", "Dr. A")).thenReturn(ekaAnswer);
+        LocalDate expiry = LocalDate.of(2026, 12, 31);
+        when(eka.requestConsent("ramesh.gond", null, null, List.of("OPConsultation"), "CAREMGT", "Dr. A", expiry)).thenReturn(ekaAnswer);
         service = new AbdmHiuConsentService(cfg, store, gateway, dataService, AbdmTestSupport.noWaitRetry(), ekaProvider);
 
-        Map<String, Object> answer = service.requestConsent("ramesh.gond", null, null, List.of("OPConsultation"), "CAREMGT", "Dr. A");
+        Map<String, Object> answer = service.requestConsent("ramesh.gond", null, null, List.of("OPConsultation"), "CAREMGT", "Dr. A", expiry);
 
         assertEquals(ekaAnswer, answer);
         verifyNoInteractions(gateway);
@@ -209,6 +210,34 @@ public class AbdmHiuConsentServiceTest {
         assertEquals("GRANTED", r.get("status"));
         assertEquals("2026-10-25T10:00:00.000Z", r.get("createdAt"));
         assertEquals(List.of(Map.of("consentId", "artefact-1", "status", "GRANTED", "dataFlowStatus", "RECEIVED", "records", 2L)), r.get("artefacts"));
+    }
+
+    // HIU_FLOW_104: NHA's list shows the patient, the ABHA number, the record types, the dates, the expiry, and when each
+    // status came.
+    @Test
+    public void theListShowsThePatientWhatWasGrantedAndEachStatusWithItsTime() {
+        AbdmHiuStore.Consent granted = new AbdmHiuStore.Consent(3, "uuid-3", "cr-1", null, "req-init-1", null, "ramesh.gond@sbx", null, HIU_ID,
+                "CAREMGT", "OPConsultation,Prescription", Instant.parse("2026-01-01T00:00:00Z"), Instant.parse("2026-10-25T23:59:59Z"),
+                Instant.parse("2026-11-25T00:00:00Z"), "GRANTED", null, null, Instant.parse("2026-10-25T10:00:00Z"), null);
+        when(store.listConsentRequests()).thenReturn(List.of(granted));
+        when(store.findArtefacts(List.of("cr-1"))).thenReturn(List.of());
+        when(store.patientsByAbhaAddress(List.of("ramesh.gond@sbx"))).thenReturn(Map.of("ramesh.gond@sbx",
+                new AbdmHiuStore.Patient("Ramesh Gond", "91123456789012")));
+        when(store.statusHistory(List.of("cr-1"))).thenReturn(List.of(
+                new AbdmHiuStore.StatusChange("cr-1", null, "REQUESTED", Instant.parse("2026-10-25T10:00:00Z")),
+                new AbdmHiuStore.StatusChange("cr-1", null, "GRANTED", Instant.parse("2026-10-25T10:05:00Z"))));
+
+        Map<String, Object> r = service.list().get(0);
+
+        assertEquals("Ramesh Gond", r.get("patientName"));
+        assertEquals("xx-xxxx-xxxx-9012", r.get("abhaNumber"));
+        assertEquals("CAREMGT", r.get("purposeCode"));
+        assertEquals(List.of("OPConsultation", "Prescription"), r.get("hiTypes"));
+        assertEquals("2026-01-01T00:00:00.000Z", r.get("from"));
+        assertEquals("2026-10-25T23:59:59.000Z", r.get("to"));
+        assertEquals("2026-11-25T00:00:00.000Z", r.get("expiry"));
+        assertEquals(List.of(Map.of("status", "REQUESTED", "at", "2026-10-25T10:00:00.000Z"),
+                Map.of("status", "GRANTED", "at", "2026-10-25T10:05:00.000Z")), r.get("statusHistory"));
     }
 
     private static AbdmHiuStore.Consent request(long id, String consentRequestId, String status) {

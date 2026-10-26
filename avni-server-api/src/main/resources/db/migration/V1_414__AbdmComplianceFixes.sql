@@ -41,3 +41,27 @@ SELECT grant_all_on_table(a.rolname, t.name)
 FROM pg_roles a,
      (values ('abdm_inbound_event')) as t(name)
 WHERE pg_has_role('openchs', a.oid, 'member');
+
+-- Each status a consent request or artefact took, and when (HIU_FLOW_104). Keyed by the abdm_consent row, so the history
+-- survives a request's id being mapped from Eka's to ABDM's.
+create table abdm_consent_status
+(
+    id              bigserial primary key,
+    organisation_id integer     not null references organisation (id),
+    consent_row_id  bigint      not null references abdm_consent (id) on delete cascade,
+    status          varchar(30) not null,
+    changed_at      timestamptz not null default now()
+);
+create index abdm_consent_status_row on abdm_consent_status (consent_row_id);
+
+select enable_rls_on_tx_table('abdm_consent_status');
+
+SELECT grant_all_on_table(a.rolname, t.name)
+FROM pg_roles a,
+     (values ('abdm_consent_status')) as t(name)
+WHERE pg_has_role('openchs', a.oid, 'member');
+
+-- Received records are kept encrypted (AVNI-14). Rows from before this migration keep their plaintext until their
+-- consent ends and the hourly erase deletes them.
+alter table abdm_health_information alter column fhir_bundle drop not null;
+alter table abdm_health_information add column fhir_bundle_encrypted text;

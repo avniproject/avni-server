@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// The HIU's ABDM state (V1_413), all rows role HIU. In abdm_consent a consent request is the row with no consent_id; each
+// The HIU's ABDM state (V1_413, V1_414), all rows role HIU. In abdm_consent a consent request is the row with no consent_id; each
 // artefact granted under it is a row of its own carrying the request's consent_request_id. Plain JDBC, autocommitted per
 // statement; organisation_id set here. Every lookup names the role: in mock mode this server is the HIP too, and the two
 // sides share consent and transaction ids.
@@ -32,10 +32,12 @@ public class AbdmHiuStore {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final AbdmOrgContext orgContext;
+    private final AbdmRecordCipher recordCipher;
 
-    public AbdmHiuStore(NamedParameterJdbcTemplate jdbc, AbdmOrgContext orgContext) {
+    public AbdmHiuStore(NamedParameterJdbcTemplate jdbc, AbdmOrgContext orgContext, AbdmRecordCipher recordCipher) {
         this.jdbc = jdbc;
         this.orgContext = orgContext;
+        this.recordCipher = recordCipher;
     }
 
     public record Consent(long id, String uuid, String consentRequestId, String consentId, String initRequestId,
@@ -53,7 +55,15 @@ public class AbdmHiuStore {
     }
 
     public record Record(String careContextReference, String hipId, String transactionId, Instant receivedAt,
-                         Boolean checksumMatched, JsonNode bundle) {
+                         Boolean checksumMatched, JsonNode bundle, String consentId) {
+    }
+
+    // The patient an ABHA address belongs to in this organisation, for the HIU list (M1 abha_link).
+    public record Patient(String name, String abhaNumber) {
+    }
+
+    // One status a consent request (consentId null) or an artefact took, and when (V1_414 abdm_consent_status).
+    public record StatusChange(String consentRequestId, String consentId, String status, Instant at) {
     }
 
     // Eka mode: a patient's Eka OID and subject, from the M1 abha_event table.
@@ -76,6 +86,7 @@ public class AbdmHiuStore {
                         .addValue("purpose", purposeCode, Types.VARCHAR).addValue("hiTypes", hiTypes, Types.VARCHAR)
                         .addValue("from", AbdmFlows.iso(dateFrom), Types.VARCHAR).addValue("to", AbdmFlows.iso(dateTo), Types.VARCHAR)
                         .addValue("erase", AbdmFlows.iso(dataEraseAt), Types.VARCHAR).addValue("status", status, Types.VARCHAR));
+        history("c.uuid = :uuid", params().addValue("uuid", uuid, Types.VARCHAR), status);
     }
 
     public Optional<Consent> findConsentRequestByInitRequest(String initRequestId) {
@@ -99,17 +110,21 @@ public class AbdmHiuStore {
     public void setConsentRequestId(long id, String consentRequestId, String status) {
         jdbc.update("update abdm_consent set consent_request_id = :cr, status = :status, error = null, updated_at = now() where organisation_id = :org and id = :id",
                 params().addValue("id", id).addValue("cr", consentRequestId, Types.VARCHAR).addValue("status", status, Types.VARCHAR));
+        history("c.id = :id", params().addValue("id", id), status);
     }
 
     public void failConsent(long id, String error) {
         jdbc.update("update abdm_consent set status = 'FAILED', error = :error, updated_at = now() where organisation_id = :org and id = :id",
                 params().addValue("id", id).addValue("error", error, Types.VARCHAR));
+        history("c.id = :id", params().addValue("id", id), "FAILED");
     }
 
     public int setConsentRequestStatus(String consentRequestId, String status) {
-        return jdbc.update("update abdm_consent set status = :status, updated_at = now() " +
+        int updated = jdbc.update("update abdm_consent set status = :status, updated_at = now() " +
                         "where organisation_id = :org and role = 'HIU' and consent_id is null and consent_request_id = :cr",
                 params().addValue("cr", consentRequestId, Types.VARCHAR).addValue("status", status, Types.VARCHAR));
+        history("c.consent_id is null and c.consent_request_id = :cr", params().addValue("cr", consentRequestId, Types.VARCHAR), status);
+        return updated;
     }
 
     public List<Consent> listConsentRequests() {
@@ -159,6 +174,7 @@ public class AbdmHiuStore {
             jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, fetch_request_id, abha_address, hiu_id, status) " +
                     "values (:uuid, :org, 'HIU', :cr, :consentId, :fetch, :address, :hiu, :status)", p.addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR));
         }
+        history("c.consent_id = :consentId", params().addValue("consentId", consentId, Types.VARCHAR), status);
     }
 
     public Optional<Consent> findArtefactByFetchRequest(String fetchRequestId) {
@@ -188,6 +204,7 @@ public class AbdmHiuStore {
         if (consentIds == null || consentIds.isEmpty()) return;
         jdbc.update("update abdm_consent set status = :status, updated_at = now() where organisation_id = :org and role = 'HIU' and consent_id in (:ids)",
                 params().addValue("ids", consentIds).addValue("status", status, Types.VARCHAR));
+        history("c.consent_id in (:ids)", params().addValue("ids", consentIds), status);
     }
 
     public List<Artefact> findArtefacts(Collection<String> consentRequestIds) {
@@ -252,15 +269,17 @@ public class AbdmHiuStore {
 
     // ---- health information
 
-    // DEMO-ONLY: stored in plaintext, not erased at dataEraseAt.
+    // Encrypted under AbdmRecordCipher's own key (AVNI-14); erased by eraseRecordsOfEndedConsents. Throws
+    // AbdmRecordCipher.NoKeyException, storing nothing, when that key is not set.
     public void insertHealthInformation(long dataFlowId, String transactionId, String consentId, String hipId,
                                         String careContextReference, Boolean checksumMatched, String fhirBundleJson) {
+        String encrypted = recordCipher.encrypt(fhirBundleJson);
         jdbc.update("insert into abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id, hip_id, " +
-                        "care_context_reference, checksum_matched, fhir_bundle) values (:org, :flow, :tx, :consentId, :hip, :ref, :matched, cast(:bundle as jsonb))",
+                        "care_context_reference, checksum_matched, fhir_bundle_encrypted) values (:org, :flow, :tx, :consentId, :hip, :ref, :matched, :bundle)",
                 params().addValue("flow", dataFlowId).addValue("tx", transactionId, Types.VARCHAR)
                         .addValue("consentId", consentId, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
                         .addValue("ref", careContextReference, Types.VARCHAR).addValue("matched", checksumMatched, Types.BOOLEAN)
-                        .addValue("bundle", fhirBundleJson, Types.VARCHAR));
+                        .addValue("bundle", encrypted, Types.VARCHAR));
     }
 
     // Eka mode: a webhook delivered twice, or a push in several parts, keeps one record per care context.
@@ -287,12 +306,90 @@ public class AbdmHiuStore {
     // Every record received under the consent request's artefacts.
     public List<Record> records(String consentRequestId) {
         if (consentRequestId == null) return new ArrayList<>();
-        return jdbc.query("select h.care_context_reference, h.hip_id, h.transaction_id, h.received_at, h.checksum_matched, h.fhir_bundle " +
+        return jdbc.query("select h.care_context_reference, h.hip_id, h.transaction_id, h.received_at, h.checksum_matched, h.fhir_bundle::text as fhir_bundle, " +
+                        "h.fhir_bundle_encrypted, h.consent_id " +
                         "from abdm_health_information h join abdm_consent c on c.organisation_id = h.organisation_id and c.role = 'HIU' " +
                         "and c.consent_id = h.consent_id where h.organisation_id = :org and c.consent_request_id = :cr order by h.received_at, h.id",
                 params().addValue("cr", consentRequestId, Types.VARCHAR),
                 (rs, n) -> new Record(rs.getString("care_context_reference"), rs.getString("hip_id"), rs.getString("transaction_id"),
-                        instant(rs, "received_at"), (Boolean) rs.getObject("checksum_matched"), AbdmJson.read(rs.getString("fhir_bundle"))));
+                        instant(rs, "received_at"), (Boolean) rs.getObject("checksum_matched"), bundleOf(rs), rs.getString("consent_id")));
+    }
+
+    // Rows from before V1_414 hold the bundle in plaintext; they go when their consent ends.
+    private JsonNode bundleOf(ResultSet rs) throws SQLException {
+        String encrypted = rs.getString("fhir_bundle_encrypted");
+        return AbdmJson.read(encrypted != null ? recordCipher.decrypt(encrypted) : rs.getString("fhir_bundle"));
+    }
+
+    // By ABHA address as given (any case, suffix or not): the live patient holding it and their ABHA number.
+    public java.util.Map<String, Patient> patientsByAbhaAddress(Collection<String> abhaAddresses) {
+        java.util.Map<String, String> byName = new java.util.LinkedHashMap<>();
+        if (abhaAddresses != null) for (String a : abhaAddresses) if (a != null) byName.put(a.toLowerCase(Locale.ROOT).split("@")[0], a);
+        java.util.Map<String, Patient> out = new java.util.LinkedHashMap<>();
+        if (byName.isEmpty()) return out;
+        jdbc.query("select split_part(lower(l.abha_address), '@', 1) as name_part, concat_ws(' ', i.first_name, i.middle_name, i.last_name) as name, " +
+                        "l.abha_number from abha_link l join individual i on i.id = l.individual_id where l.organisation_id = :org " +
+                        "and l.is_voided = false and i.is_voided = false and split_part(lower(l.abha_address), '@', 1) in (:names) order by i.id",
+                params().addValue("names", byName.keySet()),
+                rs -> {
+                    String given = byName.get(rs.getString("name_part"));
+                    if (given != null) out.putIfAbsent(given, new Patient(rs.getString("name"), rs.getString("abha_number")));
+                });
+        return out;
+    }
+
+    // Each status the requests took, oldest first.
+    public List<StatusChange> statusHistory(Collection<String> consentRequestIds) {
+        if (consentRequestIds == null || consentRequestIds.isEmpty()) return new ArrayList<>();
+        return jdbc.query("select c.consent_request_id, c.consent_id, s.status, s.changed_at from abdm_consent_status s " +
+                        "join abdm_consent c on c.id = s.consent_row_id where s.organisation_id = :org and c.role = 'HIU' " +
+                        "and c.consent_request_id in (:ids) order by s.changed_at, s.id",
+                params().addValue("ids", consentRequestIds),
+                (rs, n) -> new StatusChange(rs.getString("consent_request_id"), rs.getString("consent_id"), rs.getString("status"),
+                        instant(rs, "changed_at")));
+    }
+
+    // What the patient granted, which may be narrower than what was asked: kept on the request and its artefacts.
+    public void setGrantedTerms(String consentRequestId, String hiTypes, Instant dateFrom, Instant dateTo, Instant dataEraseAt) {
+        jdbc.update("update abdm_consent set hi_types = coalesce(:hiTypes, hi_types), date_from = coalesce(cast(:from as timestamptz), date_from), " +
+                        "date_to = coalesce(cast(:to as timestamptz), date_to), data_erase_at = coalesce(cast(:erase as timestamptz), data_erase_at), " +
+                        "updated_at = now() where organisation_id = :org and role = 'HIU' and consent_request_id = :cr",
+                params().addValue("cr", consentRequestId, Types.VARCHAR).addValue("hiTypes", hiTypes, Types.VARCHAR)
+                        .addValue("from", AbdmFlows.iso(dateFrom), Types.VARCHAR).addValue("to", AbdmFlows.iso(dateTo), Types.VARCHAR)
+                        .addValue("erase", AbdmFlows.iso(dataEraseAt), Types.VARCHAR));
+    }
+
+    // Requests and artefacts past their erase date become EXPIRED (HIU_FLOW_301). Returns the requests expired.
+    public int expireOverdueConsents() {
+        int requests = jdbc.update("update abdm_consent set status = 'EXPIRED', updated_at = now() where organisation_id = :org and role = 'HIU' " +
+                "and consent_id is null and status in ('GRANTED', 'REQUESTED') and data_erase_at is not null and data_erase_at < now()", params());
+        jdbc.update("update abdm_consent a set status = 'EXPIRED', updated_at = now() where a.organisation_id = :org and a.role = 'HIU' " +
+                "and a.consent_id is not null and a.status = 'GRANTED' and ((a.data_erase_at is not null and a.data_erase_at < now()) " +
+                "or exists (select 1 from abdm_consent r where r.organisation_id = a.organisation_id and r.role = 'HIU' and r.consent_id is null " +
+                "   and r.consent_request_id = a.consent_request_id and r.status = 'EXPIRED'))", params());
+        history("c.status = 'EXPIRED'", params(), "EXPIRED");
+        return requests;
+    }
+
+    // Records whose artefact is no longer granted, or whose request was withdrawn, refused, expired or is past its erase
+    // date, are deleted (HIU_FLOW_202, HIU_FLOW_301, AVNI-14). Returns how many.
+    public int eraseRecordsOfEndedConsents() {
+        return jdbc.update("delete from abdm_health_information h where h.organisation_id = :org and (" +
+                "not exists (select 1 from abdm_consent a where a.organisation_id = h.organisation_id and a.role = 'HIU' and a.consent_id = h.consent_id " +
+                "   and a.status = 'GRANTED' and (a.data_erase_at is null or a.data_erase_at > now())) " +
+                "or exists (select 1 from abdm_consent a join abdm_consent r on r.organisation_id = a.organisation_id and r.role = 'HIU' " +
+                "   and r.consent_id is null and r.consent_request_id = a.consent_request_id " +
+                "   where a.organisation_id = h.organisation_id and a.role = 'HIU' and a.consent_id = h.consent_id " +
+                "   and (r.status in ('REVOKED', 'EXPIRED', 'DENIED') or (r.data_erase_at is not null and r.data_erase_at < now()))))", params());
+    }
+
+    // One row in abdm_consent_status per change, keyed by the abdm_consent row so it survives the request id being mapped.
+    private void history(String rowFilter, MapSqlParameterSource p, String status) {
+        if (status == null) return;
+        jdbc.update("insert into abdm_consent_status (organisation_id, consent_row_id, status) select c.organisation_id, c.id, :historyStatus " +
+                        "from abdm_consent c where c.organisation_id = :org and c.role = 'HIU' and " + rowFilter + " and coalesce((select s.status " +
+                        "from abdm_consent_status s where s.consent_row_id = c.id order by s.id desc limit 1), '') <> :historyStatus",
+                p.addValue("historyStatus", status, Types.VARCHAR));
     }
 
     // ---- plumbing

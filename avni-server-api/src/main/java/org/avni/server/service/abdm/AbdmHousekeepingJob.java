@@ -19,11 +19,14 @@ public class AbdmHousekeepingJob {
     private final AbdmConfig cfg;
     private final AbdmOrgContext orgContext;
     private final AbdmMessageLog messageLog;
+    private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData;
     private final int messageRetentionDays;
 
     @Autowired
     public AbdmHousekeepingJob(AbdmConfig cfg, AbdmOrgContext orgContext, AbdmMessageLog messageLog,
+                               org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData,
                                @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
+        this.hiuData = hiuData;
         this.cfg = cfg;
         this.orgContext = orgContext;
         this.messageLog = messageLog;
@@ -33,6 +36,11 @@ public class AbdmHousekeepingJob {
     @Scheduled(cron = "${abdm.housekeeping.traffic-cron:0 30 2 * * *}", zone = "Asia/Kolkata")
     public void purgeOldTraffic() {
         runAsOrg("traffic purge", () -> messageLog.purgeOlderThan(Duration.ofDays(messageRetentionDays)));
+    }
+
+    @Scheduled(cron = "${abdm.housekeeping.consent-cron:0 5 * * * *}", zone = "Asia/Kolkata")
+    public void expireConsentsAndEraseRecords() {
+        runAsOrg("consent expiry and record erase", hiuData::expireAndErase);
     }
 
     private void runAsOrg(String what, Runnable work) {
