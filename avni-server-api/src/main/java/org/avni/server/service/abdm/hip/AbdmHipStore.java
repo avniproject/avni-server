@@ -255,6 +255,24 @@ public class AbdmHipStore {
                 params().addValue("ref", linkReference, Types.VARCHAR), LINK_REQUEST));
     }
 
+    // Live patients whose full name (any case, single spaces), gender letter and year of birth are these.
+    public List<Subject> findSubjectsByDemographics(String name, String genderLetter, Integer yearOfBirth) {
+        if (name == null || genderLetter == null || yearOfBirth == null) return new ArrayList<>();
+        return jdbc.query("select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
+                        "where i.organisation_id = :org and i.is_voided = false " +
+                        "and lower(regexp_replace(" + NAME + ", '\\s+', ' ', 'g')) = lower(regexp_replace(:name, '\\s+', ' ', 'g')) " +
+                        "and upper(left(g.name, 1)) = :gender and extract(year from i.date_of_birth) = :year order by i.id limit 3",
+                params().addValue("name", name, Types.VARCHAR).addValue("gender", genderLetter, Types.VARCHAR).addValue("year", yearOfBirth),
+                SUBJECT);
+    }
+
+    // One more wrong code on a link request; returns how many so far.
+    public int countLinkAttempt(long id) {
+        Integer attempts = jdbc.queryForObject("update abdm_link_request set attempts = attempts + 1, updated_at = now() " +
+                "where organisation_id = :org and id = :id returning attempts", params().addValue("id", id), Integer.class);
+        return attempts == null ? 0 : attempts;
+    }
+
     public void setLinkRequestStatus(long id, String status) {
         jdbc.update("update abdm_link_request set status = :status, updated_at = now() where organisation_id = :org and id = :id",
                 params().addValue("id", id).addValue("status", status, Types.VARCHAR));

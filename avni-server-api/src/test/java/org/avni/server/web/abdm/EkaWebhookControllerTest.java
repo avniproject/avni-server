@@ -57,6 +57,7 @@ public class EkaWebhookControllerTest {
     private ObjectProvider<EkaHiuEvents> hiuProvider;
     private MockMvc mvc;
     private AbdmInboundEvents inboundEvents;
+    private org.avni.server.service.abdm.eka.EkaHipDiscovery discovery;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -88,7 +89,11 @@ public class EkaWebhookControllerTest {
         when(hiuProvider.getIfAvailable()).thenReturn(hiu);
         inboundEvents = mock(AbdmInboundEvents.class);
         when(inboundEvents.claim(anyString(), anyString())).thenReturn(true);
-        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(cfg, verifier, async, messageLog, inboundEvents, hipProvider, hiuProvider)).build();
+        discovery = mock(org.avni.server.service.abdm.eka.EkaHipDiscovery.class);
+        ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discoveryProvider = mock(ObjectProvider.class);
+        when(discoveryProvider.getIfAvailable()).thenReturn(discovery);
+        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(cfg, verifier, async, messageLog, inboundEvents, hipProvider, hiuProvider,
+                discoveryProvider)).build();
     }
 
     static String event(String name) {
@@ -179,6 +184,18 @@ public class EkaWebhookControllerTest {
 
         send(body, null).andExpect(status().isOk());
 
+        verifyNoInteractions(hip, hiu);
+        verify(discovery).linkConfirm(any());
+    }
+
+    // USER_INIT_LINK_601 to 607: the three discovery events reach patient-led linking (EKA_ABDM_SPEC.md 2.7).
+    @Test
+    public void eachDiscoveryEventGoesToPatientLedLinking() throws Exception {
+        send(renamed(event("link-care-context.json"), "abha.care_context_discover", "d-1"), null).andExpect(status().isOk());
+        send(renamed(event("link-care-context.json"), "abha.care_context_discover_link_init", "d-2"), null).andExpect(status().isOk());
+
+        verify(discovery).discover(any());
+        verify(discovery).linkInit(any());
         verifyNoInteractions(hip, hiu);
     }
 

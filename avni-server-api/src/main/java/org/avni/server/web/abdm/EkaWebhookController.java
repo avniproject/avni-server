@@ -47,7 +47,7 @@ public class EkaWebhookController {
     private static final int SEEN_EVENTS = 1000;
     private static final String SOURCE = "eka";
 
-    enum Route {LINK_CARE_CONTEXT, HIP_DATA_FETCH, CONSENT_UPDATE, HIU_DATA_PUSH, NONE}
+    enum Route {LINK_CARE_CONTEXT, HIP_DATA_FETCH, CONSENT_UPDATE, HIU_DATA_PUSH, DISCOVER, DISCOVER_LINK_INIT, DISCOVER_LINK_CONFIRM, NONE}
 
     // Event names squashed to letters and digits, without the "abha"/"abdm" prefix: the spec's names and close variants.
     private static final Set<String> LINK_CARE_CONTEXT = Set.of("linkcarecontext", "linkcarecontexts", "carecontextlink",
@@ -56,6 +56,10 @@ public class EkaWebhookController {
     private static final Set<String> CONSENT_UPDATE = Set.of("consentupdate", "consentupdated", "consentstatus", "consentstatusupdate",
             "consentnotify");
     private static final Set<String> HIU_DATA_PUSH = Set.of("hiudatapush", "datapush", "hiudatatransfer", "hiuhealthinformationtransfer");
+    // Patient-led linking (spec 2.7): Eka's three names, as published.
+    private static final Set<String> DISCOVER = Set.of("carecontextdiscover");
+    private static final Set<String> DISCOVER_LINK_INIT = Set.of("carecontextdiscoverlinkinit");
+    private static final Set<String> DISCOVER_LINK_CONFIRM = Set.of("contextdiscoverlinkconfirm", "carecontextdiscoverlinkconfirm");
 
     private final AbdmConfig cfg;
     private final EkaWebhookVerifier verifier;
@@ -64,6 +68,7 @@ public class EkaWebhookController {
     private final AbdmInboundEvents inboundEvents;
     private final ObjectProvider<EkaHipEvents> hip;
     private final ObjectProvider<EkaHiuEvents> hiu;
+    private final ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery;
     private final Map<String, Boolean> seen = new LinkedHashMap<>(64, 0.75f, false) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
@@ -73,7 +78,9 @@ public class EkaWebhookController {
 
     @Autowired
     public EkaWebhookController(AbdmConfig cfg, EkaWebhookVerifier verifier, AbdmAsync async, AbdmMessageLog messageLog,
-                                AbdmInboundEvents inboundEvents, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu) {
+                                AbdmInboundEvents inboundEvents, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu,
+                                ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery) {
+        this.discovery = discovery;
         this.cfg = cfg;
         this.verifier = verifier;
         this.async = async;
@@ -143,6 +150,9 @@ public class EkaWebhookController {
             case HIP_DATA_FETCH -> handle(hip, name, eventId, h -> h.hipDataFetch(event));
             case CONSENT_UPDATE -> handle(hiu, name, eventId, h -> h.consentUpdate(event));
             case HIU_DATA_PUSH -> handle(hiu, name, eventId, h -> h.hiuDataPush(event));
+            case DISCOVER -> handle(discovery, name, eventId, d -> d.discover(event));
+            case DISCOVER_LINK_INIT -> handle(discovery, name, eventId, d -> d.linkInit(event));
+            case DISCOVER_LINK_CONFIRM -> handle(discovery, name, eventId, d -> d.linkConfirm(event));
             default -> logger.info("Eka webhook {} {} ignored: nothing handles this event", name, eventId);
         }
     }
@@ -169,6 +179,9 @@ public class EkaWebhookController {
         if (HIP_DATA_FETCH.contains(key)) return Route.HIP_DATA_FETCH;
         if (CONSENT_UPDATE.contains(key)) return Route.CONSENT_UPDATE;
         if (HIU_DATA_PUSH.contains(key)) return Route.HIU_DATA_PUSH;
+        if (DISCOVER.contains(key)) return Route.DISCOVER;
+        if (DISCOVER_LINK_INIT.contains(key)) return Route.DISCOVER_LINK_INIT;
+        if (DISCOVER_LINK_CONFIRM.contains(key)) return Route.DISCOVER_LINK_CONFIRM;
         return Route.NONE;
     }
 

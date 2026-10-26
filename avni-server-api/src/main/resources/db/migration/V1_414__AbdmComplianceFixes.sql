@@ -65,3 +65,6 @@ WHERE pg_has_role('openchs', a.oid, 'member');
 -- consent ends and the hourly erase deletes them.
 alter table abdm_health_information alter column fhir_bundle drop not null;
 alter table abdm_health_information add column fhir_bundle_encrypted text;
+
+-- Patient-led linking through Eka: wrong codes are counted, and a request is closed after three (USER_INIT_LINK_605).
+alter table abdm_link_request add column attempts integer not null default 0;
