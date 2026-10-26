@@ -44,7 +44,7 @@ public class AbdmVisitQueueTest {
     public void aCompletedVisitOfAPatientWithAnAbhaIsQueuedForLinking() {
         queue(true).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
 
-        verify(store).ensureCareContexts(7L, HIP_ID, "subject-1", "OPConsultation",
+        verify(store).queueCareContexts(7L, HIP_ID, "subject-1", "OPConsultation",
                 List.of(new AbdmHipStore.NewCareContext("enc-9", "OPD Visit, 2 May 2026")));
     }
 
@@ -60,7 +60,7 @@ public class AbdmVisitQueueTest {
 
         queue(true).queue(visit);
 
-        verify(store).ensureCareContexts(7L, HIP_ID, "subject-1", "OPConsultation",
+        verify(store).queueCareContexts(7L, HIP_ID, "subject-1", "OPConsultation",
                 List.of(new AbdmHipStore.NewCareContext("penc-1", "Hypertension Follow-up, 26 Oct 2026")));
     }
 
@@ -70,7 +70,7 @@ public class AbdmVisitQueueTest {
 
         queue(true).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
 
-        verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
+        verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
     }
 
     @Test
@@ -86,12 +86,12 @@ public class AbdmVisitQueueTest {
         q.queue(cancelled);
         q.queue(voided);
 
-        verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
+        verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
     }
 
     @Test
     public void aFailureToQueueNeverFailsTheSave() {
-        doThrow(new IllegalStateException("table missing")).when(store).ensureCareContexts(anyLong(), any(), any(), any(), any());
+        doThrow(new IllegalStateException("table missing")).when(store).queueCareContexts(anyLong(), any(), any(), any(), any());
 
         queue(true).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
     }
@@ -100,11 +100,23 @@ public class AbdmVisitQueueTest {
     public void switchedOffNothingIsQueued() {
         queue(false).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
 
-        verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
+        verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
+    }
+
+    // Switched off from the admin screen while the server runs: a visit saved after that is left for the patient to link.
+    @Test
+    public void switchedOffWhileRunningNothingMoreIsQueued() {
+        AbdmAutoLink autoLink = new AbdmAutoLink(true);
+        AbdmVisitQueue q = new AbdmVisitQueue(cfg, store, abhaLinks, autoLink);
+        autoLink.set(false);
+
+        q.queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
+
+        verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
     }
 
     private AbdmVisitQueue queue(boolean on) {
-        return new AbdmVisitQueue(cfg, store, abhaLinks, on);
+        return new AbdmVisitQueue(cfg, store, abhaLinks, new AbdmAutoLink(on));
     }
 
     private Encounter visit(String uuid, DateTime at) {

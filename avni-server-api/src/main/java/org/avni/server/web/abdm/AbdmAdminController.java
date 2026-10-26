@@ -12,10 +12,12 @@ import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.gateway.AbdmSessionService;
+import org.avni.server.service.abdm.hip.AbdmAutoLink;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,16 +39,18 @@ public class AbdmAdminController {
     private final AbdmGatewayClient client;
     private final AbdmMessageLog messageLog;
     private final EkaAbdmClient ekaClient;
+    private final AbdmAutoLink autoLink;
 
     @Autowired
     public AbdmAdminController(AccessControlService accessControlService, AbdmConfig cfg, AbdmSessionService session,
-                               AbdmGatewayClient client, AbdmMessageLog messageLog, EkaAbdmClient ekaClient) {
+                               AbdmGatewayClient client, AbdmMessageLog messageLog, EkaAbdmClient ekaClient, AbdmAutoLink autoLink) {
         this.accessControlService = accessControlService;
         this.cfg = cfg;
         this.session = session;
         this.client = client;
         this.messageLog = messageLog;
         this.ekaClient = ekaClient;
+        this.autoLink = autoLink;
     }
 
     @GetMapping("/web/abdm/status")
@@ -71,7 +75,15 @@ public class AbdmAdminController {
         status.put("hipId", cfg.getHipId());
         status.put("hiuId", cfg.getHiuId());
         status.put("session", sessionState);
+        status.put("autoLink", autoLink.isOn());
         return status;
+    }
+
+    @PostMapping("/web/abdm/auto-link")
+    public Map<String, Object> setAutoLink(@RequestBody Map<String, Object> body) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        autoLink.set(Boolean.TRUE.equals(body.get("on")));
+        return Map.of("autoLink", autoLink.isOn());
     }
 
     private String ekaClientId() {

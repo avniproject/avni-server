@@ -210,6 +210,19 @@ public class EkaHipServiceTest {
         assertEquals("enc-2", body.getValue().get("care_contexts").get(0).get("care_context_id").asText());
     }
 
+    // The job links what was queued on save, never a visit the patient may be linking from their own app.
+    @Test
+    public void theJobLinksOnlyVisitsQueuedOnSave() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "QUEUED")));
+
+        service.linkCareContexts("subject-1", true);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(1, body.getValue().get("care_contexts").size());
+        assertEquals("enc-2", body.getValue().get("care_contexts").get(0).get("care_context_id").asText());
+    }
+
     @Test
     public void nothingToLinkMeansNoCall() {
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
@@ -307,6 +320,24 @@ public class EkaHipServiceTest {
 
         verify(store).markLinked(HIP_ID, List.of("enc-1"), "HIP");
         verify(eka, never()).post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any());
+    }
+
+    // On 26 Oct a visit linked and no text went, with nothing in the log to say why.
+    @Test
+    public void withNoPhoneNumberTheSkippedTextIsLogged() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
+        when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.empty());
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(EkaHipService.class);
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> logged = new ch.qos.logback.core.read.ListAppender<>();
+        logged.start();
+        logger.addAppender(logged);
+        try {
+            service.linkCareContext(event("link-care-context.json"));
+        } finally {
+            logger.detachAppender(logged);
+        }
+
+        assertTrue(logged.list.stream().anyMatch(e -> e.getFormattedMessage().contains("no phone number")));
     }
 
     @Test

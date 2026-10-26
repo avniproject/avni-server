@@ -120,6 +120,10 @@ public class EkaHipService implements EkaHipEvents {
 
     // Links every completed visit not yet linked; answers with the same view as AbdmHipLinkingService.careContexts.
     public List<Map<String, Object>> linkCareContexts(String subjectUuid) {
+        return linkCareContexts(subjectUuid, false);
+    }
+
+    public List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly) {
         AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
         AbhaEvent abha = orgContext.inReadOnlyTransaction(() -> abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid)
                 .filter(latest -> !AbhaEventService.REMOVED.equals(latest.getAction()) && StringUtils.hasText(latest.getEkaOid()))
@@ -133,7 +137,9 @@ public class EkaHipService implements EkaHipEvents {
         store.ensureCareContexts(patient.individualId(), hipId, patient.uuid(), HI_TYPE,
                 patient.visits().stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
         List<AbdmHipStore.CareContext> toLink = store.findCareContexts(patient.individualId(), hipId).stream()
-                .filter(c -> !LINKED.equals(c.status())).toList();
+                .filter(c -> !LINKED.equals(c.status()))
+                .filter(c -> !queuedOnly || AbdmHipLinkingService.QUEUED.equals(c.status()) || AbdmHipLinkingService.FAILED.equals(c.status()))
+                .toList();
         if (toLink.isEmpty()) return linking.careContexts(subjectUuid);
         List<String> references = toLink.stream().map(AbdmHipStore.CareContext::reference).toList();
 
@@ -248,7 +254,10 @@ public class EkaHipService implements EkaHipEvents {
     // and the HIP; Eka's (spec line 188) the number only. A refusal leaves the link as it is.
     private void tellPatientLinked(long individualId) {
         Optional<String> phone = phones.phoneOf(individualId);
-        if (phone.isEmpty()) return;
+        if (phone.isEmpty()) {
+            logger.info("Eka text message for subject {} not sent: Avni holds no phone number for the patient", individualId);
+            return;
+        }
         ObjectNode body = AbdmJson.obj();
         body.put("mobile_number", phone.get());
         Map<String, String> headers = new LinkedHashMap<>();

@@ -113,7 +113,7 @@ public class AbdmHipStore {
     // Patients with visits queued for linking (PENDING), or whose last try failed over an hour ago.
     public List<String> subjectsToLink(String hipId, int limit) {
         return jdbc.queryForList("select distinct i.uuid from abdm_care_context c join individual i on i.id = c.individual_id " +
-                        "where c.organisation_id = :org and c.hip_id = :hip and (c.status = 'PENDING' " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and (c.status = 'QUEUED' " +
                         "or (c.status = 'FAILED' and c.updated_at < now() - interval '1 hour')) limit :limit",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("limit", limit), String.class);
     }
@@ -122,7 +122,7 @@ public class AbdmHipStore {
     public void failQueued(String subjectUuid, String hipId, String reason) {
         jdbc.update("update abdm_care_context c set status = 'FAILED', error = :reason, updated_at = now() from individual i " +
                         "where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +
-                        "and c.status in ('PENDING', 'FAILED')",
+                        "and c.status in ('QUEUED', 'FAILED')",
                 params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
                         .addValue("reason", reason, Types.VARCHAR));
     }
@@ -183,6 +183,21 @@ public class AbdmHipStore {
             jdbc.update("insert into abdm_care_context (uuid, organisation_id, individual_id, hip_id, patient_reference, reference, display, hi_type, status) " +
                             "values (:uuid, :org, :ind, :hip, :patient, :ref, :display, :hiType, 'PENDING') " +
                             "on conflict (organisation_id, hip_id, reference) do update set display = excluded.display",
+                    params().addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR).addValue("ind", individualId)
+                            .addValue("hip", hipId, Types.VARCHAR).addValue("patient", patientReference, Types.VARCHAR)
+                            .addValue("ref", c.reference(), Types.VARCHAR).addValue("display", c.display(), Types.VARCHAR)
+                            .addValue("hiType", hiType, Types.VARCHAR));
+        }
+    }
+
+    // A visit saved while linking on save is on: QUEUED for AbdmHousekeepingJob. A row already known as PENDING (seen by
+    // discovery or listed) is queued too; one being linked, linked or failed keeps its status.
+    public void queueCareContexts(long individualId, String hipId, String patientReference, String hiType, List<NewCareContext> careContexts) {
+        for (NewCareContext c : careContexts) {
+            jdbc.update("insert into abdm_care_context (uuid, organisation_id, individual_id, hip_id, patient_reference, reference, display, hi_type, status) " +
+                            "values (:uuid, :org, :ind, :hip, :patient, :ref, :display, :hiType, 'QUEUED') " +
+                            "on conflict (organisation_id, hip_id, reference) do update set display = excluded.display, " +
+                            "status = case when abdm_care_context.status = 'PENDING' then 'QUEUED' else abdm_care_context.status end",
                     params().addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR).addValue("ind", individualId)
                             .addValue("hip", hipId, Types.VARCHAR).addValue("patient", patientReference, Types.VARCHAR)
                             .addValue("ref", c.reference(), Types.VARCHAR).addValue("display", c.display(), Types.VARCHAR)

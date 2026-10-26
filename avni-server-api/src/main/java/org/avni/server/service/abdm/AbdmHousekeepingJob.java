@@ -23,6 +23,7 @@ public class AbdmHousekeepingJob {
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData;
     private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore;
     private final org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking;
+    private final org.avni.server.service.abdm.hip.AbdmAutoLink autoLink;
     private final int messageRetentionDays;
 
     @Autowired
@@ -30,9 +31,11 @@ public class AbdmHousekeepingJob {
                                org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData,
                                org.avni.server.service.abdm.hip.AbdmHipStore hipStore,
                                org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking,
+                               org.avni.server.service.abdm.hip.AbdmAutoLink autoLink,
                                @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
         this.hipStore = hipStore;
         this.hipLinking = hipLinking;
+        this.autoLink = autoLink;
         this.hiuData = hiuData;
         this.cfg = cfg;
         this.orgContext = orgContext;
@@ -53,11 +56,12 @@ public class AbdmHousekeepingJob {
     // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through the usual route, patient by patient.
     @Scheduled(cron = "${abdm.housekeeping.link-cron:0 */5 * * * *}", zone = "Asia/Kolkata")
     public void linkQueuedVisits() {
+        if (!autoLink.isOn()) return;
         runAsOrg("linking of queued visits", () -> {
             String hipId = cfg.getHipId();
             for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {
                 try {
-                    hipLinking.linkCareContexts(subjectUuid);
+                    hipLinking.linkQueuedCareContexts(subjectUuid);
                 } catch (RuntimeException e) {
                     hipStore.failQueued(subjectUuid, hipId, e.getMessage());
                     logger.info("ABDM: visits of subject {} not linked: {}", subjectUuid, e.getMessage());
