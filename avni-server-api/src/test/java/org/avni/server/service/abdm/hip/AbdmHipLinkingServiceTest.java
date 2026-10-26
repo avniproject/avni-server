@@ -315,6 +315,15 @@ public class AbdmHipLinkingServiceTest {
     }
 
     @Test
+    public void inEkaModeTheJobLinksOnlyQueuedVisitsThroughEka() {
+        when(cfg.isEka()).thenReturn(true);
+        List<Map<String, Object>> fromEka = List.of(Map.of("reference", "enc-2", "status", "LINK_REQUESTED"));
+        when(ekaHipService.linkCareContexts("subject-1", true)).thenReturn(fromEka);
+
+        assertEquals(fromEka, service.linkQueuedCareContexts("subject-1"));
+    }
+
+    @Test
     public void outsideEkaModeEkaIsNotUsed() {
         service.linkCareContexts("subject-1");
 

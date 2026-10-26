@@ -6,6 +6,7 @@ import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayClient;
 import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abdm.gateway.AbdmSessionService;
+import org.avni.server.service.abdm.hip.AbdmAutoLink;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.*;
 public class AbdmAdminControllerTest {
     private AbdmSessionService session;
     private EkaAbdmClient ekaClient;
+    private final AbdmAutoLink autoLink = new AbdmAutoLink(true);
 
     @Before
     public void setUp() {
@@ -34,7 +36,7 @@ public class AbdmAdminControllerTest {
                 "TANUH-HIU", "", "", "123456", "@sbx", 300, "https://facilitysbx.abdm.gov.in", "", "", "https://hpridsbx.abdm.gov.in", "",
                 "", "", "Dr. Demo", true, "log");
         return new AbdmAdminController(mock(AccessControlService.class), cfg, session, mock(AbdmGatewayClient.class),
-                mock(AbdmMessageLog.class), ekaClient);
+                mock(AbdmMessageLog.class), ekaClient, autoLink);
     }
 
     @Test
@@ -59,6 +61,18 @@ public class AbdmAdminControllerTest {
 
         assertEquals(false, session.get("ok"));
         assertTrue(((String) session.get("error")).contains("Eka login failed"));
+    }
+
+    // Linking on save, shown on the Status tab and switched there while the server runs (HIP_INTI_LINK_505).
+    @Test
+    public void linkingOnSaveIsReportedAndCanBeSwitched() {
+        AbdmAdminController controller = controller("eka");
+        assertEquals(true, controller.status().get("autoLink"));
+
+        assertEquals(Map.of("autoLink", false), controller.setAutoLink(Map.of("on", false)));
+
+        assertFalse(autoLink.isOn());
+        assertEquals(false, controller.status().get("autoLink"));
     }
 
     @Test

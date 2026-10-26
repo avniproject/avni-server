@@ -9,7 +9,6 @@ import org.avni.server.service.abdm.AbdmConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -23,9 +22,9 @@ import java.util.List;
 // DEMO-ONLY abdm-hackathon: never merged.
 // HIP_INTI_LINK_505: "linking of health records should be done automatically once records have been saved at HIP end".
 // EncounterService.save and ProgramEncounterService.save hand each saved visit here. A completed visit of a patient
-// holding an ABHA becomes a PENDING care context; AbdmHousekeepingJob.linkQueuedVisits links the queue through Eka.
+// holding an ABHA becomes a QUEUED care context; AbdmHousekeepingJob.linkQueuedVisits links the queue through Eka.
 // What is needed is read during the save; the row is written after the save commits, in a transaction of its own, so
-// nothing here can fail or slow a sync. abdm.auto-link=false switches it off.
+// nothing here can fail or slow a sync. AbdmAutoLink switches it off, from abdm.auto-link or the admin screen.
 @Component
 public class AbdmVisitQueue {
     private static final Logger logger = LoggerFactory.getLogger(AbdmVisitQueue.class);
@@ -33,26 +32,26 @@ public class AbdmVisitQueue {
     private final AbdmConfig cfg;
     private final AbdmHipStore store;
     private final AbhaLinkRepository abhaLinkRepository;
-    private final boolean on;
+    private final AbdmAutoLink autoLink;
     private final TransactionTemplate ownTransaction;
 
     @Autowired
     public AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
-                          @Value("${abdm.auto-link:true}") boolean on, PlatformTransactionManager transactionManager) {
+                          AbdmAutoLink autoLink, PlatformTransactionManager transactionManager) {
         this.cfg = cfg;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
-        this.on = on;
+        this.autoLink = autoLink;
         this.ownTransaction = new TransactionTemplate(transactionManager);
         this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // Tests: runs at once, with no transaction of its own.
-    AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, boolean on) {
+    AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbdmAutoLink autoLink) {
         this.cfg = cfg;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
-        this.on = on;
+        this.autoLink = autoLink;
         this.ownTransaction = null;
     }
 
@@ -60,7 +59,7 @@ public class AbdmVisitQueue {
     }
 
     public void queue(AbstractEncounter visit) {
-        if (!on || visit == null) return;
+        if (!autoLink.isOn() || visit == null) return;
         Queued queued;
         try {
             if (visit.isVoided() || visit.getEncounterDateTime() == null || visit.getCancelDateTime() != null) return;
@@ -89,7 +88,7 @@ public class AbdmVisitQueue {
         try {
             Runnable work = () -> {
                 if (abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(q.individualId()).isEmpty()) return;
-                store.ensureCareContexts(q.individualId(), q.hipId(), q.subjectUuid(), AbdmHipLinkingService.HI_TYPE, List.of(q.careContext()));
+                store.queueCareContexts(q.individualId(), q.hipId(), q.subjectUuid(), AbdmHipLinkingService.HI_TYPE, List.of(q.careContext()));
             };
             if (ownTransaction == null) work.run();
             else ownTransaction.executeWithoutResult(status -> work.run());

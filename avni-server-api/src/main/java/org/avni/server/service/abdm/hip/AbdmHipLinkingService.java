@@ -38,12 +38,14 @@ import java.util.stream.Collectors;
 // DEMO-ONLY abdm-hackathon: never merged.
 // HIP-initiated linking: a subject's completed visits become care contexts on their ABHA. Ask the gateway for a link
 // token (once per patient), then link the care contexts with it. Statuses: PENDING -> LINK_REQUESTED -> LINKED | FAILED.
+// A visit queued on save (AbdmVisitQueue) starts QUEUED instead, and only those are linked by AbdmHousekeepingJob.
 @Service
 public class AbdmHipLinkingService {
     private static final Logger logger = LoggerFactory.getLogger(AbdmHipLinkingService.class);
 
     public static final String HI_TYPE = "OPConsultation";
     public static final String PENDING = "PENDING";
+    public static final String QUEUED = "QUEUED";
     public static final String LINK_REQUESTED = "LINK_REQUESTED";
     public static final String LINKED = "LINKED";
     public static final String FAILED = "FAILED";
@@ -108,6 +110,12 @@ public class AbdmHipLinkingService {
     }
 
     // Links every completed visit not yet linked; answers at once with the statuses, the gateway answers later.
+    // The job's call: in Eka mode only the visits queued on save, never one a patient may be linking from their own app.
+    public List<Map<String, Object>> linkQueuedCareContexts(String subjectUuid) {
+        if (cfg.isEka()) return ekaHipService.getObject().linkCareContexts(subjectUuid, true);
+        return linkCareContexts(subjectUuid);
+    }
+
     public List<Map<String, Object>> linkCareContexts(String subjectUuid) {
         if (cfg.isEka()) return ekaHipService.getObject().linkCareContexts(subjectUuid);
         Patient patient = loadPatient(subjectUuid);
