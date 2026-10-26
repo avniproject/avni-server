@@ -15,17 +15,24 @@ import java.time.Duration;
 @Component
 public class AbdmHousekeepingJob {
     private static final Logger logger = LoggerFactory.getLogger(AbdmHousekeepingJob.class);
+    private static final int LINK_BATCH = 50;
 
     private final AbdmConfig cfg;
     private final AbdmOrgContext orgContext;
     private final AbdmMessageLog messageLog;
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData;
+    private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore;
+    private final org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking;
     private final int messageRetentionDays;
 
     @Autowired
     public AbdmHousekeepingJob(AbdmConfig cfg, AbdmOrgContext orgContext, AbdmMessageLog messageLog,
                                org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData,
+                               org.avni.server.service.abdm.hip.AbdmHipStore hipStore,
+                               org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking,
                                @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
+        this.hipStore = hipStore;
+        this.hipLinking = hipLinking;
         this.hiuData = hiuData;
         this.cfg = cfg;
         this.orgContext = orgContext;
@@ -41,6 +48,22 @@ public class AbdmHousekeepingJob {
     @Scheduled(cron = "${abdm.housekeeping.consent-cron:0 5 * * * *}", zone = "Asia/Kolkata")
     public void expireConsentsAndEraseRecords() {
         runAsOrg("consent expiry and record erase", hiuData::expireAndErase);
+    }
+
+    // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through the usual route, patient by patient.
+    @Scheduled(cron = "${abdm.housekeeping.link-cron:0 */5 * * * *}", zone = "Asia/Kolkata")
+    public void linkQueuedVisits() {
+        runAsOrg("linking of queued visits", () -> {
+            String hipId = cfg.getHipId();
+            for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {
+                try {
+                    hipLinking.linkCareContexts(subjectUuid);
+                } catch (RuntimeException e) {
+                    hipStore.failQueued(subjectUuid, hipId, e.getMessage());
+                    logger.info("ABDM: visits of subject {} not linked: {}", subjectUuid, e.getMessage());
+                }
+            }
+        });
     }
 
     private void runAsOrg(String what, Runnable work) {

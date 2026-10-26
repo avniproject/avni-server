@@ -288,16 +288,20 @@ public class AbdmHipLinkingService {
                 visits(individual));
     }
 
-    // Completed, not cancelled, not voided; newest first.
+    // Completed, not cancelled, not voided, general and programme visits (of enrolments not voided); newest first.
     public static List<Visit> visits(Individual individual) {
-        return individual.nonVoidedEncounters()
+        java.util.stream.Stream<org.avni.server.domain.AbstractEncounter> general = individual.nonVoidedEncounters().map(e -> e);
+        java.util.stream.Stream<org.avni.server.domain.AbstractEncounter> programme = individual.getProgramEnrolments() == null
+                ? java.util.stream.Stream.empty()
+                : individual.getProgramEnrolments().stream().filter(p -> !p.isVoided()).flatMap(p -> p.nonVoidedEncounters().map(e -> e));
+        return java.util.stream.Stream.concat(general, programme)
                 .filter(e -> e.getEncounterDateTime() != null && e.getCancelDateTime() == null)
-                .sorted(Comparator.comparing((Encounter e) -> e.getEncounterDateTime()).reversed())
+                .sorted(Comparator.comparing((org.avni.server.domain.AbstractEncounter e) -> e.getEncounterDateTime()).reversed())
                 .map(e -> new Visit(e.getUuid(), display(e), e.getEncounterDateTime().toDate().toInstant()))
                 .collect(Collectors.toList());
     }
 
-    public static String display(Encounter encounter) {
+    public static String display(org.avni.server.domain.AbstractEncounter encounter) {
         String type = encounter.getEncounterType() == null ? "Visit" : encounter.getEncounterType().getName();
         return type + ", " + DISPLAY_DATE.print(encounter.getEncounterDateTime());
     }

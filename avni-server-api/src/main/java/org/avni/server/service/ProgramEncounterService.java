@@ -31,6 +31,8 @@ import java.util.stream.Stream;
 
 @Service
 public class ProgramEncounterService implements ScopeAwareService<ProgramEncounter> {
+    @Autowired
+    org.springframework.beans.factory.ObjectProvider<org.avni.server.service.abdm.hip.AbdmVisitQueue> abdmVisitQueue;
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ProgramEncounterService.class);
     @Autowired
     Bugsnag bugsnag;
@@ -232,6 +234,9 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
             programEncounter.setAddressId(individual.getAddressLevel().getId());
         }
         programEncounter = programEncounterRepository.saveEntity(programEncounter);
+        // DEMO-ONLY abdm-hackathon: queue the visit for ABDM linking (HIP_INTI_LINK_505); never fails the save.
+        ProgramEncounter saved = programEncounter;
+        if (abdmVisitQueue != null) abdmVisitQueue.ifAvailable(q -> q.queue(saved));
         return programEncounter;
     }
 

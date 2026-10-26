@@ -88,11 +88,14 @@ public class EkaHipService implements EkaHipEvents {
     private final FhirBundleBuilder builder;
     private final FideliusCrypto crypto;
     private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones;
+    private final org.avni.server.dao.ProgramEncounterRepository programEncounterRepository;
 
     public EkaHipService(AbdmConfig cfg, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka, AbdmOrgContext orgContext,
                          AbhaEventRepository abhaEventRepository, EncounterRepository encounterRepository,
                          AbhaLinkRepository abhaLinkRepository, CareContextDocumentAssembler assembler, FhirBundleBuilder builder,
-                         FideliusCrypto crypto, org.avni.server.service.abdm.hip.AbdmPatientPhones phones) {
+                         FideliusCrypto crypto, org.avni.server.service.abdm.hip.AbdmPatientPhones phones,
+                         org.avni.server.dao.ProgramEncounterRepository programEncounterRepository) {
+        this.programEncounterRepository = programEncounterRepository;
         this.cfg = cfg;
         this.store = store;
         this.linking = linking;
@@ -359,11 +362,17 @@ public class EkaHipService implements EkaHipEvents {
     Prepared prepare(String reference, String expectedPatientUuid) {
         try {
             return orgContext.inReadOnlyTransaction(() -> {
-                Encounter encounter = encounterRepository.findByUuid(reference);
+                org.avni.server.domain.AbstractEncounter encounter = encounterRepository.findByUuid(reference);
+                Individual individual = encounter == null ? null : ((Encounter) encounter).getIndividual();
+                if (encounter == null) {
+                    org.avni.server.domain.ProgramEncounter programmeVisit = programEncounterRepository.findByUuid(reference);
+                    encounter = programmeVisit;
+                    individual = programmeVisit == null || programmeVisit.getProgramEnrolment() == null ? null
+                            : programmeVisit.getProgramEnrolment().getIndividual();
+                }
                 if (encounter == null || encounter.isVoided() || encounter.getEncounterDateTime() == null) {
                     return new Prepared(reference, null, "visit not found");
                 }
-                Individual individual = encounter.getIndividual();
                 if (expectedPatientUuid != null && (individual == null || !expectedPatientUuid.equals(individual.getUuid()))) {
                     return new Prepared(reference, null, "belongs to another patient");
                 }

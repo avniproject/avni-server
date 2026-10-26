@@ -44,6 +44,8 @@ public class EncounterService implements ScopeAwareService<Encounter> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterService.class);
     @Autowired
     Bugsnag bugsnag;
+    @Autowired
+    org.springframework.beans.factory.ObjectProvider<org.avni.server.service.abdm.hip.AbdmVisitQueue> abdmVisitQueue;
     private final EncounterRepository encounterRepository;
     private final ObservationService observationService;
     private final IndividualRepository individualRepository;
@@ -187,7 +189,10 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         if (individual.getAddressLevel() != null) {
             encounter.setAddressId(individual.getAddressLevel().getId());
         }
-        return encounterRepository.saveEntity(encounter);
+        Encounter saved = encounterRepository.saveEntity(encounter);
+        // DEMO-ONLY abdm-hackathon: queue the visit for ABDM linking (HIP_INTI_LINK_505); never fails the save.
+        if (abdmVisitQueue != null) abdmVisitQueue.ifAvailable(q -> q.queue(saved));
+        return saved;
     }
 
     public Page<Encounter> search(EncounterSearchRequest encounterSearchRequest) {

@@ -33,7 +33,8 @@ public class CareContextDocumentAssembler {
         this.formMappingService = formMappingService;
     }
 
-    public CareContextDocument assemble(Encounter encounter, Individual individual, String abhaNumber, String abhaAddress,
+    // A general visit or a programme visit (ProgramEncounter): both are AbstractEncounters.
+    public CareContextDocument assemble(AbstractEncounter encounter, Individual individual, String abhaNumber, String abhaAddress,
                                         String hipId, String hipName) {
         EncounterType encounterType = encounter.getEncounterType();
         Instant visitTime = encounter.getEncounterDateTime() == null ? null : Instant.ofEpochMilli(encounter.getEncounterDateTime().getMillis());
@@ -50,10 +51,10 @@ public class CareContextDocumentAssembler {
                 practitionerName(encounter),
                 hipId,
                 hipName,
-                items(encounter, encounterType));
+                items(encounter, encounterType, encounter instanceof ProgramEncounter ? FormType.ProgramEncounter : FormType.Encounter));
     }
 
-    private List<CareContextDocument.Item> items(Encounter encounter, EncounterType encounterType) {
+    private List<CareContextDocument.Item> items(AbstractEncounter encounter, EncounterType encounterType, FormType formType) {
         ObservationCollection observations = encounter.getObservations();
         if (observations == null || observations.isEmpty()) return List.of();
 
@@ -62,7 +63,7 @@ public class CareContextDocumentAssembler {
             Concept concept = conceptRepository.findByUuid(conceptUuid);
             if (concept != null) concepts.add(concept);
         }
-        Map<String, Integer> formOrder = formOrder(encounterType);
+        Map<String, Integer> formOrder = formOrder(encounterType, formType);
         concepts.sort(Comparator.<Concept>comparingInt(c -> formOrder.getOrDefault(c.getUuid(), Integer.MAX_VALUE))
                 .thenComparing(Concept::getName, Comparator.nullsLast(Comparator.naturalOrder())));
 
@@ -95,11 +96,11 @@ public class CareContextDocumentAssembler {
     }
 
     // Concept uuid to its position on the encounter's form. Empty when the form cannot be found: answers then go by name.
-    private Map<String, Integer> formOrder(EncounterType encounterType) {
+    private Map<String, Integer> formOrder(EncounterType encounterType, FormType formType) {
         Map<String, Integer> order = new HashMap<>();
         if (encounterType == null) return order;
         try {
-            FormMapping mapping = formMappingService.find(encounterType, FormType.Encounter);
+            FormMapping mapping = formMappingService.find(encounterType, formType);
             if (mapping == null || mapping.getForm() == null) return order;
             int position = 0;
             for (FormElement element : mapping.getForm().getAllFormElements()) {
@@ -117,7 +118,7 @@ public class CareContextDocumentAssembler {
         return name.isBlank() ? null : name;
     }
 
-    private static String practitionerName(Encounter encounter) {
+    private static String practitionerName(AbstractEncounter encounter) {
         User user = encounter.getFilledBy() != null ? encounter.getFilledBy() : encounter.getLastModifiedBy();
         return user == null ? null : user.getName();
     }

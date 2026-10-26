@@ -110,6 +110,23 @@ public class AbdmHipStore {
                         rs.getString("abha_address"), rs.getLong("encounters"), rs.getLong("linked")));
     }
 
+    // Patients with visits queued for linking (PENDING), or whose last try failed over an hour ago.
+    public List<String> subjectsToLink(String hipId, int limit) {
+        return jdbc.queryForList("select distinct i.uuid from abdm_care_context c join individual i on i.id = c.individual_id " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and (c.status = 'PENDING' " +
+                        "or (c.status = 'FAILED' and c.updated_at < now() - interval '1 hour')) limit :limit",
+                params().addValue("hip", hipId, Types.VARCHAR).addValue("limit", limit), String.class);
+    }
+
+    // A patient whose queued visits could not be linked: FAILED with the reason, so the next try waits an hour.
+    public void failQueued(String subjectUuid, String hipId, String reason) {
+        jdbc.update("update abdm_care_context c set status = 'FAILED', error = :reason, updated_at = now() from individual i " +
+                        "where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +
+                        "and c.status in ('PENDING', 'FAILED')",
+                params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
+                        .addValue("reason", reason, Types.VARCHAR));
+    }
+
     // ---- patient links (HIP-initiated linking)
 
     public Optional<PatientLink> findPatientLink(long individualId, String hipId) {

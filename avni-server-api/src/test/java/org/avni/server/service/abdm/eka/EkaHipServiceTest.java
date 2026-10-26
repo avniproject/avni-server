@@ -68,6 +68,7 @@ public class EkaHipServiceTest {
     private final FhirBundleBuilder builder = mock(FhirBundleBuilder.class);
     private final FideliusCrypto crypto = new FideliusCrypto();
     private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones = mock(org.avni.server.service.abdm.hip.AbdmPatientPhones.class);
+    private final org.avni.server.dao.ProgramEncounterRepository programEncounterRepository = mock(org.avni.server.dao.ProgramEncounterRepository.class);
     private final List<Map<String, Object>> view = List.of(Map.of("reference", "enc-2", "status", "LINK_REQUESTED"));
     private EkaHipService service;
 
@@ -76,7 +77,7 @@ public class EkaHipServiceTest {
         when(cfg.isEka()).thenReturn(true);
         when(cfg.isEkaSendData()).thenReturn(true);
         service = new EkaHipService(cfg, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
-                abhaLinkRepository, assembler, builder, crypto, phones);
+                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository);
 
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
                 1990, "12345678568912", "asha.devi", List.of(
@@ -98,7 +99,7 @@ public class EkaHipServiceTest {
         link.setAbhaAddress("asha.devi");
         when(abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(INDIVIDUAL_ID)).thenReturn(Optional.of(link));
         when(assembler.assemble(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> new CareContextDocument(
-                ((Encounter) inv.getArgument(0)).getUuid(), "OPD Visit", null, "subject-1", "Asha Devi", "Female", null,
+                ((org.avni.server.domain.AbstractEncounter) inv.getArgument(0)).getUuid(), "OPD Visit", null, "subject-1", "Asha Devi", "Female", null,
                 null, null, null, HIP_ID, "TANUH Health Centre", List.of()));
         when(builder.build(any())).thenAnswer(inv -> bundle(inv.getArgument(0)));
         when(store.insertDataFlow(anyString(), anyString(), any(), anyString(), anyString(), any())).thenReturn(42L);
@@ -422,6 +423,26 @@ public class EkaHipServiceTest {
     }
 
     // NHA: share only what the consent covers. Avni holds visit notes (OPConsultation) only.
+    // A visit under a programme is a care context too; its record is built from the programme visit.
+    @Test
+    public void aProgrammeVisitIsPreparedFromItsEnrolmentsPatient() {
+        Individual patient = new Individual();
+        patient.setId(INDIVIDUAL_ID);
+        patient.setUuid("subject-1");
+        org.avni.server.domain.ProgramEnrolment enrolment = new org.avni.server.domain.ProgramEnrolment();
+        enrolment.setIndividual(patient);
+        org.avni.server.domain.ProgramEncounter visit = new org.avni.server.domain.ProgramEncounter();
+        visit.setUuid("penc-1");
+        visit.setProgramEnrolment(enrolment);
+        visit.setEncounterDateTime(new DateTime(2026, 10, 26, 9, 0), null);
+        when(programEncounterRepository.findByUuid("penc-1")).thenReturn(visit);
+
+        EkaHipService.Prepared prepared = service.prepare("penc-1", "subject-1");
+
+        assertNotNull(prepared.problem(), prepared.bundleJson());
+        verify(assembler).assemble(eq(visit), eq(patient), any(), any(), any(), any());
+    }
+
     @Test
     public void aDataFetchForRecordTypesWeDoNotHoldSendsNothing() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));

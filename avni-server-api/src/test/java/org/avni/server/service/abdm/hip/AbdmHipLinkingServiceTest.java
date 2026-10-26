@@ -117,6 +117,47 @@ public class AbdmHipLinkingServiceTest {
     }
 
     @Test
+    public void programmeVisitsAreVisitsToo_newestFirst_withoutThoseOfAVoidedEnrolment() {
+        Individual patient = new Individual();
+        org.avni.server.domain.Encounter general = new org.avni.server.domain.Encounter();
+        general.setUuid("enc-1");
+        general.setEncounterType(encounterType("OPD Visit"));
+        general.setEncounterDateTime(new org.joda.time.DateTime(2026, 3, 14, 10, 0), null);
+        patient.setEncounters(new java.util.HashSet<>(List.of(general)));
+        org.avni.server.domain.ProgramEnrolment live = enrolment(patient, false, programVisit("penc-1", "HTN Follow-up", new org.joda.time.DateTime(2026, 10, 26, 9, 0)));
+        org.avni.server.domain.ProgramEnrolment voided = enrolment(patient, true, programVisit("penc-2", "HTN Follow-up", new org.joda.time.DateTime(2026, 10, 1, 9, 0)));
+        patient.setProgramEnrolments(new java.util.HashSet<>(List.of(live, voided)));
+
+        List<AbdmHipLinkingService.Visit> visits = AbdmHipLinkingService.visits(patient);
+
+        assertEquals(List.of("penc-1", "enc-1"), visits.stream().map(AbdmHipLinkingService.Visit::reference).toList());
+        assertEquals("HTN Follow-up, 26 Oct 2026", visits.get(0).display());
+    }
+
+    private static org.avni.server.domain.EncounterType encounterType(String name) {
+        org.avni.server.domain.EncounterType t = new org.avni.server.domain.EncounterType();
+        t.setName(name);
+        return t;
+    }
+
+    private static org.avni.server.domain.ProgramEncounter programVisit(String uuid, String type, org.joda.time.DateTime at) {
+        org.avni.server.domain.ProgramEncounter v = new org.avni.server.domain.ProgramEncounter();
+        v.setUuid(uuid);
+        v.setEncounterType(encounterType(type));
+        v.setEncounterDateTime(at, null);
+        return v;
+    }
+
+    private static org.avni.server.domain.ProgramEnrolment enrolment(Individual patient, boolean voided, org.avni.server.domain.ProgramEncounter visit) {
+        org.avni.server.domain.ProgramEnrolment e = new org.avni.server.domain.ProgramEnrolment();
+        e.setIndividual(patient);
+        e.setVoided(voided);
+        visit.setProgramEnrolment(e);
+        e.setProgramEncounters(new java.util.HashSet<>(List.of(visit)));
+        return e;
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void careContextsAreTheCompletedVisitsNewestFirstWithTypeAndDate() {
         service.linkCareContexts("subject-1");

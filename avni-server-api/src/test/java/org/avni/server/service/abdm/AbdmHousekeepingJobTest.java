@@ -17,6 +17,12 @@ public class AbdmHousekeepingJobTest {
     private final AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
     private final AbdmMessageLog messageLog = mock(AbdmMessageLog.class);
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData = mock(org.avni.server.service.abdm.hiu.AbdmHiuDataService.class);
+    private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore = mock(org.avni.server.service.abdm.hip.AbdmHipStore.class);
+    private final org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking = mock(org.avni.server.service.abdm.hip.AbdmHipLinkingService.class);
+
+    private AbdmHousekeepingJob job() {
+        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, hipLinking, 30);
+    }
 
     @Test
     public void oldTrafficIsDeletedAsTheOrganisation() {
@@ -26,10 +32,29 @@ public class AbdmHousekeepingJobTest {
             return null;
         }).when(orgContext).runAsOrg(any(Runnable.class));
 
-        new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, 30).purgeOldTraffic();
+        job().purgeOldTraffic();
 
         verify(orgContext).runAsOrg(any(Runnable.class));
         verify(messageLog).purgeOlderThan(Duration.ofDays(30));
+    }
+
+    // HIP_INTI_LINK_505: visits queued on save are linked without anyone pressing a button.
+    @Test
+    public void queuedVisitsAreLinkedPatientByPatient_andOneThatFailsIsMarkedSoItWaitsBeforeTheNextTry() {
+        when(cfg.getSystemUser()).thenReturn("abdm-system");
+        when(cfg.getHipId()).thenReturn("TANUH");
+        doAnswer(inv -> {
+            ((Runnable) inv.getArgument(0)).run();
+            return null;
+        }).when(orgContext).runAsOrg(any(Runnable.class));
+        when(hipStore.subjectsToLink("TANUH", 50)).thenReturn(java.util.List.of("subject-1", "subject-2"));
+        when(hipLinking.linkCareContexts("subject-1")).thenThrow(org.avni.server.service.abdm.hip.AbdmRequestException.conflict("Patient has no Eka ID"));
+
+        job().linkQueuedVisits();
+
+        verify(hipLinking).linkCareContexts("subject-1");
+        verify(hipLinking).linkCareContexts("subject-2");
+        verify(hipStore).failQueued("subject-1", "TANUH", "Patient has no Eka ID");
     }
 
     @Test
@@ -40,14 +65,14 @@ public class AbdmHousekeepingJobTest {
             return null;
         }).when(orgContext).runAsOrg(any(Runnable.class));
 
-        new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, 30).expireConsentsAndEraseRecords();
+        job().expireConsentsAndEraseRecords();
 
         verify(hiuData).expireAndErase();
     }
 
     @Test
     public void withNoSystemUserNothingRuns() {
-        new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, 30).purgeOldTraffic();
+        job().purgeOldTraffic();
 
         verify(orgContext, never()).runAsOrg(any(Runnable.class));
         verify(messageLog, never()).purgeOlderThan(any());
