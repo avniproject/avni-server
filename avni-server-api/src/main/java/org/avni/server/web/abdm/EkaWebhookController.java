@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.service.abdm.AbdmAsync;
 import org.avni.server.service.abdm.AbdmCallbackHeaders;
 import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmInboundEvents;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.AbdmPaths;
@@ -36,12 +37,15 @@ import java.util.function.Consumer;
 // Then 200 at once, and the work goes to an AbdmAsync thread as the organisation: log the event, hand it to the HIP or
 // HIU handler. Handlers come through ObjectProvider, so the server starts with either side missing.
 // Eka's retry policy is undocumented, so delivery is taken as at-least-once: an event id (the top-level transaction_id)
-// already seen is answered 200 and dropped. DEMO-ONLY: the ids are held in memory, the last 1000, per server.
+// already seen is answered 200 and dropped. The last 1000 ids are held in memory; abdm_inbound_event (AbdmInboundEvents)
+// is the record that survives a restart, and an event whose handling fails is released from it so a redelivery is handled.
+// With no abdm.eka.webhook-verify setting the signature is enforced.
 // No Avni user: the path is under /api/v3/**, unprotected (ResourceProtectionStatus).
 @RestController
 public class EkaWebhookController {
     private static final Logger logger = LoggerFactory.getLogger(EkaWebhookController.class);
     private static final int SEEN_EVENTS = 1000;
+    private static final String SOURCE = "eka";
 
     enum Route {LINK_CARE_CONTEXT, HIP_DATA_FETCH, CONSENT_UPDATE, HIU_DATA_PUSH, NONE}
 
@@ -57,6 +61,7 @@ public class EkaWebhookController {
     private final EkaWebhookVerifier verifier;
     private final AbdmAsync async;
     private final AbdmMessageLog messageLog;
+    private final AbdmInboundEvents inboundEvents;
     private final ObjectProvider<EkaHipEvents> hip;
     private final ObjectProvider<EkaHiuEvents> hiu;
     private final Map<String, Boolean> seen = new LinkedHashMap<>(64, 0.75f, false) {
@@ -68,11 +73,12 @@ public class EkaWebhookController {
 
     @Autowired
     public EkaWebhookController(AbdmConfig cfg, EkaWebhookVerifier verifier, AbdmAsync async, AbdmMessageLog messageLog,
-                                ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu) {
+                                AbdmInboundEvents inboundEvents, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu) {
         this.cfg = cfg;
         this.verifier = verifier;
         this.async = async;
         this.messageLog = messageLog;
+        this.inboundEvents = inboundEvents;
         this.hip = hip;
         this.hiu = hiu;
     }
@@ -81,7 +87,8 @@ public class EkaWebhookController {
     public ResponseEntity<Map<String, String>> receive(@RequestBody(required = false) byte[] body,
                                                        @RequestHeader(value = EkaWebhookVerifier.HEADER, required = false) String signature) {
         String rawBody = body == null ? "" : new String(body, StandardCharsets.UTF_8);
-        String verify = cfg.getEkaWebhookVerify() == null ? "log" : cfg.getEkaWebhookVerify().trim().toLowerCase(Locale.ROOT);
+        // No setting means enforce: an unsigned event is refused unless someone chose otherwise.
+        String verify = cfg.getEkaWebhookVerify() == null ? "enforce" : cfg.getEkaWebhookVerify().trim().toLowerCase(Locale.ROOT);
         if (!"off".equals(verify)) {
             EkaWebhookVerifier.Result result = verifier.verify(signature, rawBody);
             if ("enforce".equals(verify) && !result.valid()) {
@@ -114,8 +121,18 @@ public class EkaWebhookController {
                 AbdmJson.text(event, "data.hip_id"), null, null, null);
         JsonNode received = event;
         async.submit("Eka webhook " + name, () -> {
+            // The database's record of events taken outlives a restart; the in-memory one above only saves a round trip.
+            if (eventId != null && !inboundEvents.claim(SOURCE, eventId)) {
+                logger.info("Eka webhook {} {} already handled; ignored", name, eventId);
+                return;
+            }
             messageLog.incoming(AbdmPaths.IN_EKA_WEBHOOK + "#" + name, headers, received);
-            dispatch(route(name), name, eventId, received);
+            try {
+                dispatch(route(name), name, eventId, received);
+            } catch (RuntimeException e) {
+                if (eventId != null) inboundEvents.release(SOURCE, eventId);
+                logger.warn("Eka webhook {} {} failed ({}); released for Eka's next delivery", name, eventId, e.getClass().getSimpleName());
+            }
         });
         return answer(HttpStatus.OK, "accepted", null);
     }

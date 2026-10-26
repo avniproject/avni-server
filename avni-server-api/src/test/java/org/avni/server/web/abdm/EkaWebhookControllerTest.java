@@ -7,6 +7,7 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmAsync;
 import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.AbdmInboundEvents;
 import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmPaths;
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,6 +56,7 @@ public class EkaWebhookControllerTest {
     private EkaHiuEvents hiu;
     private ObjectProvider<EkaHiuEvents> hiuProvider;
     private MockMvc mvc;
+    private AbdmInboundEvents inboundEvents;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -83,7 +86,9 @@ public class EkaWebhookControllerTest {
         hiuProvider = mock(ObjectProvider.class);
         when(hipProvider.getIfAvailable()).thenReturn(hip);
         when(hiuProvider.getIfAvailable()).thenReturn(hiu);
-        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(cfg, verifier, async, messageLog, hipProvider, hiuProvider)).build();
+        inboundEvents = mock(AbdmInboundEvents.class);
+        when(inboundEvents.claim(anyString(), anyString())).thenReturn(true);
+        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(cfg, verifier, async, messageLog, inboundEvents, hipProvider, hiuProvider)).build();
     }
 
     static String event(String name) {
@@ -267,6 +272,39 @@ public class EkaWebhookControllerTest {
 
         verify(hip, times(1)).linkCareContext(any());
         verify(messageLog, times(1)).incoming(any(), any(), any());
+    }
+
+    // AVNI-15: the in-memory list of seen events was lost on every restart.
+    @Test
+    public void anEventTheDatabaseHasAlreadySeenIsNotHandledAgain_asAfterARestart() throws Exception {
+        String body = event("link-care-context.json");
+        when(inboundEvents.claim("eka", "wh-link-1")).thenReturn(false);
+
+        send(body, signature(NOW, body)).andExpect(status().isOk());
+
+        verifyNoInteractions(hip);
+        verify(messageLog, never()).incoming(any(), any(), any());
+    }
+
+    @Test
+    public void anEventWhoseHandlingFailsIsReleasedSoARedeliveryIsHandled() throws Exception {
+        String body = event("link-care-context.json");
+        doThrow(new IllegalStateException("database down")).when(hip).linkCareContext(any());
+
+        send(body, signature(NOW, body)).andExpect(status().isOk());
+
+        verify(inboundEvents).claim("eka", "wh-link-1");
+        verify(inboundEvents).release("eka", "wh-link-1");
+    }
+
+    // With no setting, an unsigned webhook used to be accepted (the default was log).
+    @Test
+    public void withNoModeConfiguredAnUnsignedEventIsRefused() throws Exception {
+        when(cfg.getEkaWebhookVerify()).thenReturn(null);
+
+        send(event("link-care-context.json"), null).andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(hip);
     }
 
     @Test

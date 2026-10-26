@@ -23,3 +23,21 @@ SELECT grant_all_on_table(a.rolname, t.name)
 FROM pg_roles a,
      (values ('abdm_parked_event')) as t(name)
 WHERE pg_has_role('openchs', a.oid, 'member');
+
+-- Inbound events already taken, so a webhook delivered again (before or after a restart) has one effect (AVNI-15).
+create table abdm_inbound_event
+(
+    id              bigserial primary key,
+    organisation_id integer      not null references organisation (id),
+    source          varchar(20)  not null,
+    event_id        varchar(100) not null,
+    received_at     timestamptz  not null default now(),
+    unique (organisation_id, source, event_id)
+);
+
+select enable_rls_on_tx_table('abdm_inbound_event');
+
+SELECT grant_all_on_table(a.rolname, t.name)
+FROM pg_roles a,
+     (values ('abdm_inbound_event')) as t(name)
+WHERE pg_has_role('openchs', a.oid, 'member');

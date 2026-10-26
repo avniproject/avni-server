@@ -70,7 +70,7 @@ public class AbdmConfig {
                       @Value("${abdm.eka.doctor-oid:}") String ekaDoctorOid,
                       @Value("${abdm.eka.requester-name:Dr. Demo}") String ekaRequesterName,
                       @Value("${abdm.eka.send-data:true}") boolean ekaSendData,
-                      @Value("${abdm.eka.webhook-verify:log}") String ekaWebhookVerify) {
+                      @Value("${abdm.eka.webhook-verify:enforce}") String ekaWebhookVerify) {
         this.environment = environment;
         this.mode = mode;
         this.sandboxBaseUrl = sandboxBaseUrl;
