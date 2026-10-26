@@ -60,6 +60,10 @@ public class AbdmHiuStore {
     public record EkaPatientRow(String ekaOid, String subjectUuid) {
     }
 
+    // A consent update for a request id no request of ours carries yet (V1_414 abdm_parked_event).
+    public record ParkedConsentUpdate(long id, String consentRequestId, String status, List<String> artefactIds) {
+    }
+
     // ---- consent requests
 
     public void insertConsentRequest(String uuid, String abhaAddress, String hiuId, String purposeCode, String hiTypes,
@@ -111,6 +115,34 @@ public class AbdmHiuStore {
     public List<Consent> listConsentRequests() {
         return jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIU' and consent_id is null order by created_at desc limit 200",
                 params(), CONSENT);
+    }
+
+    // ---- parked consent updates
+
+    public void parkConsentUpdate(String consentRequestId, String status, List<String> artefactIds) {
+        String detail = AbdmJson.write(AbdmJson.M.createObjectNode().set("artefacts", AbdmJson.M.valueToTree(artefactIds == null ? List.of() : artefactIds)));
+        jdbc.update("insert into abdm_parked_event (organisation_id, kind, reference, status, detail) " +
+                        "values (:org, 'consent_update', :ref, :status, cast(:detail as jsonb))",
+                params().addValue("ref", consentRequestId, Types.VARCHAR).addValue("status", status, Types.VARCHAR)
+                        .addValue("detail", detail, Types.VARCHAR));
+    }
+
+    // Oldest first, so they are applied in the order they came.
+    public List<ParkedConsentUpdate> parkedConsentUpdates(String consentRequestId) {
+        if (consentRequestId == null) return new ArrayList<>();
+        return jdbc.query("select id, reference, status, detail from abdm_parked_event where organisation_id = :org " +
+                        "and kind = 'consent_update' and reference = :ref and resolved_at is null order by id",
+                params().addValue("ref", consentRequestId, Types.VARCHAR),
+                (rs, n) -> {
+                    List<String> artefacts = new ArrayList<>();
+                    JsonNode ids = AbdmJson.at(AbdmJson.read(rs.getString("detail")), "artefacts");
+                    if (ids != null && ids.isArray()) ids.forEach(id -> artefacts.add(id.asText()));
+                    return new ParkedConsentUpdate(rs.getLong("id"), rs.getString("reference"), rs.getString("status"), artefacts);
+                });
+    }
+
+    public void resolveParked(long id) {
+        jdbc.update("update abdm_parked_event set resolved_at = now() where organisation_id = :org and id = :id", params().addValue("id", id));
     }
 
     // ---- artefacts

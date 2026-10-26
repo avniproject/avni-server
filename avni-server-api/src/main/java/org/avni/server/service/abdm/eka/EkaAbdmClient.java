@@ -35,8 +35,8 @@ import java.util.function.Function;
 // the given headers (X-Pt-Id, X-Partner-Pt-Id, X-Hip-Id ...). Any non-2xx answer throws AbdmGatewayException with Eka's
 // error code and message; a call that does not answer throws it with status 0. Never logs a body, a token or an ID of a
 // patient. The requestId in the response is a fresh UUID for the traffic log.
-// The JDK HTTP client as EkaRestClient uses it: HTTP/1.1, 5 s to connect, 10 s for the whole exchange, a Content-Length
-// body. A 401 is not retried: EkaTokenService has no way to drop a token, and renews it 15 minutes before it expires.
+// The JDK HTTP client as EkaRestClient uses it: HTTP/1.1, 5 s to connect, 10 s for the whole exchange (60 s for postSlow),
+// a Content-Length body. Server errors and 429 are tried up to three times (exchange). A 401 is not retried: EkaTokenService has no way to drop a token, and renews it 15 minutes before it expires.
 @Component
 public class EkaAbdmClient {
     private static final Logger logger = LoggerFactory.getLogger(EkaAbdmClient.class);
@@ -47,6 +47,9 @@ public class EkaAbdmClient {
 
     static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     static final Duration ANSWER_TIMEOUT = Duration.ofSeconds(10);
+    static final Duration SLOW_ANSWER_TIMEOUT = Duration.ofSeconds(60);
+    static final Duration RETRY_BACKOFF = Duration.ofMillis(500);
+    static final int ATTEMPTS = 3;
     private static final int MAX_MESSAGE = 300;
 
     private final AbdmOrgContext orgContext;
@@ -56,15 +59,19 @@ public class EkaAbdmClient {
     private final Function<EkaSystemConfig, String> baseUrlOf;
     private final HttpClient httpClient;
     private final Duration answerTimeout;
+    private final Duration slowAnswerTimeout;
+    private final Duration retryBackoff;
 
     @Autowired
     public EkaAbdmClient(AbdmOrgContext orgContext, ExternalSystemConfigRepository configRepository, EkaTokenService tokenService,
                          AbdmMessageLog messageLog) {
-        this(orgContext, configRepository, tokenService, messageLog, EkaSystemConfig::getBaseUrl, CONNECT_TIMEOUT, ANSWER_TIMEOUT);
+        this(orgContext, configRepository, tokenService, messageLog, EkaSystemConfig::getBaseUrl, CONNECT_TIMEOUT, ANSWER_TIMEOUT,
+                SLOW_ANSWER_TIMEOUT, RETRY_BACKOFF);
     }
 
     EkaAbdmClient(AbdmOrgContext orgContext, ExternalSystemConfigRepository configRepository, EkaTokenService tokenService,
-                  AbdmMessageLog messageLog, Function<EkaSystemConfig, String> baseUrlOf, Duration connectTimeout, Duration answerTimeout) {
+                  AbdmMessageLog messageLog, Function<EkaSystemConfig, String> baseUrlOf, Duration connectTimeout, Duration answerTimeout,
+                  Duration slowAnswerTimeout, Duration retryBackoff) {
         this.orgContext = orgContext;
         this.configRepository = configRepository;
         this.tokenService = tokenService;
@@ -72,18 +79,25 @@ public class EkaAbdmClient {
         this.baseUrlOf = baseUrlOf;
         this.httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(connectTimeout).build();
         this.answerTimeout = answerTimeout;
+        this.slowAnswerTimeout = slowAnswerTimeout;
+        this.retryBackoff = retryBackoff;
+    }
+
+    // For calls Eka is known to take longer than ANSWER_TIMEOUT over (consent create and approve, AVNI-20).
+    public AbdmGatewayResponse postSlow(String path, JsonNode body, Map<String, String> headers) {
+        return exchange("POST", path, body, headers, slowAnswerTimeout);
     }
 
     public AbdmGatewayResponse post(String path, JsonNode body, Map<String, String> headers) {
-        return exchange("POST", path, body, headers);
+        return exchange("POST", path, body, headers, answerTimeout);
     }
 
     public AbdmGatewayResponse patch(String path, JsonNode body, Map<String, String> headers) {
-        return exchange("PATCH", path, body, headers);
+        return exchange("PATCH", path, body, headers, answerTimeout);
     }
 
     public AbdmGatewayResponse get(String path, Map<String, String> headers) {
-        return exchange("GET", path, null, headers);
+        return exchange("GET", path, null, headers, answerTimeout);
     }
 
     // The organisation's Eka base URL, for the admin screen.
@@ -101,7 +115,47 @@ public class EkaAbdmClient {
         token(organisationId());
     }
 
-    private AbdmGatewayResponse exchange(String method, String path, JsonNode body, Map<String, String> headers) {
+    // Up to ATTEMPTS tries, backing off, for a server error, 429, a call that never reached Eka, or a read that did not
+    // answer (AVNI-17). A write that did not answer is not sent again: Eka may have acted on it.
+    private AbdmGatewayResponse exchange(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return exchangeOnce(method, path, body, headers, timeout);
+            } catch (AbdmGatewayException e) {
+                if (attempt >= ATTEMPTS || !worthTryingAgain(method, e)) throw e;
+                logger.info("Eka {} {}: try {} of {} after {}", method, withoutQuery(path), attempt + 1, ATTEMPTS,
+                        e.getStatus() == 0 ? "no answer" : "HTTP " + e.getStatus());
+                pause(retryBackoff.multipliedBy(1L << (attempt - 1)));
+            }
+        }
+    }
+
+    private static boolean worthTryingAgain(String method, AbdmGatewayException e) {
+        int status = e.getStatus();
+        if (status == 429 || status >= 500) return true;
+        if (e instanceof NoAnswer noAnswer) return !noAnswer.sent || "GET".equals(method);
+        return false;
+    }
+
+    private static void pause(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // Eka did not answer. sent: the request may have reached Eka (a timeout), as against a connection never made.
+    static class NoAnswer extends AbdmGatewayException {
+        final boolean sent;
+
+        NoAnswer(boolean sent, String message) {
+            super(0, null, message);
+            this.sent = sent;
+        }
+    }
+
+    private AbdmGatewayResponse exchangeOnce(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
         String requestId = UUID.randomUUID().toString();
         String call = "Eka " + method + " " + withoutQuery(path);
         Integer status = null;
@@ -109,7 +163,7 @@ public class EkaAbdmClient {
             Long organisationId = organisationId();
             String url = baseUrlOf(config(organisationId)) + path;
             String token = token(organisationId);
-            HttpResponse<String> response = send(method, url, token, body, headers, call);
+            HttpResponse<String> response = send(method, url, token, body, headers, call, timeout);
             status = response.statusCode();
             logger.info("{} -> {} (request {})", call, status, requestId);
             JsonNode answer = parse(response.body());
@@ -129,7 +183,8 @@ public class EkaAbdmClient {
         }
     }
 
-    private HttpResponse<String> send(String method, String url, String token, JsonNode body, Map<String, String> headers, String call) {
+    private HttpResponse<String> send(String method, String url, String token, JsonNode body, Map<String, String> headers, String call,
+                                      Duration timeout) {
         HttpRequest.Builder builder;
         try {
             builder = HttpRequest.newBuilder(URI.create(url))
@@ -152,13 +207,14 @@ public class EkaAbdmClient {
         }
         CompletableFuture<HttpResponse<String>> answer = httpClient.sendAsync(builder.build(), HttpResponse.BodyHandlers.ofString());
         try {
-            return answer.get(answerTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            return answer.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             answer.cancel(true);
-            throw new AbdmGatewayException(0, null, call + " did not answer within " + answerTimeout.toMillis() + " ms");
+            throw new NoAnswer(true, call + " did not answer within " + timeout.toMillis() + " ms");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() == null ? e : e.getCause();
-            throw new AbdmGatewayException(0, null, call + " did not answer: " + cause.getClass().getSimpleName());
+            boolean neverConnected = cause instanceof java.net.ConnectException || cause instanceof java.net.http.HttpConnectTimeoutException;
+            throw new NoAnswer(!neverConnected, call + " did not answer: " + cause.getClass().getSimpleName());
         } catch (InterruptedException e) {
             answer.cancel(true);
             Thread.currentThread().interrupt();

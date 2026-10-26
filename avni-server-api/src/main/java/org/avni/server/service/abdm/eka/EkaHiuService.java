@@ -127,6 +127,10 @@ public class EkaHiuService implements EkaHiuEvents {
                                               String purposeCode, String requesterName) {
         String address = AbdmFlows.withSuffix(abhaAddress, cfg.getAbhaAddressSuffix());
         if (address == null) throw AbdmRequestException.badRequest("abhaAddress is required");
+        if (!isAbhaAddress(address, cfg.getAbhaAddressSuffix())) {
+            throw AbdmRequestException.badRequest("Not an ABHA address: expected a name of letters, digits, '.' or '_' ending in "
+                    + (StringUtils.hasText(cfg.getAbhaAddressSuffix()) ? cfg.getAbhaAddressSuffix() : "@abdm or @sbx"));
+        }
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         LocalDate fromDate = from == null ? today.minusYears(5) : from;
         LocalDate toDate = to == null ? today : to;
@@ -189,7 +193,7 @@ public class EkaHiuService implements EkaHiuEvents {
         }
 
         try {
-            AbdmGatewayResponse response = eka.post(CONSENT_CREATE, body, patientHeaders(patient.oid(), patient.subjectUuid()));
+            AbdmGatewayResponse response = eka.postSlow(CONSENT_CREATE, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             String consentRequestId = consentInitIdOf(response == null ? null : response.body());
             if (consentRequestId == null) {
                 // Any 2xx is success (the spec's 204-with-a-body contradiction); abha.consent_update correlates it later.
@@ -197,6 +201,13 @@ public class EkaHiuService implements EkaHiuEvents {
                         response == null ? null : response.status());
             } else if (rowId != null) {
                 store.setConsentRequestId(rowId, consentRequestId, REQUESTED);
+                // Eka's consent_init_id is not ABDM's consent request id, which consent_update and the push name. Map it now
+                // when Eka's list already has it; otherwise consentUpdate maps it the same way when the first update comes.
+                String abdmId = abdmIdOf(consentRequestId, patient, address);
+                if (abdmId != null && !abdmId.equals(consentRequestId)) {
+                    store.setConsentRequestId(rowId, abdmId, REQUESTED);
+                    applyParked(abdmId, address, cfg.getHiuId());
+                }
             }
         } catch (RuntimeException e) {
             return failed(out, rowId, uuid, "Eka refused the consent request: " + describe(e));
@@ -292,27 +303,63 @@ public class EkaHiuService implements EkaHiuEvents {
         }
 
         Optional<AbdmHiuStore.Consent> request = retry.find(() -> store.findConsentRequest(consentRequestId));
+        if (request.isEmpty()) request = matchThroughEka(consentRequestId);
         if (request.isEmpty()) {
-            // DEMO-ONLY: Eka's consent_init_id may not be ABDM's consentRequestId (spec 3.2, unverified). The newest
-            // request still waiting takes the id, so the rest of the flow correlates on it.
-            request = newestRequest(null, List.of(REQUESTED));
-            request.ifPresentOrElse(r -> {
-                logger.warn("Eka consent update for unknown consent request {}: taken as request {}, the newest one waiting", consentRequestId, r.uuid());
-                store.setConsentRequestId(r.id(), consentRequestId, status);
-            }, () -> logger.warn("Eka consent update for unknown consent request {}; no request waiting", consentRequestId));
+            // Never filed under another request: with two waiting, that swapped their approvals (AVNI-24, 26 Oct).
+            store.parkConsentUpdate(consentRequestId, status, artefacts);
+            logger.warn("Eka consent update ({}) for consent request {}, which no request of ours carries yet: parked", status, consentRequestId);
+            return;
         }
+        String abhaAddress = request.get().abhaAddress();
+        String hiuId = request.get().hiuId() != null ? request.get().hiuId() : cfg.getHiuId();
+        applyParked(consentRequestId, abhaAddress, hiuId);
+        apply(consentRequestId, status, artefacts, abhaAddress, hiuId);
+    }
+
+    private void apply(String consentRequestId, String status, List<String> artefacts, String abhaAddress, String hiuId) {
         store.setConsentRequestStatus(consentRequestId, status);
         if (!GRANTED.equals(status)) {
             store.setArtefactStatus(artefacts, status);
             return;
         }
-        String abhaAddress = request.map(AbdmHiuStore.Consent::abhaAddress).orElse(null);
-        String hiuId = request.map(AbdmHiuStore.Consent::hiuId).orElse(cfg.getHiuId());
         // No fetch and no health-information request: Eka pushes the records itself (abha.hiu_data_push).
         for (String consentId : artefacts) {
             store.upsertArtefact(consentRequestId, consentId, abhaAddress, hiuId, GRANTED, null);
         }
         logger.info("Eka consent request {} {} with {} artefact(s)", consentRequestId, status, artefacts.size());
+    }
+
+    // Updates parked for this id before it was matched, oldest first.
+    private void applyParked(String consentRequestId, String abhaAddress, String hiuId) {
+        for (AbdmHiuStore.ParkedConsentUpdate parked : store.parkedConsentUpdates(consentRequestId)) {
+            apply(consentRequestId, parked.status(), parked.artefactIds(), abhaAddress, hiuId);
+            store.resolveParked(parked.id());
+        }
+    }
+
+    // ABDM's consent request id to our request: Eka's consent list, per patient with a request waiting, gives the
+    // consent_init_id Eka answered our create with, which is what the request carries until it is matched.
+    private Optional<AbdmHiuStore.Consent> matchThroughEka(String abdmId) {
+        Map<String, List<AbdmHiuStore.Consent>> byPatient = new LinkedHashMap<>();
+        for (AbdmHiuStore.Consent r : store.listConsentRequests()) {
+            if (r.consentRequestId() == null || r.abhaAddress() == null || FAILED.equals(r.status())) continue;
+            byPatient.computeIfAbsent(r.abhaAddress().toLowerCase(Locale.ROOT), a -> new ArrayList<>()).add(r);
+        }
+        for (List<AbdmHiuStore.Consent> requests : byPatient.values()) {
+            String address = requests.get(0).abhaAddress();
+            EkaPatient patient = findPatient(address, address);
+            if (patient.oid() == null) continue;
+            String initId = initIdOf(abdmId, consentList(patient, address));
+            if (initId == null) continue;
+            for (AbdmHiuStore.Consent r : requests) {
+                if (initId.equals(r.consentRequestId())) {
+                    store.setConsentRequestId(r.id(), abdmId, r.status());
+                    logger.info("Eka consent request {} (Eka's {}) is request {}", abdmId, initId, r.uuid());
+                    return Optional.of(r);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     // ---- abha.hiu_data_push (spec 3.7, 3.8)
@@ -336,13 +383,17 @@ public class EkaHiuService implements EkaHiuEvents {
         String senderKey = AbdmFlows.firstNonNull(AbdmJson.text(keyInformation, "dh_public_key.key_value"),
                 AbdmJson.text(keyInformation, "dhPublicKey.keyValue"));
         String senderNonce = AbdmJson.text(keyInformation, "nonce");
-        String flowConsentId = consentId != null ? consentId : "unknown";
         if (transactionId == null) {
             logger.warn("Eka HIU data push for consent {} without a transaction id; ignored", consentId);
             return;
         }
+        // Eka's push names the consent request; the records and our receipt belong to its granted artefact (AVNI-16).
+        String flowConsentId = grantedArtefactFor(consentId);
+        if (flowConsentId == null) {
+            logger.warn("Eka HIU data push {} for consent {}: no granted consent of ours covers it; nothing kept, no receipt", transactionId, consentId);
+            return;
+        }
 
-        fileUnderConsentRequest(consentId, abhaAddress);
         List<Keyset> keys = decryptionKeys();
         AbdmHiuStore.DataFlow flow = store.findDataFlowByTransaction(transactionId).orElse(null);
         long flowId;
@@ -409,7 +460,7 @@ public class EkaHiuService implements EkaHiuEvents {
         logger.info("Eka HIU data push {} for consent {}: {} record(s) kept", transactionId, consentId, received);
 
         ObjectNode ack = AbdmJson.obj();
-        ack.put("consent_id", consentId);
+        ack.put("consent_id", flowConsentId);
         ack.put("transaction_id", transactionId);
         ack.set("status_response", statusResponse);
         try {
@@ -447,35 +498,26 @@ public class EkaHiuService implements EkaHiuEvents {
         throw last != null ? last : new IllegalStateException("No HIU key");
     }
 
-    // The webapp lists records through artefact rows (AbdmHiuStore.records), so the push's consent id needs one.
-    private void fileUnderConsentRequest(String consentId, String abhaAddress) {
-        if (consentId == null) return;
-        // consent_update may still be on its way, as the NHA route allows for.
-        if (retry.find(() -> store.findArtefact(consentId)).isPresent()) return;
+    // The artefact a push belongs to: the id itself when it is an artefact of ours, else the one granted artefact of the
+    // consent request it names. consent_update may still be on its way, as the NHA route allows for. Null when none, or
+    // when the request has several and the push cannot say which (no guessing).
+    private String grantedArtefactFor(String consentId) {
+        if (consentId == null) return null;
+        if (store.findArtefact(consentId).isPresent()) return consentId;
         Optional<AbdmHiuStore.Consent> request = store.findConsentRequest(consentId);
-        if (request.isEmpty()) {
-            // DEMO-ONLY: the newest granted or waiting request for this patient.
-            request = newestRequest(abhaAddress, List.of(GRANTED, REQUESTED));
-            request.ifPresent(r -> logger.warn("Eka HIU data push for unknown consent {}: filed under request {}", consentId, r.uuid()));
+        if (request.isEmpty()) request = matchThroughEka(consentId);
+        if (request.isEmpty()) return null;
+        Optional<List<String>> granted = retry.find(() -> {
+            List<String> ids = store.findArtefacts(List.of(consentId)).stream()
+                    .filter(a -> GRANTED.equals(a.status())).map(AbdmHiuStore.Artefact::consentId).toList();
+            return ids.isEmpty() ? Optional.empty() : Optional.of(ids);
+        });
+        if (granted.isEmpty()) return null;
+        if (granted.get().size() > 1) {
+            logger.warn("Eka HIU data push for consent request {}: {} granted artefacts and the push names none of them", consentId, granted.get().size());
+            return null;
         }
-        if (request.isEmpty()) {
-            logger.warn("Eka HIU data push for unknown consent {}: kept, but under no consent request", consentId);
-            return;
-        }
-        AbdmHiuStore.Consent r = request.get();
-        String consentRequestId = r.consentRequestId();
-        if (consentRequestId == null) {
-            consentRequestId = consentId;
-            store.setConsentRequestId(r.id(), consentRequestId, GRANTED);
-        }
-        store.upsertArtefact(consentRequestId, consentId, r.abhaAddress(), r.hiuId() != null ? r.hiuId() : cfg.getHiuId(), GRANTED, null);
-    }
-
-    private Optional<AbdmHiuStore.Consent> newestRequest(String abhaAddress, List<String> statuses) {
-        return store.listConsentRequests().stream()
-                .filter(r -> statuses.contains(r.status()))
-                .filter(r -> abhaAddress == null || abhaAddress.equalsIgnoreCase(r.abhaAddress()))
-                .findFirst();
+        return granted.get().get(0);
     }
 
     // ---- sandbox approval (spec 3.5): acting as the patient, as a PHR app would
@@ -527,7 +569,7 @@ public class EkaHiuService implements EkaHiuEvents {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("consentRequestId", consentId);
         try {
-            AbdmGatewayResponse response = eka.post(path, body, patientHeaders(patient.oid(), patient.subjectUuid()));
+            AbdmGatewayResponse response = eka.postSlow(path, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             out.put("ok", true);
             out.put("httpStatus", response == null ? null : response.status());
             out.put("body", response == null ? null : response.body());
@@ -577,30 +619,62 @@ public class EkaHiuService implements EkaHiuEvents {
     // Eka's consent list maps its consent_init_id to ABDM's consent id (spec 3.3); when they differ, ABDM's is kept.
     private String abdmConsentId(AbdmHiuStore.Consent request, EkaPatient patient) {
         String id = request.consentRequestId();
+        String abdmId = abdmIdOf(id, patient, request.abhaAddress());
+        if (abdmId == null || abdmId.equals(id)) return id;
+        store.setConsentRequestId(request.id(), abdmId, request.status());
+        logger.info("Eka consent request {} is ABDM consent request {}", id, abdmId);
+        return abdmId;
+    }
+
+    // ABDM's consent request id for Eka's consent_init_id, from the patient's consent list; null when not listed.
+    private String abdmIdOf(String initId, EkaPatient patient, String abhaAddress) {
+        if (initId == null || patient.oid() == null) return null;
+        JsonNode consents = consentList(patient, abhaAddress);
+        if (consents == null) return null;
+        for (JsonNode c : consents) {
+            if (initId.equals(AbdmJson.text(c, "consent_init_id"))) return AbdmJson.text(c, "consent_id");
+        }
+        return null;
+    }
+
+    // Eka's consent_init_id for ABDM's consent request id; null when not listed.
+    private static String initIdOf(String abdmId, JsonNode consents) {
+        if (consents == null) return null;
+        for (JsonNode c : consents) {
+            if (abdmId.equals(AbdmJson.text(c, "consent_id"))) return AbdmJson.text(c, "consent_init_id");
+        }
+        return null;
+    }
+
+    // The patient's consents at Eka (spec 3.3) as an array, or null when Eka does not answer with one.
+    private JsonNode consentList(EkaPatient patient, String abhaAddress) {
         try {
             ObjectNode body = AbdmJson.obj();
             ObjectNode p = body.putObject("patient");
             p.put("oid", patient.oid());
-            p.put("health_id", request.abhaAddress());
+            p.put("health_id", abhaAddress);
             ObjectNode hiu = body.putObject("hiu");
             putIfText(hiu, "clinic_id", cfg.getEkaClinicId());
             putIfText(hiu, "d_oid", cfg.getEkaDoctorOid());
             AbdmGatewayResponse response = eka.post(CONSENT_LIST, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             JsonNode consents = response == null ? null
                     : firstPresent(AbdmJson.at(response.body(), "consents"), AbdmJson.at(response.body(), "data.consents"));
-            if (consents == null || !consents.isArray()) return id;
-            for (JsonNode c : consents) {
-                String abdmId = AbdmJson.text(c, "consent_id");
-                if (id.equals(AbdmJson.text(c, "consent_init_id")) && abdmId != null && !abdmId.equals(id)) {
-                    store.setConsentRequestId(request.id(), abdmId, request.status());
-                    logger.info("Eka consent request {} is ABDM consent request {}", id, abdmId);
-                    return abdmId;
-                }
-            }
+            return consents != null && consents.isArray() ? consents : null;
         } catch (RuntimeException e) {
-            logger.info("Eka consent list not read ({}); approving consent request {} as is", describe(e), id);
+            logger.info("Eka consent list not read: {}", describe(e));
+            return null;
         }
-        return id;
+    }
+
+    // NHA's pattern for an ABHA address, with the environment's suffix (@sbx in the sandbox, @abdm in production).
+    static boolean isAbhaAddress(String address, String suffix) {
+        if (address == null) return false;
+        int at = address.lastIndexOf('@');
+        if (at < 0) return false;
+        String name = address.substring(0, at);
+        String domain = address.substring(at);
+        boolean domainOk = StringUtils.hasText(suffix) ? domain.equalsIgnoreCase(suffix) : domain.matches("@(abdm|sbx)");
+        return domainOk && name.matches("[a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]");
     }
 
     // ---- patient

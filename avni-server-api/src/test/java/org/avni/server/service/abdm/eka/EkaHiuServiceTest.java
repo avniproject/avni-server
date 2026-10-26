@@ -13,6 +13,7 @@ import org.avni.server.service.abdm.gateway.AbdmGatewayException;
 import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
+import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abdm.hip.AbdmTestSupport;
 import org.avni.server.service.abdm.hiu.AbdmHiuStore;
 import org.avni.server.service.abha.EkaCredentialCipher;
@@ -36,6 +37,7 @@ import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIU_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -82,7 +84,7 @@ public class EkaHiuServiceTest {
         when(store.findConsentRequestByInitRequest(anyString())).thenReturn(Optional.of(request(5, null, "REQUESTED")));
         when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam")));
         when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(abhaEvent("created", "oid-1")));
-        when(eka.post(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
+        when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
                 .thenReturn(new AbdmGatewayResponse("r-1", 200, AbdmJson.read("{\"consent_init_id\":\"init-1\"}")));
     }
 
@@ -96,7 +98,7 @@ public class EkaHiuServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).post(eq("/abdm/v1/consents/create"), body.capture(), headers.capture());
+        verify(eka).postSlow(eq("/abdm/v1/consents/create"), body.capture(), headers.capture());
         JsonNode b = body.getValue();
         assertEquals("oid-1", b.at("/patient/oid").asText());
         assertEquals("shyam@sbx", b.at("/patient/health_id").asText());
@@ -120,7 +122,7 @@ public class EkaHiuServiceTest {
                 eq("OPConsultation,Prescription"), eq(Instant.parse("2026-01-01T00:00:00Z")), eq(Instant.parse("2026-10-20T23:59:59Z")),
                 any(Instant.class), anyString(), eq("REQUESTED"));
         order.verify(eka).patch(eq("/abdm/v1/hiu/keyset"), any(), any());
-        order.verify(eka).post(eq("/abdm/v1/consents/create"), any(), any());
+        order.verify(eka).postSlow(eq("/abdm/v1/consents/create"), any(), any());
         order.verify(store).setConsentRequestId(5L, "init-1", "REQUESTED");
         assertEquals("REQUESTED", answer.get("status"));
         assertNotNull(answer.get("uuid"));
@@ -159,7 +161,7 @@ public class EkaHiuServiceTest {
 
     @Test
     public void ekaRefusingTheConsentFailsTheRowWithItsMessage() {
-        when(eka.post(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new AbdmGatewayException(400, "ABDM-1040", "Invalid HIU ID"));
+        when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new AbdmGatewayException(400, "ABDM-1040", "Invalid HIU ID"));
 
         Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, null);
 
@@ -189,7 +191,7 @@ public class EkaHiuServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).post(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
+        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
         assertTrue(body.getValue().at("/patient/oid").isMissingNode());
         assertEquals("shyam@sbx", body.getValue().at("/patient/health_id").asText());
         assertFalse(headers.getValue().containsKey(EkaAbdmClient.H_PATIENT_OID));
@@ -206,7 +208,7 @@ public class EkaHiuServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).post(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
+        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
         assertEquals("oid-2", body.getValue().at("/patient/oid").asText());
         assertEquals("subject-2", headers.getValue().get(EkaAbdmClient.H_PARTNER_PATIENT_ID));
     }
@@ -253,18 +255,57 @@ public class EkaHiuServiceTest {
         verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
     }
 
+    // AVNI-24: with two requests waiting, an update for the older one used to be filed under the newest.
     @Test
-    public void anUpdateForAnIdWeDoNotKnowIsTakenByTheNewestOpenRequest() {
-        when(store.findConsentRequest("abdm-cr-1")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of(request(6, null, "FAILED"), request(5, "init-1", "REQUESTED")));
-        ObjectNode event = (ObjectNode) ekaFixture("hiu-consent-update-granted.json");
-        ((ObjectNode) event.at("/data/notification")).put("consentRequestId", "abdm-cr-1");
+    public void anUpdateForAnIdWeDoNotKnowIsMatchedToItsOwnRequestThroughEkasConsentList() {
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
+        when(store.listConsentRequests()).thenReturn(List.of(request(6, "init-2", "REQUESTED"), request(5, "init-1", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}", "{\"consent_id\":\"abdm-B\",\"consent_init_id\":\"init-2\"}");
 
-        service.consentUpdate(event);
+        service.consentUpdate(grantedUpdate("abdm-A"));
 
-        verify(store).setConsentRequestId(5L, "abdm-cr-1", "GRANTED");
-        verify(store).setConsentRequestStatus("abdm-cr-1", "GRANTED");
-        verify(store).upsertArtefact("abdm-cr-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
+        verify(store).setConsentRequestId(5L, "abdm-A", "REQUESTED");
+        verify(store, never()).setConsentRequestId(eq(6L), any(), any());
+        verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
+    }
+
+    @Test
+    public void anUpdateThatNoRequestOwnsIsParkedAndNothingIsGuessed() {
+        when(store.findConsentRequest("abdm-Z")).thenReturn(Optional.empty());
+        when(store.listConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
+
+        service.consentUpdate(grantedUpdate("abdm-Z"));
+
+        verify(store, never()).setConsentRequestId(anyLong(), any(), any());
+        verify(store, never()).setConsentRequestStatus(any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        verify(store).parkConsentUpdate("abdm-Z", "GRANTED", List.of("artefact-1"));
+    }
+
+    @Test
+    public void aNewRequestIsMappedToAbdmsIdFromEkasListAndAnUpdateParkedForThatIdIsApplied() {
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+
+        service.requestConsent("shyam", null, null, null, null, null);
+
+        verify(store).setConsentRequestId(5L, "abdm-A", "REQUESTED");
+        verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
+        verify(store).resolveParked(77L);
+    }
+
+    // AVNI-23: a name and a pasted command were sent to Eka as ABHA addresses.
+    @Test
+    public void somethingThatIsNotAnAbhaAddressIsRefusedBeforeAnythingIsStoredOrSent() {
+        for (String notAnAddress : List.of("Shyam Kumar", "rm -rf /", "shyam@abdm", ".shyam@sbx", "a@sbx")) {
+            assertThrows(notAnAddress, AbdmRequestException.class,
+                    () -> service.requestConsent(notAnAddress, null, null, null, null, null));
+        }
+        verify(store, never()).insertConsentRequest(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(eka);
     }
 
     // ---- abha.hiu_data_push
@@ -331,20 +372,43 @@ public class EkaHiuServiceTest {
         assertEquals("cc-1", ack.getValue().at("/status_response/0/care_context_id").asText());
     }
 
+    // AVNI-16: Eka's push names the consent request; the receipt must carry the granted artefact's id (else ABDM-1080).
     @Test
-    public void aPushNamingTheConsentRequestItselfIsFiledUnderThatRequest() {
+    public void aPushNamingTheConsentRequestIsFiledUnderItsGrantedArtefactAndAcknowledgedWithTheArtefactsId() {
         FideliusKeyMaterial hip = crypto.generateKeyMaterial();
         String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
-        when(store.findArtefact("init-1")).thenReturn(Optional.empty());
-        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "GRANTED")));
-        when(store.insertDataFlow(eq("init-1"), isNull(), anyString(), anyString(), anyString(), any(), eq("RECEIVING"))).thenReturn(31L);
+        when(store.findArtefact("abdm-cr-1")).thenReturn(Optional.empty());
+        when(store.findConsentRequest("abdm-cr-1")).thenReturn(Optional.of(request(5, "abdm-cr-1", "GRANTED")));
+        when(store.findArtefacts(List.of("abdm-cr-1"))).thenReturn(List.of(new AbdmHiuStore.Artefact("abdm-cr-1", "artefact-1", "GRANTED", null, 0)));
+        when(store.findDataFlowByTransaction("dtx-1")).thenReturn(Optional.empty());
+        when(store.insertDataFlow(eq("artefact-1"), isNull(), anyString(), anyString(), anyString(), any(), eq("RECEIVING"))).thenReturn(31L);
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
-        ((ObjectNode) event.get("data")).put("consent_id", "init-1");
+        ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-1");
 
         service.hiuDataPush(event);
 
-        verify(store).upsertArtefact("init-1", "init-1", "shyam@sbx", HIU_ID, "GRANTED", null);
-        verify(store).insertHealthInformation(31L, "dtx-1", "init-1", "HIP-X", "cc-1", true, AbdmJson.write(AbdmJson.read(BUNDLE)));
+        verify(store).insertHealthInformation(31L, "dtx-1", "artefact-1", "HIP-X", "cc-1", true, AbdmJson.write(AbdmJson.read(BUNDLE)));
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        ArgumentCaptor<JsonNode> ack = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq("/abdm/v1/hiu/care-context/data/on-push"), ack.capture(), any());
+        assertEquals("artefact-1", ack.getValue().get("consent_id").asText());
+    }
+
+    @Test
+    public void aPushNoGrantedConsentOfOursCoversIsNeitherKeptNorAcknowledgedWithAWrongId() {
+        FideliusKeyMaterial hip = crypto.generateKeyMaterial();
+        String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
+        when(store.findArtefact("abdm-cr-9")).thenReturn(Optional.empty());
+        when(store.findConsentRequest("abdm-cr-9")).thenReturn(Optional.empty());
+        when(store.listConsentRequests()).thenReturn(List.of());
+        ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
+        ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-9");
+
+        service.hiuDataPush(event);
+
+        verify(store, never()).insertHealthInformation(anyLong(), any(), any(), any(), any(), any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        verify(eka, never()).post(eq("/abdm/v1/hiu/care-context/data/on-push"), any(), any());
     }
 
     // ---- sandbox approval
@@ -355,13 +419,13 @@ public class EkaHiuServiceTest {
         when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
         when(hipStore.findCareContexts(7, HIP_ID)).thenReturn(List.of(careContext("enc-1", "Visit 12 Oct", "LINKED"),
                 careContext("enc-2", "Visit 13 Oct", "FAILED")));
-        when(eka.post(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenReturn(new AbdmGatewayResponse("a-1", 204, null));
+        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenReturn(new AbdmGatewayResponse("a-1", 204, null));
 
         Map<String, Object> answer = service.approveInSandbox("init-1");
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).post(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), headers.capture());
+        verify(eka).postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), headers.capture());
         JsonNode b = body.getValue();
         assertEquals("init-1", b.get("id").asText());
         assertEquals("view", b.get("access_mode").asText());
@@ -384,7 +448,7 @@ public class EkaHiuServiceTest {
         service.approveInSandbox("init-1");
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), any());
+        verify(eka).postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), any());
         assertEquals("abdm-cr-1", body.getValue().get("id").asText());
         verify(store).setConsentRequestId(5L, "abdm-cr-1", "REQUESTED");
     }
@@ -392,7 +456,7 @@ public class EkaHiuServiceTest {
     @Test
     public void ekasRefusalOfAnApprovalIsReturnedAsItCame() {
         when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(eka.post(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenThrow(new AbdmGatewayException(491, null, "SessionExpiredTryAgain"));
+        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenThrow(new AbdmGatewayException(491, null, "SessionExpiredTryAgain"));
 
         Map<String, Object> answer = service.approveInSandbox("init-1");
 
@@ -407,6 +471,17 @@ public class EkaHiuServiceTest {
     private EkaHiuService service(String keyForm) {
         return new EkaHiuService(cfg, store, eka, crypto, cipher, AbdmTestSupport.orgContext(), hipStore, abhaEvents,
                 AbdmTestSupport.noWaitRetry(), keyForm, "MH1001");
+    }
+
+    private void ekaListsConsents(String... consents) {
+        when(eka.post(eq(EkaHiuService.CONSENT_LIST), any(), any())).thenReturn(new AbdmGatewayResponse("l-1", 200,
+                AbdmJson.read("{\"consents\":[" + String.join(",", consents) + "]}")));
+    }
+
+    private static ObjectNode grantedUpdate(String consentRequestId) {
+        ObjectNode event = (ObjectNode) ekaFixture("hiu-consent-update-granted.json");
+        ((ObjectNode) event.at("/data/notification")).put("consentRequestId", consentRequestId);
+        return event;
     }
 
     private void knownArtefactAndNewFlow() {

@@ -54,7 +54,7 @@ public class EkaAbdmClientTest {
         when(tokenService.getAccessToken(1L)).thenReturn(new EkaToken("eka-token-1", Instant.now().plusSeconds(3600)));
         messageLog = mock(AbdmMessageLog.class);
         client = new EkaAbdmClient(orgContext, configRepository, tokenService, messageLog, config -> baseUrl,
-                Duration.ofSeconds(2), Duration.ofMillis(700));
+                Duration.ofSeconds(2), Duration.ofMillis(700), Duration.ofSeconds(3), Duration.ofMillis(10));
     }
 
     @After
@@ -156,13 +156,76 @@ public class EkaAbdmClientTest {
     }
 
     @Test
-    public void aSlowAnswerFailsWithStatusZero() {
+    public void aSlowAnswerFailsWithStatusZero_andAPostThatMayHaveLandedIsNotSentAgain() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202).withFixedDelay(1500)));
 
         AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertEquals(0, e.getStatus());
         verify(messageLog).outgoing(eq("POST"), eq("eka:" + LINK), anyString(), any(), isNull());
+        eka.verify(1, postRequestedFor(urlEqualTo(LINK)));
+    }
+
+    // AVNI-20: Eka took longer than 10 s to approve, so the page showed an error while the approval went through.
+    @Test
+    public void aCallMarkedSlowGetsItsOwnLongerDeadline() {
+        eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(204).withFixedDelay(1500)));
+
+        AbdmGatewayResponse response = client.postSlow(LINK, AbdmJson.obj(), Map.of());
+
+        assertEquals(204, response.status());
+    }
+
+    // AVNI-17: Eka twice refused a consent request with an internal error, then accepted it on retry (26 Oct).
+    @Test
+    public void aServerErrorIsTriedAgainAndTheSecondAnswerIsKept() {
+        eka.stubFor(post(urlEqualTo(LINK)).inScenario("flaky").whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)
+                .willReturn(aResponse().withStatus(500).withBody("{\"code\":\"303001\",\"error\":\"internal\"}")).willSetStateTo("second"));
+        eka.stubFor(post(urlEqualTo(LINK)).inScenario("flaky").whenScenarioStateIs("second")
+                .willReturn(aResponse().withStatus(202).withBody("{\"ok\":true}")));
+
+        AbdmGatewayResponse response = client.post(LINK, AbdmJson.obj(), Map.of());
+
+        assertEquals(202, response.status());
+        eka.verify(2, postRequestedFor(urlEqualTo(LINK)));
+    }
+
+    @Test
+    public void tooManyRequestsIsTriedAgain() {
+        eka.stubFor(get(urlEqualTo(LINK)).inScenario("busy").whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)
+                .willReturn(aResponse().withStatus(429)).willSetStateTo("free"));
+        eka.stubFor(get(urlEqualTo(LINK)).inScenario("busy").whenScenarioStateIs("free").willReturn(aResponse().withStatus(200)));
+
+        assertEquals(200, client.get(LINK, Map.of()).status());
+        eka.verify(2, getRequestedFor(urlEqualTo(LINK)));
+    }
+
+    @Test
+    public void aServerErrorThatPersistsFailsAfterThreeTries() {
+        eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(503)));
+
+        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+
+        assertEquals(503, e.getStatus());
+        eka.verify(3, postRequestedFor(urlEqualTo(LINK)));
+    }
+
+    @Test
+    public void aRefusalOfTheRequestItselfIsNotTriedAgain() {
+        eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(400).withBody("{\"error\":{\"code\":\"ABDM-1080\",\"message\":\"Invalid\"}}")));
+
+        assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+
+        eka.verify(1, postRequestedFor(urlEqualTo(LINK)));
+    }
+
+    @Test
+    public void aReadThatDoesNotAnswerIsTriedAgain() {
+        eka.stubFor(get(urlEqualTo(LINK)).willReturn(aResponse().withStatus(200).withFixedDelay(1500)));
+
+        assertThrows(AbdmGatewayException.class, () -> client.get(LINK, Map.of()));
+
+        eka.verify(3, getRequestedFor(urlEqualTo(LINK)));
     }
 
     @Test
