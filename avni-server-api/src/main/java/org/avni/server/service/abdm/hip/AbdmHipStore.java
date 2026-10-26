@@ -110,7 +110,7 @@ public class AbdmHipStore {
                         rs.getString("abha_address"), rs.getLong("encounters"), rs.getLong("linked")));
     }
 
-    // Patients with visits queued for linking (PENDING), or whose last try failed over an hour ago.
+    // Patients with visits queued on save (QUEUED), or whose last try failed over an hour ago.
     public List<String> subjectsToLink(String hipId, int limit) {
         return jdbc.queryForList("select distinct i.uuid from abdm_care_context c join individual i on i.id = c.individual_id " +
                         "where c.organisation_id = :org and c.hip_id = :hip and (c.status = 'QUEUED' " +
