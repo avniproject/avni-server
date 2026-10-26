@@ -113,6 +113,13 @@ public class AbdmHiuStore {
         history("c.id = :id", params().addValue("id", id), status);
     }
 
+    // Only the id: the status is left as it is. Writing back a status read earlier undid a grant that landed meanwhile
+    // (26 Oct: GRANTED, then REQUESTED again within the same second).
+    public void mapConsentRequestId(long id, String consentRequestId) {
+        jdbc.update("update abdm_consent set consent_request_id = :cr, updated_at = now() where organisation_id = :org and id = :id",
+                params().addValue("id", id).addValue("cr", consentRequestId, Types.VARCHAR));
+    }
+
     public void failConsent(long id, String error) {
         jdbc.update("update abdm_consent set status = 'FAILED', error = :error, updated_at = now() where organisation_id = :org and id = :id",
                 params().addValue("id", id).addValue("error", error, Types.VARCHAR));

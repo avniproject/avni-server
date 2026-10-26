@@ -393,7 +393,7 @@ public class EkaHiuService implements EkaHiuEvents {
             if (initId == null) continue;
             for (AbdmHiuStore.Consent r : requests) {
                 if (initId.equals(r.consentRequestId())) {
-                    store.setConsentRequestId(r.id(), abdmId, r.status());
+                    store.mapConsentRequestId(r.id(), abdmId);
                     logger.info("Eka consent request {} (Eka's {}) is request {}", abdmId, initId, r.uuid());
                     return Optional.of(r);
                 }
@@ -664,7 +664,7 @@ public class EkaHiuService implements EkaHiuEvents {
         String id = request.consentRequestId();
         String abdmId = abdmIdOf(id, patient, request.abhaAddress());
         if (abdmId == null || abdmId.equals(id)) return id;
-        store.setConsentRequestId(request.id(), abdmId, request.status());
+        store.mapConsentRequestId(request.id(), abdmId);
         logger.info("Eka consent request {} is ABDM consent request {}", id, abdmId);
         return abdmId;
     }
