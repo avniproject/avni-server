@@ -4,6 +4,8 @@ package org.avni.server.web.request;
 public class AbhaSubjectSearchRequest {
     private String subjectTypeUUID;
     private String abhaNumber;
+    // An ABHA made with a mobile number only has an address and no number.
+    private String abhaAddress;
 
     public String getSubjectTypeUUID() {
         return subjectTypeUUID;
@@ -19,5 +21,13 @@ public class AbhaSubjectSearchRequest {
 
     public void setAbhaNumber(String abhaNumber) {
         this.abhaNumber = abhaNumber;
+    }
+
+    public String getAbhaAddress() {
+        return abhaAddress;
+    }
+
+    public void setAbhaAddress(String abhaAddress) {
+        this.abhaAddress = abhaAddress;
     }
 }

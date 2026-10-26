@@ -129,11 +129,19 @@ public class AbhaService {
     // The patients of the subject type in the organisation holding an ABHA number, after the checks of /abha/session,
     // whose privilege is on that subject type only. Never logs the number.
     public List<String> findSubjectUUIDs(String subjectTypeUUID, String abhaNumber) {
+        return findSubjectUUIDs(subjectTypeUUID, abhaNumber, null);
+    }
+
+    // By number, by address, or both. A number given must be one; with neither there is nothing to check, and an empty
+    // answer would read as "nobody holds it".
+    public List<String> findSubjectUUIDs(String subjectTypeUUID, String abhaNumber, String abhaAddress) {
         checkAccess(subjectTypeUUID);
-        if (AbhaLinkService.digitsOnly(abhaNumber).length() != AbhaLinkService.ABHA_NUMBER_DIGITS) {
+        boolean hasNumber = !AbhaLinkService.digitsOnly(abhaNumber).isEmpty();
+        boolean hasAddress = abhaAddress != null && !abhaAddress.isBlank();
+        if ((hasNumber && AbhaLinkService.digitsOnly(abhaNumber).length() != AbhaLinkService.ABHA_NUMBER_DIGITS) || (!hasNumber && !hasAddress)) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NUMBER_INVALID);
         }
         // Found: checkAccess refuses a subject type it cannot find.
-        return abhaLinkService.findSubjectUUIDs(subjectTypeRepository.findByUuid(subjectTypeUUID), abhaNumber);
+        return abhaLinkService.findSubjectUUIDs(subjectTypeRepository.findByUuid(subjectTypeUUID), hasNumber ? abhaNumber : null, abhaAddress);
     }
 }
