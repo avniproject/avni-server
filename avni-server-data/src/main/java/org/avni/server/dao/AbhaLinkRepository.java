@@ -25,7 +25,22 @@ public interface AbhaLinkRepository extends TransactionalDataRepository<AbhaLink
             "where l.organisation_id = :organisationId and l.abha_number = :abhaNumber " +
             "and l.is_voided = false and i.is_voided = false and i.subject_type_id = :subjectTypeId order by i.uuid";
 
+    // By ABHA address: the part before '@', in any case (abha_link_org_address_live, V1_415).
+    String LIVE_SUBJECT_UUIDS_BY_ADDRESS = "select i.uuid from public.abha_link l join public.individual i on i.id = l.individual_id " +
+            "where l.organisation_id = :organisationId and split_part(lower(l.abha_address), '@', 1) = split_part(lower(:abhaAddress), '@', 1) " +
+            "and l.is_voided = false and i.is_voided = false order by i.uuid";
+    String LIVE_SUBJECT_UUIDS_OF_TYPE_BY_ADDRESS = "select i.uuid from public.abha_link l join public.individual i on i.id = l.individual_id " +
+            "where l.organisation_id = :organisationId and split_part(lower(l.abha_address), '@', 1) = split_part(lower(:abhaAddress), '@', 1) " +
+            "and l.is_voided = false and i.is_voided = false and i.subject_type_id = :subjectTypeId order by i.uuid";
+
     Optional<AbhaLink> findByIndividualIdAndIsVoidedFalse(Long individualId);
+
+    @Query(value = LIVE_SUBJECT_UUIDS_BY_ADDRESS, nativeQuery = true)
+    List<String> findLiveSubjectUUIDsByAddress(@Param("organisationId") Long organisationId, @Param("abhaAddress") String abhaAddress);
+
+    @Query(value = LIVE_SUBJECT_UUIDS_OF_TYPE_BY_ADDRESS, nativeQuery = true)
+    List<String> findLiveSubjectUUIDsOfTypeByAddress(@Param("organisationId") Long organisationId, @Param("abhaAddress") String abhaAddress,
+                                                     @Param("subjectTypeId") Long subjectTypeId);
 
     @Query(value = LIVE_SUBJECT_UUIDS, nativeQuery = true)
     List<String> findLiveSubjectUUIDs(@Param("organisationId") Long organisationId, @Param("abhaNumber") String abhaNumber);

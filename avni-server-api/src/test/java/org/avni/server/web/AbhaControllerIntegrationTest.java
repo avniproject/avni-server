@@ -378,6 +378,23 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals(Collections.singletonList(holder), uuids(mapper.readTree(response.getBody()).path("subjectUUIDs")));
     }
 
+    // An ABHA made with a mobile number only has an address and no number: the search finds its holder by the address,
+    // in any case and with or without the suffix. With neither, there is nothing to check.
+    @Test
+    public void searchByAddressAloneFindsTheHolder() throws Exception {
+        allowSearch(ALL_PRIVILEGES_USER);
+        String holder = linkedSubject(SUBJECT_TYPE_A, DEMO_ID, ABHA_DIGITS, false, false);
+        new JdbcTemplate(dataSource).update("update public.abha_link set abha_address = 'Ramesh.Gond@sbx' where individual_id = " +
+                "(select id from public.individual where uuid = ?)", holder);
+
+        ResponseEntity<String> response = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, null, "ramesh.gond");
+
+        assertEquals(response.getBody(), HttpStatus.OK, response.getStatusCode());
+        assertEquals(Collections.singletonList(holder), uuids(mapper.readTree(response.getBody()).path("subjectUUIDs")));
+        ResponseEntity<String> neither = search(ALL_PRIVILEGES_USER, SUBJECT_TYPE_A, null, null);
+        assertEquals(neither.getBody(), HttpStatus.BAD_REQUEST, neither.getStatusCode());
+    }
+
     // An ABHA number is 14 digits. Anything else cannot be checked, and an empty answer would read as "nobody holds it".
     @Test
     public void searchNumberNotFourteenDigitsIs400() throws Exception {
@@ -456,10 +473,15 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
     }
 
     private ResponseEntity<String> search(String username, String subjectTypeUUID, String abhaNumber) {
+        return search(username, subjectTypeUUID, abhaNumber, null);
+    }
+
+    private ResponseEntity<String> search(String username, String subjectTypeUUID, String abhaNumber, String abhaAddress) {
         setUser(username);
         Map<String, String> request = new HashMap<>();
         request.put("subjectTypeUUID", subjectTypeUUID);
         request.put("abhaNumber", abhaNumber);
+        if (abhaAddress != null) request.put("abhaAddress", abhaAddress);
         return template.postForEntity("/abha/subjects/search", request, String.class);
     }
 

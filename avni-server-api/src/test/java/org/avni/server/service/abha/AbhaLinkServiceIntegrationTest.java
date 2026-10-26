@@ -244,10 +244,51 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Arrays.asList(voided(subject, ABHA_DIGITS, ABHA_ADDRESS), live(subject, ABHA_DIGITS, ABHA_ADDRESS)), links());
     }
 
-    // An ABHA number is 14 digits. Anything else is no ABHA number: no link, and the save goes through, since sync is
-    // never refused. The warning names the subject, not the answer.
+    // An ABHA made with a mobile number only has an address and no number. It is linked too, so a second patient with the
+    // same address can be found.
     @Test
-    public void answerNotFourteenDigitsLinksNothing() {
+    public void anAbhaWithOnlyAnAddressIsLinkedWithoutANumber() {
+        enableAbha();
+        Individual subject = save(subjectWith(null, ABHA_ADDRESS));
+
+        assertEquals(Collections.singletonList(live(subject, null, ABHA_ADDRESS)), links());
+    }
+
+    @Test
+    public void removingTheNumberKeepsTheAddressLinked() {
+        enableAbha();
+        Individual subject = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        subject.getObservations().remove(abhaNumber.getUuid());
+        save(subject);
+
+        assertEquals(Collections.singletonList(live(subject, null, ABHA_ADDRESS)), links());
+    }
+
+    // The holders of an ABHA address, whatever its case and whether or not it carries its @ suffix.
+    @Test
+    public void aHolderIsFoundByAddressAlone() {
+        enableAbha();
+        Individual holder = save(subjectWith(null, "Ramesh.Gond@sbx"));
+        SubjectType subjectType = subjectTypeRepository.findByUuid(SUBJECT_TYPE);
+
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.findSubjectUUIDs(subjectType, null, "ramesh.gond@sbx"));
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.findSubjectUUIDs(subjectType, null, "RAMESH.GOND"));
+        assertEquals(Collections.emptyList(), abhaLinkService.findSubjectUUIDs(subjectType, null, "ramesh.gond2@sbx"));
+    }
+
+    @Test
+    public void otherLiveHoldersNamesTheSubjectAlreadyHoldingTheAddressWhenThereIsNoNumber() {
+        enableAbha();
+        Individual holder = save(subjectWith(null, ABHA_ADDRESS));
+
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(null, "Ramesh.Gond@SBX")));
+    }
+
+    // An ABHA number is 14 digits. Anything else is no ABHA number: the address still links when there is one, no link
+    // otherwise, and the save goes through, since sync is never refused. The warning names the subject, not the answer.
+    @Test
+    public void answerNotFourteenDigitsLinksOnlyTheAddress() {
         enableAbha();
         ListAppender<ILoggingEvent> log = captureLog();
         Individual tooLong;
@@ -259,7 +300,7 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
             stopCapturing(log);
         }
 
-        assertEquals(Collections.emptyList(), links());
+        assertEquals(Collections.singletonList(live(tooLong, null, ABHA_ADDRESS)), links());
         assertEquals(2, countSubjects(tooLong, tooShort));
         assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(tooLong.getUuid())));
         assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(tooShort.getUuid())));
@@ -332,14 +373,16 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
     }
 
     @Test
-    public void otherLiveHoldersIsEmptyWithAbhaOffOrNoNumber() {
+    // With no ABHA number the address is asked (an ABHA made with a mobile number only); with neither, nobody is.
+    public void otherLiveHoldersIsEmptyWithAbhaOffOrNoAbha() {
         save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
         assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
 
         enableAbha();
-        save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
-        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(null, ABHA_ADDRESS)));
+        Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(null, ABHA_ADDRESS)));
         assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith("1234", null)));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(null, null)));
     }
 
     @Test

@@ -54,7 +54,7 @@ public class AbhaController {
     @PreAuthorize("hasAnyAuthority('user')")
     @Transactional(readOnly = true)
     public AbhaSubjectSearchResponse searchSubjects(@RequestBody AbhaSubjectSearchRequest request) {
-        return new AbhaSubjectSearchResponse(abhaService.findSubjectUUIDs(request.getSubjectTypeUUID(), request.getAbhaNumber()));
+        return new AbhaSubjectSearchResponse(abhaService.findSubjectUUIDs(request.getSubjectTypeUUID(), request.getAbhaNumber(), request.getAbhaAddress()));
     }
 
     // 201 when stored, 200 when this uuid was already stored.

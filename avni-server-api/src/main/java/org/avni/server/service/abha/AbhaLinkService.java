@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -46,8 +47,9 @@ public class AbhaLinkService {
     }
 
     // Called after every save or void of a subject. Organisations with ABHA off pay one look at their settings and
-    // nothing more. A voided subject, or one with no ABHA Number answer, has no live link; otherwise its one live link
-    // holds the current answers, updated in place when they change.
+    // nothing more. A voided subject, or one with neither an ABHA Number nor an ABHA Address answer, has no live link;
+    // otherwise its one live link holds the current answers, updated in place when they change. An ABHA made with a
+    // mobile number only has an address and no number, and is linked by the address.
     public void syncLink(Individual individual) {
         if (!organisationConfigService.isAbhaEnabled()) {
             return;
@@ -59,7 +61,14 @@ public class AbhaLinkService {
             logger.warn("ABHA Number answer of subject {} is not {} digits; no ABHA link kept", individual.getUuid(), ABHA_NUMBER_DIGITS);
             number = "";
         }
-        if (number.isEmpty()) {
+        String address = individual.isVoided() ? null : answer(individual, ABHA_ADDRESS_CONCEPT);
+        if (address != null && address.isBlank()) address = null;
+        if (address != null && address.length() > ABHA_ADDRESS_MAX_LENGTH) {
+            // Too long for the column: linking it would refuse the save, and every retry of it. The number is still linked.
+            logger.warn("ABHA Address answer of subject {} is longer than {} characters; linked without it", individual.getUuid(), ABHA_ADDRESS_MAX_LENGTH);
+            address = null;
+        }
+        if (number.isEmpty() && address == null) {
             liveLink.ifPresent(link -> {
                 link.setVoided(true);
                 abhaLinkRepository.save(link);
@@ -67,57 +76,76 @@ public class AbhaLinkService {
             });
             return;
         }
-        String address = answer(individual, ABHA_ADDRESS_CONCEPT);
-        if (address != null && address.length() > ABHA_ADDRESS_MAX_LENGTH) {
-            // Too long for the column: linking it would refuse the save, and every retry of it. The number is still linked.
-            logger.warn("ABHA Address answer of subject {} is longer than {} characters; linked without it", individual.getUuid(), ABHA_ADDRESS_MAX_LENGTH);
-            address = null;
-        }
+        String linkedNumber = number.isEmpty() ? null : number;
         AbhaLink link = liveLink.orElseGet(() -> {
             AbhaLink newLink = new AbhaLink();
             newLink.assignUUID();
             newLink.setIndividual(individual);
             return newLink;
         });
-        if (link.getId() != null && number.equals(link.getAbhaNumber()) && Objects.equals(address, link.getAbhaAddress())) {
+        if (link.getId() != null && Objects.equals(linkedNumber, link.getAbhaNumber()) && Objects.equals(address, link.getAbhaAddress())) {
             return;
         }
-        boolean numberChanged = !number.equals(link.getAbhaNumber());
-        link.setAbhaNumber(number);
+        boolean numberChanged = linkedNumber != null && !linkedNumber.equals(link.getAbhaNumber());
+        boolean addressChanged = address != null && !address.equalsIgnoreCase(Objects.toString(link.getAbhaAddress(), ""));
+        link.setAbhaNumber(linkedNumber);
         link.setAbhaAddress(address);
         abhaLinkRepository.save(link);
         if (numberChanged) {
-            warnIfHeldByOthers(number);
+            warnIfHeldByOthers(abhaLinkRepository.findLiveSubjectUUIDs(organisationId(), linkedNumber), "number");
+        } else if (linkedNumber == null && addressChanged) {
+            warnIfHeldByOthers(abhaLinkRepository.findLiveSubjectUUIDsByAddress(organisationId(), address), "address");
         }
     }
 
     // Sync is never refused for a duplicate: the app blocks one when the ABHA is found, a bulk upload refuses one before it
     // saves (otherLiveHolders), and other routes (another system) are left to the warning.
-    private void warnIfHeldByOthers(String number) {
-        List<String> holders = abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), number);
+    private void warnIfHeldByOthers(List<String> holders, String what) {
         if (holders.size() > 1) {
-            logger.warn("One ABHA number is held by {} live subjects: {}", holders.size(), holders);
+            logger.warn("One ABHA {} is held by {} live subjects: {}", what, holders.size(), holders);
         }
     }
 
-    // Who else, live in the user's organisation, already holds the ABHA number this subject answers. Empty with ABHA off,
-    // or when the answer is not an ABHA number. A bulk upload refuses its row on this (SubjectWriter); sync never asks.
+    private static Long organisationId() {
+        return UserContextHolder.getUserContext().getOrganisationId();
+    }
+
+    // Who else, live in the user's organisation, already holds the ABHA this subject answers: by its number, else, for
+    // an ABHA with only an address, by the address. Empty with ABHA off, or with neither answer. A bulk upload refuses its
+    // row on this (SubjectWriter); sync never asks.
     public List<String> otherLiveHolders(Individual individual) {
         if (!organisationConfigService.isAbhaEnabled()) {
             return Collections.emptyList();
         }
         String number = digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
-        if (number.length() != ABHA_NUMBER_DIGITS) {
+        String address = answer(individual, ABHA_ADDRESS_CONCEPT);
+        List<String> holders;
+        if (number.length() == ABHA_NUMBER_DIGITS) {
+            holders = abhaLinkRepository.findLiveSubjectUUIDs(organisationId(), number);
+        } else if (address != null && !address.isBlank()) {
+            holders = abhaLinkRepository.findLiveSubjectUUIDsByAddress(organisationId(), address.trim());
+        } else {
             return Collections.emptyList();
         }
-        return abhaLinkRepository.findLiveSubjectUUIDs(UserContextHolder.getUserContext().getOrganisationId(), number).stream()
-                .filter(uuid -> !uuid.equals(individual.getUuid()))
-                .collect(Collectors.toList());
+        return holders.stream().filter(uuid -> !uuid.equals(individual.getUuid())).collect(Collectors.toList());
     }
 
-    // The live subjects of this subject type in the user's organisation holding this number, however it is written.
+    // The live subjects of this subject type in the user's organisation holding this number (however it is written) or
+    // this address (in any case, with or without its @ suffix). Either may be missing.
+    public List<String> findSubjectUUIDs(SubjectType subjectType, String abhaNumber, String abhaAddress) {
+        java.util.TreeSet<String> holders = new java.util.TreeSet<>();
+        String number = digitsOnly(abhaNumber);
+        if (number.length() == ABHA_NUMBER_DIGITS) {
+            holders.addAll(abhaLinkRepository.findLiveSubjectUUIDsOfType(organisationId(), number, subjectType.getId()));
+        }
+        if (abhaAddress != null && !abhaAddress.isBlank()) {
+            holders.addAll(abhaLinkRepository.findLiveSubjectUUIDsOfTypeByAddress(organisationId(), abhaAddress.trim(), subjectType.getId()));
+        }
+        return new ArrayList<>(holders);
+    }
+
     public List<String> findSubjectUUIDs(SubjectType subjectType, String abhaNumber) {
-        return abhaLinkRepository.findLiveSubjectUUIDsOfType(UserContextHolder.getUserContext().getOrganisationId(), digitsOnly(abhaNumber), subjectType.getId());
+        return findSubjectUUIDs(subjectType, abhaNumber, null);
     }
 
     // The organisation's own question, else its parent's, and so on up. Never one query across them all, which expects
