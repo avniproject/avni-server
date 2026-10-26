@@ -186,14 +186,21 @@ public class FhirBundleBuilderTest {
         assertEquals(1, bundle.at("/entry/0/resource/section/0/entry").size());
     }
 
+    // NRCES tells the two apart by type code (ndhm-identifier-type-code HIN = the number, ABHA = the address) and publishes
+    // no system for the address; NRCES's own samples carry the number as MR under healthid.ndhm.gov.in, so the number
+    // carries both codes (abdm-docs shared.fhir.abha-identifiers).
     @Test
-    public void patientCarriesAbhaIdentifiersOnlyWhenGiven() {
+    public void patientCarriesAbhaIdentifiersOnlyWhenGiven_toldApartByNrcesTypeCodes() {
         JsonNode patient = resources(builder().build(tanuhSample()), "Patient").get(0);
         assertEquals(2, patient.get("identifier").size());
         assertEquals("https://healthid.ndhm.gov.in", patient.at("/identifier/0/system").asText());
-        assertEquals("ABHA Number", patient.at("/identifier/0/type/text").asText());
+        assertEquals("https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code", patient.at("/identifier/0/type/coding/0/system").asText());
+        assertEquals("HIN", patient.at("/identifier/0/type/coding/0/code").asText());
+        assertEquals("MR", patient.at("/identifier/0/type/coding/1/code").asText());
         assertEquals("91-5555-0000-0042", patient.at("/identifier/0/value").asText());
-        assertEquals("ABHA Address", patient.at("/identifier/1/type/text").asText());
+        assertEquals("ABHA", patient.at("/identifier/1/type/coding/0/code").asText());
+        assertEquals(1, patient.at("/identifier/1/type/coding").size());
+        assertFalse(patient.at("/identifier/1").has("system"));
         assertEquals("lakshmi.devi@sbx", patient.at("/identifier/1/value").asText());
         assertEquals("Lakshmi Devi", patient.at("/name/0/text").asText());
         assertEquals("female", patient.get("gender").asText());
@@ -201,9 +208,45 @@ public class FhirBundleBuilderTest {
 
         JsonNode onlyAddress = resources(builder().build(doc(null, "lakshmi.devi@sbx")), "Patient").get(0);
         assertEquals(1, onlyAddress.get("identifier").size());
-        assertEquals("ABHA Address", onlyAddress.at("/identifier/0/type/text").asText());
+        assertEquals("ABHA", onlyAddress.at("/identifier/0/type/coding/0/code").asText());
 
         assertFalse(resources(builder().build(doc(null, null)), "Patient").get(0).has("identifier"));
+    }
+
+    // AVNI-08, Health_RECORD_CREATION_101: "kindly ensure to implement SNOMED CT/ LOINC codes".
+    @Test
+    public void anAnswerWhoseQuestionHasAStandardCodeIsCodedWithIt() {
+        JsonNode observation = onlyObservation(new CareContextDocument.Item("Systolic blood pressure", "Numeric", 130, "mmHg",
+                List.of(new CareContextDocument.Code("http://loinc.org", "8480-6"), new CareContextDocument.Code("http://snomed.info/sct", "271649006"))));
+
+        assertEquals("http://loinc.org", observation.at("/code/coding/0/system").asText());
+        assertEquals("8480-6", observation.at("/code/coding/0/code").asText());
+        assertEquals("Systolic blood pressure", observation.at("/code/coding/0/display").asText());
+        assertEquals("271649006", observation.at("/code/coding/1/code").asText());
+        assertEquals("Systolic blood pressure", observation.at("/code/text").asText());
+
+        JsonNode uncoded = onlyObservation(new CareContextDocument.Item("Tobacco use", "Coded", "Yes", null));
+        assertFalse(uncoded.get("code").has("coding"));
+    }
+
+    // NHA's simple form: a PDF of the record as a DocumentReference, listed in the Composition.
+    @Test
+    public void aPdfOfTheVisitTravelsWithItAsADocument() {
+        ObjectNode bundle = builder().build(tanuhSample());
+
+        JsonNode document = resources(bundle, "DocumentReference").get(0);
+        assertEquals("application/pdf", document.at("/content/0/attachment/contentType").asText());
+        String pdf = new String(java.util.Base64.getDecoder().decode(document.at("/content/0/attachment/data").asText()), StandardCharsets.ISO_8859_1);
+        assertTrue(pdf.startsWith("%PDF-"));
+        assertTrue(pdf.contains("Systolic blood pressure: 130 mmHg"));
+        assertTrue("dashes print as a hyphen, not '?'", pdf.contains("(Hypertension Screening - TANUH Health Centre)"));
+        boolean listed = false;
+        for (JsonNode section : bundle.at("/entry/0/resource/section")) {
+            for (JsonNode ref : section.path("entry")) {
+                if (ref.get("reference").asText().equals("urn:uuid:" + document.get("id").asText())) listed = true;
+            }
+        }
+        assertTrue(listed);
     }
 
     @Test

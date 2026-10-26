@@ -18,8 +18,9 @@ import java.util.stream.StreamSupport;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // A care context as an ABDM OPConsultation FHIR R4 document bundle, built with Jackson (no HAPI). Composition first,
-// then Patient, Practitioner, Organization, Encounter and one Observation per answer. Never writes a null: a missing
-// value leaves its field out. Not validated against the NRCES profiles.
+// then Patient, Practitioner, Organization, Encounter, one Observation per answer, and a DocumentReference carrying the
+// visit as a PDF. Never writes a null: a missing value leaves its field out. Checked against NRCES 6.5.0 with NHA's
+// validator (docs.abdm.gov.in/mcp) through the golden sample.
 @Component
 public class FhirBundleBuilder {
     static final String NRCES = "https://nrces.in/ndhm/fhir/r4/StructureDefinition/";
@@ -27,6 +28,8 @@ public class FhirBundleBuilder {
     static final String V2_0203 = "http://terminology.hl7.org/CodeSystem/v2-0203";
     static final String ABHA_SYSTEM = "https://healthid.ndhm.gov.in";
     static final String FACILITY_SYSTEM = "https://facility.ndhm.gov.in";
+    // NRCES tells an ABHA number (HIN) from an ABHA address (ABHA) by this type code; it publishes no system for either.
+    static final String NDHM_IDENTIFIER_TYPE = "https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code";
     private static final ZoneId AVNI_DATE_ZONE = ZoneId.of("Asia/Kolkata");
     // DEMO-ONLY: media, references to other records and nested groups are not shared.
     private static final Set<String> NOT_SHARED = Set.of("Image", "ImageV2", "Video", "Audio", "File", "Subject", "Location", "Id",
@@ -58,6 +61,7 @@ public class FhirBundleBuilder {
         String practitionerId = idSupplier.get();
         String organisationId = idSupplier.get();
         String encounterId = idSupplier.get();
+        String documentId = idSupplier.get();
 
         List<ObjectNode> observations = new ArrayList<>();
         for (CareContextDocument.Item item : Optional.ofNullable(d.items()).orElse(List.of())) {
@@ -79,17 +83,51 @@ public class FhirBundleBuilder {
         bundle.put("timestamp", now);
 
         ArrayNode entries = bundle.putArray("entry");
-        entries.add(entry(composition(d, compositionId, patientId, practitionerId, organisationId, encounterId, visitTime, observations)));
+        entries.add(entry(composition(d, compositionId, patientId, practitionerId, organisationId, encounterId, documentId, visitTime, observations)));
         entries.add(entry(patient(d, patientId)));
         entries.add(entry(practitioner(d, practitionerId)));
         entries.add(entry(organisation(d, organisationId)));
         entries.add(entry(encounter(d, encounterId, patientId, visitTime)));
         observations.forEach(o -> entries.add(entry(o)));
+        entries.add(entry(document(d, documentId, patientId, visitTime)));
         return bundle;
     }
 
+    // The visit as a PDF, NHA's simple form ("a simple bundle wraps a PDF ... as an attachment"), beside the structured
+    // record, as NRCES's OPConsultation samples carry one.
+    private ObjectNode document(CareContextDocument d, String id, String patientId, String visitTime) {
+        ObjectNode r = resource("DocumentReference", id, "DocumentReference");
+        r.put("status", "current");
+        r.put("docStatus", "final");
+        r.set("type", codeable(SNOMED, "371530004", "Clinical consultation report"));
+        r.set("subject", reference(patientId, d.patientName()));
+        ObjectNode attachment = r.putArray("content").addObject().putObject("attachment");
+        attachment.put("contentType", "application/pdf");
+        attachment.put("language", "en-IN");
+        attachment.put("data", Base64.getEncoder().encodeToString(SimplePdf.of(title(d), pdfLines(d, visitTime))));
+        attachment.put("title", title(d));
+        attachment.put("creation", visitTime);
+        return r;
+    }
+
+    private static List<String> pdfLines(CareContextDocument d, String visitTime) {
+        List<String> lines = new ArrayList<>();
+        if (hasText(d.patientName())) lines.add("Patient: " + d.patientName());
+        if (hasText(d.hipName())) lines.add("Facility: " + d.hipName());
+        lines.add("Seen by: " + practitionerName(d));
+        lines.add("Date: " + visitTime);
+        lines.add("");
+        for (CareContextDocument.Item item : Optional.ofNullable(d.items()).orElse(List.of())) {
+            if (item == null || !hasText(item.name()) || item.value() == null) continue;
+            if (NOT_SHARED.contains(item.dataType() == null ? "Text" : item.dataType())) continue;
+            String value = item.value() instanceof Collection<?> c ? join(c) : item.value().toString();
+            lines.add(item.name() + ": " + value + (hasText(item.unit()) ? " " + item.unit() : ""));
+        }
+        return lines;
+    }
+
     private ObjectNode composition(CareContextDocument d, String id, String patientId, String practitionerId, String organisationId,
-                                   String encounterId, String visitTime, List<ObjectNode> observations) {
+                                   String encounterId, String documentId, String visitTime, List<ObjectNode> observations) {
         ObjectNode c = resource("Composition", id, "OPConsultRecord");
         c.put("status", "final");
         c.set("type", codeable(SNOMED, "371530004", "Clinical consultation report"));
@@ -110,15 +148,18 @@ public class FhirBundleBuilder {
             ArrayNode refs = section.putArray("entry");
             observations.forEach(o -> refs.add(reference(o.get("id").asText(), null)));
         }
+        ObjectNode documentSection = c.withArray("section").addObject();
+        documentSection.put("title", "Document");
+        documentSection.set("code", codeable(SNOMED, "371530004", "Clinical consultation report"));
+        documentSection.putArray("entry").add(reference(documentId, "DocumentReference"));
         return c;
     }
 
     private ObjectNode patient(CareContextDocument d, String id) {
         ObjectNode p = resource("Patient", id, "Patient");
         ArrayNode identifiers = AbdmJson.arr();
-        if (hasText(d.abhaNumber())) identifiers.add(abhaIdentifier("ABHA Number", d.abhaNumber()));
-        // DEMO-ONLY: the ABHA address under the same system as the number, told apart by type, as NRCES samples do.
-        if (hasText(d.abhaAddress())) identifiers.add(abhaIdentifier("ABHA Address", d.abhaAddress()));
+        if (hasText(d.abhaNumber())) identifiers.add(abhaNumberIdentifier(d.abhaNumber()));
+        if (hasText(d.abhaAddress())) identifiers.add(abhaAddressIdentifier(d.abhaAddress()));
         if (!identifiers.isEmpty()) p.set("identifier", identifiers);
         if (hasText(d.patientName())) p.putArray("name").addObject().put("text", d.patientName());
         p.put("gender", fhirGender(d.gender()));
@@ -175,7 +216,18 @@ public class FhirBundleBuilder {
 
         ObjectNode o = resource("Observation", idSupplier.get(), "Observation");
         o.put("status", "final");
-        o.putObject("code").put("text", item.name()); // DEMO-ONLY: the question's name, no SNOMED/LOINC coding
+        ObjectNode code = o.putObject("code");
+        // The question's standard codes when its concept carries them (AVNI-08); its name always.
+        if (item.codes() != null && !item.codes().isEmpty()) {
+            ArrayNode codings = code.putArray("coding");
+            for (CareContextDocument.Code c : item.codes()) {
+                ObjectNode coding = codings.addObject();
+                coding.put("system", c.system());
+                coding.put("code", c.code());
+                coding.put("display", item.name());
+            }
+        }
+        code.put("text", item.name());
         o.set("subject", reference(patientId, null));
         o.set("encounter", reference(encounterId, null));
         o.put("effectiveDateTime", visitTime);
@@ -310,15 +362,34 @@ public class FhirBundleBuilder {
         return c;
     }
 
-    private static ObjectNode abhaIdentifier(String label, String value) {
+    // The number carries NRCES's HIN and, as NRCES's own samples do, MR under healthid.ndhm.gov.in.
+    private static ObjectNode abhaNumberIdentifier(String value) {
+        ObjectNode identifier = AbdmJson.obj();
+        ObjectNode type = identifier.putObject("type");
+        ArrayNode codings = type.putArray("coding");
+        ObjectNode hin = codings.addObject();
+        hin.put("system", NDHM_IDENTIFIER_TYPE);
+        hin.put("code", "HIN");
+        hin.put("display", "Health ID issued by NDHM");
+        ObjectNode mr = codings.addObject();
+        mr.put("system", V2_0203);
+        mr.put("code", "MR");
+        mr.put("display", "Medical record number");
+        type.put("text", "ABHA Number");
+        identifier.put("system", ABHA_SYSTEM);
+        identifier.put("value", value);
+        return identifier;
+    }
+
+    // The address: NRCES's ABHA code, and no system, since NRCES publishes none for it.
+    private static ObjectNode abhaAddressIdentifier(String value) {
         ObjectNode identifier = AbdmJson.obj();
         ObjectNode type = identifier.putObject("type");
         ObjectNode coding = type.putArray("coding").addObject();
-        coding.put("system", V2_0203);
-        coding.put("code", "MR");
-        coding.put("display", "Medical record number");
-        type.put("text", label);
-        identifier.put("system", ABHA_SYSTEM);
+        coding.put("system", NDHM_IDENTIFIER_TYPE);
+        coding.put("code", "ABHA");
+        coding.put("display", "Ayushman Bharat Health Account (ABHA) ID");
+        type.put("text", "ABHA Address");
         identifier.put("value", value);
         return identifier;
     }

@@ -42,6 +42,21 @@ public class CareContextDocumentAssemblerTest {
         return new TestFormElementBuilder().withConcept(c).withDisplayOrder(order).withUuid("fe-" + c.getUuid()).build();
     }
 
+    // AVNI-08: a question's standard code comes from its concept's key-values, set by the implementer.
+    @Test
+    public void aConceptsStandardCodesTravelWithItsAnswer() {
+        org.avni.server.application.KeyValues keyValues = new org.avni.server.application.KeyValues();
+        keyValues.add(new org.avni.server.application.KeyValue("snomedCode", "271649006"));
+        keyValues.add(new org.avni.server.application.KeyValue("loincCode", "8480-6"));
+        systolic.setKeyValues(keyValues);
+
+        CareContextDocument d = assembler.assemble(encounter, individual, null, null, "TANUH", "TANUH Health Centre");
+
+        CareContextDocument.Item item = d.items().stream().filter(i -> i.name().equals("Systolic blood pressure")).findFirst().orElseThrow();
+        assertEquals(java.util.List.of(new CareContextDocument.Code("http://loinc.org", "8480-6"),
+                new CareContextDocument.Code("http://snomed.info/sct", "271649006")), item.codes());
+    }
+
     @Before
     public void setUp() {
         conceptRepository = mock(ConceptRepository.class);

@@ -70,7 +70,7 @@ public class CareContextDocumentAssembler {
         List<CareContextDocument.Item> items = new ArrayList<>();
         for (Concept concept : concepts) {
             Object value = value(concept, observations.get(concept.getUuid()));
-            if (value != null) items.add(new CareContextDocument.Item(concept.getName(), concept.getDataType(), value, concept.getUnit()));
+            if (value != null) items.add(new CareContextDocument.Item(concept.getName(), concept.getDataType(), value, concept.getUnit(), codes(concept)));
         }
         return items;
     }
@@ -85,6 +85,24 @@ public class CareContextDocumentAssembler {
                 if (name != null) names.add(name);
             }
             return names.isEmpty() ? null : names;
+        }
+        return null;
+    }
+
+    // The question's standard codes, from its concept's key-values loincCode and snomedCode (set by the implementer).
+    private static List<CareContextDocument.Code> codes(Concept concept) {
+        List<CareContextDocument.Code> codes = new ArrayList<>();
+        if (concept.getKeyValues() == null) return codes;
+        String loinc = keyValue(concept, "loincCode");
+        if (loinc != null) codes.add(new CareContextDocument.Code("http://loinc.org", loinc));
+        String snomed = keyValue(concept, "snomedCode");
+        if (snomed != null) codes.add(new CareContextDocument.Code("http://snomed.info/sct", snomed));
+        return codes;
+    }
+
+    private static String keyValue(Concept concept, String key) {
+        for (org.avni.server.application.KeyValue kv : concept.getKeyValues()) {
+            if (key.equals(kv.getKey()) && kv.getValue() != null && !kv.getValue().toString().isBlank()) return kv.getValue().toString().trim();
         }
         return null;
     }

@@ -57,11 +57,25 @@
           "text" : "Physical exam section"
         },
         "entry" : [ {
-          "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000007"
-        }, {
           "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000008"
         }, {
           "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000009"
+        }, {
+          "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000010"
+        } ]
+      }, {
+        "title" : "Document",
+        "code" : {
+          "coding" : [ {
+            "system" : "http://snomed.info/sct",
+            "code" : "371530004",
+            "display" : "Clinical consultation report"
+          } ],
+          "text" : "Clinical consultation report"
+        },
+        "entry" : [ {
+          "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+          "display" : "DocumentReference"
         } ]
       } ]
     }
@@ -76,6 +90,10 @@
       "identifier" : [ {
         "type" : {
           "coding" : [ {
+            "system" : "https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code",
+            "code" : "HIN",
+            "display" : "Health ID issued by NDHM"
+          }, {
             "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
             "code" : "MR",
             "display" : "Medical record number"
@@ -87,13 +105,12 @@
       }, {
         "type" : {
           "coding" : [ {
-            "system" : "http://terminology.hl7.org/CodeSystem/v2-0203",
-            "code" : "MR",
-            "display" : "Medical record number"
+            "system" : "https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code",
+            "code" : "ABHA",
+            "display" : "Ayushman Bharat Health Account (ABHA) ID"
           } ],
           "text" : "ABHA Address"
         },
-        "system" : "https://healthid.ndhm.gov.in",
         "value" : "lakshmi.devi@sbx"
       } ],
       "name" : [ {
@@ -161,10 +178,10 @@
       }
     }
   }, {
-    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000008",
     "resource" : {
       "resourceType" : "Observation",
-      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000008",
       "meta" : {
         "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Observation" ]
       },
@@ -185,10 +202,10 @@
       }
     }
   }, {
-    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000008",
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000009",
     "resource" : {
       "resourceType" : "Observation",
-      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000008",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000009",
       "meta" : {
         "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Observation" ]
       },
@@ -209,10 +226,10 @@
       }
     }
   }, {
-    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000009",
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000010",
     "resource" : {
       "resourceType" : "Observation",
-      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000009",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000010",
       "meta" : {
         "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/Observation" ]
       },
@@ -230,6 +247,38 @@
       "valueCodeableConcept" : {
         "text" : "Yes"
       }
+    }
+  }, {
+    "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+    "resource" : {
+      "resourceType" : "DocumentReference",
+      "id" : "7b3e9c1a-5d2f-4a8b-9c0d-000000000007",
+      "meta" : {
+        "profile" : [ "https://nrces.in/ndhm/fhir/r4/StructureDefinition/DocumentReference" ]
+      },
+      "status" : "current",
+      "docStatus" : "final",
+      "type" : {
+        "coding" : [ {
+          "system" : "http://snomed.info/sct",
+          "code" : "371530004",
+          "display" : "Clinical consultation report"
+        } ],
+        "text" : "Clinical consultation report"
+      },
+      "subject" : {
+        "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000003",
+        "display" : "Lakshmi Devi"
+      },
+      "content" : [ {
+        "attachment" : {
+          "contentType" : "application/pdf",
+          "language" : "en-IN",
+          "data" : "JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFs0IDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nID4+CmVuZG9iago0IDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgNTk1IDg0Ml0gL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgMyAwIFIgPj4gPj4gL0NvbnRlbnRzIDUgMCBSID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggNDYzID4+CnN0cmVhbQpCVAovRjEgMTQgVGYKMSAwIDAgMSA1MCA3OTIgVG0KKEh5cGVydGVuc2lvbiBTY3JlZW5pbmcgLSBUQU5VSCBIZWFsdGggQ2VudHJlKSBUagovRjEgMTAgVGYKMSAwIDAgMSA1MCA3NjQgVG0KKFBhdGllbnQ6IExha3NobWkgRGV2aSkgVGoKMSAwIDAgMSA1MCA3NTAgVG0KKEZhY2lsaXR5OiBUQU5VSCBIZWFsdGggQ2VudHJlKSBUagoxIDAgMCAxIDUwIDczNiBUbQooU2VlbiBieTogS2F2eWEgUikgVGoKMSAwIDAgMSA1MCA3MjIgVG0KKERhdGU6IDIwMjYtMTAtMjBUMDQ6NDU6MDAuMDAwWikgVGoKMSAwIDAgMSA1MCA3MDggVG0KKCkgVGoKMSAwIDAgMSA1MCA2OTQgVG0KKFN5c3RvbGljIGJsb29kIHByZXNzdXJlOiAxMzAgbW1IZykgVGoKMSAwIDAgMSA1MCA2ODAgVG0KKERpYXN0b2xpYyBibG9vZCBwcmVzc3VyZTogODUgbW1IZykgVGoKMSAwIDAgMSA1MCA2NjYgVG0KKFRvYmFjY28gdXNlOiBZZXMpIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjEyIDAwMDAwIG4gCjAwMDAwMDAzMzggMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo4NTIKJSVFT0YK",
+          "title" : "Hypertension Screening — TANUH Health Centre",
+          "creation" : "2026-10-20T04:45:00.000Z"
+        }
+      } ]
     }
   } ]
 }
