@@ -382,6 +382,10 @@ public class EkaHipService implements EkaHipEvents {
                 if (encounter == null || encounter.isVoided() || encounter.getEncounterDateTime() == null) {
                     return new Prepared(reference, null, "visit not found");
                 }
+                // Voiding a patient leaves their visits as they are, and a visit already linked stays linked at NHA.
+                if (individual == null || individual.isVoided()) {
+                    return new Prepared(reference, null, "patient removed");
+                }
                 if (expectedPatientUuid != null && (individual == null || !expectedPatientUuid.equals(individual.getUuid()))) {
                     return new Prepared(reference, null, "belongs to another patient");
                 }

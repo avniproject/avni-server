@@ -267,8 +267,10 @@ public class EkaHiuServiceTest {
 
         service.consentUpdate(grantedUpdate("abdm-A"));
 
-        verify(store).setConsentRequestId(5L, "abdm-A", "REQUESTED");
-        verify(store, never()).setConsentRequestId(eq(6L), any(), any());
+        verify(store).mapConsentRequestId(5L, "abdm-A");
+        verify(store, never()).mapConsentRequestId(eq(6L), any());
+        // 26 Oct: a grant that landed while this match ran was overwritten with the REQUESTED read before it.
+        verify(store, never()).setConsentRequestId(anyLong(), any(), any());
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
     }
@@ -501,7 +503,8 @@ public class EkaHiuServiceTest {
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), any());
         assertEquals("abdm-cr-1", body.getValue().get("id").asText());
-        verify(store).setConsentRequestId(5L, "abdm-cr-1", "REQUESTED");
+        verify(store).mapConsentRequestId(5L, "abdm-cr-1");
+        verify(store, never()).setConsentRequestId(anyLong(), any(), any());
     }
 
     @Test

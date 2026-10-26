@@ -555,6 +555,21 @@ public class EkaHipServiceTest {
         return event;
     }
 
+    // A patient voided at the HIP is removed, though a visit of theirs stays linked at NHA: it is never sent (26 Oct run).
+    @Test
+    public void aVisitOfAVoidedPatientIsNotSent() {
+        Individual voided = new Individual();
+        voided.setId(INDIVIDUAL_ID);
+        voided.setUuid("subject-1");
+        voided.setVoided(true);
+        when(encounterRepository.findByUuid("enc-1")).thenReturn(encounter("enc-1", voided, new DateTime(2026, 3, 14, 10, 0)));
+
+        EkaHipService.Prepared prepared = service.prepare("enc-1", null);
+
+        assertNull(prepared.bundleJson());
+        verifyNoInteractions(builder);
+    }
+
     private static AbdmHipStore.CareContext row(String reference, String status) {
         return new AbdmHipStore.CareContext(1, "cc-" + reference, INDIVIDUAL_ID, HIP_ID, "subject-1", reference, "Display " + reference,
                 "OPConsultation", status, "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
