@@ -175,6 +175,20 @@ public class EkaRestClientTest {
         }
     }
 
+    // What Eka's sandbox actually answered on 26 Oct 2026, about 28 minutes after the patient's OTP, while its session
+    // check still said the patient was logged in. Only verifying the ABHA again brings the card back.
+    @Test
+    public void cardRefusedForAnInvalidXTokenThrowsSessionExpired() {
+        eka.stubFor(get(urlPathEqualTo(CARD_PATH)).willReturn(aResponse().withStatus(400)
+                .withHeader("Content-Type", "application/json").withBody("{\"error\":\"Invalid X-token\",\"code\":400}")));
+        try {
+            client.getAbhaCard(baseUrl, "access-1", "oid-1", "HIP-1");
+            fail("expected EkaSessionExpiredException");
+        } catch (EkaSessionExpiredException e) {
+            assertTrue(e.getMessage(), !e.getMessage().contains("access-1") && !e.getMessage().contains("oid-1"));
+        }
+    }
+
     // The app is told it gets a PNG. Anything else, such as an error written with 200, is not served as one.
     @Test
     public void answerThatIsNotAPngThrows() {

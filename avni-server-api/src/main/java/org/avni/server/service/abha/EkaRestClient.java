@@ -42,6 +42,12 @@ public class EkaRestClient {
     // Eka's own status, with {"error":"SessionExpiredTryAgain"}, for a card asked for after the patient's ABHA login at
     // Eka has lapsed, about 30 minutes after their ABHA was found, created or verified.
     private static final int PATIENT_LOGIN_LAPSED = 491;
+    // What Eka's sandbox answers instead, seen 26 Oct 2026: HTTP 400 with {"error":"Invalid X-token"}, while its session
+    // check still says the patient is logged in. Any other 400 is a plain refusal.
+    private static final int BAD_REQUEST = 400;
+    private static final String INVALID_X_TOKEN = "Invalid X-token";
+    // A 400's body is read only to find those words, and never further than this.
+    static final int MAX_ERROR_BYTES = 1024;
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     private static final Duration ANSWER_TIMEOUT = Duration.ofSeconds(10);
     // An ABHA card is one picture; anything larger is not one, and is not held in memory to find out.
@@ -92,6 +98,9 @@ public class EkaRestClient {
         if (response.statusCode() == PATIENT_LOGIN_LAPSED) {
             throw new EkaSessionExpiredException("Eka card request refused: the patient's ABHA login at Eka has lapsed (HTTP 491)");
         }
+        if (response.statusCode() == BAD_REQUEST && new String(response.body(), StandardCharsets.UTF_8).contains(INVALID_X_TOKEN)) {
+            throw new EkaSessionExpiredException("Eka card request refused: the patient's ABHA login at Eka has lapsed (HTTP 400, invalid X-token)");
+        }
         if (response.statusCode() < 200 || response.statusCode() > 299) {
             throw new EkaCardException("Eka card request failed with HTTP " + response.statusCode());
         }
@@ -123,9 +132,14 @@ public class EkaRestClient {
         }
     }
 
-    // An error's body is discarded unread. A card's is read up to the cap: one declared larger fails before any of it is
-    // read, and one sent without a length fails as soon as it passes the cap, ending the transfer.
+    // An error's body is discarded unread, except a 400's first kilobyte, which says whether the patient's login lapsed.
+    // A card's is read up to the cap: one declared larger fails before any of it is read, and one sent without a length
+    // fails as soon as it passes the cap, ending the transfer.
     private static HttpResponse.BodySubscriber<byte[]> cardBody(HttpResponse.ResponseInfo info) {
+        if (info.statusCode() == BAD_REQUEST) {
+            long declared = info.headers().firstValueAsLong("Content-Length").orElse(-1);
+            return declared > MAX_ERROR_BYTES ? HttpResponse.BodySubscribers.replacing(new byte[0]) : new CappedBody(MAX_ERROR_BYTES, false);
+        }
         if (info.statusCode() < 200 || info.statusCode() > 299) {
             return HttpResponse.BodySubscribers.replacing(new byte[0]);
         }

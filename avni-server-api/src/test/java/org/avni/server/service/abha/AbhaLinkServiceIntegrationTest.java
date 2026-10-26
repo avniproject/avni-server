@@ -285,8 +285,8 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertNothingLoggedCarries(log, longAddress, ABHA_DIGITS, ABHA_NUMBER);
     }
 
-    // A duplicate from an upload, another system or a second phone is never refused. Both stay linked, and the
-    // warning names both subjects, never the number.
+    // A duplicate saved from another system or a second phone is never refused (a bulk upload asks otherLiveHolders
+    // first). Both stay linked, and the warning names both subjects, never the number.
     @Test
     public void twoSubjectsSameNumberBothLiveAndWarned() {
         enableAbha();
@@ -302,6 +302,44 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Arrays.asList(live(first, ABHA_DIGITS, ABHA_ADDRESS), live(second, ABHA_DIGITS, null)), links());
         assertTrue(warnings(log).toString(), warnings(log).stream().anyMatch(w -> w.contains(first.getUuid()) && w.contains(second.getUuid())));
         assertNothingLoggedCarries(log, ABHA_DIGITS, ABHA_NUMBER, ABHA_ADDRESS);
+    }
+
+    // What a bulk upload asks before it saves a row: who else already holds this number. The row is refused if anyone
+    // does (SubjectWriter). Sync never asks.
+    @Test
+    public void otherLiveHoldersNamesTheSubjectAlreadyHoldingTheNumber() {
+        enableAbha();
+        Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
+    }
+
+    @Test
+    public void otherLiveHoldersLeavesOutTheSubjectItself() {
+        enableAbha();
+        Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(holder));
+    }
+
+    @Test
+    public void otherLiveHoldersLeavesOutAVoidedHolder() {
+        enableAbha();
+        Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+        new TransactionTemplate(transactionManager).execute(status -> individualService.voidSubject(holder));
+
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
+    }
+
+    @Test
+    public void otherLiveHoldersIsEmptyWithAbhaOffOrNoNumber() {
+        save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
+
+        enableAbha();
+        save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(null, ABHA_ADDRESS)));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith("1234", null)));
     }
 
     @Test

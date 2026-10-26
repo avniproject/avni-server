@@ -14,6 +14,7 @@ import org.avni.server.importer.batch.csv.creator.SubjectTypeCreator;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.service.abha.AbhaLinkService;
 import org.avni.server.util.ValidationUtil;
 import org.joda.time.LocalDate;
 import org.springframework.batch.item.Chunk;
@@ -39,6 +40,7 @@ public class SubjectWriter extends EntityWriter {
     private final SubjectMigrationService subjectMigrationService;
     private final SubjectTypeService subjectTypeService;
     private final SubjectHeadersCreator subjectHeadersCreator;
+    private final AbhaLinkService abhaLinkService;
 
     @Autowired
     public SubjectWriter(IndividualRepository individualRepository,
@@ -48,7 +50,8 @@ public class SubjectWriter extends EntityWriter {
                          ObservationCreator observationCreator, IndividualService individualService,
                          @Qualifier("BatchS3Service") S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
-                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeadersCreator subjectHeadersCreator) {
+                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeadersCreator subjectHeadersCreator,
+                         AbhaLinkService abhaLinkService) {
         super(organisationConfigService);
         this.individualRepository = individualRepository;
         this.genderRepository = genderRepository;
@@ -61,6 +64,7 @@ public class SubjectWriter extends EntityWriter {
         this.subjectTypeService = subjectTypeService;
         this.s3Service = s3Service;
         this.subjectHeadersCreator = subjectHeadersCreator;
+        this.abhaLinkService = abhaLinkService;
     }
 
     public void write(Chunk<? extends Row> chunk, String type, String locationHierarchy) throws Exception {
@@ -117,6 +121,12 @@ public class SubjectWriter extends EntityWriter {
         ObservationCollection observations = observationCreator.getObservations(row, subjectHeadersCreator, allErrorMsgs, FormType.IndividualProfile, individual.getObservations(), formMapping);
         ValidationUtil.handleErrors(allErrorMsgs);
         individual.setObservations(observations);
+        // One ABHA, one patient (NHA's M1 tagging case). The row names the other patient, never the number.
+        List<String> abhaHolders = abhaLinkService.otherLiveHolders(individual);
+        if (!abhaHolders.isEmpty()) {
+            allErrorMsgs.add(String.format("'%s' is already held by another subject: %s", AbhaLinkService.ABHA_NUMBER_CONCEPT, String.join(", ", abhaHolders)));
+            ValidationUtil.handleErrors(allErrorMsgs);
+        }
         Individual savedIndividual = individualService.save(individual);
         if (oldAddressLevel != null) {
             subjectMigrationService.markSubjectMigrationIfRequired(savedIndividual.getUuid(), oldAddressLevel, savedIndividual.getAddressLevel(), oldObservations, savedIndividual.getObservations(), false);
