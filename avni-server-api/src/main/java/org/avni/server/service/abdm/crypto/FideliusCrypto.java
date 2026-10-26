@@ -124,12 +124,13 @@ public class FideliusCrypto {
         }
     }
 
-    // A raw D (32 bytes, or 33 with a leading zero as fidelius-cli writes it) or a PKCS#8 PrivateKeyInfo.
+    // A raw D (up to 32 bytes, or 33 with a leading zero as fidelius-cli writes it; shorter when D's top bytes are zero,
+    // about one key in seventeen on this curve) or a PKCS#8 PrivateKeyInfo, which is always longer.
     public static PrivateKey parsePrivateKey(String base64) {
         byte[] bytes = decode(base64);
         try {
             KeyFactory factory = KeyFactory.getInstance(ALGORITHM, PROVIDER);
-            if (bytes.length == 32 || bytes.length == 33) {
+            if (bytes.length > 0 && bytes.length <= 33) {
                 return factory.generatePrivate(new ECPrivateKeySpec(new BigInteger(1, bytes), CURVE_SPEC));
             }
             return factory.generatePrivate(new PKCS8EncodedKeySpec(bytes));

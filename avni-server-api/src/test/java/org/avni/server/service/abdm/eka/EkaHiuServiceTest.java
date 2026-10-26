@@ -334,6 +334,20 @@ public class EkaHiuServiceTest {
                 Instant.parse("2026-10-01T00:00:00Z"), Instant.parse("2026-11-01T00:00:00Z"));
     }
 
+    // Two patients holding one ABHA address: neither is picked (the first one used to be).
+    @Test
+    public void twoPatientsHoldingTheAddressAreNotGuessedBetween() {
+        when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam"),
+                new AbdmHipStore.Subject(8, "subject-2", "Shyam K")));
+        when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-2")).thenReturn(Optional.of(abhaEvent("created", "oid-2")));
+
+        service.requestConsent("shyam", null, null, null, null, null);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
+        assertTrue(body.getValue().at("/patient/oid").isMissingNode());
+    }
+
     // AVNI-23: a name and a pasted command were sent to Eka as ABHA addresses.
     @Test
     public void somethingThatIsNotAnAbhaAddressIsRefusedBeforeAnythingIsStoredOrSent() {

@@ -67,6 +67,7 @@ public class EkaHipServiceTest {
     private final CareContextDocumentAssembler assembler = mock(CareContextDocumentAssembler.class);
     private final FhirBundleBuilder builder = mock(FhirBundleBuilder.class);
     private final FideliusCrypto crypto = new FideliusCrypto();
+    private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones = mock(org.avni.server.service.abdm.hip.AbdmPatientPhones.class);
     private final List<Map<String, Object>> view = List.of(Map.of("reference", "enc-2", "status", "LINK_REQUESTED"));
     private EkaHipService service;
 
@@ -75,7 +76,7 @@ public class EkaHipServiceTest {
         when(cfg.isEka()).thenReturn(true);
         when(cfg.isEkaSendData()).thenReturn(true);
         service = new EkaHipService(cfg, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
-                abhaLinkRepository, assembler, builder, crypto);
+                abhaLinkRepository, assembler, builder, crypto, phones);
 
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
                 1990, "12345678568912", "asha.devi", List.of(
@@ -282,6 +283,42 @@ public class EkaHipServiceTest {
         verify(store).markLinked(HIP_ID, List.of("enc-5"), "HIP");
     }
 
+    // HIP_INIT_NOTIFY_HIECM: NHA's call "informs patients that a care context has been successfully linked"; Eka's takes
+    // the mobile number only (EKA_ABDM_SPEC.md:188).
+    @Test
+    public void aLinkedVisitTellsThePatientByTextMessage() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
+        when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.of("9876543210"));
+
+        service.linkCareContext(event("link-care-context.json"));
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq("/abdm/v1/care-contexts/sms/notify"), body.capture(), any());
+        assertEquals("9876543210", body.getValue().get("mobile_number").asText());
+    }
+
+    @Test
+    public void withNoPhoneNumberNoTextMessageIsSent() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
+        when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.empty());
+
+        service.linkCareContext(event("link-care-context.json"));
+
+        verify(store).markLinked(HIP_ID, List.of("enc-1"), "HIP");
+        verify(eka, never()).post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any());
+    }
+
+    @Test
+    public void aTextMessageEkaRefusesLeavesTheLinkAsItIs() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
+        when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.of("9876543210"));
+        when(eka.post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any())).thenThrow(new org.avni.server.service.abdm.gateway.AbdmGatewayException(500, null, "down"));
+
+        service.linkCareContext(event("link-care-context.json"));
+
+        verify(store).markLinked(HIP_ID, List.of("enc-1"), "HIP");
+    }
+
     @Test
     public void aWebhookWithAnUnknownStatusChangesNothing() {
         ObjectNode e = (ObjectNode) event("link-care-context.json");
@@ -382,6 +419,19 @@ public class EkaHipServiceTest {
         assertEquals(1, body.getValue().get("entries").size());
         assertEquals("enc-1", body.getValue().at("/entries/0/care_context_id").asText());
         verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-2"));
+    }
+
+    // NHA: share only what the consent covers. Avni holds visit notes (OPConsultation) only.
+    @Test
+    public void aDataFetchForRecordTypesWeDoNotHoldSendsNothing() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        ObjectNode e = (ObjectNode) event("hip-data-fetch.json");
+        ((ObjectNode) e.get("data")).putArray("hi_types").add("Prescription");
+
+        service.hipDataFetch(e);
+
+        verify(eka, never()).post(eq(ON_FETCH), any(), any());
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("OPConsultation"));
     }
 
     @Test

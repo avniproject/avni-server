@@ -727,6 +727,11 @@ public class EkaHiuService implements EkaHiuEvents {
     EkaPatient findPatient(String address, String asTyped) {
         try {
             List<AbdmHipStore.Subject> subjects = hipStore.findSubjectsByAbhaAddress(address, cfg.getAbhaAddressSuffix());
+            if (subjects.size() > 1) {
+                // Never guessed between: which of them the request is for cannot be told from the address.
+                logger.warn("Eka patient lookup: {} patients hold this ABHA address; none is picked", subjects.size());
+                return EkaPatient.NONE;
+            }
             for (AbdmHipStore.Subject s : subjects) {
                 Optional<AbhaEvent> event = abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid())
                         .filter(e -> !AbhaEventService.REMOVED.equals(e.getAction()) && StringUtils.hasText(e.getEkaOid()));

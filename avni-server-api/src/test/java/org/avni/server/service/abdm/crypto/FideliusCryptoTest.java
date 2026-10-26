@@ -118,6 +118,22 @@ public class FideliusCryptoTest {
         assertEquals(fromPkcs8, fromRaw);
     }
 
+    // About one key in seventeen has a D whose shortest form is 31 bytes; a raw key that short was refused.
+    @Test
+    public void aRawPrivateKeyShorterThan32BytesIsRead() {
+        FideliusKeyMaterial b = crypto.generateKeyMaterial();
+        for (int tries = 0; tries < 2000; tries++) {
+            FideliusKeyMaterial a = crypto.generateKeyMaterial();
+            byte[] d = ((ECPrivateKey) FideliusCrypto.parsePrivateKey(a.privateKeyBase64())).getD().toByteArray();
+            if (d.length >= 32) continue;
+            String rawD = Base64.getEncoder().encodeToString(d);
+            assertEquals(crypto.encrypt(PLAINTEXT, a.privateKeyBase64(), a.nonceBase64(), b.publicKeyRawBase64(), b.nonceBase64()),
+                    crypto.encrypt(PLAINTEXT, rawD, a.nonceBase64(), b.publicKeyRawBase64(), b.nonceBase64()));
+            return;
+        }
+        throw new AssertionError("no short key in 2000 tries");
+    }
+
     @Test
     public void decryptsFideliusCliVector() {
         assertEquals(FC_PLAINTEXT, crypto.decrypt(FC_CIPHER, FC_REQUESTER_PRIVATE, FC_REQUESTER_NONCE, FC_SENDER_PUBLIC, FC_SENDER_NONCE));

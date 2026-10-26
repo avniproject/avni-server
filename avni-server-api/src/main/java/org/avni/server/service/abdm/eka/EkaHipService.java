@@ -41,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -65,6 +66,7 @@ public class EkaHipService implements EkaHipEvents {
 
     public static final String LINK_PATH = "/abdm/v1/care-contexts/link";
     public static final String ON_FETCH_PATH = "/abdm/v1/hip/care-context/data/on-fetch";
+    public static final String SMS_NOTIFY_PATH = "/abdm/v1/care-contexts/sms/notify";
     public static final String NO_EKA_ID = "Patient has no Eka ID: register or verify their ABHA through the app first";
     static final String FLOW_REQUESTED = "REQUESTED";
     static final String FLOW_TRANSFERRED = "TRANSFERRED";
@@ -85,11 +87,12 @@ public class EkaHipService implements EkaHipEvents {
     private final CareContextDocumentAssembler assembler;
     private final FhirBundleBuilder builder;
     private final FideliusCrypto crypto;
+    private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones;
 
     public EkaHipService(AbdmConfig cfg, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka, AbdmOrgContext orgContext,
                          AbhaEventRepository abhaEventRepository, EncounterRepository encounterRepository,
                          AbhaLinkRepository abhaLinkRepository, CareContextDocumentAssembler assembler, FhirBundleBuilder builder,
-                         FideliusCrypto crypto) {
+                         FideliusCrypto crypto, org.avni.server.service.abdm.hip.AbdmPatientPhones phones) {
         this.cfg = cfg;
         this.store = store;
         this.linking = linking;
@@ -101,6 +104,7 @@ public class EkaHipService implements EkaHipEvents {
         this.assembler = assembler;
         this.builder = builder;
         this.crypto = crypto;
+        this.phones = phones;
     }
 
     // One visit's FHIR bundle as JSON, or why there is none.
@@ -213,28 +217,45 @@ public class EkaHipService implements EkaHipEvents {
         }
         String hipId = cfg.getHipId();
         List<String> references = careContextIds(data);
-        List<String> matched = references.isEmpty() ? new ArrayList<>()
-                : store.findCareContextsByReferences(hipId, references).stream().map(AbdmHipStore.CareContext::reference)
-                .collect(Collectors.toList());
-        if (matched.isEmpty()) {
+        List<AbdmHipStore.CareContext> rows = references.isEmpty() ? new ArrayList<>() : store.findCareContextsByReferences(hipId, references);
+        if (rows.isEmpty()) {
             String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
             if (patientUuid != null) {
-                matched = store.findSubjectByUuid(patientUuid)
+                rows = store.findSubjectByUuid(patientUuid)
                         .map(s -> store.findCareContexts(s.id(), hipId).stream().filter(c -> LINK_REQUESTED.equals(c.status()))
-                                .map(AbdmHipStore.CareContext::reference).collect(Collectors.toList()))
+                                .collect(Collectors.toList()))
                         .orElse(new ArrayList<>());
             }
         }
+        List<String> matched = rows.stream().map(AbdmHipStore.CareContext::reference).collect(Collectors.toList());
         if (matched.isEmpty()) {
             logger.warn("Eka link status {} names no care context of ours; dropped", status);
             return;
         }
         if (outcome == Outcome.LINKED) {
             store.markLinked(hipId, matched, "HIP");
+            rows.stream().map(AbdmHipStore.CareContext::individualId).distinct().forEach(this::tellPatientLinked);
         } else {
             store.markStatus(hipId, matched, FAILED, failure(status, data));
         }
         logger.info("Eka link status {} applied to {} care contexts", status, matched.size());
+    }
+
+    // HIP_INIT_NOTIFY_HIECM: a text to the patient's phone saying a record was linked. NHA's call takes the phone number
+    // and the HIP; Eka's (spec line 188) the number only. A refusal leaves the link as it is.
+    private void tellPatientLinked(long individualId) {
+        Optional<String> phone = phones.phoneOf(individualId);
+        if (phone.isEmpty()) return;
+        ObjectNode body = AbdmJson.obj();
+        body.put("mobile_number", phone.get());
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put(EkaAbdmClient.H_HIP_ID, cfg.getHipId());
+        try {
+            eka.post(SMS_NOTIFY_PATH, body, headers);
+            logger.info("Eka text message sent to the patient of subject {} for a linked record", individualId);
+        } catch (RuntimeException e) {
+            logger.warn("Eka text message for subject {} not sent: {}", individualId, e.getMessage());
+        }
     }
 
     // abha.hip_data_fetch (self-custody only): build each requested visit's bundle, encrypt it to the requester's key with a
@@ -261,6 +282,13 @@ public class EkaHipService implements EkaHipEvents {
         List<String> references = careContextIds(data);
         if (references.isEmpty()) {
             store.finishDataFlow(flowId, FLOW_FAILED, 0, "The request names no care context");
+            return;
+        }
+        // Share only what the consent covers: the visits held here are OPConsultation records.
+        List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
+        if (asked != null && !asked.isEmpty() && !asked.contains(HI_TYPE)) {
+            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: only " + HI_TYPE + " records are held here; asked for " + String.join(", ", asked));
+            logger.info("Eka data fetch {}: asked for record types not held here; nothing sent", transactionId);
             return;
         }
         String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
