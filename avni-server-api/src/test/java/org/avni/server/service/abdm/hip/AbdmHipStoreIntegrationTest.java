@@ -101,7 +101,8 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     }
 
     // At a large organisation the search narrows by the date-of-birth index (V1_391), which a year read out of the date
-    // cannot use. Sequential scans are off so the plan shows whether the index can take the date at all.
+    // cannot use. The year's condition is planned alone, with sequential scans off: the whole search's plan depends on
+    // how many rows the test database holds, and with few Postgres walks the primary key for the search's order.
     @Test
     public void theYearOfBirthIsSearchedThroughTheDateOfBirthIndex() {
         JdbcOperations jdbc = namedJdbc.getJdbcOperations();
@@ -112,7 +113,8 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
                 .addValue("bornFrom", java.time.LocalDate.of(1990, 1, 1)).addValue("bornBefore", java.time.LocalDate.of(1991, 1, 1))
                 .addValue("limit", 21);
 
-        List<String> plan = namedJdbc.queryForList("explain " + AbdmHipStore.PHONE_SEARCH_SQL, params, String.class);
+        List<String> plan = namedJdbc.queryForList("explain select i.id from individual i where i.organisation_id = :org and "
+                + AbdmHipStore.BORN_IN_YEAR, params, String.class);
 
         assertTrue(String.join("\n", plan), plan.stream().anyMatch(line -> line.contains("Index Cond") && line.contains("date_of_birth")));
     }

@@ -232,10 +232,11 @@ public class AbdmHipStore {
     // else, such as a relative on the family phone. At most PHONE_SEARCH_LIMIT + 1 rows, so a caller can tell the limit
     // was passed. The year of birth is a date range, so the date-of-birth index (V1_391) narrows the rows read; the phone
     // has no index.
+    static final String BORN_IN_YEAR = "i.date_of_birth >= :bornFrom and i.date_of_birth < :bornBefore";
     static final String PHONE_SEARCH_SQL = "select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
             "where i.organisation_id = :org and i.is_voided = false " +
             "and right(regexp_replace(coalesce(i.observations -> :pn ->> 'phoneNumber', i.observations ->> :text, ''), '[^0-9]', '', 'g'), 10) = :digits " +
-            "and upper(left(g.name, 1)) = :gender and i.date_of_birth >= :bornFrom and i.date_of_birth < :bornBefore " +
+            "and upper(left(g.name, 1)) = :gender and " + BORN_IN_YEAR + " " +
             "and not exists (select 1 from abha_link al where al.individual_id = i.id and al.is_voided = false) order by i.id limit :limit";
 
     public List<Candidate> findSubjectsByPhone(AbdmPatientPhones.PhoneConcepts concepts, String lastTenDigits, String genderLetter, int yearOfBirth) {
