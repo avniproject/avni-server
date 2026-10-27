@@ -134,6 +134,13 @@ public class AbdmHiuStore {
         return updated;
     }
 
+    // Requests still waiting for the patient's answer under Eka's id, newest first: the only ones an ABDM id we do not
+    // know yet can belong to. An answered request is filed under ABDM's id already.
+    public List<Consent> waitingConsentRequests() {
+        return jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIU' and consent_id is null " +
+                "and status = 'REQUESTED' and consent_request_id is not null order by created_at desc, id desc", params(), CONSENT);
+    }
+
     public List<Consent> listConsentRequests() {
         return jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIU' and consent_id is null order by created_at desc limit 200",
                 params(), CONSENT);
@@ -163,14 +170,32 @@ public class AbdmHiuStore {
                 });
     }
 
-    // The ids updates are parked for, for the hourly retry. One parked over a week ago is left: no request of ours took it.
+    // The ids updates are parked for, for the hourly retry, newest first so one that never matches holds back none parked
+    // after it. One parked over a week ago is left: no request of ours took it.
     public List<String> parkedConsentRequestIds() {
-        return jdbc.queryForList("select distinct reference from abdm_parked_event where organisation_id = :org and kind = 'consent_update' " +
-                "and resolved_at is null and created_at > now() - interval '7 days' order by reference limit 100", params(), String.class);
+        return jdbc.queryForList("select reference from abdm_parked_event where organisation_id = :org and kind = 'consent_update' " +
+                "and resolved_at is null and created_at > now() - interval '7 days' group by reference order by max(id) desc limit 100",
+                params(), String.class);
     }
 
-    public void resolveParked(long id) {
-        jdbc.update("update abdm_parked_event set resolved_at = now() where organisation_id = :org and id = :id", params().addValue("id", id));
+    // Taken by one path only: two reaching the same update at once (the hourly run, a push, an approval, a webhook)
+    // apply it once.
+    public boolean claimParked(long id) {
+        return jdbc.update("update abdm_parked_event set resolved_at = now() where organisation_id = :org and id = :id and resolved_at is null",
+                params().addValue("id", id)) == 1;
+    }
+
+    // An update whose apply failed goes back for the next try.
+    public void releaseParked(long id) {
+        jdbc.update("update abdm_parked_event set resolved_at = null where organisation_id = :org and id = :id", params().addValue("id", id));
+    }
+
+    // The id an update naming this artefact is parked under, the newest when several.
+    public Optional<String> parkedReferenceOf(String artefactId) {
+        if (artefactId == null) return Optional.empty();
+        return one(jdbc.queryForList("select reference from abdm_parked_event where organisation_id = :org and kind = 'consent_update' " +
+                        "and resolved_at is null and detail -> 'artefacts' @> jsonb_build_array(cast(:artefact as text)) order by id desc limit 1",
+                params().addValue("artefact", artefactId, Types.VARCHAR), String.class));
     }
 
     // ---- artefacts

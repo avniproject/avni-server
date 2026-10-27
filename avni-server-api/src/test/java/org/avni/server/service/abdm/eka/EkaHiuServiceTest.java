@@ -80,6 +80,7 @@ public class EkaHiuServiceTest {
         ours = crypto.generateKeyMaterial();
         when(store.findDataFlowsByConsent(KEYSET)).thenReturn(List.of(keyset(21, ours)));
         when(store.findConsentRequestByInitRequest(anyString())).thenReturn(Optional.of(request(5, null, "REQUESTED")));
+        when(store.claimParked(anyLong())).thenReturn(true);
         when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam")));
         when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(abhaEvent("created", "oid-1")));
         when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
@@ -272,6 +273,23 @@ public class EkaHiuServiceTest {
         verify(store).setArtefactStatus(List.of("artefact-1"), "REVOKED");
     }
 
+    // A withdrawal naming only artefacts whose grant is still parked must not be lost: replayed after the grant, oldest
+    // first, it leaves the request withdrawn.
+    @Test
+    public void aWithdrawalNamingOnlyArtefactsOfAParkedGrantIsParkedBehindIt() {
+        when(store.findArtefact("artefact-1")).thenReturn(Optional.empty());
+        when(store.parkedReferenceOf("artefact-1")).thenReturn(Optional.of("abdm-A"));
+        ObjectNode event = (ObjectNode) ekaFixture("hiu-consent-update-granted.json");
+        ObjectNode notification = (ObjectNode) event.at("/data/notification");
+        notification.remove("consentRequestId");
+        notification.put("status", "REVOKED");
+
+        service.consentUpdate(event);
+
+        verify(store).parkConsentUpdate("abdm-A", "REVOKED", List.of("artefact-1"));
+        verify(store, never()).setConsentRequestStatus(any(), any());
+    }
+
     @Test
     public void anUpdateNamingOnlyArtefactsWeDoNotHoldIsIgnored() {
         when(store.findArtefact("artefact-1")).thenReturn(Optional.empty());
@@ -291,7 +309,7 @@ public class EkaHiuServiceTest {
     @Test
     public void anUpdateForAnIdWeDoNotKnowIsMatchedToItsOwnRequestThroughEkasConsentList() {
         when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of(request(6, "init-2", "REQUESTED"), request(5, "init-1", "REQUESTED")));
+        when(store.waitingConsentRequests()).thenReturn(List.of(request(6, "init-2", "REQUESTED"), request(5, "init-1", "REQUESTED")));
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}", "{\"consent_id\":\"abdm-B\",\"consent_init_id\":\"init-2\"}");
 
         service.consentUpdate(grantedUpdate("abdm-A"));
@@ -307,7 +325,7 @@ public class EkaHiuServiceTest {
     @Test
     public void anUpdateThatNoRequestOwnsIsParkedAndNothingIsGuessed() {
         when(store.findConsentRequest("abdm-Z")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        when(store.waitingConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
 
         service.consentUpdate(grantedUpdate("abdm-Z"));
@@ -328,7 +346,7 @@ public class EkaHiuServiceTest {
         verify(store).setConsentRequestId(5L, "abdm-A", "REQUESTED");
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
-        verify(store).resolveParked(77L);
+        verify(store).claimParked(77L);
     }
 
     // A parked update was applied only when another update came; every path that maps a request applies it now.
@@ -343,14 +361,14 @@ public class EkaHiuServiceTest {
         verify(store).mapConsentRequestId(5L, "abdm-A");
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
-        verify(store).resolveParked(77L);
+        verify(store).claimParked(77L);
     }
 
     @Test
     public void aPushThatMatchesItsRequestThroughEkaAppliesTheUpdateParkedForIt() {
         when(store.findArtefact("abdm-A")).thenReturn(Optional.empty());
         when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        when(store.waitingConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
         when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
         FideliusKeyMaterial hip = crypto.generateKeyMaterial();
@@ -362,7 +380,7 @@ public class EkaHiuServiceTest {
 
         verify(store).mapConsentRequestId(5L, "abdm-A");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
-        verify(store).resolveParked(77L);
+        verify(store).claimParked(77L);
     }
 
     // The hourly retry: an update parked because Eka's list did not have the id yet is applied once it does.
@@ -370,7 +388,7 @@ public class EkaHiuServiceTest {
     public void theRetryAppliesAParkedUpdateOnceEkasListMatchesItsRequest() {
         when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A"));
         when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        when(store.waitingConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
         when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
 
@@ -378,7 +396,7 @@ public class EkaHiuServiceTest {
 
         verify(store).mapConsentRequestId(5L, "abdm-A");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
-        verify(store).resolveParked(77L);
+        verify(store).claimParked(77L);
     }
 
     @Test
@@ -390,7 +408,7 @@ public class EkaHiuServiceTest {
         service.retryParkedUpdates();
 
         verify(store).setConsentRequestStatus("abdm-A", "DENIED");
-        verify(store).resolveParked(77L);
+        verify(store).claimParked(77L);
         verify(eka, never()).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
     }
 
@@ -398,7 +416,7 @@ public class EkaHiuServiceTest {
     @Test
     public void theRetryAsksEkaOncePerPatientForAllParkedIds() {
         when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A", "abdm-B"));
-        when(store.listConsentRequests()).thenReturn(List.of(request(6, "init-2", "REQUESTED"), request(5, "init-1", "REQUESTED")));
+        when(store.waitingConsentRequests()).thenReturn(List.of(request(6, "init-2", "REQUESTED"), request(5, "init-1", "REQUESTED")));
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}", "{\"consent_id\":\"abdm-B\",\"consent_init_id\":\"init-2\"}");
 
         service.retryParkedUpdates();
@@ -408,17 +426,56 @@ public class EkaHiuServiceTest {
         verify(eka, times(1)).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
     }
 
-    // Only a request still waiting for its answer can be the one an unknown ABDM id belongs to; an answered one is
-    // already filed under ABDM's id, so asking Eka about its patient is wasted.
+    // The hourly run shares the scheduler thread with other jobs, so it asks Eka about ten patients at most, the newest
+    // first; the event paths still match through every waiting request.
     @Test
-    public void matchingThroughEkaAsksOnlyAboutPatientsWithARequestStillWaiting() {
-        when(store.findConsentRequest("abdm-Z")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of(request(5, "abdm-A", "GRANTED")));
+    public void theRetryAsksEkaAboutTenPatientsAtMost() {
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-never"));
+        List<AbdmHiuStore.Consent> waiting = new java.util.ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            String address = "patient" + i + "@sbx";
+            waiting.add(new AbdmHiuStore.Consent(i, "uuid-" + i, "init-" + i, null, "init-request-" + i, address, null, HIU_ID,
+                    "CAREMGT", "OPConsultation", null, null, null, "REQUESTED", null, null, null));
+            when(hipStore.findSubjectsByAbhaAddress(address, "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(100 + i, "subject-p" + i, "P" + i)));
+            when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-p" + i)).thenReturn(Optional.of(abhaEvent("created", "oid-p" + i)));
+        }
+        when(store.waitingConsentRequests()).thenReturn(waiting);
+        ekaListsConsents();
 
-        service.consentUpdate(grantedUpdate("abdm-Z"));
+        service.retryParkedUpdates();
 
-        verify(eka, never()).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
-        verify(store).parkConsentUpdate("abdm-Z", "GRANTED", List.of("artefact-1"));
+        verify(eka, times(10)).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
+    }
+
+    // Two paths can reach one parked update at once (the hourly run, a push, an approval, a webhook): only the one that
+    // claims it applies it, so an artefact is never inserted twice.
+    @Test
+    public void aParkedUpdateAnotherPathHasClaimedIsNotAppliedAgain() {
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A"));
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "REQUESTED")));
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+        when(store.claimParked(77L)).thenReturn(false);
+
+        service.retryParkedUpdates();
+
+        verify(store, never()).setConsentRequestStatus(any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void aParkedUpdateThatFailsToApplyIsReleasedForTheNextTry() {
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A"));
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "REQUESTED")));
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "DENIED", List.of())));
+        org.mockito.Mockito.doThrow(new RuntimeException("database gone")).when(store).setConsentRequestStatus("abdm-A", "DENIED");
+
+        try {
+            service.retryParkedUpdates();
+        } catch (RuntimeException expected) {
+            // the job logs it
+        }
+
+        verify(store).releaseParked(77L);
     }
 
     // HIU_FLOW_102: the consent's expiry is asked for, not fixed at 30 days.
@@ -572,7 +629,7 @@ public class EkaHiuServiceTest {
         String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
         when(store.findArtefact("abdm-cr-9")).thenReturn(Optional.empty());
         when(store.findConsentRequest("abdm-cr-9")).thenReturn(Optional.empty());
-        when(store.listConsentRequests()).thenReturn(List.of());
+        when(store.waitingConsentRequests()).thenReturn(List.of());
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
         ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-9");
 
