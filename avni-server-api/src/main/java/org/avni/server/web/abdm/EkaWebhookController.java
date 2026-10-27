@@ -37,14 +37,13 @@ import java.util.function.Consumer;
 // Then 200 at once, and the work goes to an AbdmAsync thread as the organisation: log the event, hand it to the HIP or
 // HIU handler. Handlers come through ObjectProvider, so the server starts with either side missing.
 // Eka's retry policy is undocumented, so delivery is taken as at-least-once: an event id (the top-level transaction_id)
-// already seen is answered 200 and dropped. The last 1000 ids are held in memory; abdm_inbound_event (AbdmInboundEvents)
-// is the record that survives a restart, and an event whose handling fails is released from it so a redelivery is handled.
+// already taken (abdm_inbound_event, AbdmInboundEvents) is dropped. An event whose handling fails is released from it, so
+// Eka's redelivery is handled.
 // With no abdm.eka.webhook-verify setting the signature is enforced.
 // No Avni user: the path is under /api/v3/**, unprotected (ResourceProtectionStatus).
 @RestController
 public class EkaWebhookController {
     private static final Logger logger = LoggerFactory.getLogger(EkaWebhookController.class);
-    private static final int SEEN_EVENTS = 1000;
     private static final String SOURCE = "eka";
 
     enum Route {LINK_CARE_CONTEXT, HIP_DATA_FETCH, CONSENT_UPDATE, HIU_DATA_PUSH, DISCOVER, DISCOVER_LINK_INIT, DISCOVER_LINK_CONFIRM, NONE}
@@ -69,12 +68,6 @@ public class EkaWebhookController {
     private final ObjectProvider<EkaHipEvents> hip;
     private final ObjectProvider<EkaHiuEvents> hiu;
     private final ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery;
-    private final Map<String, Boolean> seen = new LinkedHashMap<>(64, 0.75f, false) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
-            return size() > SEEN_EVENTS;
-        }
-    };
 
     @Autowired
     public EkaWebhookController(AbdmConfig cfg, EkaWebhookVerifier verifier, AbdmAsync async, AbdmMessageLog messageLog,
@@ -120,15 +113,10 @@ public class EkaWebhookController {
         String name = eventName(event);
         String eventId = AbdmFlows.firstNonNull(AbdmJson.text(event, "transaction_id"), AbdmJson.text(event, "event_id"),
                 AbdmJson.text(event, "id"));
-        if (eventId != null && !firstSighting(eventId)) {
-            logger.info("Eka webhook {} {} already received; ignored", name, eventId);
-            return answer(HttpStatus.OK, "duplicate", null);
-        }
         AbdmCallbackHeaders headers = new AbdmCallbackHeaders(AbdmPaths.IN_EKA_WEBHOOK, eventId, AbdmJson.text(event, "timestamp"),
                 AbdmJson.text(event, "data.hip_id"), null, null, null);
         JsonNode received = event;
         async.submit("Eka webhook " + name, () -> {
-            // The database's record of events taken outlives a restart; the in-memory one above only saves a round trip.
             if (eventId != null && !inboundEvents.claim(SOURCE, eventId)) {
                 logger.info("Eka webhook {} {} already handled; ignored", name, eventId);
                 return;
@@ -183,14 +171,6 @@ public class EkaWebhookController {
         if (DISCOVER_LINK_INIT.contains(key)) return Route.DISCOVER_LINK_INIT;
         if (DISCOVER_LINK_CONFIRM.contains(key)) return Route.DISCOVER_LINK_CONFIRM;
         return Route.NONE;
-    }
-
-    private boolean firstSighting(String eventId) {
-        synchronized (seen) {
-            if (seen.containsKey(eventId)) return false;
-            seen.put(eventId, Boolean.TRUE);
-            return true;
-        }
     }
 
     private static ResponseEntity<Map<String, String>> answer(HttpStatus status, String outcome, String reason) {

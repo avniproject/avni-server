@@ -283,6 +283,7 @@ public class EkaWebhookControllerTest {
     @Test
     public void aRepeatedEventIdIsHandledOnce() throws Exception {
         String body = event("link-care-context.json");
+        when(inboundEvents.claim("eka", "wh-link-1")).thenReturn(true, false);
 
         send(body, signature(NOW, body)).andExpect(status().isOk());
         send(body, signature(NOW, body)).andExpect(status().isOk());
@@ -312,6 +313,18 @@ public class EkaWebhookControllerTest {
 
         verify(inboundEvents).claim("eka", "wh-link-1");
         verify(inboundEvents).release("eka", "wh-link-1");
+    }
+
+    // The release was undone by an in-memory list of seen ids, checked first and never cleared, so the redelivery was dropped.
+    @Test
+    public void aRedeliveryAfterAFailedHandlingIsHandled() throws Exception {
+        String body = event("link-care-context.json");
+        doThrow(new IllegalStateException("database down")).doNothing().when(hip).linkCareContext(any());
+
+        send(body, signature(NOW, body)).andExpect(status().isOk());
+        send(body, signature(NOW, body)).andExpect(status().isOk());
+
+        verify(hip, times(2)).linkCareContext(any());
     }
 
     // With no setting, an unsigned webhook used to be accepted (the default was log).
