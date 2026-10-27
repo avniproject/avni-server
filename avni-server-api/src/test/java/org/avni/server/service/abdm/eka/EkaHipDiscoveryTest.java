@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -87,9 +88,10 @@ public class EkaHipDiscoveryTest {
         assertTrue(reply.at("/error/message").asText().length() > 0);
     }
 
+    // NHA USER_INIT_LINK_603: with no ABHA match, search by the verified mobile, then a fuzzy match on the name.
     @Test
-    public void withNoAbhaMatchOnlyOnePatientWithTheSameNameGenderYearAndPhoneIsOffered() {
-        when(store.findSubjectsByDemographics("Asha Devi", "F", 1990)).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+    public void withNoAbhaMatchThePatientHoldingTheMobileWithAMatchingNameIsOffered() {
+        onTheMobile(candidate(7, "subject-1", "Asha Devi K"));
 
         discovery.discover(discoverEvent());
 
@@ -97,13 +99,58 @@ public class EkaHipDiscoveryTest {
     }
 
     @Test
-    public void aNameMatchWhosePhoneDiffersIsNotOffered() {
-        when(store.findSubjectsByDemographics("Asha Devi", "F", 1990)).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
-        when(phones.phoneOf(7)).thenReturn(Optional.of("9000000000"));
+    public void aPatientOnTheMobileWhoseNameDiffersIsNotOffered() {
+        onTheMobile(candidate(7, "subject-1", "Asha Bai"));
+
+        discovery.discover(discoverEvent());
+
+        JsonNode reply = sent(ON_DISCOVER);
+        assertEquals(0, reply.path("patients").size());
+        assertTrue(reply.at("/error/message").asText().length() > 0);
+    }
+
+    @Test
+    public void patientsSharingTheMobileAreNarrowedByName() {
+        onTheMobile(candidate(7, "subject-1", "Asha Devi"), candidate(8, "subject-8", "Ravi Kumar"));
+
+        discovery.discover(discoverEvent());
+
+        JsonNode reply = sent(ON_DISCOVER);
+        assertEquals(1, reply.path("patients").size());
+        assertEquals("subject-1", reply.at("/patients/0/ref_num").asText());
+    }
+
+    @Test
+    public void twoPatientsOnTheMobileStillMatchingAreNeverGuessedBetween() {
+        onTheMobile(candidate(7, "subject-1", "Asha Devi"), candidate(8, "subject-8", "Asha Devi"));
+
+        discovery.discover(discoverEvent());
+
+        JsonNode reply = sent(ON_DISCOVER);
+        assertEquals(0, reply.path("patients").size());
+        assertTrue(reply.at("/error/message").asText().contains("More than one"));
+    }
+
+    // A health worker's phone entered for many patients: past the search's limit, Avni cannot say no one else matches.
+    @Test
+    public void aMobileSharedByMoreThanTwentyPatientsIsRefused() {
+        AbdmHipStore.Candidate[] many = new AbdmHipStore.Candidate[21];
+        for (int i = 0; i < many.length; i++) many[i] = candidate(100 + i, "subject-" + (100 + i), i == 0 ? "Asha Devi" : "Ravi Kumar " + i);
+        onTheMobile(many);
 
         discovery.discover(discoverEvent());
 
         assertEquals(0, sent(ON_DISCOVER).path("patients").size());
+    }
+
+    @Test
+    public void withoutAMobileOrWithABlankGenderNoSearchByPhoneIsMade() {
+        discovery.discover(AbdmJson.read("{\"event\":\"abha.care_context_discover\",\"data\":{\"gender\":\"F\",\"patient_name\":\"Asha Devi\"," +
+                "\"request_id\":\"req-1\",\"txn_id\":\"txn-1\",\"year_of_birth\":1990}}"));
+        discovery.discover(AbdmJson.read("{\"event\":\"abha.care_context_discover\",\"data\":{\"gender\":\" \",\"patient_name\":\"Asha Devi\"," +
+                "\"identifiers\":[{\"type\":\"MOBILE\",\"value\":\"9876543210\"}],\"request_id\":\"req-2\",\"txn_id\":\"txn-2\",\"year_of_birth\":1990}}"));
+
+        verify(store, never()).findSubjectsByPhone(any(), any(), any(), anyInt());
     }
 
     // ---- link init
@@ -256,6 +303,16 @@ public class EkaHipDiscoveryTest {
 
     private static JsonNode confirmEvent(String code) {
         return AbdmJson.read("{\"event\":\"abha.context_discover_link_confirm\",\"data\":{\"linkRefNumber\":\"link-1\",\"request_id\":\"req-3\",\"token\":\"" + code + "\"}}");
+    }
+
+    private void onTheMobile(AbdmHipStore.Candidate... candidates) {
+        AbdmPatientPhones.PhoneConcepts concepts = new AbdmPatientPhones.PhoneConcepts(null, "phone-concept");
+        when(phones.phoneConcepts()).thenReturn(concepts);
+        when(store.findSubjectsByPhone(concepts, "9876543210", "F", 1990)).thenReturn(List.of(candidates));
+    }
+
+    private static AbdmHipStore.Candidate candidate(long id, String uuid, String name) {
+        return new AbdmHipStore.Candidate(id, uuid, name);
     }
 
     private static AbdmHipStore.LinkRequest linkRequest(Instant expiresAt) {

@@ -50,6 +50,9 @@ public class AbdmHipStore {
     public record Subject(long id, String uuid, String name) {
     }
 
+    public record Candidate(long id, String uuid, String name) {
+    }
+
     public record PatientRow(String subjectUuid, String name, String abhaNumber, String abhaAddress, long encounters, long linked) {
     }
 
@@ -202,15 +205,25 @@ public class AbdmHipStore {
                 params().addValue("ref", linkReference, Types.VARCHAR), LINK_REQUEST));
     }
 
-    // Live patients whose full name (any case, single spaces), gender letter and year of birth are these.
-    public List<Subject> findSubjectsByDemographics(String name, String genderLetter, Integer yearOfBirth) {
-        if (name == null || genderLetter == null || yearOfBirth == null) return new ArrayList<>();
+    // Search limit for one mobile: past it, Avni cannot say that no one else on the number matches.
+    public static final int PHONE_SEARCH_LIMIT = 20;
+
+    // Live subjects whose phone, read as IndividualService.findPhoneNumber reads it (the PhoneNumber value first, else
+    // the contact-number text), ends in these ten digits, of this gender letter and year of birth. At most
+    // PHONE_SEARCH_LIMIT + 1 rows, so a caller can tell the limit was passed. DEMO-ONLY: a scan of the organisation's
+    // subjects, with no index on the phone.
+    public List<Candidate> findSubjectsByPhone(AbdmPatientPhones.PhoneConcepts concepts, String lastTenDigits, String genderLetter, int yearOfBirth) {
+        if (concepts == null || (concepts.phoneNumberConceptUuid() == null && concepts.contactNumberConceptUuid() == null)
+                || lastTenDigits == null || !lastTenDigits.matches("[0-9]{10}") || genderLetter == null) return new ArrayList<>();
         return jdbc.query("select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
                         "where i.organisation_id = :org and i.is_voided = false " +
-                        "and lower(regexp_replace(" + NAME + ", '\\s+', ' ', 'g')) = lower(regexp_replace(:name, '\\s+', ' ', 'g')) " +
-                        "and upper(left(g.name, 1)) = :gender and extract(year from i.date_of_birth) = :year order by i.id limit 3",
-                params().addValue("name", name, Types.VARCHAR).addValue("gender", genderLetter, Types.VARCHAR).addValue("year", yearOfBirth),
-                SUBJECT);
+                        "and right(regexp_replace(coalesce(i.observations -> :pn ->> 'phoneNumber', i.observations ->> :text, ''), '[^0-9]', '', 'g'), 10) = :digits " +
+                        "and upper(left(g.name, 1)) = :gender and extract(year from i.date_of_birth) = :year order by i.id limit :limit",
+                params().addValue("pn", concepts.phoneNumberConceptUuid(), Types.VARCHAR)
+                        .addValue("text", concepts.contactNumberConceptUuid(), Types.VARCHAR)
+                        .addValue("digits", lastTenDigits, Types.VARCHAR).addValue("gender", genderLetter, Types.VARCHAR)
+                        .addValue("year", yearOfBirth).addValue("limit", PHONE_SEARCH_LIMIT + 1),
+                (rs, n) -> new Candidate(rs.getLong("id"), rs.getString("uuid"), rs.getString("name")));
     }
 
     // One more wrong code on a link request; returns how many so far.

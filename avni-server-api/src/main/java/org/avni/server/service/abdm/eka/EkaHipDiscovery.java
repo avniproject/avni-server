@@ -9,6 +9,7 @@ import org.avni.server.service.abdm.AbdmTime;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
+import org.avni.server.service.abdm.hip.AbdmNames;
 import org.avni.server.service.abdm.hip.AbdmPatientPhones;
 import org.avni.server.service.abdm.hip.AbdmPhoneOtp;
 import org.slf4j.Logger;
@@ -32,8 +33,9 @@ import java.util.stream.Collectors;
 // Patient-led linking through Eka (USER_INIT_LINK_601 to 607; EKA_ABDM_SPEC.md 2.7): the patient finds the facility in
 // their ABHA app, Eka asks us who they are (care_context_discover), the patient picks visits (link_init) and confirms
 // with a code we send to the phone Avni holds for them (link_confirm). NHA: "every HIP must answer discovery".
-// A patient is found by ABHA address, then ABHA number, then name, gender and year of birth with a matching phone. Only
-// one patient is ever offered: when more than one matches, none is. Never logs a name, an ABHA, a phone or a code.
+// A patient is found by ABHA address, then ABHA number, then, as NHA asks (USER_INIT_LINK_603), by the verified mobile
+// narrowed by gender, year of birth and a tolerant name match (AbdmNames). Only one patient is ever offered: when more
+// than one matches, none is. Never logs a name, an ABHA, a phone or a code.
 @Component
 public class EkaHipDiscovery {
     private static final Logger logger = LoggerFactory.getLogger(EkaHipDiscovery.class);
@@ -43,6 +45,7 @@ public class EkaHipDiscovery {
     static final String ON_CONFIRM = "/abdm/v1/care-contexts/discover/link/on-confirm";
     private static final Duration CODE_LIFETIME = Duration.ofMinutes(10);
     private static final int MAX_ATTEMPTS = 3;
+    private static final String MORE_THAN_ONE = "More than one patient matches at this facility; please ask the facility";
 
     private final AbdmConfig cfg;
     private final AbdmHipStore store;
@@ -107,23 +110,23 @@ public class EkaHipDiscovery {
         String gender = AbdmJson.text(data, "gender");
         Integer year = data != null && data.path("year_of_birth").canConvertToInt() ? data.path("year_of_birth").asInt() : null;
         String mobile = AbdmFlows.digitsOnly(identifier(data, "MOBILE"));
-        if (!StringUtils.hasText(name) || gender == null || year == null || mobile.length() < 10) {
+        if (!StringUtils.hasText(name) || !StringUtils.hasText(gender) || year == null || mobile.length() < 10) {
             return new Match(null, "No patient with this ABHA at this facility");
         }
-        Match m = one(store.findSubjectsByDemographics(name.trim(), gender.trim().substring(0, 1).toUpperCase(Locale.ROOT), year));
-        if (m == null || m.subject() == null) return m != null ? m : new Match(null, "No patient found at this facility");
-        // Conservative: a name match counts only when the phone Avni holds is the patient's.
-        String held = AbdmFlows.digitsOnly(phones.phoneOf(m.subject().id()).orElse(""));
-        if (held.length() < 10 || !held.substring(held.length() - 10).equals(mobile.substring(mobile.length() - 10))) {
-            return new Match(null, "No patient found at this facility");
-        }
-        return m;
+        // The mobile ABDM verified is the anchor, compared with the phone Avni texts the code to.
+        List<AbdmHipStore.Candidate> onTheMobile = store.findSubjectsByPhone(phones.phoneConcepts(), mobile.substring(mobile.length() - 10),
+                gender.trim().substring(0, 1).toUpperCase(Locale.ROOT), year);
+        if (onTheMobile.size() > AbdmHipStore.PHONE_SEARCH_LIMIT) return new Match(null, MORE_THAN_ONE);
+        List<AbdmHipStore.Subject> named = onTheMobile.stream().filter(c -> AbdmNames.sameName(c.name(), name))
+                .map(c -> new AbdmHipStore.Subject(c.id(), c.uuid(), c.name())).collect(Collectors.toList());
+        Match m = one(named);
+        return m != null ? m : new Match(null, "No patient found at this facility");
     }
 
     // Exactly one: a Match. Several: a refusal. None: null, so the next way of finding is tried.
     private static Match one(List<AbdmHipStore.Subject> subjects) {
         if (subjects == null || subjects.isEmpty()) return null;
-        if (subjects.size() > 1) return new Match(null, "More than one patient matches at this facility; please ask the facility");
+        if (subjects.size() > 1) return new Match(null, MORE_THAN_ONE);
         return new Match(subjects.get(0), null);
     }
 

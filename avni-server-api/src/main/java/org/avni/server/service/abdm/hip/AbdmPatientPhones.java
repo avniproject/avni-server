@@ -1,7 +1,10 @@
 package org.avni.server.service.abdm.hip;
 
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
+import org.avni.server.service.ConceptService;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.slf4j.Logger;
@@ -13,7 +16,7 @@ import java.util.Optional;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // A patient's phone number, read as the rest of Avni reads it (IndividualService.findPhoneNumber), in a read-only
-// transaction as the organisation. Never logged.
+// transaction as the organisation, and the concepts it is read from, for finding a patient by phone. Never logged.
 @Component
 public class AbdmPatientPhones {
     private static final Logger logger = LoggerFactory.getLogger(AbdmPatientPhones.class);
@@ -21,11 +24,32 @@ public class AbdmPatientPhones {
     private final IndividualRepository individualRepository;
     private final IndividualService individualService;
     private final AbdmOrgContext orgContext;
+    private final ConceptRepository conceptRepository;
+    private final ConceptService conceptService;
 
-    public AbdmPatientPhones(IndividualRepository individualRepository, IndividualService individualService, AbdmOrgContext orgContext) {
+    public AbdmPatientPhones(IndividualRepository individualRepository, IndividualService individualService, AbdmOrgContext orgContext,
+                             ConceptRepository conceptRepository, ConceptService conceptService) {
         this.individualRepository = individualRepository;
         this.individualService = individualService;
         this.orgContext = orgContext;
+        this.conceptRepository = conceptRepository;
+        this.conceptService = conceptService;
+    }
+
+    public record PhoneConcepts(String phoneNumberConceptUuid, String contactNumberConceptUuid) {
+    }
+
+    // The two concepts IndividualService.findPhoneNumber reads, in its order: the first of data type PhoneNumber, then the
+    // contact-number text concept. Both null when they cannot be read.
+    public PhoneConcepts phoneConcepts() {
+        try {
+            return orgContext.inReadOnlyTransaction(() -> new PhoneConcepts(
+                    conceptRepository.findAllByDataType("PhoneNumber").stream().findFirst().map(Concept::getUuid).orElse(null),
+                    conceptService.findContactNumberConcept().map(Concept::getUuid).orElse(null)));
+        } catch (RuntimeException e) {
+            logger.warn("Phone number concepts not read: {}", e.getClass().getSimpleName());
+            return new PhoneConcepts(null, null);
+        }
     }
 
     public Optional<String> phoneOf(long individualId) {
