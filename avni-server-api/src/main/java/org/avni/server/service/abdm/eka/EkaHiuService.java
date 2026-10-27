@@ -297,11 +297,25 @@ public class EkaHiuService implements EkaHiuEvents {
         String status = normaliseStatus(AbdmFlows.firstNonNull(AbdmJson.text(notification, "status"), AbdmJson.text(data, "status")));
         List<String> artefacts = artefactIds(firstPresent(AbdmJson.at(notification, "consentArtefacts"),
                 AbdmJson.at(notification, "consent_artefacts"), AbdmJson.at(data, "consent_artefacts")));
-        if (consentRequestId == null || status == null) {
-            logger.warn("Eka consent update without a consent request id or status; ignored");
+        if (status == null || (consentRequestId == null && artefacts.isEmpty())) {
+            logger.warn("Eka consent update without a status, or without a consent request id or artefact; ignored");
             return;
         }
+        if (consentRequestId == null) {
+            // A withdrawal or expiry naming only the artefacts: each goes under the request it was granted by.
+            Map<String, List<String>> byRequest = new LinkedHashMap<>();
+            for (String artefact : artefacts) {
+                store.findArtefact(artefact).map(AbdmHiuStore.Consent::consentRequestId)
+                        .ifPresent(id -> byRequest.computeIfAbsent(id, k -> new ArrayList<>()).add(artefact));
+            }
+            if (byRequest.isEmpty()) logger.warn("Eka consent update ({}) naming only artefacts we do not hold; ignored", status);
+            byRequest.forEach((id, ids) -> consentUpdate(id, status, ids));
+            return;
+        }
+        consentUpdate(consentRequestId, status, artefacts);
+    }
 
+    private void consentUpdate(String consentRequestId, String status, List<String> artefacts) {
         Optional<AbdmHiuStore.Consent> request = retry.find(() -> store.findConsentRequest(consentRequestId));
         boolean mappedEarlier = request.isPresent();
         if (!mappedEarlier) request = matchThroughEka(consentRequestId);

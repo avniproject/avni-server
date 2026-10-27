@@ -255,6 +255,38 @@ public class EkaHiuServiceTest {
         verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
     }
 
+    // A withdrawal or expiry that names only the artefacts was dropped, so the records stayed viewable. Each artefact
+    // leads to the request it was granted under.
+    @Test
+    public void anUpdateNamingOnlyArtefactsIsAppliedToTheRequestTheyWereGrantedUnder() {
+        when(store.findArtefact("artefact-1")).thenReturn(Optional.of(artefactOf("abdm-A", "artefact-1")));
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "GRANTED")));
+        ObjectNode event = (ObjectNode) ekaFixture("hiu-consent-update-granted.json");
+        ObjectNode notification = (ObjectNode) event.at("/data/notification");
+        notification.remove("consentRequestId");
+        notification.put("status", "REVOKED");
+
+        service.consentUpdate(event);
+
+        verify(store).setConsentRequestStatus("abdm-A", "REVOKED");
+        verify(store).setArtefactStatus(List.of("artefact-1"), "REVOKED");
+    }
+
+    @Test
+    public void anUpdateNamingOnlyArtefactsWeDoNotHoldIsIgnored() {
+        when(store.findArtefact("artefact-1")).thenReturn(Optional.empty());
+        ObjectNode event = (ObjectNode) ekaFixture("hiu-consent-update-granted.json");
+        ObjectNode notification = (ObjectNode) event.at("/data/notification");
+        notification.remove("consentRequestId");
+        notification.put("status", "REVOKED");
+
+        service.consentUpdate(event);
+
+        verify(store, never()).setConsentRequestStatus(any(), any());
+        verify(store, never()).setArtefactStatus(any(), any());
+        verify(store, never()).parkConsentUpdate(any(), any(), any());
+    }
+
     // AVNI-24: with two requests waiting, an update for the older one used to be filed under the newest.
     @Test
     public void anUpdateForAnIdWeDoNotKnowIsMatchedToItsOwnRequestThroughEkasConsentList() {
@@ -652,6 +684,11 @@ public class EkaHiuServiceTest {
         return new AbdmHiuStore.Consent(id, "uuid-" + id, consentRequestId, null, "init-request-" + id, "shyam@sbx", null, HIU_ID,
                 "CAREMGT", "OPConsultation", Instant.parse("2026-01-01T00:00:00Z"), Instant.parse("2026-10-20T23:59:59Z"),
                 Instant.parse("2026-11-24T00:00:00Z"), status, null, null, null);
+    }
+
+    private static AbdmHiuStore.Consent artefactOf(String consentRequestId, String consentId) {
+        return new AbdmHiuStore.Consent(9, "uuid-9", consentRequestId, consentId, null, "shyam@sbx", "HIP-X", HIU_ID,
+                "CAREMGT", "OPConsultation", null, null, null, "GRANTED", null, null, null);
     }
 
     private static AbdmHipStore.CareContext careContext(String reference, String display, String status) {
