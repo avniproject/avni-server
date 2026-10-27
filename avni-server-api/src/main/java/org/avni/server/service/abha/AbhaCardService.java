@@ -1,8 +1,10 @@
 package org.avni.server.service.abha;
 
 import org.avni.server.dao.AbhaEventRepository;
+import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.AbhaEvent;
+import org.avni.server.domain.AbhaLink;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.AvniAccessException;
@@ -33,11 +35,13 @@ public class AbhaCardService {
     private final IndividualRepository individualRepository;
     private final AccessControlService accessControlService;
     private final AbhaEventRepository abhaEventRepository;
+    private final AbhaLinkRepository abhaLinkRepository;
     private final EkaRestClient ekaRestClient;
 
     @Autowired
     public AbhaCardService(AbhaService abhaService, IndividualRepository individualRepository, AccessControlService accessControlService,
-                           AbhaEventRepository abhaEventRepository, EkaRestClient ekaRestClient) {
+                           AbhaEventRepository abhaEventRepository, AbhaLinkRepository abhaLinkRepository, EkaRestClient ekaRestClient) {
+        this.abhaLinkRepository = abhaLinkRepository;
         this.abhaService = abhaService;
         this.individualRepository = individualRepository;
         this.accessControlService = accessControlService;
@@ -46,15 +50,17 @@ public class AbhaCardService {
     }
 
     public byte[] getCard(String subjectUUID) {
-        return getCard(subjectUUID, null);
+        return getCard(subjectUUID, null, null);
     }
 
     // In order: ABHA on, Eka settings stored and the user's health centre (as /abha/session); then the user's right to
-    // this patient; then an ABHA with an Eka ID recorded for them; then Eka. abhaLastFour: the ABHA the phone shows the
-    // card for, the record's on the profile or the one just found in a registration or edit.
-    public byte[] getCard(String subjectUUID, String abhaLastFour) {
+    // this patient; then an ABHA with an Eka ID recorded for them; then Eka. abhaLastFour, else abhaAddress (an ABHA with
+    // no number): the ABHA the phone shows the card for, the record's on the profile or the one just found in a
+    // registration or edit.
+    public byte[] getCard(String subjectUUID, String abhaLastFour, String abhaAddress) {
         AbhaAccess access = abhaService.checkOrganisationAccess();
-        AbhaEvent event = cardRecord(recordsTheUserMaySee(subjectUUID, access.getUser()), abhaLastFour)
+        Sight sight = recordsTheUserMaySee(subjectUUID, access.getUser());
+        AbhaEvent event = cardRecord(sight.records(), abhaLastFour, abhaAddress, sight.saved())
                 .orElseThrow(() -> new AbhaRefusedException(AbhaRefusal.ABHA_NO_CARD));
         EkaToken token = abhaService.ekaAccessToken(access.getOrganisationId());
         try {
@@ -73,11 +79,14 @@ public class AbhaCardService {
         }
     }
 
-    // None after a removal. Without abhaLastFour (an older app), the card of the latest record, and none when it has no
-    // Eka ID rather than the card of the ABHA before it. With it, the latest record of that ABHA with an Eka ID: a later
-    // lookup of another ABHA, left unsaved by a worker, never puts that person's card on this patient's profile.
-    static Optional<AbhaEvent> cardRecord(List<AbhaEvent> newestFirst, String abhaLastFour) {
+    // None after a removal. The record of the ABHA the phone names: by its number's last four digits, else by its
+    // address; with neither, the ABHA saved on the patient's record. Never a later lookup of another ABHA, left unsaved
+    // by a worker, which would put that person's card on this patient's profile. Only a patient with no saved ABHA here
+    // (not synced, or an older app's request) falls back to the latest record, and to none when it has no Eka ID.
+    static Optional<AbhaEvent> cardRecord(List<AbhaEvent> newestFirst, String abhaLastFour, String abhaAddress, AbhaLink saved) {
         String wanted = abhaLastFour != null && abhaLastFour.matches("[0-9]{4}") ? abhaLastFour : null;
+        if (wanted == null && StringUtils.hasText(abhaAddress)) return AbhaEventService.ofSavedAbha(newestFirst, null, abhaAddress);
+        if (wanted == null && saved != null) return AbhaEventService.ofSavedAbha(newestFirst, saved.getAbhaNumber(), saved.getAbhaAddress());
         for (AbhaEvent record : newestFirst) {
             if (AbhaEventService.REMOVED.equals(record.getAction())) return Optional.empty();
             if (wanted == null) return StringUtils.hasText(record.getEkaOid()) ? Optional.of(record) : Optional.empty();
@@ -94,7 +103,11 @@ public class AbhaCardService {
     // own latest record, received in the last 30 minutes, straight after a registration that has not synced. Anyone may
     // post a record naming a UUID the server does not have, so another worker's record for it is never served; and
     // without the 30 minutes anyone in the organisation who learnt a patient's ID could fetch their card.
-    private List<AbhaEvent> recordsTheUserMaySee(String subjectUUID, User user) {
+    // The records the user may see, newest first, and the patient's saved ABHA when the server has the patient.
+    record Sight(List<AbhaEvent> records, AbhaLink saved) {
+    }
+
+    private Sight recordsTheUserMaySee(String subjectUUID, User user) {
         Individual individual = StringUtils.hasText(subjectUUID) ? individualRepository.findByUuid(subjectUUID) : null;
         if (individual == null) {
             List<AbhaEvent> own = abhaEventRepository.findBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(
@@ -102,7 +115,7 @@ public class AbhaCardService {
             if (own.isEmpty()) {
                 throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_YOURS);
             }
-            return own;
+            return new Sight(own, null);
         }
         try {
             accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
@@ -110,6 +123,7 @@ public class AbhaCardService {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
         }
         abhaService.checkSubjectWithinReach(individual);
-        return abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID);
+        return new Sight(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID),
+                abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null));
     }
 }

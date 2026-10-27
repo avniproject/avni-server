@@ -73,13 +73,15 @@ public class AbhaController {
     @GetMapping(value = "/abha/card", produces = MediaType.IMAGE_PNG_VALUE)
     @PreAuthorize("hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    // X-Abha-Last-Four: the ABHA the phone shows the card for. A header, so request logs never carry it.
+    // X-Abha-Last-Four, else X-Abha-Address (an ABHA with no number): the ABHA the phone shows the card for. Headers,
+    // so request logs never carry them.
     public ResponseEntity<byte[]> getCard(@RequestParam("subjectUUID") String subjectUUID,
-                                          @RequestHeader(value = "X-Abha-Last-Four", required = false) String abhaLastFour) {
+                                          @RequestHeader(value = "X-Abha-Last-Four", required = false) String abhaLastFour,
+                                          @RequestHeader(value = "X-Abha-Address", required = false) String abhaAddress) {
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .cacheControl(CacheControl.noStore())
-                .body(abhaCardService.getCard(subjectUUID, abhaLastFour));
+                .body(abhaCardService.getCard(subjectUUID, abhaLastFour, abhaAddress));
     }
 
     @ExceptionHandler(AbhaEventInvalidException.class)

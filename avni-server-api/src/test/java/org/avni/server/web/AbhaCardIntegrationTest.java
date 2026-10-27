@@ -138,6 +138,8 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private IndividualRepository individualRepository;
     @Autowired
+    private org.avni.server.dao.AbhaLinkRepository abhaLinkRepository;
+    @Autowired
     private AbhaEventRepository abhaEventRepository;
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -479,6 +481,42 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-found")));
     }
 
+    // An ABHA made with a mobile number has only an address; the phone names it by its address (27 Oct sweep: with no
+    // number to name, the card was the latest lookup's, another person's if one was left unsaved).
+    @Test
+    public void anAbhaWithOnlyAnAddressHasTheCardOfThatAddressNotOfALaterLookup() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-saved", "created", now.minus(Duration.ofDays(2)), null, "p.holder@sbx");
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-other", "linked", now.minus(Duration.ofMinutes(5)), "91333344444533", "q.other@sbx");
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject, null, "p.holder@sbx");
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-saved")));
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-other")));
+    }
+
+    // A phone that names no ABHA gets the card of the ABHA saved on the patient's record, never a later lookup.
+    @Test
+    public void withNoAbhaNamedTheCardIsOfTheAbhaOnTheSavedRecord() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        saveAbhaLink(subject, null, "p.holder@sbx");
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-saved", "created", now.minus(Duration.ofDays(2)), null, "p.holder@sbx");
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-other", "linked", now.minus(Duration.ofMinutes(5)), "91333344444533", "q.other@sbx");
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject);
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-saved")));
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-other")));
+    }
+
     @Test
     public void anAbhaThePatientHasNoRecordOfHasNoCard() throws Exception {
         readyFor(VIEWER, "HIP-1");
@@ -637,6 +675,10 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
     }
 
     MockHttpServletResponse getCardWithEkaOnWireMock(String username, String subjectUUID, String abhaLastFour) {
+        return getCardWithEkaOnWireMock(username, subjectUUID, abhaLastFour, null);
+    }
+
+    MockHttpServletResponse getCardWithEkaOnWireMock(String username, String subjectUUID, String abhaLastFour, String abhaAddress) {
         AbhaService abhaService = new AbhaService(organisationConfigService, subjectTypeRepository, accessControlService,
                 externalSystemConfigRepository, abhaHealthCentreService, standInTokens, abhaLinkService);
         EkaRestClient ekaOnWireMock = new EkaRestClient() {
@@ -646,7 +688,8 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
                 return super.getAbhaCard("http://localhost:" + eka.port(), accessToken, ekaOid, hipId);
             }
         };
-        AbhaCardService abhaCardService = new AbhaCardService(abhaService, individualRepository, accessControlService, abhaEventRepository, ekaOnWireMock);
+        AbhaCardService abhaCardService = new AbhaCardService(abhaService, individualRepository, accessControlService, abhaEventRepository,
+                abhaLinkRepository, ekaOnWireMock);
         AbhaController controller = new AbhaController(abhaService);
         ReflectionTestUtils.setField(controller, "abhaCardService", abhaCardService);
         setUser(username);
@@ -657,6 +700,7 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
                 org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request =
                         org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/abha/card").param("subjectUUID", subjectUUID);
                 if (abhaLastFour != null) request.header("X-Abha-Last-Four", abhaLastFour);
+                if (abhaAddress != null) request.header("X-Abha-Address", abhaAddress);
                 return MockMvcBuilders.standaloneSetup(controller).build().perform(request).andReturn().getResponse();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -740,6 +784,20 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
     // Received by the server when it happened on the phone.
     private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt) {
         recordEvent(organisationId, subjectUUID, username, ekaOid, action, occurredAt, occurredAt);
+    }
+
+    private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt, String abhaNumber,
+                             String abhaAddress) {
+        recordEvent(organisationId, subjectUUID, username, ekaOid, action, occurredAt, abhaNumber);
+        new JdbcTemplate(dataSource).update("update public.abha_event set abha_address = ? where id = (select max(id) from public.abha_event)", abhaAddress);
+    }
+
+    // The patient's saved ABHA, as AbhaLinkService keeps it on every save.
+    private void saveAbhaLink(String subjectUUID, String abhaNumber, String abhaAddress) {
+        setUser(userRepository.getDefaultSuperAdmin());
+        new JdbcTemplate(dataSource).update("insert into public.abha_link (uuid, organisation_id, individual_id, abha_number, abha_address, created_by_id, " +
+                        "last_modified_by_id, created_date_time, last_modified_date_time) values (?, ?, (select id from public.individual where uuid = ?), ?, ?, 1, 1, now(), now())",
+                UUID.randomUUID().toString(), DEMO_ID, subjectUUID, abhaNumber, abhaAddress);
     }
 
     private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt, String abhaNumber) {
