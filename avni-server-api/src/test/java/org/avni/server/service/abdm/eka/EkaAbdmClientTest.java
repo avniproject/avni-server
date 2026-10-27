@@ -217,6 +217,27 @@ public class EkaAbdmClientTest {
         eka.verify(1, postRequestedFor(urlEqualTo(LINK)));
     }
 
+    // A TLS handshake that fails comes before the request is written, so Eka never had it: tried again, and never read as
+    // Eka perhaps having acted. WireMock's own certificate is not one the JVM trusts.
+    @Test
+    public void aFailedTlsHandshakeIsACallNeverSent() {
+        WireMockServer tls = new WireMockServer(options().dynamicPort().dynamicHttpsPort());
+        tls.start();
+        try {
+            AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
+            when(orgContext.organisationId()).thenReturn(1L);
+            EkaAbdmClient overTls = new EkaAbdmClient(orgContext, configRepository, tokenService, messageLog, config -> "https://localhost:" + tls.httpsPort(),
+                    Duration.ofSeconds(2), Duration.ofMillis(700), Duration.ofSeconds(3), Duration.ofMillis(10));
+
+            EkaAbdmClient.NoAnswer e = assertThrows(EkaAbdmClient.NoAnswer.class, () -> overTls.post(LINK, AbdmJson.obj(), Map.of()));
+
+            assertFalse(e.getMessage(), e.sent);
+            assertFalse(EkaAbdmClient.mayHaveActed(e));
+        } finally {
+            tls.stop();
+        }
+    }
+
     @Test
     public void aReadThatDoesNotAnswerIsTriedAgain() {
         eka.stubFor(get(urlEqualTo(LINK)).willReturn(aResponse().withStatus(200).withFixedDelay(1500)));

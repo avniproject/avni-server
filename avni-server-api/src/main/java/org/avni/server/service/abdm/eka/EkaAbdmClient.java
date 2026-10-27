@@ -144,6 +144,13 @@ public class EkaAbdmClient {
         }
     }
 
+    // Whether Eka may have acted on a call that failed: one it may have received went unanswered, or the last try got a
+    // server error. A refusal, or a call that never reached Eka, means it did not.
+    static boolean mayHaveActed(RuntimeException e) {
+        if (e instanceof NoAnswer noAnswer) return noAnswer.sent;
+        return e instanceof EkaCallException call && call.getStatus() >= 500;
+    }
+
     // Eka did not answer. sent: the request may have reached Eka (a timeout), as against a connection never made.
     static class NoAnswer extends EkaCallException {
         final boolean sent;
@@ -212,13 +219,21 @@ public class EkaAbdmClient {
             throw new NoAnswer(true, call + " did not answer within " + timeout.toMillis() + " ms");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() == null ? e : e.getCause();
-            boolean neverConnected = cause instanceof java.net.ConnectException || cause instanceof java.net.http.HttpConnectTimeoutException;
-            throw new NoAnswer(!neverConnected, call + " did not answer: " + cause.getClass().getSimpleName());
+            throw new NoAnswer(!neverConnected(cause), call + " did not answer: " + cause.getClass().getSimpleName());
         } catch (InterruptedException e) {
             answer.cancel(true);
             Thread.currentThread().interrupt();
             throw new EkaCallException(0, null, call + " did not answer: interrupted");
         }
+    }
+
+    // No connection, or a TLS handshake that failed: both come before the request is written.
+    private static boolean neverConnected(Throwable cause) {
+        for (Throwable t = cause; t != null; t = t.getCause() == t ? null : t.getCause()) {
+            if (t instanceof java.net.ConnectException || t instanceof java.net.http.HttpConnectTimeoutException
+                    || t instanceof javax.net.ssl.SSLHandshakeException) return true;
+        }
+        return false;
     }
 
     private Long organisationId() {

@@ -226,7 +226,7 @@ public class EkaHipDiscovery {
                     case UNANSWERED -> {
                         // Eka may have linked them: shareable on a data fetch and offered again, never shown LINKED. Only visits
                         // still PENDING when the update runs change; one linked, queued or failed meanwhile keeps its status.
-                        store.markLinkRequestedIfPending(hipId, refs, "Eka did not answer on-confirm; it may have linked them");
+                        store.markLinkRequestedIfPending(hipId, refs, "Eka gave no clear answer to on-confirm; it may have linked them");
                         store.setLinkRequestStatus(request.id(), "UNANSWERED");
                     }
                     case REFUSED -> store.setLinkRequestStatus(request.id(), "FAILED");
@@ -264,12 +264,9 @@ public class EkaHipDiscovery {
         try {
             eka.postSlow(path, reply, headers);
             return Sent.ACCEPTED;
-        } catch (EkaAbdmClient.NoAnswer e) {
-            logger.warn("Eka {} failed: {}", path, e.getMessage());
-            return e.sent ? Sent.UNANSWERED : Sent.REFUSED;
         } catch (RuntimeException e) {
             logger.warn("Eka {} failed: {}", path, e.getMessage());
-            return Sent.REFUSED;
+            return EkaAbdmClient.mayHaveActed(e) ? Sent.UNANSWERED : Sent.REFUSED;
         }
     }
 

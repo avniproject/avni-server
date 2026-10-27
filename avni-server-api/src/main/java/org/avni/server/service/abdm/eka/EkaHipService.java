@@ -343,18 +343,15 @@ public class EkaHipService implements EkaHipEvents {
             eka.postSlow(ON_FETCH_PATH, body, patientHeaders(oid, patientUuid));
             store.finishDataFlow(flowId, FLOW_TRANSFERRED, entries.size(), notSent);
             logger.info("Eka data fetch {}: {} records sent on-fetch", transactionId, entries.size());
-        } catch (EkaAbdmClient.NoAnswer e) {
-            if (!e.sent) {
+        } catch (RuntimeException e) {
+            if (!EkaAbdmClient.mayHaveActed(e)) {
                 store.finishDataFlow(flowId, FLOW_FAILED, 0, "On-fetch failed: " + e.getMessage());
                 logger.warn("Eka on-fetch for {} failed: {}", transactionId, e.getMessage());
                 return;
             }
-            String unanswered = "Eka did not answer; it may have the records" + (notSent == null ? "" : ". " + notSent);
+            String unanswered = "Eka may have the records: " + e.getMessage() + (notSent == null ? "" : ". " + notSent);
             store.finishDataFlow(flowId, FLOW_UNANSWERED, entries.size(), unanswered);
             logger.warn("Eka on-fetch for {} not answered: {}", transactionId, e.getMessage());
-        } catch (RuntimeException e) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "On-fetch failed: " + e.getMessage());
-            logger.warn("Eka on-fetch for {} failed: {}", transactionId, e.getMessage());
         }
     }
 

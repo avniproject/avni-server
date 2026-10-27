@@ -233,8 +233,33 @@ public class EkaHipDiscoveryTest {
         discovery.linkConfirm(confirmEvent("424242"));
 
         verify(store, never()).markLinked(any(), any(), any());
-        verify(store).markLinkRequestedIfPending(eq(HIP_ID), eq(List.of("enc-2")), contains("did not answer"));
+        verify(store).markLinkRequestedIfPending(eq(HIP_ID), eq(List.of("enc-2")), contains("may have linked them"));
         verify(store).setLinkRequestStatus(31L, "UNANSWERED");
+    }
+
+    // A server error after the last try leaves it unknown whether Eka linked them, as no answer does.
+    @Test
+    public void aServerErrorOnOnConfirmAfterTheLastTryLeavesTheVisitsLinkRequested() {
+        rightCodeFor("enc-2", "PENDING");
+        when(eka.postSlow(eq(ON_CONFIRM), any(), any())).thenThrow(new EkaCallException(503, null, "Eka POST on-confirm refused with HTTP 503"));
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store).markLinkRequestedIfPending(eq(HIP_ID), eq(List.of("enc-2")), any());
+        verify(store).setLinkRequestStatus(31L, "UNANSWERED");
+    }
+
+    @Test
+    public void anOnConfirmThatNeverReachedEkaLeavesTheVisitsUnlinkedAndTheRequestFailed() {
+        rightCodeFor("enc-2", "PENDING");
+        when(eka.postSlow(eq(ON_CONFIRM), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(false, "did not answer: ConnectException"));
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store, never()).markLinkRequestedIfPending(any(), any(), any());
+        verify(store).setLinkRequestStatus(31L, "FAILED");
     }
 
     // A visit linked, queued or failed by another path during the 60 s wait must keep its status: the update is guarded

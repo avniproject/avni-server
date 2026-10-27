@@ -502,6 +502,31 @@ public class EkaHipServiceTest {
         verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
     }
 
+    // A server error after the last try leaves it unknown whether Eka took the records, as no answer does.
+    @Test
+    public void aServerErrorOnOnFetchAfterTheLastTryIsRecordedAsUnansweredNotFailed() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaCallException(502, null, "Eka POST " + ON_FETCH + " refused with HTTP 502"));
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(store).finishDataFlow(eq(42L), eq("UNANSWERED"), eq(2), contains("HTTP 502"));
+        verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
+    }
+
+    @Test
+    public void anOnFetchThatNeverReachedEkaIsRecordedAsFailedWithNothingSent() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(false, "Eka POST " + ON_FETCH + " did not answer: ConnectException"));
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("ConnectException"));
+        verify(store, never()).finishDataFlow(eq(42L), eq("UNANSWERED"), anyInt(), any());
+    }
+
     @Test
     public void nothingToSendMeansNoOnFetch() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
