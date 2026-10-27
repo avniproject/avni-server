@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -72,11 +73,13 @@ public class AbhaController {
     @GetMapping(value = "/abha/card", produces = MediaType.IMAGE_PNG_VALUE)
     @PreAuthorize("hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<byte[]> getCard(@RequestParam("subjectUUID") String subjectUUID) {
+    // X-Abha-Last-Four: the ABHA the phone shows the card for. A header, so request logs never carry it.
+    public ResponseEntity<byte[]> getCard(@RequestParam("subjectUUID") String subjectUUID,
+                                          @RequestHeader(value = "X-Abha-Last-Four", required = false) String abhaLastFour) {
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .cacheControl(CacheControl.noStore())
-                .body(abhaCardService.getCard(subjectUUID));
+                .body(abhaCardService.getCard(subjectUUID, abhaLastFour));
     }
 
     @ExceptionHandler(AbhaEventInvalidException.class)

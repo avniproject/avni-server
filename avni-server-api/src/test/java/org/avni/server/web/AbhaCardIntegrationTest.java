@@ -445,6 +445,69 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-new")));
     }
 
+    // The phone names the ABHA it shows the card for: the record's on the profile, the one just found in a registration
+    // or an edit. A later lookup of another ABHA, left unsaved by a worker, must not put that person's card on this
+    // patient's profile (27 Oct run: the profile said 2009 and the card was 4533's).
+    @Test
+    public void theCardIsOfTheAbhaThePhoneNamesNotALaterLookupOfAnother() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-saved", "created", now.minus(Duration.ofDays(2)), "91111122222009");
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-unsaved", "linked", now.minus(Duration.ofMinutes(5)), "91333344444533");
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject, "2009");
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-saved")));
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-unsaved")));
+    }
+
+    @Test
+    public void theAbhaJustFoundInAnEditHasItsCardBeforeTheSave() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-saved", "created", now.minus(Duration.ofDays(2)), "91111122222009");
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-found", "linked", now.minus(Duration.ofMinutes(1)), "91333344444533");
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject, "4533");
+
+        assertEquals(response.getContentAsString(), 200, response.getStatus());
+        eka.verify(1, getRequestedFor(urlPathEqualTo(CARD_PATH)).withQueryParam("oid", equalTo("oid-found")));
+    }
+
+    @Test
+    public void anAbhaThePatientHasNoRecordOfHasNoCard() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-saved", "created", Instant.now().minus(Duration.ofDays(2)), "91111122222009");
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject, "1111");
+
+        assertEquals(response.getContentAsString(), 404, response.getStatus());
+        assertEquals("ABHA_NO_CARD", mapper.readTree(response.getContentAsString()).path("code").asText());
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)));
+    }
+
+    @Test
+    public void anAbhaRemovedSinceHasNoCardThoughThePhoneNamesIt() throws Exception {
+        readyFor(VIEWER, "HIP-1");
+        String subject = subjectOnServer(IN_CATCHMENT);
+        Instant now = Instant.now();
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, "oid-saved", "created", now.minus(Duration.ofDays(2)), "91111122222009");
+        recordEvent(DEMO_ID, subject, OTHER_WORKER, null, "removed", now.minus(Duration.ofDays(1)));
+        stubCard();
+
+        MockHttpServletResponse response = getCardWithEkaOnWireMock(VIEWER, subject, "2009");
+
+        assertEquals(response.getContentAsString(), 404, response.getStatus());
+        eka.verify(0, getRequestedFor(urlPathEqualTo(CARD_PATH)));
+    }
+
     @Test
     public void ekaTimeoutFailsCleanly() throws Exception {
         readyFor(VIEWER, "HIP-1");
@@ -570,6 +633,10 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
     }
 
     MockHttpServletResponse getCardWithEkaOnWireMock(String username, String subjectUUID) {
+        return getCardWithEkaOnWireMock(username, subjectUUID, null);
+    }
+
+    MockHttpServletResponse getCardWithEkaOnWireMock(String username, String subjectUUID, String abhaLastFour) {
         AbhaService abhaService = new AbhaService(organisationConfigService, subjectTypeRepository, accessControlService,
                 externalSystemConfigRepository, abhaHealthCentreService, standInTokens, abhaLinkService);
         EkaRestClient ekaOnWireMock = new EkaRestClient() {
@@ -587,9 +654,10 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
         readOnly.setReadOnly(true);
         return readOnly.execute(status -> {
             try {
-                return MockMvcBuilders.standaloneSetup(controller).build()
-                        .perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/abha/card").param("subjectUUID", subjectUUID))
-                        .andReturn().getResponse();
+                org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request =
+                        org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/abha/card").param("subjectUUID", subjectUUID);
+                if (abhaLastFour != null) request.header("X-Abha-Last-Four", abhaLastFour);
+                return MockMvcBuilders.standaloneSetup(controller).build().perform(request).andReturn().getResponse();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -672,6 +740,11 @@ public class AbhaCardIntegrationTest extends AbstractControllerIntegrationTest {
     // Received by the server when it happened on the phone.
     private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt) {
         recordEvent(organisationId, subjectUUID, username, ekaOid, action, occurredAt, occurredAt);
+    }
+
+    private void recordEvent(Long organisationId, String subjectUUID, String username, String ekaOid, String action, Instant occurredAt, String abhaNumber) {
+        recordEvent(organisationId, subjectUUID, username, ekaOid, action, occurredAt, occurredAt);
+        new JdbcTemplate(dataSource).update("update public.abha_event set abha_number = ? where id = (select max(id) from public.abha_event)", abhaNumber);
     }
 
     // occurredAt is the phone's time; receivedAt is the server's (created_date_time).

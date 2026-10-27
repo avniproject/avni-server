@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 // A patient's ABHA card, fetched from Eka on every request and kept nowhere on the server: the card is a picture of
@@ -44,14 +45,16 @@ public class AbhaCardService {
         this.ekaRestClient = ekaRestClient;
     }
 
-    // In order: ABHA on, Eka settings stored and the user's health centre (as /abha/session); then the user's right to
-    // this patient; then an ABHA with an Eka ID recorded for them; then Eka.
     public byte[] getCard(String subjectUUID) {
+        return getCard(subjectUUID, null);
+    }
+
+    // In order: ABHA on, Eka settings stored and the user's health centre (as /abha/session); then the user's right to
+    // this patient; then an ABHA with an Eka ID recorded for them; then Eka. abhaLastFour: the ABHA the phone shows the
+    // card for, the record's on the profile or the one just found in a registration or edit.
+    public byte[] getCard(String subjectUUID, String abhaLastFour) {
         AbhaAccess access = abhaService.checkOrganisationAccess();
-        // The card of the patient's current ABHA only: none after a removal, and none when the latest ABHA has no Eka ID,
-        // rather than the card of the ABHA before it.
-        AbhaEvent event = latestRecordTheUserMaySee(subjectUUID, access.getUser())
-                .filter(latest -> !AbhaEventService.REMOVED.equals(latest.getAction()) && StringUtils.hasText(latest.getEkaOid()))
+        AbhaEvent event = cardRecord(recordsTheUserMaySee(subjectUUID, access.getUser()), abhaLastFour)
                 .orElseThrow(() -> new AbhaRefusedException(AbhaRefusal.ABHA_NO_CARD));
         EkaToken token = abhaService.ekaAccessToken(access.getOrganisationId());
         try {
@@ -70,16 +73,31 @@ public class AbhaCardService {
         }
     }
 
+    // None after a removal. Without abhaLastFour (an older app), the card of the latest record, and none when it has no
+    // Eka ID rather than the card of the ABHA before it. With it, the latest record of that ABHA with an Eka ID: a later
+    // lookup of another ABHA, left unsaved by a worker, never puts that person's card on this patient's profile.
+    static Optional<AbhaEvent> cardRecord(List<AbhaEvent> newestFirst, String abhaLastFour) {
+        String wanted = abhaLastFour != null && abhaLastFour.matches("[0-9]{4}") ? abhaLastFour : null;
+        for (AbhaEvent record : newestFirst) {
+            if (AbhaEventService.REMOVED.equals(record.getAction())) return Optional.empty();
+            if (wanted == null) return StringUtils.hasText(record.getEkaOid()) ? Optional.of(record) : Optional.empty();
+            if (AbhaLinkService.digitsOnly(record.getAbhaNumber()).endsWith(wanted) && StringUtils.hasText(record.getEkaOid())) {
+                return Optional.of(record);
+            }
+        }
+        return Optional.empty();
+    }
+
     // A patient on the server: the user's right to view their subject type, and the patient within what the user's
     // phone may hold (catchment, direct assignment, sync attributes); then the latest record the server received for
     // them, from whichever worker. A patient the server does not have, or cannot show this organisation: only the user's
     // own latest record, received in the last 30 minutes, straight after a registration that has not synced. Anyone may
     // post a record naming a UUID the server does not have, so another worker's record for it is never served; and
     // without the 30 minutes anyone in the organisation who learnt a patient's ID could fetch their card.
-    private Optional<AbhaEvent> latestRecordTheUserMaySee(String subjectUUID, User user) {
+    private List<AbhaEvent> recordsTheUserMaySee(String subjectUUID, User user) {
         Individual individual = StringUtils.hasText(subjectUUID) ? individualRepository.findByUuid(subjectUUID) : null;
         if (individual == null) {
-            Optional<AbhaEvent> own = abhaEventRepository.findFirstBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(
+            List<AbhaEvent> own = abhaEventRepository.findBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(
                     subjectUUID, user.getId(), Date.from(Instant.now().minus(RECORDED_WITHIN)));
             if (own.isEmpty()) {
                 throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_YOURS);
@@ -92,6 +110,6 @@ public class AbhaCardService {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NO_PRIVILEGE);
         }
         abhaService.checkSubjectWithinReach(individual);
-        return abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID);
+        return abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUUID);
     }
 }
