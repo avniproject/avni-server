@@ -233,19 +233,21 @@ public class EkaHipDiscoveryTest {
         discovery.linkConfirm(confirmEvent("424242"));
 
         verify(store, never()).markLinked(any(), any(), any());
-        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("LINK_REQUESTED"), contains("did not answer"));
+        verify(store).markLinkRequestedIfPending(eq(HIP_ID), eq(List.of("enc-2")), contains("did not answer"));
         verify(store).setLinkRequestStatus(31L, "UNANSWERED");
     }
 
-    // A visit linked on save between discover and confirm must not be turned back.
+    // A visit linked, queued or failed by another path during the 60 s wait must keep its status: the update is guarded
+    // in SQL at the time it runs (AbdmHipStore.markLinkRequestedIfPending), never by a status read before the wait.
     @Test
-    public void anUnansweredOnConfirmNeverTurnsBackAVisitAlreadyLinked() {
+    public void anUnansweredOnConfirmChangesOnlyVisitsStillPendingWhenItWrites() {
         rightCodeFor("enc-2", "LINKED");
         when(eka.postSlow(eq(ON_CONFIRM), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(true, "did not answer within 60000 ms"));
 
         discovery.linkConfirm(confirmEvent("424242"));
 
         verify(store, never()).markStatus(any(), any(), any(), any());
+        verify(store).markLinkRequestedIfPending(eq(HIP_ID), eq(List.of("enc-2")), any());
         verify(store).setLinkRequestStatus(31L, "UNANSWERED");
     }
 

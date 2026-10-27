@@ -180,6 +180,15 @@ public class AbdmHipStore {
                         .addValue("status", status, Types.VARCHAR).addValue("error", error, Types.VARCHAR));
     }
 
+    // Only rows still PENDING when this runs: a visit linked, queued on save or failed by another path in the meantime keeps
+    // its status, and a queued one is still linked by the job.
+    public void markLinkRequestedIfPending(String hipId, Collection<String> references, String error) {
+        if (references == null || references.isEmpty()) return;
+        jdbc.update("update abdm_care_context set status = 'LINK_REQUESTED', error = :error, updated_at = now() " +
+                        "where organisation_id = :org and hip_id = :hip and reference in (:refs) and status = 'PENDING'",
+                params().addValue("hip", hipId, Types.VARCHAR).addValue("refs", references).addValue("error", error, Types.VARCHAR));
+    }
+
     public void markLinked(String hipId, Collection<String> references, String linkMode) {
         if (references == null || references.isEmpty()) return;
         jdbc.update("update abdm_care_context set status = 'LINKED', link_mode = :mode, error = null, updated_at = now() " +
@@ -209,16 +218,18 @@ public class AbdmHipStore {
     public static final int PHONE_SEARCH_LIMIT = 20;
 
     // Live subjects whose phone, read as IndividualService.findPhoneNumber reads it (the PhoneNumber value first, else
-    // the contact-number text), ends in these ten digits, of this gender letter and year of birth. At most
-    // PHONE_SEARCH_LIMIT + 1 rows, so a caller can tell the limit was passed. DEMO-ONLY: a scan of the organisation's
-    // subjects, with no index on the phone.
+    // the contact-number text), ends in these ten digits, of this gender letter and year of birth, and who hold no ABHA:
+    // discovery searches by phone only when the asking ABHA matched no patient here, so one holding an ABHA is someone
+    // else, such as a relative on the family phone. At most PHONE_SEARCH_LIMIT + 1 rows, so a caller can tell the limit
+    // was passed. DEMO-ONLY: a scan of the organisation's subjects, with no index on the phone.
     public List<Candidate> findSubjectsByPhone(AbdmPatientPhones.PhoneConcepts concepts, String lastTenDigits, String genderLetter, int yearOfBirth) {
         if (concepts == null || (concepts.phoneNumberConceptUuid() == null && concepts.contactNumberConceptUuid() == null)
                 || lastTenDigits == null || !lastTenDigits.matches("[0-9]{10}") || genderLetter == null) return new ArrayList<>();
         return jdbc.query("select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
                         "where i.organisation_id = :org and i.is_voided = false " +
                         "and right(regexp_replace(coalesce(i.observations -> :pn ->> 'phoneNumber', i.observations ->> :text, ''), '[^0-9]', '', 'g'), 10) = :digits " +
-                        "and upper(left(g.name, 1)) = :gender and extract(year from i.date_of_birth) = :year order by i.id limit :limit",
+                        "and upper(left(g.name, 1)) = :gender and extract(year from i.date_of_birth) = :year " +
+                        "and not exists (select 1 from abha_link al where al.individual_id = i.id and al.is_voided = false) order by i.id limit :limit",
                 params().addValue("pn", concepts.phoneNumberConceptUuid(), Types.VARCHAR)
                         .addValue("text", concepts.contactNumberConceptUuid(), Types.VARCHAR)
                         .addValue("digits", lastTenDigits, Types.VARCHAR).addValue("gender", genderLetter, Types.VARCHAR)

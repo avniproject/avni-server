@@ -224,13 +224,9 @@ public class EkaHipDiscovery {
                         logger.info("Eka discovery link {}: {} visit(s) linked by the patient", linkReference, refs.size());
                     }
                     case UNANSWERED -> {
-                        // Eka may have linked them: shareable on a data fetch and offered again, never shown LINKED. A visit
-                        // linked on save in the meantime is left as it is.
-                        List<String> notLinked = rows.stream().filter(c -> !AbdmHipLinkingService.LINKED.equals(c.status()))
-                                .map(AbdmHipStore.CareContext::reference).collect(Collectors.toList());
-                        if (!notLinked.isEmpty()) {
-                            store.markStatus(hipId, notLinked, AbdmHipLinkingService.LINK_REQUESTED, "Eka did not answer on-confirm; it may have linked them");
-                        }
+                        // Eka may have linked them: shareable on a data fetch and offered again, never shown LINKED. Only visits
+                        // still PENDING when the update runs change; one linked, queued or failed meanwhile keeps its status.
+                        store.markLinkRequestedIfPending(hipId, refs, "Eka did not answer on-confirm; it may have linked them");
                         store.setLinkRequestStatus(request.id(), "UNANSWERED");
                     }
                     case REFUSED -> store.setLinkRequestStatus(request.id(), "FAILED");
@@ -259,7 +255,7 @@ public class EkaHipDiscovery {
 
     private enum Sent {ACCEPTED, REFUSED, UNANSWERED}
 
-    // Replies go on the slow limit, as on-fetch does: Eka has taken over 10 s to answer (26 Oct).
+    // Replies go on the slow limit, as on-fetch does: Eka took over 10 s to answer on-fetch 3 times in 18 on 26 Oct.
     private Sent send(String path, ObjectNode reply, JsonNode data) {
         Map<String, String> headers = new LinkedHashMap<>();
         String oid = AbdmJson.text(data, "oid");

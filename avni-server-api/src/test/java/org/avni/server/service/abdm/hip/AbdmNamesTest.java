@@ -38,6 +38,19 @@ public class AbdmNamesTest {
         assertFalse(AbdmNames.sameName("A", "Asha Devi"));
     }
 
+    // An initial must not take the word a whole-word match needs: initial-first names are common in Tamil Nadu.
+    @Test
+    public void aWordAnInitialCouldTakeStillMatchesItsWholeWord() {
+        assertTrue(AbdmNames.sameName("K Kavitha", "Kavitha Kannan"));
+    }
+
+    // On a shared family phone, "Lakshmi" alone must not match a relative's "Lakshmi Priya" of the same gender and year.
+    @Test
+    public void aOneWordNameMatchesOnlyAOneWordName() {
+        assertFalse(AbdmNames.sameName("Lakshmi", "Lakshmi Priya"));
+        assertTrue(AbdmNames.sameName("Lakshmi", "LAKSHMI"));
+    }
+
     @Test
     public void namesInAnotherScriptAreCompared() {
         assertTrue(AbdmNames.sameName("லட்சுமி தேவி", "லட்சுமி தேவி"));
