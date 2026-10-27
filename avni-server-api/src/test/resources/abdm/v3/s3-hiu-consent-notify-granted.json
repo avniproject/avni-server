@@ -1,7 +1,0 @@
-{
-  "notification": {
-    "consentRequestId": "cr-1",
-    "status": "GRANTED",
-    "consentArtefacts": [{"id": "artefact-1"}, {"id": "artefact-2"}]
-  }
-}

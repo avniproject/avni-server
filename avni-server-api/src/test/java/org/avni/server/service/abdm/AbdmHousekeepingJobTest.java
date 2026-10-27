@@ -7,6 +7,7 @@ import java.time.Duration;
 import org.avni.server.service.abdm.hip.AbdmAutoLink;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -21,12 +22,12 @@ public class AbdmHousekeepingJobTest {
     private final AbdmMessageLog messageLog = mock(AbdmMessageLog.class);
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData = mock(org.avni.server.service.abdm.hiu.AbdmHiuDataService.class);
     private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore = mock(org.avni.server.service.abdm.hip.AbdmHipStore.class);
-    private final org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking = mock(org.avni.server.service.abdm.hip.AbdmHipLinkingService.class);
+    private final org.avni.server.service.abdm.eka.EkaHipService ekaHip = mock(org.avni.server.service.abdm.eka.EkaHipService.class);
 
     private final AbdmAutoLink autoLink = new AbdmAutoLink(true);
 
     private AbdmHousekeepingJob job() {
-        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, hipLinking, autoLink, 30);
+        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, ekaHip, autoLink, 30);
     }
 
     @Test
@@ -53,12 +54,12 @@ public class AbdmHousekeepingJobTest {
             return null;
         }).when(orgContext).runAsOrg(any(Runnable.class));
         when(hipStore.subjectsToLink("TANUH", 50)).thenReturn(java.util.List.of("subject-1", "subject-2"));
-        when(hipLinking.linkQueuedCareContexts("subject-1")).thenThrow(org.avni.server.service.abdm.hip.AbdmRequestException.conflict("Patient has no Eka ID"));
+        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(org.avni.server.service.abdm.hip.AbdmRequestException.conflict("Patient has no Eka ID"));
 
         job().linkQueuedVisits();
 
-        verify(hipLinking).linkQueuedCareContexts("subject-1");
-        verify(hipLinking).linkQueuedCareContexts("subject-2");
+        verify(ekaHip).linkCareContexts("subject-1", true);
+        verify(ekaHip).linkCareContexts("subject-2", true);
         verify(hipStore).failQueued("subject-1", "TANUH", "Patient has no Eka ID");
     }
 
@@ -77,7 +78,7 @@ public class AbdmHousekeepingJobTest {
         job().linkQueuedVisits();
 
         verify(hipStore, never()).subjectsToLink(any(), anyInt());
-        verify(hipLinking, never()).linkQueuedCareContexts(any());
+        verify(ekaHip, never()).linkCareContexts(any(), anyBoolean());
     }
 
     @Test

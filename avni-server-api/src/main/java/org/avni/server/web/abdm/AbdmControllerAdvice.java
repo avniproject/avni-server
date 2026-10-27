@@ -1,6 +1,6 @@
 package org.avni.server.web.abdm;
 
-import org.avni.server.service.abdm.gateway.AbdmGatewayException;
+import org.avni.server.service.abdm.eka.EkaCallException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -21,11 +21,11 @@ import java.util.Map;
 public class AbdmControllerAdvice {
     private static final Logger logger = LoggerFactory.getLogger(AbdmControllerAdvice.class);
 
-    @ExceptionHandler(AbdmGatewayException.class)
-    public ResponseEntity<Map<String, Object>> gateway(AbdmGatewayException e) {
-        logger.warn("ABDM gateway failure: HTTP {} {}", e.getStatus(), e.getAbdmCode());
+    @ExceptionHandler(EkaCallException.class)
+    public ResponseEntity<Map<String, Object>> eka(EkaCallException e) {
+        logger.warn("ABDM: Eka call failed: HTTP {} {}", e.getStatus(), e.getAbdmCode());
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("code", "ABDM_GATEWAY");
+        body.put("code", "ABDM_EKA");
         body.put("status", e.getStatus());
         body.put("abdmCode", e.getAbdmCode());
         body.put("message", e.getMessage());

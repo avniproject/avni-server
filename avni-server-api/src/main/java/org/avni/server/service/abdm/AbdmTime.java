@@ -6,15 +6,11 @@ import java.time.format.DateTimeFormatter;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // ABDM's TIMESTAMP and date fields: ISO 8601 UTC with milliseconds always present. Instant.toString() drops ".000",
-// which the gateway rejects.
+// which ABDM rejects.
 public final class AbdmTime {
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneOffset.UTC);
 
     private AbdmTime() {
-    }
-
-    public static String now() {
-        return format(Instant.now());
     }
 
     public static String format(Instant instant) {

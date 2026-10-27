@@ -36,13 +36,13 @@ public class AbdmDemoResetControllerTest {
         order.verify(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
-        order.verify(jdbc, times(7)).update(sql.capture(), params.capture());
+        order.verify(jdbc, times(8)).update(sql.capture(), params.capture());
         List<String> tables = sql.getAllValues().stream().map(s -> s.split(" ")[2]).toList();
         assertEquals(List.of("abdm_health_information", "abdm_data_flow", "abdm_consent", "abdm_link_request",
-                "abdm_care_context", "abdm_patient_link", "abdm_message"), tables);
+                "abdm_care_context", "abdm_parked_event", "abdm_inbound_event", "abdm_message"), tables);
         sql.getAllValues().forEach(s -> assertTrue(s, s.endsWith("where organisation_id = :org")));
         params.getAllValues().forEach(p -> assertEquals(4L, p.getValue("org")));
-        assertEquals(14, result.get("rowsDeleted"));
+        assertEquals(16, result.get("rowsDeleted"));
     }
 
     @Test

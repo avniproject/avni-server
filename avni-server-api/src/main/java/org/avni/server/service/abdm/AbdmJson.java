@@ -37,11 +37,6 @@ public final class AbdmJson {
         return n;
     }
 
-    // The REQUEST-ID of the request an on-* callback answers.
-    public static String requestIdOf(JsonNode body) {
-        return text(body, "response.requestId");
-    }
-
     public static String write(JsonNode node) {
         try {
             return M.writeValueAsString(node);

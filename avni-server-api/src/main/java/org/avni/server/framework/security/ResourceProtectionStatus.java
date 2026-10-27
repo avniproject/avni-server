@@ -28,10 +28,9 @@ public class ResourceProtectionStatus {
             "/api/user/generateToken",
             "/open",
             "/.well-known/**",
-            // DEMO-ONLY abdm-hackathon: ABDM gateway callbacks and the in-process stand-in gateway carry no Avni user;
-            // the callbacks are checked by AbdmCallbackVerifier instead.
-            "/api/v3/**",
-            "/mock-abdm/**"
+            // DEMO-ONLY abdm-hackathon: Eka's webhook carries no Avni user; its signature is checked instead
+            // (EkaWebhookVerifier).
+            "/api/v3/eka/webhook"
     );
 
     public static boolean isProtected(HttpServletRequest request) {

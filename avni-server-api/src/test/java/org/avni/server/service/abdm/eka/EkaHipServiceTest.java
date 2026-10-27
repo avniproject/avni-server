@@ -16,8 +16,6 @@ import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
 import org.avni.server.service.abdm.fhir.CareContextDocument;
 import org.avni.server.service.abdm.fhir.CareContextDocumentAssembler;
 import org.avni.server.service.abdm.fhir.FhirBundleBuilder;
-import org.avni.server.service.abdm.gateway.AbdmGatewayException;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
@@ -34,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,8 +71,6 @@ public class EkaHipServiceTest {
 
     @Before
     public void setUp() {
-        when(cfg.isEka()).thenReturn(true);
-        when(cfg.isEkaSendData()).thenReturn(true);
         service = new EkaHipService(cfg, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
                 abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository);
 
@@ -87,7 +82,7 @@ public class EkaHipServiceTest {
         when(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
                 .thenReturn(Optional.of(abhaEvent("linked", OID, "asha.devi@sbx")));
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "PENDING")));
-        when(eka.post(anyString(), any(), any())).thenReturn(new AbdmGatewayResponse("r-1", 202, null));
+        when(eka.post(anyString(), any(), any())).thenReturn(new EkaResponse("r-1", 202, null));
 
         Individual patient = new Individual();
         patient.setId(INDIVIDUAL_ID);
@@ -109,7 +104,7 @@ public class EkaHipServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void linkingSendsTheUnlinkedVisitsToEkaWithThePatientsIdsAndTheirRecords() {
+    public void linkingSendsTheUnlinkedVisitsToEkaWithThePatientsIdsAndNoRecords() {
         List<Map<String, Object>> answer = service.linkCareContexts("subject-1");
 
         assertSame(view, answer);
@@ -134,11 +129,12 @@ public class EkaHipServiceTest {
         assertEquals("enc-1", first.get("care_context_id").asText());
         assertEquals("Display enc-1", first.get("display").asText());
         assertEquals("OPConsultation", first.get("hi_type").asText());
-        assertEquals("OPConsultation", first.get("hi_types").get(0).asText());
-        String bundle = new String(Base64.getDecoder().decode(first.get("data").asText()), StandardCharsets.UTF_8);
-        assertEquals("enc-1", AbdmJson.read(bundle).get("id").asText());
-        verify(assembler, times(2)).assemble(any(Encounter.class), any(Individual.class), eq("12-3456-7856-8912"), eq("asha.devi@sbx"),
-                eq(HIP_ID), eq("TANUH Health Centre"));
+        // Avni keeps custody: the record goes only on Eka's hip_data_fetch, never with the link.
+        for (JsonNode c : careContexts) {
+            assertFalse(c.has("data"));
+            assertFalse(c.has("hi_types"));
+        }
+        verifyNoInteractions(assembler, builder);
 
         // Persist before send: the rows carry the link request before Eka sees it.
         ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
@@ -147,33 +143,6 @@ public class EkaHipServiceTest {
         order.verify(eka).post(eq(LINK), any(), any());
         assertNotNull(linkRequestId.getValue());
         verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
-    }
-
-    @Test
-    public void withoutSendDataTheLinkCarriesNoRecords() {
-        when(cfg.isEkaSendData()).thenReturn(false);
-
-        service.linkCareContexts("subject-1");
-
-        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq(LINK), body.capture(), any());
-        for (JsonNode c : body.getValue().get("care_contexts")) {
-            assertFalse(c.has("data"));
-            assertFalse(c.has("hi_types"));
-        }
-        verifyNoInteractions(assembler, builder);
-    }
-
-    @Test
-    public void aRecordThatCannotBeBuiltIsLinkedWithoutData() {
-        when(encounterRepository.findByUuid("enc-2")).thenReturn(null);
-
-        service.linkCareContexts("subject-1");
-
-        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq(LINK), body.capture(), any());
-        assertTrue(body.getValue().get("care_contexts").get(0).has("data"));
-        assertFalse(body.getValue().get("care_contexts").get(1).has("data"));
     }
 
     @Test
@@ -233,7 +202,7 @@ public class EkaHipServiceTest {
 
     @Test
     public void anEkaRefusalMarksTheVisitsFailedWithTheReason() {
-        when(eka.post(eq(LINK), any(), any())).thenThrow(new AbdmGatewayException(400, "ABDM-1035", "Eka POST " + LINK + " refused with HTTP 400 ABDM-1035: Invalid HIP ID"));
+        when(eka.post(eq(LINK), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1035", "Eka POST " + LINK + " refused with HTTP 400 ABDM-1035: Invalid HIP ID"));
 
         assertSame(view, service.linkCareContexts("subject-1"));
 
@@ -244,7 +213,7 @@ public class EkaHipServiceTest {
 
     @Test
     public void aSynchronousAnswerWithAStatusIsApplied() {
-        when(eka.post(eq(LINK), any(), any())).thenReturn(new AbdmGatewayResponse("r", 200, AbdmJson.read("{\"status\":\"LINKED\"}")));
+        when(eka.post(eq(LINK), any(), any())).thenReturn(new EkaResponse("r", 200, AbdmJson.read("{\"status\":\"LINKED\"}")));
 
         service.linkCareContexts("subject-1");
 
@@ -255,7 +224,7 @@ public class EkaHipServiceTest {
 
     @Test
     public void aSynchronousAnswerPerCareContextIsAppliedPerCareContext() {
-        when(eka.post(eq(LINK), any(), any())).thenReturn(new AbdmGatewayResponse("r", 200, AbdmJson.read(
+        when(eka.post(eq(LINK), any(), any())).thenReturn(new EkaResponse("r", 200, AbdmJson.read(
                 "{\"care_contexts\":[{\"care_context_id\":\"enc-1\",\"status\":\"LINKED\"},{\"care_context_id\":\"enc-2\",\"status\":\"ERRORED\",\"error\":\"duplicate\"}]}")));
 
         service.linkCareContexts("subject-1");
@@ -344,7 +313,7 @@ public class EkaHipServiceTest {
     public void aTextMessageEkaRefusesLeavesTheLinkAsItIs() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
         when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.of("9876543210"));
-        when(eka.post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any())).thenThrow(new org.avni.server.service.abdm.gateway.AbdmGatewayException(500, null, "down"));
+        when(eka.post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any())).thenThrow(new EkaCallException(500, null, "down"));
 
         service.linkCareContext(event("link-care-context.json"));
 
@@ -501,7 +470,7 @@ public class EkaHipServiceTest {
     public void anEkaRefusalOfOnFetchIsRecordedAsFailed() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
-        when(eka.post(eq(ON_FETCH), any(), any())).thenThrow(new AbdmGatewayException(400, null, "Eka POST " + ON_FETCH + " refused with HTTP 400"));
+        when(eka.post(eq(ON_FETCH), any(), any())).thenThrow(new EkaCallException(400, null, "Eka POST " + ON_FETCH + " refused with HTTP 400"));
 
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
 

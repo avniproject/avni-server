@@ -7,8 +7,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// A callback can arrive before the thread that sent the request has finished; the correlation row is written before the
-// send, but the lookup still gets a few tries. DEMO-ONLY: 10 x 500 ms, then the caller logs and gives up.
+// An Eka webhook can arrive before the thread that sent the request has finished; the correlation row is written before
+// the send, but the lookup still gets a few tries. DEMO-ONLY: 10 x 500 ms, then the caller logs and gives up.
 @Component
 public class AbdmRetry {
     private final int attempts;

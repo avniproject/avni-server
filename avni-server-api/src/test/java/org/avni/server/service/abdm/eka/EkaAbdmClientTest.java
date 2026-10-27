@@ -7,8 +7,6 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.AbdmOrgContext;
-import org.avni.server.service.abdm.gateway.AbdmGatewayException;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abha.EkaAuthException;
 import org.avni.server.service.abha.EkaNotConfiguredException;
 import org.avni.server.service.abha.EkaToken;
@@ -67,7 +65,7 @@ public class EkaAbdmClientTest {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202)));
         JsonNode body = AbdmJson.read("{\"oid\":\"oid-1\",\"care_contexts\":[]}");
 
-        AbdmGatewayResponse response = client.post(LINK, body, Map.of(EkaAbdmClient.H_PATIENT_OID, "oid-1",
+        EkaResponse response = client.post(LINK, body, Map.of(EkaAbdmClient.H_PATIENT_OID, "oid-1",
                 EkaAbdmClient.H_PARTNER_PATIENT_ID, "subject-1", EkaAbdmClient.H_HIP_ID, "TANUH"));
 
         assertEquals(202, response.status());
@@ -92,9 +90,9 @@ public class EkaAbdmClientTest {
         eka.stubFor(post(urlEqualTo("/abdm/v1/consents/create")).willReturn(aResponse().withStatus(204)));
         eka.stubFor(post(urlEqualTo("/created")).willReturn(aResponse().withStatus(201).withBody("not json")));
 
-        AbdmGatewayResponse onboard = client.post("/abdm/v1/hip/onboard", AbdmJson.obj(), Map.of());
-        AbdmGatewayResponse noContent = client.post("/abdm/v1/consents/create", AbdmJson.obj(), null);
-        AbdmGatewayResponse text = client.post("/created", AbdmJson.obj(), null);
+        EkaResponse onboard = client.post("/abdm/v1/hip/onboard", AbdmJson.obj(), Map.of());
+        EkaResponse noContent = client.post("/abdm/v1/consents/create", AbdmJson.obj(), null);
+        EkaResponse text = client.post("/created", AbdmJson.obj(), null);
 
         assertEquals("C-1", onboard.body().get("hip_code").asText());
         assertEquals(204, noContent.status());
@@ -104,18 +102,18 @@ public class EkaAbdmClientTest {
 
     @Test
     public void getAndPatchUseTheirOwnMethods() {
-        eka.stubFor(get(urlEqualTo("/abdm/nhpr/v1/hfr/search/IN2910000001")).willReturn(aResponse().withStatus(200)
-                .withBody("{\"data\":{\"facilityId\":\"IN2910000001\"},\"success\":true}")));
+        eka.stubFor(get(urlEqualTo("/abdm/v1/hiu/care-context/data/tx-1/entries/0")).willReturn(aResponse().withStatus(200)
+                .withBody("{\"data\":{\"content\":\"c\"},\"success\":true}")));
         eka.stubFor(patch(urlEqualTo("/abdm/v1/hiu/keyset")).willReturn(aResponse().withStatus(200)));
 
-        AbdmGatewayResponse found = client.get("/abdm/nhpr/v1/hfr/search/IN2910000001", Map.of(EkaAbdmClient.H_HIP_ID, "TANUH"));
+        EkaResponse found = client.get("/abdm/v1/hiu/care-context/data/tx-1/entries/0", Map.of(EkaAbdmClient.H_HIP_ID, "TANUH"));
         client.patch("/abdm/v1/hiu/keyset", AbdmJson.read("{\"public_key\":\"k\",\"nonce\":\"n\"}"), null);
 
-        assertEquals("IN2910000001", found.body().at("/data/facilityId").asText());
-        eka.verify(getRequestedFor(urlEqualTo("/abdm/nhpr/v1/hfr/search/IN2910000001"))
+        assertEquals("c", found.body().at("/data/content").asText());
+        eka.verify(getRequestedFor(urlEqualTo("/abdm/v1/hiu/care-context/data/tx-1/entries/0"))
                 .withHeader("Authorization", equalTo("Bearer eka-token-1")).withHeader("X-Hip-Id", equalTo("TANUH")));
         eka.verify(patchRequestedFor(urlEqualTo("/abdm/v1/hiu/keyset")).withRequestBody(equalToJson("{\"public_key\":\"k\",\"nonce\":\"n\"}")));
-        verify(messageLog).outgoing(eq("GET"), eq("eka:/abdm/nhpr/v1/hfr/search/IN2910000001"), anyString(), isNull(), eq(200));
+        verify(messageLog).outgoing(eq("GET"), eq("eka:/abdm/v1/hiu/care-context/data/tx-1/entries/0"), anyString(), isNull(), eq(200));
         verify(messageLog).outgoing(eq("PATCH"), eq("eka:/abdm/v1/hiu/keyset"), anyString(), any(), eq(200));
     }
 
@@ -124,7 +122,7 @@ public class EkaAbdmClientTest {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(400).withHeader("Content-Type", "application/json")
                 .withBody("{\"code\":400,\"error\":\"Validation failed\",\"source_error\":{\"code\":\"ABDM-1035\",\"message\":\"Invalid HIP ID\"}}")));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertEquals(400, e.getStatus());
         assertEquals("ABDM-1035", e.getAbdmCode());
@@ -138,7 +136,7 @@ public class EkaAbdmClientTest {
         eka.stubFor(post(urlEqualTo("/x")).willReturn(aResponse().withStatus(400)
                 .withBody("{\"error\":{\"message\":\"requested endpoint is already registered\",\"code\":\"INVALID_REQUEST\"}}")));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post("/x", AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post("/x", AbdmJson.obj(), Map.of()));
 
         assertEquals("INVALID_REQUEST", e.getAbdmCode());
         assertTrue(e.getMessage(), e.getMessage().contains("already registered"));
@@ -148,7 +146,7 @@ public class EkaAbdmClientTest {
     public void aRejectedTokenFailsOnceWithoutRetrying() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(401).withBody("Unauthorized")));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertEquals(401, e.getStatus());
         assertTrue(e.getMessage(), e.getMessage().contains("401"));
@@ -159,7 +157,7 @@ public class EkaAbdmClientTest {
     public void aSlowAnswerFailsWithStatusZero_andAPostThatMayHaveLandedIsNotSentAgain() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202).withFixedDelay(1500)));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertEquals(0, e.getStatus());
         verify(messageLog).outgoing(eq("POST"), eq("eka:" + LINK), anyString(), any(), isNull());
@@ -171,7 +169,7 @@ public class EkaAbdmClientTest {
     public void aCallMarkedSlowGetsItsOwnLongerDeadline() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(204).withFixedDelay(1500)));
 
-        AbdmGatewayResponse response = client.postSlow(LINK, AbdmJson.obj(), Map.of());
+        EkaResponse response = client.postSlow(LINK, AbdmJson.obj(), Map.of());
 
         assertEquals(204, response.status());
     }
@@ -184,7 +182,7 @@ public class EkaAbdmClientTest {
         eka.stubFor(post(urlEqualTo(LINK)).inScenario("flaky").whenScenarioStateIs("second")
                 .willReturn(aResponse().withStatus(202).withBody("{\"ok\":true}")));
 
-        AbdmGatewayResponse response = client.post(LINK, AbdmJson.obj(), Map.of());
+        EkaResponse response = client.post(LINK, AbdmJson.obj(), Map.of());
 
         assertEquals(202, response.status());
         eka.verify(2, postRequestedFor(urlEqualTo(LINK)));
@@ -204,7 +202,7 @@ public class EkaAbdmClientTest {
     public void aServerErrorThatPersistsFailsAfterThreeTries() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(503)));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertEquals(503, e.getStatus());
         eka.verify(3, postRequestedFor(urlEqualTo(LINK)));
@@ -214,7 +212,7 @@ public class EkaAbdmClientTest {
     public void aRefusalOfTheRequestItselfIsNotTriedAgain() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(400).withBody("{\"error\":{\"code\":\"ABDM-1080\",\"message\":\"Invalid\"}}")));
 
-        assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         eka.verify(1, postRequestedFor(urlEqualTo(LINK)));
     }
@@ -223,7 +221,7 @@ public class EkaAbdmClientTest {
     public void aReadThatDoesNotAnswerIsTriedAgain() {
         eka.stubFor(get(urlEqualTo(LINK)).willReturn(aResponse().withStatus(200).withFixedDelay(1500)));
 
-        assertThrows(AbdmGatewayException.class, () -> client.get(LINK, Map.of()));
+        assertThrows(EkaCallException.class, () -> client.get(LINK, Map.of()));
 
         eka.verify(3, getRequestedFor(urlEqualTo(LINK)));
     }
@@ -232,7 +230,7 @@ public class EkaAbdmClientTest {
     public void noEkaSettingsMeansNoCall() throws Exception {
         when(configRepository.getEkaSystemConfig(1L)).thenThrow(new EkaNotConfiguredException("Eka system config not found"));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertEquals(0, e.getStatus());
         assertTrue(e.getMessage(), e.getMessage().contains("Eka"));
@@ -243,7 +241,7 @@ public class EkaAbdmClientTest {
     public void aFailedEkaLoginMeansNoCall() throws Exception {
         when(tokenService.getAccessToken(1L)).thenThrow(new EkaAuthException("Eka login failed with HTTP 401"));
 
-        AbdmGatewayException e = assertThrows(AbdmGatewayException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
         assertTrue(e.getMessage(), e.getMessage().contains("Eka login failed"));
         assertEquals(0, eka.getAllServeEvents().size());

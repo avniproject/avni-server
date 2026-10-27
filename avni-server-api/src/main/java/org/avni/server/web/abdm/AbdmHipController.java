@@ -1,7 +1,7 @@
 package org.avni.server.web.abdm;
 
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.service.abdm.hip.AbdmHipConsentService;
+import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -17,18 +17,18 @@ import java.util.List;
 import java.util.Map;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// The webapp's HIP screens: patients with an ABHA, their visits as care contexts, linking, and the consents received.
-// Not @Transactional: linking calls the gateway, and the callback must see what was written before the call.
+// The webapp's HIP screens: patients with an ABHA, their visits as care contexts, and linking them through Eka.
+// Not @Transactional: linking calls Eka, and its webhook must see what was written before the call.
 @RestController
 public class AbdmHipController {
     private final AbdmHipLinkingService linkingService;
-    private final AbdmHipConsentService consentService;
+    private final EkaHipService ekaHipService;
     private final AccessControlService accessControlService;
 
-    public AbdmHipController(AbdmHipLinkingService linkingService, AbdmHipConsentService consentService,
+    public AbdmHipController(AbdmHipLinkingService linkingService, EkaHipService ekaHipService,
                              AccessControlService accessControlService) {
         this.linkingService = linkingService;
-        this.consentService = consentService;
+        this.ekaHipService = ekaHipService;
         this.accessControlService = accessControlService;
     }
 
@@ -50,14 +50,7 @@ public class AbdmHipController {
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> link(@PathVariable("uuid") String uuid) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        return linkingService.linkCareContexts(uuid);
-    }
-
-    @GetMapping("/web/abdm/hip/consents")
-    @PreAuthorize("hasAnyAuthority('user')")
-    public List<Map<String, Object>> consents() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        return consentService.list();
+        return ekaHipService.linkCareContexts(uuid);
     }
 
     @ExceptionHandler(AbdmRequestException.class)

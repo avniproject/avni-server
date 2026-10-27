@@ -7,8 +7,6 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.AbdmOrgContext;
-import org.avni.server.service.abdm.gateway.AbdmGatewayException;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abha.EkaNotConfiguredException;
 import org.avni.server.service.abha.EkaTokenService;
 import org.slf4j.Logger;
@@ -30,9 +28,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// Eka Care's ABDM Connect API (Eka mode), with the current organisation's Eka settings (base URL) and access token, the
+// Eka Care's ABDM Connect API, with the current organisation's Eka settings (base URL) and access token, the
 // ones M1 uses (ExternalSystemConfigRepository.getEkaSystemConfig, EkaTokenService). Sends Authorization: Bearer plus
-// the given headers (X-Pt-Id, X-Partner-Pt-Id, X-Hip-Id ...). Any non-2xx answer throws AbdmGatewayException with Eka's
+// the given headers (X-Pt-Id, X-Partner-Pt-Id, X-Hip-Id ...). Any non-2xx answer throws EkaCallException with Eka's
 // error code and message; a call that does not answer throws it with status 0. Never logs a body, a token or an ID of a
 // patient. The requestId in the response is a fresh UUID for the traffic log.
 // The JDK HTTP client as EkaRestClient uses it: HTTP/1.1, 5 s to connect, 10 s for the whole exchange (60 s for postSlow),
@@ -84,19 +82,19 @@ public class EkaAbdmClient {
     }
 
     // For calls Eka is known to take longer than ANSWER_TIMEOUT over (consent create and approve, AVNI-20).
-    public AbdmGatewayResponse postSlow(String path, JsonNode body, Map<String, String> headers) {
+    public EkaResponse postSlow(String path, JsonNode body, Map<String, String> headers) {
         return exchange("POST", path, body, headers, slowAnswerTimeout);
     }
 
-    public AbdmGatewayResponse post(String path, JsonNode body, Map<String, String> headers) {
+    public EkaResponse post(String path, JsonNode body, Map<String, String> headers) {
         return exchange("POST", path, body, headers, answerTimeout);
     }
 
-    public AbdmGatewayResponse patch(String path, JsonNode body, Map<String, String> headers) {
+    public EkaResponse patch(String path, JsonNode body, Map<String, String> headers) {
         return exchange("PATCH", path, body, headers, answerTimeout);
     }
 
-    public AbdmGatewayResponse get(String path, Map<String, String> headers) {
+    public EkaResponse get(String path, Map<String, String> headers) {
         return exchange("GET", path, null, headers, answerTimeout);
     }
 
@@ -117,11 +115,11 @@ public class EkaAbdmClient {
 
     // Up to ATTEMPTS tries, backing off, for a server error, 429, a call that never reached Eka, or a read that did not
     // answer (AVNI-17). A write that did not answer is not sent again: Eka may have acted on it.
-    private AbdmGatewayResponse exchange(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
+    private EkaResponse exchange(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
         for (int attempt = 1; ; attempt++) {
             try {
                 return exchangeOnce(method, path, body, headers, timeout);
-            } catch (AbdmGatewayException e) {
+            } catch (EkaCallException e) {
                 if (attempt >= ATTEMPTS || !worthTryingAgain(method, e)) throw e;
                 logger.info("Eka {} {}: try {} of {} after {}", method, withoutQuery(path), attempt + 1, ATTEMPTS,
                         e.getStatus() == 0 ? "no answer" : "HTTP " + e.getStatus());
@@ -130,7 +128,7 @@ public class EkaAbdmClient {
         }
     }
 
-    private static boolean worthTryingAgain(String method, AbdmGatewayException e) {
+    private static boolean worthTryingAgain(String method, EkaCallException e) {
         int status = e.getStatus();
         if (status == 429 || status >= 500) return true;
         if (e instanceof NoAnswer noAnswer) return !noAnswer.sent || "GET".equals(method);
@@ -146,7 +144,7 @@ public class EkaAbdmClient {
     }
 
     // Eka did not answer. sent: the request may have reached Eka (a timeout), as against a connection never made.
-    static class NoAnswer extends AbdmGatewayException {
+    static class NoAnswer extends EkaCallException {
         final boolean sent;
 
         NoAnswer(boolean sent, String message) {
@@ -155,7 +153,7 @@ public class EkaAbdmClient {
         }
     }
 
-    private AbdmGatewayResponse exchangeOnce(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
+    private EkaResponse exchangeOnce(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
         String requestId = UUID.randomUUID().toString();
         String call = "Eka " + method + " " + withoutQuery(path);
         Integer status = null;
@@ -168,8 +166,8 @@ public class EkaAbdmClient {
             logger.info("{} -> {} (request {})", call, status, requestId);
             JsonNode answer = parse(response.body());
             if (status < 200 || status > 299) throw refusal(call, status, answer);
-            return new AbdmGatewayResponse(requestId, status, answer);
-        } catch (AbdmGatewayException e) {
+            return new EkaResponse(requestId, status, answer);
+        } catch (EkaCallException e) {
             if (status == null) logger.warn("{} failed (request {}): {}", call, requestId, e.getMessage());
             throw e;
         } finally {
@@ -197,7 +195,7 @@ public class EkaAbdmClient {
                 });
             }
         } catch (IllegalArgumentException e) {
-            throw new AbdmGatewayException(0, null, call + " not sent: the address or a header is not valid");
+            throw new EkaCallException(0, null, call + " not sent: the address or a header is not valid");
         }
         HttpRequest.BodyPublisher content = HttpRequest.BodyPublishers.ofString(body == null ? "" : AbdmJson.write(body));
         switch (method) {
@@ -218,13 +216,13 @@ public class EkaAbdmClient {
         } catch (InterruptedException e) {
             answer.cancel(true);
             Thread.currentThread().interrupt();
-            throw new AbdmGatewayException(0, null, call + " did not answer: interrupted");
+            throw new EkaCallException(0, null, call + " did not answer: interrupted");
         }
     }
 
     private Long organisationId() {
         Long organisationId = orgContext.organisationId();
-        if (organisationId == null) throw new AbdmGatewayException(0, null, "Eka call not made: no organisation in context");
+        if (organisationId == null) throw new EkaCallException(0, null, "Eka call not made: no organisation in context");
         return organisationId;
     }
 
@@ -232,7 +230,7 @@ public class EkaAbdmClient {
         try {
             return configRepository.getEkaSystemConfig(organisationId);
         } catch (EkaNotConfiguredException e) {
-            throw new AbdmGatewayException(0, null, "Eka is not set up for this organisation: save its Eka settings first");
+            throw new EkaCallException(0, null, "Eka is not set up for this organisation: save its Eka settings first");
         }
     }
 
@@ -241,7 +239,7 @@ public class EkaAbdmClient {
             String url = baseUrlOf.apply(config);
             return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
         } catch (IllegalStateException e) {
-            throw new AbdmGatewayException(0, null, "Eka settings unusable: " + e.getMessage());
+            throw new EkaCallException(0, null, "Eka settings unusable: " + e.getMessage());
         }
     }
 
@@ -249,9 +247,9 @@ public class EkaAbdmClient {
         try {
             return tokenService.getAccessToken(organisationId).getAccessToken();
         } catch (EkaNotConfiguredException e) {
-            throw new AbdmGatewayException(0, null, "Eka client id or secret not set for this organisation");
+            throw new EkaCallException(0, null, "Eka client id or secret not set for this organisation");
         } catch (RuntimeException e) {
-            throw new AbdmGatewayException(0, null, "Eka login failed: " + e.getMessage());
+            throw new EkaCallException(0, null, "Eka login failed: " + e.getMessage());
         }
     }
 
@@ -267,7 +265,7 @@ public class EkaAbdmClient {
 
     // Eka's error shapes, read tolerantly: {"code", "error": "<text>", "source_error": {"code": "ABDM-xxxx", "message"}},
     // {"error": {"code", "message"}} and {"data", "error": {}, "success": false}. ABDM's own code wins when present.
-    static AbdmGatewayException refusal(String call, int status, JsonNode body) {
+    static EkaCallException refusal(String call, int status, JsonNode body) {
         String code = null;
         String message = null;
         String ekaText = null;
@@ -295,7 +293,7 @@ public class EkaAbdmClient {
         if (code != null) text.append(" ").append(code);
         if (message != null) text.append(": ").append(cut(message));
         if (ekaText != null && !ekaText.equals(message)) text.append(" (").append(cut(ekaText)).append(")");
-        return new AbdmGatewayException(status, code, text.toString());
+        return new EkaCallException(status, code, text.toString());
     }
 
     private static String cut(String s) {

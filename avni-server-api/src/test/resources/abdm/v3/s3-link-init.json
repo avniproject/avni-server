@@ -1,7 +1,0 @@
-{
-  "transactionId": "tx-discover-1",
-  "abhaAddress": "ramesh.gond@sbx",
-  "patient": [
-    {"referenceNumber": "subject-1", "careContexts": [{"referenceNumber": "enc-1"}, {"referenceNumber": "enc-2"}], "hiType": "OPConsultation", "count": 2}
-  ]
-}

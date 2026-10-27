@@ -6,16 +6,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// Runs callback work off the request thread, as the organisation (AbdmOrgContext). Never throws to the caller.
+// Runs webhook work off the request thread, as the organisation (AbdmOrgContext). Never throws to the caller.
 // Failures are logged by class and message only, never a body. Tests run the work inline with inline(orgContext), or
 // mock this class.
 @Component
@@ -36,16 +34,11 @@ public class AbdmAsync {
         this.executor = executor;
     }
 
-    // Runs everything on the caller's thread, at once, ignoring delays. For tests.
+    // Runs everything on the caller's thread, at once. For tests.
     public static AbdmAsync inline(AbdmOrgContext orgContext) {
         return new AbdmAsync(orgContext, null) {
             @Override
             public void submit(String what, Runnable work) {
-                run(what, work);
-            }
-
-            @Override
-            public void submitAfter(Duration delay, String what, Runnable work) {
                 run(what, work);
             }
         };
@@ -56,14 +49,6 @@ public class AbdmAsync {
             executor.execute(() -> run(what, work));
         } catch (RejectedExecutionException e) {
             logger.error("ABDM work {} not started: the executor is shut down", what);
-        }
-    }
-
-    public void submitAfter(Duration delay, String what, Runnable work) {
-        try {
-            executor.schedule(() -> run(what, work), Math.max(0, delay.toMillis()), TimeUnit.MILLISECONDS);
-        } catch (RejectedExecutionException e) {
-            logger.error("ABDM work {} not scheduled: the executor is shut down", what);
         }
     }
 

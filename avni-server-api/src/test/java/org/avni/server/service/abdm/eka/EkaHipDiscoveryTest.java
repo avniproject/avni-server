@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmPatientPhones;
@@ -24,7 +23,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -50,7 +48,7 @@ public class EkaHipDiscoveryTest {
     @Before
     public void setUp() {
         discovery = new EkaHipDiscovery(cfg, store, linking, eka, phones, otp);
-        when(eka.post(anyString(), any(), any())).thenReturn(new AbdmGatewayResponse("r", 204, null));
+        when(eka.post(anyString(), any(), any())).thenReturn(new EkaResponse("r", 204, null));
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
                 "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z")),
                 new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T10:00:00Z")))));

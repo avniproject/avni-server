@@ -9,8 +9,6 @@ import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.crypto.FideliusCrypto;
 import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
-import org.avni.server.service.abdm.gateway.AbdmGatewayException;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
@@ -54,7 +52,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-// DEMO-ONLY abdm-hackathon: Avni as HIU through Eka Care (Eka mode). Real Fidelius crypto, everything else mocked.
+// DEMO-ONLY abdm-hackathon: Avni as HIU through Eka Care. Real Fidelius crypto, everything else mocked.
 public class EkaHiuServiceTest {
     private static final String BUNDLE = "{\"resourceType\":\"Bundle\",\"type\":\"collection\",\"entry\":[]}";
     private static final String KEYSET = EkaHiuService.KEYSET_CONSENT_ID;
@@ -72,7 +70,6 @@ public class EkaHiuServiceTest {
     @Before
     public void setUp() {
         cfg = AbdmTestSupport.config();
-        when(cfg.isEka()).thenReturn(true);
         when(cfg.getEkaClinicId()).thenReturn("clinic-1");
         when(cfg.getEkaDoctorOid()).thenReturn("doctor-oid-1");
         when(cfg.getEkaRequesterName()).thenReturn("Dr. Demo");
@@ -86,7 +83,7 @@ public class EkaHiuServiceTest {
         when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam")));
         when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(abhaEvent("created", "oid-1")));
         when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
-                .thenReturn(new AbdmGatewayResponse("r-1", 200, AbdmJson.read("{\"consent_init_id\":\"init-1\"}")));
+                .thenReturn(new EkaResponse("r-1", 200, AbdmJson.read("{\"consent_init_id\":\"init-1\"}")));
     }
 
     // ---- consent create
@@ -162,7 +159,7 @@ public class EkaHiuServiceTest {
 
     @Test
     public void ekaRefusingTheConsentFailsTheRowWithItsMessage() {
-        when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new AbdmGatewayException(400, "ABDM-1040", "Invalid HIU ID"));
+        when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1040", "Invalid HIU ID"));
 
         Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, null);
 
@@ -173,7 +170,7 @@ public class EkaHiuServiceTest {
 
     @Test
     public void ekaRefusingOurKeyFailsTheRowAndNoConsentIsSent() {
-        when(eka.patch(eq("/abdm/v1/hiu/keyset"), any(), any())).thenThrow(new AbdmGatewayException(400, null, "Invalid public key"));
+        when(eka.patch(eq("/abdm/v1/hiu/keyset"), any(), any())).thenThrow(new EkaCallException(400, null, "Invalid public key"));
 
         Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, null);
 
@@ -223,7 +220,7 @@ public class EkaHiuServiceTest {
         service.consentUpdate(ekaFixture("hiu-consent-update-granted.json"));
 
         verify(store).setConsentRequestStatus("init-1", "GRANTED");
-        verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
+        verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
         // Only the consent list, for the terms granted (HIU_FLOW_106).
         verify(eka).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
         verifyNoMoreInteractions(eka);
@@ -242,8 +239,8 @@ public class EkaHiuServiceTest {
         service.consentUpdate(event);
 
         verify(store).setConsentRequestStatus("init-1", "GRANTED");
-        verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
-        verify(store).upsertArtefact("init-1", "artefact-2", "shyam@sbx", HIU_ID, "GRANTED", null);
+        verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+        verify(store).upsertArtefact("init-1", "artefact-2", "shyam@sbx", HIU_ID, "GRANTED");
     }
 
     @Test
@@ -255,7 +252,7 @@ public class EkaHiuServiceTest {
         service.consentUpdate(event);
 
         verify(store).setConsentRequestStatus("init-1", "DENIED");
-        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
     }
 
     // AVNI-24: with two requests waiting, an update for the older one used to be filed under the newest.
@@ -272,7 +269,7 @@ public class EkaHiuServiceTest {
         // 26 Oct: a grant that landed while this match ran was overwritten with the REQUESTED read before it.
         verify(store, never()).setConsentRequestId(anyLong(), any(), any());
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
-        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
     }
 
     @Test
@@ -285,7 +282,7 @@ public class EkaHiuServiceTest {
 
         verify(store, never()).setConsentRequestId(anyLong(), any(), any());
         verify(store, never()).setConsentRequestStatus(any(), any());
-        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
         verify(store).parkConsentUpdate("abdm-Z", "GRANTED", List.of("artefact-1"));
     }
 
@@ -298,7 +295,7 @@ public class EkaHiuServiceTest {
 
         verify(store).setConsentRequestId(5L, "abdm-A", "REQUESTED");
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
-        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED", null);
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
         verify(store).resolveParked(77L);
     }
 
@@ -399,7 +396,7 @@ public class EkaHiuServiceTest {
         entry.put("checksum", AbdmFlows.md5Hex(BUNDLE));
         entry.put("content", content);
         entry.put("media", "application/fhir+json");
-        when(eka.get(eq("/abdm/v1/hiu/care-context/data/dtx-1/entries/ref-1"), any())).thenReturn(new AbdmGatewayResponse("g-1", 200, entry));
+        when(eka.get(eq("/abdm/v1/hiu/care-context/data/dtx-1/entries/ref-1"), any())).thenReturn(new EkaResponse("g-1", 200, entry));
 
         service.hiuDataPush(push("", null, hip.publicKeyRawBase64(), hip.nonceBase64()));
 
@@ -441,7 +438,7 @@ public class EkaHiuServiceTest {
         service.hiuDataPush(event);
 
         verify(store).insertHealthInformation(31L, "dtx-1", "artefact-1", "HIP-X", "cc-1", true, AbdmJson.write(AbdmJson.read(BUNDLE)));
-        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
         ArgumentCaptor<JsonNode> ack = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).post(eq("/abdm/v1/hiu/care-context/data/on-push"), ack.capture(), any());
         assertEquals("artefact-1", ack.getValue().get("consent_id").asText());
@@ -460,7 +457,7 @@ public class EkaHiuServiceTest {
         service.hiuDataPush(event);
 
         verify(store, never()).insertHealthInformation(anyLong(), any(), any(), any(), any(), any(), any());
-        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any(), any());
+        verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
         verify(eka, never()).post(eq("/abdm/v1/hiu/care-context/data/on-push"), any(), any());
     }
 
@@ -472,7 +469,7 @@ public class EkaHiuServiceTest {
         when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
         when(hipStore.findCareContexts(7, HIP_ID)).thenReturn(List.of(careContext("enc-1", "Visit 12 Oct", "LINKED"),
                 careContext("enc-2", "Visit 13 Oct", "FAILED")));
-        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenReturn(new AbdmGatewayResponse("a-1", 204, null));
+        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenReturn(new EkaResponse("a-1", 204, null));
 
         Map<String, Object> answer = service.approveInSandbox("init-1");
 
@@ -495,7 +492,7 @@ public class EkaHiuServiceTest {
     @Test
     public void approvalUsesTheAbdmConsentIdThatEkasListGivesForOurRequest() {
         when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(eka.post(eq("/abdm/v1/consents/list"), any(), any())).thenReturn(new AbdmGatewayResponse("l-1", 200,
+        when(eka.post(eq("/abdm/v1/consents/list"), any(), any())).thenReturn(new EkaResponse("l-1", 200,
                 AbdmJson.read("{\"consents\":[{\"consent_id\":\"abdm-cr-1\",\"consent_init_id\":\"init-1\",\"status\":\"REQUESTED\"}]}")));
 
         service.approveInSandbox("init-1");
@@ -510,7 +507,7 @@ public class EkaHiuServiceTest {
     @Test
     public void ekasRefusalOfAnApprovalIsReturnedAsItCame() {
         when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenThrow(new AbdmGatewayException(491, null, "SessionExpiredTryAgain"));
+        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenThrow(new EkaCallException(491, null, "SessionExpiredTryAgain"));
 
         Map<String, Object> answer = service.approveInSandbox("init-1");
 
@@ -528,7 +525,7 @@ public class EkaHiuServiceTest {
     }
 
     private void ekaListsConsents(String... consents) {
-        when(eka.post(eq(EkaHiuService.CONSENT_LIST), any(), any())).thenReturn(new AbdmGatewayResponse("l-1", 200,
+        when(eka.post(eq(EkaHiuService.CONSENT_LIST), any(), any())).thenReturn(new EkaResponse("l-1", 200,
                 AbdmJson.read("{\"consents\":[" + String.join(",", consents) + "]}")));
     }
 
@@ -540,7 +537,7 @@ public class EkaHiuServiceTest {
 
     private void knownArtefactAndNewFlow() {
         when(store.findArtefact("artefact-1")).thenReturn(Optional.of(new AbdmHiuStore.Consent(9, "uuid-9", "init-1", "artefact-1", null,
-                null, "shyam@sbx", null, HIU_ID, null, null, null, null, null, "GRANTED", null, null, null, null)));
+                "shyam@sbx", null, HIU_ID, null, null, null, null, null, "GRANTED", null, null, null)));
         when(store.findDataFlowByTransaction("dtx-1")).thenReturn(Optional.empty());
         when(store.insertDataFlow(eq("artefact-1"), isNull(), anyString(), anyString(), anyString(), any(), eq("RECEIVING"))).thenReturn(31L);
     }
@@ -562,9 +559,9 @@ public class EkaHiuServiceTest {
     }
 
     private static AbdmHiuStore.Consent request(long id, String consentRequestId, String status) {
-        return new AbdmHiuStore.Consent(id, "uuid-" + id, consentRequestId, null, "init-request-" + id, null, "shyam@sbx", null, HIU_ID,
+        return new AbdmHiuStore.Consent(id, "uuid-" + id, consentRequestId, null, "init-request-" + id, "shyam@sbx", null, HIU_ID,
                 "CAREMGT", "OPConsultation", Instant.parse("2026-01-01T00:00:00Z"), Instant.parse("2026-10-20T23:59:59Z"),
-                Instant.parse("2026-11-24T00:00:00Z"), status, null, null, null, null);
+                Instant.parse("2026-11-24T00:00:00Z"), status, null, null, null);
     }
 
     private static AbdmHipStore.CareContext careContext(String reference, String display, String status) {

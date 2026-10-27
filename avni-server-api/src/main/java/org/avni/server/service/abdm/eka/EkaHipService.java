@@ -19,9 +19,7 @@ import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
 import org.avni.server.service.abdm.fhir.CareContextDocument;
 import org.avni.server.service.abdm.fhir.CareContextDocumentAssembler;
 import org.avni.server.service.abdm.fhir.FhirBundleBuilder;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.hip.AbdmFlows;
-import org.avni.server.service.abdm.hip.AbdmHipDataTransferService;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
@@ -31,12 +29,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -53,12 +48,11 @@ import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.LINK_REQUES
 import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.PENDING;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// M2 in Eka mode (Avni as HIP through Eka Care's ABDM Connect, spec section 2). Linking: a subject's completed visits
-// become care contexts, sent to Eka with the patient's Eka ID (recorded at M1) and, when abdm.eka.send-data is on, each
-// visit's FHIR bundle so Eka holds the record (spec "Path A"). Eka answers 202 and reports each care context later on the
-// abha.link_care_context webhook. Without the bundle (self-custody, "Path B"), Eka relays an HIU's request on the
-// abha.hip_data_fetch webhook and we answer on-fetch with the records encrypted to the requester's key.
-// Care-context rows and statuses are the NHA route's (AbdmHipStore): PENDING -> LINK_REQUESTED -> LINKED | FAILED.
+// M2: Avni as HIP through Eka Care's ABDM Connect (spec section 2). Linking: a subject's completed visits become care
+// contexts, sent to Eka with the patient's Eka ID (recorded at M1) and no record, so Avni keeps custody (spec "Path B").
+// Eka answers 202 and reports each care context later on the abha.link_care_context webhook. Eka relays an HIU's request
+// on the abha.hip_data_fetch webhook and we answer on-fetch with the records encrypted to the requester's key.
+// Care-context rows and statuses are in AbdmHipStore: PENDING -> LINK_REQUESTED -> LINKED | FAILED.
 // Never logs an ABHA, an Eka ID, a key or a record.
 @Service
 public class EkaHipService implements EkaHipEvents {
@@ -67,6 +61,7 @@ public class EkaHipService implements EkaHipEvents {
     public static final String LINK_PATH = "/abdm/v1/care-contexts/link";
     public static final String ON_FETCH_PATH = "/abdm/v1/hip/care-context/data/on-fetch";
     public static final String SMS_NOTIFY_PATH = "/abdm/v1/care-contexts/sms/notify";
+    static final String MEDIA = "application/fhir+json";
     public static final String NO_EKA_ID = "Patient has no Eka ID: register or verify their ABHA through the app first";
     static final String FLOW_REQUESTED = "REQUESTED";
     static final String FLOW_TRANSFERRED = "TRANSFERRED";
@@ -116,7 +111,7 @@ public class EkaHipService implements EkaHipEvents {
 
     private enum Outcome {LINKED, FAILED, UNKNOWN}
 
-    // ---- linking (called through AbdmHipLinkingService.linkCareContexts in Eka mode)
+    // ---- linking (the admin page's Link, and AbdmHousekeepingJob for visits queued on save)
 
     // Links every completed visit not yet linked; answers with the same view as AbdmHipLinkingService.careContexts.
     public List<Map<String, Object>> linkCareContexts(String subjectUuid) {
@@ -143,15 +138,6 @@ public class EkaHipService implements EkaHipEvents {
         if (toLink.isEmpty()) return linking.careContexts(subjectUuid);
         List<String> references = toLink.stream().map(AbdmHipStore.CareContext::reference).toList();
 
-        Map<String, String> bundles = new HashMap<>();
-        if (cfg.isEkaSendData()) {
-            for (String reference : references) {
-                Prepared p = prepare(reference, patient.uuid());
-                if (p.bundleJson() != null) bundles.put(reference, p.bundleJson());
-                else logger.warn("Eka link: care context {} goes without its record: {}", reference, p.problem());
-            }
-        }
-
         ObjectNode body = AbdmJson.obj();
         body.put("abha_address", abhaAddress);
         body.put("oid", oid);
@@ -162,18 +148,13 @@ public class EkaHipService implements EkaHipEvents {
             cc.put("care_context_id", c.reference());
             cc.put("display", c.display());
             cc.put("hi_type", HI_TYPE);
-            String bundle = bundles.get(c.reference());
-            if (bundle != null) {
-                cc.putArray("hi_types").add(HI_TYPE);
-                cc.put("data", Base64.getEncoder().encodeToString(bundle.getBytes(StandardCharsets.UTF_8)));
-            }
         }
 
         // Persist before send: a webhook can arrive before post() returns.
         String linkRequestId = UUID.randomUUID().toString();
         store.markLinkRequested(hipId, references, linkRequestId);
         try {
-            AbdmGatewayResponse response = eka.post(LINK_PATH, body, patientHeaders(oid, patient.uuid()));
+            EkaResponse response = eka.post(LINK_PATH, body, patientHeaders(oid, patient.uuid()));
             logger.info("Eka link of {} care contexts for subject {}: HTTP {}", references.size(), patient.uuid(), response.status());
             applyAnswer(hipId, linkRequestId, response.body());
         } catch (RuntimeException e) {
@@ -270,7 +251,7 @@ public class EkaHipService implements EkaHipEvents {
         }
     }
 
-    // abha.hip_data_fetch (self-custody only): build each requested visit's bundle, encrypt it to the requester's key with a
+    // abha.hip_data_fetch: build each requested visit's bundle, encrypt it to the requester's key with a
     // fresh key pair of ours, and post it on-fetch. Recorded as an HIP data flow.
     @Override
     public void hipDataFetch(JsonNode event) {
@@ -333,7 +314,7 @@ public class EkaHipService implements EkaHipEvents {
                 }
                 ObjectNode entry = entries.addObject();
                 entry.put("care_context_id", reference);
-                entry.put("media", AbdmHipDataTransferService.MEDIA);
+                entry.put("media", MEDIA);
                 entry.put("checksum", AbdmFlows.md5Hex(p.bundleJson())); // DEMO-ONLY: algorithm unverified
                 entry.put("content", content);
             }

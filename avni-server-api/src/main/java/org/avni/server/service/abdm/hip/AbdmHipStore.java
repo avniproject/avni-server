@@ -1,6 +1,5 @@
 package org.avni.server.service.abdm.hip;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,9 +19,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// The HIP's ABDM state (V1_413): patient links, care contexts, user-initiated link requests, HIP consents and HIP data
-// flows. Plain JDBC, one autocommitted statement each, so a correlation row is visible to the callback thread as soon as
-// it is written. organisation_id is set here: the Hibernate interceptor does not see these statements.
+// The HIP's ABDM state (V1_413): care contexts, patient-led link requests, and a record of each data request Eka relayed.
+// Plain JDBC, one autocommitted statement each, so a correlation row is visible to the webhook thread as soon as it is
+// written. organisation_id is set here: the Hibernate interceptor does not see these statements.
 @Component
 public class AbdmHipStore {
     public static final String ROLE = "HIP";
@@ -33,10 +32,6 @@ public class AbdmHipStore {
     public AbdmHipStore(NamedParameterJdbcTemplate jdbc, AbdmOrgContext orgContext) {
         this.jdbc = jdbc;
         this.orgContext = orgContext;
-    }
-
-    public record PatientLink(long id, long individualId, String hipId, String abhaNumber, String abhaAddress, String status,
-                              String tokenRequestId, String encryptedLinkToken, String error) {
     }
 
     public record CareContext(long id, String uuid, long individualId, String hipId, String patientReference, String reference,
@@ -50,15 +45,6 @@ public class AbdmHipStore {
 
     public record LinkRequest(long id, String transactionId, String linkReference, Long individualId, String abhaAddress,
                               List<String> careContextRefs, String status, Instant expiresAt) {
-    }
-
-    public record Consent(long id, String consentId, String abhaAddress, String hipId, String hiuId, String purposeCode,
-                          String hiTypes, Instant dateFrom, Instant dateTo, Instant dataEraseAt, String status,
-                          JsonNode consentDetail, Instant updatedAt) {
-    }
-
-    public record DataFlow(long id, String uuid, String consentId, String transactionId, String requestId, String status,
-                           Integer entries, String error, Instant updatedAt) {
     }
 
     public record Subject(long id, String uuid, String name) {
@@ -127,54 +113,6 @@ public class AbdmHipStore {
                         .addValue("reason", reason, Types.VARCHAR));
     }
 
-    // ---- patient links (HIP-initiated linking)
-
-    public Optional<PatientLink> findPatientLink(long individualId, String hipId) {
-        return one(jdbc.query("select * from abdm_patient_link where organisation_id = :org and individual_id = :ind and hip_id = :hip",
-                params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR), PATIENT_LINK));
-    }
-
-    public Optional<PatientLink> findPatientLinkByTokenRequest(String tokenRequestId) {
-        if (tokenRequestId == null) return Optional.empty();
-        return one(jdbc.query("select * from abdm_patient_link where organisation_id = :org and token_request_id = :req",
-                params().addValue("req", tokenRequestId, Types.VARCHAR), PATIENT_LINK));
-    }
-
-    public void requestToken(long individualId, String hipId, String abhaNumber, String abhaAddress, String tokenRequestId) {
-        jdbc.update("insert into abdm_patient_link (organisation_id, individual_id, hip_id, abha_number, abha_address, status, token_request_id) " +
-                        "values (:org, :ind, :hip, :number, :address, 'TOKEN_REQUESTED', :req) " +
-                        "on conflict (organisation_id, individual_id, hip_id) do update set abha_number = excluded.abha_number, " +
-                        "abha_address = excluded.abha_address, status = 'TOKEN_REQUESTED', token_request_id = excluded.token_request_id, " +
-                        "error = null, updated_at = now()",
-                params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR)
-                        .addValue("number", abhaNumber, Types.VARCHAR).addValue("address", abhaAddress, Types.VARCHAR)
-                        .addValue("req", tokenRequestId, Types.VARCHAR));
-    }
-
-    public void storeLinkToken(long patientLinkId, String encryptedLinkToken) {
-        jdbc.update("update abdm_patient_link set encrypted_link_token = :token, link_token_received_at = now(), status = 'TOKEN_RECEIVED', " +
-                        "error = null, updated_at = now() where organisation_id = :org and id = :id",
-                params().addValue("id", patientLinkId).addValue("token", encryptedLinkToken, Types.VARCHAR));
-    }
-
-    public void failPatientLink(long patientLinkId, String error) {
-        jdbc.update("update abdm_patient_link set status = 'FAILED', error = :error, updated_at = now() where organisation_id = :org and id = :id",
-                params().addValue("id", patientLinkId).addValue("error", error, Types.VARCHAR));
-    }
-
-    // A link token the gateway refused is not offered again.
-    public void clearLinkToken(long individualId, String hipId) {
-        jdbc.update("update abdm_patient_link set encrypted_link_token = null, updated_at = now() " +
-                        "where organisation_id = :org and individual_id = :ind and hip_id = :hip",
-                params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR));
-    }
-
-    public void setPatientLinkStatus(long individualId, String hipId, String status) {
-        jdbc.update("update abdm_patient_link set status = :status, updated_at = now() " +
-                        "where organisation_id = :org and individual_id = :ind and hip_id = :hip",
-                params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR).addValue("status", status, Types.VARCHAR));
-    }
-
     // ---- care contexts
 
     // New ones start PENDING; an existing row keeps its status.
@@ -214,12 +152,6 @@ public class AbdmHipStore {
         if (references == null || references.isEmpty()) return new ArrayList<>();
         return jdbc.query("select * from abdm_care_context where organisation_id = :org and hip_id = :hip and reference in (:refs) order by id",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("refs", references), CARE_CONTEXT);
-    }
-
-    public List<CareContext> findCareContextsByLinkRequest(String linkRequestId) {
-        if (linkRequestId == null) return new ArrayList<>();
-        return jdbc.query("select * from abdm_care_context where organisation_id = :org and link_request_id = :req order by id",
-                params().addValue("req", linkRequestId, Types.VARCHAR), CARE_CONTEXT);
     }
 
     // linkRequestId null while the link token is still awaited.
@@ -293,45 +225,6 @@ public class AbdmHipStore {
                 params().addValue("id", id).addValue("status", status, Types.VARCHAR));
     }
 
-    // ---- consents (role HIP)
-
-    public void upsertConsent(String consentId, String abhaAddress, String hipId, String hiuId, String purposeCode, String hiTypes,
-                              Instant dateFrom, Instant dateTo, Instant dataEraseAt, String status, JsonNode consentDetail) {
-        MapSqlParameterSource p = params().addValue("consentId", consentId, Types.VARCHAR)
-                .addValue("address", abhaAddress, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
-                .addValue("hiu", hiuId, Types.VARCHAR).addValue("purpose", purposeCode, Types.VARCHAR)
-                .addValue("hiTypes", hiTypes, Types.VARCHAR).addValue("from", AbdmFlows.iso(dateFrom), Types.VARCHAR)
-                .addValue("to", AbdmFlows.iso(dateTo), Types.VARCHAR).addValue("erase", AbdmFlows.iso(dataEraseAt), Types.VARCHAR)
-                .addValue("status", status, Types.VARCHAR)
-                .addValue("detail", consentDetail == null ? null : AbdmJson.write(consentDetail), Types.VARCHAR);
-        int updated = jdbc.update("update abdm_consent set abha_address = :address, hip_id = :hip, hiu_id = :hiu, purpose_code = :purpose, " +
-                "hi_types = :hiTypes, date_from = cast(:from as timestamptz), date_to = cast(:to as timestamptz), " +
-                "data_erase_at = cast(:erase as timestamptz), status = :status, consent_detail = cast(:detail as jsonb), updated_at = now() " +
-                "where organisation_id = :org and role = 'HIP' and consent_id = :consentId", p);
-        if (updated == 0) {
-            jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_id, abha_address, hip_id, hiu_id, purpose_code, hi_types, " +
-                    "date_from, date_to, data_erase_at, status, consent_detail) values (:uuid, :org, 'HIP', :consentId, :address, :hip, :hiu, " +
-                    ":purpose, :hiTypes, cast(:from as timestamptz), cast(:to as timestamptz), cast(:erase as timestamptz), :status, " +
-                    "cast(:detail as jsonb))", p.addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR));
-        }
-    }
-
-    public int setConsentStatus(String consentId, String status) {
-        return jdbc.update("update abdm_consent set status = :status, updated_at = now() where organisation_id = :org and role = 'HIP' and consent_id = :consentId",
-                params().addValue("consentId", consentId, Types.VARCHAR).addValue("status", status, Types.VARCHAR));
-    }
-
-    public Optional<Consent> findConsent(String consentId) {
-        if (consentId == null) return Optional.empty();
-        return one(jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIP' and consent_id = :consentId order by id desc",
-                params().addValue("consentId", consentId, Types.VARCHAR), CONSENT));
-    }
-
-    public List<Consent> listConsents() {
-        return jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIP' order by updated_at desc limit 200",
-                params(), CONSENT);
-    }
-
     // ---- data flows (role HIP)
 
     public long insertDataFlow(String consentId, String transactionId, String requestId, String dataPushUrl, String status, String error) {
@@ -348,12 +241,6 @@ public class AbdmHipStore {
         jdbc.update("update abdm_data_flow set status = :status, entries = :entries, error = :error, updated_at = now() where organisation_id = :org and id = :id",
                 params().addValue("id", id).addValue("status", status, Types.VARCHAR).addValue("entries", entries)
                         .addValue("error", error, Types.VARCHAR));
-    }
-
-    public List<DataFlow> findDataFlows(Collection<String> consentIds) {
-        if (consentIds == null || consentIds.isEmpty()) return new ArrayList<>();
-        return jdbc.query("select * from abdm_data_flow where organisation_id = :org and role = 'HIP' and consent_id in (:ids) order by created_at",
-                params().addValue("ids", consentIds), DATA_FLOW);
     }
 
     // ---- plumbing
@@ -383,10 +270,6 @@ public class AbdmHipStore {
 
     private static final RowMapper<Subject> SUBJECT = (rs, n) -> new Subject(rs.getLong("id"), rs.getString("uuid"), rs.getString("name"));
 
-    private static final RowMapper<PatientLink> PATIENT_LINK = (rs, n) -> new PatientLink(rs.getLong("id"), rs.getLong("individual_id"),
-            rs.getString("hip_id"), rs.getString("abha_number"), rs.getString("abha_address"), rs.getString("status"),
-            rs.getString("token_request_id"), rs.getString("encrypted_link_token"), rs.getString("error"));
-
     private static final RowMapper<CareContext> CARE_CONTEXT = (rs, n) -> new CareContext(rs.getLong("id"), rs.getString("uuid"),
             rs.getLong("individual_id"), rs.getString("hip_id"), rs.getString("patient_reference"), rs.getString("reference"),
             rs.getString("display"), rs.getString("hi_type"), rs.getString("status"), rs.getString("link_mode"),
@@ -396,12 +279,4 @@ public class AbdmHipStore {
             rs.getString("link_reference"), nullableLong(rs, "individual_id"), rs.getString("abha_address"),
             AbdmFlows.texts(AbdmJson.read(rs.getString("care_context_refs")), null), rs.getString("status"), instant(rs, "expires_at"));
 
-    private static final RowMapper<Consent> CONSENT = (rs, n) -> new Consent(rs.getLong("id"), rs.getString("consent_id"),
-            rs.getString("abha_address"), rs.getString("hip_id"), rs.getString("hiu_id"), rs.getString("purpose_code"),
-            rs.getString("hi_types"), instant(rs, "date_from"), instant(rs, "date_to"), instant(rs, "data_erase_at"),
-            rs.getString("status"), AbdmJson.read(rs.getString("consent_detail")), instant(rs, "updated_at"));
-
-    private static final RowMapper<DataFlow> DATA_FLOW = (rs, n) -> new DataFlow(rs.getLong("id"), rs.getString("uuid"),
-            rs.getString("consent_id"), rs.getString("transaction_id"), rs.getString("request_id"), rs.getString("status"),
-            nullableInt(rs, "entries"), rs.getString("error"), instant(rs, "updated_at"));
 }

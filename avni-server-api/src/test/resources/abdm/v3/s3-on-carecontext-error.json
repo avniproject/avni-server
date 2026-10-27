@@ -1,5 +1,0 @@
-{
-  "abhaAddress": "ramesh.gond@sbx",
-  "error": {"code": "ABDM-1091", "message": "Invalid link token"},
-  "response": {"requestId": "req-link-1"}
-}

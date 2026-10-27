@@ -3,6 +3,7 @@ package org.avni.server.web.abdm;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abdm.hiu.AbdmHiuConsentService;
@@ -24,15 +25,17 @@ import java.util.Map;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // The webapp's HIU screens: ask a patient for consent, follow the requests, read the records received.
-// Not @Transactional: requesting consent calls the gateway.
+// Not @Transactional: requesting consent calls Eka.
 @RestController
 public class AbdmHiuController {
+    private final EkaHiuService ekaHiuService;
     private final AbdmHiuConsentService consentService;
     private final AbdmHiuDataService dataService;
     private final AccessControlService accessControlService;
 
-    public AbdmHiuController(AbdmHiuConsentService consentService, AbdmHiuDataService dataService,
+    public AbdmHiuController(EkaHiuService ekaHiuService, AbdmHiuConsentService consentService, AbdmHiuDataService dataService,
                              AccessControlService accessControlService) {
+        this.ekaHiuService = ekaHiuService;
         this.consentService = consentService;
         this.dataService = dataService;
         this.accessControlService = accessControlService;
@@ -43,7 +46,7 @@ public class AbdmHiuController {
     @PreAuthorize("hasAnyAuthority('user')")
     public Map<String, Object> requestConsent(@RequestBody JsonNode body) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        return consentService.requestConsent(AbdmJson.text(body, "abhaAddress"), date(body, "from"), date(body, "to"),
+        return ekaHiuService.requestConsent(AbdmJson.text(body, "abhaAddress"), date(body, "from"), date(body, "to"),
                 AbdmFlows.texts(AbdmJson.at(body, "hiTypes"), null), AbdmJson.text(body, "purposeCode"),
                 AbdmJson.text(body, "requesterName"), date(body, "expiry"));
     }

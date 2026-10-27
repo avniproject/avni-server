@@ -22,7 +22,7 @@ public class AbdmHousekeepingJob {
     private final AbdmMessageLog messageLog;
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData;
     private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore;
-    private final org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking;
+    private final org.avni.server.service.abdm.eka.EkaHipService ekaHip;
     private final org.avni.server.service.abdm.hip.AbdmAutoLink autoLink;
     private final int messageRetentionDays;
 
@@ -30,11 +30,11 @@ public class AbdmHousekeepingJob {
     public AbdmHousekeepingJob(AbdmConfig cfg, AbdmOrgContext orgContext, AbdmMessageLog messageLog,
                                org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData,
                                org.avni.server.service.abdm.hip.AbdmHipStore hipStore,
-                               org.avni.server.service.abdm.hip.AbdmHipLinkingService hipLinking,
+                               org.avni.server.service.abdm.eka.EkaHipService ekaHip,
                                org.avni.server.service.abdm.hip.AbdmAutoLink autoLink,
                                @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
         this.hipStore = hipStore;
-        this.hipLinking = hipLinking;
+        this.ekaHip = ekaHip;
         this.autoLink = autoLink;
         this.hiuData = hiuData;
         this.cfg = cfg;
@@ -53,7 +53,7 @@ public class AbdmHousekeepingJob {
         runAsOrg("consent expiry and record erase", hiuData::expireAndErase);
     }
 
-    // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through the usual route, patient by patient.
+    // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient.
     @Scheduled(cron = "${abdm.housekeeping.link-cron:0 */5 * * * *}", zone = "Asia/Kolkata")
     public void linkQueuedVisits() {
         if (!autoLink.isOn()) return;
@@ -61,7 +61,7 @@ public class AbdmHousekeepingJob {
             String hipId = cfg.getHipId();
             for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {
                 try {
-                    hipLinking.linkQueuedCareContexts(subjectUuid);
+                    ekaHip.linkCareContexts(subjectUuid, true);
                 } catch (RuntimeException e) {
                     hipStore.failQueued(subjectUuid, hipId, e.getMessage());
                     logger.info("ABDM: visits of subject {} not linked: {}", subjectUuid, e.getMessage());

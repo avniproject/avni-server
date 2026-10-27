@@ -11,8 +11,6 @@ import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmTime;
 import org.avni.server.service.abdm.crypto.FideliusCrypto;
 import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
-import org.avni.server.service.abdm.gateway.AbdmGatewayException;
-import org.avni.server.service.abdm.gateway.AbdmGatewayResponse;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
@@ -45,10 +43,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// Avni as HIU through Eka Care's ABDM Connect API (Eka mode), spec EKA_ABDM_SPEC.md section 3. Asks for consent
+// Avni as HIU through Eka Care's ABDM Connect API, spec EKA_ABDM_SPEC.md section 3. Asks for consent
 // (consents/create), hears Eka's abha.consent_update and abha.hiu_data_push webhooks, decrypts each entry with our HIU
-// key and keeps the FHIR bundle in the same tables the NHA route uses, so the webapp's HIU screens work unchanged.
-// Eka pushes the records on its own once consent is granted: there is no health-information request in this route.
+// key and keeps the FHIR bundle (AbdmHiuStore), which the webapp's HIU screens read.
+// Eka pushes the records on its own once consent is granted: Avni sends no health-information request.
 // Field names are read with fallbacks wherever the spec marks them unverified. Never logs an ABHA address, an OID, a
 // key, a nonce, a body or a record.
 @Component
@@ -71,7 +69,7 @@ public class EkaHiuService implements EkaHiuEvents {
     public static final String FAILED = "FAILED";
     private static final String LINKED = "LINKED";
 
-    // Avni's purpose codes (the NHA route's) to Eka's purpose strings, which must match exactly.
+    // ABDM's purpose codes to Eka's purpose strings, which must match exactly.
     private static final Map<String, String> PURPOSES = Map.of(
             "CAREMGT", "Care management",
             "PATRQT", "Self Requested",
@@ -121,7 +119,7 @@ public class EkaHiuService implements EkaHiuEvents {
         this.requesterRegistrationNumber = requesterRegistrationNumber;
     }
 
-    // ---- consent request (spec 3.2). Same answer as AbdmHiuConsentService: {uuid, status}, plus error when it failed.
+    // ---- consent request (spec 3.2). Answers {uuid, status}, plus error when it failed.
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
                                               String purposeCode, String requesterName) {
@@ -161,7 +159,7 @@ public class EkaHiuService implements EkaHiuEvents {
                 : now.plus(30, ChronoUnit.DAYS);
         String uuid = UUID.randomUUID().toString();
         String initRequestId = UUID.randomUUID().toString();
-        // Persist first, as the NHA route does: the request is on the HIU screen whatever Eka says.
+        // Persist first: the request is on the HIU screen whatever Eka says.
         store.insertConsentRequest(uuid, address, cfg.getHiuId(), purpose, String.join(",", types), periodFrom, periodTo, expiry,
                 initRequestId, REQUESTED);
         Long rowId = store.findConsentRequestByInitRequest(initRequestId).map(AbdmHiuStore.Consent::id).orElse(null);
@@ -169,7 +167,7 @@ public class EkaHiuService implements EkaHiuEvents {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("uuid", uuid);
         try {
-            ensureKeyset(false);
+            ensureKeyset();
         } catch (RuntimeException e) {
             return failed(out, rowId, uuid, "Our HIU key was not registered with Eka: " + describe(e));
         }
@@ -206,7 +204,7 @@ public class EkaHiuService implements EkaHiuEvents {
         }
 
         try {
-            AbdmGatewayResponse response = eka.postSlow(CONSENT_CREATE, body, patientHeaders(patient.oid(), patient.subjectUuid()));
+            EkaResponse response = eka.postSlow(CONSENT_CREATE, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             String consentRequestId = consentInitIdOf(response == null ? null : response.body());
             if (consentRequestId == null) {
                 // Any 2xx is success (the spec's 204-with-a-body contradiction); abha.consent_update correlates it later.
@@ -239,26 +237,14 @@ public class EkaHiuService implements EkaHiuEvents {
 
     // ---- HIU key (spec 3.1)
 
-    // Registers the HIU key with Eka again, for trying the keyset call on its own at the venue.
-    public Map<String, Object> registerKeyset() {
-        Keyset keyset = ensureKeyset(true);
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("status", "REGISTERED");
-        out.put("keyForm", rawKeyForm() ? "raw" : "x509");
-        out.put("keyset", keyset.id());
-        return out;
-    }
-
     // Once per run per organisation: the newest stored key, else a fresh one stored first, sent to Eka.
     // DEMO-ONLY: the private key is kept under the Eka credentials key (EkaCredentialCipher); keys are never rotated.
-    synchronized Keyset ensureKeyset(boolean registerAgain) {
+    synchronized Keyset ensureKeyset() {
         Long organisationId = orgContext.organisationId();
         long key = organisationId == null ? 0L : organisationId;
         Keyset keyset = registered.get(key);
-        if (keyset != null && !registerAgain) return keyset;
-        if (keyset == null) {
-            keyset = store.findDataFlowsByConsent(KEYSET_CONSENT_ID).stream().findFirst().map(Keyset::of).orElseGet(this::newKeyset);
-        }
+        if (keyset != null) return keyset;
+        keyset = store.findDataFlowsByConsent(KEYSET_CONSENT_ID).stream().findFirst().map(Keyset::of).orElseGet(this::newKeyset);
         ObjectNode body = AbdmJson.obj();
         body.put("public_key", rawKeyForm() ? rawPoint(keyset.publicKeyX509()) : keyset.publicKeyX509());
         body.put("nonce", keyset.nonce());
@@ -337,7 +323,7 @@ public class EkaHiuService implements EkaHiuEvents {
         }
         // No fetch and no health-information request: Eka pushes the records itself (abha.hiu_data_push).
         for (String consentId : artefacts) {
-            store.upsertArtefact(consentRequestId, consentId, abhaAddress, hiuId, GRANTED, null);
+            store.upsertArtefact(consentRequestId, consentId, abhaAddress, hiuId, GRANTED);
         }
         keepGrantedTerms(consentRequestId, abhaAddress);
         logger.info("Eka consent request {} {} with {} artefact(s)", consentRequestId, status, artefacts.size());
@@ -480,7 +466,7 @@ public class EkaHiuService implements EkaHiuEvents {
                             received++;
                         }
                     }
-                } catch (AbdmGatewayException e) {
+                } catch (EkaCallException e) {
                     problem = "Entry not fetched from Eka: " + describe(e);
                 } catch (org.avni.server.service.abdm.hiu.AbdmRecordCipher.NoKeyException e) {
                     problem = "Not kept: no key to store received records";
@@ -522,7 +508,7 @@ public class EkaHiuService implements EkaHiuEvents {
         if (contentRef == null) return new String[]{null, checksum};
         String path = String.format(ENTRY, UriUtils.encodePathSegment(transactionId, StandardCharsets.UTF_8),
                 UriUtils.encodePathSegment(contentRef, StandardCharsets.UTF_8));
-        AbdmGatewayResponse response = eka.get(path, Map.of());
+        EkaResponse response = eka.get(path, Map.of());
         JsonNode body = response == null ? null : response.body();
         String fetched = AbdmFlows.firstNonNull(AbdmJson.text(body, "content"), AbdmJson.text(body, "data.content"));
         String fetchedChecksum = AbdmFlows.firstNonNull(AbdmJson.text(body, "checksum"), AbdmJson.text(body, "data.checksum"), checksum);
@@ -542,7 +528,7 @@ public class EkaHiuService implements EkaHiuEvents {
     }
 
     // The artefact a push belongs to: the id itself when it is an artefact of ours, else the one granted artefact of the
-    // consent request it names. consent_update may still be on its way, as the NHA route allows for. Null when none, or
+    // consent request it names. consent_update may still be on its way. Null when none, or
     // when the request has several and the push cannot say which (no guessing).
     private String grantedArtefactFor(String consentId) {
         if (consentId == null) return null;
@@ -612,11 +598,11 @@ public class EkaHiuService implements EkaHiuEvents {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("consentRequestId", consentId);
         try {
-            AbdmGatewayResponse response = eka.postSlow(path, body, patientHeaders(patient.oid(), patient.subjectUuid()));
+            EkaResponse response = eka.postSlow(path, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             out.put("ok", true);
             out.put("httpStatus", response == null ? null : response.status());
             out.put("body", response == null ? null : response.body());
-        } catch (AbdmGatewayException e) {
+        } catch (EkaCallException e) {
             out.put("ok", false);
             out.put("httpStatus", e.getStatus());
             out.put("abdmCode", e.getAbdmCode());
@@ -699,7 +685,7 @@ public class EkaHiuService implements EkaHiuEvents {
             ObjectNode hiu = body.putObject("hiu");
             putIfText(hiu, "clinic_id", cfg.getEkaClinicId());
             putIfText(hiu, "d_oid", cfg.getEkaDoctorOid());
-            AbdmGatewayResponse response = eka.post(CONSENT_LIST, body, patientHeaders(patient.oid(), patient.subjectUuid()));
+            EkaResponse response = eka.post(CONSENT_LIST, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             JsonNode consents = response == null ? null
                     : firstPresent(AbdmJson.at(response.body(), "consents"), AbdmJson.at(response.body(), "data.consents"));
             return consents != null && consents.isArray() ? consents : null;
@@ -820,7 +806,7 @@ public class EkaHiuService implements EkaHiuEvents {
     }
 
     private static String describe(RuntimeException e) {
-        if (e instanceof AbdmGatewayException g) {
+        if (e instanceof EkaCallException g) {
             String code = g.getAbdmCode() == null ? "" : g.getAbdmCode() + " ";
             return code + g.getMessage() + " (HTTP " + g.getStatus() + ")";
         }

@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// Eka mode: Eka Care posts every ABDM event here, on one URL, routed on the envelope's "event" field (spec section 5).
+// Eka Care posts every ABDM event here, on one URL, routed on the envelope's "event" field (spec section 5).
 // The raw body is kept as received, because the signature is over those exact bytes. The signature is checked per
 // abdm.eka.webhook-verify: off skips it, log records the outcome and carries on, enforce answers 401 to a bad one.
 // Then 200 at once, and the work goes to an AbdmAsync thread as the organisation: log the event, hand it to the HIP or
@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 // already taken (abdm_inbound_event, AbdmInboundEvents) is dropped. An event whose handling fails is released from it, so
 // Eka's redelivery is handled.
 // With no abdm.eka.webhook-verify setting the signature is enforced.
-// No Avni user: the path is under /api/v3/**, unprotected (ResourceProtectionStatus).
+// No Avni user: this path alone is open (ResourceProtectionStatus), so the signature is the check.
 @RestController
 public class EkaWebhookController {
     private static final Logger logger = LoggerFactory.getLogger(EkaWebhookController.class);

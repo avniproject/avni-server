@@ -30,11 +30,11 @@ public class ArchitectureTest {
     private static final Map<String, Set<String>> GET_WRITE_EXCLUSIONS = Map.of(
             "org.avni.server.web.IdentifierAssignmentController", Set.of(),
             "org.avni.server.web.FormController", Set.of("getFormIdentifiers"),
-            // DEMO-ONLY abdm-hackathon: these GETs call ABDM or Eka and write a traffic-log row; never merged.
+            // DEMO-ONLY abdm-hackathon, never merged: the status GET calls Eka and writes a traffic-log row; the HIP and HIU
+            // GETs read through plain JDBC as the organisation, outside a Spring transaction.
             "org.avni.server.web.abdm.AbdmAdminController", Set.of(),
             "org.avni.server.web.abdm.AbdmHipController", Set.of(),
-            "org.avni.server.web.abdm.AbdmHiuController", Set.of(),
-            "org.avni.server.web.abdm.MockConsentManagerController", Set.of()
+            "org.avni.server.web.abdm.AbdmHiuController", Set.of()
     );
 
     @ArchTest

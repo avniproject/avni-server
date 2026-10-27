@@ -24,8 +24,8 @@ import java.util.UUID;
 // DEMO-ONLY abdm-hackathon: never merged.
 // The HIU's ABDM state (V1_413, V1_414), all rows role HIU. In abdm_consent a consent request is the row with no consent_id; each
 // artefact granted under it is a row of its own carrying the request's consent_request_id. Plain JDBC, autocommitted per
-// statement; organisation_id set here. Every lookup names the role: in mock mode this server is the HIP too, and the two
-// sides share consent and transaction ids.
+// statement; organisation_id set here. Every lookup names the role: one organisation can be both HIP and HIU, and the
+// two sides share consent and transaction ids.
 @Component
 public class AbdmHiuStore {
     public static final String ROLE = "HIU";
@@ -41,9 +41,9 @@ public class AbdmHiuStore {
     }
 
     public record Consent(long id, String uuid, String consentRequestId, String consentId, String initRequestId,
-                          String fetchRequestId, String abhaAddress, String hipId, String hiuId, String purposeCode,
+                          String abhaAddress, String hipId, String hiuId, String purposeCode,
                           String hiTypes, Instant dateFrom, Instant dateTo, Instant dataEraseAt, String status,
-                          JsonNode consentDetail, String error, Instant createdAt, Instant updatedAt) {
+                          String error, Instant createdAt, Instant updatedAt) {
     }
 
     public record Artefact(String consentRequestId, String consentId, String status, String dataFlowStatus, long records) {
@@ -66,7 +66,7 @@ public class AbdmHiuStore {
     public record StatusChange(String consentRequestId, String consentId, String status, Instant at) {
     }
 
-    // Eka mode: a patient's Eka OID and subject, from the M1 abha_event table.
+    // A patient's Eka OID and subject, from the M1 abha_event table.
     public record EkaPatientRow(String ekaOid, String subjectUuid) {
     }
 
@@ -169,42 +169,24 @@ public class AbdmHiuStore {
 
     // ---- artefacts
 
-    // Writes the fetch request id before the fetch is sent; an artefact notified twice keeps one row.
-    public void upsertArtefact(String consentRequestId, String consentId, String abhaAddress, String hiuId, String status, String fetchRequestId) {
+    // An artefact notified twice keeps one row.
+    public void upsertArtefact(String consentRequestId, String consentId, String abhaAddress, String hiuId, String status) {
         MapSqlParameterSource p = params().addValue("cr", consentRequestId, Types.VARCHAR).addValue("consentId", consentId, Types.VARCHAR)
                 .addValue("address", abhaAddress, Types.VARCHAR).addValue("hiu", hiuId, Types.VARCHAR)
-                .addValue("status", status, Types.VARCHAR).addValue("fetch", fetchRequestId, Types.VARCHAR);
+                .addValue("status", status, Types.VARCHAR);
         int updated = jdbc.update("update abdm_consent set consent_request_id = coalesce(:cr, consent_request_id), status = :status, " +
-                "fetch_request_id = coalesce(:fetch, fetch_request_id), updated_at = now() " +
-                "where organisation_id = :org and role = 'HIU' and consent_id = :consentId", p);
+                "updated_at = now() where organisation_id = :org and role = 'HIU' and consent_id = :consentId", p);
         if (updated == 0) {
-            jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, fetch_request_id, abha_address, hiu_id, status) " +
-                    "values (:uuid, :org, 'HIU', :cr, :consentId, :fetch, :address, :hiu, :status)", p.addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR));
+            jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, abha_address, hiu_id, status) " +
+                    "values (:uuid, :org, 'HIU', :cr, :consentId, :address, :hiu, :status)", p.addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR));
         }
         history("c.consent_id = :consentId", params().addValue("consentId", consentId, Types.VARCHAR), status);
-    }
-
-    public Optional<Consent> findArtefactByFetchRequest(String fetchRequestId) {
-        if (fetchRequestId == null) return Optional.empty();
-        return one(jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIU' and fetch_request_id = :fetch",
-                params().addValue("fetch", fetchRequestId, Types.VARCHAR), CONSENT));
     }
 
     public Optional<Consent> findArtefact(String consentId) {
         if (consentId == null) return Optional.empty();
         return one(jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIU' and consent_id = :consentId",
                 params().addValue("consentId", consentId, Types.VARCHAR), CONSENT));
-    }
-
-    public void storeArtefactDetail(long id, String status, String hipId, String hiTypes, Instant dateFrom, Instant dateTo,
-                                    Instant dataEraseAt, JsonNode consentDetail) {
-        jdbc.update("update abdm_consent set status = coalesce(:status, status), hip_id = :hip, hi_types = :hiTypes, " +
-                        "date_from = cast(:from as timestamptz), date_to = cast(:to as timestamptz), data_erase_at = cast(:erase as timestamptz), " +
-                        "consent_detail = cast(:detail as jsonb), error = null, updated_at = now() where organisation_id = :org and id = :id",
-                params().addValue("id", id).addValue("status", status, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
-                        .addValue("hiTypes", hiTypes, Types.VARCHAR).addValue("from", AbdmFlows.iso(dateFrom), Types.VARCHAR)
-                        .addValue("to", AbdmFlows.iso(dateTo), Types.VARCHAR).addValue("erase", AbdmFlows.iso(dataEraseAt), Types.VARCHAR)
-                        .addValue("detail", consentDetail == null ? null : AbdmJson.write(consentDetail), Types.VARCHAR));
     }
 
     public void setArtefactStatus(Collection<String> consentIds, String status) {
@@ -242,13 +224,7 @@ public class AbdmHiuStore {
         return id == null ? 0 : id;
     }
 
-    public Optional<DataFlow> findDataFlowByRequest(String requestId) {
-        if (requestId == null) return Optional.empty();
-        return one(jdbc.query("select * from abdm_data_flow where organisation_id = :org and role = 'HIU' and request_id = :req",
-                params().addValue("req", requestId, Types.VARCHAR), DATA_FLOW));
-    }
-
-    // Newest first. Eka mode keeps its HIU keysets as flows of a consent id of their own (EkaHiuService.KEYSET_CONSENT_ID).
+    // Newest first. The HIU keysets are kept as flows of a consent id of their own (EkaHiuService.KEYSET_CONSENT_ID).
     public List<DataFlow> findDataFlowsByConsent(String consentId) {
         if (consentId == null) return new ArrayList<>();
         return jdbc.query("select * from abdm_data_flow where organisation_id = :org and role = 'HIU' and consent_id = :consentId order by id desc",
@@ -289,7 +265,7 @@ public class AbdmHiuStore {
                         .addValue("bundle", encrypted, Types.VARCHAR));
     }
 
-    // Eka mode: a webhook delivered twice, or a push in several parts, keeps one record per care context.
+    // A webhook delivered twice, or a push in several parts, keeps one record per care context.
     public boolean hasHealthInformation(String transactionId, String careContextReference) {
         if (transactionId == null) return false;
         Integer count = jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = :org and transaction_id = :tx " +
@@ -298,7 +274,7 @@ public class AbdmHiuStore {
         return count != null && count > 0;
     }
 
-    // Eka mode, read-only: the Eka OID of the latest live ABHA event (M1) naming one of these ABHA addresses.
+    // Read-only: the Eka OID of the latest live ABHA event (M1) naming one of these ABHA addresses.
     public Optional<EkaPatientRow> findEkaPatientByAbhaAddress(Collection<String> abhaAddresses) {
         List<String> addresses = abhaAddresses == null ? List.of() : abhaAddresses.stream().filter(a -> a != null && !a.isBlank())
                 .map(a -> a.trim().toLowerCase(Locale.ROOT)).distinct().toList();
@@ -421,9 +397,9 @@ public class AbdmHiuStore {
 
     private static final RowMapper<Consent> CONSENT = (rs, n) -> new Consent(rs.getLong("id"), rs.getString("uuid"),
             rs.getString("consent_request_id"), rs.getString("consent_id"), rs.getString("init_request_id"),
-            rs.getString("fetch_request_id"), rs.getString("abha_address"), rs.getString("hip_id"), rs.getString("hiu_id"),
+            rs.getString("abha_address"), rs.getString("hip_id"), rs.getString("hiu_id"),
             rs.getString("purpose_code"), rs.getString("hi_types"), instant(rs, "date_from"), instant(rs, "date_to"),
-            instant(rs, "data_erase_at"), rs.getString("status"), AbdmJson.read(rs.getString("consent_detail")),
+            instant(rs, "data_erase_at"), rs.getString("status"),
             rs.getString("error"), instant(rs, "created_at"), instant(rs, "updated_at"));
 
     private static final RowMapper<DataFlow> DATA_FLOW = (rs, n) -> new DataFlow(rs.getLong("id"), rs.getString("uuid"),

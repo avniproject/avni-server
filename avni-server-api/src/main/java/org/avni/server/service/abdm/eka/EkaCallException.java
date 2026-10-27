@@ -1,13 +1,13 @@
-package org.avni.server.service.abdm.gateway;
+package org.avni.server.service.abdm.eka;
 
 // DEMO-ONLY abdm-hackathon: never merged.
-// The gateway refused or did not answer. abdmCode is ABDM's own error code (e.g. ABDM-1035) when its body named one.
+// Eka refused or did not answer. abdmCode is ABDM's own error code (e.g. ABDM-1035) when Eka's body named one.
 // The message never carries a token, a secret or a patient's details.
-public class AbdmGatewayException extends RuntimeException {
+public class EkaCallException extends RuntimeException {
     private final int status;
     private final String abdmCode;
 
-    public AbdmGatewayException(int status, String abdmCode, String message) {
+    public EkaCallException(int status, String abdmCode, String message) {
         super(message);
         this.status = status;
         this.abdmCode = abdmCode;

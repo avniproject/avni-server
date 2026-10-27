@@ -13,12 +13,13 @@ import java.util.Map;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // "Reset demo data" on the ABDM page: clears this organisation's ABDM tables (traffic, consents, records received,
-// links) so a demo starts clean. Patients and visits are untouched; their visits can be linked again.
+// links, webhook events taken and set aside) so a demo starts clean. Patients and visits are untouched; their visits
+// can be linked again.
 @RestController
 public class AbdmDemoResetController {
     // Children first, so no row is left pointing at a deleted one.
     private static final List<String> TABLES = List.of("abdm_health_information", "abdm_data_flow", "abdm_consent",
-            "abdm_link_request", "abdm_care_context", "abdm_patient_link", "abdm_message");
+            "abdm_link_request", "abdm_care_context", "abdm_parked_event", "abdm_inbound_event", "abdm_message");
 
     private final AccessControlService accessControlService;
     private final NamedParameterJdbcTemplate jdbc;

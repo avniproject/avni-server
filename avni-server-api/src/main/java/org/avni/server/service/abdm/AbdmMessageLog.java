@@ -37,9 +37,9 @@ public class AbdmMessageLog {
     private static final Logger logger = LoggerFactory.getLogger(AbdmMessageLog.class);
     private static final int MAX_RECENT = 500;
     public static final String MASK = "***";
-    private static final String INSERT = "insert into abdm_message (organisation_id, direction, method, path, request_id, correlation_id, http_status, body) " +
-            "values (:organisationId, :direction, :method, :path, :requestId, :correlationId, :httpStatus, cast(:body as jsonb))";
-    private static final String RECENT = "select id, direction, method, path, request_id, correlation_id, http_status, created_at, body::text as body " +
+    private static final String INSERT = "insert into abdm_message (organisation_id, direction, method, path, request_id, http_status, body) " +
+            "values (:organisationId, :direction, :method, :path, :requestId, :httpStatus, cast(:body as jsonb))";
+    private static final String RECENT = "select id, direction, method, path, request_id, http_status, created_at, body::text as body " +
             "from abdm_message order by id desc limit :limit";
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -69,7 +69,6 @@ public class AbdmMessageLog {
             row.put("method", rs.getString("method"));
             row.put("path", rs.getString("path"));
             row.put("requestId", rs.getString("request_id"));
-            row.put("correlationId", rs.getString("correlation_id"));
             int status = rs.getInt("http_status");
             row.put("httpStatus", rs.wasNull() ? null : status);
             Timestamp createdAt = rs.getTimestamp("created_at");
@@ -89,7 +88,6 @@ public class AbdmMessageLog {
                     .addValue("method", method)
                     .addValue("path", truncate(path, 500))
                     .addValue("requestId", truncate(requestId, 100))
-                    .addValue("correlationId", truncate(body == null ? null : AbdmJson.requestIdOf(body), 100))
                     .addValue("httpStatus", httpStatus)
                     .addValue("body", body == null || body.isNull() ? null : AbdmJson.write(redact(body)));
             ownTransaction.executeWithoutResult(status -> jdbc.update(INSERT, params));

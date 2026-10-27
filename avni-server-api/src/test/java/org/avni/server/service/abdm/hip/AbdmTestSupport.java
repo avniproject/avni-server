@@ -1,15 +1,9 @@
 package org.avni.server.service.abdm.hip;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.service.abdm.AbdmAsync;
-import org.avni.server.service.abdm.AbdmCallbackHeaders;
 import org.avni.server.service.abdm.AbdmConfig;
-import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmOrgContext;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -18,26 +12,12 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-// DEMO-ONLY abdm-hackathon: fixtures and mocks the M2/M3 tests share.
+// DEMO-ONLY abdm-hackathon: mocks the M2/M3 tests share.
 public final class AbdmTestSupport {
     public static final String HIP_ID = "TANUH";
     public static final String HIU_ID = "TANUH-HIU";
-    public static final String PUSH_URL = "http://localhost:8021/api/v3/hiu/health-information/transfer";
 
     private AbdmTestSupport() {
-    }
-
-    public static JsonNode fixture(String name) {
-        try (InputStream in = AbdmTestSupport.class.getResourceAsStream("/abdm/v3/" + name)) {
-            if (in == null) throw new IllegalArgumentException("No fixture " + name);
-            return AbdmJson.read(new String(in.readAllBytes(), StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public static AbdmCallbackHeaders headers(String requestId) {
-        return new AbdmCallbackHeaders("/test", requestId, "2026-10-25T10:00:00.000Z", HIP_ID, HIU_ID, "sbx", null);
     }
 
     public static AbdmConfig config() {
@@ -46,8 +26,6 @@ public final class AbdmTestSupport {
         when(cfg.getHipName()).thenReturn("TANUH Health Centre");
         when(cfg.getHiuId()).thenReturn(HIU_ID);
         when(cfg.getAbhaAddressSuffix()).thenReturn("@sbx");
-        when(cfg.getDemoOtp()).thenReturn("123456");
-        when(cfg.dataPushUrl()).thenReturn(PUSH_URL);
         return cfg;
     }
 
