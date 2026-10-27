@@ -294,6 +294,7 @@ public class EkaHipService implements EkaHipEvents {
         }
         String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
         String oid = AbdmJson.text(data, "oid");
+        String requesterAddress = AbdmJson.text(data, "abha_address");
         String hipId = cfg.getHipId();
 
         Set<String> linkedHere = store.findCareContextsByReferences(hipId, references).stream()
@@ -308,7 +309,7 @@ public class EkaHipService implements EkaHipEvents {
                     problems.add(reference + " (not linked through this HIP)");
                     continue;
                 }
-                Prepared p = prepare(reference, patientUuid);
+                Prepared p = prepare(reference, patientUuid, oid, requesterAddress);
                 if (p.bundleJson() == null) {
                     problems.add(reference + " (" + p.problem() + ")");
                     continue;
@@ -361,10 +362,29 @@ public class EkaHipService implements EkaHipEvents {
         }
     }
 
+    // The ABHA asking is the one on the record: its Eka ID, its address, or the default address of its number. When
+    // Eka names no ABHA there is nothing to check against.
+    private boolean stillTheirAbha(AbhaLink link, String subjectUuid, String requesterOid, String requesterAddress) {
+        if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return true;
+        if (link == null) return false;
+        if (StringUtils.hasText(requesterOid) && AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
+                link.getAbhaNumber(), link.getAbhaAddress()).map(AbhaEvent::getEkaOid).filter(requesterOid::equals).isPresent()) return true;
+        if (!StringUtils.hasText(requesterAddress)) return false;
+        String asking = requesterAddress.trim().split("@", 2)[0].toLowerCase(Locale.ROOT);
+        String savedName = link.getAbhaAddress() == null ? null : link.getAbhaAddress().trim().split("@", 2)[0].toLowerCase(Locale.ROOT);
+        String savedNumber = link.getAbhaNumber() == null ? "" : link.getAbhaNumber().replaceAll("[^0-9]", "");
+        return asking.equals(savedName) || (!savedNumber.isEmpty() && asking.equals(savedNumber));
+    }
+
     // ---- building
 
-    // Read in one transaction: the encounter, its patient and their ABHA, as a FHIR bundle.
     Prepared prepare(String reference, String expectedPatientUuid) {
+        return prepare(reference, expectedPatientUuid, null, null);
+    }
+
+    // Read in one transaction: the encounter, its patient and their ABHA, as a FHIR bundle. requesterOid and
+    // requesterAddress: the ABHA Eka asks for, which must still be the one on the patient's record.
+    Prepared prepare(String reference, String expectedPatientUuid, String requesterOid, String requesterAddress) {
         try {
             return orgContext.inReadOnlyTransaction(() -> {
                 org.avni.server.domain.AbstractEncounter encounter = encounterRepository.findByUuid(reference);
@@ -386,6 +406,11 @@ public class EkaHipService implements EkaHipEvents {
                     return new Prepared(reference, null, "belongs to another patient");
                 }
                 AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
+                // A visit stays linked at NHA under the ABHA it was linked with; once the record holds another ABHA, or
+                // none, that ABHA gets nothing.
+                if (!stillTheirAbha(link, individual.getUuid(), requesterOid, requesterAddress)) {
+                    return new Prepared(reference, null, "the ABHA asking is no longer the patient's");
+                }
                 CareContextDocument document = assembler.assemble(encounter, individual,
                         link == null ? null : AbdmFlows.hyphenatedAbhaNumber(link.getAbhaNumber()),
                         link == null ? null : AbdmFlows.withSuffix(link.getAbhaAddress(), cfg.getAbhaAddressSuffix()),

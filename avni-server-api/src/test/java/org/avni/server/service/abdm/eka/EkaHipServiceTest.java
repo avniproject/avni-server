@@ -519,6 +519,45 @@ public class EkaHipServiceTest {
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("HTTP 400"));
     }
 
+    // A visit stays linked at NHA under the ABHA it was linked with. Once the record holds another ABHA, or none, a
+    // request from the old one gets nothing (27 Oct sweep: a wrong ABHA corrected on the record kept the records flowing).
+    @Test
+    public void visitsAreNotSentToAnAbhaTheRecordNoLongerHolds() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) fetch.get("data")).put("oid", "oid-old-abha").put("abha_address", "old.abha@sbx");
+
+        service.hipDataFetch(fetch);
+
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
+    }
+
+    @Test
+    public void noVisitIsSentForAPatientWhoseAbhaWasRemoved() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(INDIVIDUAL_ID)).thenReturn(Optional.empty());
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+    }
+
+    // The ABHA number's own default address (its 14 digits) is the same ABHA as the readable one on the record.
+    @Test
+    public void aRequestFromTheSavedNumbersDefaultAddressIsServed() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) fetch.get("data")).put("oid", "oid-not-recorded").put("abha_address", "12345678568912@sbx");
+
+        service.hipDataFetch(fetch);
+
+        verify(eka).postSlow(eq(ON_FETCH), any(), any());
+    }
+
     // On 26 Oct Eka took over 10 s to take an on-fetch 3 times in 18, and each of those shares was lost.
     @Test
     public void onFetchGoesOnTheSlowLimit() {

@@ -793,10 +793,12 @@ public class EkaHiuService implements EkaHiuEvents {
                         abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid()), null, address);
                 if (event.isPresent()) return new EkaPatient(event.get().getEkaOid(), s.uuid(), s.id());
             }
+            // A lookup naming the address gives the ABHA's Eka ID, whichever record it was made on; the patient is the one
+            // holding the address, never the record of a lookup left unsaved.
             Optional<AbdmHiuStore.EkaPatientRow> row = store.findEkaPatientByAbhaAddress(asTyped == null ? List.of(address) : List.of(address, asTyped));
             if (row.isPresent()) {
-                Long individualId = hipStore.findSubjectByUuid(row.get().subjectUuid()).map(AbdmHipStore.Subject::id).orElse(null);
-                return new EkaPatient(row.get().ekaOid(), row.get().subjectUuid(), individualId);
+                AbdmHipStore.Subject holder = subjects.isEmpty() ? null : subjects.get(0);
+                return new EkaPatient(row.get().ekaOid(), holder == null ? null : holder.uuid(), holder == null ? null : holder.id());
             }
             if (!subjects.isEmpty()) return new EkaPatient(null, subjects.get(0).uuid(), subjects.get(0).id());
         } catch (RuntimeException e) {

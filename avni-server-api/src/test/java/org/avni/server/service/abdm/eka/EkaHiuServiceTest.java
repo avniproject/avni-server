@@ -199,7 +199,9 @@ public class EkaHiuServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void anAbhaEventNamingTheAddressGivesTheOidWhenNoSubjectHoldsIt() {
+    // The lookup's Eka ID is the ABHA's; the record it was made on is not the ABHA's holder (nobody here holds it), so no
+    // patient of ours is named to Eka for it (27 Oct sweep).
+    public void anAbhaEventNamingTheAddressGivesTheOidButNoPatientWhenNoSubjectHoldsIt() {
         when(hipStore.findSubjectsByAbhaAddress(any(), any())).thenReturn(List.of());
         when(store.findEkaPatientByAbhaAddress(any())).thenReturn(Optional.of(new AbdmHiuStore.EkaPatientRow("oid-2", "subject-2")));
 
@@ -209,7 +211,7 @@ public class EkaHiuServiceTest {
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
         verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
         assertEquals("oid-2", body.getValue().at("/patient/oid").asText());
-        assertEquals("subject-2", headers.getValue().get(EkaAbdmClient.H_PARTNER_PATIENT_ID));
+        assertFalse(headers.getValue().containsKey(EkaAbdmClient.H_PARTNER_PATIENT_ID));
     }
 
     // ---- abha.consent_update
@@ -525,6 +527,22 @@ public class EkaHiuServiceTest {
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
         assertEquals("oid-1", body.getValue().at("/patient/oid").asText());
+    }
+
+    // The holder of an address may have no lookup of their own (an upload, a typed answer) while another patient's record
+    // holds a lookup of that address, left unsaved: its Eka ID is the ABHA's, but the patient is the holder, never the other.
+    @Test
+    public void aLookupOfTheAddressUnderAnotherPatientIsNeverTakenForTheirs() {
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of());
+        when(store.findEkaPatientByAbhaAddress(any())).thenReturn(Optional.of(new AbdmHiuStore.EkaPatientRow("oid-shyam", "subject-other")));
+        when(hipStore.findSubjectByUuid("subject-other")).thenReturn(Optional.of(new AbdmHipStore.Subject(99, "subject-other", "Someone Else")));
+        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
+        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-shyam"), any(), any())).thenReturn(new EkaResponse("a-1", 204, null));
+
+        service.approveInSandbox("init-1");
+
+        verify(hipStore).findCareContexts(7, HIP_ID);
+        verify(hipStore, never()).findCareContexts(eq(99L), any());
     }
 
     // Two patients holding one ABHA address: neither is picked (the first one used to be).
