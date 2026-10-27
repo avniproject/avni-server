@@ -34,6 +34,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -302,7 +303,8 @@ public class EkaHiuService implements EkaHiuEvents {
         }
 
         Optional<AbdmHiuStore.Consent> request = retry.find(() -> store.findConsentRequest(consentRequestId));
-        if (request.isEmpty()) request = matchThroughEka(consentRequestId);
+        boolean mappedEarlier = request.isPresent();
+        if (!mappedEarlier) request = matchThroughEka(consentRequestId);
         if (request.isEmpty()) {
             // Never filed under another request: with two waiting, that swapped their approvals (AVNI-24, 26 Oct).
             store.parkConsentUpdate(consentRequestId, status, artefacts);
@@ -310,8 +312,9 @@ public class EkaHiuService implements EkaHiuEvents {
             return;
         }
         String abhaAddress = request.get().abhaAddress();
-        String hiuId = request.get().hiuId() != null ? request.get().hiuId() : cfg.getHiuId();
-        applyParked(consentRequestId, abhaAddress, hiuId);
+        String hiuId = hiuIdOf(request.get());
+        // Matching through Eka has applied what was parked for the id; a request mapped earlier may still have some.
+        if (mappedEarlier) applyParked(consentRequestId, abhaAddress, hiuId);
         apply(consentRequestId, status, artefacts, abhaAddress, hiuId);
     }
 
@@ -355,6 +358,18 @@ public class EkaHiuService implements EkaHiuEvents {
         }
     }
 
+    // Hourly (AbdmHousekeepingJob): an update parked because no request carried its id is applied once one does,
+    // whether another path has mapped the request since or Eka's consent list now gives the match.
+    public void retryParkedUpdates() {
+        List<String> unmatched = new ArrayList<>();
+        for (String id : store.parkedConsentRequestIds()) {
+            Optional<AbdmHiuStore.Consent> request = store.findConsentRequest(id);
+            if (request.isPresent()) applyParked(id, request.get().abhaAddress(), hiuIdOf(request.get()));
+            else unmatched.add(id);
+        }
+        if (!unmatched.isEmpty()) matchThroughEka(unmatched);
+    }
+
     // Updates parked for this id before it was matched, oldest first.
     private void applyParked(String consentRequestId, String abhaAddress, String hiuId) {
         for (AbdmHiuStore.ParkedConsentUpdate parked : store.parkedConsentUpdates(consentRequestId)) {
@@ -363,29 +378,51 @@ public class EkaHiuService implements EkaHiuEvents {
         }
     }
 
-    // ABDM's consent request id to our request: Eka's consent list, per patient with a request waiting, gives the
-    // consent_init_id Eka answered our create with, which is what the request carries until it is matched.
     private Optional<AbdmHiuStore.Consent> matchThroughEka(String abdmId) {
+        return Optional.ofNullable(matchThroughEka(List.of(abdmId)).get(abdmId));
+    }
+
+    // ABDM's consent request ids to our requests: Eka's consent list, per patient with a request waiting, gives the
+    // consent_init_id Eka answered our create with, which is what the request carries until it is matched. Only a
+    // request still REQUESTED can be waiting; an answered one is filed under ABDM's id already. One list per patient.
+    private Map<String, AbdmHiuStore.Consent> matchThroughEka(Collection<String> abdmIds) {
+        Map<String, AbdmHiuStore.Consent> matched = new LinkedHashMap<>();
         Map<String, List<AbdmHiuStore.Consent>> byPatient = new LinkedHashMap<>();
         for (AbdmHiuStore.Consent r : store.listConsentRequests()) {
-            if (r.consentRequestId() == null || r.abhaAddress() == null || FAILED.equals(r.status())) continue;
+            if (r.consentRequestId() == null || r.abhaAddress() == null || !REQUESTED.equals(r.status())) continue;
             byPatient.computeIfAbsent(r.abhaAddress().toLowerCase(Locale.ROOT), a -> new ArrayList<>()).add(r);
         }
         for (List<AbdmHiuStore.Consent> requests : byPatient.values()) {
+            if (matched.size() == abdmIds.size()) break;
             String address = requests.get(0).abhaAddress();
             EkaPatient patient = findPatient(address, address);
             if (patient.oid() == null) continue;
-            String initId = initIdOf(abdmId, consentList(patient, address));
-            if (initId == null) continue;
-            for (AbdmHiuStore.Consent r : requests) {
-                if (initId.equals(r.consentRequestId())) {
-                    store.mapConsentRequestId(r.id(), abdmId);
-                    logger.info("Eka consent request {} (Eka's {}) is request {}", abdmId, initId, r.uuid());
-                    return Optional.of(r);
+            JsonNode consents = consentList(patient, address);
+            for (String abdmId : abdmIds) {
+                if (matched.containsKey(abdmId)) continue;
+                String initId = initIdOf(abdmId, consents);
+                if (initId == null) continue;
+                for (AbdmHiuStore.Consent r : requests) {
+                    if (initId.equals(r.consentRequestId()) && !matched.containsValue(r)) {
+                        mapToAbdmId(r, abdmId);
+                        logger.info("Eka consent request {} (Eka's {}) is request {}", abdmId, initId, r.uuid());
+                        matched.put(abdmId, r);
+                        break;
+                    }
                 }
             }
         }
-        return Optional.empty();
+        return matched;
+    }
+
+    // Files the request under ABDM's id, then applies any update that came for that id before it could be placed.
+    private void mapToAbdmId(AbdmHiuStore.Consent request, String abdmId) {
+        store.mapConsentRequestId(request.id(), abdmId);
+        applyParked(abdmId, request.abhaAddress(), hiuIdOf(request));
+    }
+
+    private String hiuIdOf(AbdmHiuStore.Consent request) {
+        return request.hiuId() != null ? request.hiuId() : cfg.getHiuId();
     }
 
     // ---- abha.hiu_data_push (spec 3.7, 3.8)
@@ -650,7 +687,7 @@ public class EkaHiuService implements EkaHiuEvents {
         String id = request.consentRequestId();
         String abdmId = abdmIdOf(id, patient, request.abhaAddress());
         if (abdmId == null || abdmId.equals(id)) return id;
-        store.mapConsentRequestId(request.id(), abdmId);
+        mapToAbdmId(request, abdmId);
         logger.info("Eka consent request {} is ABDM consent request {}", id, abdmId);
         return abdmId;
     }

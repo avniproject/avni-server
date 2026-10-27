@@ -299,6 +299,96 @@ public class EkaHiuServiceTest {
         verify(store).resolveParked(77L);
     }
 
+    // A parked update was applied only when another update came; every path that maps a request applies it now.
+    @Test
+    public void approvalThatMapsTheRequestToAbdmsIdAppliesTheUpdateParkedForThatId() {
+        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+
+        service.approveInSandbox("init-1");
+
+        verify(store).mapConsentRequestId(5L, "abdm-A");
+        verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+        verify(store).resolveParked(77L);
+    }
+
+    @Test
+    public void aPushThatMatchesItsRequestThroughEkaAppliesTheUpdateParkedForIt() {
+        when(store.findArtefact("abdm-A")).thenReturn(Optional.empty());
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
+        when(store.listConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+        FideliusKeyMaterial hip = crypto.generateKeyMaterial();
+        String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
+        ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
+        ((ObjectNode) event.get("data")).put("consent_id", "abdm-A");
+
+        service.hiuDataPush(event);
+
+        verify(store).mapConsentRequestId(5L, "abdm-A");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+        verify(store).resolveParked(77L);
+    }
+
+    // The hourly retry: an update parked because Eka's list did not have the id yet is applied once it does.
+    @Test
+    public void theRetryAppliesAParkedUpdateOnceEkasListMatchesItsRequest() {
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A"));
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
+        when(store.listConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+
+        service.retryParkedUpdates();
+
+        verify(store).mapConsentRequestId(5L, "abdm-A");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+        verify(store).resolveParked(77L);
+    }
+
+    @Test
+    public void theRetryAppliesAParkedUpdateWhoseRequestWasMappedSinceWithoutAskingEka() {
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A"));
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "REQUESTED")));
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "DENIED", List.of())));
+
+        service.retryParkedUpdates();
+
+        verify(store).setConsentRequestStatus("abdm-A", "DENIED");
+        verify(store).resolveParked(77L);
+        verify(eka, never()).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
+    }
+
+    // Several parked ids cost one consent-list call per patient, not one per id.
+    @Test
+    public void theRetryAsksEkaOncePerPatientForAllParkedIds() {
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A", "abdm-B"));
+        when(store.listConsentRequests()).thenReturn(List.of(request(6, "init-2", "REQUESTED"), request(5, "init-1", "REQUESTED")));
+        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}", "{\"consent_id\":\"abdm-B\",\"consent_init_id\":\"init-2\"}");
+
+        service.retryParkedUpdates();
+
+        verify(store).mapConsentRequestId(5L, "abdm-A");
+        verify(store).mapConsentRequestId(6L, "abdm-B");
+        verify(eka, times(1)).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
+    }
+
+    // Only a request still waiting for its answer can be the one an unknown ABDM id belongs to; an answered one is
+    // already filed under ABDM's id, so asking Eka about its patient is wasted.
+    @Test
+    public void matchingThroughEkaAsksOnlyAboutPatientsWithARequestStillWaiting() {
+        when(store.findConsentRequest("abdm-Z")).thenReturn(Optional.empty());
+        when(store.listConsentRequests()).thenReturn(List.of(request(5, "abdm-A", "GRANTED")));
+
+        service.consentUpdate(grantedUpdate("abdm-Z"));
+
+        verify(eka, never()).post(eq(EkaHiuService.CONSENT_LIST), any(), any());
+        verify(store).parkConsentUpdate("abdm-Z", "GRANTED", List.of("artefact-1"));
+    }
+
     // HIU_FLOW_102: the consent's expiry is asked for, not fixed at 30 days.
     @Test
     public void theExpiryAskedForIsSentAndKept() {

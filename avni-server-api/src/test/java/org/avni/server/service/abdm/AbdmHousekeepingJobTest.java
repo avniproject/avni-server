@@ -23,11 +23,12 @@ public class AbdmHousekeepingJobTest {
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData = mock(org.avni.server.service.abdm.hiu.AbdmHiuDataService.class);
     private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore = mock(org.avni.server.service.abdm.hip.AbdmHipStore.class);
     private final org.avni.server.service.abdm.eka.EkaHipService ekaHip = mock(org.avni.server.service.abdm.eka.EkaHipService.class);
+    private final org.avni.server.service.abdm.eka.EkaHiuService ekaHiu = mock(org.avni.server.service.abdm.eka.EkaHiuService.class);
 
     private final AbdmAutoLink autoLink = new AbdmAutoLink(true);
 
     private AbdmHousekeepingJob job() {
-        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, ekaHip, autoLink, 30);
+        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, ekaHip, ekaHiu, autoLink, 30);
     }
 
     @Test
@@ -61,6 +62,20 @@ public class AbdmHousekeepingJobTest {
         verify(ekaHip).linkCareContexts("subject-1", true);
         verify(ekaHip).linkCareContexts("subject-2", true);
         verify(hipStore).failQueued("subject-1", "TANUH", "Patient has no Eka ID");
+    }
+
+    @Test
+    public void parkedConsentUpdatesAreRetriedAsTheOrganisation() {
+        when(cfg.getSystemUser()).thenReturn("abdm-system");
+        doAnswer(inv -> {
+            ((Runnable) inv.getArgument(0)).run();
+            return null;
+        }).when(orgContext).runAsOrg(any(Runnable.class));
+
+        job().expireConsentsAndEraseRecords();
+
+        verify(hiuData).expireAndErase();
+        verify(ekaHiu).retryParkedUpdates();
     }
 
     // A test of linking from the patient's app needs visits nothing has linked first.

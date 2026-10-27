@@ -163,6 +163,12 @@ public class AbdmHiuStore {
                 });
     }
 
+    // The ids updates are parked for, for the hourly retry. One parked over a week ago is left: no request of ours took it.
+    public List<String> parkedConsentRequestIds() {
+        return jdbc.queryForList("select distinct reference from abdm_parked_event where organisation_id = :org and kind = 'consent_update' " +
+                "and resolved_at is null and created_at > now() - interval '7 days' order by reference limit 100", params(), String.class);
+    }
+
     public void resolveParked(long id) {
         jdbc.update("update abdm_parked_event set resolved_at = now() where organisation_id = :org and id = :id", params().addValue("id", id));
     }

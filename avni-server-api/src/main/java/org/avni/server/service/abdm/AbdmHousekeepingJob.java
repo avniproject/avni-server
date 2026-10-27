@@ -23,6 +23,7 @@ public class AbdmHousekeepingJob {
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData;
     private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore;
     private final org.avni.server.service.abdm.eka.EkaHipService ekaHip;
+    private final org.avni.server.service.abdm.eka.EkaHiuService ekaHiu;
     private final org.avni.server.service.abdm.hip.AbdmAutoLink autoLink;
     private final int messageRetentionDays;
 
@@ -31,10 +32,12 @@ public class AbdmHousekeepingJob {
                                org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData,
                                org.avni.server.service.abdm.hip.AbdmHipStore hipStore,
                                org.avni.server.service.abdm.eka.EkaHipService ekaHip,
+                               org.avni.server.service.abdm.eka.EkaHiuService ekaHiu,
                                org.avni.server.service.abdm.hip.AbdmAutoLink autoLink,
                                @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
         this.hipStore = hipStore;
         this.ekaHip = ekaHip;
+        this.ekaHiu = ekaHiu;
         this.autoLink = autoLink;
         this.hiuData = hiuData;
         this.cfg = cfg;
@@ -51,6 +54,7 @@ public class AbdmHousekeepingJob {
     @Scheduled(cron = "${abdm.housekeeping.consent-cron:0 5 * * * *}", zone = "Asia/Kolkata")
     public void expireConsentsAndEraseRecords() {
         runAsOrg("consent expiry and record erase", hiuData::expireAndErase);
+        runAsOrg("retry of parked consent updates", ekaHiu::retryParkedUpdates);
     }
 
     // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient.
