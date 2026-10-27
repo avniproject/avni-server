@@ -343,7 +343,7 @@ public class EkaHipServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).post(eq(ON_FETCH), body.capture(), headers.capture());
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), headers.capture());
         assertEquals(OID, headers.getValue().get(EkaAbdmClient.H_PATIENT_OID));
         assertEquals("subject-1", headers.getValue().get(EkaAbdmClient.H_PARTNER_PATIENT_ID));
         assertEquals(HIP_ID, headers.getValue().get(EkaAbdmClient.H_HIP_ID));
@@ -371,7 +371,7 @@ public class EkaHipServiceTest {
 
         InOrder order = inOrder(store, eka);
         order.verify(store).insertDataFlow(eq("eka:flow-tx-1"), eq("flow-tx-1"), eq("wh-fetch-1"), eq("eka:" + ON_FETCH), eq("REQUESTED"), isNull());
-        order.verify(eka).post(eq(ON_FETCH), any(), any());
+        order.verify(eka).postSlow(eq(ON_FETCH), any(), any());
         order.verify(store).finishDataFlow(42L, "TRANSFERRED", 2, null);
     }
 
@@ -383,7 +383,7 @@ public class EkaHipServiceTest {
         service.hipDataFetch(fetchEvent(requester.publicKeyRawBase64(), requester.nonceBase64(), "flow-tx-1"));
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq(ON_FETCH), body.capture(), any());
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
         JsonNode b = body.getValue();
         assertEquals(1, b.get("entries").size());
         String plain = crypto.decrypt(b.at("/entries/0/content").asText(), requester.privateKeyBase64(), requester.nonceBase64(),
@@ -400,7 +400,7 @@ public class EkaHipServiceTest {
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), ""));
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq(ON_FETCH), body.capture(), any());
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
         assertEquals("wh-fetch-1", body.getValue().get("transaction_id").asText());
     }
 
@@ -416,7 +416,7 @@ public class EkaHipServiceTest {
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq(ON_FETCH), body.capture(), any());
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
         assertEquals(1, body.getValue().get("entries").size());
         assertEquals("enc-1", body.getValue().at("/entries/0/care_context_id").asText());
         verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-2"));
@@ -451,7 +451,7 @@ public class EkaHipServiceTest {
 
         service.hipDataFetch(e);
 
-        verify(eka, never()).post(eq(ON_FETCH), any(), any());
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("OPConsultation"));
     }
 
@@ -462,7 +462,7 @@ public class EkaHipServiceTest {
 
         service.hipDataFetch(e);
 
-        verify(eka, never()).post(anyString(), any(), any());
+        verifyNoInteractions(eka);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("key"));
     }
 
@@ -470,11 +470,36 @@ public class EkaHipServiceTest {
     public void anEkaRefusalOfOnFetchIsRecordedAsFailed() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
-        when(eka.post(eq(ON_FETCH), any(), any())).thenThrow(new EkaCallException(400, null, "Eka POST " + ON_FETCH + " refused with HTTP 400"));
+        when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaCallException(400, null, "Eka POST " + ON_FETCH + " refused with HTTP 400"));
 
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
 
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("HTTP 400"));
+    }
+
+    // On 26 Oct Eka took over 10 s to take an on-fetch 3 times in 18, and each of those shares was lost.
+    @Test
+    public void onFetchGoesOnTheSlowLimit() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(eka).postSlow(eq(ON_FETCH), any(), any());
+        verify(eka, never()).post(eq(ON_FETCH), any(), any());
+    }
+
+    // Eka may have taken the records, so an unanswered share is neither a success nor a failure.
+    @Test
+    public void anOnFetchEkaNeverAnsweredIsRecordedAsUnansweredNotFailed() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(true, "Eka POST " + ON_FETCH + " did not answer within 60000 ms"));
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(store).finishDataFlow(eq(42L), eq("UNANSWERED"), eq(2), contains("did not answer"));
+        verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
     }
 
     @Test
@@ -484,7 +509,7 @@ public class EkaHipServiceTest {
 
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
 
-        verify(eka, never()).post(anyString(), any(), any());
+        verifyNoInteractions(eka);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), anyString());
     }
 

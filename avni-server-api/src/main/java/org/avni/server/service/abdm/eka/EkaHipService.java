@@ -66,6 +66,8 @@ public class EkaHipService implements EkaHipEvents {
     static final String FLOW_REQUESTED = "REQUESTED";
     static final String FLOW_TRANSFERRED = "TRANSFERRED";
     static final String FLOW_FAILED = "FAILED";
+    // Eka did not answer an on-fetch it may still have taken: neither transferred nor failed.
+    static final String FLOW_UNANSWERED = "UNANSWERED";
 
     // Eka documents LINKED and ERRORED; the rest are tolerated in case the sandbox says it differently.
     private static final Set<String> SAYS_LINKED = Set.of("LINKED", "SUCCESS", "SUCCESSFUL", "LINK_SUCCESS", "COMPLETED");
@@ -337,9 +339,19 @@ public class EkaHipService implements EkaHipEvents {
         body.set("entries", entries);
         body.set("key_information", keyInformation(ours));
         try {
-            eka.post(ON_FETCH_PATH, body, patientHeaders(oid, patientUuid));
+            // Eka has taken over 10 s to answer an on-fetch (26 Oct: 3 of 18), so the share gets the slow limit.
+            eka.postSlow(ON_FETCH_PATH, body, patientHeaders(oid, patientUuid));
             store.finishDataFlow(flowId, FLOW_TRANSFERRED, entries.size(), notSent);
             logger.info("Eka data fetch {}: {} records sent on-fetch", transactionId, entries.size());
+        } catch (EkaAbdmClient.NoAnswer e) {
+            if (!e.sent) {
+                store.finishDataFlow(flowId, FLOW_FAILED, 0, "On-fetch failed: " + e.getMessage());
+                logger.warn("Eka on-fetch for {} failed: {}", transactionId, e.getMessage());
+                return;
+            }
+            String unanswered = "Eka did not answer; it may have the records" + (notSent == null ? "" : ". " + notSent);
+            store.finishDataFlow(flowId, FLOW_UNANSWERED, entries.size(), unanswered);
+            logger.warn("Eka on-fetch for {} not answered: {}", transactionId, e.getMessage());
         } catch (RuntimeException e) {
             store.finishDataFlow(flowId, FLOW_FAILED, 0, "On-fetch failed: " + e.getMessage());
             logger.warn("Eka on-fetch for {} failed: {}", transactionId, e.getMessage());
