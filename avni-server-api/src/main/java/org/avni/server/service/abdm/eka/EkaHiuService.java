@@ -778,8 +778,8 @@ public class EkaHiuService implements EkaHiuEvents {
 
     // ---- patient
 
-    // The patient's Eka OID: the subject holding this ABHA address and its latest ABHA event (M1), else the latest ABHA
-    // event naming the address. Read-only.
+    // The patient's Eka OID: the subject holding this ABHA address and the record of that ABHA among its ABHA events (M1),
+    // never a later lookup of another ABHA left unsaved; else the latest ABHA event naming the address. Read-only.
     EkaPatient findPatient(String address, String asTyped) {
         try {
             List<AbdmHipStore.Subject> subjects = hipStore.findSubjectsByAbhaAddress(address, cfg.getAbhaAddressSuffix());
@@ -789,8 +789,8 @@ public class EkaHiuService implements EkaHiuEvents {
                 return EkaPatient.NONE;
             }
             for (AbdmHipStore.Subject s : subjects) {
-                Optional<AbhaEvent> event = abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid())
-                        .filter(e -> !AbhaEventService.REMOVED.equals(e.getAction()) && StringUtils.hasText(e.getEkaOid()));
+                Optional<AbhaEvent> event = AbhaEventService.ofSavedAbha(
+                        abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid()), null, address);
                 if (event.isPresent()) return new EkaPatient(event.get().getEkaOid(), s.uuid(), s.id());
             }
             Optional<AbdmHiuStore.EkaPatientRow> row = store.findEkaPatientByAbhaAddress(asTyped == null ? List.of(address) : List.of(address, asTyped));

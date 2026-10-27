@@ -122,11 +122,12 @@ public class EkaHipService implements EkaHipEvents {
 
     public List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly) {
         AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
-        AbhaEvent abha = orgContext.inReadOnlyTransaction(() -> abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid)
-                .filter(latest -> !AbhaEventService.REMOVED.equals(latest.getAction()) && StringUtils.hasText(latest.getEkaOid()))
+        // The Eka ID of the ABHA on the saved record, never of a later lookup of another ABHA left unsaved.
+        AbhaEvent abha = orgContext.inReadOnlyTransaction(() -> AbhaEventService.ofSavedAbha(
+                abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid), patient.abhaNumber(), patient.abhaAddress())
                 .orElse(null));
         if (abha == null) throw AbdmRequestException.conflict(NO_EKA_ID);
-        String abhaAddress = AbdmFlows.withSuffix(AbdmFlows.firstNonNull(abha.getAbhaAddress(), patient.abhaAddress()), cfg.getAbhaAddressSuffix());
+        String abhaAddress = AbdmFlows.withSuffix(AbdmFlows.firstNonNull(patient.abhaAddress(), abha.getAbhaAddress()), cfg.getAbhaAddressSuffix());
         if (abhaAddress == null) throw AbdmRequestException.conflict("This subject has no ABHA address");
         String oid = abha.getEkaOid();
         String hipId = cfg.getHipId();

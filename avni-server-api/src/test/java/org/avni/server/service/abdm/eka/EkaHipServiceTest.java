@@ -79,8 +79,8 @@ public class EkaHipServiceTest {
                 new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T18:00:00Z")),
                 new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T04:30:00Z")))));
         when(linking.careContexts("subject-1")).thenReturn(view);
-        when(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
-                .thenReturn(Optional.of(abhaEvent("linked", OID, "asha.devi@sbx")));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", OID, "asha.devi@sbx")));
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "PENDING")));
         when(eka.post(anyString(), any(), any())).thenReturn(new EkaResponse("r-1", 202, null));
 
@@ -147,8 +147,8 @@ public class EkaHipServiceTest {
 
     @Test
     public void aPatientWithoutAnEkaIdGetsAClearErrorAndNothingIsSent() {
-        when(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
-                .thenReturn(Optional.of(abhaEvent("linked", null, "asha.devi@sbx")));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", null, "asha.devi@sbx")));
 
         AbdmRequestException e = assertThrows(AbdmRequestException.class, () -> service.linkCareContexts("subject-1"));
 
@@ -158,10 +158,37 @@ public class EkaHipServiceTest {
         verify(store, never()).ensureCareContexts(anyLong(), anyString(), anyString(), anyString(), any());
     }
 
+    // A lookup of another person's ABHA, left unsaved in an edit, is the latest record: the visits still go to the ABHA
+    // on the saved record, under its own Eka ID, never to the other person's (27 Oct run, same cause as the card).
+    @Test
+    public void aLaterLookupOfAnotherAbhaLeftUnsavedIsNeverLinkedTo() {
+        AbhaEvent other = abhaEvent("linked", "oid-someone-else", "someone.else@sbx", "91000000004533");
+        when(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(other));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(other, abhaEvent("linked", OID, "asha.devi@sbx", "12345678568912")));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(OID, body.getValue().get("oid").asText());
+        assertEquals("asha.devi@sbx", body.getValue().get("abha_address").asText());
+    }
+
+    @Test
+    public void onlyALookupOfAnotherAbhaMeansNoEkaId() {
+        AbhaEvent other = abhaEvent("linked", "oid-someone-else", "someone.else@sbx", "91000000004533");
+        when(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(other));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(other));
+
+        assertThrows(AbdmRequestException.class, () -> service.linkCareContexts("subject-1"));
+        verifyNoInteractions(eka);
+    }
+
     @Test
     public void aRemovedAbhaCountsAsNoEkaId() {
-        when(abhaEventRepository.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
-                .thenReturn(Optional.of(abhaEvent("removed", OID, null)));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("removed", OID, null)));
 
         assertThrows(AbdmRequestException.class, () -> service.linkCareContexts("subject-1"));
         verifyNoInteractions(eka);
@@ -578,6 +605,12 @@ public class EkaHipServiceTest {
         b.put("resourceType", "Bundle");
         b.put("id", document.encounterUuid());
         return b;
+    }
+
+    private static AbhaEvent abhaEvent(String action, String oid, String abhaAddress, String abhaNumber) {
+        AbhaEvent event = abhaEvent(action, oid, abhaAddress);
+        event.setAbhaNumber(abhaNumber);
+        return event;
     }
 
     private static AbhaEvent abhaEvent(String action, String oid, String abhaAddress) {

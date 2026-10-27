@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 // The audit record of every ABHA action. The record is the audit, so nothing from it is logged but its uuid and action.
 @Service
@@ -23,6 +24,31 @@ public class AbhaEventService {
     public static final String CREATED = "created";
     public static final String LINKED = "linked";
     public static final String REMOVED = "removed";
+
+    // The record, among a patient's records newest first, of the ABHA their saved record holds: the latest since the
+    // last removal whose ABHA number (else, with no number on either, address) is the saved one's, with an Eka ID.
+    // Never a later lookup of another ABHA a worker left unsaved (27 Oct run: the card, the link and the consent
+    // request all took the latest lookup for the patient's own).
+    public static Optional<AbhaEvent> ofSavedAbha(List<AbhaEvent> newestFirst, String savedNumber, String savedAddress) {
+        String number = AbhaLinkService.digitsOnly(savedNumber);
+        String name = addressName(savedAddress);
+        if (number.length() != AbhaLinkService.ABHA_NUMBER_DIGITS) number = "";
+        if (number.isEmpty() && name == null) return Optional.empty();
+        for (AbhaEvent record : newestFirst) {
+            if (REMOVED.equals(record.getAction())) return Optional.empty();
+            if (!StringUtils.hasText(record.getEkaOid())) continue;
+            String recordNumber = AbhaLinkService.digitsOnly(record.getAbhaNumber());
+            boolean same = !number.isEmpty() && !recordNumber.isEmpty() ? number.equals(recordNumber)
+                    : name != null && name.equals(addressName(record.getAbhaAddress()));
+            if (same) return Optional.of(record);
+        }
+        return Optional.empty();
+    }
+
+    private static String addressName(String address) {
+        if (!StringUtils.hasText(address)) return null;
+        return address.trim().split("@", 2)[0].toLowerCase(java.util.Locale.ROOT);
+    }
     // The ABHA verified again from its card, once the patient's login at Eka had lapsed.
     public static final String VERIFIED = "verified";
     public static final String UNKNOWN_ROUTE = "unknown";

@@ -82,7 +82,7 @@ public class EkaHiuServiceTest {
         when(store.findConsentRequestByInitRequest(anyString())).thenReturn(Optional.of(request(5, null, "REQUESTED")));
         when(store.claimParked(anyLong())).thenReturn(true);
         when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam")));
-        when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(abhaEvent("created", "oid-1")));
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(abhaEvent("created", "oid-1", "shyam@sbx")));
         when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
                 .thenReturn(new EkaResponse("r-1", 200, AbdmJson.read("{\"consent_init_id\":\"init-1\"}")));
     }
@@ -437,7 +437,7 @@ public class EkaHiuServiceTest {
             waiting.add(new AbdmHiuStore.Consent(i, "uuid-" + i, "init-" + i, null, "init-request-" + i, address, null, HIU_ID,
                     "CAREMGT", "OPConsultation", null, null, null, "REQUESTED", null, null, null));
             when(hipStore.findSubjectsByAbhaAddress(address, "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(100 + i, "subject-p" + i, "P" + i)));
-            when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-p" + i)).thenReturn(Optional.of(abhaEvent("created", "oid-p" + i)));
+            when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-p" + i)).thenReturn(List.of(abhaEvent("created", "oid-p" + i, address)));
         }
         when(store.waitingConsentRequests()).thenReturn(waiting);
         ekaListsConsents();
@@ -512,12 +512,27 @@ public class EkaHiuServiceTest {
                 Instant.parse("2026-10-01T00:00:00Z"), Instant.parse("2026-11-01T00:00:00Z"));
     }
 
+    // A lookup of another person's ABHA left unsaved on the patient is the latest record: the consent request still goes
+    // under the Eka ID of the ABHA the record holds (27 Oct run, same cause as the card).
+    @Test
+    public void aLaterLookupOfAnotherAbhaIsNeverUsedForAConsentRequest() {
+        AbhaEvent other = abhaEvent("linked", "oid-someone-else", "someone.else@sbx");
+        when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(other));
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(other, abhaEvent("created", "oid-1", "shyam@sbx")));
+
+        service.requestConsent("shyam", null, null, null, null, null);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
+        assertEquals("oid-1", body.getValue().at("/patient/oid").asText());
+    }
+
     // Two patients holding one ABHA address: neither is picked (the first one used to be).
     @Test
     public void twoPatientsHoldingTheAddressAreNotGuessedBetween() {
         when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam"),
                 new AbdmHipStore.Subject(8, "subject-2", "Shyam K")));
-        when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-2")).thenReturn(Optional.of(abhaEvent("created", "oid-2")));
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-2")).thenReturn(List.of(abhaEvent("created", "oid-2", "shyam@sbx")));
 
         service.requestConsent("shyam", null, null, null, null, null);
 
@@ -754,9 +769,14 @@ public class EkaHiuServiceTest {
     }
 
     private static AbhaEvent abhaEvent(String action, String oid) {
+        return abhaEvent(action, oid, null);
+    }
+
+    private static AbhaEvent abhaEvent(String action, String oid, String abhaAddress) {
         AbhaEvent event = new AbhaEvent();
         event.setAction(action);
         event.setEkaOid(oid);
+        event.setAbhaAddress(abhaAddress);
         return event;
     }
 
