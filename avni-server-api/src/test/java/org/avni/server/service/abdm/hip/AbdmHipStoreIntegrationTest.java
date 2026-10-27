@@ -87,6 +87,36 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertFalse(found.contains(STORED_WITH_LEADING_ZERO));
     }
 
+    @Test
+    public void theYearOfBirthTakesEveryDayOfThatYearAndNoneOfTheNext() {
+        insertSubjectBornOn(STORED_AS_PHONE_NUMBER, "1990-01-01");
+        insertSubjectBornOn(STORED_WITH_LEADING_ZERO, "1990-12-31");
+        insertSubjectBornOn("f3c8a1e5-6b2d-4f7a-9c0e-8d1b3a5c7e92", "1991-01-01");
+
+        List<String> found = store.findSubjectsByPhone(new AbdmPatientPhones.PhoneConcepts(null, CONTACT_NUMBER_CONCEPT), "9282738493", "M", 1990)
+                .stream().map(AbdmHipStore.Candidate::uuid).toList();
+
+        assertTrue(found.toString(), found.containsAll(List.of(STORED_AS_PHONE_NUMBER, STORED_WITH_LEADING_ZERO)));
+        assertFalse(found.contains("f3c8a1e5-6b2d-4f7a-9c0e-8d1b3a5c7e92"));
+    }
+
+    // At a large organisation the search narrows by the date-of-birth index (V1_391), which a year read out of the date
+    // cannot use. Sequential scans are off so the plan shows whether the index can take the date at all.
+    @Test
+    public void theYearOfBirthIsSearchedThroughTheDateOfBirthIndex() {
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.execute("set local enable_seqscan = off");
+        org.springframework.jdbc.core.namedparam.MapSqlParameterSource params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource()
+                .addValue("org", 2L).addValue("pn", null, java.sql.Types.VARCHAR).addValue("text", CONTACT_NUMBER_CONCEPT)
+                .addValue("digits", "9282738493").addValue("gender", "M").addValue("year", 1990)
+                .addValue("bornFrom", java.time.LocalDate.of(1990, 1, 1)).addValue("bornBefore", java.time.LocalDate.of(1991, 1, 1))
+                .addValue("limit", 21);
+
+        List<String> plan = namedJdbc.queryForList("explain " + AbdmHipStore.PHONE_SEARCH_SQL, params, String.class);
+
+        assertTrue(String.join("\n", plan), plan.stream().anyMatch(line -> line.contains("Index Cond") && line.contains("date_of_birth")));
+    }
+
     // When Eka does not answer on-confirm, only visits still PENDING when the update runs become LINK_REQUESTED: one linked,
     // queued on save or failed by another path in the meantime keeps its status, so the job still links a queued one.
     @Test
@@ -107,6 +137,11 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals("LINKED", status.get("v-linked"));
         assertEquals("FAILED", status.get("v-failed"));
         assertEquals("QUEUED", status.get("v-queued"));
+    }
+
+    private void insertSubjectBornOn(String uuid, String dateOfBirth) {
+        insertSubject(uuid, "{\"" + CONTACT_NUMBER_CONCEPT + "\": \"9282738493\"}");
+        namedJdbc.getJdbcOperations().update("update individual set date_of_birth = ?::date where uuid = ?", dateOfBirth, uuid);
     }
 
     private void insertSubject(String uuid, String observations) {

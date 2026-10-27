@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -222,18 +223,22 @@ public class AbdmHipStore {
     // discovery searches by phone only when the asking ABHA matched no patient here, so one holding an ABHA is someone
     // else, such as a relative on the family phone. At most PHONE_SEARCH_LIMIT + 1 rows, so a caller can tell the limit
     // was passed. DEMO-ONLY: a scan of the organisation's subjects, with no index on the phone.
+    // The year of birth as a date range, so the date-of-birth index (V1_391) narrows the search.
+    static final String PHONE_SEARCH_SQL = "select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
+            "where i.organisation_id = :org and i.is_voided = false " +
+            "and right(regexp_replace(coalesce(i.observations -> :pn ->> 'phoneNumber', i.observations ->> :text, ''), '[^0-9]', '', 'g'), 10) = :digits " +
+            "and upper(left(g.name, 1)) = :gender and i.date_of_birth >= :bornFrom and i.date_of_birth < :bornBefore " +
+            "and not exists (select 1 from abha_link al where al.individual_id = i.id and al.is_voided = false) order by i.id limit :limit";
+
     public List<Candidate> findSubjectsByPhone(AbdmPatientPhones.PhoneConcepts concepts, String lastTenDigits, String genderLetter, int yearOfBirth) {
         if (concepts == null || (concepts.phoneNumberConceptUuid() == null && concepts.contactNumberConceptUuid() == null)
                 || lastTenDigits == null || !lastTenDigits.matches("[0-9]{10}") || genderLetter == null) return new ArrayList<>();
-        return jdbc.query("select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
-                        "where i.organisation_id = :org and i.is_voided = false " +
-                        "and right(regexp_replace(coalesce(i.observations -> :pn ->> 'phoneNumber', i.observations ->> :text, ''), '[^0-9]', '', 'g'), 10) = :digits " +
-                        "and upper(left(g.name, 1)) = :gender and extract(year from i.date_of_birth) = :year " +
-                        "and not exists (select 1 from abha_link al where al.individual_id = i.id and al.is_voided = false) order by i.id limit :limit",
+        return jdbc.query(PHONE_SEARCH_SQL,
                 params().addValue("pn", concepts.phoneNumberConceptUuid(), Types.VARCHAR)
                         .addValue("text", concepts.contactNumberConceptUuid(), Types.VARCHAR)
                         .addValue("digits", lastTenDigits, Types.VARCHAR).addValue("gender", genderLetter, Types.VARCHAR)
-                        .addValue("year", yearOfBirth).addValue("limit", PHONE_SEARCH_LIMIT + 1),
+                        .addValue("bornFrom", LocalDate.of(yearOfBirth, 1, 1)).addValue("bornBefore", LocalDate.of(yearOfBirth + 1, 1, 1))
+                        .addValue("limit", PHONE_SEARCH_LIMIT + 1),
                 (rs, n) -> new Candidate(rs.getLong("id"), rs.getString("uuid"), rs.getString("name")));
     }
 
