@@ -30,6 +30,9 @@ public class AbhaLinkService {
     public static final int ABHA_NUMBER_DIGITS = 14;
     // abha_link.abha_address is varchar(255).
     static final int ABHA_ADDRESS_MAX_LENGTH = 255;
+    // ABDM's shape, name@suffix: a name of letters, digits and dots (underscores in older ones), the default address an
+    // ABHA number is issued starting with its digits. A placeholder an upload or a form carries instead (NA, -, 0) is none.
+    private static final java.util.regex.Pattern ABHA_ADDRESS_SHAPE = java.util.regex.Pattern.compile("[A-Za-z0-9._]+@[A-Za-z]+");
     private static final Logger logger = LoggerFactory.getLogger(AbhaLinkService.class);
 
     private final OrganisationConfigService organisationConfigService;
@@ -66,6 +69,11 @@ public class AbhaLinkService {
         if (address != null && address.length() > ABHA_ADDRESS_MAX_LENGTH) {
             // Too long for the column: linking it would refuse the save, and every retry of it. The number is still linked.
             logger.warn("ABHA Address answer of subject {} is longer than {} characters; linked without it", individual.getUuid(), ABHA_ADDRESS_MAX_LENGTH);
+            address = null;
+        }
+        if (address != null && !isAbhaAddress(address)) {
+            // Not an ABHA address: linked, it would make every subject carrying the same placeholder one patient.
+            logger.warn("ABHA Address answer of subject {} is not an ABHA address; linked without it", individual.getUuid());
             address = null;
         }
         if (number.isEmpty() && address == null) {
@@ -113,21 +121,28 @@ public class AbhaLinkService {
     // Who else, live in the user's organisation, already holds the ABHA this subject answers: by its number, else, for
     // an ABHA with only an address, by the address. Empty with ABHA off, or with neither answer. A bulk upload refuses its
     // row on this (SubjectWriter); sync never asks.
-    public List<String> otherLiveHolders(Individual individual) {
+    // The live subjects holding the ABHA, and the answer they were found by (ABHA_NUMBER_CONCEPT or ABHA_ADDRESS_CONCEPT).
+    public record OtherHolders(String answer, List<String> subjectUuids) {
+    }
+
+    public OtherHolders otherLiveHolders(Individual individual) {
         if (!organisationConfigService.isAbhaEnabled()) {
-            return Collections.emptyList();
+            return new OtherHolders(null, Collections.emptyList());
         }
         String number = digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
         String address = answer(individual, ABHA_ADDRESS_CONCEPT);
         List<String> holders;
+        String foundBy;
         if (number.length() == ABHA_NUMBER_DIGITS) {
             holders = abhaLinkRepository.findLiveSubjectUUIDs(organisationId(), number);
-        } else if (address != null && !address.isBlank()) {
-            holders = abhaLinkRepository.findLiveSubjectUUIDsByAddress(organisationId(), address.trim());
+            foundBy = ABHA_NUMBER_CONCEPT;
+        } else if (isAbhaAddress(address)) {
+            holders = abhaLinkRepository.findLiveSubjectUUIDsByAddress(organisationId(), address);
+            foundBy = ABHA_ADDRESS_CONCEPT;
         } else {
-            return Collections.emptyList();
+            return new OtherHolders(null, Collections.emptyList());
         }
-        return holders.stream().filter(uuid -> !uuid.equals(individual.getUuid())).collect(Collectors.toList());
+        return new OtherHolders(foundBy, holders.stream().filter(uuid -> !uuid.equals(individual.getUuid())).collect(Collectors.toList()));
     }
 
     // The live subjects of this subject type in the user's organisation holding this number (however it is written) or
@@ -158,6 +173,10 @@ public class AbhaLinkService {
             }
         }
         return null;
+    }
+
+    static boolean isAbhaAddress(String value) {
+        return value != null && ABHA_ADDRESS_SHAPE.matcher(value).matches();
     }
 
     // Eka writes 12-3456-7856-8912; a person may type the 14 digits with spaces or nothing between them.

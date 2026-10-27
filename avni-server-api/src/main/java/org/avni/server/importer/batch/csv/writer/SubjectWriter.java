@@ -122,9 +122,9 @@ public class SubjectWriter extends EntityWriter {
         ValidationUtil.handleErrors(allErrorMsgs);
         individual.setObservations(observations);
         // One ABHA, one patient (NHA's M1 tagging case). The row names the other patient, never the number.
-        List<String> abhaHolders = abhaLinkService.otherLiveHolders(individual);
-        if (!abhaHolders.isEmpty()) {
-            allErrorMsgs.add(String.format("'%s' is already held by another subject: %s", AbhaLinkService.ABHA_NUMBER_CONCEPT, String.join(", ", abhaHolders)));
+        AbhaLinkService.OtherHolders abhaHolders = abhaLinkService.otherLiveHolders(individual);
+        if (!abhaHolders.subjectUuids().isEmpty()) {
+            allErrorMsgs.add(String.format("'%s' is already held by another subject: %s", abhaHolders.answer(), String.join(", ", abhaHolders.subjectUuids())));
             ValidationUtil.handleErrors(allErrorMsgs);
         }
         Individual savedIndividual = individualService.save(individual);

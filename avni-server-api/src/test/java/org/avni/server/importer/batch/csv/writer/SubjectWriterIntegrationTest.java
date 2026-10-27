@@ -472,6 +472,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         singleSelectConcepts.add(testConceptService.createConcept("Notes Concept", ConceptDataType.Notes));
         singleSelectConcepts.add(testConceptService.createConcept("Concept \"With\" Quotes", ConceptDataType.Text));
         singleSelectConcepts.add(testConceptService.createConcept("\"Fully Quoted\"", ConceptDataType.Text));
+        singleSelectConcepts.add(testConceptService.createConcept("ABHA Number", ConceptDataType.Text));
+        singleSelectConcepts.add(testConceptService.createConcept("ABHA Address", ConceptDataType.Text));
 
         subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
                 .setMandatoryFieldsForNewEntity()
@@ -539,6 +541,49 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         } catch (ValidationException e) {
             e.getMessage().contains("Entry with id from previous system, ABCD already present in Avni");
         }
+    }
+
+    // NHA's M1 tagging case: one ABHA, one patient. A second row carrying an ABHA another live subject holds is refused,
+    // and the message names the answer that clashed.
+    @Test
+    public void aRowWhoseAbhaNumberAnotherSubjectHoldsIsRefused() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        organisationConfigService.updateSettings("enableAbha", true);
+        success(abhaHeader(), abhaRow("ABHA-1", "12-3456-7856-8912", ""));
+        String holder = individualRepository.findByLegacyId("ABHA-1").getUuid();
+
+        failure(abhaHeader(), abhaRow("ABHA-2", "12345678568912", ""), "'ABHA Number' is already held by another subject: " + holder);
+    }
+
+    @Test
+    public void aRowWhoseAbhaAddressAnotherSubjectHoldsIsRefusedNamingTheAddress() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        organisationConfigService.updateSettings("enableAbha", true);
+        success(abhaHeader(), abhaRow("ABHA-1", "", "ramesh.gond@sbx"));
+        String holder = individualRepository.findByLegacyId("ABHA-1").getUuid();
+
+        failure(abhaHeader(), abhaRow("ABHA-2", "", "Ramesh.Gond@abdm"), "'ABHA Address' is already held by another subject: " + holder);
+    }
+
+    // A placeholder in the ABHA Address column (NA for "no ABHA") is not an ABHA: every row carrying it saves.
+    @Test
+    public void rowsWithAPlaceholderForTheAbhaAddressAllSave() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        organisationConfigService.updateSettings("enableAbha", true);
+
+        success(abhaHeader(), abhaRow("ABHA-1", "", "NA"));
+        success(abhaHeader(), abhaRow("ABHA-2", "", "NA"));
+    }
+
+    private String[] abhaHeader() {
+        return header("Id from previous system", "Subject Type", "Date Of Registration", "Registration Coordinates", "First Name",
+                "Last Name", "Date Of Birth", "Date Of Birth Verified", "Gender", "Profile Picture", "State", "District",
+                "\"ABHA Number\"", "\"ABHA Address\"");
+    }
+
+    private String[] abhaRow(String legacyId, String abhaNumber, String abhaAddress) {
+        return dataRow(legacyId, "SubjectType1", "2020-01-01", "21.5135243,85.6731848", "John", "Doe", "1990-01-01", "true", "Male", "",
+                "Bihar", "District1", abhaNumber, abhaAddress);
     }
 
     private String getLocationHierarchy() {

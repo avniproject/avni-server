@@ -282,7 +282,22 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         enableAbha();
         Individual holder = save(subjectWith(null, ABHA_ADDRESS));
 
-        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(null, "Ramesh.Gond@SBX")));
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(null, "Ramesh.Gond@SBX")).subjectUuids());
+        assertEquals(AbhaLinkService.ABHA_ADDRESS_CONCEPT, abhaLinkService.otherLiveHolders(subjectWith(null, "Ramesh.Gond@SBX")).answer());
+    }
+
+    // A placeholder an upload or a form carries where there is no ABHA (NA, -, 0) is no ABHA address: it is never linked
+    // or matched, so rows carrying it are not taken for one patient. A number beside it still links.
+    @Test
+    public void aPlaceholderInTheAddressIsNoAbha() {
+        enableAbha();
+        save(subjectWith(null, "NA"));
+        save(subjectWith(null, "NA"));
+        assertEquals(Collections.emptyList(), links());
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(null, "NA")).subjectUuids());
+
+        Individual withNumber = save(subjectWith(ABHA_NUMBER, "-"));
+        assertEquals(Collections.singletonList(live(withNumber, ABHA_DIGITS, null)), links());
     }
 
     // An ABHA number is 14 digits. Anything else is no ABHA number: the address still links when there is one, no link
@@ -352,7 +367,8 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         enableAbha();
         Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
 
-        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)).subjectUuids());
+        assertEquals(AbhaLinkService.ABHA_NUMBER_CONCEPT, abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)).answer());
     }
 
     @Test
@@ -360,7 +376,7 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         enableAbha();
         Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
 
-        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(holder));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(holder).subjectUuids());
     }
 
     @Test
@@ -369,20 +385,20 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
         new TransactionTemplate(transactionManager).execute(status -> individualService.voidSubject(holder));
 
-        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)).subjectUuids());
     }
 
     @Test
     // With no ABHA number the address is asked (an ABHA made with a mobile number only); with neither, nobody is.
     public void otherLiveHoldersIsEmptyWithAbhaOffOrNoAbha() {
         save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
-        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)));
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(ABHA_DIGITS, null)).subjectUuids());
 
         enableAbha();
         Individual holder = save(subjectWith(ABHA_NUMBER, ABHA_ADDRESS));
-        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(null, ABHA_ADDRESS)));
-        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith("1234", null)));
-        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(null, null)));
+        assertEquals(Collections.singletonList(holder.getUuid()), abhaLinkService.otherLiveHolders(subjectWith(null, ABHA_ADDRESS)).subjectUuids());
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith("1234", null)).subjectUuids());
+        assertEquals(Collections.emptyList(), abhaLinkService.otherLiveHolders(subjectWith(null, null)).subjectUuids());
     }
 
     @Test
