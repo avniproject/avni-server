@@ -210,11 +210,29 @@ public class EkaHipDiscovery {
                 String hipId = cfg.getHipId();
                 store.ensureCareContexts(p.individualId(), hipId, p.uuid(), AbdmHipLinkingService.HI_TYPE, theirs);
                 List<String> refs = theirs.stream().map(AbdmHipStore.NewCareContext::reference).collect(Collectors.toList());
-                store.markLinked(hipId, refs, "USER");
-                store.setLinkRequestStatus(request.id(), "LINKED");
-                patients.add(patientEntry(p.uuid(), p.name(), store.findCareContextsByReferences(hipId, refs)));
+                List<AbdmHipStore.CareContext> rows = store.findCareContextsByReferences(hipId, refs);
+                patients.add(patientEntry(p.uuid(), p.name(), rows));
                 reply.set("error", error(0, ""));
-                logger.info("Eka discovery link {}: {} visit(s) linked by the patient", linkReference, refs.size());
+                // Calling on-confirm is what links them (EKA_ABDM_SPEC.md 2.7), so Avni records the outcome only after it.
+                switch (send(ON_CONFIRM, reply, data)) {
+                    case ACCEPTED -> {
+                        store.markLinked(hipId, refs, "USER");
+                        store.setLinkRequestStatus(request.id(), "LINKED");
+                        logger.info("Eka discovery link {}: {} visit(s) linked by the patient", linkReference, refs.size());
+                    }
+                    case UNANSWERED -> {
+                        // Eka may have linked them: shareable on a data fetch and offered again, never shown LINKED. A visit
+                        // linked on save in the meantime is left as it is.
+                        List<String> notLinked = rows.stream().filter(c -> !AbdmHipLinkingService.LINKED.equals(c.status()))
+                                .map(AbdmHipStore.CareContext::reference).collect(Collectors.toList());
+                        if (!notLinked.isEmpty()) {
+                            store.markStatus(hipId, notLinked, AbdmHipLinkingService.LINK_REQUESTED, "Eka did not answer on-confirm; it may have linked them");
+                        }
+                        store.setLinkRequestStatus(request.id(), "UNANSWERED");
+                    }
+                    case REFUSED -> store.setLinkRequestStatus(request.id(), "FAILED");
+                }
+                return;
             }
         }
         send(ON_CONFIRM, reply, data);
@@ -236,15 +254,23 @@ public class EkaHipDiscovery {
         return p;
     }
 
-    private void send(String path, ObjectNode reply, JsonNode data) {
+    private enum Sent {ACCEPTED, REFUSED, UNANSWERED}
+
+    // Replies go on the slow limit, as on-fetch does: Eka has taken over 10 s to answer (26 Oct).
+    private Sent send(String path, ObjectNode reply, JsonNode data) {
         Map<String, String> headers = new LinkedHashMap<>();
         String oid = AbdmJson.text(data, "oid");
         if (StringUtils.hasText(oid)) headers.put(EkaAbdmClient.H_PATIENT_OID, oid);
         headers.put(EkaAbdmClient.H_HIP_ID, cfg.getHipId());
         try {
-            eka.post(path, reply, headers);
+            eka.postSlow(path, reply, headers);
+            return Sent.ACCEPTED;
+        } catch (EkaAbdmClient.NoAnswer e) {
+            logger.warn("Eka {} failed: {}", path, e.getMessage());
+            return e.sent ? Sent.UNANSWERED : Sent.REFUSED;
         } catch (RuntimeException e) {
             logger.warn("Eka {} failed: {}", path, e.getMessage());
+            return Sent.REFUSED;
         }
     }
 

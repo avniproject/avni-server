@@ -81,7 +81,8 @@ public class EkaAbdmClient {
         this.retryBackoff = retryBackoff;
     }
 
-    // For calls Eka is known to take longer than ANSWER_TIMEOUT over: consent create and approve (AVNI-20), and on-fetch.
+    // For calls Eka is known to take longer than ANSWER_TIMEOUT over: consent create and approve (AVNI-20), on-fetch, and
+    // the replies to patient-led linking (on-discover, on-init, on-confirm).
     public EkaResponse postSlow(String path, JsonNode body, Map<String, String> headers) {
         return exchange("POST", path, body, headers, slowAnswerTimeout);
     }

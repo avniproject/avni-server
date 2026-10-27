@@ -12,6 +12,7 @@ import org.avni.server.service.abdm.hip.AbdmTestSupport;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,7 +25,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -48,7 +51,7 @@ public class EkaHipDiscoveryTest {
     @Before
     public void setUp() {
         discovery = new EkaHipDiscovery(cfg, store, linking, eka, phones, otp);
-        when(eka.post(anyString(), any(), any())).thenReturn(new EkaResponse("r", 204, null));
+        when(eka.postSlow(anyString(), any(), any())).thenReturn(new EkaResponse("r", 204, null));
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
                 "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z")),
                 new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T10:00:00Z")))));
@@ -153,10 +156,57 @@ public class EkaHipDiscoveryTest {
 
         discovery.linkConfirm(confirmEvent("424242"));
 
-        verify(store).markLinked(HIP_ID, List.of("enc-2"), "USER");
-        verify(store).setLinkRequestStatus(31L, "LINKED");
+        // Calling on-confirm is what links the contexts (EKA_ABDM_SPEC.md:356): Avni says LINKED only after Eka accepts.
+        InOrder order = inOrder(eka, store);
+        order.verify(eka).postSlow(eq(ON_CONFIRM), any(), any());
+        order.verify(store).markLinked(HIP_ID, List.of("enc-2"), "USER");
+        order.verify(store).setLinkRequestStatus(31L, "LINKED");
         JsonNode reply = sent(ON_CONFIRM);
         assertEquals("enc-2", reply.at("/patients/0/care_contexts/0/ref_num").asText());
+    }
+
+    @Test
+    public void aRefusedOnConfirmLeavesTheVisitsUnlinkedAndTheRequestFailed() {
+        rightCodeFor("enc-2", "PENDING");
+        when(eka.postSlow(eq(ON_CONFIRM), any(), any())).thenThrow(new EkaCallException(400, null, "refused"));
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store, never()).markStatus(any(), any(), any(), any());
+        verify(store).setLinkRequestStatus(31L, "FAILED");
+    }
+
+    // Eka may have linked them: they stay shareable on a data fetch and are offered again, never shown LINKED.
+    @Test
+    public void anUnansweredOnConfirmLeavesTheVisitsLinkRequested() {
+        rightCodeFor("enc-2", "PENDING");
+        when(eka.postSlow(eq(ON_CONFIRM), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(true, "did not answer within 60000 ms"));
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("LINK_REQUESTED"), contains("did not answer"));
+        verify(store).setLinkRequestStatus(31L, "UNANSWERED");
+    }
+
+    // A visit linked on save between discover and confirm must not be turned back.
+    @Test
+    public void anUnansweredOnConfirmNeverTurnsBackAVisitAlreadyLinked() {
+        rightCodeFor("enc-2", "LINKED");
+        when(eka.postSlow(eq(ON_CONFIRM), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(true, "did not answer within 60000 ms"));
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store, never()).markStatus(any(), any(), any(), any());
+        verify(store).setLinkRequestStatus(31L, "UNANSWERED");
+    }
+
+    private void rightCodeFor(String careContext, String status) {
+        when(store.findLinkRequest("link-1")).thenReturn(Optional.of(linkRequest(Instant.now().plusSeconds(300))));
+        when(store.findSubjectById(7)).thenReturn(Optional.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(otp.verify("9876543210", "424242")).thenReturn(true);
+        when(store.findCareContextsByReferences(HIP_ID, List.of(careContext))).thenReturn(List.of(row(careContext, status)));
     }
 
     @Test
@@ -187,7 +237,7 @@ public class EkaHipDiscoveryTest {
 
     private JsonNode sent(String path) {
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq(path), body.capture(), any());
+        verify(eka).postSlow(eq(path), body.capture(), any());
         return body.getValue();
     }
 
