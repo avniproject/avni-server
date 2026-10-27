@@ -208,7 +208,22 @@ public class EkaHipServiceTest {
 
         ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
         verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
-        verify(store).markByLinkRequest(eq(linkRequestId.getValue()), eq("FAILED"), contains("Invalid HIP ID"));
+        verify(store).settleLinkRequest(eq(linkRequestId.getValue()), eq("FAILED"), contains("Invalid HIP ID"));
+        verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
+    }
+
+    // Eka may have linked them, and its webhook may already have said so: they stay requested, and a LINKED stays.
+    @Test
+    public void aLinkCallEkaMayHaveActedOnLeavesTheVisitsLinkRequested() {
+        when(eka.post(eq(LINK), any(), any())).thenThrow(new EkaCallException(504, null, "Eka POST " + LINK + " refused with HTTP 504"));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
+        verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
+        verify(store).settleLinkRequest(eq(linkRequestId.getValue()), eq("LINK_REQUESTED"), contains("may have linked them"));
+        verify(store, never()).settleLinkRequest(anyString(), eq("FAILED"), any());
+        verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
     }
 
     @Test

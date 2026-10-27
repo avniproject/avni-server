@@ -166,6 +166,14 @@ public class AbdmHipStore {
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("refs", references).addValue("req", linkRequestId, Types.VARCHAR));
     }
 
+    // A link call's outcome for its visits still LINK_REQUESTED: one Eka's webhook has already settled keeps its status.
+    public void settleLinkRequest(String linkRequestId, String status, String error) {
+        jdbc.update("update abdm_care_context set status = :status, error = :error, updated_at = now() " +
+                        "where organisation_id = :org and link_request_id = :req and status = 'LINK_REQUESTED'",
+                params().addValue("req", linkRequestId, Types.VARCHAR).addValue("status", status, Types.VARCHAR)
+                        .addValue("error", error, Types.VARCHAR));
+    }
+
     public int markByLinkRequest(String linkRequestId, String status, String error) {
         return jdbc.update("update abdm_care_context set status = :status, error = :error, updated_at = now() " +
                         "where organisation_id = :org and link_request_id = :req",
@@ -222,8 +230,8 @@ public class AbdmHipStore {
     // the contact-number text), ends in these ten digits, of this gender letter and year of birth, and who hold no ABHA:
     // discovery searches by phone only when the asking ABHA matched no patient here, so one holding an ABHA is someone
     // else, such as a relative on the family phone. At most PHONE_SEARCH_LIMIT + 1 rows, so a caller can tell the limit
-    // was passed. DEMO-ONLY: a scan of the organisation's subjects, with no index on the phone.
-    // The year of birth as a date range, so the date-of-birth index (V1_391) narrows the search.
+    // was passed. The year of birth is a date range, so the date-of-birth index (V1_391) narrows the rows read; the phone
+    // has no index.
     static final String PHONE_SEARCH_SQL = "select i.id, i.uuid, " + NAME + " as name from individual i left join gender g on g.id = i.gender_id " +
             "where i.organisation_id = :org and i.is_voided = false " +
             "and right(regexp_replace(coalesce(i.observations -> :pn ->> 'phoneNumber', i.observations ->> :text, ''), '[^0-9]', '', 'g'), 10) = :digits " +

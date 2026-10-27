@@ -160,7 +160,12 @@ public class EkaHipService implements EkaHipEvents {
             logger.info("Eka link of {} care contexts for subject {}: HTTP {}", references.size(), patient.uuid(), response.status());
             applyAnswer(hipId, linkRequestId, response.body());
         } catch (RuntimeException e) {
-            store.markByLinkRequest(linkRequestId, FAILED, "Eka link failed: " + e.getMessage());
+            if (EkaAbdmClient.mayHaveActed(e)) {
+                // Eka may have linked them, and its webhook may have said so already: they stay requested, a LINKED stays.
+                store.settleLinkRequest(linkRequestId, LINK_REQUESTED, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
+            } else {
+                store.settleLinkRequest(linkRequestId, FAILED, "Eka link failed: " + e.getMessage());
+            }
             logger.warn("Eka link of care contexts for subject {} failed: {}", patient.uuid(), e.getMessage());
         }
         return linking.careContexts(subjectUuid);

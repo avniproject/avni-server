@@ -139,6 +139,24 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals("QUEUED", status.get("v-queued"));
     }
 
+    // A link call that fails settles only the visits still LINK_REQUESTED: one Eka's webhook marked LINKED first keeps it.
+    @Test
+    public void settleLinkRequestChangesOnlyVisitsStillRequested() {
+        long individualId = namedJdbc.getJdbcOperations().queryForObject("select id from individual where uuid = ?", Long.class, KNOWN);
+        String hip = "TEST-HIP";
+        store.ensureCareContexts(individualId, hip, KNOWN, "OPConsultation", List.of(new AbdmHipStore.NewCareContext("v-1", "Visit 1"),
+                new AbdmHipStore.NewCareContext("v-2", "Visit 2")));
+        store.markLinkRequested(hip, List.of("v-1", "v-2"), "req-1");
+        store.markLinked(hip, List.of("v-2"), "HIP");
+
+        store.settleLinkRequest("req-1", "FAILED", "Eka refused");
+
+        java.util.Map<String, String> status = store.findCareContexts(individualId, hip).stream()
+                .collect(java.util.stream.Collectors.toMap(AbdmHipStore.CareContext::reference, AbdmHipStore.CareContext::status));
+        assertEquals("FAILED", status.get("v-1"));
+        assertEquals("LINKED", status.get("v-2"));
+    }
+
     private void insertSubjectBornOn(String uuid, String dateOfBirth) {
         insertSubject(uuid, "{\"" + CONTACT_NUMBER_CONCEPT + "\": \"9282738493\"}");
         namedJdbc.getJdbcOperations().update("update individual set date_of_birth = ?::date where uuid = ?", dateOfBirth, uuid);

@@ -6,6 +6,7 @@ package org.avni.server.service.abdm.eka;
 public class EkaCallException extends RuntimeException {
     private final int status;
     private final String abdmCode;
+    private boolean earlierTryMayHaveActed;
 
     public EkaCallException(int status, String abdmCode, String message) {
         super(message);
@@ -19,5 +20,15 @@ public class EkaCallException extends RuntimeException {
 
     public String getAbdmCode() {
         return abdmCode;
+    }
+
+    // Set by EkaAbdmClient when an earlier try of the same call may have reached Eka and been acted on.
+    EkaCallException afterATryEkaMayHaveActedOn() {
+        earlierTryMayHaveActed = true;
+        return this;
+    }
+
+    boolean earlierTryMayHaveActed() {
+        return earlierTryMayHaveActed;
     }
 }

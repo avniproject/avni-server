@@ -115,13 +115,16 @@ public class EkaAbdmClient {
     }
 
     // Up to ATTEMPTS tries, backing off, for a server error, 429, a call that never reached Eka, or a read that did not
-    // answer (AVNI-17). A write that did not answer is not sent again: Eka may have acted on it.
+    // answer (AVNI-17). A write that did not answer is not sent again: Eka may have acted on it. A write that got a server
+    // error is sent again, and its outcome keeps that the earlier try may have been acted on (mayHaveActed).
     private EkaResponse exchange(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
+        boolean actedOnBefore = false;
         for (int attempt = 1; ; attempt++) {
             try {
                 return exchangeOnce(method, path, body, headers, timeout);
             } catch (EkaCallException e) {
-                if (attempt >= ATTEMPTS || !worthTryingAgain(method, e)) throw e;
+                if (attempt >= ATTEMPTS || !worthTryingAgain(method, e)) throw actedOnBefore ? e.afterATryEkaMayHaveActedOn() : e;
+                actedOnBefore |= mayHaveActed(e);
                 logger.info("Eka {} {}: try {} of {} after {}", method, withoutQuery(path), attempt + 1, ATTEMPTS,
                         e.getStatus() == 0 ? "no answer" : "HTTP " + e.getStatus());
                 pause(retryBackoff.multipliedBy(1L << (attempt - 1)));
@@ -144,9 +147,10 @@ public class EkaAbdmClient {
         }
     }
 
-    // Whether Eka may have acted on a call that failed: one it may have received went unanswered, or the last try got a
-    // server error. A refusal, or a call that never reached Eka, means it did not.
+    // Whether Eka may have acted on a call that failed: a try it may have received went unanswered or got a server error.
+    // A refusal, or a call that never reached Eka, on every try means it did not.
     static boolean mayHaveActed(RuntimeException e) {
+        if (e instanceof EkaCallException earlier && earlier.earlierTryMayHaveActed()) return true;
         if (e instanceof NoAnswer noAnswer) return noAnswer.sent;
         return e instanceof EkaCallException call && call.getStatus() >= 500;
     }

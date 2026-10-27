@@ -208,6 +208,32 @@ public class EkaAbdmClientTest {
         eka.verify(3, postRequestedFor(urlEqualTo(LINK)));
     }
 
+    // A 504 can come after Eka passed the call on, so a refusal on the retry (a duplicate) does not undo "may have acted".
+    @Test
+    public void aServerErrorOnAnEarlierTryStillMeansEkaMayHaveActed() {
+        eka.stubFor(post(urlEqualTo(LINK)).inScenario("gateway").whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)
+                .willReturn(aResponse().withStatus(504)).willSetStateTo("second"));
+        eka.stubFor(post(urlEqualTo(LINK)).inScenario("gateway").whenScenarioStateIs("second")
+                .willReturn(aResponse().withStatus(409).withBody("{\"error\":{\"code\":\"ABDM-1010\",\"message\":\"Duplicate\"}}")));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+
+        assertEquals(409, e.getStatus());
+        assertTrue(EkaAbdmClient.mayHaveActed(e));
+    }
+
+    @Test
+    public void tooManyRequestsBeforeARefusalMeansEkaDidNotAct() {
+        eka.stubFor(post(urlEqualTo(LINK)).inScenario("busy").whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)
+                .willReturn(aResponse().withStatus(429)).willSetStateTo("second"));
+        eka.stubFor(post(urlEqualTo(LINK)).inScenario("busy").whenScenarioStateIs("second").willReturn(aResponse().withStatus(400)));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+
+        assertEquals(400, e.getStatus());
+        assertFalse(EkaAbdmClient.mayHaveActed(e));
+    }
+
     @Test
     public void aRefusalOfTheRequestItselfIsNotTriedAgain() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(400).withBody("{\"error\":{\"code\":\"ABDM-1080\",\"message\":\"Invalid\"}}")));
