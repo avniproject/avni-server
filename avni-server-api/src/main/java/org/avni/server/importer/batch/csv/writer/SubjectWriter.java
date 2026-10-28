@@ -94,9 +94,9 @@ public class SubjectWriter extends EntityWriter {
         ValidationUtil.handleErrors(allErrorMsgs);
 
         setFirstName(row, individual, allErrorMsgs);
+        setLastName(row,individual,subjectType,allErrorMsgs);
         if (subjectType.isAllowMiddleName())
             individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
-        individual.setLastName(row.get(SubjectHeadersCreator.lastName));
         setProfilePicture(subjectType, individual, row, allErrorMsgs);
         if (subjectType.isPerson())
             setDateOfBirth(individual, row, allErrorMsgs);
@@ -141,6 +141,14 @@ public class SubjectWriter extends EntityWriter {
         individual.setFirstName(firstName);
     }
 
+   private static void setLastName(Row row, Individual individual, SubjectType subjectType, List<String> allErrorMsgs) {
+        String lastName = row.get(SubjectHeadersCreator.lastName);
+        if (!subjectType.isLastNameOptional() && !StringUtils.hasText(lastName)) {
+            allErrorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.lastName));
+            return;
+        }
+        individual.setLastName(lastName);
+    }
     private SubjectType setSubjectType(Row row, Individual individual, List<String> allErrorMsgs, String type) {
         String subjectTypeChosen = type.split("---")[1];
         String subjectTypeValue = row.get(SubjectHeadersCreator.subjectTypeHeader);
