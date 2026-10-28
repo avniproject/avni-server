@@ -428,4 +428,41 @@ public class MediaControllerRoutingTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(new LinkedHashMap<>(), response.getBody());
     }
+
+    @Test
+    public void batchWithAFileInAnAdminManagedFolderIsRejectedWithoutSigningAny() {
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("photo1.jpg", "extensions/index.html")));
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("photo1.jpg", "icons/logo.png")));
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void batchWithATraversalOrBackslashNameIsRejected() {
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("../otherOrg/photo.jpg")));
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("..")));
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("extensions\\index.html")));
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void batchWithAMissingFileNameIsRejected() {
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("photo1.jpg", null)));
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("photo1.jpg", " ")));
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(null));
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void batchAcceptsAFileNameWithDotsInIt() {
+        ResponseEntity<?> response = controller.generateUploadUrls(Arrays.asList("photo..v2.jpg"));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(defaultS3Service).generateMediaUploadUrl("photo..v2.jpg", HttpMethod.PUT);
+    }
+
+    @Test
+    public void presignedPutOfANameWithAFolderIsRejected() {
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrl("extensions/index.html"));
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
 }
