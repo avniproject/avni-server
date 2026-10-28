@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -8,6 +9,7 @@ import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -34,6 +36,9 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "checklist_id")
     private Checklist checklist;
+
+    @Formula("(select c.uuid from checklist c where c.id = checklist_id)")
+    private String linkedChecklistUuid;
 
     @Column(updatable = false)
     private boolean syncDisabled;
@@ -100,5 +105,10 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getChecklist().getProgramEnrolment().getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedChecklistUuid() {
+        return uuidOf(checklist, linkedChecklistUuid);
     }
 }

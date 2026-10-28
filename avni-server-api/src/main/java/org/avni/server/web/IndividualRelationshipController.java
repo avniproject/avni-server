@@ -139,8 +139,8 @@ public class IndividualRelationshipController extends AbstractController<Individ
         IndividualRelationship individualRelationship = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(individualRelationship.getRelationship().getUuid(), "relationshipTypeUUID"));
-        resource.add(Link.of(individualRelationship.getIndividuala().getUuid(), "individualAUUID"));
-        resource.add(Link.of(individualRelationship.getIndividualB().getUuid(), "individualBUUID"));
+        resource.add(Link.of(individualRelationship.getLinkedIndividualAUuid(), "individualAUUID"));
+        resource.add(Link.of(individualRelationship.getLinkedIndividualBUuid(), "individualBUUID"));
         addAuditFields(individualRelationship, resource);
         return resource;
     }

@@ -288,7 +288,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         Encounter encounter = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(Link.of(encounter.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(encounter.getLinkedIndividualUuid(), "individualUUID"));
         addAuditFields(encounter, resource);
         addUserFields(encounter.getFilledBy(), resource, "filledBy");
         return resource;

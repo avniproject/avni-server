@@ -193,7 +193,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         ProgramEncounter programEncounter = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(programEncounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(Link.of(programEncounter.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        resource.add(Link.of(programEncounter.getLinkedProgramEnrolmentUuid(), "programEnrolmentUUID"));
         addAuditFields(programEncounter, resource);
         addUserFields(programEncounter.getFilledBy(), resource, "filledBy");
         return resource;

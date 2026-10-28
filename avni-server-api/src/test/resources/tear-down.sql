@@ -1,3 +1,7 @@
+DELETE FROM checklist_item where 1 = 1;
+DELETE FROM checklist where 1 = 1;
+DELETE FROM checklist_item_detail where 1 = 1;
+DELETE FROM checklist_detail where 1 = 1;
 DELETE FROM non_applicable_form_element where 1 = 1;
 DELETE FROM form_element where 1 = 1;
 DELETE FROM form_element_group where 1 = 1;

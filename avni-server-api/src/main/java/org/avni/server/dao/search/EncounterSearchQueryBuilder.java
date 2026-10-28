@@ -12,7 +12,7 @@ import java.util.*;
 public class EncounterSearchQueryBuilder {
     private final Logger logger;
 
-    private final String baseQuery = "select e.*\n" +
+    private final String baseQuery = "select e.*, (select subject.uuid from individual subject where subject.id = e.individual_id) as \"linkedIndividualUuid\"\n" +
             "from encounter e\n";
 
     private String offsetLimitClause = "offset :offset limit :limit";

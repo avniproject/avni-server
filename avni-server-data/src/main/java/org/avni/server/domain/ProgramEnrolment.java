@@ -13,6 +13,7 @@ import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
 import org.avni.server.geo.PointType;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -38,6 +39,9 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
     private Individual individual;
+
+    @Formula("(select i.uuid from individual i where i.id = individual_id)")
+    private String linkedIndividualUuid;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "programEnrolment")
     private Set<ProgramEncounter> programEncounters;
@@ -245,5 +249,10 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualUuid() {
+        return uuidOf(individual, linkedIndividualUuid);
     }
 }

@@ -10,7 +10,7 @@ public class ProgramEnrolmentResourceProcessor extends ResourceProcessor<Program
         ProgramEnrolment programEnrolment = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(programEnrolment.getProgram().getUuid(), "programUUID"));
-        resource.add(Link.of(programEnrolment.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(programEnrolment.getLinkedIndividualUuid(), "individualUUID"));
         return resource;
     }
 }
