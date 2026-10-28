@@ -1,5 +1,7 @@
 package org.avni.server.web.api;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.*;
@@ -8,6 +10,7 @@ import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
 import org.avni.server.web.response.ResponsePage;
+import org.avni.server.web.response.SubjectResponse;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
@@ -39,6 +42,10 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
     private TestSubjectService testSubjectService;
     @Autowired
     private SubjectApiController subjectApiController;
+    @Autowired
+    private TestLocationService testLocationService;
+    @PersistenceContext
+    private EntityManager entityManager;
     private SubjectType subjectType;
     private TestDataSetupService.TestCatchmentData catchmentData;
     private Concept singleCodedConcept;
@@ -47,6 +54,7 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
     private Concept textConcept;
     private Concept locationConcept;
     private Concept dateConcept;
+    private Individual savedSubject;
 
     @Before
     public void setUp() throws Exception {
@@ -77,13 +85,13 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
                 .addObservation(dateConcept, "2000-10-31T18:30:00.000+00:00")
                 .build();
         testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
-        Individual subject = new SubjectBuilder()
+        savedSubject = new SubjectBuilder()
                 .withMandatoryFieldsForNewEntity()
                 .withSubjectType(subjectType)
                 .withLocation(catchmentData.getAddressLevel1())
                 .withObservations(observationCollection)
                 .build();
-        testSubjectService.save(subject);
+        testSubjectService.save(savedSubject);
     }
 
     @Test
@@ -141,5 +149,47 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
                 true,
                 PageRequest.of(0, 10));
         assertEquals(1, subjects.getContent().size());
+    }
+
+    @Test
+    public void getSubjectByIdShouldIncludeLocationPropertiesOfSubjectLocation() {
+        addLocationPropertiesToSubjectLocation();
+
+        SubjectResponse response = subjectApiController.get(savedSubject.getUuid(), false).getBody();
+
+        Map locationProperties = (Map) response.get("Location Properties");
+        assertEquals(2, locationProperties.size());
+        assertEquals("411001", locationProperties.get("Text"));
+        assertEquals("singleCoded1", locationProperties.get("Single Coded"));
+    }
+
+    @Test
+    public void getSubjectByIdShouldLeaveOutLocationPropertiesWhenLocationHasNone() {
+        SubjectResponse response = subjectApiController.get(savedSubject.getUuid(), false).getBody();
+
+        assertThat(response).doesNotContainKey("Location Properties");
+        assertThat(response).containsKey("Location ID");
+    }
+
+    @Test
+    public void getSubjectsShouldNotIncludeLocationProperties() {
+        addLocationPropertiesToSubjectLocation();
+
+        ResponsePage subjects = subjectApiController.getSubjects(null, null, subjectType.getName(), null,
+                Collections.singletonList(catchmentData.getAddressLevel1().getUuid()), false, PageRequest.of(0, 10));
+
+        assertEquals(1, subjects.getContent().size());
+        assertThat((Map) subjects.getContent().get(0)).doesNotContainKey("Location Properties");
+    }
+
+    private void addLocationPropertiesToSubjectLocation() {
+        AddressLevel location = catchmentData.getAddressLevel1();
+        location.setLocationProperties(new ObservationCollectionBuilder()
+                .addObservation(textConcept, "411001")
+                .addObservation(singleCodedConcept, singleCodedConcept.getAnswerConcept("singleCoded1"))
+                .build());
+        testLocationService.save(location);
+        entityManager.flush();
+        entityManager.clear();
     }
 }
