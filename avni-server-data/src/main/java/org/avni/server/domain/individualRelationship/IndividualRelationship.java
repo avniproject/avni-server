@@ -1,5 +1,6 @@
 package org.avni.server.domain.individualRelationship;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +12,7 @@ import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -36,6 +38,12 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_b_id")
     private Individual individualB;
+
+    @Formula("(select i.uuid from individual i where i.id = individual_a_id)")
+    private String linkedIndividualAUuid;
+
+    @Formula("(select i.uuid from individual i where i.id = individual_b_id)")
+    private String linkedIndividualBUuid;
 
     @Column
     @Convert(converter = JodaDateTimeConverter.class)
@@ -129,5 +137,15 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividuala(), this.getIndividualB());
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualAUuid() {
+        return uuidOf(individuala, linkedIndividualAUuid);
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualBUuid() {
+        return uuidOf(individualB, linkedIndividualBUuid);
     }
 }

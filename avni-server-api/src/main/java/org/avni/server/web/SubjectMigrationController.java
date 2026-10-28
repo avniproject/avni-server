@@ -107,7 +107,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     public EntityModel<SubjectMigration> process(EntityModel<SubjectMigration> resource) {
         SubjectMigration content = resource.getContent();
         resource.removeLinks();
-        resource.add(Link.of(content.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(content.getLinkedIndividualUuid(), "individualUUID"));
         resource.add(Link.of(content.getSubjectType().getUuid(), "subjectTypeUUID"));
         if (content.getOldAddressLevel() != null)
             resource.add(Link.of(content.getOldAddressLevel().getUuid(), "oldAddressLevelUUID"));

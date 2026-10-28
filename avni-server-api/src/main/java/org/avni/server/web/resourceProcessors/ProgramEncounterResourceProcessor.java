@@ -10,7 +10,7 @@ public class ProgramEncounterResourceProcessor extends ResourceProcessor<Program
         ProgramEncounter programEncounter = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(programEncounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(Link.of(programEncounter.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        resource.add(Link.of(programEncounter.getLinkedProgramEnrolmentUuid(), "programEnrolmentUUID"));
         return resource;
     }
 }

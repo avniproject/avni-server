@@ -6,6 +6,7 @@ import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.joda.time.DateTime;
 import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.domain.EncounterType.EncounterTypeProjection;
@@ -26,6 +27,9 @@ public class ProgramEncounter extends AbstractEncounter implements MessageableEn
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_enrolment_id")
     private ProgramEnrolment programEnrolment;
+
+    @Formula("(select pe.uuid from program_enrolment pe where pe.id = program_enrolment_id)")
+    private String linkedProgramEnrolmentUuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
@@ -104,5 +108,10 @@ public class ProgramEncounter extends AbstractEncounter implements MessageableEn
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getProgramEnrolment().getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedProgramEnrolmentUuid() {
+        return uuidOf(programEnrolment, linkedProgramEnrolmentUuid);
     }
 }

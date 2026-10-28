@@ -121,7 +121,7 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
     public EntityModel<ChecklistItem> process(EntityModel<ChecklistItem> resource) {
         ChecklistItem checklistItem = resource.getContent();
         resource.removeLinks();
-        resource.add(Link.of(checklistItem.getChecklist().getUuid(), "checklistUUID"));
+        resource.add(Link.of(checklistItem.getLinkedChecklistUuid(), "checklistUUID"));
         if (checklistItem.getChecklistItemDetail() != null) {
             resource.add(Link.of(checklistItem.getChecklistItemDetail().getUuid(), "checklistItemDetailUUID"));
         }

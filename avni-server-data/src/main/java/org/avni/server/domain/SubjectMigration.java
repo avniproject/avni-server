@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -7,6 +8,7 @@ import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.Formula;
 
 import java.util.Date;
 
@@ -20,6 +22,9 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
     private Individual individual;
+
+    @Formula("(select i.uuid from individual i where i.id = individual_id)")
+    private String linkedIndividualUuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "old_address_level_id")
@@ -141,5 +146,10 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualUuid() {
+        return uuidOf(individual, linkedIndividualUuid);
     }
 }

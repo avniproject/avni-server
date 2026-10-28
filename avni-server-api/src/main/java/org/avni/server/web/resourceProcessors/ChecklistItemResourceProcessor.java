@@ -9,7 +9,7 @@ public class ChecklistItemResourceProcessor extends ResourceProcessor<ChecklistI
     public EntityModel<ChecklistItem> process(EntityModel<ChecklistItem> resource) {
         ChecklistItem checklistItem = resource.getContent();
         resource.removeLinks();
-        resource.add(Link.of(checklistItem.getChecklist().getUuid(), "checklistUUID"));
+        resource.add(Link.of(checklistItem.getLinkedChecklistUuid(), "checklistUUID"));
         resource.add(Link.of(checklistItem.getChecklistItemDetail().getUuid(), "checklistItemDetailUUID"));
         return resource;
     }

@@ -8,6 +8,7 @@ import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.joda.time.DateTime;
 
 import java.util.Date;
@@ -27,6 +28,12 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_subject_id")
     private Individual memberSubject;
+
+    @Formula("(select i.uuid from individual i where i.id = group_subject_id)")
+    private String linkedGroupSubjectUuid;
+
+    @Formula("(select i.uuid from individual i where i.id = member_subject_id)")
+    private String linkedMemberSubjectUuid;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -103,11 +110,11 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     }
 
     public String getGroupSubjectUUID() {
-        return groupSubject.getUuid();
+        return uuidOf(groupSubject, linkedGroupSubjectUuid);
     }
 
     public String getMemberSubjectUUID() {
-        return memberSubject.getUuid();
+        return uuidOf(memberSubject, linkedMemberSubjectUuid);
     }
 
     public String getGroupRoleUUID() {

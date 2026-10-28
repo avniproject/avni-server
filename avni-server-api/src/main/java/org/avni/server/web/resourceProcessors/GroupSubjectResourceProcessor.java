@@ -9,8 +9,8 @@ public class GroupSubjectResourceProcessor extends ResourceProcessor<GroupSubjec
     public EntityModel<GroupSubject> process(EntityModel<GroupSubject> resource) {
         GroupSubject groupSubject = resource.getContent();
         resource.removeLinks();
-        resource.add(Link.of(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));
-        resource.add(Link.of(groupSubject.getMemberSubject().getUuid(), "memberSubjectUUID"));
+        resource.add(Link.of(groupSubject.getGroupSubjectUUID(), "groupSubjectUUID"));
+        resource.add(Link.of(groupSubject.getMemberSubjectUUID(), "memberSubjectUUID"));
         resource.add(Link.of(groupSubject.getGroupRole().getUuid(), "groupRoleUUID"));
         return resource;
     }}
