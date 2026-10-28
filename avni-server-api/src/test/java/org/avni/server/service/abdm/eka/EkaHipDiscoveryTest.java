@@ -74,6 +74,9 @@ public class EkaHipDiscoveryTest {
         assertEquals("subject-1", reply.at("/patients/0/ref_num").asText());
         assertEquals(1, reply.at("/patients/0/care_contexts").size());
         assertEquals("enc-2", reply.at("/patients/0/care_contexts/0/ref_num").asText());
+        // A match carries no error: Eka passes code 0 on to ABDM, whose check refuses it, and the whole reply with it
+        // ("ABDM-9999 Invalid message", 28 Oct run).
+        assertFalse(reply.toString(), reply.has("error"));
     }
 
     @Test
@@ -86,6 +89,8 @@ public class EkaHipDiscoveryTest {
         JsonNode reply = sent(ON_DISCOVER);
         assertEquals(0, reply.path("patients").size());
         assertTrue(reply.at("/error/message").asText().length() > 0);
+        // ABDM accepts an error code of 3 to 6 digits (or ABDM-nnnn); a 1 fails its check as a 0 does.
+        assertTrue(reply.at("/error/code").asText(), reply.at("/error/code").asText().matches("[0-9]{3,6}"));
     }
 
     // NHA USER_INIT_LINK_603: with no ABHA match, search by the verified mobile, then a fuzzy match on the name.
@@ -168,6 +173,7 @@ public class EkaHipDiscoveryTest {
         JsonNode reply = sent(ON_INIT);
         assertEquals(reference.getValue(), reply.get("ref_num").asText());
         assertFalse(reply.path("otp_expiry").asText().isEmpty());
+        assertFalse(reply.toString(), reply.has("error"));
     }
 
     @Test
@@ -210,6 +216,7 @@ public class EkaHipDiscoveryTest {
         order.verify(store).setLinkRequestStatus(31L, "LINKED");
         JsonNode reply = sent(ON_CONFIRM);
         assertEquals("enc-2", reply.at("/patients/0/care_contexts/0/ref_num").asText());
+        assertFalse(reply.toString(), reply.has("error"));
     }
 
     @Test

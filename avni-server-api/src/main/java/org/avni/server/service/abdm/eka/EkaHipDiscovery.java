@@ -74,7 +74,7 @@ public class EkaHipDiscovery {
         ArrayNode patients = reply.putArray("patients");
         Match match = find(data);
         if (match.subject() == null) {
-            reply.set("error", error(1, match.why()));
+            reply.set("error", error(REFUSED, match.why()));
         } else {
             AbdmHipLinkingService.Patient p = linking.loadPatient(match.subject().uuid());
             String hipId = cfg.getHipId();
@@ -83,10 +83,9 @@ public class EkaHipDiscovery {
             List<AbdmHipStore.CareContext> unlinked = store.findCareContexts(p.individualId(), hipId).stream()
                     .filter(c -> !AbdmHipLinkingService.LINKED.equals(c.status())).collect(Collectors.toList());
             if (unlinked.isEmpty()) {
-                reply.set("error", error(1, "No visits left to link at this facility"));
+                reply.set("error", error(REFUSED, "No visits left to link at this facility"));
             } else {
                 patients.add(patientEntry(p.uuid(), p.name(), unlinked));
-                reply.set("error", error(0, ""));
             }
         }
         send(ON_DISCOVER, reply, data);
@@ -168,7 +167,7 @@ public class EkaHipDiscovery {
         if (problem == null && phone.isEmpty()) problem = "This facility holds no phone number to send the code to";
         if (problem == null && !otp.send(phone.get())) problem = "The code could not be sent; please try again";
         if (problem != null) {
-            reply.set("error", error(1, problem));
+            reply.set("error", error(REFUSED, problem));
         } else {
             String linkReference = UUID.randomUUID().toString();
             Instant expiry = Instant.now().plus(CODE_LIFETIME);
@@ -176,7 +175,6 @@ public class EkaHipDiscovery {
                     "OTP_SENT", expiry);
             reply.put("ref_num", linkReference);
             reply.put("otp_expiry", AbdmTime.format(expiry));
-            reply.set("error", error(0, ""));
             logger.info("Eka discovery link {}: code sent for {} visit(s)", linkReference, references.size());
         }
         send(ON_INIT, reply, data);
@@ -193,10 +191,10 @@ public class EkaHipDiscovery {
         ArrayNode patients = reply.putArray("patients");
         Optional<AbdmHipStore.LinkRequest> found = store.findLinkRequest(linkReference);
         if (found.isEmpty() || found.get().individualId() == null || !"OTP_SENT".equals(found.get().status())) {
-            reply.set("error", error(1, "Unknown or finished link request"));
+            reply.set("error", error(REFUSED, "Unknown or finished link request"));
         } else if (found.get().expiresAt() != null && Instant.now().isAfter(found.get().expiresAt())) {
             store.setLinkRequestStatus(found.get().id(), "EXPIRED");
-            reply.set("error", error(1, "The code has expired"));
+            reply.set("error", error(REFUSED, "The code has expired"));
         } else {
             AbdmHipStore.LinkRequest request = found.get();
             Optional<AbdmHipStore.Subject> subject = store.findSubjectById(request.individualId());
@@ -204,7 +202,7 @@ public class EkaHipDiscovery {
             if (subject.isEmpty() || phone.isEmpty() || code == null || !otp.verify(phone.get(), code)) {
                 int attempts = store.countLinkAttempt(request.id());
                 if (attempts >= MAX_ATTEMPTS) store.setLinkRequestStatus(request.id(), "FAILED");
-                reply.set("error", error(1, attempts >= MAX_ATTEMPTS ? "Too many wrong codes; start again" : "The code is not right"));
+                reply.set("error", error(REFUSED, attempts >= MAX_ATTEMPTS ? "Too many wrong codes; start again" : "The code is not right"));
             } else {
                 AbdmHipLinkingService.Patient p = linking.loadPatient(subject.get().uuid());
                 Set<String> asked = Set.copyOf(request.careContextRefs());
@@ -215,7 +213,6 @@ public class EkaHipDiscovery {
                 List<String> refs = theirs.stream().map(AbdmHipStore.NewCareContext::reference).collect(Collectors.toList());
                 List<AbdmHipStore.CareContext> rows = store.findCareContextsByReferences(hipId, refs);
                 patients.add(patientEntry(p.uuid(), p.name(), rows));
-                reply.set("error", error(0, ""));
                 // Calling on-confirm is what links them (EKA_ABDM_SPEC.md 2.7), so Avni records the outcome only after it.
                 switch (send(ON_CONFIRM, reply, data)) {
                     case ACCEPTED -> {
@@ -269,6 +266,11 @@ public class EkaHipDiscovery {
             return EkaAbdmClient.mayHaveActed(e) ? Sent.UNANSWERED : Sent.REFUSED;
         }
     }
+
+    // A reply that refuses carries an error; one that succeeds carries none (28 Oct run: Eka passed a success's code 0 on to
+    // ABDM, whose check refused the whole reply as "ABDM-9999 Invalid message"). ABDM accepts a code of 3 to 6 digits;
+    // which code Eka sends it on as is unverified, so the message carries the reason.
+    static final int REFUSED = 1000;
 
     private static ObjectNode error(int code, String message) {
         ObjectNode e = AbdmJson.obj();
