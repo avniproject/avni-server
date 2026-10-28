@@ -28,9 +28,15 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -40,6 +46,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -353,5 +360,72 @@ public class MediaControllerRoutingTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("true", response.getBody());
+    }
+
+    @Test
+    public void batchOfUploadUrlsSignsEachFileOnItsOwnBackend() {
+        ResponseEntity<?> response = controller.generateUploadUrls(Arrays.asList("photo1.jpg", MODEL_REL_KEY, "photo2.jpg"));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Map<String, String> expected = new LinkedHashMap<>();
+        expected.put("photo1.jpg", "https://s3/put");
+        expected.put(MODEL_REL_KEY, "https://gcs/put");
+        expected.put("photo2.jpg", "https://s3/put");
+        assertEquals(expected, response.getBody());
+        verify(defaultS3Service).generateMediaUploadUrl("photo1.jpg", HttpMethod.PUT);
+        verify(defaultS3Service).generateMediaUploadUrl("photo2.jpg", HttpMethod.PUT);
+        verify(modelBackend).generateMediaUploadUrl(MODEL_REL_KEY, HttpMethod.PUT);
+        verify(accessControlService, times(1)).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+    }
+
+    @Test
+    public void batchOfUploadUrlsAtTheCapIsSigned() {
+        List<String> fileNames = new ArrayList<>();
+        for (int i = 0; i < MediaController.MAX_UPLOAD_URLS_PER_REQUEST; i++) fileNames.add("photo" + i + ".jpg");
+
+        ResponseEntity<?> response = controller.generateUploadUrls(fileNames);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(MediaController.MAX_UPLOAD_URLS_PER_REQUEST, ((Map<?, ?>) response.getBody()).size());
+    }
+
+    @Test
+    public void batchOfUploadUrlsOverTheCapIsRejectedWithoutSigningAny() {
+        List<String> fileNames = new ArrayList<>();
+        for (int i = 0; i <= MediaController.MAX_UPLOAD_URLS_PER_REQUEST; i++) fileNames.add("photo" + i + ".jpg");
+
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(fileNames));
+        verify(defaultS3Service, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void batchWithAModelKeyByANonAdminIsRejected() {
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.EditOrganisationConfiguration))
+                .when(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+
+        assertThrows(AvniAccessException.class, () -> controller.generateUploadUrls(Arrays.asList("photo1.jpg", MODEL_REL_KEY)));
+        verify(modelBackend, never()).generateMediaUploadUrl(anyString(), any(HttpMethod.class));
+    }
+
+    @Test
+    public void batchWithAKeyInAReservedFolderIsRejected() {
+        assertThrows(BadRequestError.class, () -> controller.generateUploadUrls(Arrays.asList("photo1.jpg", "models/not-a-sha.bin")));
+    }
+
+    @Test
+    public void batchReturnsForbiddenWhenTheStorageRefusesAFile() {
+        when(defaultS3Service.generateMediaUploadUrl(eq("photo2.jpg"), any(HttpMethod.class))).thenThrow(new AccessDeniedException("denied"));
+
+        ResponseEntity<?> response = controller.generateUploadUrls(Arrays.asList("photo1.jpg", "photo2.jpg"));
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+
+    @Test
+    public void emptyBatchReturnsNoUrls() {
+        ResponseEntity<?> response = controller.generateUploadUrls(new ArrayList<>());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(new LinkedHashMap<>(), response.getBody());
     }
 }
