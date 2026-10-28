@@ -45,6 +45,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +56,8 @@ import static java.lang.String.format;
 
 @RestController
 public class MediaController {
+    public static final int MAX_UPLOAD_URLS_PER_REQUEST = 50;
+
     private final Logger logger;
     private final S3Service s3Service;
     private final StorageServiceProvider storageServiceProvider;
@@ -97,6 +100,10 @@ public class MediaController {
     @Transactional(readOnly = true)
     public ResponseEntity<String> generateUploadUrl(@PathVariable String fileName) {
         logger.info("getting media upload url");
+        return uploadUrlResponse(fileName);
+    }
+
+    private ResponseEntity<String> uploadUrlResponse(String fileName) {
         // A namespace reserved for admin-managed content must not be writable via the media presign.
         Optional<ManagedContentNamespace> namespace = ManagedContentNamespace.forRelativeKey(fileName);
         if (namespace.isPresent()) {
@@ -533,5 +540,24 @@ public class MediaController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                 .contentType(MediaType.parseMediaType("application/octet-stream"))
                 .body(resource);
+    }
+
+    @RequestMapping(value = "/media/uploadUrls", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> generateUploadUrls(@RequestBody List<String> fileNames) {
+        logger.info("getting {} media upload urls", fileNames.size());
+        if (fileNames.size() > MAX_UPLOAD_URLS_PER_REQUEST) {
+            throw new BadRequestError("At most %d file names per request, got %d.", MAX_UPLOAD_URLS_PER_REQUEST, fileNames.size());
+        }
+        Map<String, String> uploadUrls = new LinkedHashMap<>();
+        for (String fileName : fileNames) {
+            ResponseEntity<String> response = uploadUrlResponse(fileName);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                return response;
+            }
+            uploadUrls.put(fileName, response.getBody());
+        }
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(uploadUrls);
     }
 }
