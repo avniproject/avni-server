@@ -30,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Sql(value = {"/tear-down.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class ReportCardControllerIntegrationTest extends AbstractControllerIntegrationTest {
+    private static final String CARD_NAME = "Open the monthly overview";
+
     @Autowired
     private DashboardRepository dashboardRepository;
 
@@ -41,19 +43,8 @@ public class ReportCardControllerIntegrationTest extends AbstractControllerInteg
 
     @Test
     public void cardSyncCarriesOpenDashboardTargetInActionDetail() throws Exception {
-        Dashboard dashboard = new Dashboard();
-        dashboard.setUuid(UUID.randomUUID().toString());
-        dashboard.setName("Monthly overview");
-        dashboardRepository.save(dashboard);
-
-        // What the web app sends when it saves a card: a query card, with the target dashboard in actionDetailDashboardUUID.
-        String cardJson = mapper.writeValueAsString(Map.of(
-                "name", "Open the monthly overview",
-                "color", "#1b6ec2",
-                "count", 1,
-                "query", "({params}) => []",
-                "action", "OpenDashboard",
-                "actionDetailDashboardUUID", dashboard.getUuid()));
+        Dashboard dashboard = saveDashboard();
+        String cardJson = openDashboardCardJson(dashboard);
         // Binding the request and writing the response both go through Spring's own JSON mapper, so this checks the field name.
         // Qualified because the base class has its own post(path, json), which hides the static import.
         MvcResult saved = mockMvc.perform(MockMvcRequestBuilders.post("/web/reportCard").contentType(MediaType.APPLICATION_JSON).content(cardJson))
@@ -68,6 +59,43 @@ public class ReportCardControllerIntegrationTest extends AbstractControllerInteg
         assertThat(syncedCard.path("actionDetail").path("dashboardUUID").textValue())
                 .as("the target dashboard the phone reads from actionDetail")
                 .isEqualTo(dashboard.getUuid());
+    }
+
+    // Saving a card still needs the "Edit offline dashboard and report card" privilege (avniproject/avni-server#1101).
+    // The target dashboard exists, so the privilege is the only thing that can refuse the save.
+    @Test
+    public void newCardIsRefusedWithoutTheEditDashboardPrivilege() throws Exception {
+        String cardJson = openDashboardCardJson(saveDashboard());
+
+        setUser("user-no-access");
+        mockMvc.perform(MockMvcRequestBuilders.post("/web/reportCard").contentType(MediaType.APPLICATION_JSON).content(cardJson))
+                .andExpect(status().isForbidden());
+
+        setUser("demo-admin");
+        String savedCards = mockMvc.perform(get("/web/reportCard"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(mapper.readTree(savedCards).findValuesAsText("name")).as("names of the saved cards").doesNotContain(CARD_NAME);
+    }
+
+    private Dashboard saveDashboard() {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setUuid(UUID.randomUUID().toString());
+        dashboard.setName("Monthly overview");
+        dashboardRepository.save(dashboard);
+        return dashboard;
+    }
+
+    private String openDashboardCardJson(Dashboard dashboard) throws Exception {
+        // A query card with the fields the web app sends (name, color, count, query, action), plus
+        // actionDetailDashboardUUID, the name avniproject/avni-webapp#1830 specifies for the target dashboard.
+        return mapper.writeValueAsString(Map.of(
+                "name", CARD_NAME,
+                "color", "#1b6ec2",
+                "count", 1,
+                "query", "({params}) => []",
+                "action", "OpenDashboard",
+                "actionDetailDashboardUUID", dashboard.getUuid()));
     }
 
     // The card sync as the phone calls it, from the beginning of time. The phone reads the cards from _embedded.card.

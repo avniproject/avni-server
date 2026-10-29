@@ -521,8 +521,9 @@ public class CardServiceTest {
         when(cardRepository.findOne(7L)).thenReturn(existingCard);
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // The web app sends every action field whatever the action is, so the
-        // old target arrives together with the new action.
+        // The request carries the old target together with the new action. The web app sends every
+        // action field it has, whatever the action is, and avniproject/avni-webapp#1830 adds
+        // actionDetailDashboardUUID to those fields.
         ReportCardWebRequest request = newWebRequest();
         request.setAction("ViewSubjectProfile");
         request.setActionDetailDashboardUUID(DASHBOARD_UUID);
@@ -542,7 +543,9 @@ public class CardServiceTest {
 
         when(cardRepository.findByUuid("card-uuid")).thenReturn(existingCard);
 
-        // The bundle also carries the old target together with the new action.
+        // Only a hand-edited bundle carries the old target together with the new action: an exported one
+        // never does, because ReportCardMapper.toBundle reads the target from actionDetail, which holds
+        // a dashboardUUID only when the action is OpenDashboard. This test guards that case.
         ReportCardBundleRequest bundleRequest = newBundleRequest();
         bundleRequest.setAction("ViewSubjectProfile");
         bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
