@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,7 +31,6 @@ public class BaseSubjectSearchQueryBuilder<T> {
     protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n";
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
-    protected static final String SEARCH_ALL_FILTER = "i.id in (select i.id from individual i join program_enrolment penr on penr.individual_id = i.id and penr.is_voided is false\n";
 
     private String orderByClause = "";
 
@@ -37,6 +38,8 @@ public class BaseSubjectSearchQueryBuilder<T> {
     private final Map<String, Object> parameters = new HashMap<>();
     private boolean forCount;
     private final Set<String> customFields = new HashSet<>();
+    public static final String DEFAULT_TIME_ZONE = "Asia/Kolkata";
+    private String timeZone = DEFAULT_TIME_ZONE;
 
     public BaseSubjectSearchQueryBuilder() {
         logger = LoggerFactory.getLogger(this.getClass());
@@ -141,7 +144,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         if (concept.isCoded()) {
             customFields.add(String.format("multi_select_coded(i.observations -> '%s') as \"%s\"", concept.getUuid(), concept.getName()));
         } else if (concept.getDataType().equals(ConceptDataType.Date.toString())) {
-            customFields.add(String.format("cast(i.observations ->> '%s' as date) as \"%s\"", concept.getUuid(), concept.getName()));
+            customFields.add(String.format("%s as \"%s\"", observationAsDate(String.format("i.observations ->> '%s'", concept.getUuid())), concept.getName()));
         } else {
             customFields.add(String.format("i.observations ->> '%s' as \"%s\"", concept.getUuid(), concept.getName()));
         }
@@ -152,6 +155,38 @@ public class BaseSubjectSearchQueryBuilder<T> {
         SubjectTypeRepository subjectTypeRepository = ApplicationContextProvider.getContext().getBean(SubjectTypeRepository.class);
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         return customSearchFields.stream().filter(csf -> csf.getSubjectTypeUUID().equals(subjectType.getUuid())).collect(Collectors.toList());
+    }
+
+    public T withTimeZone(String timeZone) {
+        if (S.isEmpty(timeZone)) return (T) this;
+        try {
+            this.timeZone = ZoneId.of(timeZone).getId();
+        } catch (DateTimeException e) {
+            logger.warn("Ignoring unknown time zone {} in search", timeZone);
+        }
+        return (T) this;
+    }
+
+    private String observationAsDate(String observationValue) {
+        return String.format("(case when %1$s like '%%T%%' then cast(cast(%1$s as timestamp with time zone) at time zone '%2$s' as date) else cast(%1$s as date) end)",
+                observationValue, timeZone);
+    }
+
+    protected String localDate(String timestampColumn) {
+        return String.format("cast(%s at time zone '%s' as date)", timestampColumn, timeZone);
+    }
+
+    private String parameterAsDate(String param, String value) {
+        return value.contains("T")
+                ? String.format("cast(cast(:%s as timestamp with time zone) at time zone '%s' as date)", param, timeZone)
+                : String.format("cast(:%s as date)", param);
+    }
+
+    private String dateTimeComparison(String observation, String operator, String param, String value) {
+        if (value.contains("T")) {
+            return String.format("cast(%s as timestamp with time zone) %s cast(:%s as timestamp with time zone)", observation, operator, param);
+        }
+        return String.format("%s %s cast(:%s as date)", observationAsDate(observation), operator, param);
     }
 
     public T withNameFilter(String name) {
@@ -227,7 +262,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         if (StringUtils.isEmpty(searchString)) return (T) this;
         String searchValue = "%" + searchString + "%";
         parameters.put("searchAll", searchValue);
-        whereClauses.add(generateWhereClause(SEARCH_ALL_FILTER, "(cast(i.observations as text) ilike :searchAll or cast(penr.observations as text) ilike :searchAll)"));
+        whereClauses.add("(cast(i.observations as text) ilike :searchAll or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and cast(penr.observations as text) ilike :searchAll))");
         return (T) this;
     }
 
@@ -268,6 +303,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
             String conceptUuidParam = "conceptUuid" + ci;
             addParameter(conceptUuidParam, c.getUuid());
             String tableAlias = aliasMap.get(c.getSearchScope().toUpperCase());
+            int clausesBefore = whereClauses.size();
 
             if (c.getDataType().equalsIgnoreCase("CODED")) {
                 List<String> conditions = new ArrayList<>();
@@ -286,7 +322,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), "(" + codedFilter + ")"));
             }
 
-            if (c.getDataType().equalsIgnoreCase("TEXT") || c.getDataType().equalsIgnoreCase("ID")) {
+            if (c.getDataType().equalsIgnoreCase("TEXT") || c.getDataType().equalsIgnoreCase("ID") || c.getDataType().equalsIgnoreCase("NOTES")) {
                 String value = "%" + c.getValue() + "%";
                 String param = "textValue" + ci;
                 addParameter(param, value);
@@ -321,20 +357,65 @@ public class BaseSubjectSearchQueryBuilder<T> {
                         String value = c.getMinValue();
                         String param = "dateTimeValueMin" + ci;
                         addParameter(param, value);
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as date)  >= cast(:" + param + " as date)"));
+                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  >= cast(:" + param + " as date)"));
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
                         String value = c.getMaxValue();
                         String param = "dateTimeValueMax" + ci;
                         addParameter(param, value);
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as date)  <= cast(:" + param + " as date)"));
+                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  <= cast(:" + param + " as date)"));
                     }
                 } else {
                     String value = c.getMinValue();
                     String param = "dateTimeValueMin" + ci;
                     addParameter(param, value);
-                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as date)  = cast(:" + param + " as date)"));
+                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  = cast(:" + param + " as date)"));
                 }
+            }
+
+            if (c.getDataType().equalsIgnoreCase("DATETIME")) {
+                String observation = tableAlias + ".observations ->>:" + conceptUuidParam;
+                if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
+                    if (!StringUtils.isEmpty(c.getMinValue())) {
+                        String param = "dateTimeValueMin" + ci;
+                        addParameter(param, c.getMinValue());
+                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), dateTimeComparison(observation, ">=", param, c.getMinValue())));
+                    }
+                    if (!StringUtils.isEmpty(c.getMaxValue())) {
+                        String param = "dateTimeValueMax" + ci;
+                        addParameter(param, c.getMaxValue());
+                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), dateTimeComparison(observation, "<=", param, c.getMaxValue())));
+                    }
+                } else if (!StringUtils.isEmpty(c.getMinValue())) {
+                    String param = "dateTimeValueMin" + ci;
+                    addParameter(param, c.getMinValue());
+                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observationAsDate(observation) + " = " + parameterAsDate(param, c.getMinValue())));
+                }
+            }
+
+            if (c.getDataType().equalsIgnoreCase("TIME")) {
+                String observation = "cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as time)";
+                if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
+                    if (!StringUtils.isEmpty(c.getMinValue())) {
+                        String param = "timeValueMin" + ci;
+                        addParameter(param, c.getMinValue());
+                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observation + " >= cast(:" + param + " as time)"));
+                    }
+                    if (!StringUtils.isEmpty(c.getMaxValue())) {
+                        String param = "timeValueMax" + ci;
+                        addParameter(param, c.getMaxValue());
+                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observation + " <= cast(:" + param + " as time)"));
+                    }
+                } else if (!StringUtils.isEmpty(c.getMinValue())) {
+                    String param = "timeValueMin" + ci;
+                    addParameter(param, c.getMinValue());
+                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observation + " = cast(:" + param + " as time)"));
+                }
+            }
+
+            if (whereClauses.size() == clausesBefore) {
+                parameters.remove(conceptUuidParam);
+                logger.warn("Search filter on concept {} of type {} is not supported and was ignored", c.getUuid(), c.getDataType());
             }
         }
 

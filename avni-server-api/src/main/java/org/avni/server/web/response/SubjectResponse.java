@@ -31,6 +31,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
         Response.putIfPresent(subjectResponse, "Subject location", subject.getSubjectLocation());
         subjectResponse.put("Registration date", subject.getRegistrationDate());
         putLocation(subject, subjectResponse);
+        if (options.isIncludeLocationProperties()) putLocationProperties(subject, subjectResponse, conceptRepository, conceptService);
         putRelatives(subject, subjectResponse);
         if (options.isIncludeCatchments()) putCatchments(subject, subjectResponse);
 
@@ -101,5 +102,14 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
         SubjectResponse subjectResponse = fromSubject(subject, options, conceptRepository, conceptService, s3Service);
         subjectResponse.put("Groups", groups.stream().filter(group -> !group.isVoided()).map(GroupSubject::getGroupSubjectUUID).collect(Collectors.toList()));
         return subjectResponse;
+    }
+
+    private static void putLocationProperties(Individual subject, SubjectResponse subjectResponse, ConceptRepository conceptRepository, ConceptService conceptService) {
+        AddressLevel addressLevel = subject.getAddressLevel();
+        if (addressLevel == null) return;
+        LinkedHashMap<String, Object> locationProperties = new LinkedHashMap<>();
+        Response.mapObservations(conceptRepository, conceptService, locationProperties, addressLevel.getLocationProperties());
+        if (!locationProperties.isEmpty())
+            subjectResponse.put("Location Properties", locationProperties);
     }
 }

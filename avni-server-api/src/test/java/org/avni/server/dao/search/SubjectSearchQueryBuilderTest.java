@@ -17,6 +17,7 @@ import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.web.request.webapp.search.Concept;
 import org.avni.server.web.request.webapp.search.DateRange;
 import org.avni.server.web.request.webapp.search.IntegerRange;
+import org.avni.server.web.request.webapp.search.PageDetails;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.joda.time.LocalDate;
 import org.junit.After;
@@ -285,6 +286,151 @@ public class SubjectSearchQueryBuilderTest {
         String sql = new SubjectSearchQueryBuilder().withCustomFields(null).build(subjectType).getSql();
 
         assertThat(sql).isEqualTo(new SubjectSearchQueryBuilder().build(subjectType).getSql());
+    }
+
+    @Test
+    public void dateConceptFilterTakesTheDateInTheSearchersTimeZone() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withTimeZone("America/New_York")
+                .withConceptsFilter(Collections.singletonList(dateRangeConcept("2026-10-29", "2026-10-29")))
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("at time zone 'America/New_York' as date)");
+        assertThat(sql).contains("(case when i.observations ->>:conceptUuid0 like '%T%' then");
+    }
+
+    @Test
+    public void dateConceptFilterUsesIndianTimeWhenNoTimeZoneIsSent() {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        request.setConcept(Collections.singletonList(dateRangeConcept("2026-10-29", null)));
+        PageDetails pageDetails = new PageDetails();
+        pageDetails.setPageNumber(0);
+        pageDetails.setNumberOfRecordPerPage(10);
+        request.setPageElement(pageDetails);
+
+        String sql = new SubjectSearchQueryBuilder().withSubjectSearchFilter(request, subjectType).build(subjectType).getSql();
+
+        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date)");
+    }
+
+    @Test
+    public void unknownTimeZoneIsIgnored() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withTimeZone("Asia/Kolkata' or 1=1 --")
+                .withConceptsFilter(Collections.singletonList(dateRangeConcept("2026-10-29", null)))
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date)").doesNotContain("1=1");
+    }
+
+    @Test
+    public void dateResultColumnIsShownInTheSearchersTimeZone() {
+        org.avni.server.domain.Concept concept = new ConceptBuilder().withUuid("c-lmp").withName("LMP")
+                .withDataType(ConceptDataType.Date).build();
+        when(conceptRepository.findByUuid("c-lmp")).thenReturn(concept);
+        configureColumns(concept);
+
+        String sql = new SubjectSearchQueryBuilder().withTimeZone("Asia/Kolkata").withCustomFields(null).build(subjectType).getSql();
+
+        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) else cast(i.observations ->> 'c-lmp' as date) end) as \"LMP\"");
+    }
+
+    @Test
+    public void programEncounterDateFilterUsesTheProgramEncounterTableOfItsSubquery() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withProgramEncounterDateFilter(new DateRange("2026-04-01", "2026-04-30"))
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("cast(penc.encounter_date_time at time zone 'Asia/Kolkata' as date) >= cast(:programEncounterDateMin as date)")
+                .doesNotContain("pe.encounter_date_time");
+    }
+
+    @Test
+    public void visitOnTheLastDayOfTheRangeIsIncluded() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withTimeZone("Asia/Kolkata")
+                .withEncounterDateFilter(new DateRange("2026-02-15", "2026-02-15"))
+                .withProgramEnrolmentDateFilter(new DateRange("2026-03-01", "2026-03-31"))
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("cast(e.encounter_date_time at time zone 'Asia/Kolkata' as date) <= cast(:encounterDateMax as date)")
+                .contains("cast(penr.enrolment_date_time at time zone 'Asia/Kolkata' as date) <= cast(trim(:programEnrolmentDateMax) as date)");
+    }
+
+    @Test
+    public void searchAllAlsoLooksAtSubjectsWithoutAnEnrolment() {
+        String sql = new SubjectSearchQueryBuilder().withSearchAll("alpha").build(subjectType).getSql();
+
+        assertThat(sql).contains("(cast(i.observations as text) ilike :searchAll or i.id in (select penr.individual_id from program_enrolment penr");
+        assertThat(sql).doesNotContain("join program_enrolment penr on penr.individual_id = i.id");
+    }
+
+    @Test
+    public void notesConceptIsSearchedLikeText() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withConceptsFilter(Collections.singletonList(new Concept("c-notes", "registration", "Notes", null, "three")))
+                .build(subjectType);
+
+        assertThat(query.getSql()).contains("i.observations->> :conceptUuid0 ilike :textValue0");
+        assertThat(query.getParameters()).containsEntry("textValue0", "%three%");
+    }
+
+    @Test
+    public void timeConceptIsComparedAsATimeOfDay() {
+        Concept concept = new Concept("c-time", "registration", "Time", null, null);
+        concept.setWidget("Range");
+        concept.setMinValue("09:00");
+        concept.setMaxValue("12:00");
+
+        SqlQuery query = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(concept)).build(subjectType);
+
+        assertThat(query.getSql()).contains("cast(i.observations ->>:conceptUuid0 as time) >= cast(:timeValueMin0 as time)")
+                .contains("cast(i.observations ->>:conceptUuid0 as time) <= cast(:timeValueMax0 as time)");
+        assertThat(query.getParameters()).containsEntry("conceptUuid0", "c-time");
+    }
+
+    @Test
+    public void dateTimeConceptWithATimeIsComparedToTheMinute() {
+        Concept concept = new Concept("c-dt", "registration", "DateTime", null, null);
+        concept.setWidget("Range");
+        concept.setMinValue("2026-01-01T03:30:00.000Z");
+        concept.setMaxValue("2026-03-31T12:30:00.000Z");
+
+        String sql = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(concept)).build(subjectType).getSql();
+
+        assertThat(sql).contains("cast(i.observations ->>:conceptUuid0 as timestamp with time zone) >= cast(:dateTimeValueMin0 as timestamp with time zone)")
+                .contains("cast(i.observations ->>:conceptUuid0 as timestamp with time zone) <= cast(:dateTimeValueMax0 as timestamp with time zone)");
+    }
+
+    @Test
+    public void dateTimeConceptWithOnlyADateIsComparedByDay() {
+        Concept concept = new Concept("c-dt", "registration", "DateTime", null, null);
+        concept.setWidget("Range");
+        concept.setMinValue("2026-01-01");
+        concept.setMaxValue("2026-03-31");
+
+        String sql = new SubjectSearchQueryBuilder().withTimeZone("Asia/Kolkata")
+                .withConceptsFilter(Collections.singletonList(concept)).build(subjectType).getSql();
+
+        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) else cast(i.observations ->>:conceptUuid0 as date) end) >= cast(:dateTimeValueMin0 as date)");
+    }
+
+    @Test
+    public void unsupportedConceptTypeIsIgnoredInsteadOfBreakingTheSearch() {
+        SqlQuery query = new SubjectSearchQueryBuilder()
+                .withConceptsFilter(Collections.singletonList(new Concept("c-loc", "registration", "Location", null, "x")))
+                .build(subjectType);
+
+        assertThat(query.getParameters()).doesNotContainKey("conceptUuid0");
+        assertThat(query.getSql()).doesNotContain("conceptUuid0");
+    }
+
+    private Concept dateRangeConcept(String minValue, String maxValue) {
+        Concept concept = new Concept("c-date", "registration", "Date", null, null);
+        concept.setWidget("Range");
+        concept.setMinValue(minValue);
+        concept.setMaxValue(maxValue);
+        return concept;
     }
 
     private org.avni.server.domain.Concept textConcept(String uuid, String name, KeyValues keyValues) {
