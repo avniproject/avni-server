@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.CustomCardConfigRepository;
+import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
 import org.avni.server.dao.OperationalProgramRepository;
@@ -12,7 +13,9 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.Account;
 import org.avni.server.domain.CustomCardConfig;
+import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.EncounterType;
+import org.avni.server.domain.OperationalEncounterType;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.Program;
@@ -47,6 +50,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -70,6 +74,7 @@ public class CardServiceTest {
     @Mock private OperationalProgramRepository operationalProgramRepository;
     @Mock private OperationalEncounterTypeRepository operationalEncounterTypeRepository;
     @Mock private AttendanceTypeRepository attendanceTypeRepository;
+    @Mock private DashboardRepository dashboardRepository;
 
     private CardService cardService;
     private SubjectType subjectType;
@@ -87,7 +92,7 @@ public class CardServiceTest {
         cardService = new CardService(cardRepository, standardReportCardTypeRepository, subjectTypeRepository,
                 programRepository, encounterTypeRepository, customCardConfigRepository, customCardConfigService,
                 operationalSubjectTypeRepository, operationalProgramRepository, operationalEncounterTypeRepository,
-                attendanceTypeRepository);
+                attendanceTypeRepository, dashboardRepository);
 
         subjectType = new SubjectType();
         subjectType.setUuid(SUBJECT_TYPE_UUID);
@@ -548,6 +553,180 @@ public class CardServiceTest {
         assertNull(existingCard.getActionDetailDashboardUUID());
     }
 
+    @Test
+    public void saveCard_persists_open_dashboard_card_with_its_target() {
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+
+        // A query makes this a Custom Data Card.
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("({params}) => []");
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals("({params}) => []", savedCard.getQuery());
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(dashboardRepository).findByUuid(DASHBOARD_UUID);
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_action_on_custom_design_card() {
+        CustomCardConfig config = new CustomCardConfig();
+        config.assignUUID();
+        config.setName("sample");
+        when(customCardConfigService.createOrUpdateCustomCardConfig(any())).thenReturn(config);
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+
+        ReportCardWebRequest request = newWebRequest();
+        CustomCardConfigRequest configRequest = new CustomCardConfigRequest();
+        configRequest.setName("sample");
+        request.setCustomCardConfig(configRequest);
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(config, savedCard.getCustomCardConfig());
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_when_target_dashboard_does_not_exist() {
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(null);
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when the target dashboard does not exist");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard with uuid dashboard-uuid doesn't exist", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_when_target_dashboard_is_voided() {
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(true));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when the target dashboard is voided");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard with uuid dashboard-uuid doesn't exist", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void editCard_rejects_open_dashboard_when_target_dashboard_is_voided() {
+        // The card already points at a dashboard that has since been deleted.
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(true));
+
+        // Saving it again with the same target is refused until the target changes.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        try {
+            cardService.editCard(request, 7L);
+            fail("Expected BadRequestError when the target dashboard is voided");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard with uuid dashboard-uuid doesn't exist", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void uploadCard_does_not_look_up_open_dashboard_target() {
+        // A bundle imports cards before dashboards, so the target may not exist yet.
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("OpenDashboard");
+        bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.uploadCard(bundleRequest);
+
+        ArgumentCaptor<ReportCard> savedCard = ArgumentCaptor.forClass(ReportCard.class);
+        verify(cardRepository).save(savedCard.capture());
+        assertEquals(DASHBOARD_UUID, savedCard.getValue().getActionDetailDashboardUUID());
+        verifyNoInteractions(dashboardRepository);
+    }
+
+    @Test
+    public void saveCard_stores_only_the_dashboard_when_request_also_carries_do_visit_fields() {
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+
+        // The web app sends every action field whatever the action is.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+        request.setActionDetailSubjectTypeUUID("unknown-subject-type");
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(Set.of("dashboardUUID"), savedCard.getActionDetail().keySet());
+        verify(cardRepository).save(savedCard);
+        verifyNoInteractions(subjectTypeRepository, operationalSubjectTypeRepository);
+    }
+
+    @Test
+    public void editCard_keeps_only_the_last_actions_detail_across_open_dashboard_do_visit_and_back() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(subjectType);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(subjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
+        when(encounterTypeRepository.findByUuid(ENCOUNTER_TYPE_UUID)).thenReturn(encounterType);
+        when(operationalEncounterTypeRepository.findByEncounterTypeAndOrganisationId(encounterType, ORG_ID)).thenReturn(new OperationalEncounterType());
+
+        ReportCardWebRequest openDashboardRequest = newWebRequest();
+        openDashboardRequest.setAction("OpenDashboard");
+        openDashboardRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(openDashboardRequest, 7L);
+
+        assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
+
+        ReportCardWebRequest doVisitRequest = newWebRequest();
+        doVisitRequest.setAction("DoVisit");
+        doVisitRequest.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        doVisitRequest.setActionDetailEncounterTypeUUID(ENCOUNTER_TYPE_UUID);
+        doVisitRequest.setActionDetailVisitType("SOME_VISIT");
+
+        cardService.editCard(doVisitRequest, 7L);
+
+        assertEquals(Set.of("subjectTypeUUID", "programUUID", "encounterTypeUUID", "visitType"), existingCard.getActionDetail().keySet());
+
+        cardService.editCard(openDashboardRequest, 7L);
+
+        assertEquals(ReportCardAction.OpenDashboard, existingCard.getAction());
+        assertEquals(DASHBOARD_UUID, existingCard.getActionDetailDashboardUUID());
+        assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
+        verify(cardRepository, times(3)).save(existingCard);
+    }
+
     private ReportCardWebRequest newWebRequest() {
         ReportCardWebRequest request = new ReportCardWebRequest();
         request.setName("Some Report Card");
@@ -563,6 +742,14 @@ public class CardServiceTest {
         request.setColor("#fff");
         request.setCount(1);
         return request;
+    }
+
+    private Dashboard newDashboard(boolean voided) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setUuid(DASHBOARD_UUID);
+        dashboard.setName("Monthly Overview");
+        dashboard.setVoided(voided);
+        return dashboard;
     }
 
     private SubjectType newGroupSubjectType(String uuid, String name, boolean isGroup, boolean attendanceEnabled) {

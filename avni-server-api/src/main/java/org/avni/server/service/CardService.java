@@ -47,9 +47,10 @@ public class CardService implements NonScopeAwareService {
     private final OperationalProgramRepository operationalProgramRepository;
     private final OperationalEncounterTypeRepository operationalEncounterTypeRepository;
     private final AttendanceTypeRepository attendanceTypeRepository;
+    private final DashboardRepository dashboardRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService, OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, AttendanceTypeRepository attendanceTypeRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, CustomCardConfigRepository customCardConfigRepository, CustomCardConfigService customCardConfigService, OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, AttendanceTypeRepository attendanceTypeRepository, DashboardRepository dashboardRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -61,6 +62,7 @@ public class CardService implements NonScopeAwareService {
         this.operationalProgramRepository = operationalProgramRepository;
         this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
         this.attendanceTypeRepository = attendanceTypeRepository;
+        this.dashboardRepository = dashboardRepository;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
@@ -350,6 +352,17 @@ public class CardService implements NonScopeAwareService {
         if (ReportCardAction.MarkAttendance.name().equals(request.getAction())) {
             requireOperational(List.of(request.getActionDetailSubjectTypeUUID()), organisationId, "SubjectType",
                     subjectTypeRepository::findByUuid, operationalSubjectTypeRepository::findBySubjectTypeAndOrganisationId, SubjectType::getName);
+        }
+        if (ReportCardAction.OpenDashboard.name().equals(request.getAction())) {
+            // Web saves only: a bundle imports cards before dashboards, so uploadCard must not look the target up.
+            // A blank target is left to buildActionDetail, which refuses it with its own message.
+            String dashboardUUID = request.getActionDetailDashboardUUID();
+            if (StringUtils.hasText(dashboardUUID)) {
+                Dashboard dashboard = dashboardRepository.findByUuid(dashboardUUID);
+                if (dashboard == null || dashboard.isVoided()) {
+                    throw new BadRequestError("Dashboard with uuid %s doesn't exist", dashboardUUID);
+                }
+            }
         }
     }
 
