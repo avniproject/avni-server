@@ -32,6 +32,7 @@ public class SubjectAssignmentSearchQueryBuilder extends BaseSubjectSearchQueryB
 
     public SubjectAssignmentSearchQueryBuilder withSubjectSearchFilter(SubjectSearchRequest request) {
         return this
+                .withTimeZone(request.getTimeZone())
                 .withIncludeVoidedFilter(false)
                 .withNameFilter(request.getName())
                 .withSubjectTypeFilter(request.getSubjectType())

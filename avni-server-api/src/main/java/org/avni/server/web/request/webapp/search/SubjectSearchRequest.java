@@ -26,6 +26,7 @@ public class SubjectSearchRequest {
     private String userGroup;
     private String assignedTo;
     private DateTime createdOn;
+    private String timeZone;
 
     public String getSubjectType() {
         return subjectType;
@@ -182,5 +183,13 @@ public class SubjectSearchRequest {
 
     public void setCreatedOn(DateTime createdOn) {
         this.createdOn = createdOn;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
     }
 }

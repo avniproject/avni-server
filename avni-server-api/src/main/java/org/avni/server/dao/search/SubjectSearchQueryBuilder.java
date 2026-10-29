@@ -39,6 +39,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withSubjectSearchFilter(SubjectSearchRequest request, SubjectType subjectType) {
         return this
+                .withTimeZone(request.getTimeZone())
                 .withNameFilter(request.getName())
                 .withConceptsFilter(request.getConcept())
                 .withSearchAll(request.getSearchAll())
@@ -76,24 +77,24 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
         if (encounterDateRange == null || encounterDateRange.isEmpty()) return this;
         return withRangeFilter(encounterDateRange,
                         "encounterDate",
-                        "e.encounter_date_time >= cast(:rangeParam as date)",
-                        "e.encounter_date_time <= cast(:rangeParam as date)", ENCOUNTER_FILTER);
+                        localDate("e.encounter_date_time") + " >= cast(:rangeParam as date)",
+                        localDate("e.encounter_date_time") + " <= cast(:rangeParam as date)", ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEncounterDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
         return withRangeFilter(dateRange,
                         "programEncounterDate",
-                        "pe.encounter_date_time >= cast(:rangeParam as date)",
-                        "pe.encounter_date_time <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
+                        localDate("penc.encounter_date_time") + " >= cast(:rangeParam as date)",
+                        localDate("penc.encounter_date_time") + " <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
         return withRangeFilter(dateRange,
                         "programEnrolmentDate",
-                        "penr.enrolment_date_time >= cast(trim(:rangeParam) as date)",
-                        "penr.enrolment_date_time <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
+                        localDate("penr.enrolment_date_time") + " >= cast(trim(:rangeParam) as date)",
+                        localDate("penr.enrolment_date_time") + " <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
     }
 
     @Override
