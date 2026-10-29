@@ -39,10 +39,6 @@ public final class AbdmFlows {
         return "xx-xxxx-xxxx-" + d.substring(d.length() - 4);
     }
 
-    // Eka's free-text errors can quote the patient (AVNI-10). Masks an ABHA number (14 digits, 2-4-4-4), an Aadhaar
-    // (12 digits, 4-4-4), an Indian mobile (10 digits from 6-9, or 5-5, with or without +91) and an ABHA address, and
-    // keeps everything else. A digit run is matched only whole, so UUID segments, ABDM codes and timestamps survive;
-    // an all-digit Eka id of 10, 12 or 14 digits would be masked too (Eka's id formats are undocumented).
     public static String maskIdentifiers(String text) {
         if (text == null) return null;
         String masked = text;
@@ -57,8 +53,8 @@ public final class AbdmFlows {
     private static final List<Pattern> IDENTIFIERS = List.of(
             Pattern.compile(WHOLE_START + "\\d{2}[- ]?\\d{4}[- ]?\\d{4}[- ]?\\d{4}" + WHOLE_END),
             Pattern.compile(WHOLE_START + "\\d{4}[- ]?\\d{4}[- ]?\\d{4}" + WHOLE_END),
-            Pattern.compile(WHOLE_START + "(?:\\+?91[- ]?)?(?:[6-9]\\d{9}|[6-9]\\d{4} \\d{5})" + WHOLE_END),
-            Pattern.compile("[\\w.]+@(?:sbx|abdm)\\b", Pattern.CASE_INSENSITIVE));
+            Pattern.compile("(?<![A-Za-z0-9])(?:\\+?91[- ]?|0)?(?:[6-9]\\d{9}|[6-9]\\d{4}[- ]\\d{5})" + WHOLE_END),
+            Pattern.compile("(?<![\\w.])[\\w.]++@(?:sbx|abdm)\\b", Pattern.CASE_INSENSITIVE));
 
     public static String withSuffix(String abhaAddress, String suffix) {
         if (abhaAddress == null || abhaAddress.isBlank()) return null;

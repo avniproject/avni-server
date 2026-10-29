@@ -128,7 +128,6 @@ public class AbdmMessageLog {
             node.forEach(n -> out.add(redact(n, parent, keep)));
             return out;
         }
-        // Errors are kept for support, but Eka's text in them can quote the patient (AVNI-10).
         if (keep && node.isTextual() && FREE_TEXT.contains(parent)) return TextNode.valueOf(AbdmFlows.maskIdentifiers(node.asText()));
         if (keep || node.isNull() || node.isBoolean()) return node;
         return TextNode.valueOf(MASK);

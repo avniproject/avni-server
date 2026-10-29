@@ -118,14 +118,12 @@ public class AbhaService {
         }
     }
 
-    // The key for the app's ABHA screens, with nearly Eka's full lifetime left; the same refusals as ekaAccessToken.
     private EkaToken ekaSessionToken(Long organisationId) {
         try {
             return ekaTokenService.getSessionToken(organisationId);
         } catch (EkaNotConfiguredException e) {
             throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_CONFIGURED);
         } catch (EkaAuthException e) {
-            // EkaTokenService has logged it, without the key.
             throw new AbhaRefusedException(AbhaRefusal.ABHA_EKA_UNAVAILABLE);
         }
     }

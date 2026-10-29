@@ -498,7 +498,6 @@ public class EkaHipService implements EkaHipEvents {
                 reason = error.asText();
             }
         }
-        // Stored as the visit's error and shown on the admin page: never with a patient identifier Eka quoted (AVNI-10).
         if (StringUtils.hasText(reason)) return AbdmFlows.maskIdentifiers(reason);
         String retries = AbdmJson.text(node, "retry_count");
         return "Eka reported " + status + (retries == null ? "" : " after " + retries + " retries");

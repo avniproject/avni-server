@@ -37,8 +37,6 @@ public class AbhaSession {
         return hipId;
     }
 
-    // The key's remaining life as the server counts it, so the app can time it from when it receives the session and
-    // never compares the server's clock with the phone's. Never negative.
     public long getExpiresInSeconds() {
         return expiresInSeconds;
     }

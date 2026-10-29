@@ -195,8 +195,6 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals(response.getContentAsString(), 5, body.size());
     }
 
-    // The app times the key from when it receives it, in seconds, so a phone whose clock is off still closes Eka's
-    // screens before the key dies.
     @Test
     public void sessionCarriesTheKeysRemainingLifeInSeconds() throws Exception {
         enableAbha();

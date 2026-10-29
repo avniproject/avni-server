@@ -96,8 +96,6 @@ public class EkaTokenServiceTest {
         eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
-    // The key handed to the app's ABHA screens must outlast a whole registration, so it carries nearly Eka's full
-    // 30 minutes: a cached key good enough for a server call (15 minutes) is renewed for a session.
     @Test
     public void aSessionKeyIsRenewedWhenUnderTwentyEightMinutesLeft() throws Exception {
         stubLogin("client-1", "access-1", 1200, 0);
@@ -131,7 +129,6 @@ public class EkaTokenServiceTest {
         eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
-    // Should Eka's keys last under 28 minutes, each session logs in afresh and gets that fresh key: no loop, no refusal.
     @Test
     public void whenEkaKeysLastUnderTwentyEightMinutesEachSessionLogsInAndGetsTheFreshKey() throws Exception {
         stubLogin("client-1", "access-1", 1200, 0);
@@ -142,7 +139,6 @@ public class EkaTokenServiceTest {
         eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
-    // A failed renewal for a session does not refuse the worker while the cached key still has 15 minutes.
     @Test
     public void aFailedSessionLoginFallsBackToTheCachedKeyWhileItHasFifteenMinutesLeft() throws Exception {
         stubLogin("client-1", "access-1", 1200, 0);

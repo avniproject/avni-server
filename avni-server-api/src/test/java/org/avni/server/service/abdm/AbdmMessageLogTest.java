@@ -46,7 +46,6 @@ public class AbdmMessageLogTest {
         assertFalse(AbdmJson.write(kept).contains("9876543210"));
     }
 
-    // Errors are kept for support, but Eka's text can quote the patient (AVNI-10).
     @Test
     public void freeTextKeptForSupportLosesAnyIdentifierInIt() {
         JsonNode kept = AbdmMessageLog.redact(AbdmJson.read("{\"request_id\":\"r-1\",\"error\":{\"code\":\"ABDM-1035\"," +

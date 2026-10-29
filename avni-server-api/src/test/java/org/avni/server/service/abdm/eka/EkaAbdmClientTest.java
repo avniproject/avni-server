@@ -142,7 +142,6 @@ public class EkaAbdmClientTest {
         assertTrue(e.getMessage(), e.getMessage().contains("already registered"));
     }
 
-    // The refusal's text reaches abdm_care_context.error, abdm_consent.error, the admin page and the log (AVNI-10).
     @Test
     public void anEkaRefusalNeverCarriesAPatientsIdentifier() {
         eka.stubFor(post(urlEqualTo("/x")).willReturn(aResponse().withStatus(400)

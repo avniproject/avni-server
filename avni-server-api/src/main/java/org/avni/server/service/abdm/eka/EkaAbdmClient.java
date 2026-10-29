@@ -312,7 +312,6 @@ public class EkaAbdmClient {
         }
         StringBuilder text = new StringBuilder(call).append(" refused with HTTP ").append(status);
         if (code != null) text.append(" ").append(code);
-        // The text reaches our tables, the admin page and the log, so it loses any patient identifier Eka quoted (AVNI-10).
         if (message != null) text.append(": ").append(cut(AbdmFlows.maskIdentifiers(message)));
         if (ekaText != null && !ekaText.equals(message)) text.append(" (").append(cut(AbdmFlows.maskIdentifiers(ekaText))).append(")");
         return new EkaCallException(status, code, text.toString());

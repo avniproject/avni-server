@@ -13,9 +13,7 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 // One Eka access token per organisation, held in memory and renewed by a fresh login when under 15 minutes remain.
-// The app's ABHA screens are handed the key for a whole registration, so a key for them must have nearly Eka's full 30
-// minutes left (getSessionToken); a key that lived only 26 minutes on the phone failed mid-flow on 29 Oct 2026. Most
-// session calls therefore log in afresh, which relies on Eka leaving earlier keys valid: seen on 29 Oct, not documented.
+// The app is handed the same key for a whole ABHA flow, so it must outlast one; Eka's keys last 30 minutes.
 // Each cached token carries the settings it was made from, and every call compares them with the stored settings,
 // so a saved change takes effect on the next call on every server instance, with nothing to evict.
 @Service
@@ -46,8 +44,6 @@ public class EkaTokenService {
         return getAccessToken(organisationId, RENEW_BEFORE);
     }
 
-    // The key for the app's ABHA screens. Should the renewal fail, a cached key that still clears the bar for server
-    // calls is better than refusing the worker.
     public EkaToken getSessionToken(Long organisationId) throws EkaNotConfiguredException {
         try {
             return getAccessToken(organisationId, SESSION_MIN_REMAINING);
