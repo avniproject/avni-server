@@ -207,6 +207,17 @@ public class ReportCard extends OrganisationAwareEntity {
         return actionDetail != null ? actionDetail.getString("attendanceTypeUUID") : null;
     }
 
+    public String getActionDetailDashboardUUID() {
+        return actionDetail != null ? actionDetail.getString("dashboardUUID") : null;
+    }
+
+    // OpenDashboard — fresh JsonObject so any stale keys from a prior action
+    // type get cleared when an existing card is switched to this action.
+    public void setActionDetailDashboardUUID(String dashboardUUID) {
+        this.actionDetail = new JsonObject(new HashMap<>());
+        this.actionDetail.with("dashboardUUID", dashboardUUID);
+    }
+
     public void setActionDetailFields(String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType) {
         this.actionDetail = new JsonObject(new HashMap<>());
         this.actionDetail.with("subjectTypeUUID", subjectTypeUUID);

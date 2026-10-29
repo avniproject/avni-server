@@ -71,7 +71,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID(), reportCardRequest.getActionDetailDashboardUUID());
         linkCustomCardConfig(card, reportCardRequest);
         cardRepository.save(card);
         return card;
@@ -86,7 +86,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID(), reportCardRequest.getActionDetailDashboardUUID());
         CustomCardConfig previousConfig = card.getCustomCardConfig();
         upsertAndLinkCustomCardConfig(card, reportCardRequest.getCustomCardConfig());
         voidOrphanedCustomCardConfig(card, previousConfig);
@@ -100,7 +100,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
-        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType(), request.getActionDetailAttendanceTypeUUID());
+        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType(), request.getActionDetailAttendanceTypeUUID(), request.getActionDetailDashboardUUID());
         linkCustomCardConfig(existingCard, request);
         return cardRepository.save(existingCard);
     }
@@ -254,7 +254,7 @@ public class CardService implements NonScopeAwareService {
         card.setCustomCardConfig(config);
     }
 
-    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType, String attendanceTypeUUID) {
+    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType, String attendanceTypeUUID, String dashboardUUID) {
         ReportCardAction action = card.getAction();
         if (action == ReportCardAction.DoVisit) {
             buildDoVisitActionDetail(card, subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
@@ -262,6 +262,10 @@ public class CardService implements NonScopeAwareService {
         }
         if (action == ReportCardAction.MarkAttendance) {
             buildMarkAttendanceActionDetail(card, subjectTypeUUID, attendanceTypeUUID);
+            return;
+        }
+        if (action == ReportCardAction.OpenDashboard) {
+            buildOpenDashboardActionDetail(card, dashboardUUID);
             return;
         }
         // For ViewSubjectProfile (and any future action without its own detail
@@ -316,6 +320,13 @@ public class CardService implements NonScopeAwareService {
             throw new BadRequestError(String.format("AttendanceType '%s' does not belong to SubjectType '%s'", attendanceType.getName(), subjectType.getName()));
         }
         card.setActionDetailFields(subjectTypeUUID, attendanceTypeUUID);
+    }
+
+    private void buildOpenDashboardActionDetail(ReportCard card, String dashboardUUID) {
+        if (!StringUtils.hasText(dashboardUUID)) {
+            throw new BadRequestError("Dashboard is required when action is OpenDashboard");
+        }
+        card.setActionDetailDashboardUUID(dashboardUUID);
     }
 
     private void validateOperationalMappingsForWebRequest(ReportCardRequest request) {

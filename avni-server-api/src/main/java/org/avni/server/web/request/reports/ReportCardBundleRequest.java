@@ -18,6 +18,7 @@ public class ReportCardBundleRequest extends ReportCardContract {
     private String actionDetailEncounterTypeUUID;
     private String actionDetailVisitType;
     private String actionDetailAttendanceTypeUUID;
+    private String actionDetailDashboardUUID;
     private CustomCardConfigRequest customCardConfig;
 
     public String getStandardReportCardType() {
@@ -106,6 +107,14 @@ public class ReportCardBundleRequest extends ReportCardContract {
 
     public void setActionDetailAttendanceTypeUUID(String actionDetailAttendanceTypeUUID) {
         this.actionDetailAttendanceTypeUUID = actionDetailAttendanceTypeUUID;
+    }
+
+    public String getActionDetailDashboardUUID() {
+        return actionDetailDashboardUUID;
+    }
+
+    public void setActionDetailDashboardUUID(String actionDetailDashboardUUID) {
+        this.actionDetailDashboardUUID = actionDetailDashboardUUID;
     }
 
     public CustomCardConfigRequest getCustomCardConfig() {

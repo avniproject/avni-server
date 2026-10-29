@@ -27,14 +27,17 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.domain.ReportCard;
+import org.avni.server.domain.ReportCardAction;
 import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.util.Collections;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,6 +57,7 @@ public class CardServiceTest {
     private static final String SUBJECT_TYPE_UUID = "subject-type-uuid";
     private static final String PROGRAM_UUID = "program-uuid";
     private static final String ENCOUNTER_TYPE_UUID = "encounter-type-uuid";
+    private static final String DASHBOARD_UUID = "dashboard-uuid";
 
     @Mock private CardRepository cardRepository;
     @Mock private StandardReportCardTypeRepository standardReportCardTypeRepository;
@@ -438,10 +442,125 @@ public class CardServiceTest {
         verify(customCardConfigRepository, never()).save(any());
     }
 
+    @Test
+    public void uploadCard_stores_open_dashboard_target_in_action_detail() {
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("OpenDashboard");
+        bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.uploadCard(bundleRequest);
+
+        ArgumentCaptor<ReportCard> savedCard = ArgumentCaptor.forClass(ReportCard.class);
+        verify(cardRepository).save(savedCard.capture());
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getValue().getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getValue().getActionDetailDashboardUUID());
+        assertEquals(Set.of("dashboardUUID"), savedCard.getValue().getActionDetail().keySet());
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_without_target() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        // No dashboardUUID
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when dashboard UUID is missing");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard is required when action is OpenDashboard", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_with_blank_target() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID("   ");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when dashboard UUID is blank");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard is required when action is OpenDashboard", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void uploadCard_rejects_open_dashboard_without_target() {
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("OpenDashboard");
+        // No dashboardUUID
+
+        try {
+            cardService.uploadCard(bundleRequest);
+            fail("Expected BadRequestError when dashboard UUID is missing");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard is required when action is OpenDashboard", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void editCard_clears_open_dashboard_target_when_action_changes_to_view_subject_profile() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // The web app sends every action field whatever the action is, so the
+        // old target arrives together with the new action.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ViewSubjectProfile");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void uploadCard_clears_open_dashboard_target_when_bundle_card_changes_action() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Bundle Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(existingCard);
+
+        // The bundle also carries the old target together with the new action.
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("ViewSubjectProfile");
+        bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.uploadCard(bundleRequest);
+
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailDashboardUUID());
+    }
+
     private ReportCardWebRequest newWebRequest() {
         ReportCardWebRequest request = new ReportCardWebRequest();
         request.setName("Some Report Card");
         request.setColor("#ffffff");
+        request.setCount(1);
+        return request;
+    }
+
+    private ReportCardBundleRequest newBundleRequest() {
+        ReportCardBundleRequest request = new ReportCardBundleRequest();
+        request.setUuid("card-uuid");
+        request.setName("Bundle Card");
+        request.setColor("#fff");
         request.setCount(1);
         return request;
     }
