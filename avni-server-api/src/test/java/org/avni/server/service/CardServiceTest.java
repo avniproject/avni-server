@@ -535,6 +535,27 @@ public class CardServiceTest {
     }
 
     @Test
+    public void editCard_clears_open_dashboard_target_when_action_is_removed() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // The request carries no action, and still carries the old target.
+        ReportCardWebRequest request = newWebRequest();
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getAction());
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailDashboardUUID());
+    }
+
+    @Test
     public void uploadCard_clears_open_dashboard_target_when_bundle_card_changes_action() {
         ReportCard existingCard = new ReportCard();
         existingCard.setName("Bundle Card");
@@ -728,6 +749,31 @@ public class CardServiceTest {
         assertEquals(DASHBOARD_UUID, existingCard.getActionDetailDashboardUUID());
         assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
         verify(cardRepository, times(3)).save(existingCard);
+    }
+
+    @Test
+    public void editCard_replaces_mark_attendance_detail_with_open_dashboard_target() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.MarkAttendance);
+        existingCard.setActionDetailFields(SUBJECT_TYPE_UUID, "attendance-type-uuid");
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+
+        // The request still carries the old Mark attendance fields next to the new action.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        request.setActionDetailAttendanceTypeUUID("attendance-type-uuid");
+
+        cardService.editCard(request, 7L);
+
+        assertEquals(ReportCardAction.OpenDashboard, existingCard.getAction());
+        assertEquals(DASHBOARD_UUID, existingCard.getActionDetailDashboardUUID());
+        assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
     }
 
     private ReportCardWebRequest newWebRequest() {
