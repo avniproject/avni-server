@@ -142,6 +142,18 @@ public class EkaAbdmClientTest {
         assertTrue(e.getMessage(), e.getMessage().contains("already registered"));
     }
 
+    // The refusal's text reaches abdm_care_context.error, abdm_consent.error, the admin page and the log (AVNI-10).
+    @Test
+    public void anEkaRefusalNeverCarriesAPatientsIdentifier() {
+        eka.stubFor(post(urlEqualTo("/x")).willReturn(aResponse().withStatus(400)
+                .withBody("{\"error\":{\"code\":\"ABDM-1035\",\"message\":\"ABHA 91-1234-5678-9012 not found\"}}")));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post("/x", AbdmJson.obj(), Map.of()));
+
+        assertTrue(e.getMessage(), e.getMessage().contains("ABDM-1035"));
+        assertFalse(e.getMessage(), e.getMessage().contains("91-1234-5678-9012"));
+    }
+
     @Test
     public void aRejectedTokenFailsOnceWithoutRetrying() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(401).withBody("Unauthorized")));

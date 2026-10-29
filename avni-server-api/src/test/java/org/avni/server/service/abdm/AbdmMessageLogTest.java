@@ -46,6 +46,20 @@ public class AbdmMessageLogTest {
         assertFalse(AbdmJson.write(kept).contains("9876543210"));
     }
 
+    // Errors are kept for support, but Eka's text can quote the patient (AVNI-10).
+    @Test
+    public void freeTextKeptForSupportLosesAnyIdentifierInIt() {
+        JsonNode kept = AbdmMessageLog.redact(AbdmJson.read("{\"request_id\":\"r-1\",\"error\":{\"code\":\"ABDM-1035\"," +
+                "\"message\":\"No ABHA asha.rao@sbx for 9876543210\"}}"));
+
+        assertEquals("r-1", kept.get("request_id").asText());
+        assertEquals("ABDM-1035", kept.at("/error/code").asText());
+        String message = kept.at("/error/message").asText();
+        assertFalse(message, message.contains("asha.rao@sbx"));
+        assertFalse(message, message.contains("9876543210"));
+        assertTrue(message, message.startsWith("No ABHA "));
+    }
+
     @Test
     public void aConsentUpdateKeepsItsArtefactIds() {
         JsonNode kept = AbdmMessageLog.redact(AbdmJson.read("{\"data\":{\"notification\":{\"consentRequestId\":\"cr-1\",\"status\":\"GRANTED\"," +

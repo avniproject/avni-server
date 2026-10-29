@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm.eka;
 
+import org.avni.server.service.abdm.hip.AbdmFlows;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
@@ -311,8 +312,9 @@ public class EkaAbdmClient {
         }
         StringBuilder text = new StringBuilder(call).append(" refused with HTTP ").append(status);
         if (code != null) text.append(" ").append(code);
-        if (message != null) text.append(": ").append(cut(message));
-        if (ekaText != null && !ekaText.equals(message)) text.append(" (").append(cut(ekaText)).append(")");
+        // The text reaches our tables, the admin page and the log, so it loses any patient identifier Eka quoted (AVNI-10).
+        if (message != null) text.append(": ").append(cut(AbdmFlows.maskIdentifiers(message)));
+        if (ekaText != null && !ekaText.equals(message)) text.append(" (").append(cut(AbdmFlows.maskIdentifiers(ekaText))).append(")");
         return new EkaCallException(status, code, text.toString());
     }
 

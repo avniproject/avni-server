@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // Small pieces both the HIP and the HIU flows use.
@@ -37,6 +38,27 @@ public final class AbdmFlows {
         if (d.length() < 4) return null;
         return "xx-xxxx-xxxx-" + d.substring(d.length() - 4);
     }
+
+    // Eka's free-text errors can quote the patient (AVNI-10). Masks an ABHA number (14 digits, 2-4-4-4), an Aadhaar
+    // (12 digits, 4-4-4), an Indian mobile (10 digits from 6-9, or 5-5, with or without +91) and an ABHA address, and
+    // keeps everything else. A digit run is matched only whole, so UUID segments, ABDM codes and timestamps survive;
+    // an all-digit Eka id of 10, 12 or 14 digits would be masked too (Eka's id formats are undocumented).
+    public static String maskIdentifiers(String text) {
+        if (text == null) return null;
+        String masked = text;
+        for (Pattern identifier : IDENTIFIERS) {
+            masked = identifier.matcher(masked).replaceAll("***");
+        }
+        return masked;
+    }
+
+    private static final String WHOLE_START = "(?<![\\w-])";
+    private static final String WHOLE_END = "(?![\\w-])";
+    private static final List<Pattern> IDENTIFIERS = List.of(
+            Pattern.compile(WHOLE_START + "\\d{2}[- ]?\\d{4}[- ]?\\d{4}[- ]?\\d{4}" + WHOLE_END),
+            Pattern.compile(WHOLE_START + "\\d{4}[- ]?\\d{4}[- ]?\\d{4}" + WHOLE_END),
+            Pattern.compile(WHOLE_START + "(?:\\+?91[- ]?)?(?:[6-9]\\d{9}|[6-9]\\d{4} \\d{5})" + WHOLE_END),
+            Pattern.compile("[\\w.]+@(?:sbx|abdm)\\b", Pattern.CASE_INSENSITIVE));
 
     public static String withSuffix(String abhaAddress, String suffix) {
         if (abhaAddress == null || abhaAddress.isBlank()) return null;

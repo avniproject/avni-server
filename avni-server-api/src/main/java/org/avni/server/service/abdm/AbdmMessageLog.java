@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm;
 
+import org.avni.server.service.abdm.hip.AbdmFlows;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.domain.Organisation;
 import org.avni.server.framework.security.UserContextHolder;
@@ -104,6 +105,7 @@ public class AbdmMessageLog {
             "purpose", "care_context_id", "careContextReference", "code", "message", "error", "success", "description", "media",
             "checksum", "access_mode", "from", "to", "expiry", "erase_at", "dataEraseAt", "linkRefNumber", "count", "crypto_alg",
             "curve", "business_id", "client_id", "c_at", "u_at", "retry_count", "link_mode");
+    private static final Set<String> FREE_TEXT = Set.of("message", "error", "description");
     // An "id" is kept only as a consent artefact's.
     private static final Set<String> ID_KEPT_UNDER = Set.of("consentArtefacts", "consent_artefacts", "consentArtefact");
 
@@ -126,6 +128,8 @@ public class AbdmMessageLog {
             node.forEach(n -> out.add(redact(n, parent, keep)));
             return out;
         }
+        // Errors are kept for support, but Eka's text in them can quote the patient (AVNI-10).
+        if (keep && node.isTextual() && FREE_TEXT.contains(parent)) return TextNode.valueOf(AbdmFlows.maskIdentifiers(node.asText()));
         if (keep || node.isNull() || node.isBoolean()) return node;
         return TextNode.valueOf(MASK);
     }

@@ -40,6 +40,7 @@ import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIP_ID;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -295,6 +296,18 @@ public class EkaHipServiceTest {
 
         verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("FAILED"), contains("ABDM-1035"));
         verify(store, never()).markLinked(anyString(), any(), anyString());
+    }
+
+    @Test
+    public void anErroredWebhookStoresItsReasonWithoutThePatientsIdentifiers() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-2"))).thenReturn(List.of(row("enc-2", "LINK_REQUESTED")));
+        JsonNode webhook = event("link-care-context-errored.json");
+        ((com.fasterxml.jackson.databind.node.ObjectNode) webhook.at("/data/error")).put("message", "No care context for demo.patient@sbx");
+
+        service.linkCareContext(webhook);
+
+        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("FAILED"),
+                argThat(reason -> reason.contains("ABDM-1035") && !reason.contains("@sbx")));
     }
 
     @Test
