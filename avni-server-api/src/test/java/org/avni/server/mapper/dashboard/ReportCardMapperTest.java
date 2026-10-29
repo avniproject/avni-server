@@ -3,9 +3,13 @@ package org.avni.server.mapper.dashboard;
 import org.avni.server.domain.CustomCardConfig;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.ReportCard;
+import org.avni.server.domain.ReportCardAction;
 import org.avni.server.service.CardService;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.CustomCardConfigRequest;
+import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.response.reports.ReportCardBundleContract;
+import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -86,5 +90,61 @@ public class ReportCardMapperTest {
         ReportCardBundleContract result = mapper.toBundle(card);
 
         assertNull(result.getCustomCardConfig());
+    }
+
+    @Test
+    public void toWebResponseCarriesOpenDashboardActionAndTarget() {
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-4");
+        card.setName("Card");
+        card.setAction(ReportCardAction.OpenDashboard);
+        card.setActionDetailDashboardUUID("dashboard-uuid");
+
+        ReportCardWebResponse result = mapper.toWebResponse(card);
+
+        assertEquals("OpenDashboard", result.getAction());
+        assertEquals("dashboard-uuid", result.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void toWebResponseHasNoTargetForOtherActions() {
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-5");
+        card.setName("Card");
+        card.setAction(ReportCardAction.ViewSubjectProfile);
+
+        ReportCardWebResponse result = mapper.toWebResponse(card);
+
+        assertEquals("ViewSubjectProfile", result.getAction());
+        assertNull(result.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void toBundleCarriesOpenDashboardActionAndTarget() {
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-6");
+        card.setName("Card");
+        card.setAction(ReportCardAction.OpenDashboard);
+        card.setActionDetailDashboardUUID("dashboard-uuid");
+
+        ReportCardBundleContract result = mapper.toBundle(card);
+
+        assertEquals("OpenDashboard", result.getAction());
+        assertEquals("dashboard-uuid", result.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void bundleJsonFromExportReadsBackAsUploadRequestWithTheTarget() throws Exception {
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-7");
+        card.setName("Card");
+        card.setAction(ReportCardAction.OpenDashboard);
+        card.setActionDetailDashboardUUID("dashboard-uuid");
+
+        String json = ObjectMapperSingleton.getObjectMapper().writeValueAsString(mapper.toBundle(card));
+        ReportCardBundleRequest uploaded = ObjectMapperSingleton.getObjectMapper().readValue(json, ReportCardBundleRequest.class);
+
+        assertEquals("OpenDashboard", uploaded.getAction());
+        assertEquals("dashboard-uuid", uploaded.getActionDetailDashboardUUID());
     }
 }

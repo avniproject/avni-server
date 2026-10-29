@@ -43,6 +43,7 @@ public class ReportCardMapper {
         response.setActionDetailEncounterTypeUUID(card.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(card.getActionDetailVisitType());
         response.setActionDetailAttendanceTypeUUID(card.getActionDetailAttendanceTypeUUID());
+        response.setActionDetailDashboardUUID(card.getActionDetailDashboardUUID());
         response.setOnActionCompletion(card.getOnActionCompletion() != null ? card.getOnActionCompletion().name() : null);
         if (card.getCustomCardConfig() != null) {
             response.setCustomCardConfigUUID(card.getCustomCardConfig().getUuid());
@@ -80,6 +81,7 @@ public class ReportCardMapper {
         response.setActionDetailEncounterTypeUUID(reportCard.getActionDetailEncounterTypeUUID());
         response.setActionDetailVisitType(reportCard.getActionDetailVisitType());
         response.setActionDetailAttendanceTypeUUID(reportCard.getActionDetailAttendanceTypeUUID());
+        response.setActionDetailDashboardUUID(reportCard.getActionDetailDashboardUUID());
         response.setOnActionCompletion(reportCard.getOnActionCompletion() != null ? reportCard.getOnActionCompletion().name() : null);
         CustomCardConfig config = reportCard.getCustomCardConfig();
         if (config != null) {
