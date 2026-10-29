@@ -10,6 +10,7 @@ import org.avni.server.service.builder.*;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,9 +48,11 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
     private Concept textConcept;
     private Concept locationConcept;
     private Concept dateConcept;
+    private DateTimeZone originalDefaultZone;
 
     @Before
     public void setUp() throws Exception {
+        originalDefaultZone = DateTimeZone.getDefault();
         DateTimeZone.setDefault(DateTimeZone.forOffsetHoursMinutes(5, 30));
 
         ApiRequestContextHolder.create(new ApiRequestContext("2"));
@@ -141,5 +144,10 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
                 true,
                 PageRequest.of(0, 10));
         assertEquals(1, subjects.getContent().size());
+    }
+
+    @After
+    public void restoreDefaultZone() {
+        DateTimeZone.setDefault(originalDefaultZone);
     }
 }
