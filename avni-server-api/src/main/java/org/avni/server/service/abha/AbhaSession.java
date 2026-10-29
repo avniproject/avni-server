@@ -1,5 +1,6 @@
 package org.avni.server.service.abha;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -9,12 +10,14 @@ public class AbhaSession {
     private final String expiresAt;
     private final String environment;
     private final String hipId;
+    private final long expiresInSeconds;
 
     public AbhaSession(String accessToken, Instant expiresAt, String environment, String hipId) {
         this.accessToken = accessToken;
         this.expiresAt = expiresAt.truncatedTo(ChronoUnit.SECONDS).toString();
         this.environment = environment;
         this.hipId = hipId;
+        this.expiresInSeconds = Math.max(0, Duration.between(Instant.now(), expiresAt).getSeconds());
     }
 
     public String getAccessToken() {
@@ -32,5 +35,11 @@ public class AbhaSession {
 
     public String getHipId() {
         return hipId;
+    }
+
+    // The key's remaining life as the server counts it, so the app can time it from when it receives the session and
+    // never compares the server's clock with the phone's. Never negative.
+    public long getExpiresInSeconds() {
+        return expiresInSeconds;
     }
 }

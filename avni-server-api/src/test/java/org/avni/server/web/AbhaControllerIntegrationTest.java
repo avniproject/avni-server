@@ -181,7 +181,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         enableAbha();
         storeEkaSettings();
         setHealthCentre(REGISTRAR, "HIP-2");
-        when(standInEka.getAccessToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00.123456Z")));
+        when(standInEka.getSessionToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00.123456Z")));
 
         MockHttpServletResponse response = getSessionWithStandInEka(REGISTRAR, SUBJECT_TYPE_A);
 
@@ -191,7 +191,23 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         assertEquals("2026-10-17T10:30:00Z", body.path("expiresAt").asText());
         assertEquals("sandbox", body.path("environment").asText());
         assertEquals("HIP-2", body.path("hipId").asText());
-        assertEquals(response.getContentAsString(), 4, body.size());
+        assertEquals("a key already past its end has no seconds left, never a negative number", 0, body.path("expiresInSeconds").asLong());
+        assertEquals(response.getContentAsString(), 5, body.size());
+    }
+
+    // The app times the key from when it receives it, in seconds, so a phone whose clock is off still closes Eka's
+    // screens before the key dies.
+    @Test
+    public void sessionCarriesTheKeysRemainingLifeInSeconds() throws Exception {
+        enableAbha();
+        storeEkaSettings();
+        setHealthCentre(REGISTRAR, "HIP-2");
+        when(standInEka.getSessionToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.now().plusSeconds(1800)));
+
+        MockHttpServletResponse response = getSessionWithStandInEka(REGISTRAR, SUBJECT_TYPE_A);
+
+        long seconds = mapper.readTree(response.getContentAsString()).path("expiresInSeconds").asLong();
+        assertTrue("expiresInSeconds " + seconds, seconds > 1790 && seconds <= 1800);
     }
 
     // A worker who may only edit the subject type still links an ABHA from the edit screen.
@@ -200,7 +216,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         enableAbha();
         storeEkaSettings();
         setHealthCentre(EDITOR, "HIP-1");
-        when(standInEka.getAccessToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00Z")));
+        when(standInEka.getSessionToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00Z")));
 
         MockHttpServletResponse response = getSessionWithStandInEka(EDITOR, SUBJECT_TYPE_A);
 
@@ -214,7 +230,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         enableAbha();
         storeEkaSettings();
         setHealthCentre(REGISTRAR, "HIP-1");
-        when(standInEka.getAccessToken(DEMO_ID)).thenThrow(new EkaNotConfiguredException("Eka client id or secret not set"));
+        when(standInEka.getSessionToken(DEMO_ID)).thenThrow(new EkaNotConfiguredException("Eka client id or secret not set"));
 
         MockHttpServletResponse response = getSessionWithStandInEka(REGISTRAR, SUBJECT_TYPE_A);
 
@@ -229,7 +245,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         enableAbha();
         storeEkaSettings();
         setHealthCentre(REGISTRAR, "HIP-1");
-        when(standInEka.getAccessToken(DEMO_ID)).thenThrow(new EkaAuthException("Eka login did not answer within 10 s"));
+        when(standInEka.getSessionToken(DEMO_ID)).thenThrow(new EkaAuthException("Eka login did not answer within 10 s"));
 
         MockHttpServletResponse response = getSessionWithStandInEka(REGISTRAR, SUBJECT_TYPE_A);
 
@@ -245,7 +261,7 @@ public class AbhaControllerIntegrationTest extends AbstractControllerIntegration
         storeEkaSettings();
         setHealthCentre(REGISTRAR, "HIP-2");
         Long registrarId = userRepository.findByUsername(REGISTRAR).getId();
-        when(standInEka.getAccessToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00Z")));
+        when(standInEka.getSessionToken(DEMO_ID)).thenReturn(new EkaToken("eka-key-for-demo", Instant.parse("2026-10-17T10:30:00Z")));
 
         Logger avni = (Logger) LoggerFactory.getLogger("org.avni");
         boolean avniAdditive = avni.isAdditive();

@@ -96,6 +96,64 @@ public class EkaTokenServiceTest {
         eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
+    // The key handed to the app's ABHA screens must outlast a whole registration, so it carries nearly Eka's full
+    // 30 minutes: a cached key good enough for a server call (15 minutes) is renewed for a session.
+    @Test
+    public void aSessionKeyIsRenewedWhenUnderTwentyEightMinutesLeft() throws Exception {
+        stubLogin("client-1", "access-1", 1200, 0);
+
+        service.getAccessToken(ORG);
+        service.getSessionToken(ORG);
+
+        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    @Test
+    public void aSessionKeyWithMoreThanTwentyEightMinutesLeftIsReused() throws Exception {
+        stubLogin("client-1", "access-1", 1800, 0);
+
+        EkaToken first = service.getSessionToken(ORG);
+        EkaToken second = service.getSessionToken(ORG);
+
+        assertSame(first, second);
+        eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    @Test
+    public void otherCallersReuseTheKeyASessionRenewed() throws Exception {
+        stubLogin("client-1", "access-1", 1200, 0);
+
+        service.getAccessToken(ORG);
+        EkaToken renewed = service.getSessionToken(ORG);
+        EkaToken reused = service.getAccessToken(ORG);
+
+        assertSame(renewed, reused);
+        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    // Should Eka's keys last under 28 minutes, each session logs in afresh and gets that fresh key: no loop, no refusal.
+    @Test
+    public void whenEkaKeysLastUnderTwentyEightMinutesEachSessionLogsInAndGetsTheFreshKey() throws Exception {
+        stubLogin("client-1", "access-1", 1200, 0);
+
+        assertEquals("access-1", service.getSessionToken(ORG).getAccessToken());
+        assertEquals("access-1", service.getSessionToken(ORG).getAccessToken());
+
+        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    // A failed renewal for a session does not refuse the worker while the cached key still has 15 minutes.
+    @Test
+    public void aFailedSessionLoginFallsBackToTheCachedKeyWhileItHasFifteenMinutesLeft() throws Exception {
+        stubLogin("client-1", "access-1", 1200, 0);
+        EkaToken cached = service.getAccessToken(ORG);
+        eka.resetMappings();
+        eka.stubFor(post(urlEqualTo(LOGIN_PATH)).willReturn(aResponse().withStatus(401)));
+
+        assertSame(cached, service.getSessionToken(ORG));
+        eka.verify(2, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
     @Test
     public void failedLoginIsNotRetriedForTenSeconds() throws Exception {
         eka.stubFor(post(urlEqualTo(LOGIN_PATH)).willReturn(aResponse().withStatus(401)));

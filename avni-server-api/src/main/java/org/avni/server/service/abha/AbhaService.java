@@ -118,9 +118,21 @@ public class AbhaService {
         }
     }
 
+    // The key for the app's ABHA screens, with nearly Eka's full lifetime left; the same refusals as ekaAccessToken.
+    private EkaToken ekaSessionToken(Long organisationId) {
+        try {
+            return ekaTokenService.getSessionToken(organisationId);
+        } catch (EkaNotConfiguredException e) {
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_NOT_CONFIGURED);
+        } catch (EkaAuthException e) {
+            // EkaTokenService has logged it, without the key.
+            throw new AbhaRefusedException(AbhaRefusal.ABHA_EKA_UNAVAILABLE);
+        }
+    }
+
     public AbhaSession createSession(String subjectTypeUUID) {
         AbhaAccess access = checkAccess(subjectTypeUUID);
-        EkaToken token = ekaAccessToken(access.getOrganisationId());
+        EkaToken token = ekaSessionToken(access.getOrganisationId());
         // The key is a bearer credential for the organisation at Eka; never log it.
         logger.info("ABHA session key issued to user {} of organisation {}", access.getUser().getId(), access.getOrganisationId());
         return new AbhaSession(token.getAccessToken(), token.getExpiresAt(), access.getEkaSystemConfig().getEnvironment(), access.getHipId());

@@ -13,13 +13,16 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 // One Eka access token per organisation, held in memory and renewed by a fresh login when under 15 minutes remain.
-// The app is handed the same key for a whole ABHA flow, so it must outlast one; Eka's keys last 30 minutes.
+// The app's ABHA screens are handed the key for a whole registration, so a key for them must have nearly Eka's full 30
+// minutes left (getSessionToken); a key that lived only 26 minutes on the phone failed mid-flow on 29 Oct 2026. Most
+// session calls therefore log in afresh, which relies on Eka leaving earlier keys valid: seen on 29 Oct, not documented.
 // Each cached token carries the settings it was made from, and every call compares them with the stored settings,
 // so a saved change takes effect on the next call on every server instance, with nothing to evict.
 @Service
 public class EkaTokenService {
     private static final Logger logger = LoggerFactory.getLogger(EkaTokenService.class);
     private static final Duration RENEW_BEFORE = Duration.ofMinutes(15);
+    private static final Duration SESSION_MIN_REMAINING = Duration.ofMinutes(28);
     private static final Duration RETRY_AFTER_FAILURE = Duration.ofSeconds(10);
 
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
@@ -40,18 +43,36 @@ public class EkaTokenService {
     }
 
     public EkaToken getAccessToken(Long organisationId) throws EkaNotConfiguredException {
+        return getAccessToken(organisationId, RENEW_BEFORE);
+    }
+
+    // The key for the app's ABHA screens. Should the renewal fail, a cached key that still clears the bar for server
+    // calls is better than refusing the worker.
+    public EkaToken getSessionToken(Long organisationId) throws EkaNotConfiguredException {
+        try {
+            return getAccessToken(organisationId, SESSION_MIN_REMAINING);
+        } catch (EkaAuthException e) {
+            IssuedToken issued = tokens.get(organisationId);
+            if (isUsable(issued, settingsOf(externalSystemConfigRepository.getEkaSystemConfig(organisationId)), RENEW_BEFORE)) {
+                return issued.token;
+            }
+            throw e;
+        }
+    }
+
+    private EkaToken getAccessToken(Long organisationId, Duration minRemaining) throws EkaNotConfiguredException {
         EkaSystemConfig config = externalSystemConfigRepository.getEkaSystemConfig(organisationId);
         if (!StringUtils.hasText(config.getClientId()) || !StringUtils.hasText(config.getEncryptedClientSecret())) {
             throw new EkaNotConfiguredException("Eka client id or secret not set for organisation with id: " + organisationId);
         }
         String settings = settingsOf(config);
         IssuedToken issued = tokens.get(organisationId);
-        if (isUsable(issued, settings)) {
+        if (isUsable(issued, settings, minRemaining)) {
             return issued.token;
         }
         synchronized (locks.computeIfAbsent(organisationId, id -> new Object())) {
             issued = tokens.get(organisationId);
-            if (isUsable(issued, settings)) {
+            if (isUsable(issued, settings, minRemaining)) {
                 return issued.token;
             }
             // Callers queued behind a failed login fail at once, instead of each waiting out a timeout of their own.
@@ -81,10 +102,10 @@ public class EkaTokenService {
         return config.getEnvironment() + "\n" + config.getClientId() + "\n" + config.getEncryptedClientSecret();
     }
 
-    private static boolean isUsable(IssuedToken issued, String settings) {
+    private static boolean isUsable(IssuedToken issued, String settings, Duration minRemaining) {
         return issued != null
                 && issued.settings.equals(settings)
-                && issued.token.getExpiresAt().isAfter(Instant.now().plus(RENEW_BEFORE));
+                && issued.token.getExpiresAt().isAfter(Instant.now().plus(minRemaining));
     }
 
     private static final class IssuedToken {
