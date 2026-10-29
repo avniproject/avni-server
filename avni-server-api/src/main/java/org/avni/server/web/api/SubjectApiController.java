@@ -114,7 +114,7 @@ public class SubjectApiController {
 
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subject.getSubjectType());
         List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(Collections.singletonList(subject));
-        return new ResponseEntity<>(SubjectResponse.fromSubject(subject, SubjectResponseOptions.forSingleSubject(includeCatchments), conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
+        return new ResponseEntity<>(SubjectResponse.fromSubject(subject, SubjectResponseOptions.forSingleSubjectWithLocationProperties(includeCatchments), conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
     }
 
     @PostMapping(value = "/api/subject")

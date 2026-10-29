@@ -1499,6 +1499,12 @@ components:
           type: string
           format: uuid
           description: Unique identifier of the lowest location/address at which the subject is registered
+        Location Properties:
+          type: object
+          description: "Location properties of the location identified by Location ID, as key value pairs. key is the concept name and value of type (date, string, number or array of string of name of concepts). Returned only when fetching a single subject by ID, and only when the location has properties."
+          example:
+            Pin code: "411001"
+            Has PHC: "Yes"
         relatives:
           type: array
           items:
@@ -1910,6 +1916,12 @@ components:
           description: "Level of the location in the hierarchy"
         GPS Coordinates:
           $ref: '#/components/schemas/GeoLocation'
+        customProperties:
+          type: object
+          description: "Location properties as key value pairs. key is the concept name and value of type (date, string, number or array of string of name of concepts)."
+          example:
+            Pin code: "411001"
+            Has PHC: "Yes"
         Parent:
           $ref: '#/components/schemas/Location'
         Voided:
