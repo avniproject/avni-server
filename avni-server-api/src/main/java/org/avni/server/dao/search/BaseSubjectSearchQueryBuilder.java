@@ -111,7 +111,10 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 }
             };
 
-            this.orderByClause = "order by " + columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder.name() + ", i.id desc";
+            String sortExpression = sortColumn.equalsIgnoreCase("AGE")
+                    ? "i.date_of_birth " + (sortOrder == SortOrder.asc ? SortOrder.desc : SortOrder.asc).name() + " nulls last"
+                    : columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder.name();
+            this.orderByClause = "order by " + sortExpression + ", i.id desc";
         }
 
         return (T) this;

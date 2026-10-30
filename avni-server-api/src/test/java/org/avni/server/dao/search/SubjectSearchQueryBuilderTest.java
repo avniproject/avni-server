@@ -18,6 +18,7 @@ import org.avni.server.web.request.webapp.search.Concept;
 import org.avni.server.web.request.webapp.search.DateRange;
 import org.avni.server.web.request.webapp.search.IntegerRange;
 import org.avni.server.web.request.webapp.search.PageDetails;
+import org.avni.server.web.request.webapp.search.SortOrder;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.joda.time.LocalDate;
 import org.junit.After;
@@ -324,6 +325,31 @@ public class SubjectSearchQueryBuilderTest {
     }
 
     @Test
+    public void ageAscendingSortsYoungestFirstWithNoDateOfBirthLast() {
+        assertThat(sortedSql("age", SortOrder.asc)).contains("order by i.date_of_birth desc nulls last, i.id desc");
+    }
+
+    @Test
+    public void ageDescendingSortsOldestFirstWithNoDateOfBirthLast() {
+        assertThat(sortedSql("age", SortOrder.desc)).contains("order by i.date_of_birth asc nulls last, i.id desc");
+    }
+
+    @Test
+    public void ageSortKeepsTheRequestedPage() {
+        SqlQuery query = sortedQuery("age", SortOrder.asc);
+        assertThat(query.getSql()).contains("nulls last, i.id desc\noffset :offset limit :limit");
+        assertThat(query.getParameters()).containsEntry("offset", 10).containsEntry("limit", 10);
+    }
+
+    @Test
+    public void otherSortColumnsAreUnchanged() {
+        assertThat(sortedSql("dateOfBirth", SortOrder.asc)).contains("order by i.date_of_birth asc, i.id desc");
+        assertThat(sortedSql("fullName", SortOrder.desc)).contains("order by concat_ws(' ',i.first_name,i.middle_name,i.last_name) desc, i.id desc");
+        assertThat(sortedSql("subjectType", SortOrder.asc)).contains("order by st.name asc, i.id desc");
+        assertThat(sortedSql("gender", SortOrder.desc)).contains("order by gender.name desc, i.id desc");
+    }
+
+    @Test
     public void dateResultColumnIsShownInTheSearchersTimeZone() {
         org.avni.server.domain.Concept concept = new ConceptBuilder().withUuid("c-lmp").withName("LMP")
                 .withDataType(ConceptDataType.Date).build();
@@ -438,6 +464,21 @@ public class SubjectSearchQueryBuilderTest {
                 .withDataType(ConceptDataType.Text).withKeyValues(keyValues).build();
         when(conceptRepository.findByUuid(uuid)).thenReturn(concept);
         return concept;
+    }
+
+    private String sortedSql(String sortColumn, SortOrder sortOrder) {
+        return sortedQuery(sortColumn, sortOrder).getSql();
+    }
+
+    private SqlQuery sortedQuery(String sortColumn, SortOrder sortOrder) {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        PageDetails pageDetails = new PageDetails();
+        pageDetails.setPageNumber(1);
+        pageDetails.setNumberOfRecordPerPage(10);
+        pageDetails.setSortColumn(sortColumn);
+        pageDetails.setSortOrder(sortOrder);
+        request.setPageElement(pageDetails);
+        return new SubjectSearchQueryBuilder().withSubjectSearchFilter(request, subjectType).build(subjectType);
     }
 
     private KeyValues hiddenMarker() {
