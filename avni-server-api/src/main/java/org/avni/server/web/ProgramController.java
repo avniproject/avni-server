@@ -30,6 +30,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -169,9 +170,10 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     @GetMapping(value = "/web/program")
     @Transactional(readOnly = true)
     @ResponseBody
-    public CollectionModel<EntityModel<ProgramContractWeb>> getAll(Pageable pageable) {
-        return wrap(operationalProgramRepository
-                .findPageByIsVoidedFalse(pageable)
+    public CollectionModel<EntityModel<ProgramContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
+        return wrap((StringUtils.hasText(name)
+                ? operationalProgramRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name, pageable)
+                : operationalProgramRepository.findPageByIsVoidedFalse(pageable))
                 .map(ProgramContractWeb::fromOperationalProgram));
     }
 

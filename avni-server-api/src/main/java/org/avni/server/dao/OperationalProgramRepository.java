@@ -29,4 +29,5 @@ public interface OperationalProgramRepository extends ImplReferenceDataRepositor
     @Query("select o.name from OperationalProgram o where o.isVoided = false")
     List<String> getAllNames();
 
+    Page<OperationalProgram> findPageByIsVoidedFalseAndNameIgnoreCaseContaining(String name, Pageable pageable);
 }

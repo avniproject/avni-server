@@ -31,4 +31,6 @@ public interface OperationalEncounterTypeRepository extends ImplReferenceDataRep
 
     @Query("select o.name from OperationalEncounterType o where o.isVoided = false")
     List<String> getAllNames();
+
+    Page<OperationalEncounterType> findPageByIsVoidedFalseAndNameIgnoreCaseContaining(String name, Pageable pageable);
 }

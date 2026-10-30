@@ -34,6 +34,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -95,9 +96,10 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     @GetMapping(value = "/web/subjectType")
     @Transactional(readOnly = true)
     @ResponseBody
-    public CollectionModel<EntityModel<SubjectTypeContractWeb>> getAll(Pageable pageable) {
-        return wrap(operationalSubjectTypeRepository
-                .findPageByIsVoidedFalse(pageable)
+    public CollectionModel<EntityModel<SubjectTypeContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
+        return wrap((StringUtils.hasText(name)
+                ? operationalSubjectTypeRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name, pageable)
+                : operationalSubjectTypeRepository.findPageByIsVoidedFalse(pageable))
                 .map((OperationalSubjectType operationalSubjectType) -> {
                     FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
                     SubjectTypeContractWeb contract = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);

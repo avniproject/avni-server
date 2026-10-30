@@ -33,6 +33,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
@@ -87,9 +88,10 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     @GetMapping(value = "/web/encounterType")
     @Transactional(readOnly = true)
     @ResponseBody
-    public CollectionModel<EntityModel<EncounterTypeContractWeb>> getAll(Pageable pageable) {
-        return wrap(operationalEncounterTypeRepository
-                .findPageByIsVoidedFalse(pageable)
+    public CollectionModel<EntityModel<EncounterTypeContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
+        return wrap((StringUtils.hasText(name)
+                ? operationalEncounterTypeRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name, pageable)
+                : operationalEncounterTypeRepository.findPageByIsVoidedFalse(pageable))
                 .map(EncounterTypeContractWeb::fromOperationalEncounterType));
     }
 
