@@ -40,10 +40,7 @@ public class IdentifierUserAssignmentService {
     }
 
     public IdentifierUserAssignment update(IdentifierUserAssignment existingIdentifierUserAssignment, IdentifierUserAssignment newIdentifierUserAssignment) throws IdentifierOverlappingException, ValidationException {
-        if (existingIdentifierUserAssignment.getLastAssignedIdentifier() != null
-                && nonVoidedFieldsChanged(existingIdentifierUserAssignment, newIdentifierUserAssignment)) {
-            throw new ValidationException("Identifier assignment cannot be modified after identifiers have been issued; it can only be voided.");
-        }
+        assertNotModifiedAfterIssuance(existingIdentifierUserAssignment, newIdentifierUserAssignment);
 
         newIdentifierUserAssignment.validate();
 
@@ -60,6 +57,12 @@ public class IdentifierUserAssignmentService {
                 throw new IdentifierOverlappingException(overlappingWithAssignments);
 
             return identifierUserAssignmentRepository.updateExistingWithNew(existingIdentifierUserAssignment, newIdentifierUserAssignment);
+        }
+    }
+
+    public void assertNotModifiedAfterIssuance(IdentifierUserAssignment existing, IdentifierUserAssignment incoming) throws ValidationException {
+        if (existing.getLastAssignedIdentifier() != null && nonVoidedFieldsChanged(existing, incoming)) {
+            throw new ValidationException("Identifier assignment cannot be modified after identifiers have been issued; it can only be voided.");
         }
     }
 
