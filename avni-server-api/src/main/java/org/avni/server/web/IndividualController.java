@@ -230,6 +230,11 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional(readOnly = true)
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectProfile(@RequestParam("uuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualContract = individualService.getSubjectInfo(uuid);
+        // avni-server#1079: a uuid not in this organisation returns null here; without this guard the
+        // next line NPEs into a 500. Return 404, matching getSubjectProgramEnrollment below.
+        if (individualContract == null) {
+            return ResponseEntity.notFound().build();
+        }
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individualContract.getSubjectType().getUuid());
         return ResponseEntity.ok(individualContract);
     }
