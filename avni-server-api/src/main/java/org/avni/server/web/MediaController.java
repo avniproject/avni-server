@@ -444,6 +444,24 @@ public class MediaController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(String.format("Unsupported folderName %s", folderName));
         }
 
+            // avni-server#1047: enforce the folder's privilege on every upload, not only when the file is rejected
+            switch (folder) {
+                case ICONS:
+                    accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(PrivilegeType.EditSubjectType, PrivilegeType.EditOfflineDashboardAndReportCard));
+                    break;
+                case NEWS:
+                    accessControlService.checkPrivilege(PrivilegeType.EditNews);
+                    break;
+                case MetaData:
+                    accessControlService.checkPrivilege(PrivilegeType.EditConcept);
+                    break;
+                case PROFILE_PICS:
+                    accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(PrivilegeType.RegisterSubject, PrivilegeType.EditSubject));
+                    break;
+                default:
+                    break;
+            }
+
         File tempSourceFile;
         try {
             tempSourceFile = AvniFiles.convertMultiPartToFile(file, "");
@@ -453,10 +471,6 @@ public class MediaController {
                         .body(String.format("Unsupported file. File type: %s. Use .bmp, .jpg, .jpeg, .png, .gif file.", imageType));
             }
             if (folder.equals(MediaFolder.ICONS) && isInvalidDimension(tempSourceFile, imageType)) {
-                accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
-                    PrivilegeType.EditSubjectType,
-                    PrivilegeType.EditOfflineDashboardAndReportCard
-                ));
                 Dimension imageDimension = AvniFiles.getImageDimension(tempSourceFile, imageType);
                 String dimension = imageDimension.getWidth() + " X " + imageDimension.getHeight();
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -465,17 +479,9 @@ public class MediaController {
             }
             if (folder.equals(MediaFolder.NEWS) && isInvalidImageSize(file)) {
                 double sizeInKB = AvniFiles.getSizeInKB(file);
-                accessControlService.checkPrivilege(PrivilegeType.EditNews);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .contentType(MediaType.TEXT_PLAIN)
                         .body(String.format("Unsupported file. File size: %s. Use image of size 500KB or smaller.", sizeInKB));
-            }
-            if (folder.equals(MediaFolder.PROFILE_PICS)) {
-                // not checking privileges for specific subject type here as that will be checked while saving the entity
-                accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
-                    PrivilegeType.RegisterSubject,
-                    PrivilegeType.EditSubject
-                ));
             }
             String uuid = UUID.randomUUID().toString();
             String targetFilePath = format("%s/%s%s", folderName, uuid, imageType.EXT);
