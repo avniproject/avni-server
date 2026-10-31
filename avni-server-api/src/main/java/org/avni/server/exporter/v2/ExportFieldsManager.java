@@ -171,28 +171,6 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
         return coreFields.get(exportEntityType.getUuid());
     }
 
-    private long calculateTotalNumberOfColumns(ExportEntityType exportEntityType, Map<String, Map<String, FormElement>> formMap) {
-        return coreFields.get(exportEntityType.getUuid()).size() + mainFormMap.get(exportEntityType.getUuid()).size();
-    }
-
-    private long getTotalNumberOfMainColumns(ExportEntityType exportEntityType) {
-        return exportEntityType.getAllExportEntityTypes()
-                .stream().mapToLong(value -> this.calculateTotalNumberOfColumns(value, mainFormMap)).sum();
-    }
-
-    private long getTotalNumberOfSecondaryColumns(ExportEntityType exportEntityType) {
-        return exportEntityType.getAllExportEntityTypes()
-                .stream().mapToLong(value -> this.calculateTotalNumberOfColumns(value, secondaryFormMap)).sum();
-    }
-
-    public long getTotalNumberOfColumns(ExportEntityType exportEntityType) {
-        return getTotalNumberOfColumnsPerEntity(exportEntityType) * getMaxEntityCount(exportEntityType);
-    }
-
-    public long getTotalNumberOfColumnsPerEntity(ExportEntityType exportEntityType) {
-        return (getTotalNumberOfMainColumns(exportEntityType) + getTotalNumberOfSecondaryColumns(exportEntityType));
-    }
-
     public Map<Form, ExportFilters> getAllFormFilters() {
         return forms;
     }

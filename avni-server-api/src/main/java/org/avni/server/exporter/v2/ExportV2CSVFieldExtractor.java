@@ -127,7 +127,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                 addEncounterColumns(exportFieldsManager.getMaxEntityCount(enc), columnsData, encounters,
                         exportFieldsManager.getMainFields(enc), exportFieldsManager.getSecondaryFields(enc), enc);
             } else {
-                addBlanks(columnsData, exportFieldsManager.getTotalNumberOfColumns(enc));
+                addBlanks(columnsData, allVisitsWidth(enc));
             }
         });
         exportOutput.getGroups().forEach(grp -> {
@@ -144,14 +144,15 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                             addEncounterColumns(exportFieldsManager.getMaxEntityCount(ge), columnsData, encounters.get(ge.getUuid()),
                                     exportFieldsManager.getMainFields(ge), exportFieldsManager.getSecondaryFields(ge), ge);
                         } else {
-                            addBlanks(columnsData, exportFieldsManager.getTotalNumberOfColumns(ge));
+                            addBlanks(columnsData, allVisitsWidth(ge));
                         }
                     });
                 });
             } else {
-                addBlanks(columnsData, exportFieldsManager.getTotalNumberOfColumns(grp));
+                addBlanks(columnsData, staticWidth(grp, HeaderCreator.registrationDataMap.keySet()) + observationsWidth(exportFieldsManager.getMainFields(grp)));
                 addBlanks(columnsData, addressLevelTypes.size());//Blanks for GroupSubject addressLevels
                 addBlanks(columnsData, 1);//Blanks for No of Group members
+                grp.getEncounters().forEach(ge -> addBlanks(columnsData, allVisitsWidth(ge)));
             }
         });
         Map<ProgramEnrolment, Map<String, List<ProgramEncounter>>> programEnrolmentToEncountersMap = itemRow.getProgramEnrolmentToEncountersMap();
@@ -166,12 +167,15 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                             addEncounterColumns(exportFieldsManager.getMaxEntityCount(pe), columnsData, encounterTypeListMap.get(pe.getUuid()), exportFieldsManager.getMainFields(pe),
                                     exportFieldsManager.getSecondaryFields(pe), pe);
                         } else {
-                            addBlanks(columnsData, exportFieldsManager.getTotalNumberOfColumns(pe));
+                            addBlanks(columnsData, allVisitsWidth(pe));
                         }
                     });
                 });
             } else {
-                addBlanks(columnsData, exportFieldsManager.getTotalNumberOfColumns(program));
+                addBlanks(columnsData, staticWidth(program, HeaderCreator.enrolmentDataMap.keySet())
+                        + observationsWidth(exportFieldsManager.getMainFields(program))
+                        + observationsWidth(exportFieldsManager.getSecondaryFields(program)));
+                program.getEncounters().forEach(pe -> addBlanks(columnsData, allVisitsWidth(pe)));
             }
         });
         return columnsData.toArray();
@@ -212,8 +216,32 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         });
         int visit = counter.get();
         while (visit++ < maxVisitCount) {
-            addBlanks(columnsData, exportFieldsManager.getTotalNumberOfColumns(encounterEntityType));
+            addBlanks(columnsData, oneVisitWidth(encounterEntityType));
         }
+    }
+
+    /*
+     * Padding widths for an absent visit, visit type, programme or group. Each is measured the way the row is written
+     * for one that is present, which is the way the heading is built: a multi-select answer is a column each, a
+     * repeatable question group is a block per repeat, and the cancellation or exit form is counted from its own
+     * fields (#1075).
+     */
+    private long oneVisitWidth(ExportEntityType encounterType) {
+        return staticWidth(encounterType, HeaderCreator.encounterDataMap.keySet())
+                + observationsWidth(exportFieldsManager.getMainFields(encounterType))
+                + observationsWidth(exportFieldsManager.getSecondaryFields(encounterType));
+    }
+
+    private long allVisitsWidth(ExportEntityType encounterType) {
+        return oneVisitWidth(encounterType) * exportFieldsManager.getMaxEntityCount(encounterType);
+    }
+
+    private long staticWidth(ExportEntityType exportEntityType, Set<String> staticFields) {
+        return exportFieldsManager.getCoreFields(exportEntityType).stream().filter(staticFields::contains).count();
+    }
+
+    private long observationsWidth(Map<String, FormElement> fields) {
+        return fields == null ? 0 : addObservations(null, fields).size();
     }
 
     private void addStaticEnrolmentColumns(ExportOutput.ExportNestedOutput program, List<Object> columnsData, ProgramEnrolment programEnrolment,

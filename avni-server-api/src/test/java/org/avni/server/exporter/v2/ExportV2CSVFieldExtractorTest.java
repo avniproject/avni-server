@@ -9,6 +9,8 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.UserBuilder;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
+import org.avni.server.domain.factory.metadata.ConceptAnswerBuilder;
+import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
@@ -19,6 +21,10 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ExportOutputBuilder;
+import org.avni.server.web.request.ExportEntityTypeBuilder;
+import org.avni.server.web.external.request.export.ExportEntityType;
+import org.avni.server.web.external.request.export.ExportFilters;
+import org.avni.server.application.FormElementType;
 import org.avni.server.util.FileUtil;
 import org.bouncycastle.util.Strings;
 import org.junit.Before;
@@ -32,6 +38,7 @@ import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameCons
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -336,6 +343,125 @@ public class ExportV2CSVFieldExtractorTest {
         assertEquals("\"31\"", getExtractValue(header, "\"ST1_C1_1_C3\"", extract));
         assertEquals("\"22\"", getExtractValue(header, "\"ST1_C1_2_C2\"", extract));
         assertEquals("\"32\"", getExtractValue(header, "\"ST1_C1_2_C3\"", extract));
+    }
+
+
+    // #1075: a missing visit is padded by one visit's width, an absent visit type or programme by the heading's
+    // whole block for it, and the width is what the heading writes (multi-select answers, repeatable groups).
+    private static final String ET = "et1";
+    private Concept multiSelect;
+    private FormElement repeatableGroup;
+
+    private void setUpSubjectWithVisitType(long maxVisits, boolean withProgram) {
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
+
+        Concept text = new ConceptBuilder().withUuid("c1").withName("C1").withDataType(ConceptDataType.Text).build();
+        Concept yes = new ConceptBuilder().withUuid("a1").withName("A1").withDataType(ConceptDataType.NA).build();
+        Concept no = new ConceptBuilder().withUuid("a2").withName("A2").withDataType(ConceptDataType.NA).build();
+        multiSelect = new ConceptBuilder().withUuid("c2").withName("C2").withDataType(ConceptDataType.Coded).build();
+        multiSelect.addAnswer(new ConceptAnswerBuilder().withConcept(multiSelect).withAnswerConcept(yes).withOrder(1).withUUID("ca1").build());
+        multiSelect.addAnswer(new ConceptAnswerBuilder().withConcept(multiSelect).withAnswerConcept(no).withOrder(2).withUUID("ca2").build());
+        Concept qg = new ConceptBuilder().withUuid("c3").withName("C3").withDataType(ConceptDataType.QuestionGroup).build();
+        Concept qgChild = new ConceptBuilder().withUuid("c4").withName("C4").withDataType(ConceptDataType.Text).build();
+        repeatableGroup = new TestFormElementBuilder().withConcept(qg).withRepeatable(true).build();
+        LinkedHashMap<String, FormElement> visitForm = new LinkedHashMap<String, FormElement>() {{
+            put("c1", new TestFormElementBuilder().withConcept(text).build());
+            put("c2", new TestFormElementBuilder().withConcept(multiSelect).withType(FormElementType.MultiSelect.name()).build());
+            put("c3", repeatableGroup);
+            put("c4", new TestFormElementBuilder().withQuestionGroupElement(repeatableGroup).withConcept(qgChild).build());
+        }};
+        when(observationService.getMaxNumberOfQuestionGroupObservations(any(), any())).thenReturn(new HashMap<FormElement, Integer>() {{
+            put(repeatableGroup, 2);
+        }});
+        ExportFilters filters = new ExportFilters();
+        filters.setDate(new ExportFilters.DateFilter());
+        List<String> visitFields = Arrays.asList(UUID, "c1", "c2", "c3", "c4");
+        ExportEntityType visitType = new ExportEntityTypeBuilder().withUuid(ET).withFields(visitFields).build();
+        visitType.setFilters(filters);
+        when(encounterTypeRepository.findByUuid(ET)).thenReturn(new EncounterTypeBuilder().withUuid(ET).withName("ET1").build());
+        when(formMappingService.findForEncounter(ET, FormType.Encounter)).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.findForEncounter(ET, FormType.ProgramEncounter)).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, ET, FormType.Encounter)).thenReturn(visitForm);
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", "p1", ET, FormType.ProgramEncounter)).thenReturn(visitForm);
+        when(encounterRepository.getMaxEncounterCount(eq(ET), any(), any())).thenReturn(maxVisits);
+        when(programEncounterRepository.getMaxProgramEncounterCount(eq(ET), any(), any())).thenReturn(maxVisits);
+
+        ExportOutputBuilder builder = new ExportOutputBuilder().forSubjectType("st1").withFields(Collections.singletonList(UUID));
+        if (withProgram) {
+            ExportOutput.ExportNestedOutput program = new ExportOutput.ExportNestedOutput();
+            program.setUuid("p1");
+            program.setFields(Collections.singletonList(UUID));
+            program.setFilters(filters);
+            program.setEncounters(Collections.singletonList(visitType));
+            when(programRepository.findByUuid("p1")).thenReturn(new ProgramBuilder().withUuid("p1").withName("P1").build());
+            when(formMappingService.findForProgram("p1", FormType.ProgramEnrolment)).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+            when(formMappingService.getAllFormElementsAndDecisionMap("st1", "p1", null, FormType.ProgramEnrolment)).thenReturn(new LinkedHashMap<>());
+            builder.withProgram(Collections.singletonList(program));
+        } else {
+            builder.withEncounterTypes(Collections.singletonList(visitType));
+        }
+        exportOutput = builder.build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+    }
+
+    private LongitudinalExportItemRow subjectWithVisits(int visits) {
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(new UserBuilder().build()).withUUID("s" + visits).build();
+        LongitudinalExportItemRow row = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+        if (visits > 0) {
+            List<Encounter> encounters = new ArrayList<>();
+            for (int i = 0; i < visits; i++) {
+                Encounter encounter = new Encounter();
+                encounter.setUuid("e" + i);
+                encounter.setObservations(new ObservationCollectionBuilder().addObservation("c1", "v" + i).build());
+                encounters.add(encounter);
+            }
+            row.setEncounterTypeToEncountersMap(new HashMap<String, List<Encounter>>() {{ put(ET, encounters); }});
+        } else {
+            row.setEncounterTypeToEncountersMap(new HashMap<>());
+        }
+        row.setProgramEnrolmentToEncountersMap(new HashMap<>());
+        row.setGroupSubjectToEncountersMap(new HashMap<>());
+        return row;
+    }
+
+    private String header() throws IOException {
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        return writer.toString();
+    }
+
+    @Test
+    public void aSubjectWithFewerVisitsThanTheMostVisitedLinesUpWithTheHeading() throws IOException {
+        setUpSubjectWithVisitType(3, false);
+        String header = header();
+        for (int visits = 0; visits <= 3; visits++) {
+            assertHeaderLinesUpWithRow(header, exportV2CSVFieldExtractor.extract(subjectWithVisits(visits)));
+        }
+        Object[] oneVisit = exportV2CSVFieldExtractor.extract(subjectWithVisits(1));
+        assertEquals("e0", getExtractValue(header, "ET1_1_uuid", oneVisit));
+        assertEquals("\"v0\"", getExtractValue(header, "\"ET1_1_C1\"", oneVisit));
+    }
+
+    @Test
+    public void aSubjectWithNoneOfAVisitTypeLinesUpWhenTheMaximumIsOne() throws IOException {
+        setUpSubjectWithVisitType(1, false);
+        String header = header();
+        assertHeaderLinesUpWithRow(header, exportV2CSVFieldExtractor.extract(subjectWithVisits(0)));
+        assertHeaderLinesUpWithRow(header, exportV2CSVFieldExtractor.extract(subjectWithVisits(1)));
+    }
+
+    @Test
+    public void aSubjectNotEnrolledLinesUpWhenTheProgrammeHasAVisitTypeWithSeveralVisits() throws IOException {
+        setUpSubjectWithVisitType(2, true);
+        assertHeaderLinesUpWithRow(header(), exportV2CSVFieldExtractor.extract(subjectWithVisits(0)));
     }
 
     private Object getExtractValue(String header, String headerFieldName, Object[] extract) {
