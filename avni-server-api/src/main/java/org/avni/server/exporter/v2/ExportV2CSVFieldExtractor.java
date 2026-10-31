@@ -190,7 +190,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                                               Map<String, HeaderNameAndFunctionMapper<Individual>> registrationDataMap, List<String> fields) {
         fields.stream()
                 .filter(registrationDataMap::containsKey)
-                .forEach(key -> columnsData.add(registrationDataMap.get(key).getValueFunction().apply(individual)));
+                .forEach(key -> columnsData.add(safeStaticValue(registrationDataMap.get(key).getValueFunction().apply(individual))));
     }
 
     private void addEnrolmentColumns(List<Object> columnsData, ProgramEnrolment programEnrolment, Map<String, FormElement> enrolmentMap,
@@ -219,13 +219,13 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private void addStaticEnrolmentColumns(ExportOutput.ExportNestedOutput program, List<Object> columnsData, ProgramEnrolment programEnrolment,
                                            Map<String, HeaderNameAndFunctionMapper<ProgramEnrolment>> enrolmentDataMap) {
         exportFieldsManager.getCoreFields(program).stream().filter(enrolmentDataMap::containsKey)
-                .forEach(key -> columnsData.add(enrolmentDataMap.get(key).getValueFunction().apply(programEnrolment)));
+                .forEach(key -> columnsData.add(safeStaticValue(enrolmentDataMap.get(key).getValueFunction().apply(programEnrolment))));
     }
 
     private void appendStaticEncounterColumns(ExportEntityType encounterEntityType, List<Object> columnsData, AbstractEncounter encounter,
                                               Map<String, HeaderNameAndFunctionMapper<AbstractEncounter>> encounterDataMap) {
         exportFieldsManager.getCoreFields(encounterEntityType).stream().filter(encounterDataMap::containsKey)
-                .forEach(key -> columnsData.add(encounterDataMap.get(key).getValueFunction().apply(encounter)));
+                .forEach(key -> columnsData.add(safeStaticValue(encounterDataMap.get(key).getValueFunction().apply(encounter))));
     }
 
     private long getTotalMembers(Individual individual) {
@@ -319,6 +319,14 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private String processMediaObs(Object val) {
         List<String> imageURIs = getObservationValueList(val).stream().map(t -> (String) t).collect(Collectors.toList());
         return getFieldValue(String.join(",", imageURIs));
+    }
+
+    /**
+     * Free-text values (names) are quoted only when they hold a comma, quote or newline; dates,
+     * numbers and other non-text values are passed through untouched.
+     */
+    private Object safeStaticValue(Object value) {
+        return value instanceof String ? CsvCell.quoteIfNeeded((String) value, false) : value;
     }
 
     private String getFieldValue(String value) {

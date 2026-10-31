@@ -172,6 +172,40 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     @Test
+    public void aCommaOrQuoteInASubjectNameStaysInItsOwnColumn() throws IOException {
+        User user = new UserBuilder().build();
+        user.setName("Rao, \"Dr\" Anil");
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withUUID("s1").withFirstName("A, B").build();
+        individual.setLastName("Devi \"Sunita\", Jr");
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "firstName", "lastName", "createdBy", "registrationDate")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+        Object[] extract = exportV2CSVFieldExtractor.extract(new LongitudinalExportItemRowBuilder().withSubject(individual).build());
+
+        // what the writer does: join with commas, no quoting of its own
+        String row = Arrays.stream(extract).map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+        List<String> headerCells = parseCsvFields(FileUtil.stripUtf8Bom(header).replaceAll("[\\r\\n]+$", ""));
+        List<String> rowCells = parseCsvFields(row);
+        assertEquals("heading and row must declare the same number of columns", headerCells.size(), rowCells.size());
+        assertTrue(rowCells.contains("A, B"));
+        assertTrue(rowCells.contains("Devi \"Sunita\", Jr"));
+        assertTrue(rowCells.contains("Rao, \"Dr\" Anil"));
+        assertTrue(rowCells.contains("s1"));
+    }
+
+    @Test
     public void aQuoteInAResolvedNameIsEscapedSoTheRowDoesNotShift() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
