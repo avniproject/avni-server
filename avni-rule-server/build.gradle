@@ -43,8 +43,6 @@ dependencies {
     }
     runtimeOnly("javax.transaction:jta:1.1")
     implementation "com.zaxxer:HikariCP"
-    implementation "org.apache.poi:poi:3.16-beta2"
-    implementation "org.apache.poi:poi-ooxml:3.16-beta2"
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
     implementation 'commons-validator:commons-validator:1.4.1'
     implementation 'org.passay:passay:1.6.3'

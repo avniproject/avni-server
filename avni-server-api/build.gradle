@@ -46,6 +46,7 @@ configurations {
 }
 
 dependencies {
+    implementation "org.apache.commons:commons-collections4:4.4"
     implementation group: 'org.apache.tomcat', name: 'tomcat-jdbc'
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
     implementation("org.springframework.boot:spring-boot-starter-cache:${springBootVersion}")
@@ -66,8 +67,6 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-database-postgresql:10.20.1")
     implementation "org.flywaydb.flyway-test-extensions:flyway-spring6-test:10.0.0"
     implementation "com.zaxxer:HikariCP"
-    implementation "org.apache.poi:poi:3.16-beta2"
-    implementation "org.apache.poi:poi-ooxml:3.16-beta2"
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
     implementation 'com.auth0:jwks-rsa:0.3.0'
     implementation 'com.auth0:java-jwt:3.3.0'
