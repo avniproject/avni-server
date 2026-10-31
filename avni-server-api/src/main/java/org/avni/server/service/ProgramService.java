@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -127,23 +128,42 @@ public class ProgramService implements NonScopeAwareService {
     }
 
     private List<Program> getEligibleProgramsFromInactivePrograms(Individual individual, List<Program> staticallyEnrolablePrograms) {
-        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = null;
+        EligibilityRuleResponseEntity eligibilityRuleResponseEntity;
         try {
             eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, staticallyEnrolablePrograms);
         } catch (RuleExecutionException e) {
-            return new ArrayList<>();
+            // avni-server#1079: the rule server evaluates all programs in one call, so one program's
+            // throwing eligibility rule failed the whole call and hid every program (including those
+            // with a fine rule or no rule). Fall back to evaluating each program on its own and keep
+            // the ones that resolve; only the program whose rule throws is dropped.
+            return getEligibleProgramsIndividually(individual, staticallyEnrolablePrograms);
         }
 
+        return filterEligiblePrograms(staticallyEnrolablePrograms, eligibilityRuleResponseEntity);
+    }
+
+    private List<Program> getEligibleProgramsIndividually(Individual individual, List<Program> programs) {
+        List<Program> eligiblePrograms = new ArrayList<>();
+        for (Program program : programs) {
+            try {
+                EligibilityRuleResponseEntity response = ruleService.executeProgramEligibilityCheckRule(individual, Collections.singletonList(program));
+                eligiblePrograms.addAll(filterEligiblePrograms(Collections.singletonList(program), response));
+            } catch (RuleExecutionException e) {
+                logger.warn(String.format("Program eligibility rule failed for program %s; excluding it from eligible programs", program.getUuid()), e);
+            }
+        }
+        return eligiblePrograms;
+    }
+
+    private List<Program> filterEligiblePrograms(List<Program> programs, EligibilityRuleResponseEntity eligibilityRuleResponseEntity) {
         List<EligibilityRuleEntity> allEligiblePrograms = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
                 .filter(EligibilityRuleEntity::isEligible)
                 .collect(Collectors.toList());
 
-        List<Program> eligiblePrograms = staticallyEnrolablePrograms.stream()
+        return programs.stream()
                 .filter(staticallyEnrolableProgram -> allEligiblePrograms.stream()
                         .anyMatch(eligibilityRuleEntity -> eligibilityRuleEntity.getTypeUUID().equals(staticallyEnrolableProgram.getUuid())))
                 .collect(Collectors.toList());
-
-        return eligiblePrograms;
     }
 
     public void savePrograms(ProgramRequest[] programRequests) {
