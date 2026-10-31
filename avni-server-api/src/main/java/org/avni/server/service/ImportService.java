@@ -68,7 +68,13 @@ public class ImportService implements ImportLocationsConstants {
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
-        List<FormMapping> formMappings = formMappingRepository.findAllOperational();
+        // A form, subject type, program or encounter type can be voided (bundle upload, API) without its mapping being voided.
+        List<FormMapping> formMappings = formMappingRepository.findAllOperational().stream()
+                .filter(formMapping -> !formMapping.getForm().isVoided()
+                        && !formMapping.getSubjectType().isVoided()
+                        && (formMapping.getProgram() == null || !formMapping.getProgram().isVoided())
+                        && (formMapping.getEncounterType() == null || !formMapping.getEncounterType().isVoided()))
+                .collect(java.util.stream.Collectors.toList());
         Stream<FormMapping> subjectProfileFormMappings = formMappings.stream().filter(formMapping -> formMapping.getForm().getFormType() == FormType.IndividualProfile);
         HashMap<String, FormMappingInfo> uploadTypes = new HashMap<>();
         subjectProfileFormMappings.forEach(formMapping -> {
