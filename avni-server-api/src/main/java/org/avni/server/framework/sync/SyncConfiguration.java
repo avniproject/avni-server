@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 public class SyncConfiguration implements WebMvcConfigurer {
     private final TransactionalResourceInterceptor transactionalResourceInterceptor;
     private final MetadataResourceInterceptor metadataResourceInterceptor;
+    private final PageSizeGuardInterceptor pageSizeGuardInterceptor;
     private DummyInterceptor dummyInterceptor;
 
     private final String[] transactionalPathList = Stream.of(
@@ -90,8 +91,9 @@ public class SyncConfiguration implements WebMvcConfigurer {
     ).map(path-> "/" + path + "/**").toArray(String[]::new);
 
     @Autowired
-    public SyncConfiguration(TransactionalResourceInterceptor transactionalResourceInterceptor, MetadataResourceInterceptor metadataResourceInterceptor, DummyInterceptor dummyInterceptor) {
+    public SyncConfiguration(TransactionalResourceInterceptor transactionalResourceInterceptor, MetadataResourceInterceptor metadataResourceInterceptor, PageSizeGuardInterceptor pageSizeGuardInterceptor, DummyInterceptor dummyInterceptor) {
         this.transactionalResourceInterceptor = transactionalResourceInterceptor;
+        this.pageSizeGuardInterceptor = pageSizeGuardInterceptor;
         this.metadataResourceInterceptor = metadataResourceInterceptor;
         this.dummyInterceptor = dummyInterceptor;
     }
@@ -104,6 +106,15 @@ public class SyncConfiguration implements WebMvcConfigurer {
     @Bean("mappedMetadataResourceInterceptor")
     public MappedInterceptor mappedMetadataResourceInterceptor() {
         return new MappedInterceptor(metadataPathList, metadataResourceInterceptor);
+    }
+
+    /**
+     * Every path, so it reaches the hand-written controllers and Spring Data REST's repository endpoints alike.
+     * It acts only on handlers that take a Pageable.
+     */
+    @Bean("mappedPageSizeGuardInterceptor")
+    public MappedInterceptor mappedPageSizeGuardInterceptor() {
+        return new MappedInterceptor(new String[]{"/**"}, pageSizeGuardInterceptor);
     }
 
     @Override

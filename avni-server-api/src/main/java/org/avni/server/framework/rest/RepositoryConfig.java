@@ -6,6 +6,7 @@ import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.domain.organisation.OrganisationStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
@@ -14,6 +15,14 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 @Configuration
 public class RepositoryConfig implements RepositoryRestConfigurer {
+    // Spring Data REST's pageable resolver is registered for every controller, so this caps all paged endpoints.
+    // Requests above it are refused by PageSizeGuardInterceptor rather than quietly served this many (#1058).
+    private final int maxPageSize;
+
+    public RepositoryConfig(@Value("${avni.sync.max.page.size:1000}") int maxPageSize) {
+        this.maxPageSize = maxPageSize;
+    }
+
     @Override
     public void configureConversionService(ConfigurableConversionService conversionService) {
         conversionService.addConverter(new StringToJodaDateTimeConverter());
@@ -21,6 +30,7 @@ public class RepositoryConfig implements RepositoryRestConfigurer {
 
     @Override
     public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
+        config.setMaxPageSize(maxPageSize);
         config.exposeIdsFor(User.class);
         config.exposeIdsFor(Organisation.class);
         config.exposeIdsFor(Catchment.class);
