@@ -317,6 +317,57 @@ public class FormMappingServiceIntegrationTest extends AbstractControllerIntegra
         assertNotNull(formMappingRepository.findByUuid(clashing.getUuid()));
     }
 
+    /**
+     * #692: with two live mappings already sharing a combination, voiding one of them must go through - voiding
+     * can only remove a duplicate, never add one.
+     */
+    @Test
+    public void voidingOneOfTwoClashingMappingsGoesThrough() {
+        FormMapping clashing = twoLiveEncounterMappingsOnOneCombination();
+
+        FormMappingContract voidIt = FormMappingContract.fromFormMapping(clashing);
+        voidIt.setVoided(true);
+        formMappingService.createOrUpdateFormMapping(voidIt);
+
+        assertTrue(formMappingRepository.findByUuid(clashing.getUuid()).isVoided());
+    }
+
+    /**
+     * #692/#75: bringing a voided mapping back onto a combination that another live mapping already holds is how
+     * the duplicate in #692 was made. The combination does not move, so this has to be checked as well, and refused
+     * naming the form already there rather than reaching the database check as a bare 500.
+     */
+    @Test
+    public void refusesUnvoidingAMappingOntoACombinationAlreadyHeld() {
+        EncounterType encounterType = anEncounterType();
+        FormMapping first = formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Encounter)).withSubjectType(subjectType)
+                .withEncounterType(encounterType).build());
+        first.setVoided(true);
+        formMappingRepository.saveFormMapping(first);
+        Form holder = formRepository.save(new TestFormBuilder().withDefaultFieldsForNewEntity().withName("Visit Holder").withFormType(FormType.Encounter).build());
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(holder).withSubjectType(subjectType).withEncounterType(encounterType).build());
+
+        FormMappingContract unvoid = FormMappingContract.fromFormMapping(first);
+        unvoid.setVoided(false);
+        assertRefusedWith(unvoid, "Visit Holder");
+    }
+
+    private FormMapping twoLiveEncounterMappingsOnOneCombination() {
+        EncounterType encounterType = anEncounterType();
+        formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(saveFormOfType(FormType.Encounter)).withSubjectType(subjectType)
+                .withEncounterType(encounterType).build());
+        Form cancellationForm = saveFormOfType(FormType.IndividualEncounterCancellation);
+        FormMapping clashing = formMappingRepository.saveFormMapping(new FormMappingBuilder()
+                .withForm(cancellationForm).withSubjectType(subjectType)
+                .withEncounterType(encounterType).build());
+        cancellationForm.setFormType(FormType.Encounter);
+        formRepository.save(cancellationForm);
+        return clashing;
+    }
+
     /** Saving an existing mapping again must not report it as a duplicate of itself. */
     @Test
     public void doesNotTreatUpdatingAMappingAsItsOwnDuplicate() {
