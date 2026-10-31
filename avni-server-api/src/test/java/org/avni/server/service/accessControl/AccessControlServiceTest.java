@@ -2,7 +2,12 @@ package org.avni.server.service.accessControl;
 
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.domain.Catchment;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.SubjectPartitionCheckStatus;
+import org.avni.server.service.UserService;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.factory.UserBuilder;
@@ -10,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -90,5 +96,25 @@ public class AccessControlServiceTest {
         accessControlService.checkPrivilege(user, PrivilegeType.EditApproval);
 
         verify(userRepository).hasPrivilege(PrivilegeType.EditApproval.name(), 1L);
+    }
+
+    @Test
+    public void userWithNullSyncSettingsIsToldSyncAttributeNotConfiguredInsteadOfFailing() {
+        UserService userService = org.mockito.Mockito.mock(UserService.class);
+        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository, null, null, userService);
+        User user = new UserBuilder().id(2L).build();
+        user.setCatchment(new Catchment());
+        user.setSyncSettings(null);
+        when(userService.getCurrentUser()).thenReturn(user);
+        SubjectType subjectType = new SubjectType();
+        subjectType.setUuid("st-uuid");
+        subjectType.setSyncRegistrationConcept1Usable(true);
+        Individual subject = new Individual();
+        subject.setSubjectType(subjectType);
+        subject.setAddressLevel(new org.avni.server.domain.AddressLevel());
+
+        SubjectPartitionCheckStatus status = accessControlService.checkSubjectAccess(subject, null);
+
+        assertEquals(SubjectPartitionCheckStatus.UserSyncAttributeNotConfigured, status.getMessage());
     }
 }

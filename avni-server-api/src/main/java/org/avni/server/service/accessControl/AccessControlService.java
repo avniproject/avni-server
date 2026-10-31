@@ -304,7 +304,7 @@ public class AccessControlService {
     }
 
     private static List<UserSyncSettings> getSyncSettingsList(JsonObject syncSettings) {
-        User.SyncSettingKeys.subjectTypeSyncSettings.name();
+        if (syncSettings == null) return null;
         return ObjectMapperSingleton.getObjectMapper().convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<>() {
         });
     }
