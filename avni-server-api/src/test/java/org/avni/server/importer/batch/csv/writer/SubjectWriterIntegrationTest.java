@@ -577,6 +577,15 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "'Date Of Registration' 2090-01-01 cannot be in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept', Invalid value 'shouldhavebeenanumber' for 'QG Numeric Concept'");
     }
 
+    // #909
+    @Test
+    public void shouldRefuseADateOfBirthInTheFuture() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] row = validDataRow();
+        row[6] = "2086-06-26";
+        failure(validHeader(), row, "'Date Of Birth' 2086-06-26 cannot be in future");
+    }
+
     @Test
     public void shouldNotFailValidationIfMandatoryQuestionGroupFieldsAreNotProvided() throws InvalidConfigurationException {
         organisationConfigService.saveRegistrationLocation(district, subjectType);
