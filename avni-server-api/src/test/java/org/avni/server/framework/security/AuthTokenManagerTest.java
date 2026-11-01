@@ -45,4 +45,38 @@ public class AuthTokenManagerTest {
         request.addHeader(AuthenticationFilter.AUTH_TOKEN_HEADER, HEADER_DUMMY_TOKEN);
         assertThat (AuthTokenManager.getInstance().getDerivedAuthToken(request, QUERY_STRING_WITH_AUTH_TOKEN)).isEqualTo(HEADER_DUMMY_TOKEN);
     }
+
+    @Test
+    public void maskAuthTokenLeavesNullAndEmptyQueryStringAlone() {
+        assertThat(AuthTokenManager.maskAuthToken(null)).isNull();
+        assertThat(AuthTokenManager.maskAuthToken(EMPTY_QUERY_STRING)).isEqualTo(EMPTY_QUERY_STRING);
+    }
+
+    @Test
+    public void maskAuthTokenLeavesQueryStringWithoutTokenAlone() {
+        assertThat(AuthTokenManager.maskAuthToken("page=0&size=10")).isEqualTo("page=0&size=10");
+    }
+
+    @Test
+    public void maskAuthTokenWhenTokenIsTheOnlyParam() {
+        assertThat(AuthTokenManager.maskAuthToken(QUERY_STRING_WITH_AUTH_TOKEN)).isEqualTo("AUTH-TOKEN=***");
+    }
+
+    @Test
+    public void maskAuthTokenWhenTokenIsFirstMiddleOrLastParam() {
+        assertThat(AuthTokenManager.maskAuthToken("AUTH-TOKEN=abc.def&page=0")).isEqualTo("AUTH-TOKEN=***&page=0");
+        assertThat(AuthTokenManager.maskAuthToken("page=0&AUTH-TOKEN=abc.def&size=10")).isEqualTo("page=0&AUTH-TOKEN=***&size=10");
+        assertThat(AuthTokenManager.maskAuthToken("page=0&size=10&AUTH-TOKEN=abc.def")).isEqualTo("page=0&size=10&AUTH-TOKEN=***");
+    }
+
+    @Test
+    public void maskAuthTokenWithSemicolonSeparators() {
+        assertThat(AuthTokenManager.maskAuthToken("page=0;AUTH-TOKEN=abc.def;size=10")).isEqualTo("page=0;AUTH-TOKEN=***;size=10");
+        assertThat(AuthTokenManager.maskAuthToken("page=0&AUTH-TOKEN=abc.def;size=10")).isEqualTo("page=0&AUTH-TOKEN=***;size=10");
+    }
+
+    @Test
+    public void maskAuthTokenDoesNotMaskParamThatOnlyEndsWithTokenName() {
+        assertThat(AuthTokenManager.maskAuthToken("MY-AUTH-TOKEN=abc&page=0")).isEqualTo("MY-AUTH-TOKEN=abc&page=0");
+    }
 }

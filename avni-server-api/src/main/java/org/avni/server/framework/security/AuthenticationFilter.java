@@ -57,7 +57,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             String requestURI = request.getRequestURI();
             String queryString = request.getQueryString();
 
-            logger.info(String.format("Received request %s %s?%s", method, requestURI, queryString));
+            logger.info(String.format("Received request %s %s?%s", method, requestURI, AuthTokenManager.maskAuthToken(queryString)));
 
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
             boolean isProtected = isProtected(request);
@@ -72,7 +72,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
                 long start = System.currentTimeMillis();
                 chain.doFilter(request, response);
                 long end = System.currentTimeMillis();
-                logger.info(String.format("%s %s?%s Status: %s User: %s Organisation: %s Time: %s ms", method, requestURI, queryString, response.getStatus(), userContext.getUserName(), userContext.getOrganisationName(), (end - start)));
+                logger.info(String.format("%s %s?%s Status: %s User: %s Organisation: %s Time: %s ms", method, requestURI, AuthTokenManager.maskAuthToken(queryString), response.getStatus(), userContext.getUserName(), userContext.getOrganisationName(), (end - start)));
             } else {
                 String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
                 authTokenManager.setAuthCookie(request, response, derivedAuthToken);

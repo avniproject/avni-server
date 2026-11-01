@@ -16,6 +16,7 @@ public class AuthTokenManager {
     public static final String AUTH_TOKEN_COOKIE = "auth-token";
     public static final Pattern PARAM_SEPARATOR_PATTERN = Pattern.compile("[&;]");
     public static final String AUTH_TOKEN = "AUTH-TOKEN=";
+    private static final Pattern AUTH_TOKEN_PARAM_PATTERN = Pattern.compile("(^|[&;])" + AUTH_TOKEN + "[^&;]*");
 
     public static AuthTokenManager getInstance() {
         return new AuthTokenManager();
@@ -84,5 +85,12 @@ public class AuthTokenManager {
             }
         }
         return null;
+    }
+
+    public static String maskAuthToken(String queryString) {
+        if (!StringUtils.hasText(queryString)) {
+            return queryString;
+        }
+        return AUTH_TOKEN_PARAM_PATTERN.matcher(queryString).replaceAll("$1" + AUTH_TOKEN + "***");
     }
 }
