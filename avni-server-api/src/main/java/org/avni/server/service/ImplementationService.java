@@ -26,8 +26,11 @@ public class ImplementationService {
         this.userService = userService;
     }
 
-    @Transactional
-    public void deleteImplementationData(boolean deleteMetadata, boolean deleteAdminConfig) {
+    /**
+     * Every check deleteImplementationData makes, without deleting anything, so a background deletion can be refused
+     * in the request that asks for it, with the same response as the synchronous delete.
+     */
+    public void assertCanDeleteImplementationData(boolean deleteMetadata, boolean deleteAdminConfig) {
         if (userService.isAdmin(UserContextHolder.getUser())) {
             throw new ValidationException("Super admin cannot delete implementation data");
         }
@@ -40,6 +43,20 @@ public class ImplementationService {
         if (deleteAdminConfig && !deleteMetadata) {
             throw new ValidationException("You cannot delete admin config data without deleting metadata");
         }
+
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        }
+        if (deleteAdminConfig) {
+            accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
+        }
+    }
+
+    @Transactional
+    public void deleteImplementationData(boolean deleteMetadata, boolean deleteAdminConfig) {
+        assertCanDeleteImplementationData(deleteMetadata, deleteAdminConfig);
+        Organisation organisation = organisationService.getCurrentOrganisation();
 
         // Delete operations
         deleteTransactionalData(organisation);
