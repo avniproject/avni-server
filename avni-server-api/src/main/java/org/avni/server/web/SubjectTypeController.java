@@ -132,9 +132,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     public ResponseEntity saveSubjectTypeForWeb(@RequestBody SubjectTypeContractWeb request) {
         accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
         SubjectType existingSubjectType =
-                subjectTypeRepository.findByNameIgnoreCase(request.getName());
+                subjectTypeRepository.findByNameIgnoreCase(EntityUtil.trimName(request.getName()));
         OperationalSubjectType existingOperationalSubjectType =
-                operationalSubjectTypeRepository.findByNameIgnoreCase(request.getName());
+                operationalSubjectTypeRepository.findByNameIgnoreCase(EntityUtil.trimName(request.getName()));
         if (existingSubjectType != null || existingOperationalSubjectType != null)
             return ResponseEntity.badRequest().body(
                     ReactAdminUtil.generateJsonError(String.format("SubjectType %s already exists", request.getName()))

@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.domain.util.EntityUtil;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.BatchSize;
@@ -30,7 +31,7 @@ public class OperationalEncounterType extends OrganisationAwareEntity {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = EntityUtil.trimName(name);
     }
 
     public String getEncounterTypeUUID() {

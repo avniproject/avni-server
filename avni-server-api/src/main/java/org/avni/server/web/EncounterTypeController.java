@@ -155,9 +155,9 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     ResponseEntity saveEncounterTypeForWeb(@RequestBody EncounterTypeContractWeb request) {
         accessControlService.checkPrivilege(PrivilegeType.EditEncounterType);
         EncounterType existingEncounterType =
-                encounterTypeRepository.findByNameIgnoreCase(request.getName());
+                encounterTypeRepository.findByNameIgnoreCase(EntityUtil.trimName(request.getName()));
         OperationalEncounterType existingOperationalEncounterType =
-                operationalEncounterTypeRepository.findByNameIgnoreCase(request.getName());
+                operationalEncounterTypeRepository.findByNameIgnoreCase(EntityUtil.trimName(request.getName()));
         if (existingEncounterType != null || existingOperationalEncounterType != null)
             return ResponseEntity.badRequest().body(
                     ReactAdminUtil.generateJsonError(String.format("EncounterType %s already exists", request.getName()))

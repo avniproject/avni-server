@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.domain.util.EntityUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
@@ -64,7 +65,7 @@ public class Program extends OrganisationAwareEntity implements NamedEntity {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = EntityUtil.trimName(name);
     }
 
     public String getColour() {

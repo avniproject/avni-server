@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.domain.util.EntityUtil;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.Format;
@@ -40,7 +41,7 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = EntityUtil.trimName(name);
     }
 
     public String getSubjectTypeUUID() {

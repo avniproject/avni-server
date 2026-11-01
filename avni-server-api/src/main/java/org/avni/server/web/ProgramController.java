@@ -80,9 +80,9 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     ResponseEntity saveProgramForWeb(@RequestBody ProgramContractWeb request) {
         accessControlService.checkPrivilege(PrivilegeType.EditProgram);
         Program existingProgram =
-                programRepository.findByNameIgnoreCase(request.getName());
+                programRepository.findByNameIgnoreCase(EntityUtil.trimName(request.getName()));
         OperationalProgram existingOperationalProgram =
-                operationalProgramRepository.findByNameIgnoreCase(request.getName());
+                operationalProgramRepository.findByNameIgnoreCase(EntityUtil.trimName(request.getName()));
         if (existingProgram != null || existingOperationalProgram != null)
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Program %s already exists", request.getName())));
         Program program = new Program();

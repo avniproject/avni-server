@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.domain.util.EntityUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -157,7 +158,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = EntityUtil.trimName(name);
     }
 
     public Set<OperationalSubjectType> getOperationalSubjectTypes() {
