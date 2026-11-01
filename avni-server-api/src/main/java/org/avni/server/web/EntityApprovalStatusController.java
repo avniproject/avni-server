@@ -97,10 +97,11 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "entityType", required = false) SyncEntityName entityName,
             @RequestParam(value = "entityTypeUuid", required = false) String entityTypeUuid,
+            @RequestParam(value = "afterUuid", required = false) String afterUuid,
             Pageable pageable) {
 
         return getScopeBasedSyncResultsAsSlice(lastModifiedDateTime, now,
-                fetchSubjectTypeForEntityNameAndUuid(entityName, entityTypeUuid), pageable, entityName, entityTypeUuid);
+                fetchSubjectTypeForEntityNameAndUuid(entityName, entityTypeUuid), pageable, entityName, entityTypeUuid, afterUuid);
     }
 
     @Override
@@ -151,12 +152,12 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
 
     private SlicedResources<EntityModel<EntityApprovalStatus>> getScopeBasedSyncResultsAsSlice(DateTime lastModifiedDateTime,
                                                                                             DateTime now, String subjectTypeUuid, Pageable pageable,
-                                                                                            SyncEntityName entityName, String entityTypeUuid) {
+                                                                                            SyncEntityName entityName, String entityTypeUuid, String afterUuid) {
         if (subjectTypeUuid == null || subjectTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(entityApprovalStatusRepository,
-                userService.getCurrentUser(), lastModifiedDateTime, now, entityTypeUuid, pageable, subjectType, entityName));
+                userService.getCurrentUser(), lastModifiedDateTime, now, entityTypeUuid, pageable, subjectType, entityName, afterUuid));
     }
 
     private CollectionModel<EntityModel<EntityApprovalStatus>> getScopeBasedSyncResults(DateTime lastModifiedDateTime,

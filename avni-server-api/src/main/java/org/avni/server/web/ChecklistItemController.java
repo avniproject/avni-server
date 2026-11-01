@@ -92,13 +92,14 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
+            @RequestParam(value = "afterUuid", required = false) String afterUuid,
             Pageable pageable) {
         if (checklistDetailUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         ChecklistDetail checklistDetail = checklistDetailRepository.findByUuid(checklistDetailUuid);
         if (checklistDetail == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         Checklist checklist = checklistRepository.findFirstByChecklistDetail(checklistDetail);
         if(checklist == null || checklist.getProgramEnrolment() == null) return wrap(new SliceImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(checklistItemRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable, checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncEntityName.ChecklistItem));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(checklistItemRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable, checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncEntityName.ChecklistItem, afterUuid));
     }
 
     @RequestMapping(value = "/txNewChecklistItemEntity", method = RequestMethod.GET)

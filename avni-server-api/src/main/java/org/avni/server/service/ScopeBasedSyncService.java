@@ -41,13 +41,29 @@ public class ScopeBasedSyncService<T extends CHSEntity> {
     }
 
     public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
+        return getSyncResultsBySubjectTypeRegistrationLocationAsSlice(repository, user, lastModifiedDateTime, now, typeId, pageable, subjectType, syncEntityName, null);
+    }
+
+    /**
+     * @param afterUuid uuid of the last row the client holds at lastModifiedDateTime (avni-client#2099). When given, rows
+     *                  at exactly lastModifiedDateTime up to and including that row are left out. Null serves the request as before.
+     */
+    public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName, String afterUuid) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        SyncParameters syncParameters = new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment());
+        syncParameters.setAfterUuid(afterUuid);
+        return repository.getSyncResultsAsSlice(syncParameters);
     }
 
     public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, String entityTypeUuid, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName) {
+        return getSyncResultsBySubjectTypeRegistrationLocationAsSlice(repository, user, lastModifiedDateTime, now, entityTypeUuid, pageable, subjectType, syncEntityName, null);
+    }
+
+    public Slice<T> getSyncResultsBySubjectTypeRegistrationLocationAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, String entityTypeUuid, Pageable pageable, SubjectType subjectType, SyncEntityName syncEntityName, String afterUuid) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResultsAsSlice(new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        SyncParameters syncParameters = new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment());
+        syncParameters.setAfterUuid(afterUuid);
+        return repository.getSyncResultsAsSlice(syncParameters);
     }
 
     public Slice<T> getSyncResultsByCatchmentAsSlice(SyncableRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Pageable pageable, SyncEntityName syncEntityName) {

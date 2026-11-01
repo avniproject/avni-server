@@ -21,6 +21,7 @@ public class SyncParameters {
     private final JsonObject syncSettings;
     private final SyncEntityName syncEntityName;
     private final Catchment catchment;
+    private String afterUuid;
 
     public SyncParameters(DateTime lastModifiedDateTime,
                           DateTime now, Long typeId,
@@ -106,5 +107,22 @@ public class SyncParameters {
     public boolean isModificationCheckOnEntity() {
         return this.getSubjectType() == null || !this.getSubjectType().isDirectlyAssignable()
                 || (!this.isParentOrSelfIndividual() && !this.isProgramEncounter() && !this.isEncounter() && !this.isParentOrSelfEnrolment());
+    }
+
+    public String getAfterUuid() {
+        return afterUuid;
+    }
+
+    public void setAfterUuid(String afterUuid) {
+        this.afterUuid = afterUuid;
+    }
+
+    /**
+     * The (lastModifiedDateTime, afterUuid) cursor of avni-client#2099 continues the order the rows are read in, which is
+     * (last_modified_date_time, id) of the entity itself. Directly assignable subject types are filtered and ordered by the
+     * user's subject assignments instead, so the cursor is not applied there and the request is served as before.
+     */
+    public boolean isCursorApplicable() {
+        return afterUuid != null && !afterUuid.isEmpty() && (subjectType == null || !subjectType.isDirectlyAssignable());
     }
 }

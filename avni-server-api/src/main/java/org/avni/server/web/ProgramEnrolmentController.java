@@ -104,6 +104,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programUuid", required = false) String programUuid,
+            @RequestParam(value = "afterUuid", required = false) String afterUuid,
             Pageable pageable) throws Exception {
         if (programUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         else {
@@ -112,7 +113,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));
-            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEnrolment));
+            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEnrolment, afterUuid));
         }
     }
 

@@ -235,6 +235,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
         @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
+        @RequestParam(value = "afterUuid", required = false) String afterUuid,
         Pageable pageable) throws Exception {
         if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
@@ -242,7 +243,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         FormMapping formMapping = formMappingService.find(encounterType, FormType.Encounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for encounter %s", encounterType.getName()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Encounter));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Encounter, afterUuid));
     }
 
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)

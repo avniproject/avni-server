@@ -70,9 +70,29 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
             List<Predicate> predicates = new ArrayList<>();
             if (syncParameters.getSubjectType() == null || !syncParameters.getSubjectType().isDirectlyAssignable())
                 predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime), cb.literal(now)));
+            if (syncParameters.isCursorApplicable())
+                predicates.add(afterCursorPredicate(root, query, cb, lastModifiedDateTime, syncParameters.getAfterUuid()));
             query.orderBy(cb.asc(root.get("lastModifiedDateTime")), cb.asc(root.get("id")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    /**
+     * avni-client#2099. Rows come in (last_modified_date_time, id) order, so the client's cursor is the timestamp and uuid
+     * of the last row it holds. Keep rows after that row: later timestamps, or the same timestamp and a larger id. The
+     * cursor row's id is looked up by uuid (ids never change; its timestamp might have since). An unknown uuid reads as
+     * id 0, so the whole group at that timestamp is sent again rather than skipped.
+     */
+    @SuppressWarnings("unchecked")
+    default Predicate afterCursorPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb, Date lastModifiedDateTime, String afterUuid) {
+        Subquery<Long> cursorId = query.subquery(Long.class);
+        Root<T> cursorRow = cursorId.from((Class<T>) root.getJavaType());
+        cursorId.select(cb.min(cursorRow.get("id"))).where(cb.equal(cursorRow.get("uuid"), afterUuid));
+        Path<Date> lastModifiedDateTimePath = root.get("lastModifiedDateTime");
+        return cb.or(
+                cb.greaterThan(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime)),
+                cb.and(cb.equal(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime)),
+                        cb.greaterThan(root.get("id"), cb.coalesce(cursorId, 0L))));
     }
 
     default Specification<T> syncTypeIdSpecification(Long typeId) {
