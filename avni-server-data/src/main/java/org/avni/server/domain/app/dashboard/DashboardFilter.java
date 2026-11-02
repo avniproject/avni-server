@@ -79,6 +79,14 @@ public class DashboardFilter extends OrganisationAwareEntity {
             return (String) this.jsonObject.get(SubjectTypeFieldName);
         }
 
+        public String getPresetSubjectTypeUuid() {
+            return (String) this.jsonObject.get(PresetSubjectTypeFieldName);
+        }
+
+        public String getPresetProgramUuid() {
+            return (String) this.jsonObject.get(PresetProgramFieldName);
+        }
+
         public String getWidget() {
             return (String) this.jsonObject.get(WidgetFieldName);
         }
