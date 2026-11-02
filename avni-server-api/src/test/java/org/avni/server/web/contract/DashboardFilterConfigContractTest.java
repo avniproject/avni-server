@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 /**
  * A Subject Type filter can carry a preset subject type and an optional preset program (avniproject/avni-server#1102).
@@ -17,6 +18,7 @@ import static org.junit.Assert.assertFalse;
  * names are written out here instead of read from the constants. Only a Subject Type filter stores them.
  */
 public class DashboardFilterConfigContractTest {
+    private static final String SUBJECT_TYPE_KEY = "subjectTypeUUID";
     private static final String PRESET_SUBJECT_TYPE_KEY = "presetSubjectTypeUUID";
     private static final String PRESET_PROGRAM_KEY = "presetProgramUUID";
 
@@ -26,6 +28,9 @@ public class DashboardFilterConfigContractTest {
 
         assertEquals("st-1", json.getString(PRESET_SUBJECT_TYPE_KEY));
         assertEquals("pr-1", json.getString(PRESET_PROGRAM_KEY));
+        // The request sets no subjectTypeUUID, the filter's existing key, so it has to stay empty: a preset must not land in it.
+        // The contract writes that key as a null value, so the check is on the value.
+        assertNull("subjectTypeUUID in " + json, json.getString(SUBJECT_TYPE_KEY));
     }
 
     @Test

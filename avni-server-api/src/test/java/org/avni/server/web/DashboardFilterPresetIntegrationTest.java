@@ -1,14 +1,17 @@
 package org.avni.server.web;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.assertj.core.api.SoftAssertions;
+import org.avni.server.application.FormMapping;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.OperationalProgramRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OperationalProgram;
@@ -32,17 +35,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -58,7 +64,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * is, so the preset has to come out of that sync under the names the phone reads. Every other filter type stores none.
  * The web app reads the preset back from the dashboard endpoint, and a bundle carries it to another organisation.
  * A web save refuses a preset that is incomplete, missing, not used in the organisation, or a program the subject type
- * is not enrolled into. Only the web save is checked: a bundle carries its own consistency.
+ * is not enrolled into. Only the web save is checked: a bundle carries its own consistency. An edit is checked the same way and
+ * is refused whole, and the phone is given a changed or cleared preset by its next sync.
  */
 @Sql(value = {"/tear-down.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -68,6 +75,8 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
     private static final String PRESET_TREATMENT = "preset-treatment";
     private static final String PRESET_HOUSEHOLD = "preset-household";
     private static final String PRESET_SURVEY = "preset-survey";
+    // OpenCHS, the parent of demo and of a-demo in test-data.sql.
+    private static final Long PARENT_ORGANISATION_ID = 1L;
 
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
@@ -91,6 +100,10 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
     private OperationalProgramRepository operationalProgramRepository;
     @Autowired
     private FormMappingService formMappingService;
+    @Autowired
+    private FormMappingRepository formMappingRepository;
+    @Autowired
+    private DataSource dataSource;
 
     // The subject types and programs are made as demo-admin, through the services that also give each one the
     // operational record and the form mapping an App Designer subject type or program has. They are real in this
@@ -191,18 +204,11 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
     // preset, and the phone's sync entry for it has neither key.
     @Test
     public void dashboardSavedBeforeThePresetReadsBackWithNone() throws Exception {
-        DashboardFilter filter = new DashboardFilter();
-        filter.setUuid(UUID.randomUUID().toString());
-        filter.setName("Screening type");
-        filter.setFilterConfig(new JsonObject().with("type", "SubjectType"));
-        Dashboard dashboard = new Dashboard();
-        dashboard.setUuid(UUID.randomUUID().toString());
-        dashboard.setName("Dashboard from before the preset");
-        dashboard.addUpdateFilter(filter);
-        Dashboard saved = dashboardRepository.save(dashboard);
+        String filterUuid = UUID.randomUUID().toString();
+        Dashboard saved = storeDashboardFromBeforeThePreset(filterUuid);
 
         JsonNode openedFilterConfig = openedByTheWebApp(saved.getId()).path("filters").path(0).path("filterConfig");
-        JsonNode syncedFilterConfig = filterFromTheSync(filter.getUuid()).path("filterConfig");
+        JsonNode syncedFilterConfig = filterFromTheSync(filterUuid).path("filterConfig");
 
         SoftAssertions.assertSoftly(softly -> {
             // The type is asserted too: a filter config that came back empty would also have no preset.
@@ -217,6 +223,20 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
             softly.assertThat(syncedFilterConfig.has("presetProgramUUID"))
                     .as("filter in the sync has presetProgramUUID: " + syncedFilterConfig).isFalse();
         });
+    }
+
+    // The same dashboard, saved again as the web app sends it back: unchanged. It has no preset and gets none, and it keeps
+    // its filter: the answer carries the uuid of the filter that was stored.
+    @Test
+    public void dashboardSavedBeforeThePresetSavesUnchanged() throws Exception {
+        String filterUuid = UUID.randomUUID().toString();
+        Dashboard stored = storeDashboardFromBeforeThePreset(filterUuid);
+
+        JsonNode answer = putDashboard(stored.getId(), openedByTheWebApp(stored.getId()));
+        JsonNode syncedFilterConfig = filterFromTheSync(filterUuid).path("filterConfig");
+
+        assertThat(answer.path("filters").path(0).path("uuid").textValue()).as("uuid of the filter in the answer to the save").isEqualTo(filterUuid);
+        assertCarriesNoPreset(syncedFilterConfig, "SubjectType", "the filter in the sync after the save");
     }
 
     // The card says "optionally a preset program": a subject type alone is a whole preset.
@@ -242,11 +262,15 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         });
     }
 
-    // A program is chosen within a subject type, so a preset program alone has nothing to be chosen within.
+    // A program is chosen within a subject type, so a preset program alone has nothing to be chosen within. A subject type
+    // left empty, or with only spaces, is none.
     @Test
     public void presetProgramWithoutPresetSubjectTypeIsRefused() throws Exception {
-        assertNewDashboardIsRefused("Program only dashboard", dashboardJson("Program only dashboard", "SubjectType", null, PRESET_SCREENING),
-                "Preset program needs a preset subject type, on filter Screening type");
+        String reason = "Preset program needs a preset subject type, on filter Screening type";
+
+        assertNewDashboardIsRefused("Program only dashboard", dashboardJson("Program only dashboard", "SubjectType", null, PRESET_SCREENING), reason);
+        assertNewDashboardIsRefused("Empty subject type dashboard", dashboardJson("Empty subject type dashboard", "SubjectType", "", PRESET_SCREENING), reason);
+        assertNewDashboardIsRefused("Spaces subject type dashboard", dashboardJson("Spaces subject type dashboard", "SubjectType", "   ", PRESET_SCREENING), reason);
     }
 
     // The filter's name goes into the message, and BadRequestError formats its message. A name that went into the format
@@ -310,6 +334,32 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                 .as("preset program of the saved dashboard").isEqualTo(PRESET_TREATMENT);
     }
 
+    // The program, its operational record and the subject type are all still in use here. Only the enrolment mapping of the
+    // pair is voided, so Preset Screening is no longer a program that Preset Patient enrols into.
+    @Test
+    public void programWhoseEnrolmentMappingWasVoidedIsRefused() throws Exception {
+        voidEnrolmentMappingAsAppDesignerDoes(PRESET_PATIENT, PRESET_SCREENING);
+
+        assertNewDashboardIsRefused("Unmapped program dashboard", dashboardJson("Unmapped program dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING),
+                "Preset program Preset Screening is not enrolled into from subject type Preset Patient");
+    }
+
+    // A child organisation sees its parent's rows. When the parent organisation maps the same subject type and program as this
+    // one, both mappings are visible here, so a lookup that expects one mapping answers 500 where the list of mappings does not.
+    @Test
+    public void enrolmentMappedInParentAndChildSaves() throws Exception {
+        Long thisOrganisationId = UserContextHolder.getUserContext().getOrganisationId();
+        mapEnrolmentInTheParentOrganisation(PRESET_PATIENT, PRESET_SCREENING);
+        // Without both rows visible the save below proves nothing, so the set-up is checked first.
+        assertThat(organisationsMappingEnrolmentAsSeenHere(PRESET_PATIENT, PRESET_SCREENING))
+                .as("organisations that map Preset Patient to Preset Screening, among the mappings visible to this organisation")
+                .containsExactlyInAnyOrder(PARENT_ORGANISATION_ID, thisOrganisationId);
+
+        JsonNode saved = postDashboard(dashboardJson("Screening dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING));
+
+        assertCarriesThePreset(openedByTheWebApp(saved.path("id").longValue()).path("filters").path(0).path("filterConfig"), "the dashboard opened by the web app");
+    }
+
     // The other organisation's subject type is real, and it is in use there. This organisation cannot see it at all.
     @Test
     public void presetSubjectTypeOfAnotherOrganisationIsRefused() throws Exception {
@@ -329,12 +379,74 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         ObjectNode edit = openedByTheWebApp(dashboardId).deepCopy();
         ((ObjectNode) edit.path("filters").path(0).path("filterConfig")).put("presetProgramUUID", PRESET_SURVEY);
 
-        String body = mockMvc.perform(put("/web/dashboard/" + dashboardId).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(edit)))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse().getContentAsString();
+        String body = putDashboardRefused(dashboardId, edit);
 
         assertThat(body).as("the answer to the refused edit").contains("Preset program Preset Survey is not enrolled into from subject type Preset Patient");
         assertCarriesThePreset(openedByTheWebApp(dashboardId).path("filters").path(0).path("filterConfig"), "the dashboard opened after the refused edit");
+    }
+
+    // A refused edit changes nothing. This one renames the dashboard and its first filter, and points the second filter's
+    // preset at a program its subject type is not enrolled into, so the second filter is the one refused. The filters go back
+    // in an order set here: the answer lists them from a set, and a check of the first filter alone must not let this through.
+    @Test
+    public void refusedEditKeepsTheDashboardAsItWas() throws Exception {
+        long dashboardId = postDashboard(dashboardJsonWithFilters("Original dashboard", "Original description",
+                filterJson("Registered on", "RegistrationDate", null, null),
+                filterJson("Screening type", "SubjectType", PRESET_PATIENT, PRESET_SCREENING))).path("id").longValue();
+
+        ObjectNode edit = openedByTheWebApp(dashboardId).deepCopy();
+        ObjectNode registrationFilter = filterNamed(edit, "Registered on");
+        ObjectNode presetFilter = filterNamed(edit, "Screening type");
+        registrationFilter.put("name", "Registered on, renamed");
+        ((ObjectNode) presetFilter.path("filterConfig")).put("presetProgramUUID", PRESET_SURVEY);
+        edit.put("name", "Edited dashboard").put("description", "Edited description");
+        edit.putArray("filters").add(registrationFilter).add(presetFilter);
+
+        assertThat(putDashboardRefused(dashboardId, edit)).as("the answer to the refused edit")
+                .contains("Preset program Preset Survey is not enrolled into from subject type Preset Patient");
+
+        JsonNode afterwards = openedByTheWebApp(dashboardId);
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(afterwards.path("name").textValue()).as("name of the dashboard after the refused edit").isEqualTo("Original dashboard");
+            softly.assertThat(afterwards.path("description").textValue()).as("description of the dashboard after the refused edit").isEqualTo("Original description");
+            softly.assertThat(namesOfFilters(afterwards)).as("names of the filters after the refused edit").containsExactlyInAnyOrder("Registered on", "Screening type");
+            softly.assertThat(filterNamed(afterwards, "Screening type").path("filterConfig").path("presetProgramUUID").textValue())
+                    .as("preset program of the second filter after the refused edit").isEqualTo(PRESET_SCREENING);
+        });
+        assertThat(namesOfListedDashboards()).as("dashboards listed after the refused edit").contains("Original dashboard").doesNotContain("Edited dashboard");
+    }
+
+    // The phone is given a filter by the filter sync, which hands out the filters changed since the time it asks from. An
+    // edit has to move the filter's last modified time, or the phone would never be given the change. Each sync here asks from
+    // 1 ms after the filter's previous time, so only a filter changed since then is in it.
+    @Test
+    public void changedAndClearedPresetsReachThePhoneOnTheNextSync() throws Exception {
+        JsonNode saved = postDashboard(dashboardJson("Screening dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING));
+        long dashboardId = saved.path("id").longValue();
+        String filterUuid = saved.path("filters").path(0).path("uuid").textValue();
+        DateTime savedAt = lastModifiedOf(filterFromTheSync(filterUuid));
+
+        ObjectNode programChanged = openedByTheWebApp(dashboardId).deepCopy();
+        ((ObjectNode) programChanged.path("filters").path(0).path("filterConfig")).put("presetProgramUUID", PRESET_TREATMENT);
+        putDashboard(dashboardId, programChanged);
+
+        JsonNode changedEntry = filterFromTheSync(filterUuid, savedAt.plusMillis(1));
+        DateTime changedAt = lastModifiedOf(changedEntry);
+        JsonNode changedConfig = changedEntry.path("filterConfig");
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(changedAt.getMillis()).as("last modified time of the filter after its program was changed, saved at " + savedAt).isGreaterThan(savedAt.getMillis());
+            softly.assertThat(changedConfig.path("type").textValue()).as("type of the filter in the sync").isEqualTo("SubjectType");
+            softly.assertThat(changedConfig.path("presetSubjectTypeUUID").textValue())
+                    .as("preset subject type in the sync after the program was changed: " + changedConfig).isEqualTo(PRESET_PATIENT);
+            softly.assertThat(changedConfig.path("presetProgramUUID").textValue())
+                    .as("preset program in the sync after the program was changed: " + changedConfig).isEqualTo(PRESET_TREATMENT);
+        });
+
+        ObjectNode presetCleared = openedByTheWebApp(dashboardId).deepCopy();
+        ((ObjectNode) presetCleared.path("filters").path(0).path("filterConfig")).remove(List.of("presetSubjectTypeUUID", "presetProgramUUID"));
+        putDashboard(dashboardId, presetCleared);
+
+        assertCarriesNoPreset(filterFromTheSync(filterUuid, changedAt.plusMillis(1)).path("filterConfig"), "SubjectType", "the filter in the sync after the preset was cleared");
     }
 
     @Test
@@ -353,21 +465,46 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                 "Preset program with uuid preset-screening doesn't exist");
     }
 
-    // A picker that has been cleared may send "". It is no preset, so it is neither checked nor stored.
+    // A program deleted in App Designer after a filter was saved with it. The filter still carries the preset, so the phone is
+    // still given it (avni-client#2222 has to cope with that), and the web app's next save of the dashboard is refused until
+    // the program is cleared from the filter.
     @Test
-    public void blankPresetsAreSavedAsNone() throws Exception {
-        JsonNode saved = postDashboard(dashboardJson("Blank presets dashboard", "SubjectType", "", ""));
+    public void presetVoidedAfterSavingStillSyncsAndBlocksAResave() throws Exception {
+        JsonNode saved = postDashboard(dashboardJson("Screening dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING));
+        long dashboardId = saved.path("id").longValue();
         String filterUuid = saved.path("filters").path(0).path("uuid").textValue();
+        voidProgramAsAppDesignerDoes(PRESET_SCREENING);
 
-        JsonNode syncedFilterConfig = filterFromTheSync(filterUuid).path("filterConfig");
+        JsonNode syncedAfterVoiding = filterFromTheSync(filterUuid).path("filterConfig");
+        String refusalOfTheResave = putDashboardRefused(dashboardId, openedByTheWebApp(dashboardId));
+        ObjectNode withoutProgram = openedByTheWebApp(dashboardId).deepCopy();
+        ((ObjectNode) withoutProgram.path("filters").path(0).path("filterConfig")).remove("presetProgramUUID");
+        putDashboard(dashboardId, withoutProgram);
+        JsonNode syncedAfterClearing = filterFromTheSync(filterUuid).path("filterConfig");
 
         SoftAssertions.assertSoftly(softly -> {
-            softly.assertThat(syncedFilterConfig.path("type").textValue()).as("type of the filter in the sync").isEqualTo("SubjectType");
-            softly.assertThat(syncedFilterConfig.has("presetSubjectTypeUUID"))
-                    .as("filter in the sync has presetSubjectTypeUUID: " + syncedFilterConfig).isFalse();
-            softly.assertThat(syncedFilterConfig.has("presetProgramUUID"))
-                    .as("filter in the sync has presetProgramUUID: " + syncedFilterConfig).isFalse();
+            softly.assertThat(syncedAfterVoiding.path("presetProgramUUID").textValue())
+                    .as("preset program in the sync after the program was voided: " + syncedAfterVoiding).isEqualTo(PRESET_SCREENING);
+            softly.assertThat(refusalOfTheResave).as("the answer to saving the dashboard as it was read back")
+                    .contains("Preset program with uuid preset-screening doesn't exist");
+            softly.assertThat(syncedAfterClearing.path("presetSubjectTypeUUID").textValue())
+                    .as("preset subject type in the sync after the program was cleared: " + syncedAfterClearing).isEqualTo(PRESET_PATIENT);
+            softly.assertThat(syncedAfterClearing.has("presetProgramUUID"))
+                    .as("filter in the sync after the program was cleared has presetProgramUUID: " + syncedAfterClearing).isFalse();
         });
+    }
+
+    // A picker that has been cleared may send "", and one with a stray space may send only spaces. Neither is a preset, so
+    // it is neither checked nor stored.
+    @Test
+    public void blankPresetsAreSavedAsNone() throws Exception {
+        String emptyFilterUuid = postDashboard(dashboardJson("Blank presets dashboard", "SubjectType", "", ""))
+                .path("filters").path(0).path("uuid").textValue();
+        String spacesFilterUuid = postDashboard(dashboardJson("Spaces presets dashboard", "SubjectType", "   ", "   "))
+                .path("filters").path(0).path("uuid").textValue();
+
+        assertCarriesNoPreset(filterFromTheSync(emptyFilterUuid).path("filterConfig"), "SubjectType", "the filter saved with empty presets, in the sync");
+        assertCarriesNoPreset(filterFromTheSync(spacesFilterUuid).path("filterConfig"), "SubjectType", "the filter saved with presets of only spaces, in the sync");
     }
 
     // Only a Subject Type filter is checked. Neither value here exists, so only the filter's type can be what lets the save through.
@@ -433,6 +570,60 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         });
     }
 
+    // Only the enrolment mapping of the pair is voided, as FormMappingService.createOrUpdateFormMapping does for a mapping saved
+    // as voided. The program and its operational record are left as they are.
+    private void voidEnrolmentMappingAsAppDesignerDoes(String subjectTypeUuid, String programUuid) {
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            FormMapping enrolmentMapping = formMappingRepository.getProgramEnrolmentFormMapping(
+                    subjectTypeRepository.findByUuid(subjectTypeUuid), programRepository.findByUuid(programUuid));
+            enrolmentMapping.setVoided(true);
+            formMappingRepository.saveFormMapping(enrolmentMapping);
+        });
+    }
+
+    // Maps the subject type to the program as the parent organisation, with an enrolment form of its own. The current user is put
+    // back afterwards. No user belongs to the parent organisation: admin has no organisation. A connection for a user of this
+    // organisation is refused a row of another organisation by row-level security. So these are plain inserts with the default
+    // super admin in force, which has no organisation and so takes no database role, as RlsOrgVisibilityIntegrationTest does.
+    private void mapEnrolmentInTheParentOrganisation(String subjectTypeUuid, String programUuid) {
+        long subjectTypeId = subjectTypeRepository.findByUuid(subjectTypeUuid).getId();
+        long programId = programRepository.findByUuid(programUuid).getId();
+        String username = UserContextHolder.getUserContext().getUserName();
+        switchToUserOfAnotherOrganisation("admin");
+        try {
+            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+            Long formId = jdbc.queryForObject("insert into form (name, form_type, uuid, version, organisation_id, is_voided, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                    "values (?, 'ProgramEnrolment', ?, 0, ?, false, 1, 1, now(), now()) returning id", Long.class, "Parent enrolment form", UUID.randomUUID().toString(), PARENT_ORGANISATION_ID);
+            jdbc.update("insert into form_mapping (form_id, uuid, version, entity_id, subject_type_id, organisation_id, is_voided, enable_approval, impl_version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                    "values (?, ?, 0, ?, ?, ?, false, false, 1, 1, 1, now(), now())", formId, UUID.randomUUID().toString(), programId, subjectTypeId, PARENT_ORGANISATION_ID);
+        } finally {
+            switchToUserOfAnotherOrganisation(username);
+        }
+    }
+
+    // The organisations that own the enrolment mappings of the pair which the current user can see.
+    private List<Long> organisationsMappingEnrolmentAsSeenHere(String subjectTypeUuid, String programUuid) {
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        return new TransactionTemplate(transactionManager).execute(status -> formMappingRepository.getAllProgramEnrolmentFormMapping(subjectType).stream()
+                .filter(formMapping -> programUuid.equals(formMapping.getProgramUuid()))
+                .map(FormMapping::getOrganisationId)
+                .collect(Collectors.toList()));
+    }
+
+    // A dashboard as it was saved before the preset existed: its Subject Type filter's config is {"type": "SubjectType"} and
+    // nothing else. It goes in through the repository, because the web save no longer writes a config like that.
+    private Dashboard storeDashboardFromBeforeThePreset(String filterUuid) {
+        DashboardFilter filter = new DashboardFilter();
+        filter.setUuid(filterUuid);
+        filter.setName("Screening type");
+        filter.setFilterConfig(new JsonObject().with("type", "SubjectType"));
+        Dashboard dashboard = new Dashboard();
+        dashboard.setUuid(UUID.randomUUID().toString());
+        dashboard.setName("Dashboard from before the preset");
+        dashboard.addUpdateFilter(filter);
+        return dashboardRepository.save(dashboard);
+    }
+
     // A dashboard with no sections and one filter. It is built from plain JSON nodes, with the keys written out here
     // instead of taken from the request classes, so a wrong property name on the server cannot go unseen. A preset
     // that is null is left out of the request, and one that is "" is sent as "".
@@ -441,6 +632,25 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
     }
 
     private String dashboardJson(String dashboardName, String filterName, String filterType, String presetSubjectTypeUuid, String presetProgramUuid) throws Exception {
+        return dashboardJsonWithFilters(dashboardName, null, filterJson(filterName, filterType, presetSubjectTypeUuid, presetProgramUuid));
+    }
+
+    // A dashboard with no sections and the filters given, in that order. A description that is null is left out of the request.
+    private String dashboardJsonWithFilters(String dashboardName, String description, ObjectNode... filters) throws Exception {
+        ObjectNode dashboard = mapper.createObjectNode().put("name", dashboardName);
+        if (description != null) {
+            dashboard.put("description", description);
+        }
+        dashboard.putArray("sections");
+        ArrayNode filterArray = dashboard.putArray("filters");
+        for (ObjectNode filter : filters) {
+            filterArray.add(filter);
+        }
+        return mapper.writeValueAsString(dashboard);
+    }
+
+    // One filter of a dashboard request, with its presets written the same way as in dashboardJson.
+    private ObjectNode filterJson(String filterName, String filterType, String presetSubjectTypeUuid, String presetProgramUuid) {
         ObjectNode filterConfig = mapper.createObjectNode().put("type", filterType);
         if (presetSubjectTypeUuid != null) {
             filterConfig.put("presetSubjectTypeUUID", presetSubjectTypeUuid);
@@ -450,11 +660,7 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         }
         ObjectNode filter = mapper.createObjectNode().put("name", filterName);
         filter.set("filterConfig", filterConfig);
-
-        ObjectNode dashboard = mapper.createObjectNode().put("name", dashboardName);
-        dashboard.putArray("sections");
-        dashboard.putArray("filters").add(filter);
-        return mapper.writeValueAsString(dashboard);
+        return filter;
     }
 
     // Saves a dashboard as the current user, which has to succeed, and returns the dashboard the server answered with.
@@ -473,26 +679,51 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                 .andReturn().getResponse().getContentAsString();
     }
 
+    // Edits a dashboard as the current user, which has to succeed, and returns the dashboard the server answered with.
+    private JsonNode putDashboard(long dashboardId, JsonNode edit) throws Exception {
+        String saved = mockMvc.perform(put("/web/dashboard/" + dashboardId).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(edit)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return mapper.readTree(saved);
+    }
+
+    // Edits a dashboard as the current user, which has to be refused: 400, and the body is returned so the reason can be read.
+    private String putDashboardRefused(long dashboardId, JsonNode edit) throws Exception {
+        return mockMvc.perform(put("/web/dashboard/" + dashboardId).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(edit)))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+    }
+
     // A new dashboard that is refused is refused whole: 400 with the reason in the body, and no dashboard is left under its name.
     private void assertNewDashboardIsRefused(String dashboardName, String json, String reason) throws Exception {
         assertThat(postDashboardRefused(json)).as("the answer to the refused save of " + dashboardName).contains(reason);
         assertNoDashboardNamed(dashboardName);
     }
 
-    // The dashboards the web app lists for the current organisation.
     private void assertNoDashboardNamed(String dashboardName) throws Exception {
+        assertThat(namesOfListedDashboards()).as("dashboards listed after the refused save").doesNotContain(dashboardName);
+    }
+
+    // The dashboards the web app lists for the current organisation.
+    private List<String> namesOfListedDashboards() throws Exception {
         String body = mockMvc.perform(get("/web/dashboard").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         List<String> names = new ArrayList<>();
         mapper.readTree(body).forEach(dashboard -> names.add(dashboard.path("name").textValue()));
-        assertThat(names).as("dashboards listed after the refused save").doesNotContain(dashboardName);
+        return names;
     }
 
-    // The filter sync, read from the beginning of time. The filters are under _embedded.dashboardFilter.
+    // The filter sync, read from the beginning of time.
     private JsonNode filterFromTheSync(String filterUuid) throws Exception {
+        return filterFromTheSync(filterUuid, new DateTime(2000, 1, 1, 0, 0, DateTimeZone.UTC));
+    }
+
+    // The filter sync as a phone asks for it, from the time given: the filters changed from then on are in it. The filters are
+    // under _embedded.dashboardFilter.
+    private JsonNode filterFromTheSync(String filterUuid, DateTime syncedFrom) throws Exception {
         String body = mockMvc.perform(get("/v2/dashboardFilter/search/lastModified")
-                        .param("lastModifiedDateTime", "2000-01-01T00:00:00.000Z")
+                        .param("lastModifiedDateTime", syncedFrom.withZone(DateTimeZone.UTC).toString())
                         .param("now", DateTime.now(DateTimeZone.UTC).plusMinutes(1).toString())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -502,7 +733,30 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                 return filter;
             }
         }
-        throw new AssertionError("the saved filter " + filterUuid + " is not under _embedded.dashboardFilter in the filter sync: " + body);
+        throw new AssertionError("the saved filter " + filterUuid + " is not under _embedded.dashboardFilter in the filter sync from " + syncedFrom + ": " + body);
+    }
+
+    // The last modified time a sync entry carries, as the phone reads it.
+    private static DateTime lastModifiedOf(JsonNode syncEntry) {
+        JsonNode lastModified = syncEntry.path("lastModifiedDateTime");
+        assertThat(lastModified.isTextual()).as("lastModifiedDateTime of the sync entry: " + syncEntry).isTrue();
+        return new DateTime(lastModified.textValue());
+    }
+
+    // The filters of a dashboard as the web app reads it come from a set, so their order is not fixed. They are found by name.
+    private ObjectNode filterNamed(JsonNode dashboard, String filterName) {
+        for (JsonNode filter : dashboard.path("filters")) {
+            if (filterName.equals(filter.path("name").textValue())) {
+                return (ObjectNode) filter;
+            }
+        }
+        throw new AssertionError("no filter named " + filterName + " in the dashboard: " + dashboard);
+    }
+
+    private List<String> namesOfFilters(JsonNode dashboard) {
+        List<String> names = new ArrayList<>();
+        dashboard.path("filters").forEach(filter -> names.add(filter.path("name").textValue()));
+        return names;
     }
 
     // The dashboard as the web app opens it, from the organisation of the current user.
@@ -522,6 +776,16 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                     .as("preset subject type in " + where + ": " + filterConfig).isEqualTo(PRESET_PATIENT);
             softly.assertThat(filterConfig.path("presetProgramUUID").textValue())
                     .as("preset program in " + where + ": " + filterConfig).isEqualTo(PRESET_SCREENING);
+        });
+    }
+
+    // For a filter in the sync: neither preset key is there. Soft, so one failure names both. The type is asserted too, because a
+    // filter config that is not there at all would also have neither key.
+    private void assertCarriesNoPreset(JsonNode syncedFilterConfig, String filterType, String where) {
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(syncedFilterConfig.path("type").textValue()).as("type of " + where).isEqualTo(filterType);
+            softly.assertThat(syncedFilterConfig.has("presetSubjectTypeUUID")).as(where + " has presetSubjectTypeUUID: " + syncedFilterConfig).isFalse();
+            softly.assertThat(syncedFilterConfig.has("presetProgramUUID")).as(where + " has presetProgramUUID: " + syncedFilterConfig).isFalse();
         });
     }
 

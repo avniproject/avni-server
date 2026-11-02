@@ -240,7 +240,7 @@ public class DashboardService implements NonScopeAwareService {
         if (operationalProgramRepository.findByProgramAndOrganisationId(program, organisationId) == null) {
             throw new BadRequestError("Preset program '%s' (%s) is not available in this organisation", program.getName(), programUuid);
         }
-        // The list, not getProgramEnrolmentFormMapping: that one answers 500 when an ancestor organisation maps the same pair.
+        // The list, not getProgramEnrolmentFormMapping: that one answers 500 when this organisation and an ancestor both map the pair, because row-level security shows both rows.
         boolean enrolledInto = formMappingRepository.getAllProgramEnrolmentFormMapping(subjectType).stream()
                 .anyMatch(formMapping -> program.getUuid().equals(formMapping.getProgramUuid()));
         if (!enrolledInto) {
