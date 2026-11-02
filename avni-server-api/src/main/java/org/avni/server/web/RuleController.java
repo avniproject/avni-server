@@ -5,6 +5,8 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.IndividualService;
+import org.avni.server.service.RuleFailureTelemetryService;
+import org.avni.server.domain.enums.ruleFailure.SourceType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.ProgramEncounterContract;
@@ -44,12 +46,15 @@ public class RuleController {
     private final IndividualService individualService;
     private final AccessControlService accessControlService;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final RuleFailureTelemetryService ruleFailureTelemetryService;
 
     @Autowired
     public RuleController(RuleService ruleService,
                           ProgramEnrolmentRepository programEnrolmentRepository,
                           IndividualRepository individualRepository,
-                          FormMappingRepository formMappingRepository, IndividualService individualService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
+                          FormMappingRepository formMappingRepository, IndividualService individualService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder,
+                          RuleFailureTelemetryService ruleFailureTelemetryService) {
+        this.ruleFailureTelemetryService = ruleFailureTelemetryService;
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.individualRepository = individualRepository;
         this.formMappingRepository = formMappingRepository;
@@ -159,6 +164,9 @@ public class RuleController {
     ResponseEntity<?> getEligibleGeneralEncounters(@RequestParam String subjectUUID) {
         try {
             Individual individual = individualRepository.findByUuid(subjectUUID);
+            if (individual == null) {
+                return ResponseEntity.notFound().build();
+            }
             List<FormMapping> formMappings = formMappingRepository.getAllGeneralEncounterFormMappings();
             List<EncounterType> encounterTypes = formMappings.stream()
                     .filter(fm -> fm.getSubjectTypeUuid().equals(individual.getSubjectType().getUuid()))
@@ -171,7 +179,7 @@ public class RuleController {
             JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
             logger.info(String.format("Executing encounter Eligibility rule for the subject uuid %s", subjectUUID));
             EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(individual, encounterTypes);
-            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes);
+            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes, individual);
             return ResponseEntity.ok().body(response);
         } catch (RuleExecutionException e) {
             return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
@@ -184,6 +192,9 @@ public class RuleController {
     ResponseEntity<?> getEligibleProgramEncounters(@RequestParam String enrolmentUUID) {
         try {
             ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(enrolmentUUID);
+            if (programEnrolment == null) {
+                return ResponseEntity.notFound().build();
+            }
             List<FormMapping> formMappings = formMappingRepository.getAllProgramEncounterFormMappings();
             List<EncounterType> encounterTypes = formMappings.stream()
                     .filter(fm -> fm.getProgramUuid().equals(programEnrolment.getProgram().getUuid()))
@@ -195,24 +206,35 @@ public class RuleController {
             JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
             logger.info(String.format("Executing encounter Eligibility rule for the enrolment uuid %s", enrolmentUUID));
             EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(programEnrolment.getIndividual(), encounterTypes);
-            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes);
+            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes, programEnrolment.getIndividual());
             return ResponseEntity.ok().body(response);
         } catch (RuleExecutionException e) {
             return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
         }
     }
 
-    private void addEligibleEncounterUUIDsToResponse(JsonObject response, EligibilityRuleResponseEntity ruleResponse, List<EncounterType> encounterTypes) {
+    private void addEligibleEncounterUUIDsToResponse(JsonObject response, EligibilityRuleResponseEntity ruleResponse, List<EncounterType> encounterTypes, Individual individual) {
         if (ruleResponse.getStatus().equalsIgnoreCase("success")) {
+            ruleResponse.getEligibilityRuleEntities().stream()
+                    .filter(EligibilityRuleEntity::hasFailed)
+                    .forEach(failed -> recordEncounterEligibilityRuleFailure(individual, failed));
             List<String> eligibleEncounterTypeUUIDs = ruleResponse.getEligibilityRuleEntities()
                     .stream()
-                    .filter(EligibilityRuleEntity::isEligible)
+                    .filter(eligibilityRuleEntity -> eligibilityRuleEntity.isEligible() || eligibilityRuleEntity.hasFailed())
                     .map(EligibilityRuleEntity::getTypeUUID)
                     .collect(Collectors.toList());
             response.with("eligibleEncounterTypeUUIDs", eligibleEncounterTypeUUIDs);
         } else {
             List<String> encounterTypeUUIDS = encounterTypes.stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList());
             response.with("eligibleEncounterTypeUUIDs", encounterTypeUUIDS);
+        }
+    }
+
+    private void recordEncounterEligibilityRuleFailure(Individual individual, EligibilityRuleEntity failed) {
+        try {
+            ruleFailureTelemetryService.recordEligibilityRuleFailure(individual, failed.getTypeUUID(), SourceType.EncounterEligibilityCheck, failed.getError());
+        } catch (RuntimeException e) {
+            logger.error("Could not record the failure of the encounter eligibility rule of encounter type {}", failed.getTypeUUID(), e);
         }
     }
 }

@@ -8,6 +8,7 @@ public class EligibilityRuleEntity {
     @JsonProperty("isEligible")
     private boolean isEligible;
     private String typeUUID;
+    private RuleError error;
 
     public EligibilityRuleEntity() {
     }
@@ -31,5 +32,17 @@ public class EligibilityRuleEntity {
 
     public void setEligible(boolean eligible) {
         isEligible = eligible;
+    }
+
+    public RuleError getError() {
+        return error;
+    }
+
+    public void setError(RuleError error) {
+        this.error = error;
+    }
+
+    public boolean hasFailed() {
+        return error != null;
     }
 }

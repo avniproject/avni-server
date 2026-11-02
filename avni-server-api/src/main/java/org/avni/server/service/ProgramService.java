@@ -7,12 +7,14 @@ import org.avni.server.dao.OperationalProgramRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.enums.ruleFailure.SourceType;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.OperationalProgramContract;
 import org.avni.server.web.request.OperationalProgramsContract;
 import org.avni.server.web.request.ProgramRequest;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
+import org.avni.server.web.request.rules.response.RuleError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +23,11 @@ import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,13 +38,15 @@ public class ProgramService implements NonScopeAwareService {
     private final OperationalProgramRepository operationalProgramRepository;
     private final FormMappingRepository formMappingRepository;
     private final RuleService ruleService;
+    private final RuleFailureTelemetryService ruleFailureTelemetryService;
 
     @Autowired
-    public ProgramService(ProgramRepository programRepository, OperationalProgramRepository operationalProgramRepository, FormMappingRepository formMappingRepository, RuleService ruleService) {
+    public ProgramService(ProgramRepository programRepository, OperationalProgramRepository operationalProgramRepository, FormMappingRepository formMappingRepository, RuleService ruleService, RuleFailureTelemetryService ruleFailureTelemetryService) {
         this.programRepository = programRepository;
         this.operationalProgramRepository = operationalProgramRepository;
         this.formMappingRepository = formMappingRepository;
         this.ruleService = ruleService;
+        this.ruleFailureTelemetryService = ruleFailureTelemetryService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -127,23 +134,23 @@ public class ProgramService implements NonScopeAwareService {
     }
 
     private List<Program> getEligibleProgramsFromInactivePrograms(Individual individual, List<Program> staticallyEnrolablePrograms) {
-        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = null;
+        EligibilityRuleResponseEntity eligibilityRuleResponseEntity;
         try {
             eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, staticallyEnrolablePrograms);
         } catch (RuleExecutionException e) {
             return new ArrayList<>();
         }
 
-        List<EligibilityRuleEntity> allEligiblePrograms = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
-                .filter(EligibilityRuleEntity::isEligible)
+        if (!eligibilityRuleResponseEntity.hasNoResults()) {
+            return getEligiblePrograms(individual, staticallyEnrolablePrograms, eligibilityRuleResponseEntity);
+        }
+        if (staticallyEnrolablePrograms.size() == 1) {
+            return isEligibleAfterRuleFailure(individual, staticallyEnrolablePrograms.get(0), eligibilityRuleResponseEntity.getError())
+                    ? staticallyEnrolablePrograms : new ArrayList<>();
+        }
+        return staticallyEnrolablePrograms.stream()
+                .filter(program -> isEligibleOnItsOwn(individual, program))
                 .collect(Collectors.toList());
-
-        List<Program> eligiblePrograms = staticallyEnrolablePrograms.stream()
-                .filter(staticallyEnrolableProgram -> allEligiblePrograms.stream()
-                        .anyMatch(eligibilityRuleEntity -> eligibilityRuleEntity.getTypeUUID().equals(staticallyEnrolableProgram.getUuid())))
-                .collect(Collectors.toList());
-
-        return eligiblePrograms;
     }
 
     public void savePrograms(ProgramRequest[] programRequests) {
@@ -164,5 +171,42 @@ public class ProgramService implements NonScopeAwareService {
                 throw new BulkItemSaveException(opc, e);
             }
         }
+    }
+
+    private boolean isEligibleOnItsOwn(Individual individual, Program program) {
+        EligibilityRuleResponseEntity eligibilityRuleResponseEntity;
+        try {
+            eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, Collections.singletonList(program));
+        } catch (RuleExecutionException e) {
+            return false;
+        }
+        if (eligibilityRuleResponseEntity.hasNoResults()) {
+            return isEligibleAfterRuleFailure(individual, program, eligibilityRuleResponseEntity.getError());
+        }
+        return !getEligiblePrograms(individual, Collections.singletonList(program), eligibilityRuleResponseEntity).isEmpty();
+    }
+
+    private List<Program> getEligiblePrograms(Individual individual, List<Program> programs, EligibilityRuleResponseEntity eligibilityRuleResponseEntity) {
+        Map<String, EligibilityRuleEntity> eligibilityRuleEntities = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
+                .collect(Collectors.toMap(EligibilityRuleEntity::getTypeUUID, Function.identity(), (first, second) -> first));
+        return programs.stream()
+                .filter(program -> {
+                    EligibilityRuleEntity eligibilityRuleEntity = eligibilityRuleEntities.get(program.getUuid());
+                    if (eligibilityRuleEntity == null) return false;
+                    if (eligibilityRuleEntity.hasFailed())
+                        return isEligibleAfterRuleFailure(individual, program, eligibilityRuleEntity.getError());
+                    return eligibilityRuleEntity.isEligible();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private boolean isEligibleAfterRuleFailure(Individual individual, Program program, RuleError error) {
+        logger.warn("Enrolment eligibility rule of program {} failed for subject {}; treating the program as eligible", program.getUuid(), individual.getUuid());
+        try {
+            ruleFailureTelemetryService.recordEligibilityRuleFailure(individual, program.getUuid(), SourceType.EnrolmentEligibilityCheck, error);
+        } catch (RuntimeException e) {
+            logger.error("Could not record the failure of the enrolment eligibility rule of program {}", program.getUuid(), e);
+        }
+        return true;
     }
 }
