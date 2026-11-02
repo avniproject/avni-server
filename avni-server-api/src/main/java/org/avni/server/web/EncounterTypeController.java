@@ -90,7 +90,7 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     @ResponseBody
     public CollectionModel<EntityModel<EncounterTypeContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         return wrap((StringUtils.hasText(name)
-                ? operationalEncounterTypeRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name, pageable)
+                ? operationalEncounterTypeRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name.trim(), pageable)
                 : operationalEncounterTypeRepository.findPageByIsVoidedFalse(pageable))
                 .map(EncounterTypeContractWeb::fromOperationalEncounterType));
     }

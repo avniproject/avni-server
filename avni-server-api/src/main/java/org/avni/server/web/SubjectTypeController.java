@@ -98,7 +98,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     @ResponseBody
     public CollectionModel<EntityModel<SubjectTypeContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         return wrap((StringUtils.hasText(name)
-                ? operationalSubjectTypeRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name, pageable)
+                ? operationalSubjectTypeRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name.trim(), pageable)
                 : operationalSubjectTypeRepository.findPageByIsVoidedFalse(pageable))
                 .map((OperationalSubjectType operationalSubjectType) -> {
                     FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());

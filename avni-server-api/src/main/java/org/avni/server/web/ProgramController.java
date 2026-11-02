@@ -172,7 +172,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     @ResponseBody
     public CollectionModel<EntityModel<ProgramContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         return wrap((StringUtils.hasText(name)
-                ? operationalProgramRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name, pageable)
+                ? operationalProgramRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name.trim(), pageable)
                 : operationalProgramRepository.findPageByIsVoidedFalse(pageable))
                 .map(ProgramContractWeb::fromOperationalProgram));
     }

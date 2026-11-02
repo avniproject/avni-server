@@ -78,6 +78,7 @@ public class AppDesignerListNameSearchIntegrationTest extends AbstractController
         assertEquals(3, names(subjectTypeController.getAll(null, FIRST_PAGE_BY_NAME), st -> st.getName()).size());
         assertEquals(3, names(subjectTypeController.getAll("  ", FIRST_PAGE_BY_NAME), st -> st.getName()).size());
         assertEquals(List.of(), names(subjectTypeController.getAll("zzz", FIRST_PAGE_BY_NAME), st -> st.getName()));
+        assertEquals(List.of("Household", "HOUSEHOLD Survey"), names(subjectTypeController.getAll(" household ", FIRST_PAGE_BY_NAME), st -> st.getName()));
     }
 
     @Test
@@ -104,6 +105,7 @@ public class AppDesignerListNameSearchIntegrationTest extends AbstractController
         assertEquals(List.of("Post PREGNANCY care", "Pregnancy"), names(result, ProgramContractWeb::getName));
         assertEquals(2, totalElements(result));
         assertEquals(3, names(programController.getAll(null, FIRST_PAGE_BY_NAME), ProgramContractWeb::getName).size());
+        assertEquals(List.of("Post PREGNANCY care", "Pregnancy"), names(programController.getAll("pregnancy ", FIRST_PAGE_BY_NAME), ProgramContractWeb::getName));
     }
 
     @Test
@@ -120,6 +122,7 @@ public class AppDesignerListNameSearchIntegrationTest extends AbstractController
         CollectionModel<EntityModel<EncounterTypeContractWeb>> result = encounterTypeController.getAll("visit", FIRST_PAGE_BY_NAME);
         assertEquals(List.of("ANC Visit", "PNC Visit"), names(result, EncounterTypeContractWeb::getName));
         assertEquals(List.of("ANC Visit"), names(encounterTypeController.getAll("anc", FIRST_PAGE_BY_NAME), EncounterTypeContractWeb::getName));
+        assertEquals(List.of("ANC Visit"), names(encounterTypeController.getAll("  anc", FIRST_PAGE_BY_NAME), EncounterTypeContractWeb::getName));
         assertEquals(3, names(encounterTypeController.getAll(null, FIRST_PAGE_BY_NAME), EncounterTypeContractWeb::getName).size());
     }
 
