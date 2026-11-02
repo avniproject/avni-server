@@ -2,13 +2,17 @@ package org.avni.server.service;
 
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
+import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.domain.util.EntityUtil;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.S;
 import org.avni.server.web.contract.reports.*;
 import org.avni.server.web.request.DashboardFilterRequest;
 import org.avni.server.web.request.DashboardWebRequest;
+import org.avni.server.web.request.reports.DashboardFilterConfigRequest;
 import org.avni.server.web.request.reports.DashboardSectionCardMappingRequest;
 import org.avni.server.web.request.reports.DashboardSectionWebRequest;
 import org.joda.time.DateTime;
@@ -32,17 +36,30 @@ public class DashboardService implements NonScopeAwareService {
     private final DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository;
     private final DashboardFilterRepository dashboardFilterRepository;
     private final CardService cardService;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final ProgramRepository programRepository;
+    private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
+    private final OperationalProgramRepository operationalProgramRepository;
+    private final FormMappingRepository formMappingRepository;
 
     @Autowired
     public DashboardService(DashboardRepository dashboardRepository,
                             CardRepository cardRepository,
-                            DashboardSectionRepository dashboardSectionRepository, DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository, DashboardFilterRepository dashboardFilterRepository, CardService cardService) {
+                            DashboardSectionRepository dashboardSectionRepository, DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository, DashboardFilterRepository dashboardFilterRepository, CardService cardService,
+                            SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository,
+                            OperationalSubjectTypeRepository operationalSubjectTypeRepository, OperationalProgramRepository operationalProgramRepository,
+                            FormMappingRepository formMappingRepository) {
         this.dashboardRepository = dashboardRepository;
         this.cardRepository = cardRepository;
         this.dashboardSectionRepository = dashboardSectionRepository;
         this.dashboardSectionCardMappingRepository = dashboardSectionCardMappingRepository;
         this.dashboardFilterRepository = dashboardFilterRepository;
         this.cardService = cardService;
+        this.subjectTypeRepository = subjectTypeRepository;
+        this.programRepository = programRepository;
+        this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
+        this.operationalProgramRepository = operationalProgramRepository;
+        this.formMappingRepository = formMappingRepository;
     }
 
     public Dashboard saveDashboard(DashboardWebRequest dashboardRequest) {
@@ -166,12 +183,15 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     private void setDashboardFilters(DashboardWebRequest dashboardRequest, Dashboard dashboard) {
+        List<DashboardFilterRequest> filterRequests = dashboardRequest.getFilters();
+        for (DashboardFilterRequest filterRequest : filterRequests) {
+            assertPresetIsValid(filterRequest);
+        }
         Set<DashboardFilter> existingFilters = dashboard.getDashboardFilters();
         List<String> existingFilterUuids = new ArrayList<>();
         for (DashboardFilter existingFilter : existingFilters) {
             if (!existingFilter.isVoided()) existingFilterUuids.add(existingFilter.getUuid());
         }
-        List<DashboardFilterRequest> filterRequests = dashboardRequest.getFilters();
         for (DashboardFilterRequest filterRequest : filterRequests) {
             DashboardFilter dashboardFilter = dashboardFilterRepository.findByUuid(filterRequest.getUuid());
             existingFilterUuids.remove(filterRequest.getUuid());
@@ -188,6 +208,48 @@ public class DashboardService implements NonScopeAwareService {
             dashboardFilter.setVoided(true);
             dashboard.addUpdateFilter(dashboardFilter);
         }
+    }
+
+    // A Subject Type filter can preset a subject type and, within it, a program. Only the web save checks them: a bundle
+    // carries its own consistency. The values are read as they are stored: trimmed, and a blank is none.
+    private void assertPresetIsValid(DashboardFilterRequest filterRequest) {
+        DashboardFilterConfigRequest filterConfig = filterRequest.getFilterConfig();
+        if (!DashboardFilter.FilterType.SubjectType.name().equals(filterConfig.getType())) return;
+
+        String subjectTypeUuid = trimmedOrNull(filterConfig.getPresetSubjectTypeUUID());
+        String programUuid = trimmedOrNull(filterConfig.getPresetProgramUUID());
+        if (programUuid != null && subjectTypeUuid == null) {
+            throw new BadRequestError("Preset program needs a preset subject type, on filter %s", filterRequest.getName());
+        }
+        if (subjectTypeUuid == null) return;
+
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        if (subjectType == null || subjectType.isVoided()) {
+            throw new BadRequestError("Preset subject type with uuid %s doesn't exist", subjectTypeUuid);
+        }
+        if (operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(subjectType, organisationId) == null) {
+            throw new BadRequestError("Preset subject type '%s' (%s) is not available in this organisation", subjectType.getName(), subjectTypeUuid);
+        }
+        if (programUuid == null) return;
+
+        Program program = programRepository.findByUuid(programUuid);
+        if (program == null || program.isVoided()) {
+            throw new BadRequestError("Preset program with uuid %s doesn't exist", programUuid);
+        }
+        if (operationalProgramRepository.findByProgramAndOrganisationId(program, organisationId) == null) {
+            throw new BadRequestError("Preset program '%s' (%s) is not available in this organisation", program.getName(), programUuid);
+        }
+        // The list, not getProgramEnrolmentFormMapping: that one answers 500 when an ancestor organisation maps the same pair.
+        boolean enrolledInto = formMappingRepository.getAllProgramEnrolmentFormMapping(subjectType).stream()
+                .anyMatch(formMapping -> program.getUuid().equals(formMapping.getProgramUuid()));
+        if (!enrolledInto) {
+            throw new BadRequestError("Preset program %s is not enrolled into from subject type %s", program.getName(), subjectType.getName());
+        }
+    }
+
+    private String trimmedOrNull(String value) {
+        return S.isEmpty(value) ? null : value.trim();
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
