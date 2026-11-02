@@ -35,6 +35,7 @@ public class DashboardFilterMapperTest {
 
         assertEquals("st-1", config.getPresetSubjectTypeUUID());
         assertEquals("pr-1", config.getPresetProgramUUID());
+        assertNull("the filter's own subject type, read back from a filter that has only a preset", config.getSubjectTypeUUID());
     }
 
     @Test
@@ -43,6 +44,7 @@ public class DashboardFilterMapperTest {
 
         assertEquals("st-1", config.getPresetSubjectTypeUUID());
         assertEquals("pr-1", config.getPresetProgramUUID());
+        assertNull("the filter's own subject type, in a bundle of a filter that has only a preset", config.getSubjectTypeUUID());
     }
 
     // A filter saved before the preset existed has neither key. It reads back as no preset, not as an error.

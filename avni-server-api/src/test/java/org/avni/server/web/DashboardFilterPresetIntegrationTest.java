@@ -200,6 +200,45 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         assertCarriesThePreset(openedFilterConfig, "the restored dashboard opened by the web app");
     }
 
+    // A bundle uploaded again into an organisation that already has the dashboard replaces the filter's preset: a changed
+    // program arrives, and a bundle with no preset clears it. Phones get each change on their next sync. Every upload from a
+    // test organisation to production after the first one takes this path.
+    @Test
+    public void bundleUploadedAgainChangesAndClearsThePreset() throws Exception {
+        JsonNode saved = postDashboard(dashboardJson("Screening dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING));
+        String filterUuid = saved.path("filters").path(0).path("uuid").textValue();
+        ObjectNode exportedDashboard = (ObjectNode) dashboardWithUuid(mapper.readTree(reportDashboardJsonOfTheBundleExport()), saved.path("uuid").textValue());
+        ObjectNode exportedFilterConfig = (ObjectNode) exportedDashboard.path("filters").path(0).path("filterConfig");
+
+        switchToUserOfAnotherOrganisation("a-demo-admin");
+        importIntoThisOrganisation(exportedDashboard);
+        DateTime firstImportAt = lastModifiedOf(filterFromTheSync(filterUuid));
+
+        exportedFilterConfig.put("presetProgramUUID", PRESET_TREATMENT);
+        importIntoThisOrganisation(exportedDashboard);
+        JsonNode changedEntry = filterFromTheSync(filterUuid, firstImportAt.plusMillis(1));
+        DateTime changedAt = lastModifiedOf(changedEntry);
+
+        exportedFilterConfig.remove("presetSubjectTypeUUID");
+        exportedFilterConfig.remove("presetProgramUUID");
+        importIntoThisOrganisation(exportedDashboard);
+        JsonNode clearedEntry = filterFromTheSync(filterUuid, changedAt.plusMillis(1));
+
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(changedEntry.path("filterConfig").path("presetSubjectTypeUUID").textValue())
+                    .as("preset subject type in the sync after the bundle with a changed program: " + changedEntry).isEqualTo(PRESET_PATIENT);
+            softly.assertThat(changedEntry.path("filterConfig").path("presetProgramUUID").textValue())
+                    .as("preset program in the sync after the bundle with a changed program: " + changedEntry).isEqualTo(PRESET_TREATMENT);
+        });
+        assertCarriesNoPreset(clearedEntry.path("filterConfig"), "SubjectType", "the filter in the sync after a bundle with no preset");
+    }
+
+    // One dashboard, imported as the import job reads it out of reportDashboard.json, inside a transaction as the job runs.
+    private void importIntoThisOrganisation(JsonNode exportedDashboard) throws Exception {
+        DashboardBundleContract[] bundle = mapper.treeToValue(mapper.createArrayNode().add(exportedDashboard), DashboardBundleContract[].class);
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> dashboardService.saveDashboards(bundle));
+    }
+
     // A dashboard saved before the preset existed has a Subject Type filter with no preset keys. It reads back as no
     // preset, and the phone's sync entry for it has neither key.
     @Test
@@ -225,8 +264,25 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         });
     }
 
-    // The same dashboard, saved again as the web app sends it back: unchanged. It has no preset and gets none, and it keeps
-    // its filter: the answer carries the uuid of the filter that was stored.
+    // A cleared program picker sends the program as empty text or as spaces. That is no program: the subject type alone is
+    // saved.
+    @Test
+    public void presetSubjectTypeWithABlankProgramSavesWithNoProgram() throws Exception {
+        for (String blankProgram : new String[]{"", "   "}) {
+            JsonNode saved = postDashboard(dashboardJson("Patient dashboard, program '" + blankProgram + "'", "SubjectType", PRESET_PATIENT, blankProgram));
+            JsonNode syncedFilterConfig = filterFromTheSync(saved.path("filters").path(0).path("uuid").textValue()).path("filterConfig");
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(syncedFilterConfig.path("presetSubjectTypeUUID").textValue())
+                        .as("preset subject type in the sync, program sent as '" + blankProgram + "': " + syncedFilterConfig).isEqualTo(PRESET_PATIENT);
+                softly.assertThat(syncedFilterConfig.has("presetProgramUUID"))
+                        .as("filter in the sync has presetProgramUUID, program sent as '" + blankProgram + "': " + syncedFilterConfig).isFalse();
+            });
+        }
+    }
+
+    // The same dashboard saved again unchanged, with the body built from its read-back. It has no preset and gets none, and
+    // it keeps its filter: the answer carries the uuid of the filter that was stored.
     @Test
     public void dashboardSavedBeforeThePresetSavesUnchanged() throws Exception {
         String filterUuid = UUID.randomUUID().toString();
@@ -371,8 +427,8 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                 "Preset subject type with uuid preset-elsewhere doesn't exist");
     }
 
-    // The edit is what the web app sends back: the dashboard as it read it, with the same dashboard and filter uuids, and
-    // only the program changed to one the subject type is not enrolled into.
+    // The edit is built from the read-back: the dashboard as it was read, with the same dashboard and filter uuids, and only
+    // the program changed to one the subject type is not enrolled into.
     @Test
     public void refusedEditKeepsTheStoredPreset() throws Exception {
         long dashboardId = postDashboard(dashboardJson("Screening dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING)).path("id").longValue();
@@ -466,8 +522,8 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
     }
 
     // A program deleted in App Designer after a filter was saved with it. The filter still carries the preset, so the phone is
-    // still given it (avni-client#2222 has to cope with that), and the web app's next save of the dashboard is refused until
-    // the program is cleared from the filter.
+    // still given it (avni-client#2222 has to cope with that), and a save whose body is built from the read-back is refused
+    // until the program is cleared from the filter.
     @Test
     public void presetVoidedAfterSavingStillSyncsAndBlocksAResave() throws Exception {
         JsonNode saved = postDashboard(dashboardJson("Screening dashboard", "SubjectType", PRESET_PATIENT, PRESET_SCREENING));
@@ -610,8 +666,9 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
                 .collect(Collectors.toList()));
     }
 
-    // A dashboard as it was saved before the preset existed: its Subject Type filter's config is {"type": "SubjectType"} and
-    // nothing else. It goes in through the repository, because the web save no longer writes a config like that.
+    // A dashboard saved before the preset existed, in the shape the default dashboard has: its Subject Type filter's config is
+    // {"type": "SubjectType"} and nothing else. It goes in through the repository, because a web save, before this change as
+    // after it, also writes subjectTypeUUID and widget, as nulls.
     private Dashboard storeDashboardFromBeforeThePreset(String filterUuid) {
         DashboardFilter filter = new DashboardFilter();
         filter.setUuid(filterUuid);
