@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -297,7 +298,7 @@ public class SubjectSearchQueryBuilderTest {
                 .build(subjectType).getSql();
 
         assertThat(sql).contains("at time zone 'America/New_York' as date)");
-        assertThat(sql).contains("(case when i.observations ->>:conceptUuid0 like '%T%' then");
+        assertThat(sql).contains("(case when i.observations ->>:conceptUuid0 ~ '" + BaseSubjectSearchQueryBuilder.DATE_TIME_PATTERN + "' then");
     }
 
     @Test
@@ -358,7 +359,8 @@ public class SubjectSearchQueryBuilderTest {
 
         String sql = new SubjectSearchQueryBuilder().withTimeZone("Asia/Kolkata").withCustomFields(null).build(subjectType).getSql();
 
-        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) else cast(i.observations ->> 'c-lmp' as date) end) as \"LMP\"");
+        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) when i.observations ->> 'c-lmp' ~ '" + BaseSubjectSearchQueryBuilder.DATE_PATTERN
+                + "' then cast(i.observations ->> 'c-lmp' as date) end) as \"LMP\"");
     }
 
     @Test
@@ -410,22 +412,31 @@ public class SubjectSearchQueryBuilderTest {
 
         SqlQuery query = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(concept)).build(subjectType);
 
-        assertThat(query.getSql()).contains("cast(i.observations ->>:conceptUuid0 as time) >= cast(:timeValueMin0 as time)")
-                .contains("cast(i.observations ->>:conceptUuid0 as time) <= cast(:timeValueMax0 as time)");
+        String observationTime = "(case when i.observations ->>:conceptUuid0 ~ '" + BaseSubjectSearchQueryBuilder.TIME_PATTERN
+                + "' then cast(i.observations ->>:conceptUuid0 as time) end)";
+        assertThat(query.getSql()).contains(observationTime + " >= cast(:timeValueMin0 as time)")
+                .contains(observationTime + " <= cast(:timeValueMax0 as time)");
         assertThat(query.getParameters()).containsEntry("conceptUuid0", "c-time");
     }
 
     @Test
-    public void dateTimeConceptWithATimeIsComparedToTheMinute() {
+    public void dateTimeConceptWithATimeIsComparedByTheUsersLocalDate() {
         Concept concept = new Concept("c-dt", "registration", "DateTime", null, null);
         concept.setWidget("Range");
-        concept.setMinValue("2026-01-01T03:30:00.000Z");
-        concept.setMaxValue("2026-03-31T12:30:00.000Z");
+        concept.setMinValue("2026-06-19T18:30:00.000Z");
+        concept.setMaxValue("2026-06-19T18:30:00.000Z");
 
-        String sql = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(concept)).build(subjectType).getSql();
+        String sql = new SubjectSearchQueryBuilder().withTimeZone("Asia/Kolkata")
+                .withConceptsFilter(Collections.singletonList(concept)).build(subjectType).getSql();
 
-        assertThat(sql).contains("cast(i.observations ->>:conceptUuid0 as timestamp with time zone) >= cast(:dateTimeValueMin0 as timestamp with time zone)")
-                .contains("cast(i.observations ->>:conceptUuid0 as timestamp with time zone) <= cast(:dateTimeValueMax0 as timestamp with time zone)");
+        String observationDate = "(case when i.observations ->>:conceptUuid0 ~ '" + BaseSubjectSearchQueryBuilder.DATE_TIME_PATTERN
+                + "' then cast(cast(i.observations ->>:conceptUuid0 as timestamp with time zone) at time zone 'Asia/Kolkata' as date)"
+                + " when i.observations ->>:conceptUuid0 ~ '" + BaseSubjectSearchQueryBuilder.DATE_PATTERN
+                + "' then cast(i.observations ->>:conceptUuid0 as date) end)";
+        assertThat(sql).contains(observationDate + " >= cast(cast(:dateTimeValueMin0 as timestamp with time zone) at time zone 'Asia/Kolkata' as date)")
+                .contains(observationDate + " <= cast(cast(:dateTimeValueMax0 as timestamp with time zone) at time zone 'Asia/Kolkata' as date)")
+                .doesNotContain("as timestamp with time zone) >= cast(:dateTimeValueMin0 as timestamp with time zone)")
+                .doesNotContain("as timestamp with time zone) <= cast(:dateTimeValueMax0 as timestamp with time zone)");
     }
 
     @Test
@@ -438,7 +449,47 @@ public class SubjectSearchQueryBuilderTest {
         String sql = new SubjectSearchQueryBuilder().withTimeZone("Asia/Kolkata")
                 .withConceptsFilter(Collections.singletonList(concept)).build(subjectType).getSql();
 
-        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) else cast(i.observations ->>:conceptUuid0 as date) end) >= cast(:dateTimeValueMin0 as date)");
+        assertThat(sql).contains("then cast(i.observations ->>:conceptUuid0 as date) end) >= cast(:dateTimeValueMin0 as date)");
+    }
+
+    @Test
+    public void onlyValidDateAndTimeAnswersAreCast() {
+        assertThat(matches(BaseSubjectSearchQueryBuilder.DATE_TIME_PATTERN, "2026-01-15T09:00:00.000Z", "2026-06-20T14:00+05:30",
+                "2024-02-29T10:00:00Z", "2026-04-30T23:59:59.999-03:00", "2026-01-15T09:00", "2026-01-15T09:00:00.000+0530",
+                "2026-01-15 09:00:00", "2026-01-15t09:00:00Z", "2026-01-15T09:00:00+14:00", "2026-01-15T09:00:00-15:59", "2026-01-15T09:00:00+1559")).isTrue();
+        assertThat(matches(BaseSubjectSearchQueryBuilder.DATE_TIME_PATTERN, "", "not a date", "2026-13-01T00:00:00Z", "2026-01-15",
+                "15/01/2026 09:00", "2026-02-30T00:00:00Z", "2026-02-29T00:00:00Z", "2026-04-31T00:00:00Z", "2026-01-15T24:00:00Z",
+                "2026-01-15T09:00:00Zjunk", "0000-01-01T00:00:00Z", "2026-01-15T09:00:00+16:00", "2026-01-15T09:00:00-16:00",
+                "2026-01-15T09:00:00+23:59", "2026-01-15T09:00:00+1600")).isFalse();
+        assertThat(matches(BaseSubjectSearchQueryBuilder.DATE_PATTERN, "2026-01-15", "2026-12-31", "2024-02-29", "2000-02-29", "1600-02-29",
+                "2026-02-28", "2026-06-30")).isTrue();
+        assertThat(matches(BaseSubjectSearchQueryBuilder.DATE_PATTERN, "", "x", "2026-00-10", "2026-01-32", "2026-01-15T00:00:00Z", "15-01-2026",
+                "2026-02-30", "2026-02-29", "1900-02-29", "2100-02-29", "2026-06-31", "2026-11-31")).isFalse();
+        assertThat(matches(BaseSubjectSearchQueryBuilder.TIME_PATTERN, "00:00", "09:30", "23:59", "14:15:30", "14:15:30.250",
+                "9:30", "0:30", "9:30:00", " 9:30 ", "9:30 AM", "9:30:00 PM", "9:30am", "12:15 AM", "0:30 am", "09:30 pm")).isTrue();
+        assertThat(matches(BaseSubjectSearchQueryBuilder.TIME_PATTERN, "", "x", "24:00", "09:60", "9.30", "930", "13:00 pm", "9:30 xm",
+                "2026-01-15T09:00:00Z", "9:3")).isFalse();
+    }
+
+    private static boolean matches(String pattern, String... values) {
+        Pattern compiled = Pattern.compile(pattern);
+        boolean allMatch = Arrays.stream(values).allMatch(v -> compiled.matcher(v).find());
+        boolean noneMatch = Arrays.stream(values).noneMatch(v -> compiled.matcher(v).find());
+        if (!allMatch && !noneMatch) throw new AssertionError("Mixed result for " + Arrays.toString(values));
+        return allMatch;
+    }
+
+    @Test
+    public void typedTextIsMatchedLiterallyNotAsAWildcard() {
+        for (String type : Arrays.asList("Text", "Id", "Notes")) {
+            Concept concept = new Concept("c-text", "registration", type, null, null);
+            concept.setValue("50%_off\\x");
+
+            SqlQuery query = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(concept)).build(subjectType);
+
+            assertThat(query.getParameters()).containsEntry("textValue0", "%50\\%\\_off\\\\x%");
+            assertThat(query.getSql()).contains("i.observations->> :conceptUuid0 ilike :textValue0");
+        }
     }
 
     @Test

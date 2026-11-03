@@ -178,9 +178,34 @@ public class BaseSubjectSearchQueryBuilder<T> {
         return (T) this;
     }
 
+    // A stored answer that isn't a valid date or time (empty, or hand-edited / uploaded text) is treated as no answer,
+    // so one bad record can't fail the whole search (avni-webapp#965). The patterns accept only real calendar dates
+    // (days per month, 29 February in leap years only), so the casts below never see a value they would reject.
+    // Postgres evaluates a case lazily, so a cast only runs on a value its pattern accepted.
+    private static final String CALENDAR_DATE = "([1-9][0-9]{3}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-8]))"
+            + "|([1-9][0-9](0[48]|[2468][048]|[13579][26])|([2468][048]|[13579][26])00)-02-29)";
+    private static final String TIME_OF_DAY = "([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?";
+    // Offsets stop at ±15:59, the most Postgres reads; real ones go to ±14:00.
+    static final String DATE_TIME_PATTERN = "^" + CALENDAR_DATE + "[Tt ]" + TIME_OF_DAY + "(Z|[+-](0[0-9]|1[0-5])(:?[0-5][0-9])?)?$";
+    static final String DATE_PATTERN = "^" + CALENDAR_DATE + "$";
+    // CSV upload saves a Time cell as typed, so a Time answer can be 9:30, 9:30:00 PM or 9:30am, with spaces around it.
+    // Accepted: a 24-hour time with a one- or two-digit hour, or a 12-hour time with AM/PM, all of which Postgres reads.
+    private static final String SECONDS = "(:[0-5][0-9](\\.[0-9]+)?)?";
+    static final String TIME_PATTERN = "^ *((0?[0-9]|1[0-9]|2[0-3]):[0-5][0-9]" + SECONDS + "|(0?[0-9]|1[0-2]):[0-5][0-9]" + SECONDS + " *[aApP][mM]) *$";
+
     private String observationAsDate(String observationValue) {
-        return String.format("(case when %1$s like '%%T%%' then cast(cast(%1$s as timestamp with time zone) at time zone '%2$s' as date) else cast(%1$s as date) end)",
-                observationValue, timeZone);
+        return String.format("(case when %1$s ~ '%3$s' then cast(cast(%1$s as timestamp with time zone) at time zone '%2$s' as date)" +
+                        " when %1$s ~ '%4$s' then cast(%1$s as date) end)",
+                observationValue, timeZone, DATE_TIME_PATTERN, DATE_PATTERN);
+    }
+
+    private static String observationAsTime(String observationValue) {
+        return String.format("(case when %1$s ~ '%2$s' then cast(%1$s as time) end)", observationValue, TIME_PATTERN);
+    }
+
+    // Typed text is matched as written: % and _ are not wildcards, as on the phone.
+    static String containsPattern(String value) {
+        return "%" + value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     protected String localDate(String timestampColumn) {
@@ -193,11 +218,12 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 : String.format("cast(:%s as date)", param);
     }
 
+    /**
+     * A DateTime filter compares dates in the user's time zone, not moments: From and To on the same day match any
+     * answer on that day, whatever time the date picker sent (avni-webapp#965).
+     */
     private String dateTimeComparison(String observation, String operator, String param, String value) {
-        if (value.contains("T")) {
-            return String.format("cast(%s as timestamp with time zone) %s cast(:%s as timestamp with time zone)", observation, operator, param);
-        }
-        return String.format("%s %s cast(:%s as date)", observationAsDate(observation), operator, param);
+        return String.format("%s %s %s", observationAsDate(observation), operator, parameterAsDate(param, value));
     }
 
     public T withNameFilter(String name) {
@@ -334,7 +360,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
             }
 
             if (c.getDataType().equalsIgnoreCase("TEXT") || c.getDataType().equalsIgnoreCase("ID") || c.getDataType().equalsIgnoreCase("NOTES")) {
-                String value = "%" + c.getValue() + "%";
+                String value = containsPattern(c.getValue());
                 String param = "textValue" + ci;
                 addParameter(param, value);
                 whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), tableAlias + ".observations->> :" + conceptUuidParam + " ilike :" + param));
@@ -405,7 +431,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
             }
 
             if (c.getDataType().equalsIgnoreCase("TIME")) {
-                String observation = "cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as time)";
+                String observation = observationAsTime(tableAlias + ".observations ->>:" + conceptUuidParam);
                 if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
                     if (!StringUtils.isEmpty(c.getMinValue())) {
                         String param = "timeValueMin" + ci;
