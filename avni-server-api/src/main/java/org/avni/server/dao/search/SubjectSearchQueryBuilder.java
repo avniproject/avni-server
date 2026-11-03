@@ -51,6 +51,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 .withEncounterDateFilter(request.getEncounterDate())
                 .withProgramEnrolmentDateFilter(request.getProgramEnrolmentDate())
                 .withProgramEncounterDateFilter(request.getProgramEncounterDate())
+                .withProgramsFilter(request.getPrograms(), request.isIncludeExitedEnrolments(), request.isNotEnrolledInAnyProgram())
                 .withAddressIdsFilter(request.getAddressIds())
                 .withIncludeVoidedFilter(request.getIncludeVoided())
                 .withPaginationFilters(request.getPageElement())

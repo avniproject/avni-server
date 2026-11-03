@@ -481,6 +481,95 @@ public class SubjectSearchQueryBuilderTest {
         return new SubjectSearchQueryBuilder().withSubjectSearchFilter(request, subjectType).build(subjectType);
     }
 
+    private static final String ENROLLED_IN_PROGRAMS = "exists (select 1 from program_enrolment pf_penr join program pf_p on pf_p.id = pf_penr.program_id where pf_penr.individual_id = i.id and pf_penr.is_voided is false and pf_p.uuid in (:programFilterUuids)";
+    private static final String NOT_EXITED = " and pf_penr.program_exit_date_time is null";
+    private static final String EXITED_FROM_ANY_PROGRAM = "exists (select 1 from program_enrolment pf_exit where pf_exit.individual_id = i.id and pf_exit.is_voided is false and pf_exit.program_exit_date_time is not null)";
+    private static final String NOT_ENROLLED = "not exists (select 1 from program_enrolment pf_none where pf_none.individual_id = i.id and pf_none.is_voided is false)";
+
+    private SqlQuery programSearch(List<String> programs, Boolean includeExited, Boolean notEnrolled) {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        request.setPrograms(programs);
+        request.setIncludeExitedEnrolments(includeExited);
+        request.setNotEnrolledInAnyProgram(notEnrolled);
+        request.setPageElement(new PageDetails());
+        return new SubjectSearchQueryBuilder().withSubjectSearchFilter(request, subjectType).build(subjectType);
+    }
+
+    @Test
+    public void programFilterIsIgnoredWhenNothingIsTicked() {
+        for (SqlQuery query : Arrays.asList(programSearch(null, null, null), programSearch(Collections.emptyList(), false, false))) {
+            assertThat(query.getSql()).doesNotContain("pf_penr").doesNotContain("pf_none").doesNotContain("pf_exit");
+            assertThat(query.getParameters()).doesNotContainKey("programFilterUuids");
+        }
+    }
+
+    @Test
+    public void tickedProgramsMatchOpenNonVoidedEnrolmentsOnly() {
+        SqlQuery query = programSearch(Arrays.asList("p1", "p2"), null, null);
+        assertThat(query.getSql()).contains("(" + ENROLLED_IN_PROGRAMS + NOT_EXITED + "))");
+        assertThat(query.getSql()).doesNotContain("pf_none");
+        assertThat(query.getParameters()).containsEntry("programFilterUuids", Arrays.asList("p1", "p2"));
+    }
+
+    @Test
+    public void includeExitedDropsTheExitCondition() {
+        SqlQuery query = programSearch(Collections.singletonList("p1"), true, false);
+        assertThat(query.getSql()).contains("(" + ENROLLED_IN_PROGRAMS + "))");
+        assertThat(query.getSql()).doesNotContain("program_exit_date_time");
+    }
+
+    @Test
+    public void includeExitedAloneMatchesExitsFromAnyProgram() {
+        for (SqlQuery query : Arrays.asList(programSearch(null, true, null), programSearch(Collections.emptyList(), true, false))) {
+            assertThat(query.getSql()).contains("(" + EXITED_FROM_ANY_PROGRAM + ")");
+            assertThat(query.getSql()).doesNotContain("pf_penr").doesNotContain("pf_none");
+            assertThat(query.getParameters()).doesNotContainKey("programFilterUuids");
+        }
+    }
+
+    @Test
+    public void includeExitedWithProgramsIsLimitedToThosePrograms() {
+        SqlQuery query = programSearch(Collections.singletonList("p1"), true, false);
+        assertThat(query.getSql()).doesNotContain("pf_exit");
+    }
+
+    @Test
+    public void includeExitedAloneWithNotEnrolledIsJoinedWithOr() {
+        SqlQuery query = programSearch(null, true, true);
+        assertThat(query.getSql()).contains("(" + EXITED_FROM_ANY_PROGRAM + " or " + NOT_ENROLLED + ")");
+    }
+
+    @Test
+    public void notEnrolledAloneMatchesSubjectsWithNoNonVoidedEnrolment() {
+        SqlQuery query = programSearch(null, null, true);
+        assertThat(query.getSql()).contains("(" + NOT_ENROLLED + ")");
+        assertThat(query.getSql()).doesNotContain("pf_penr");
+        assertThat(query.getParameters()).doesNotContainKey("programFilterUuids");
+    }
+
+    @Test
+    public void notEnrolledWithProgramsIsJoinedWithOr() {
+        SqlQuery query = programSearch(Collections.singletonList("p1"), false, true);
+        assertThat(query.getSql()).contains("(" + ENROLLED_IN_PROGRAMS + NOT_EXITED + ") or " + NOT_ENROLLED + ")");
+    }
+
+    @Test
+    public void programFilterIsAndedWithOtherFilters() {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        request.setName("asha");
+        request.setGender(Collections.singletonList("g1"));
+        request.setNotEnrolledInAnyProgram(true);
+        request.setPrograms(Collections.singletonList("p1"));
+        request.setPageElement(new PageDetails());
+        String sql = new SubjectSearchQueryBuilder().withSubjectSearchFilter(request, subjectType).build(subjectType).getSql();
+        String where = sql.substring(sql.indexOf(" where "));
+        assertThat(where).contains("i.subject_type_id = :subjectTypeId");
+        assertThat(where).contains("gender.uuid in :genders");
+        assertThat(where).contains("i.first_name ilike :subjectSearchToken0");
+        assertThat(where).contains("(" + ENROLLED_IN_PROGRAMS + NOT_EXITED + ") or " + NOT_ENROLLED + ")");
+        assertThat(where.split("\\nand ")).hasSize(4);
+    }
+
     private KeyValues hiddenMarker() {
         KeyValues keyValues = new KeyValues();
         keyValues.add(new KeyValue(KeyType.hidden, true));

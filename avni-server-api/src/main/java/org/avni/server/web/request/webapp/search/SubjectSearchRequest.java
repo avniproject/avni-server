@@ -23,6 +23,8 @@ public class SubjectSearchRequest {
     private String searchAll;
     private PageDetails pageElement;
     private List<String> programs;
+    private Boolean includeExitedEnrolments;
+    private Boolean notEnrolledInAnyProgram;
     private String userGroup;
     private String assignedTo;
     private DateTime createdOn;
@@ -159,6 +161,22 @@ public class SubjectSearchRequest {
 
     public void setPrograms(List<String> programs) {
         this.programs = programs;
+    }
+
+    public boolean isIncludeExitedEnrolments() {
+        return Boolean.TRUE.equals(includeExitedEnrolments);
+    }
+
+    public void setIncludeExitedEnrolments(Boolean includeExitedEnrolments) {
+        this.includeExitedEnrolments = includeExitedEnrolments;
+    }
+
+    public boolean isNotEnrolledInAnyProgram() {
+        return Boolean.TRUE.equals(notEnrolledInAnyProgram);
+    }
+
+    public void setNotEnrolledInAnyProgram(Boolean notEnrolledInAnyProgram) {
+        this.notEnrolledInAnyProgram = notEnrolledInAnyProgram;
     }
 
     public String getUserGroup() {
