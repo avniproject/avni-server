@@ -358,8 +358,13 @@ public class CardService implements NonScopeAwareService {
             // A blank target is left to buildActionDetail, which refuses it with its own message.
             String dashboardUUID = request.getActionDetailDashboardUUID();
             if (StringUtils.hasText(dashboardUUID)) {
-                Dashboard dashboard = dashboardRepository.findByUuid(dashboardUUID);
-                if (dashboard == null || dashboard.isVoided()) {
+                // A child organisation also sees its parent's dashboards, and the Default Dashboard has the same uuid in
+                // every organisation, so the uuid can match more than one row. The editor lists every live one, so the
+                // target stands when any of them is live. A phone keeps only the copy changed last, so it can still show
+                // the target as not available.
+                boolean hasLiveDashboard = dashboardRepository.findAllByUuidIn(List.of(dashboardUUID)).stream()
+                        .anyMatch(dashboard -> !dashboard.isVoided());
+                if (!hasLiveDashboard) {
                     throw new BadRequestError("Dashboard with uuid %s doesn't exist", dashboardUUID);
                 }
             }

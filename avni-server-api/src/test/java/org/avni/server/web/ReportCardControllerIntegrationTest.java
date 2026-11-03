@@ -10,6 +10,7 @@ import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.domain.ReportCardAction;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.mapper.dashboard.DefaultDashboardConstants;
 import org.avni.server.service.CardService;
 import org.avni.server.service.DashboardService;
 import org.avni.server.service.OrganisationService;
@@ -55,6 +56,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class ReportCardControllerIntegrationTest extends AbstractControllerIntegrationTest {
     private static final String CARD_NAME = "Open the monthly overview";
+    // OpenCHS, the parent of demo and of a-demo in test-data.sql.
+    private static final Long PARENT_ORGANISATION_ID = 1L;
+    private static final String DEFAULT_DASHBOARD_UUID = DefaultDashboardConstants.DASHBOARD_NAME_UUID_MAPPING.get(DefaultDashboardConstants.DEFAULT_DASHBOARD);
 
     @Autowired
     private DashboardRepository dashboardRepository;
@@ -260,6 +264,82 @@ public class ReportCardControllerIntegrationTest extends AbstractControllerInteg
         assertThat(restoredCard.getActionDetailDashboardUUID()).as("target of the restored card").isEqualTo(dashboard.getUuid());
     }
 
+    // A child organisation sees its parent's dashboards as well as its own, and the Default Dashboard has the same uuid in
+    // every organisation. So the uuid can match two rows, and a lookup that expects one row answered 500.
+    @Test
+    public void childOrganisationSavesACardThatOpensTheDefaultDashboard() throws Exception {
+        Long thisOrganisationId = UserContextHolder.getUserContext().getOrganisationId();
+        saveDashboardInTheParentOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", false);
+        saveDashboardInThisOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", false);
+        assertThat(organisationsHoldingDashboardAsSeenHere(DEFAULT_DASHBOARD_UUID))
+                .containsExactlyInAnyOrder(PARENT_ORGANISATION_ID, thisOrganisationId);
+
+        long cardId = postCard(queryCardJson(CARD_NAME, "OpenDashboard", DEFAULT_DASHBOARD_UUID)).path("id").asLong();
+
+        assertReadsBackOpeningDashboard(cardId, DEFAULT_DASHBOARD_UUID);
+    }
+
+    // Deleted in both organisations, so no live copy is left and the target is refused as missing.
+    @Test
+    public void childOrganisationRefusesATargetDeletedInItAndInItsParent() throws Exception {
+        Long thisOrganisationId = UserContextHolder.getUserContext().getOrganisationId();
+        saveDashboardInTheParentOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", true);
+        saveDashboardInThisOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", true);
+        assertThat(organisationsHoldingDashboardAsSeenHere(DEFAULT_DASHBOARD_UUID))
+                .containsExactlyInAnyOrder(PARENT_ORGANISATION_ID, thisOrganisationId);
+
+        assertSaveRefusedAsMissingDashboard(queryCardJson(CARD_NAME, "OpenDashboard", DEFAULT_DASHBOARD_UUID), DEFAULT_DASHBOARD_UUID);
+        assertThat(savedCardNames()).doesNotContain(CARD_NAME);
+    }
+
+    // The editor lists the parent's live copy, so the user can pick it, and the save has to accept it.
+    @Test
+    public void childOrganisationSavesATargetItDeletedWhileItsParentKeepsIt() throws Exception {
+        Long thisOrganisationId = UserContextHolder.getUserContext().getOrganisationId();
+        saveDashboardInTheParentOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", false);
+        saveDashboardInThisOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", true);
+        assertThat(organisationsHoldingDashboardAsSeenHere(DEFAULT_DASHBOARD_UUID))
+                .containsExactlyInAnyOrder(PARENT_ORGANISATION_ID, thisOrganisationId);
+        String listed = mockMvc.perform(get("/web/dashboard"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(mapper.readTree(listed).findValuesAsText("uuid")).as("dashboards the editor offers")
+                .filteredOn(DEFAULT_DASHBOARD_UUID::equals).hasSize(1);
+
+        long cardId = postCard(queryCardJson(CARD_NAME, "OpenDashboard", DEFAULT_DASHBOARD_UUID)).path("id").asLong();
+
+        assertReadsBackOpeningDashboard(cardId, DEFAULT_DASHBOARD_UUID);
+    }
+
+    // The edit runs the same check as the save, so it has to accept a target that matches two rows too.
+    @Test
+    public void childOrganisationEditsACardToOpenTheDefaultDashboard() throws Exception {
+        Long thisOrganisationId = UserContextHolder.getUserContext().getOrganisationId();
+        saveDashboardInTheParentOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", false);
+        saveDashboardInThisOrganisation(DEFAULT_DASHBOARD_UUID, "Default Dashboard", false);
+        assertThat(organisationsHoldingDashboardAsSeenHere(DEFAULT_DASHBOARD_UUID))
+                .containsExactlyInAnyOrder(PARENT_ORGANISATION_ID, thisOrganisationId);
+        long cardId = postCard(openDashboardCardJson(saveDashboard())).path("id").asLong();
+
+        mockMvc.perform(put("/web/reportCard/" + cardId).contentType(MediaType.APPLICATION_JSON)
+                        .content(queryCardJson(CARD_NAME, "OpenDashboard", DEFAULT_DASHBOARD_UUID)))
+                .andExpect(status().isOk());
+
+        assertReadsBackOpeningDashboard(cardId, DEFAULT_DASHBOARD_UUID);
+    }
+
+    // What worked before the fix: one row, held by the parent only. This guards it.
+    @Test
+    public void childOrganisationSavesACardThatOpensADashboardOnlyItsParentHolds() throws Exception {
+        String uuid = UUID.randomUUID().toString();
+        saveDashboardInTheParentOrganisation(uuid, "Programme overview", false);
+        assertThat(organisationsHoldingDashboardAsSeenHere(uuid)).containsExactly(PARENT_ORGANISATION_ID);
+
+        long cardId = postCard(queryCardJson(CARD_NAME, "OpenDashboard", uuid)).path("id").asLong();
+
+        assertReadsBackOpeningDashboard(cardId, uuid);
+    }
+
     // A user can be looked up only from its own organisation, so the next user is looked up with no organisation's role in force.
     private void switchToUserOfAnotherOrganisation(String username) {
         UserContextHolder.clear();
@@ -280,6 +360,42 @@ public class ReportCardControllerIntegrationTest extends AbstractControllerInteg
         dashboard.setName("Monthly overview");
         dashboardRepository.save(dashboard);
         return dashboard;
+    }
+
+    // Saves the dashboard as the parent organisation. The current user is put back afterwards. No user belongs to the parent
+    // organisation: admin has no organisation. A connection for a user of this organisation is refused a row of another
+    // organisation by row-level security. So this is a plain insert with the default super admin in force, as the #1102 tests do.
+    private void saveDashboardInTheParentOrganisation(String uuid, String name, boolean voided) {
+        String username = UserContextHolder.getUserContext().getUserName();
+        switchToUserOfAnotherOrganisation("admin");
+        try {
+            new JdbcTemplate(dataSource).update("insert into dashboard (uuid, name, organisation_id, is_voided, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                    "values (?, ?, ?, ?, 0, 1, 1, now(), now())", uuid, name, PARENT_ORGANISATION_ID, voided);
+        } finally {
+            switchToUserOfAnotherOrganisation(username);
+        }
+    }
+
+    private void saveDashboardInThisOrganisation(String uuid, String name, boolean voided) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setUuid(uuid);
+        dashboard.setName(name);
+        dashboard.setVoided(voided);
+        dashboardRepository.save(dashboard);
+    }
+
+    // The organisations that own the dashboards with this uuid which the current user can see.
+    private List<Long> organisationsHoldingDashboardAsSeenHere(String uuid) {
+        return dashboardRepository.findAllByUuidIn(List.of(uuid)).stream()
+                .map(Dashboard::getOrganisationId)
+                .toList();
+    }
+
+    private void assertReadsBackOpeningDashboard(long cardId, String dashboardUuid) throws Exception {
+        mockMvc.perform(get("/web/reportCard/" + cardId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.action").value("OpenDashboard"))
+                .andExpect(jsonPath("$.actionDetailDashboardUUID").value(dashboardUuid));
     }
 
     private String openDashboardCardJson(Dashboard dashboard) throws Exception {

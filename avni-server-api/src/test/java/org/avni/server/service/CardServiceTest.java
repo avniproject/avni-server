@@ -40,6 +40,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -579,7 +580,7 @@ public class CardServiceTest {
 
     @Test
     public void saveCard_persists_open_dashboard_card_with_its_target() {
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
 
         // A query makes this a Custom Data Card.
         ReportCardWebRequest request = newWebRequest();
@@ -592,7 +593,41 @@ public class CardServiceTest {
         assertEquals("({params}) => []", savedCard.getQuery());
         assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
         assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
-        verify(dashboardRepository).findByUuid(DASHBOARD_UUID);
+        verify(dashboardRepository).findAllByUuidIn(List.of(DASHBOARD_UUID));
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_card_when_two_visible_dashboards_share_the_target_uuid() {
+        // A child organisation sees its own copy and its parent's, as it does for the Default Dashboard.
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false), newDashboard(false)));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("({params}) => []");
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_card_when_one_of_two_visible_dashboards_is_voided() {
+        // The voided copy comes first, so a check that reads only the first row would refuse the live one behind it.
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(true), newDashboard(false)));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("({params}) => []");
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
         verify(cardRepository).save(savedCard);
     }
 
@@ -602,7 +637,7 @@ public class CardServiceTest {
         config.assignUUID();
         config.setName("sample");
         when(customCardConfigService.createOrUpdateCustomCardConfig(any())).thenReturn(config);
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
 
         ReportCardWebRequest request = newWebRequest();
         CustomCardConfigRequest configRequest = new CustomCardConfigRequest();
@@ -621,7 +656,7 @@ public class CardServiceTest {
 
     @Test
     public void saveCard_rejects_open_dashboard_when_target_dashboard_does_not_exist() {
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(null);
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of());
 
         ReportCardWebRequest request = newWebRequest();
         request.setAction("OpenDashboard");
@@ -638,7 +673,7 @@ public class CardServiceTest {
 
     @Test
     public void saveCard_rejects_open_dashboard_when_target_dashboard_is_voided() {
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(true));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(true)));
 
         ReportCardWebRequest request = newWebRequest();
         request.setAction("OpenDashboard");
@@ -662,7 +697,7 @@ public class CardServiceTest {
         existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
 
         when(cardRepository.findOne(7L)).thenReturn(existingCard);
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(true));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(true)));
 
         // Saving it again with the same target is refused until the target changes.
         ReportCardWebRequest request = newWebRequest();
@@ -697,7 +732,7 @@ public class CardServiceTest {
 
     @Test
     public void saveCard_stores_only_the_dashboard_when_request_also_carries_do_visit_fields() {
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
 
         // The web app sends every action field whatever the action is.
         ReportCardWebRequest request = newWebRequest();
@@ -719,7 +754,7 @@ public class CardServiceTest {
 
         when(cardRepository.findOne(7L)).thenReturn(existingCard);
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
         when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(subjectType);
         when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(subjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
         when(encounterTypeRepository.findByUuid(ENCOUNTER_TYPE_UUID)).thenReturn(encounterType);
@@ -760,7 +795,7 @@ public class CardServiceTest {
 
         when(cardRepository.findOne(7L)).thenReturn(existingCard);
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(dashboardRepository.findByUuid(DASHBOARD_UUID)).thenReturn(newDashboard(false));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
 
         // The request still carries the old Mark attendance fields next to the new action.
         ReportCardWebRequest request = newWebRequest();
