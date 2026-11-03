@@ -138,13 +138,21 @@ public class BaseSubjectSearchQueryBuilder<T> {
     }
 
     protected void addCustomFields(org.avni.server.domain.Concept concept) {
+        String alias = escapeSqlIdentifier(concept.getName());
         if (concept.isCoded()) {
-            customFields.add(String.format("multi_select_coded(i.observations -> '%s') as \"%s\"", concept.getUuid(), concept.getName()));
+            customFields.add(String.format("multi_select_coded(i.observations -> '%s') as \"%s\"", concept.getUuid(), alias));
         } else if (concept.getDataType().equals(ConceptDataType.Date.toString())) {
-            customFields.add(String.format("cast(i.observations ->> '%s' as date) as \"%s\"", concept.getUuid(), concept.getName()));
+            customFields.add(String.format("cast(i.observations ->> '%s' as date) as \"%s\"", concept.getUuid(), alias));
         } else {
-            customFields.add(String.format("i.observations ->> '%s' as \"%s\"", concept.getUuid(), concept.getName()));
+            customFields.add(String.format("i.observations ->> '%s' as \"%s\"", concept.getUuid(), alias));
         }
+    }
+
+    // The concept name is interpolated as a SQL column alias (as "..."). Double any embedded
+    // double-quote so the name stays one identifier — prevents SQL injection via a crafted
+    // concept name, and the plain breakage when a legitimate name contains a quote.
+    private static String escapeSqlIdentifier(String identifier) {
+        return identifier == null ? null : identifier.replace("\"", "\"\"");
     }
 
     private List<CustomSearchFields> getSearchFields(String subjectTypeUUID, List<CustomSearchFields> customSearchFields) {
