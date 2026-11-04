@@ -130,8 +130,8 @@ public class ReportCardControllerIntegrationTest extends AbstractControllerInteg
                 .andExpect(jsonPath("$.actionDetailDashboardUUID").value(dashboard.getUuid()));
     }
 
-    // A card switched away from Open dashboard arrives with its old target still in the request. The web app sends every
-    // action field it has, whatever the action is, and avniproject/avni-webapp#1830 adds actionDetailDashboardUUID to those fields.
+    // A card switched away from Open dashboard arrives with its old target still in the request. The web app's card editor
+    // clears the target when the action changes (avniproject/avni-webapp#1830), but a request made any other way need not.
     @Test
     public void switchingToViewSubjectProfileClearsTheTargetOnReadBackAndSync() throws Exception {
         Dashboard dashboard = saveDashboard();

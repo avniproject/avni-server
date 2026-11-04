@@ -522,9 +522,9 @@ public class CardServiceTest {
         when(cardRepository.findOne(7L)).thenReturn(existingCard);
         when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // The request carries the old target together with the new action. The web app sends every
-        // action field it has, whatever the action is, and avniproject/avni-webapp#1830 adds
-        // actionDetailDashboardUUID to those fields.
+        // The request still carries the old target together with the new action. The web app's card editor
+        // clears the target when the action changes (avniproject/avni-webapp#1830), but a request made any
+        // other way need not, so the server clears it itself.
         ReportCardWebRequest request = newWebRequest();
         request.setAction("ViewSubjectProfile");
         request.setActionDetailDashboardUUID(DASHBOARD_UUID);
@@ -734,7 +734,8 @@ public class CardServiceTest {
     public void saveCard_stores_only_the_dashboard_when_request_also_carries_do_visit_fields() {
         when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
 
-        // The web app sends every action field whatever the action is.
+        // The request also carries a field of another action. The web app's card editor clears those when
+        // Open dashboard is chosen, but a request made any other way need not.
         ReportCardWebRequest request = newWebRequest();
         request.setAction("OpenDashboard");
         request.setActionDetailDashboardUUID(DASHBOARD_UUID);
