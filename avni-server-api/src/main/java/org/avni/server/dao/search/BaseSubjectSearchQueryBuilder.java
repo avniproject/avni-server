@@ -30,6 +30,9 @@ public class BaseSubjectSearchQueryBuilder<T> {
     protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.encounter_date_time is not null and e.is_voided is false\n";
     protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n";
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
+    public static final String FULL_NAME = "concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, ''))";
+    private static final String NUMBER_PATTERN = "-?[0-9]{1,30}(\\.[0-9]{1,30})?";
+    private static final String UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
 
     private String orderByClause = "";
@@ -103,7 +106,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
             Map<String, String> columnsMap = new HashMap<String, String>() {
                 {
                     put("ID", "i.id");
-                    put("FULLNAME", "concat_ws(' ',i.first_name,i.middle_name,i.last_name)");
+                    put("FULLNAME", FULL_NAME);
                     put("SUBJECTTYPE", "st.name");
                     put("GENDER", "gender.name");
                     put("DATEOFBIRTH", "i.date_of_birth");
@@ -295,12 +298,63 @@ public class BaseSubjectSearchQueryBuilder<T> {
         return (T) this;
     }
 
-    public T withSearchAll(String searchString) {
+    public T withSearchAll(String typedText) {
+        String searchString = typedText == null ? null : typedText.replace("\u0000", "");
         if (StringUtils.isEmpty(searchString)) return (T) this;
-        String searchValue = "%" + searchString + "%";
-        parameters.put("searchAll", searchValue);
-        whereClauses.add("(cast(i.observations as text) ilike :searchAll or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and cast(penr.observations as text) ilike :searchAll))");
+        parameters.put("searchAll", containsPattern(searchString));
+        parameters.put("searchAllStored", containsPattern(asStoredInJson(searchString)));
+        parameters.put("searchAllPath", searchAllPath(searchString));
+        whereClauses.add("(" + FULL_NAME + " ilike :searchAll" +
+                " or " + answersContainSearchAll("i.observations") +
+                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and " + answersContainSearchAll("penr.observations") + "))");
         return (T) this;
+    }
+
+    private static String answersContainSearchAll(String observations) {
+        return String.format("(case when cast(%1$s as text) ilike :searchAllStored then jsonb_path_exists(%1$s, cast(:searchAllPath as jsonpath), '{}', true) else false end)",
+                observations);
+    }
+
+    static String asStoredInJson(String value) {
+        StringBuilder stored = new StringBuilder();
+        value.chars().forEach(c -> {
+            switch (c) {
+                case '"' -> stored.append("\\\"");
+                case '\\' -> stored.append("\\\\");
+                case '\b' -> stored.append("\\b");
+                case '\f' -> stored.append("\\f");
+                case '\n' -> stored.append("\\n");
+                case '\r' -> stored.append("\\r");
+                case '\t' -> stored.append("\\t");
+                default -> {
+                    if (c < 0x20) stored.append(String.format("\\u%04x", c));
+                    else stored.append((char) c);
+                }
+            }
+        });
+        return stored.toString();
+    }
+
+    static String searchAllPath(String searchString) {
+        StringBuilder path = new StringBuilder("strict $.** ? ((@.type() == \"string\" && !(@ like_regex \"")
+                .append(UUID_PATTERN).append("\") && @ like_regex ").append(jsonPathString(searchString)).append(" flag \"iq\")");
+        if (searchString.matches(NUMBER_PATTERN)) {
+            path.append(" || (@.type() == \"number\" && @ == ").append(new BigDecimal(searchString).toPlainString()).append(")");
+        }
+        if (searchString.equalsIgnoreCase("true") || searchString.equalsIgnoreCase("false")) {
+            path.append(" || (@.type() == \"boolean\" && @ == ").append(searchString.toLowerCase()).append(")");
+        }
+        return path.append(")").toString();
+    }
+
+    private static String jsonPathString(String value) {
+        StringBuilder literal = new StringBuilder("\"");
+        value.chars().forEach(c -> {
+            if (c == '"' || c == '\\') literal.append('\\').append((char) c);
+            else if (c < 0x20) literal.append(String.format("\\u%04x", c));
+            else literal.append((char) c);
+        });
+        return literal.append("\"").toString();
     }
 
     private String getFilterForSearchScope(String searchScope) {

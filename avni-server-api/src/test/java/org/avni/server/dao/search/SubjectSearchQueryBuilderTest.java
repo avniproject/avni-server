@@ -345,7 +345,7 @@ public class SubjectSearchQueryBuilderTest {
     @Test
     public void otherSortColumnsAreUnchanged() {
         assertThat(sortedSql("dateOfBirth", SortOrder.asc)).contains("order by i.date_of_birth asc, i.id desc");
-        assertThat(sortedSql("fullName", SortOrder.desc)).contains("order by concat_ws(' ',i.first_name,i.middle_name,i.last_name) desc, i.id desc");
+        assertThat(sortedSql("fullName", SortOrder.desc)).contains("order by " + BaseSubjectSearchQueryBuilder.FULL_NAME + " desc, i.id desc");
         assertThat(sortedSql("subjectType", SortOrder.asc)).contains("order by st.name asc, i.id desc");
         assertThat(sortedSql("gender", SortOrder.desc)).contains("order by gender.name desc, i.id desc");
     }
@@ -389,8 +389,38 @@ public class SubjectSearchQueryBuilderTest {
     public void searchAllAlsoLooksAtSubjectsWithoutAnEnrolment() {
         String sql = new SubjectSearchQueryBuilder().withSearchAll("alpha").build(subjectType).getSql();
 
-        assertThat(sql).contains("(cast(i.observations as text) ilike :searchAll or i.id in (select penr.individual_id from program_enrolment penr");
+        assertThat(sql).contains(" or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and (case when cast(penr.observations as text) ilike :searchAllStored");
         assertThat(sql).doesNotContain("join program_enrolment penr on penr.individual_id = i.id");
+    }
+
+    @Test
+    public void searchAllMatchesTheFullNameAsOneStringAndTypedWildcardsLiterally() {
+        SqlQuery query = new SubjectSearchQueryBuilder().withSearchAll("Sunita_Test 100%").build(subjectType);
+
+        assertThat(query.getSql()).contains("(concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, '')) ilike :searchAll");
+        assertThat(query.getParameters().get("searchAll")).isEqualTo("%Sunita\\_Test 100\\%%");
+        assertThat(query.getParameters().get("searchAllStored")).isEqualTo("%Sunita\\_Test 100\\%%");
+        assertThat(query.getSql()).contains("(case when cast(i.observations as text) ilike :searchAllStored then jsonb_path_exists(i.observations, cast(:searchAllPath as jsonpath), '{}', true) else false end)");
+    }
+
+    @Test
+    public void searchAllPathMatchesTextLiterallyAndNumbersOrYesNoOnlyAsWholeValues() {
+        assertThat(BaseSubjectSearchQueryBuilder.searchAllPath("a\"b\\c\nd"))
+                .contains("@ like_regex \"a\\\"b\\\\c\\u000ad\" flag \"iq\"")
+                .doesNotContain("number").doesNotContain("boolean");
+        assertThat(BaseSubjectSearchQueryBuilder.searchAllPath("-12.50")).contains("|| (@.type() == \"number\" && @ == -12.50)");
+        assertThat(BaseSubjectSearchQueryBuilder.searchAllPath("1e5")).doesNotContain("number");
+        assertThat(BaseSubjectSearchQueryBuilder.searchAllPath("True")).contains("|| (@.type() == \"boolean\" && @ == true)");
+    }
+
+    @Test
+    public void searchAllDropsNulCharactersBeforeBuildingItsPatterns() {
+        Map<String, Object> parameters = new SubjectSearchQueryBuilder().withSearchAll("ma\u0000ngo").build(subjectType).getParameters();
+
+        assertThat(parameters.get("searchAll")).isEqualTo("%mango%");
+        assertThat(parameters.get("searchAllStored")).isEqualTo("%mango%");
+        assertThat((String) parameters.get("searchAllPath")).contains("@ like_regex \"mango\" flag \"iq\"");
+        assertThat(new SubjectSearchQueryBuilder().withSearchAll("\u0000").build(subjectType).getSql()).doesNotContain(":searchAll");
     }
 
     @Test

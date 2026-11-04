@@ -13,7 +13,7 @@ public class SubjectAssignmentSearchQueryBuilder extends BaseSubjectSearchQueryB
 
     public SqlQuery build() {
         String SUBJECT_ASSIGNMENT_SEARCH_BASE_QUERY = "select i.id                                                                   as \"id\",\n" +
-                "       cast(concat_ws(' ', i.first_name, i.middle_name, i.last_name) as text) as \"fullName\",\n" +
+                "       cast(" + FULL_NAME + " as text) as \"fullName\",\n" +
                 "       i.uuid                                                                 as \"uuid\",\n" +
                 "       i.address_id                                                           as \"addressId\",\n" +
                 "       string_agg(distinct p.name || ':' || p.colour, ', ')                   as \"programs\",\n" +

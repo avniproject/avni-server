@@ -17,7 +17,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 "                i.first_name as \"firstName\",\n" +
                 "                i.last_name as \"lastName\",\n" +
                 "                i.profile_picture as \"profilePicture\",\n" +
-                "                cast(concat_ws(' ',i.first_name,i.middle_name,i.last_name)as text) as \"fullName\",\n" +
+                "                cast(" + FULL_NAME + " as text) as \"fullName\",\n" +
                 "                i.uuid as \"uuid\",\n" +
                 "                i.address_id as \"addressId\",\n" +
                 "$SubjectTypeColumn" +
