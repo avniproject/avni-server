@@ -864,7 +864,73 @@ public class EkaHipServiceTest {
         verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq(HIP_ID), eq("subject-1"), eq("Invoice"), invoices.capture());
         assertEquals(1, invoices.getValue().size());
         verify(store, never()).ensureCareContexts(anyLong(), anyString(), anyString(), eq("WellnessRecord"), any());
-        verify(eka).post(eq(LINK), any(), any());
+    }
+
+    // Review hold 2: adding samples links the samples just added, never the patient's real visits.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void addingSamplesLinksOnlyTheSamplesJustAdded() {
+        String document = SampleRecords.reference("Prescription-document", "subject-1");
+        String wellness = SampleRecords.reference("WellnessRecord", "subject-1");
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "LINK_REQUESTED"),
+                row(SAMPLE, "PENDING", "Prescription"), row(document, "PENDING", "Prescription"), row(wellness, "FAILED", "WellnessRecord")));
+
+        service.addSampleRecords("subject-1", List.of("Prescription"));
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        List<String> sent = new java.util.ArrayList<>();
+        body.getValue().get("care_contexts").forEach(c -> sent.add(c.get("care_context_id").asText()));
+        assertEquals(List.of(SAMPLE, document), sent);
+        ArgumentCaptor<List<String>> marked = ArgumentCaptor.forClass(List.class);
+        verify(store).markLinkRequested(eq(HIP_ID), marked.capture(), anyString());
+        assertEquals(List.of(SAMPLE, document), marked.getValue());
+    }
+
+    // Review hold 1: samples are test data. The hourly job never links one, nor does Link off the sandbox, and none is
+    // served off the sandbox.
+    @Test
+    public void theHourlyJobNeverLinksASample() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "QUEUED"), row(SAMPLE, "FAILED", "Prescription")));
+
+        service.linkCareContexts("subject-1", true);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(1, body.getValue().get("care_contexts").size());
+        assertEquals("enc-1", body.getValue().at("/care_contexts/0/care_context_id").asText());
+    }
+
+    @Test
+    public void linkingOffTheSandboxLeavesSamplesOut() {
+        when(eka.isSandbox()).thenReturn(false);
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row(SAMPLE, "PENDING", "Prescription")));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(1, body.getValue().get("care_contexts").size());
+        assertEquals("enc-1", body.getValue().at("/care_contexts/0/care_context_id").asText());
+    }
+
+    @Test
+    public void aSampleIsNeverServedOffTheSandbox() {
+        when(eka.isSandbox()).thenReturn(false);
+        when(individualRepository.findById(INDIVIDUAL_ID)).thenReturn(Optional.of(patient("subject-1")));
+
+        EkaHipService.Prepared prepared = service.prepareSample(row(SAMPLE, "LINKED", "Prescription"), "subject-1", null, null);
+
+        assertNull(prepared.bundleJson());
+        assertTrue(prepared.problem(), prepared.problem().contains("sandbox"));
+        verifyNoInteractions(samples);
+    }
+
+    @Test
+    public void withNoSampleRowsTheSandboxIsNeverAsked() {
+        service.linkCareContexts("subject-1");
+
+        verify(eka, never()).isSandbox();
     }
 
     @Test

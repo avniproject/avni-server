@@ -143,6 +143,11 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     public List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly) {
+        return linkCareContexts(subjectUuid, queuedOnly, c -> true);
+    }
+
+    // only: which of the subject's rows this call may link (adding samples links just the samples added).
+    private List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly, java.util.function.Predicate<AbdmHipStore.CareContext> only) {
         AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
         EkaPatient ekaPatient = ekaPatient(subjectUuid, patient);
         String abhaAddress = ekaPatient.abhaAddress();
@@ -154,7 +159,13 @@ public class EkaHipService implements EkaHipEvents {
         List<AbdmHipStore.CareContext> toLink = store.findCareContexts(patient.individualId(), hipId).stream()
                 .filter(c -> !LINKED.equals(c.status()))
                 .filter(c -> !queuedOnly || AbdmHipLinkingService.QUEUED.equals(c.status()) || AbdmHipLinkingService.FAILED.equals(c.status()))
+                .filter(only)
                 .toList();
+        // Samples are test data: never linked by the hourly job, and never off Eka's sandbox, so one left behind by a
+        // switch to production never reaches a real patient's record.
+        if (toLink.stream().anyMatch(EkaHipService::isSample) && (queuedOnly || !eka.isSandbox())) {
+            toLink = toLink.stream().filter(c -> !isSample(c)).toList();
+        }
         if (toLink.isEmpty()) return linking.careContexts(subjectUuid);
         // One call per record type: a type Eka refuses fails only its own care contexts, never the patient's visits.
         Map<String, List<AbdmHipStore.CareContext>> byType = toLink.stream()
@@ -472,6 +483,9 @@ public class EkaHipService implements EkaHipEvents {
         String template = SampleRecords.templateOf(reference);
         if (template == null) return new Prepared(reference, null, "not a sample record");
         try {
+            if (!eka.isSandbox()) {
+                return new Prepared(reference, null, "test data, served only while this organisation uses Eka's sandbox");
+            }
             return orgContext.inReadOnlyTransaction(() -> {
                 Individual individual = individualRepository.findById(row.individualId()).orElse(null);
                 if (individual == null || individual.isVoided()) {
@@ -500,7 +514,7 @@ public class EkaHipService implements EkaHipEvents {
     // ---- sample records (M3 test data)
 
     // Adds a sample record of each type asked for (every type when none is named) as care contexts of this subject, then
-    // links them with the rest. Test data: only on Eka's sandbox. Refused before anything is written when a type is
+    // links those samples, and nothing else. Test data: only on Eka's sandbox. Refused before anything is written when a type is
     // unknown, the organisation is not on the sandbox, or the patient has no ABHA at Eka to link to.
     public List<Map<String, Object>> addSampleRecords(String subjectUuid, List<String> hiTypes) {
         List<String> types = hiTypes == null || hiTypes.isEmpty() ? List.copyOf(SampleRecords.FORMS.keySet()) : hiTypes;
@@ -514,11 +528,15 @@ public class EkaHipService implements EkaHipEvents {
         }
         AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
         ekaPatient(subjectUuid, patient);
+        Set<String> added = new java.util.HashSet<>();
         for (String type : types) {
-            store.ensureCareContexts(patient.individualId(), cfg.getHipId(), patient.uuid(), type, SampleRecords.FORMS.get(type).stream()
-                    .map(t -> new AbdmHipStore.NewCareContext(SampleRecords.reference(t, patient.uuid()), SampleRecords.title(t))).toList());
+            List<AbdmHipStore.NewCareContext> rows = SampleRecords.FORMS.get(type).stream()
+                    .map(t -> new AbdmHipStore.NewCareContext(SampleRecords.reference(t, patient.uuid()), SampleRecords.title(t))).toList();
+            store.ensureCareContexts(patient.individualId(), cfg.getHipId(), patient.uuid(), type, rows);
+            rows.forEach(r -> added.add(r.reference()));
         }
-        return linkCareContexts(subjectUuid);
+        // Only the samples just added: the patient's real visits are linked by Link or the hourly job, never by this.
+        return linkCareContexts(subjectUuid, false, c -> added.contains(c.reference()) && isSample(c));
     }
 
     // Our key material for the requester to derive the shared key: X.509 public key, as the Eka library shares it.
