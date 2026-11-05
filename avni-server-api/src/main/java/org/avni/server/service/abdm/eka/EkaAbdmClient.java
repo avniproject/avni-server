@@ -101,6 +101,11 @@ public class EkaAbdmClient {
     }
 
     // The organisation's Eka base URL, for the admin screen.
+    // Whether this organisation's Eka settings point at Eka's sandbox, where test data may go.
+    public boolean isSandbox() {
+        return config(organisationId()).isSandbox();
+    }
+
     public String baseUrl() {
         return baseUrlOf(config(organisationId()));
     }

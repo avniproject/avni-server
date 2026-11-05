@@ -26,6 +26,10 @@ public class EkaSystemConfig {
         return get(ENVIRONMENT);
     }
 
+    public boolean isSandbox() {
+        return SANDBOX.equals(getEnvironment());
+    }
+
     public String getBaseUrl() {
         String environment = getEnvironment();
         if (SANDBOX.equals(environment)) {

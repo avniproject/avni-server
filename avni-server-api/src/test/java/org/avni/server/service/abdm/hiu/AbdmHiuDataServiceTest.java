@@ -48,6 +48,15 @@ public class AbdmHiuDataServiceTest {
         assertEquals("Bundle", ((JsonNode) r.get("bundle")).get("resourceType").asText());
     }
 
+    // A request Eka refused has no consent request id at Eka, and nothing can have arrived for it (5 Nov: HTTP 500).
+    @Test
+    public void aRequestEkaRefusedHasNoRecordsAndDoesNotFail() {
+        when(store.findConsentRequestByUuid("uuid-4")).thenReturn(Optional.of(new AbdmHiuStore.Consent(4, "uuid-4", null, null, null,
+                "ramesh.gond@sbx", null, HIU_ID, null, null, null, null, null, "FAILED", "Eka refused the consent request", null, null)));
+
+        assertTrue(service.records("uuid-4").isEmpty());
+    }
+
     // HIU_FLOW_202 and 301: records stayed on screen after the patient withdrew the consent, or it expired.
     @Test
     public void noRecordIsShownOnceTheConsentIsWithdrawnOrHasExpired() {

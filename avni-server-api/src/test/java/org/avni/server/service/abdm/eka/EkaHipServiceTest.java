@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.AbhaLink;
 import org.avni.server.domain.Encounter;
@@ -16,6 +17,7 @@ import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
 import org.avni.server.service.abdm.fhir.CareContextDocument;
 import org.avni.server.service.abdm.fhir.CareContextDocumentAssembler;
 import org.avni.server.service.abdm.fhir.FhirBundleBuilder;
+import org.avni.server.service.abdm.fhir.SampleRecords;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
@@ -67,13 +69,15 @@ public class EkaHipServiceTest {
     private final FideliusCrypto crypto = new FideliusCrypto();
     private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones = mock(org.avni.server.service.abdm.hip.AbdmPatientPhones.class);
     private final org.avni.server.dao.ProgramEncounterRepository programEncounterRepository = mock(org.avni.server.dao.ProgramEncounterRepository.class);
+    private final IndividualRepository individualRepository = mock(IndividualRepository.class);
+    private final SampleRecords samples = mock(SampleRecords.class);
     private final List<Map<String, Object>> view = List.of(Map.of("reference", "enc-2", "status", "LINK_REQUESTED"));
     private EkaHipService service;
 
     @Before
     public void setUp() {
         service = new EkaHipService(cfg, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
-                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository);
+                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository, samples);
 
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
                 1990, "12345678568912", "asha.devi", List.of(
@@ -84,6 +88,7 @@ public class EkaHipServiceTest {
                 .thenReturn(List.of(abhaEvent("linked", OID, "asha.devi@sbx")));
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "PENDING")));
         when(eka.post(anyString(), any(), any())).thenReturn(new EkaResponse("r-1", 202, null));
+        when(eka.isSandbox()).thenReturn(true);
 
         Individual patient = new Individual();
         patient.setId(INDIVIDUAL_ID);
@@ -507,7 +512,7 @@ public class EkaHipServiceTest {
         service.hipDataFetch(e);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
-        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("OPConsultation"));
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("asked for Prescription"));
     }
 
     @Test
@@ -690,8 +695,207 @@ public class EkaHipServiceTest {
     }
 
     private static AbdmHipStore.CareContext row(String reference, String status) {
+        return row(reference, status, "OPConsultation");
+    }
+
+    private static AbdmHipStore.CareContext row(String reference, String status, String hiType) {
         return new AbdmHipStore.CareContext(1, "cc-" + reference, INDIVIDUAL_ID, HIP_ID, "subject-1", reference, "Display " + reference,
-                "OPConsultation", status, "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
+                hiType, status, "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
+    }
+
+    // ---- sample records of every type (M3, HIU_FLOW_107 to 114)
+
+    private static final String SAMPLE = SampleRecords.reference("Prescription", "subject-1");
+
+    // One link call per record type: a type Eka refuses fails only its own care contexts, never the patient's visits.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void linkingSendsEachRecordTypeInACallOfItsOwn() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row(SAMPLE, "PENDING", "Prescription")));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka, times(2)).post(eq(LINK), body.capture(), any());
+        JsonNode visits = body.getAllValues().get(0).get("care_contexts");
+        assertEquals(1, visits.size());
+        assertEquals("enc-1", visits.get(0).get("care_context_id").asText());
+        assertEquals("OPConsultation", visits.get(0).get("hi_type").asText());
+        JsonNode samples = body.getAllValues().get(1).get("care_contexts");
+        assertEquals(1, samples.size());
+        assertEquals(SAMPLE, samples.get(0).get("care_context_id").asText());
+        assertEquals("Prescription", samples.get(0).get("hi_type").asText());
+        ArgumentCaptor<String> requestIds = ArgumentCaptor.forClass(String.class);
+        verify(store, times(2)).markLinkRequested(eq(HIP_ID), any(), requestIds.capture());
+        assertNotEquals(requestIds.getAllValues().get(0), requestIds.getAllValues().get(1));
+    }
+
+    @Test
+    public void aTypeEkaRefusesFailsOnlyItsOwnCareContexts() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row(SAMPLE, "PENDING", "Prescription")));
+        when(eka.post(eq(LINK), argThat(b -> b != null && b.toString().contains("Prescription")), any()))
+                .thenThrow(new EkaCallException(400, null, "Eka POST link refused with HTTP 400"));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<String> requestIds = ArgumentCaptor.forClass(String.class);
+        verify(store, times(2)).markLinkRequested(eq(HIP_ID), any(), requestIds.capture());
+        verify(store).settleLinkRequest(eq(requestIds.getAllValues().get(1)), eq("FAILED"), anyString());
+        verify(store, never()).settleLinkRequest(eq(requestIds.getAllValues().get(0)), anyString(), anyString());
+    }
+
+    @Test
+    public void sampleRecordsAreRefusedOutsideEkasSandbox() {
+        when(eka.isSandbox()).thenReturn(false);
+        try {
+            service.addSampleRecords("subject-1", List.of("Prescription"));
+            fail("expected a refusal");
+        } catch (AbdmRequestException e) {
+            assertEquals(HttpStatus.CONFLICT, e.getStatus());
+            assertTrue(e.getMessage(), e.getMessage().contains("sandbox"));
+        }
+        verify(store, never()).ensureCareContexts(anyLong(), anyString(), anyString(), anyString(), any());
+        verify(eka, never()).post(anyString(), any(), any());
+    }
+
+    @Test
+    public void sampleRecordsForAPatientWithNoEkaIdWriteNothing() {
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of());
+        try {
+            service.addSampleRecords("subject-1", List.of("Prescription"));
+            fail("expected a refusal");
+        } catch (AbdmRequestException e) {
+            assertEquals(HttpStatus.CONFLICT, e.getStatus());
+        }
+        verify(store, never()).ensureCareContexts(anyLong(), anyString(), anyString(), anyString(), any());
+        verify(eka, never()).post(anyString(), any(), any());
+    }
+
+    // A visit is served as a visit, whatever its id looks like: only a row stored as a sample's own type is a sample.
+    @Test
+    public void aVisitWhoseIdLooksLikeASampleIsServedAsAVisit() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        ObjectNode e = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-3");
+        ((ObjectNode) e.get("data")).putArray("care_contexts").add(SAMPLE);
+        when(store.findCareContextsByReferences(HIP_ID, List.of(SAMPLE))).thenReturn(List.of(row(SAMPLE, "LINKED")));
+        Individual patient = patient("subject-1");
+        when(encounterRepository.findByUuid(SAMPLE)).thenReturn(encounter(SAMPLE, patient, new DateTime(2026, 3, 14, 10, 0)));
+
+        service.hipDataFetch(e);
+
+        verify(builder).build(any());
+        verifyNoInteractions(samples);
+    }
+
+    @Test
+    public void aDataFetchSendsOnlyTheRecordTypesAskedForAndASampleIsBuiltFromItsTemplate() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        ObjectNode e = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-2");
+        ObjectNode data = (ObjectNode) e.get("data");
+        data.putArray("care_contexts").add("enc-1").add(SAMPLE);
+        data.putArray("hi_types").add("Prescription");
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", SAMPLE)))
+                .thenReturn(List.of(row("enc-1", "LINKED"), row(SAMPLE, "LINKED", "Prescription")));
+        when(individualRepository.findById(INDIVIDUAL_ID)).thenReturn(Optional.of(patient("subject-1")));
+        ObjectNode sampleBundle = AbdmJson.obj();
+        sampleBundle.put("resourceType", "Bundle");
+        sampleBundle.put("id", "sample-bundle");
+        when(samples.build(eq("Prescription"), any())).thenReturn(sampleBundle);
+
+        service.hipDataFetch(e);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
+        JsonNode b = body.getValue();
+        assertEquals(1, b.get("entries").size());
+        assertEquals(SAMPLE, b.at("/entries/0/care_context_id").asText());
+        String plain = crypto.decrypt(b.at("/entries/0/content").asText(), requester.privateKeyBase64(), requester.nonceBase64(),
+                b.at("/key_information/dh_public_key/key_value").asText(), b.at("/key_information/nonce").asText());
+        assertEquals("sample-bundle", AbdmJson.read(plain).get("id").asText());
+        assertEquals(AbdmFlows.md5Hex(plain), b.at("/entries/0/checksum").asText());
+
+        ArgumentCaptor<CareContextDocument> document = ArgumentCaptor.forClass(CareContextDocument.class);
+        verify(samples).build(eq("Prescription"), document.capture());
+        assertEquals("subject-1", document.getValue().patientUuid());
+        assertEquals("Asha Devi", document.getValue().patientName());
+        assertEquals(HIP_ID, document.getValue().hipId());
+        assertNotNull(document.getValue().abhaNumber());
+        // The visit is an OPConsultation record, not asked for: never built, never sent.
+        verify(builder, never()).build(any());
+        verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-1 (OPConsultation, not asked for)"));
+    }
+
+    @Test
+    public void aSampleOfAnotherPatientIsNotSent() {
+        when(individualRepository.findById(INDIVIDUAL_ID)).thenReturn(Optional.of(patient("subject-2")));
+
+        EkaHipService.Prepared prepared = service.prepareSample(row(SAMPLE, "LINKED", "Prescription"), "subject-1", null, null);
+
+        assertNull(prepared.bundleJson());
+        assertEquals("belongs to another patient", prepared.problem());
+        verifyNoInteractions(samples);
+    }
+
+    @Test
+    public void aSampleOfAVoidedPatientIsNotSent() {
+        Individual voided = patient("subject-1");
+        voided.setVoided(true);
+        when(individualRepository.findById(INDIVIDUAL_ID)).thenReturn(Optional.of(voided));
+
+        EkaHipService.Prepared prepared = service.prepareSample(row(SAMPLE, "LINKED", "Prescription"), "subject-1", null, null);
+
+        assertNull(prepared.bundleJson());
+        assertEquals("patient removed", prepared.problem());
+        verifyNoInteractions(samples);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void sampleRecordsAreAddedForEachTypeAskedForThenLinked() {
+        List<Map<String, Object>> answer = service.addSampleRecords("subject-1", List.of("Prescription", "Invoice"));
+
+        assertSame(view, answer);
+        ArgumentCaptor<List<AbdmHipStore.NewCareContext>> prescriptions = ArgumentCaptor.forClass(List.class);
+        verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq(HIP_ID), eq("subject-1"), eq("Prescription"), prescriptions.capture());
+        assertEquals(List.of(SAMPLE, SampleRecords.reference("Prescription-document", "subject-1")),
+                prescriptions.getValue().stream().map(AbdmHipStore.NewCareContext::reference).toList());
+        assertEquals("Sample prescription (test data)", prescriptions.getValue().get(0).display());
+        ArgumentCaptor<List<AbdmHipStore.NewCareContext>> invoices = ArgumentCaptor.forClass(List.class);
+        verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq(HIP_ID), eq("subject-1"), eq("Invoice"), invoices.capture());
+        assertEquals(1, invoices.getValue().size());
+        verify(store, never()).ensureCareContexts(anyLong(), anyString(), anyString(), eq("WellnessRecord"), any());
+        verify(eka).post(eq(LINK), any(), any());
+    }
+
+    @Test
+    public void everyTypeIsAddedWhenNoneIsNamed() {
+        service.addSampleRecords("subject-1", null);
+
+        for (String type : SampleRecords.FORMS.keySet()) {
+            verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq(HIP_ID), eq("subject-1"), eq(type), any());
+        }
+    }
+
+    @Test
+    public void anUnknownRecordTypeIsRefusedBeforeAnythingIsWritten() {
+        try {
+            service.addSampleRecords("subject-1", List.of("Prescription", "Nonsense"));
+            fail("expected a refusal");
+        } catch (AbdmRequestException e) {
+            assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+            assertTrue(e.getMessage().contains("Nonsense"));
+        }
+        verify(store, never()).ensureCareContexts(anyLong(), anyString(), anyString(), anyString(), any());
+        verifyNoInteractions(eka);
+    }
+
+    private static Individual patient(String uuid) {
+        Individual p = new Individual();
+        p.setId(INDIVIDUAL_ID);
+        p.setUuid(uuid);
+        p.setFirstName("Asha");
+        p.setLastName("Devi");
+        return p;
     }
 
     private static Encounter encounter(String uuid, Individual individual, DateTime at) {

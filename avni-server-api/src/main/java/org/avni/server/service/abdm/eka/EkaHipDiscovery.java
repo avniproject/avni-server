@@ -80,8 +80,11 @@ public class EkaHipDiscovery {
             String hipId = cfg.getHipId();
             store.ensureCareContexts(p.individualId(), hipId, p.uuid(), AbdmHipLinkingService.HI_TYPE,
                     p.visits().stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
+            // Sample records (M3 test data) are linked by the clinic only, never offered here: link-init takes visits.
             List<AbdmHipStore.CareContext> unlinked = store.findCareContexts(p.individualId(), hipId).stream()
-                    .filter(c -> !AbdmHipLinkingService.LINKED.equals(c.status())).collect(Collectors.toList());
+                    .filter(c -> !AbdmHipLinkingService.LINKED.equals(c.status()))
+                    .filter(c -> !org.avni.server.service.abdm.fhir.SampleRecords.isSample(c.reference()))
+                    .collect(Collectors.toList());
             if (unlinked.isEmpty()) {
                 reply.set("error", error(REFUSED, "No visits left to link at this facility"));
             } else {

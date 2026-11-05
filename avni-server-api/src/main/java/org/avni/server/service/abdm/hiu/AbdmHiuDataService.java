@@ -40,6 +40,8 @@ public class AbdmHiuDataService {
                 .orElseThrow(() -> AbdmRequestException.notFound("Consent request not found"));
         List<Map<String, Object>> out = new ArrayList<>();
         if (ENDED.contains(request.status())) return out;
+        // A request Eka refused never got an id there, so nothing can have arrived under it.
+        if (request.consentRequestId() == null) return out;
         if (request.dataEraseAt() != null && !request.dataEraseAt().isAfter(java.time.Instant.now())) return out;
         java.util.Set<String> granted = store.findArtefacts(List.of(request.consentRequestId())).stream()
                 .filter(a -> "GRANTED".equals(a.status())).map(AbdmHiuStore.Artefact::consentId).collect(java.util.stream.Collectors.toSet());

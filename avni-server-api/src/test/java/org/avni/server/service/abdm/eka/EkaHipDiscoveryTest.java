@@ -354,7 +354,37 @@ public class EkaHipDiscoveryTest {
     }
 
     private static AbdmHipStore.CareContext row(String reference, String status) {
+        return row(reference, status, "OPConsultation");
+    }
+
+    private static AbdmHipStore.CareContext row(String reference, String status, String hiType) {
         return new AbdmHipStore.CareContext(1, "cc-" + reference, 7, HIP_ID, "subject-1", reference, "Display " + reference,
-                "OPConsultation", status, "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
+                hiType, status, "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
+    }
+
+    // M3 test data is linked by the clinic only. Offered to the patient, link-init would refuse the whole request, real
+    // visits included, because a sample is not a visit.
+    @Test
+    public void sampleRecordsAreNeverOfferedToThePatient() {
+        String sample = org.avni.server.service.abdm.fhir.SampleRecords.reference("Prescription", "subject-1");
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(store.findCareContexts(7, HIP_ID)).thenReturn(List.of(row("enc-2", "PENDING"), row(sample, "LINK_REQUESTED", "Prescription")));
+
+        discovery.discover(discoverEvent());
+
+        JsonNode reply = sent(ON_DISCOVER);
+        assertEquals(1, reply.at("/patients/0/care_contexts").size());
+        assertEquals("enc-2", reply.at("/patients/0/care_contexts/0/ref_num").asText());
+    }
+
+    @Test
+    public void aPatientWithOnlySampleRecordsLeftHasNoVisitsToLink() {
+        String sample = org.avni.server.service.abdm.fhir.SampleRecords.reference("Prescription", "subject-1");
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(store.findCareContexts(7, HIP_ID)).thenReturn(List.of(row("enc-1", "LINKED"), row(sample, "FAILED", "Prescription")));
+
+        discovery.discover(discoverEvent());
+
+        assertTrue(sent(ON_DISCOVER).toString().contains("No visits left to link"));
     }
 }

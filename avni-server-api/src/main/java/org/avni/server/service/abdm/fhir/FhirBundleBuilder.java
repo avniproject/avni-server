@@ -51,6 +51,14 @@ public class FhirBundleBuilder {
         this.clock = clock;
     }
 
+    String nextId() {
+        return idSupplier.get();
+    }
+
+    java.time.Instant now() {
+        return clock.instant();
+    }
+
     public ObjectNode build(CareContextDocument d) {
         String now = AbdmTime.format(clock.instant());
         String visitTime = d.encounterDateTime() == null ? now : AbdmTime.format(d.encounterDateTime());
@@ -155,7 +163,8 @@ public class FhirBundleBuilder {
         return c;
     }
 
-    private ObjectNode patient(CareContextDocument d, String id) {
+    // Also used by SampleRecords, to put the Avni subject into a sample record.
+    ObjectNode patient(CareContextDocument d, String id) {
         ObjectNode p = resource("Patient", id, "Patient");
         ArrayNode identifiers = AbdmJson.arr();
         if (hasText(d.abhaNumber())) identifiers.add(abhaNumberIdentifier(d.abhaNumber()));
@@ -173,7 +182,8 @@ public class FhirBundleBuilder {
         return p;
     }
 
-    private ObjectNode organisation(CareContextDocument d, String id) {
+    // Also used by SampleRecords, to name this HIP as a sample record's custodian.
+    ObjectNode organisation(CareContextDocument d, String id) {
         ObjectNode o = resource("Organization", id, "Organization");
         if (hasText(d.hipId())) {
             ObjectNode identifier = o.putArray("identifier").addObject();

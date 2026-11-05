@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -51,6 +52,21 @@ public class AbdmHipController {
     public List<Map<String, Object>> link(@PathVariable("uuid") String uuid) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         return ekaHipService.linkCareContexts(uuid);
+    }
+
+    // M3 test data: sample records of each type asked for ({"hiTypes": [...]}, every type when there is no body), linked
+    // through Eka as care contexts of this subject, so the HIU cases can fetch them.
+    @PostMapping("/web/abdm/hip/subjects/{uuid}/sample-records")
+    @PreAuthorize("hasAnyAuthority('user')")
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> addSampleRecords(@PathVariable("uuid") String uuid,
+                                                      @RequestBody(required = false) Map<String, Object> body) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        Object types = body == null ? null : body.get("hiTypes");
+        if (types != null && !(types instanceof List<?> list && list.stream().allMatch(t -> t instanceof String))) {
+            throw AbdmRequestException.badRequest("hiTypes must be a list of record type names");
+        }
+        return ekaHipService.addSampleRecords(uuid, (List<String>) types);
     }
 
     @ExceptionHandler(AbdmRequestException.class)
