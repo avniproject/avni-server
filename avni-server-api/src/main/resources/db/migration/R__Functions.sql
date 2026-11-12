@@ -224,13 +224,35 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION revoke_write_on_account_tables(rolename text)
+    RETURNS text AS
+$body$
+BEGIN
+    -- Callers pass every role openchs is a member of, openchs included, and on RDS openchs is not a superuser:
+    -- never narrow the tables' owner (or anything that acts as it), or Avni loses write on its own account tables.
+    IF pg_has_role(rolename, (SELECT relowner FROM pg_class WHERE oid = 'public.account_admin'::regclass), 'USAGE')
+        OR pg_has_role(rolename, (SELECT relowner FROM pg_class WHERE oid = 'public.account'::regclass), 'USAGE')
+        OR (SELECT rolsuper FROM pg_roles WHERE rolname = rolename) THEN
+        RETURN 'skipped owner ' || quote_ident(rolename);
+    END IF;
+    EXECUTE format('REVOKE ALL ON TABLE public.account_admin, public.account FROM %I', rolename);
+    EXECUTE format('GRANT SELECT ON TABLE public.account_admin, public.account TO %I', rolename);
+    RETURN 'account and account_admin read-only for ' || quote_ident(rolename);
+END;
+$body$ LANGUAGE plpgsql;
+
+-- Organisation logins get read and write, never TRIGGER or TRUNCATE: a trigger they attach runs as whoever
+-- writes to the table (openchs), and TRUNCATE ignores row level security. The two account tables are
+-- read-only for them, since a row in account_admin makes a user an Avni super admin.
 CREATE OR REPLACE FUNCTION grant_all_on_table(rolename text, tablename text)
     RETURNS text AS
 $body$
 BEGIN
-    EXECUTE (SELECT 'GRANT ALL ON TABLE '
+    EXECUTE (SELECT 'GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES ON TABLE '
                         || tablename
                         || ' TO ' || quote_ident(rolename));
+
+    PERFORM revoke_write_on_account_tables(rolename);
 
     EXECUTE (SELECT 'GRANT SELECT ON '
                         || tablename
@@ -245,12 +267,14 @@ CREATE OR REPLACE FUNCTION grant_all_on_all(rolename text)
     RETURNS text AS
 $body$
 BEGIN
-    EXECUTE (SELECT 'GRANT ALL ON TABLE '
+    EXECUTE (SELECT 'GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES ON TABLE '
                         || string_agg(format('%I.%I', table_schema, table_name), ',')
                         || ' TO ' || quote_ident(rolename) || ''
              FROM information_schema.tables
              WHERE table_schema = 'public'
                AND table_type = 'BASE TABLE');
+
+    PERFORM revoke_write_on_account_tables(rolename);
 
     EXECUTE (SELECT 'GRANT SELECT ON '
                         || string_agg(format('%I.%I', schemaname, viewname), ',')
