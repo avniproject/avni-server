@@ -96,7 +96,7 @@ public class EkaWebhookController {
         }
         String eventId = eventId(event, rawBody);
         try {
-            if (!inbox.receive(organisationId, SOURCE, eventId, name, route.name(), consentKey(route, event), rawBody, Instant.now())) {
+            if (!inbox.receive(organisationId, SOURCE, eventId, name, route.name(), consentKey(organisationId, route, event), rawBody, Instant.now())) {
                 logger.info("Eka webhook {} {} for organisation {} was stored before; accepted again", name, eventId, organisationId);
             }
         } catch (RuntimeException e) {
@@ -113,10 +113,14 @@ public class EkaWebhookController {
         return id != null && !id.isBlank() && id.length() <= MAX_EVENT_ID ? id : "sha256:" + sha256(rawBody);
     }
 
-    // The consent an HIU event concerns: the inbox handles a consent's events in the order they came.
-    private static String consentKey(EkaEventRoute route, JsonNode event) {
+    // The consent an HIU event concerns: the inbox handles a consent's events in the order they came. An update naming
+    // only artefacts (a withdrawal) takes the consent of a waiting update that names them, so it follows its grant.
+    private String consentKey(long organisationId, EkaEventRoute route, JsonNode event) {
         String key = switch (route) {
-            case CONSENT_UPDATE -> EkaHiuService.consentRequestIdOf(event);
+            case CONSENT_UPDATE -> {
+                String request = EkaHiuService.consentRequestIdOf(event);
+                yield request != null ? request : inbox.pendingConsentKeyOf(organisationId, EkaHiuService.artefactIdsOf(event)).orElse(null);
+            }
             case HIU_DATA_PUSH -> EkaHiuService.pushConsentIdOf(event);
             default -> null;
         };

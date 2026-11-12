@@ -9,8 +9,11 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 // The Eka webhook inbox (abdm_inbound_event, V1_414 and V1_417). EkaWebhookController stores each verified event here
 // before Eka is answered 200; EkaEventWorker takes due events, handles each as its organisation and marks it done, or
@@ -19,6 +22,7 @@ import java.util.List;
 // and a row left in progress by a stopped server is swept back.
 // A consent's updates are taken in the order they came, and an event of a consent (a data push) waits behind any update
 // of that consent that came before it, so a push finds its grant. A push holds nothing back: it may come before its grant.
+// A withdrawal naming only artefacts is stored under the consent of the waiting update that names them (pendingConsentKeyOf).
 // One worker serves every organisation, so its statements run as no organisation and name organisation_id themselves.
 @Component
 public class AbdmInbox {
@@ -75,6 +79,28 @@ public class AbdmInbox {
                         .addValue("route", route, Types.VARCHAR).addValue("consentKey", consentKey, Types.VARCHAR)
                         .addValue("body", body, Types.VARCHAR).addValue("now", Timestamp.from(now)));
         return inserted > 0;
+    }
+
+    // The consent of the latest update still to be handled that names one of these artefacts. A withdrawal naming only
+    // artefacts is stored under it, so it waits behind the grant that makes them, as a data push does.
+    public Optional<String> pendingConsentKeyOf(long organisationId, Collection<String> artefactIds) {
+        Long latestId = null;
+        String key = null;
+        for (String artefactId : artefactIds) {
+            if (artefactId == null || artefactId.isBlank()) continue;
+            List<Map<String, Object>> rows = jdbc.queryForList("select id, consent_key from abdm_inbound_event where organisation_id = :org " +
+                            "and route = '" + HOLDING_ROUTE + "' and status in ('RECEIVED', 'IN_PROGRESS') and consent_key is not null " +
+                            "and strpos(body, :quoted) > 0 order by id desc limit 1",
+                    new MapSqlParameterSource("org", organisationId).addValue("quoted", "\"" + artefactId + "\"", Types.VARCHAR));
+            for (Map<String, Object> row : rows) {
+                long id = ((Number) row.get("id")).longValue();
+                if (latestId == null || id > latestId) {
+                    latestId = id;
+                    key = (String) row.get("consent_key");
+                }
+            }
+        }
+        return Optional.ofNullable(key);
     }
 
     // Up to max due events, oldest first, each marked in progress and counted as a try; locked rows are left to whoever holds them.

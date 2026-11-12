@@ -310,8 +310,7 @@ public class EkaHiuService implements EkaHiuEvents {
         JsonNode notification = notificationOf(data);
         String consentRequestId = consentRequestIdOf(event);
         String status = normaliseStatus(AbdmFlows.firstNonNull(AbdmJson.text(notification, "status"), AbdmJson.text(data, "status")));
-        List<String> artefacts = artefactIds(firstPresent(AbdmJson.at(notification, "consentArtefacts"),
-                AbdmJson.at(notification, "consent_artefacts"), AbdmJson.at(data, "consent_artefacts")));
+        List<String> artefacts = artefactIdsOf(event);
         if (status == null || (consentRequestId == null && artefacts.isEmpty())) {
             logger.warn("Eka consent update without a status, or without a consent request id or artefact; ignored");
             return;
@@ -350,6 +349,14 @@ public class EkaHiuService implements EkaHiuEvents {
         JsonNode notification = notificationOf(data);
         return AbdmFlows.firstNonNull(AbdmJson.text(notification, "consentRequestId"), AbdmJson.text(notification, "consent_request_id"),
                 AbdmJson.text(data, "consentRequestId"), AbdmJson.text(data, "consent_request_id"));
+    }
+
+    // The artefacts an abha.consent_update names.
+    public static List<String> artefactIdsOf(JsonNode event) {
+        JsonNode data = AbdmJson.at(event, "data");
+        JsonNode notification = notificationOf(data);
+        return artefactIds(firstPresent(AbdmJson.at(notification, "consentArtefacts"), AbdmJson.at(notification, "consent_artefacts"),
+                AbdmJson.at(data, "consent_artefacts")));
     }
 
     private static JsonNode notificationOf(JsonNode data) {

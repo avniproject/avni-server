@@ -201,6 +201,34 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals(List.of("update-1"), inbox.claim(10, T0.plusSeconds(1)).stream().map(AbdmInbox.Event::eventId).toList());
     }
 
+    // A withdrawal naming only artefacts finds the consent of the update still waiting that names them, so it can wait
+    // behind the grant that makes them; one handled, another organisation's, or one naming other artefacts is not it.
+    @Test
+    public void theConsentOfAWaitingUpdateNamingAnArtefactIsFound() {
+        receiveBody(ORG, "grant-1", "CONSENT_UPDATE", "cr-1", "{\"consentArtefacts\":[{\"id\":\"artefact-1\"}]}", T0);
+        receiveBody(ORG, "grant-old", "CONSENT_UPDATE", "cr-0", "{\"consentArtefacts\":[{\"id\":\"artefact-1\"}]}", T0.minusSeconds(60));
+        receiveBody(ORG, "grant-10", "CONSENT_UPDATE", "cr-10", "{\"consentArtefacts\":[{\"id\":\"artefact-10\"}]}", T0);
+        receiveBody(OTHER_ORG, "grant-9", "CONSENT_UPDATE", "cr-9", "{\"consentArtefacts\":[{\"id\":\"artefact-2\"}]}", T0);
+        jdbc.update("update abdm_inbound_event set status = 'DONE' where event_id = 'grant-old'", Map.of());
+
+        assertEquals(java.util.Optional.of("cr-1"), inbox.pendingConsentKeyOf(ORG, List.of("artefact-1")));
+        assertEquals(java.util.Optional.empty(), inbox.pendingConsentKeyOf(ORG, List.of("artefact-2")));
+        assertEquals(java.util.Optional.empty(), inbox.pendingConsentKeyOf(ORG, List.of()));
+    }
+
+    // Stored under its grant's consent, the withdrawal is not taken while the grant waits for its next try.
+    @Test
+    public void aWithdrawalStoredUnderItsGrantsConsentWaitsWhileTheGrantWaits() {
+        receiveBody(ORG, "grant-1", "CONSENT_UPDATE", "cr-1", "{\"consentArtefacts\":[{\"id\":\"artefact-1\"}]}", T0);
+        AbdmInbox.Event grant = inbox.claim(10, T0).get(0);
+        inbox.retry(grant, "IllegalStateException: database down", T0);
+        String key = inbox.pendingConsentKeyOf(ORG, List.of("artefact-1")).orElse(null);
+        receiveBody(ORG, "revoke-1", "CONSENT_UPDATE", key, "{\"consentArtefacts\":[{\"id\":\"artefact-1\"}]}", T0.plusSeconds(1));
+
+        assertTrue(inbox.claim(10, T0.plusSeconds(5)).isEmpty());
+        assertEquals(List.of("grant-1"), inbox.claim(10, T0.plusSeconds(60)).stream().map(AbdmInbox.Event::eventId).toList());
+    }
+
     @Test
     public void anotherOrganisationsUpdateOfTheSameConsentIdHoldsNothingBack() {
         receive(OTHER_ORG, "update-1", "CONSENT_UPDATE", "cr-1", T0);
@@ -248,6 +276,10 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
     private boolean receive(long organisationId, String eventId, String route, String consentKey, Instant at) {
         return inbox.receive(organisationId, "eka", eventId, "abha.event", route, consentKey, "{\"n\":\"" + eventId + "\"}", at);
+    }
+
+    private void receiveBody(long organisationId, String eventId, String route, String consentKey, String body, Instant at) {
+        inbox.receive(organisationId, "eka", eventId, "abha.consent_update", route, consentKey, body, at);
     }
 
     private Map<String, Object> row(String eventId) {

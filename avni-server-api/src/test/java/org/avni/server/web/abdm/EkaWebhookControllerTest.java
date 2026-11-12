@@ -344,6 +344,37 @@ public class EkaWebhookControllerTest {
                 eq("artefact-1"), eq(push), any());
     }
 
+    // A withdrawal naming only its artefacts is stored under the consent of the grant still waiting that names them, so
+    // the inbox handles it after that grant and it is never dropped for want of the artefacts the grant makes.
+    @Test
+    public void aWithdrawalNamingOnlyArtefactsIsStoredUnderTheConsentOfItsWaitingGrant() throws Exception {
+        ObjectNode withdrawal = (ObjectNode) AbdmJson.read(event("consent-update.json"));
+        ObjectNode notification = (ObjectNode) withdrawal.at("/data/notification");
+        notification.remove("consentRequestId");
+        notification.put("status", "REVOKED");
+        ((ObjectNode) withdrawal.get("data")).put("status", "REVOKED");
+        withdrawal.put("transaction_id", "wh-revoke-1");
+        String body = AbdmJson.write(withdrawal);
+        when(inbox.pendingConsentKeyOf(ORG, List.of("artefact-1"))).thenReturn(Optional.of("consent-request-1"));
+
+        sendSigned(body).andExpect(status().isOk());
+
+        verify(inbox).receive(eq(ORG), eq("eka"), eq("wh-revoke-1"), eq("abha.consent_update"), eq("CONSENT_UPDATE"),
+                eq("consent-request-1"), eq(body), any());
+    }
+
+    @Test
+    public void aWithdrawalWhoseGrantIsNotWaitingIsStoredWithNoConsent() throws Exception {
+        ObjectNode withdrawal = (ObjectNode) AbdmJson.read(event("consent-update.json"));
+        ((ObjectNode) withdrawal.at("/data/notification")).remove("consentRequestId");
+        String body = AbdmJson.write(withdrawal);
+
+        sendSigned(body).andExpect(status().isOk());
+
+        verify(inbox).receive(eq(ORG), eq("eka"), eq("wh-consent-1"), eq("abha.consent_update"), eq("CONSENT_UPDATE"),
+                isNull(), eq(body), any());
+    }
+
     @Test
     public void aBodyThatIsNotJsonIsABadRequest() throws Exception {
         sendSigned("not json").andExpect(status().isBadRequest());
