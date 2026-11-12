@@ -30,6 +30,7 @@ public class OrgLoginTablePrivilegesTest extends AbstractControllerIntegrationTe
     private static final String OLD_ROLE = "privileges_probe_old";
     private static final String OWNER_ROLE = "privileges_probe_owner";
     private static final String MIGRATION = "db/migration/V1_410_1__revoke_trigger_truncate_from_org_logins.sql";
+    private static final String SEQUENCE_MIGRATION = "db/migration/V1_410_2__revoke_sequence_update_from_org_logins.sql";
 
     @Autowired
     private DataSource dataSource;
@@ -39,7 +40,69 @@ public class OrgLoginTablePrivilegesTest extends AbstractControllerIntegrationTe
         inRolledBackTransaction(statement -> {
             statement.execute("select create_db_user('" + NEW_ROLE + "', 'password')");
             assertOrgLoginNarrowed(statement, NEW_ROLE);
+            assertSequencesNarrowed(statement, NEW_ROLE);
         });
+    }
+
+    @Test
+    public void sequenceMigrationNarrowsAnOrgLoginCreatedWithTheOldGrantsAndIsIdempotent() throws Exception {
+        String migration = new String(new ClassPathResource(SEQUENCE_MIGRATION).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        inRolledBackTransaction(statement -> {
+            statement.execute("select create_db_user('" + OLD_ROLE + "', 'password')");
+            // What the grant helpers gave before this change.
+            statement.execute("grant all on all sequences in schema public to " + OLD_ROLE);
+            statement.execute("grant update on sequence public.individual_id_seq to public");
+            assertTrue(sequencePrivilege(statement, OLD_ROLE, "public.individual_id_seq", "UPDATE"));
+
+            statement.execute(migration);
+            assertSequencesNarrowed(statement, OLD_ROLE);
+            assertEquals("the owner must keep UPDATE on individual_id_seq", 1, count(statement,
+                    "select count(*) from pg_class c, aclexplode(c.relacl) a where c.oid = 'public.individual_id_seq'::regclass" +
+                            " and a.grantee = c.relowner and a.privilege_type = 'UPDATE'"));
+
+            statement.execute(migration);
+            assertSequencesNarrowed(statement, OLD_ROLE);
+        });
+    }
+
+    /**
+     * Flyway runs every pending versioned migration before R__Functions, so a migration after V1_410_2 in the
+     * same deploy calls whatever grant helper the database holds. V1_410_2 must leave the new helper in place.
+     */
+    @Test
+    public void aLaterMigrationInTheSameDeployDoesNotGrantSequenceUpdateBack() throws Exception {
+        String migration = new String(new ClassPathResource(SEQUENCE_MIGRATION).getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        inRolledBackTransaction(statement -> {
+            statement.execute("select create_db_user('" + OLD_ROLE + "', 'password')");
+            // The helper as production holds it before this release.
+            statement.execute("create or replace function grant_all_on_table(rolename text, tablename text) returns text as $f$" +
+                    " begin execute 'GRANT ALL ON TABLE ' || tablename || ' TO ' || quote_ident(rolename);" +
+                    " execute 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename);" +
+                    " return 'old'; end $f$ language plpgsql");
+
+            statement.execute(migration);
+            // A later migration adding a table, in the usual pattern.
+            statement.execute("select grant_all_on_table(a.rolname, 'individual') from pg_roles a where pg_has_role('openchs', a.oid, 'member')");
+
+            assertSequencesNarrowed(statement, OLD_ROLE);
+            assertFalse(OLD_ROLE + " must not hold TRIGGER on individual", privilege(statement, OLD_ROLE, "public.individual", "TRIGGER"));
+        });
+    }
+
+    private void assertSequencesNarrowed(Statement statement, String role) throws SQLException {
+        assertTrue(role + " must keep USAGE on individual_id_seq", sequencePrivilege(statement, role, "public.individual_id_seq", "USAGE"));
+        assertTrue(role + " must keep SELECT on individual_id_seq", sequencePrivilege(statement, role, "public.individual_id_seq", "SELECT"));
+        assertEquals(role + " must hold UPDATE on no public sequence", 0, count(statement,
+                "select count(*) from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'S'" +
+                        " and case when c.relkind = 'S' then has_sequence_privilege('" + role + "', c.oid, 'UPDATE') else false end"));
+    }
+
+    private boolean sequencePrivilege(Statement statement, String role, String sequence, String privilege) throws SQLException {
+        try (ResultSet rs = statement.executeQuery(
+                "select has_sequence_privilege('" + role + "', '" + sequence + "', '" + privilege + "')")) {
+            rs.next();
+            return rs.getBoolean(1);
+        }
     }
 
     @Test

@@ -258,7 +258,8 @@ BEGIN
                         || tablename
                         || ' TO ' || quote_ident(rolename));
 
-    EXECUTE 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename) || '';
+    -- USAGE and SELECT number new records; UPDATE would let the login reset a counter every organisation shares.
+    EXECUTE 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename) || '';
     RETURN 'ALL PERMISSIONS GRANTED TO ' || quote_ident(rolename);
 END;
 $body$ LANGUAGE plpgsql;
@@ -283,7 +284,8 @@ BEGIN
              WHERE schemaname = 'public'
                and viewowner in ('openchs'));
 
-    EXECUTE 'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename) || '';
+    -- USAGE and SELECT number new records; UPDATE would let the login reset a counter every organisation shares.
+    EXECUTE 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO ' || quote_ident(rolename) || '';
     EXECUTE 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO ' || quote_ident(rolename) || '';
     RETURN 'ALL PERMISSIONS GRANTED TO ' || quote_ident(rolename);
 END;
