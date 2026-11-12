@@ -152,6 +152,8 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
         ReflectionTestUtils.setField(realVisitQueue, "settings", abdmSettings);
         abdmVisitQueue = spy(realVisitQueue);
         ReflectionTestUtils.setField(abdmCareContextAspect, "abdmVisitQueue", abdmVisitQueue);
+        ReflectionTestUtils.setField(verifiedAbhaAspect, "abdmVisitQueue", abdmVisitQueue);
+        ReflectionTestUtils.setField(verifiedAbhaAspect, "store", abdmHipStore);
         abhaLinkService = spy(realAbhaLinkService);
         ReflectionTestUtils.setField(abhaLinkAspect, "abhaLinkService", abhaLinkService);
     }
@@ -163,6 +165,8 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
         ReflectionTestUtils.setField(realVisitQueue, "store", realHipStore);
         ReflectionTestUtils.setField(realVisitQueue, "settings", realSettings);
         ReflectionTestUtils.setField(abhaLinkAspect, "abhaLinkService", realAbhaLinkService);
+        ReflectionTestUtils.setField(verifiedAbhaAspect, "abdmVisitQueue", realVisitQueue);
+        ReflectionTestUtils.setField(verifiedAbhaAspect, "store", realHipStore);
     }
 
     @Before
@@ -353,6 +357,18 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
         verify(eka).post(eq(EkaHipService.LINK_PATH), argThat(body -> "oid-verified-1".equals(body.path("oid").asText())), any());
     }
 
+    // Most saves of a patient leave their ABHA as it was and have no visit waiting for a verified one: the hook writes
+    // nothing and opens no transaction of its own.
+    @Test
+    public void aSubjectSaveThatLeavesItsAbhaAsItWasWithNothingWaitingDoesNothing() {
+        switches(true, true);
+
+        inTransaction(() -> individualService.save(withAbhaNumber("12345678568912")));
+
+        verify(abdmVisitQueue, never()).requeueIfAbhaVerified(any());
+        verify(abdmHipStore, never()).requeueForVerifiedAbha(any());
+    }
+
     @Test
     public void withRecordSharingOffACorrectedAbhaSyncingQueuesNothing() {
         switches(true, true);
@@ -469,7 +485,7 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
                 .withLocation(catchment.getAddressLevel1()).withObservations(observations).build();
     }
 
-    // Eka settings with a HIP ID and a record-sharing client, so only the switches decide.
+    // Eka settings that can share (a HIP ID, a record-sharing client, a system user and a signing key), so only the switches decide.
     private void saveEkaSettings() {
         ExternalSystemConfig row = new ExternalSystemConfig();
         row.assignUUID();
@@ -480,7 +496,9 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
                 .with(EkaSystemConfig.ENCRYPTED_CLIENT_SECRET, "encrypted-secret")
                 .with(EkaSystemConfig.HIP_IDS, List.of(HIP_ID))
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-client-1")
-                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-sharing-secret"));
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-sharing-secret")
+                .with(EkaSystemConfig.AVNI_SYSTEM_USER, organisation.getUser().getUsername())
+                .with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, "encrypted-signing-key"));
         externalSystemConfigRepository.save(row);
     }
 

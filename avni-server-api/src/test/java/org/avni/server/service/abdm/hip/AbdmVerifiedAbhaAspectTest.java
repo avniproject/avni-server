@@ -1,10 +1,12 @@
 package org.avni.server.service.abdm.hip;
 
+import org.avni.server.domain.Individual;
 import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abha.AbhaEventRequest;
 import org.junit.Test;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,7 +18,8 @@ import static org.mockito.Mockito.when;
 public class AbdmVerifiedAbhaAspectTest {
     private final AbdmAccess access = mock(AbdmAccess.class);
     private final AbdmVisitQueue queue = mock(AbdmVisitQueue.class);
-    private final AbdmVerifiedAbhaAspect aspect = new AbdmVerifiedAbhaAspect(access, queue);
+    private final AbdmHipStore store = mock(AbdmHipStore.class);
+    private final AbdmVerifiedAbhaAspect aspect = new AbdmVerifiedAbhaAspect(access, queue, store);
 
     @Test
     public void aRecordWithAnEkaIdQueuesThePatientsWaitingVisitsAgain() {
@@ -48,16 +51,38 @@ public class AbdmVerifiedAbhaAspectTest {
         verifyNoInteractions(access);
     }
 
-    // The phone posts a corrected ABHA's record before the corrected form syncs: when the form syncs, the patient's
-    // waiting visits are queued again if the ABHA now on their record is verified (AbdmVisitQueue checks after the save).
+    // The phone posts a corrected ABHA's record before the corrected form syncs: the save that brings the corrected ABHA
+    // changes the patient's ABHA link, and their waiting visits are queued again if that ABHA is verified (AbdmVisitQueue
+    // checks after the save).
     @Test
-    public void aSavedSubjectHasItsWaitingVisitsQueuedAgainIfItsAbhaIsVerified() {
+    public void aSaveThatChangedTheAbhaLinkQueuesTheWaitingVisitsAgainIfItsAbhaIsVerified() {
         when(access.recordSharingOn()).thenReturn(true);
-        org.avni.server.domain.Individual subject = new org.avni.server.domain.Individual();
-        subject.setId(7L);
-        subject.setUuid("subject-1");
+        Individual subject = subject();
 
-        aspect.requeueIfTheSavedAbhaIsVerified(subject);
+        aspect.abhaLinkKept(subject, true);
+
+        verify(queue).requeueIfAbhaVerified(subject);
+        verify(store, never()).hasVisitsWaitingForVerifiedAbha(anyLong());
+    }
+
+    // Most saves of a patient leave their ABHA as it was and have nothing waiting: no transaction of its own, no write.
+    @Test
+    public void aSaveThatLeftTheAbhaLinkAsItWasWithNothingWaitingDoesNothing() {
+        when(access.recordSharingOn()).thenReturn(true);
+        when(store.hasVisitsWaitingForVerifiedAbha(7L)).thenReturn(false);
+
+        aspect.abhaLinkKept(subject(), false);
+
+        verifyNoInteractions(queue);
+    }
+
+    @Test
+    public void aSaveThatLeftTheAbhaLinkAsItWasStillQueuesVisitsWaitingForAVerifiedAbha() {
+        when(access.recordSharingOn()).thenReturn(true);
+        when(store.hasVisitsWaitingForVerifiedAbha(7L)).thenReturn(true);
+        Individual subject = subject();
+
+        aspect.abhaLinkKept(subject, false);
 
         verify(queue).requeueIfAbhaVerified(subject);
     }
@@ -66,10 +91,18 @@ public class AbdmVerifiedAbhaAspectTest {
     public void withRecordSharingOffASavedSubjectQueuesNothing() {
         when(access.recordSharingOn()).thenReturn(false);
 
-        aspect.requeueIfTheSavedAbhaIsVerified(new org.avni.server.domain.Individual());
-        aspect.requeueIfTheSavedAbhaIsVerified(null);
+        aspect.abhaLinkKept(subject(), true);
+        aspect.abhaLinkKept(subject(), false);
+        aspect.abhaLinkKept(null, true);
 
-        verifyNoInteractions(queue);
+        verifyNoInteractions(queue, store);
+    }
+
+    private static Individual subject() {
+        Individual subject = new Individual();
+        subject.setId(7L);
+        subject.setUuid("subject-1");
+        return subject;
     }
 
     private static AbhaEventRequest request(String ekaOid) {

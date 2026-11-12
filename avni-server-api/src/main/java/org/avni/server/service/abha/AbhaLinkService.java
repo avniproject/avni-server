@@ -52,8 +52,9 @@ public class AbhaLinkService {
     // AbhaLinkAspect calls this after every save or void of a subject, only in an organisation with ABHA on.
     // A voided subject, or one with neither an ABHA Number nor an ABHA Address answer, has no live link;
     // otherwise its one live link holds the current answers, updated in place when they change. An ABHA made with a
-    // mobile number only has an address and no number, and is linked by the address.
-    public void syncLink(Individual individual) {
+    // mobile number only has an address and no number, and is linked by the address. True when this made, changed or
+    // voided the link.
+    public boolean syncLink(Individual individual) {
         Optional<AbhaLink> liveLink = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId());
         String number = individual.isVoided() ? "" : digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
         if (!number.isEmpty() && number.length() != ABHA_NUMBER_DIGITS) {
@@ -79,7 +80,7 @@ public class AbhaLinkService {
                 abhaLinkRepository.save(link);
                 abhaRemovedEventWriter.recordRemoved(individual.getUuid());
             });
-            return;
+            return liveLink.isPresent();
         }
         String linkedNumber = number.isEmpty() ? null : number;
         AbhaLink link = liveLink.orElseGet(() -> {
@@ -89,7 +90,7 @@ public class AbhaLinkService {
             return newLink;
         });
         if (link.getId() != null && Objects.equals(linkedNumber, link.getAbhaNumber()) && Objects.equals(address, link.getAbhaAddress())) {
-            return;
+            return false;
         }
         boolean numberChanged = linkedNumber != null && !linkedNumber.equals(link.getAbhaNumber());
         boolean addressChanged = address != null && !address.equalsIgnoreCase(Objects.toString(link.getAbhaAddress(), ""));
@@ -101,6 +102,7 @@ public class AbhaLinkService {
         } else if (linkedNumber == null && addressChanged) {
             warnIfHeldByOthers(abhaLinkRepository.findLiveSubjectUUIDsByAddress(organisationId(), address), "address");
         }
+        return true;
     }
 
     // Sync is never refused for a duplicate: the app blocks one when the ABHA is found, a bulk upload refuses one before it

@@ -144,6 +144,23 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
         assertEquals(Collections.emptyList(), links());
     }
 
+    // Whether a save made, changed or voided the subject's link: what tells the save's listeners its ABHA is new.
+    @Test
+    public void keepingTheLinkSaysWhetherItChanged() {
+        enableAbha();
+        Individual subject = save(subjectWith(null, null));
+
+        subject.getObservations().put(abhaNumber.getUuid(), ABHA_NUMBER);
+        assertTrue("made", keep(subject));
+        assertFalse("as it was", keep(subject));
+        subject.getObservations().put(abhaAddress.getUuid(), ABHA_ADDRESS);
+        assertTrue("changed", keep(subject));
+        subject.getObservations().remove(abhaNumber.getUuid());
+        subject.getObservations().remove(abhaAddress.getUuid());
+        assertTrue("voided", keep(subject));
+        assertFalse("no answers and no link", keep(subject));
+    }
+
     // Updated in place: the subject keeps one row, which now holds the new number.
     @Test
     public void changedAnswerUpdatesLink() {
@@ -499,6 +516,10 @@ public class AbhaLinkServiceIntegrationTest extends AbstractControllerIntegratio
 
     private Individual save(Individual subject) {
         return new TransactionTemplate(transactionManager).execute(status -> individualService.save(subject));
+    }
+
+    private boolean keep(Individual subject) {
+        return Boolean.TRUE.equals(new TransactionTemplate(transactionManager).execute(status -> abhaLinkService.syncLink(subject)));
     }
 
     private static String live(Individual subject, String number, String address) {

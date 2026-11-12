@@ -73,7 +73,7 @@ public class AbdmHipStore {
                 params().addValue("uuid", uuid, Types.VARCHAR), SUBJECT));
     }
 
-    // no index on the address; a lower() scan of abha_link is fine at demo scale.
+    // Unindexed: a lower() scan of the organisation's ABHA links, made by discovery and the HIU's patient lookups, never on a save.
     public List<Subject> findSubjectsByAbhaAddress(String abhaAddress, String suffix) {
         return jdbc.query("select i.id, i.uuid, " + NAME + " as name from abha_link l join individual i on i.id = l.individual_id " +
                         "where l.organisation_id = :org and l.is_voided = false and i.is_voided = false " +
@@ -180,19 +180,30 @@ public class AbdmHipStore {
     }
 
     // The patient's ABHA is verified now: their visits waiting for that, or failed or given up for want of it, are queued
-    // afresh under every HIP ID. Their other queued or failed visits are touched, so a job that found no verified ABHA
-    // before this does not set them waiting (awaitVerifiedAbha). Returns how many were queued afresh.
+    // afresh under every HIP ID. Their other queued or failed visits are touched first: that locks them, so a job about to
+    // set them waiting (awaitVerifiedAbha) blocks, and once this commits finds them changed since it looked and leaves
+    // them. Returns how many were queued afresh.
     public int requeueForVerifiedAbha(String subjectUuid) {
         MapSqlParameterSource p = params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("noEkaId", AbdmHipLinkingService.NO_EKA_ID, Types.VARCHAR);
-        int requeued = jdbc.update("update abdm_care_context c set status = 'QUEUED', attempts = 0, error = null, next_attempt_at = null, updated_at = now() " +
-                        "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org " +
-                        "and (c.status = 'AWAITING_VERIFIED_ABHA' or (c.status in ('FAILED', 'FAILED_FINAL') and position(:noEkaId in coalesce(c.error, '')) = 1))", p);
         jdbc.update("update abdm_care_context c set updated_at = now() from individual i where i.id = c.individual_id and i.uuid = :uuid " +
                 "and c.organisation_id = :org and c.status in ('QUEUED', 'FAILED') and c.updated_at < now()", p);
-        return requeued;
+        return jdbc.update("update abdm_care_context c set status = 'QUEUED', attempts = 0, error = null, next_attempt_at = null, updated_at = now() " +
+                        "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org " +
+                        "and (" + WAITING_FOR_VERIFIED_ABHA + ")", p);
     }
 
-    // A patient Avni cannot link (removed, a verified ABHA with no address): no later try changes that.
+    // A visit waiting for a verified ABHA, or failed or given up for want of one.
+    private static final String WAITING_FOR_VERIFIED_ABHA = "c.status = 'AWAITING_VERIFIED_ABHA' or " +
+            "(c.status in ('FAILED', 'FAILED_FINAL') and position(:noEkaId in coalesce(c.error, '')) = 1)";
+
+    // For a save of the patient that left their ABHA as it was: whether any visit of theirs waits for a verified ABHA.
+    public boolean hasVisitsWaitingForVerifiedAbha(long individualId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("select exists (select 1 from abdm_care_context c where c.organisation_id = :org " +
+                        "and c.individual_id = :ind and (" + WAITING_FOR_VERIFIED_ABHA + "))",
+                params().addValue("ind", individualId).addValue("noEkaId", AbdmHipLinkingService.NO_EKA_ID, Types.VARCHAR), Boolean.class));
+    }
+
+    // A patient Avni cannot link (removed, a verified ABHA with neither address nor number): no later try changes that.
     public void failQueuedForGood(String subjectUuid, String hipId, String reason) {
         jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = :reason, next_attempt_at = null, updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +

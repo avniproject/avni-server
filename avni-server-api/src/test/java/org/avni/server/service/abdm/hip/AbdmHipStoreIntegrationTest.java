@@ -352,6 +352,26 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
     }
 
+    // What a save of the patient asks before queueing anything again: whether a visit of theirs waits for a verified ABHA,
+    // or was given up for want of one.
+    @Test
+    public void aPatientHasVisitsWaitingForAVerifiedAbhaOnlyWhileOneWaitsOrWasGivenUpForWantOfOne() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        assertFalse(store.hasVisitsWaitingForVerifiedAbha(knownId()));
+
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'FAILED_FINAL', error = 'Eka refused the link' where reference = 'v-2'");
+        assertFalse(store.hasVisitsWaitingForVerifiedAbha(knownId()));
+
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'FAILED_FINAL', error = ? where reference = 'v-2'",
+                AbdmHipLinkingService.NO_EKA_ID + "; given up after 6 tries");
+        assertTrue(store.hasVisitsWaitingForVerifiedAbha(knownId()));
+
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'QUEUED', error = null where reference = 'v-2'");
+        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID, store.databaseNow().plusSeconds(1));
+        assertTrue(store.hasVisitsWaitingForVerifiedAbha(knownId()));
+    }
+
     // The job found no verified ABHA, and before it wrote that the visits wait, a verified ABHA was saved and they were
     // queued again: the job's write leaves them queued, as it moves only rows unchanged since it looked.
     @Test
