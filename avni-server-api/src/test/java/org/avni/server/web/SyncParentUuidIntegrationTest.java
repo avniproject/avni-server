@@ -27,7 +27,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +101,8 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
     private GroupSubjectController groupSubjectController;
     @Autowired
     private IndividualRelationshipController individualRelationshipController;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -363,5 +368,45 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
 
         assertEquals(List.of(groupSubjectUuid), byGroup.stream().map(GroupSubject::getUuid).toList());
         assertEquals(List.of(groupSubjectUuid), byMember.stream().map(GroupSubject::getUuid).toList());
+    }
+
+    @Test
+    public void parentUuidLookupsForASyncPageDoNotGrowWithItsOffset() {
+        ProgramEncounter programEncounter = programEncounterRepository.findByUuid(programEncounterUuid);
+        for (int i = 0; i < 29; i++) {
+            ProgramEncounter another = new ProgramEncounter();
+            another.assignUUID();
+            another.setEncounterType(programEncounter.getEncounterType());
+            another.setProgramEnrolment(programEncounter.getProgramEnrolment());
+            another.setIndividual(programEncounter.getIndividual());
+            another.setAddressId(programEncounter.getAddressId());
+            another.setEncounterDateTime(DateTime.now(), null);
+            another.setObservations(new ObservationCollection());
+            programEncounterRepository.save(another);
+        }
+        entityManager.flush();
+        entityManager.clear();
+
+        long firstPageLookups = programEnrolmentScansToSync(PageRequest.of(0, 10));
+        long thirdPageLookups = programEnrolmentScansToSync(PageRequest.of(2, 10));
+
+        assertEquals(firstPageLookups, thirdPageLookups);
+    }
+
+    private long programEnrolmentScansToSync(PageRequest pageRequest) {
+        Specification<ProgramEncounter> syncOrder = (root, query, builder) -> {
+            query.orderBy(builder.asc(root.get("lastModifiedDateTime")), builder.asc(root.get("id")));
+            return builder.conjunction();
+        };
+        long scansBefore = programEnrolmentScans();
+        Slice<ProgramEncounter> page = programEncounterRepository.findAllAsSlice(syncOrder, pageRequest);
+        programEncounterController.wrap(page);
+        long scans = programEnrolmentScans() - scansBefore;
+        entityManager.clear();
+        return scans;
+    }
+
+    private long programEnrolmentScans() {
+        return jdbcTemplate.queryForObject("select coalesce(seq_scan, 0) + coalesce(idx_scan, 0) from pg_stat_xact_user_tables where relname = 'program_enrolment'", Long.class);
     }
 }
