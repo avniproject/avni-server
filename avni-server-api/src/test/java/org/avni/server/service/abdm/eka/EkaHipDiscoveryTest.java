@@ -2,6 +2,10 @@ package org.avni.server.service.abdm.eka;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.dao.AbhaEventRepository;
+import org.avni.server.dao.AbhaLinkRepository;
+import org.avni.server.domain.AbhaEvent;
+import org.avni.server.domain.AbhaLink;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
@@ -49,11 +53,15 @@ public class EkaHipDiscoveryTest {
     private final EkaAbdmClient eka = mock(EkaAbdmClient.class);
     private final AbdmPatientPhones phones = mock(AbdmPatientPhones.class);
     private final AbdmPhoneOtp otp = mock(AbdmPhoneOtp.class);
+    private final AbhaLinkRepository abhaLinks = mock(AbhaLinkRepository.class);
+    private final AbhaEventRepository abhaEvents = mock(AbhaEventRepository.class);
     private EkaHipDiscovery discovery;
 
     @Before
     public void setUp() {
-        discovery = new EkaHipDiscovery(settings, store, linking, eka, phones, otp);
+        discovery = discovery(settings);
+        holdsAbha(7, "subject-1", "12345678568912", "asha.devi", "oid-1");
+        holdsAbha(8, "subject-2", "12345678568913", "asha.devi", "oid-2");
         when(eka.postSlow(anyString(), any(), any())).thenReturn(new EkaResponse("r", 204, null));
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
                 "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z")),
@@ -93,6 +101,49 @@ public class EkaHipDiscoveryTest {
         assertTrue(reply.at("/error/message").asText().length() > 0);
         // ABDM accepts an error code of 3 to 6 digits (or ABDM-nnnn); a 1 fails its check as a 0 does.
         assertTrue(reply.at("/error/code").asText(), reply.at("/error/code").asText().matches("[0-9]{3,6}"));
+    }
+
+    // A one-digit slip in a typed ABHA must not hand a patient's name and visits to whoever holds the ABHA typed: only an
+    // ABHA Eka verified on the patient's record (its record carries an Eka ID) is matched, by address or by number.
+    @Test
+    public void aPatientWhoseAbhaWasTypedButNeverVerifiedIsNotOffered() {
+        holdsAbha(7, "subject-1", "12345678568912", "asha.devi", null);
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(store.findSubjectsByAbhaNumber("12345678568912")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        ObjectNode event = (ObjectNode) discoverEvent();
+        ((com.fasterxml.jackson.databind.node.ArrayNode) event.at("/data/identifiers")).addObject().put("type", "ABHA_NUMBER").put("value", "12-3456-7856-8912");
+
+        discovery.discover(event);
+
+        JsonNode reply = sent(ON_DISCOVER);
+        assertEquals(0, reply.path("patients").size());
+        assertTrue(reply.at("/error/message").asText().length() > 0);
+        verify(linking, never()).loadPatient(anyString());
+        verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void aPatientHoldingNoAbhaRecordAtAllIsNotOfferedByAbha() {
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of());
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+
+        discovery.discover(discoverEvent());
+
+        assertEquals(0, sent(ON_DISCOVER).path("patients").size());
+    }
+
+    // Of two patients holding the typed ABHA, the one Eka verified is the one it is.
+    @Test
+    public void ofTwoHoldingTheTypedAbhaTheVerifiedOneIsOffered() {
+        holdsAbha(8, "subject-2", "12345678568913", "asha.devi", null);
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi"),
+                new AbdmHipStore.Subject(8, "subject-2", "Asha Devi")));
+
+        discovery.discover(discoverEvent());
+
+        JsonNode reply = sent(ON_DISCOVER);
+        assertEquals(1, reply.path("patients").size());
+        assertEquals("subject-1", reply.at("/patients/0/ref_num").asText());
     }
 
     // NHA USER_INIT_LINK_603: with no ABHA match, search by the verified mobile, then a fuzzy match on the name.
@@ -188,8 +239,8 @@ public class EkaHipDiscoveryTest {
     @Test
     @SuppressWarnings("unchecked")
     public void discoveryAtOneCentreOffersOnlyTheVisitsSharedUnderIt() {
-        discovery = new EkaHipDiscovery(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
-                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")))), store, linking, eka, phones, otp);
+        discovery = discovery(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
+                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")))));
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
                 "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z"), "hip-2"),
                 new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T10:00:00Z"), null))));
@@ -366,6 +417,25 @@ public class EkaHipDiscoveryTest {
     }
 
     // ---- helpers
+
+    private EkaHipDiscovery discovery(AbdmSettings settings) {
+        return new EkaHipDiscovery(settings, store, linking, eka, phones, otp, AbdmTestSupport.orgContext(), abhaLinks, abhaEvents);
+    }
+
+    // The subject's saved ABHA and its record; a null Eka ID is an ABHA typed in and never verified with Eka.
+    private void holdsAbha(long individualId, String subjectUuid, String abhaNumber, String abhaAddress, String ekaOid) {
+        AbhaLink link = new AbhaLink();
+        link.setAbhaNumber(abhaNumber);
+        link.setAbhaAddress(abhaAddress);
+        when(abhaLinks.findByIndividualIdAndIsVoidedFalse(individualId)).thenReturn(Optional.of(link));
+        AbhaEvent record = new AbhaEvent();
+        record.setSubjectUuid(subjectUuid);
+        record.setAction("linked");
+        record.setAbhaNumber(abhaNumber);
+        record.setAbhaAddress(abhaAddress + "@sbx");
+        record.setEkaOid(ekaOid);
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid)).thenReturn(List.of(record));
+    }
 
     private JsonNode sent(String path) {
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);

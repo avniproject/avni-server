@@ -3,8 +3,11 @@ package org.avni.server.service.abdm.eka;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.dao.AbhaEventRepository;
+import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmTime;
 import org.avni.server.service.abdm.hip.AbdmFlows;
@@ -13,6 +16,7 @@ import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmNames;
 import org.avni.server.service.abdm.hip.AbdmPatientPhones;
 import org.avni.server.service.abdm.hip.AbdmPhoneOtp;
+import org.avni.server.service.abha.AbhaEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -34,9 +38,9 @@ import java.util.stream.Collectors;
 // Patient-led linking through Eka (USER_INIT_LINK_601 to 607; EKA_ABDM_SPEC.md 2.7): the patient finds the facility in
 // their ABHA app, Eka asks us who they are (care_context_discover), the patient picks visits (link_init) and confirms
 // with a code we send to the phone Avni holds for them (link_confirm). NHA: "every HIP must answer discovery".
-// A patient is found by ABHA address, then ABHA number, then, as NHA asks (USER_INIT_LINK_603), by the verified mobile
-// narrowed by gender, year of birth and a tolerant name match (AbdmNames). Only one patient is ever offered: when more
-// than one matches, none is. Each step is for one of the organisation's HIP IDs: the one the event names, which must be
+// A patient is found by ABHA address, then ABHA number, each only when Eka verified the ABHA on their record, then, as
+// NHA asks (USER_INIT_LINK_603), by the verified mobile narrowed by gender, year of birth and a tolerant name match
+// (AbdmNames). Only one patient is ever offered: when more than one matches, none is. Each step is for one of the organisation's HIP IDs: the one the event names, which must be
 // the organisation's (else the event is not answered), else the one the visits asked for are shared under, else its first.
 // Only the visits shared under that HIP ID are offered and linked (AbdmHipLinkingService.visitsByHip).
 // Never logs a name, an ABHA, a phone or a code.
@@ -57,9 +61,16 @@ public class EkaHipDiscovery {
     private final EkaAbdmClient eka;
     private final AbdmPatientPhones phones;
     private final AbdmPhoneOtp otp;
+    private final AbdmOrgContext orgContext;
+    private final AbhaLinkRepository abhaLinks;
+    private final AbhaEventRepository abhaEvents;
 
     public EkaHipDiscovery(AbdmSettings settings, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka,
-                           AbdmPatientPhones phones, AbdmPhoneOtp otp) {
+                           AbdmPatientPhones phones, AbdmPhoneOtp otp, AbdmOrgContext orgContext, AbhaLinkRepository abhaLinks,
+                           AbhaEventRepository abhaEvents) {
+        this.orgContext = orgContext;
+        this.abhaLinks = abhaLinks;
+        this.abhaEvents = abhaEvents;
         this.settings = settings;
         this.store = store;
         this.linking = linking;
@@ -106,12 +117,12 @@ public class EkaHipDiscovery {
     private Match find(JsonNode data, String abhaAddressSuffix) {
         String abhaAddress = AbdmFlows.firstNonNull(AbdmJson.text(data, "abha_address"), identifier(data, "ABHAADDRESS"));
         if (abhaAddress != null) {
-            Match m = one(store.findSubjectsByAbhaAddress(abhaAddress, abhaAddressSuffix));
+            Match m = one(verified(store.findSubjectsByAbhaAddress(abhaAddress, abhaAddressSuffix)));
             if (m != null) return m;
         }
         String number = AbdmFlows.digitsOnly(identifier(data, "ABHANUMBER"));
         if (number.length() == 14) {
-            Match m = one(store.findSubjectsByAbhaNumber(number));
+            Match m = one(verified(store.findSubjectsByAbhaNumber(number)));
             if (m != null) return m;
         }
         String name = AbdmJson.text(data, "patient_name");
@@ -129,6 +140,15 @@ public class EkaHipDiscovery {
                 .map(c -> new AbdmHipStore.Subject(c.id(), c.uuid(), c.name())).collect(Collectors.toList());
         Match m = one(named);
         return m != null ? m : new Match(null, "No patient found at this facility");
+    }
+
+    // Only subjects whose saved ABHA Eka verified (its record carries an Eka ID): a typed ABHA nobody checked, a digit off,
+    // would hand this patient's name and visits to whoever holds the ABHA typed.
+    private List<AbdmHipStore.Subject> verified(List<AbdmHipStore.Subject> subjects) {
+        return subjects.stream().filter(s -> orgContext.inReadOnlyTransaction(() -> abhaLinks.findByIndividualIdAndIsVoidedFalse(s.id())
+                .flatMap(link -> AbhaEventService.ofSavedAbha(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid()),
+                        link.getAbhaNumber(), link.getAbhaAddress()))
+                .isPresent())).toList();
     }
 
     // Exactly one: a Match. Several: a refusal. None: null, so the next way of finding is tried.

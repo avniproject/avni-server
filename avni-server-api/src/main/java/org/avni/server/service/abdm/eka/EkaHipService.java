@@ -412,18 +412,23 @@ public class EkaHipService implements EkaHipEvents {
         }
     }
 
-    // The ABHA asking is the one on the record: its Eka ID, its address, or the default address of its number. When
-    // Eka names no ABHA there is nothing to check against.
-    private boolean stillTheirAbha(AbhaLink link, String subjectUuid, String requesterOid, String requesterAddress) {
-        if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return true;
-        if (link == null) return false;
-        if (StringUtils.hasText(requesterOid) && AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
-                link.getAbhaNumber(), link.getAbhaAddress()).map(AbhaEvent::getEkaOid).filter(requesterOid::equals).isPresent()) return true;
-        if (!StringUtils.hasText(requesterAddress)) return false;
+    private static final String NOT_THEIRS = "the ABHA asking is no longer the patient's";
+
+    // Why the ABHA asking may not have the patient's records; null when it may. It must be the ABHA on the record, one Eka
+    // verified (its record carries an Eka ID), asked by that Eka ID, its address, or the default address of its number.
+    // When Eka names no ABHA there is nothing to check against.
+    private String abhaProblem(AbhaLink link, String subjectUuid, String requesterOid, String requesterAddress) {
+        if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return null;
+        if (link == null) return NOT_THEIRS;
+        Optional<AbhaEvent> verified = AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
+                link.getAbhaNumber(), link.getAbhaAddress());
+        if (verified.isEmpty()) return "the patient's ABHA is not verified with Eka";
+        if (StringUtils.hasText(requesterOid) && requesterOid.equals(verified.get().getEkaOid())) return null;
+        if (!StringUtils.hasText(requesterAddress)) return NOT_THEIRS;
         String asking = requesterAddress.trim().split("@", 2)[0].toLowerCase(Locale.ROOT);
         String savedName = link.getAbhaAddress() == null ? null : link.getAbhaAddress().trim().split("@", 2)[0].toLowerCase(Locale.ROOT);
         String savedNumber = link.getAbhaNumber() == null ? "" : link.getAbhaNumber().replaceAll("[^0-9]", "");
-        return asking.equals(savedName) || (!savedNumber.isEmpty() && asking.equals(savedNumber));
+        return asking.equals(savedName) || (!savedNumber.isEmpty() && asking.equals(savedNumber)) ? null : NOT_THEIRS;
     }
 
     // ---- building
@@ -460,10 +465,9 @@ public class EkaHipService implements EkaHipEvents {
                 }
                 AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
                 // A visit stays linked at NHA under the ABHA it was linked with; once the record holds another ABHA, or
-                // none, that ABHA gets nothing.
-                if (!stillTheirAbha(link, individual.getUuid(), requesterOid, requesterAddress)) {
-                    return new Prepared(reference, null, "the ABHA asking is no longer the patient's");
-                }
+                // none, or one Eka never verified, that ABHA gets nothing.
+                String abhaProblem = abhaProblem(link, individual.getUuid(), requesterOid, requesterAddress);
+                if (abhaProblem != null) return new Prepared(reference, null, abhaProblem);
                 CareContextDocument document = assembler.assemble(encounter, individual,
                         link == null ? null : AbdmFlows.hyphenatedAbhaNumber(link.getAbhaNumber()),
                         link == null ? null : AbdmFlows.withSuffix(link.getAbhaAddress(), orgSettings.getAbhaAddressSuffix()),

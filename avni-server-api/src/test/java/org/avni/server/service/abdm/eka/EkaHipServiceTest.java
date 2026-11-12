@@ -682,6 +682,23 @@ public class EkaHipServiceTest {
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
     }
 
+    // An ABHA typed on the record and never verified with Eka gets nothing, even when the request names that address.
+    @Test
+    public void visitsAreNotSentToAnAbhaOnTheRecordThatEkaNeverVerified() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", null, "asha.devi@sbx")));
+        ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) fetch.get("data")).put("abha_address", "asha.devi@sbx").remove("oid");
+
+        service.hipDataFetch(fetch);
+
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+        verifyNoInteractions(assembler);
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("not verified"));
+    }
+
     @Test
     public void noVisitIsSentForAPatientWhoseAbhaWasRemoved() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
