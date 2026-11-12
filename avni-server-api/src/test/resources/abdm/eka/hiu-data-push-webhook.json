@@ -7,7 +7,7 @@
   "business_id": "demo-business",
   "client_id": "demo-client",
   "data": {
-    "abha_address": "demo.patient@sbx",
+    "abha_address": "test.patient@sbx",
     "abha_number": "",
     "hip_id": "OTHER-HIP",
     "oid": "eka-oid-0001",

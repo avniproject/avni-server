@@ -22,7 +22,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public class CareContextDocumentAssemblerTest {
     private ConceptRepository conceptRepository;
     private FormMappingService formMappingService;
@@ -50,7 +49,7 @@ public class CareContextDocumentAssemblerTest {
         keyValues.add(new org.avni.server.application.KeyValue("loincCode", "8480-6"));
         systolic.setKeyValues(keyValues);
 
-        CareContextDocument d = assembler.assemble(encounter, individual, null, null, "TANUH", "TANUH Health Centre");
+        CareContextDocument d = assembler.assemble(encounter, individual, null, null, "test-hip", "Test Health Centre");
 
         CareContextDocument.Item item = d.items().stream().filter(i -> i.name().equals("Systolic blood pressure")).findFirst().orElseThrow();
         assertEquals(java.util.List.of(new CareContextDocument.Code("http://loinc.org", "8480-6"),
@@ -110,7 +109,7 @@ public class CareContextDocumentAssemblerTest {
     }
 
     private CareContextDocument assemble() {
-        return assembler.assemble(encounter, individual, "91-5555-0000-0042", "lakshmi.devi@sbx", "TANUH", "TANUH Health Centre");
+        return assembler.assemble(encounter, individual, "91-5555-0000-0042", "lakshmi.devi@sbx", "test-hip", "Test Health Centre");
     }
 
     private static CareContextDocument.Item item(CareContextDocument d, String name) {
@@ -131,8 +130,8 @@ public class CareContextDocumentAssemblerTest {
         assertEquals("91-5555-0000-0042", d.abhaNumber());
         assertEquals("lakshmi.devi@sbx", d.abhaAddress());
         assertEquals("Kavya R", d.practitionerName());
-        assertEquals("TANUH", d.hipId());
-        assertEquals("TANUH Health Centre", d.hipName());
+        assertEquals("test-hip", d.hipId());
+        assertEquals("Test Health Centre", d.hipName());
     }
 
     @Test

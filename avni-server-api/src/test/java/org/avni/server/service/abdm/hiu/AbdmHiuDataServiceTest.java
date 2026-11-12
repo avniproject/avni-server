@@ -34,14 +34,14 @@ public class AbdmHiuDataServiceTest {
     public void recordsAreThoseReceivedUnderTheRequestsArtefacts() {
         when(store.findConsentRequestByUuid("uuid-3")).thenReturn(Optional.of(new AbdmHiuStore.Consent(3, "uuid-3", "cr-1", null, null,
                 "ramesh.gond@sbx", null, HIU_ID, null, null, null, null, null, "GRANTED", null, null, null)));
-        when(store.records("cr-1")).thenReturn(List.of(new AbdmHiuStore.Record("enc-1", "TANUH", "tx-1",
+        when(store.records("cr-1")).thenReturn(List.of(new AbdmHiuStore.Record("enc-1", "test-hip", "tx-1",
                 Instant.parse("2026-10-25T10:00:00Z"), true, AbdmJson.read(BUNDLE), "artefact-1")));
         when(store.findArtefacts(List.of("cr-1"))).thenReturn(List.of(new AbdmHiuStore.Artefact("cr-1", "artefact-1", "GRANTED", "RECEIVED", 1)));
 
         Map<String, Object> r = service.records("uuid-3").get(0);
 
         assertEquals("enc-1", r.get("careContextReference"));
-        assertEquals("TANUH", r.get("hipId"));
+        assertEquals("test-hip", r.get("hipId"));
         assertEquals("tx-1", r.get("transactionId"));
         assertEquals("2026-10-25T10:00:00.000Z", r.get("receivedAt"));
         assertEquals(true, r.get("checksumMatched"));
@@ -108,7 +108,7 @@ public class AbdmHiuDataServiceTest {
     }
 
     private static AbdmHiuStore.Record record(String consentId) {
-        return new AbdmHiuStore.Record("enc-" + consentId, "TANUH", "tx-1", Instant.parse("2026-10-25T10:00:00Z"), true, AbdmJson.read(BUNDLE), consentId);
+        return new AbdmHiuStore.Record("enc-" + consentId, "test-hip", "tx-1", Instant.parse("2026-10-25T10:00:00Z"), true, AbdmJson.read(BUNDLE), consentId);
     }
 
 }

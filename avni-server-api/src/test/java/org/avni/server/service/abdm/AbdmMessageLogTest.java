@@ -7,7 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-// DEMO-ONLY abdm-hackathon: what the traffic log keeps of a message (AVNI-13: 32 of 64 stored messages carried a patient
+// What the traffic log keeps of a message (AVNI-13: 32 of 64 stored messages carried a patient
 // identifier in plain text on 26 Oct).
 public class AbdmMessageLogTest {
     private static final String MASK = AbdmMessageLog.MASK;
@@ -15,12 +15,12 @@ public class AbdmMessageLogTest {
     @Test
     public void aWebhookKeepsItsIdsAndStatusesAndLosesThePatient() {
         JsonNode kept = AbdmMessageLog.redact(AbdmJson.read("{\"service\":\"abdm\",\"event\":\"abha.link_care_context\"," +
-                "\"transaction_id\":\"wh-link-1\",\"data\":{\"abha_address\":\"demo.patient@sbx\",\"hip_id\":\"TANUH\"," +
+                "\"transaction_id\":\"wh-link-1\",\"data\":{\"abha_address\":\"test.patient@sbx\",\"hip_id\":\"test-hip\"," +
                 "\"care_context_id\":\"enc-1\",\"status\":\"LINKED\",\"error\":null,\"oid\":\"eka-oid-0001\",\"partner_patient_id\":\"subject-1\"}}"));
 
         assertEquals("abha.link_care_context", kept.get("event").asText());
         assertEquals("wh-link-1", kept.get("transaction_id").asText());
-        assertEquals("TANUH", kept.at("/data/hip_id").asText());
+        assertEquals("test-hip", kept.at("/data/hip_id").asText());
         assertEquals("enc-1", kept.at("/data/care_context_id").asText());
         assertEquals("LINKED", kept.at("/data/status").asText());
         assertTrue(kept.at("/data/error").isNull());

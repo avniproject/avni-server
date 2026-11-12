@@ -17,8 +17,8 @@ import static org.mockito.Mockito.when;
 
 // Mocks the M2/M3 tests share.
 public final class AbdmTestSupport {
-    public static final String HIP_ID = "TANUH";
-    public static final String HIU_ID = "TANUH-HIU";
+    public static final String HIP_ID = "test-hip";
+    public static final String HIU_ID = "test-hiu";
 
     private AbdmTestSupport() {
     }
@@ -28,7 +28,7 @@ public final class AbdmTestSupport {
         JsonObject json = new JsonObject()
                 .with(EkaSystemConfig.ENVIRONMENT, "sandbox")
                 .with(EkaSystemConfig.HIP_IDS, List.of(HIP_ID))
-                .with(EkaSystemConfig.HIP_NAMES, Map.of(HIP_ID, "TANUH Health Centre"))
+                .with(EkaSystemConfig.HIP_NAMES, Map.of(HIP_ID, "Test Health Centre"))
                 .with(EkaSystemConfig.HIU_ID, HIU_ID)
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-client-1")
                 .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-sharing-secret");

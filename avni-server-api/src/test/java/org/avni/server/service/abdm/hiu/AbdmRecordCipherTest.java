@@ -9,7 +9,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 
-// DEMO-ONLY abdm-hackathon: records received from other providers are kept encrypted, under a key of their own (AVNI-14).
+// Records received from other providers are kept encrypted, under a key of their own (AVNI-14).
 public class AbdmRecordCipherTest {
     private static final String KEY = Base64.getEncoder().encodeToString(new byte[32]);
 

@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 
-// DEMO-ONLY abdm: the Eka record of the ABHA a patient's saved record holds (AbhaEventService.ofSavedAbha), which the
+// The Eka record of the ABHA a patient's saved record holds (AbhaEventService.ofSavedAbha), which the
 // link to Eka and the consent request use. Records are newest first, as the repository returns them.
 public class AbhaEventServiceSavedAbhaTest {
     private static final String SAVED = "91111122222009";

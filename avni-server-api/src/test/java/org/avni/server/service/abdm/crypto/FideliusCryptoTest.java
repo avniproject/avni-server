@@ -8,7 +8,6 @@ import java.util.Base64;
 
 import static org.junit.Assert.*;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public class FideliusCryptoTest {
     private static final String PLAINTEXT = "{\"resourceType\":\"Bundle\",\"note\":\"ರಕ್ತದೊತ್ತಡ 130/85 — ok\"}";
 

@@ -5,7 +5,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // NHA's patient-led linking: on a mobile number match, a fuzzy match on the name (USER_INIT_LINK_603).
 public class AbdmNamesTest {
     @Test

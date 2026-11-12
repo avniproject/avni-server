@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // AbdmHipStore's SQL against Postgres. Patient-led linking finds a patient by the phone Avni holds for them, read as
 // IndividualService.findPhoneNumber reads it, so the number searched is the number the code is texted to. test-data.sql
 // holds subject 4378dce3 (Male, org 2) with "9282738493" under the Text contact-number concept 7c39cb04.
@@ -62,7 +61,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertTrue(store.findSubjectsByPhone(concepts, "9282738493", "M", year - 1).stream().noneMatch(c -> c.uuid().equals(KNOWN)));
         assertTrue(store.findSubjectsByPhone(concepts, "9000000000", "M", year).isEmpty());
 
-        // TANUH's configuration: a contact-number text concept and no PhoneNumber concept.
+        // An organisation with a contact-number text concept and no PhoneNumber concept.
         List<String> textOnly = store.findSubjectsByPhone(new AbdmPatientPhones.PhoneConcepts(null, CONTACT_NUMBER_CONCEPT), "9282738493", "M", year)
                 .stream().map(AbdmHipStore.Candidate::uuid).toList();
         assertTrue(textOnly.toString(), textOnly.containsAll(List.of(KNOWN, STORED_WITH_LEADING_ZERO)));

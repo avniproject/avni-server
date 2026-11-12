@@ -19,7 +19,6 @@ import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public class FhirBundleBuilderTest {
     private static final String GOLDEN = "/abdm/fhir/op-consultation-sample.json";
     private static final Instant VISIT = Instant.parse("2026-10-20T04:45:00Z");
@@ -37,10 +36,10 @@ public class FhirBundleBuilderTest {
     private static CareContextDocument doc(String abhaNumber, String abhaAddress, CareContextDocument.Item... items) {
         return new CareContextDocument("2f0c6a1e-8b7d-4c3e-a5f9-1d2e3f4a5b6c", "Hypertension Screening", VISIT,
                 "c8a1d2e3-4f5a-4b6c-8d7e-9f0a1b2c3d4e", "Lakshmi Devi", "Female", new LocalDate(1968, 3, 12),
-                abhaNumber, abhaAddress, "Kavya R", "TANUH", "TANUH Health Centre", Arrays.asList(items));
+                abhaNumber, abhaAddress, "Kavya R", "test-hip", "Test Health Centre", Arrays.asList(items));
     }
 
-    static CareContextDocument tanuhSample() {
+    static CareContextDocument sampleVisit() {
         return doc("91-5555-0000-0042", "lakshmi.devi@sbx",
                 new CareContextDocument.Item("Systolic blood pressure", "Numeric", 130, "mmHg"),
                 new CareContextDocument.Item("Diastolic blood pressure", "Numeric", 85, "mmHg"),
@@ -76,7 +75,7 @@ public class FhirBundleBuilderTest {
 
     @Test
     public void bundleIsAnNrcesDocumentBundle() {
-        ObjectNode bundle = builder().build(tanuhSample());
+        ObjectNode bundle = builder().build(sampleVisit());
 
         assertEquals("Bundle", bundle.get("resourceType").asText());
         assertEquals("document", bundle.get("type").asText());
@@ -88,20 +87,20 @@ public class FhirBundleBuilderTest {
 
     @Test
     public void compositionIsTheFirstEntry() {
-        JsonNode composition = builder().build(tanuhSample()).at("/entry/0/resource");
+        JsonNode composition = builder().build(sampleVisit()).at("/entry/0/resource");
 
         assertEquals("Composition", composition.get("resourceType").asText());
         assertEquals("https://nrces.in/ndhm/fhir/r4/StructureDefinition/OPConsultRecord", composition.at("/meta/profile/0").asText());
         assertEquals("final", composition.get("status").asText());
         assertEquals("371530004", composition.at("/type/coding/0/code").asText());
-        assertEquals("Hypertension Screening — TANUH Health Centre", composition.get("title").asText());
+        assertEquals("Hypertension Screening — Test Health Centre", composition.get("title").asText());
         assertEquals("2026-10-20T04:45:00.000Z", composition.get("date").asText());
         assertEquals(3, composition.at("/section/0/entry").size());
     }
 
     @Test
     public void everyReferenceResolvesToAnEntryFullUrl() {
-        ObjectNode bundle = builder().build(tanuhSample());
+        ObjectNode bundle = builder().build(sampleVisit());
         Set<String> fullUrls = new HashSet<>();
         bundle.get("entry").forEach(e -> {
             assertTrue(e.get("fullUrl").asText().startsWith("urn:uuid:"));
@@ -124,7 +123,7 @@ public class FhirBundleBuilderTest {
                         new CareContextDocument.Item("Weight", "Numeric", 61.5, null)));
         List<String> nulls = new ArrayList<>();
         walk(builder().build(sparse), "$", nulls, new ArrayList<>());
-        walk(builder().build(tanuhSample()), "$", nulls, new ArrayList<>());
+        walk(builder().build(sampleVisit()), "$", nulls, new ArrayList<>());
 
         assertEquals(Collections.emptyList(), nulls);
     }
@@ -191,7 +190,7 @@ public class FhirBundleBuilderTest {
     // carries both codes (abdm-docs shared.fhir.abha-identifiers).
     @Test
     public void patientCarriesAbhaIdentifiersOnlyWhenGiven_toldApartByNrcesTypeCodes() {
-        JsonNode patient = resources(builder().build(tanuhSample()), "Patient").get(0);
+        JsonNode patient = resources(builder().build(sampleVisit()), "Patient").get(0);
         assertEquals(2, patient.get("identifier").size());
         assertEquals("https://healthid.ndhm.gov.in", patient.at("/identifier/0/system").asText());
         assertEquals("https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code", patient.at("/identifier/0/type/coding/0/system").asText());
@@ -232,14 +231,14 @@ public class FhirBundleBuilderTest {
     // NHA's simple form: a PDF of the record as a DocumentReference, listed in the Composition.
     @Test
     public void aPdfOfTheVisitTravelsWithItAsADocument() {
-        ObjectNode bundle = builder().build(tanuhSample());
+        ObjectNode bundle = builder().build(sampleVisit());
 
         JsonNode document = resources(bundle, "DocumentReference").get(0);
         assertEquals("application/pdf", document.at("/content/0/attachment/contentType").asText());
         String pdf = new String(java.util.Base64.getDecoder().decode(document.at("/content/0/attachment/data").asText()), StandardCharsets.ISO_8859_1);
         assertTrue(pdf.startsWith("%PDF-"));
         assertTrue(pdf.contains("Systolic blood pressure: 130 mmHg"));
-        assertTrue("dashes print as a hyphen, not '?'", pdf.contains("(Hypertension Screening - TANUH Health Centre)"));
+        assertTrue("dashes print as a hyphen, not '?'", pdf.contains("(Hypertension Screening - Test Health Centre)"));
         boolean listed = false;
         for (JsonNode section : bundle.at("/entry/0/resource/section")) {
             for (JsonNode ref : section.path("entry")) {
@@ -261,34 +260,34 @@ public class FhirBundleBuilderTest {
 
     @Test
     public void practitionerOrganisationAndEncounter() {
-        ObjectNode bundle = builder().build(tanuhSample());
+        ObjectNode bundle = builder().build(sampleVisit());
         assertEquals("Kavya R", resources(bundle, "Practitioner").get(0).at("/name/0/text").asText());
         JsonNode org = resources(bundle, "Organization").get(0);
         assertEquals("https://facility.ndhm.gov.in", org.at("/identifier/0/system").asText());
-        assertEquals("TANUH", org.at("/identifier/0/value").asText());
-        assertEquals("TANUH Health Centre", org.get("name").asText());
+        assertEquals("test-hip", org.at("/identifier/0/value").asText());
+        assertEquals("Test Health Centre", org.get("name").asText());
         JsonNode encounter = resources(bundle, "Encounter").get(0);
         assertEquals("finished", encounter.get("status").asText());
         assertEquals("AMB", encounter.at("/class/code").asText());
         assertEquals("2026-10-20T04:45:00.000Z", encounter.at("/period/start").asText());
 
         CareContextDocument noPractitioner = new CareContextDocument(null, "Hypertension Screening", VISIT, null, "A", "M", null, null, null, null,
-                "TANUH", "TANUH Health Centre", List.of());
+                "test-hip", "Test Health Centre", List.of());
         assertEquals("Health worker", resources(builder().build(noPractitioner), "Practitioner").get(0).at("/name/0/text").asText());
     }
 
     @Test
     public void defaultConstructorGivesFreshUuids() {
         FhirBundleBuilder b = new FhirBundleBuilder();
-        String first = b.build(tanuhSample()).get("id").asText();
-        assertNotEquals(first, b.build(tanuhSample()).get("id").asText());
+        String first = b.build(sampleVisit()).get("id").asText();
+        assertNotEquals(first, b.build(sampleVisit()).get("id").asText());
         assertEquals(36, first.length());
     }
 
     // Regenerate with: ABDM_WRITE_GOLDEN=1 ./gradlew :avni-server-api:test --tests '*FhirBundleBuilderTest' --offline
     @Test
-    public void tanuhSampleMatchesTheGoldenFile() throws Exception {
-        ObjectNode built = builder().build(tanuhSample());
+    public void theSampleVisitMatchesTheGoldenFile() throws Exception {
+        ObjectNode built = builder().build(sampleVisit());
         if (System.getenv("ABDM_WRITE_GOLDEN") != null) {
             Path path = Path.of(System.getProperty("user.dir"), "src/test/resources" + GOLDEN);
             Files.createDirectories(path.getParent());

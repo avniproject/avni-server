@@ -7,10 +7,10 @@
   "business_id": "demo-business",
   "client_id": "demo-client",
   "data": {
-    "abha_address": "demo.patient@sbx",
+    "abha_address": "test.patient@sbx",
     "oid": "eka-oid-0001",
     "partner_patient_id": "subject-1",
-    "hip_id": "TANUH",
+    "hip_id": "test-hip",
     "transaction_id": "flow-tx-1",
     "care_contexts": ["enc-1", "enc-2"],
     "key_information": {

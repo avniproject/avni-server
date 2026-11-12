@@ -65,7 +65,7 @@ public class EkaAbdmClientTest {
         JsonNode body = AbdmJson.read("{\"oid\":\"oid-1\",\"care_contexts\":[]}");
 
         EkaResponse response = client.post(LINK, body, Map.of(EkaAbdmClient.H_PATIENT_OID, "oid-1",
-                EkaAbdmClient.H_PARTNER_PATIENT_ID, "subject-1", EkaAbdmClient.H_HIP_ID, "TANUH"));
+                EkaAbdmClient.H_PARTNER_PATIENT_ID, "subject-1", EkaAbdmClient.H_HIP_ID, "test-hip"));
 
         assertEquals(202, response.status());
         assertNull(response.body());
@@ -74,7 +74,7 @@ public class EkaAbdmClientTest {
                 .withHeader("Authorization", equalTo("Bearer eka-token-1"))
                 .withHeader("X-Pt-Id", equalTo("oid-1"))
                 .withHeader("X-Partner-Pt-Id", equalTo("subject-1"))
-                .withHeader("X-Hip-Id", equalTo("TANUH"))
+                .withHeader("X-Hip-Id", equalTo("test-hip"))
                 .withHeader("Content-Type", containing("application/json"))
                 .withHeader("Content-Length", matching("[0-9]+"))
                 .withoutHeader("Transfer-Encoding")
@@ -85,7 +85,7 @@ public class EkaAbdmClientTest {
     @Test
     public void anyTwoHundredIsAcceptedAndAJsonBodyIsRead() {
         eka.stubFor(post(urlEqualTo("/abdm/v1/hip/onboard")).willReturn(aResponse().withStatus(200)
-                .withHeader("Content-Type", "application/json").withBody("{\"hip_id\":\"TANUH\",\"hip_code\":\"C-1\"}")));
+                .withHeader("Content-Type", "application/json").withBody("{\"hip_id\":\"test-hip\",\"hip_code\":\"C-1\"}")));
         eka.stubFor(post(urlEqualTo("/abdm/v1/consents/create")).willReturn(aResponse().withStatus(204)));
         eka.stubFor(post(urlEqualTo("/created")).willReturn(aResponse().withStatus(201).withBody("not json")));
 
@@ -105,12 +105,12 @@ public class EkaAbdmClientTest {
                 .withBody("{\"data\":{\"content\":\"c\"},\"success\":true}")));
         eka.stubFor(patch(urlEqualTo("/abdm/v1/hiu/keyset")).willReturn(aResponse().withStatus(200)));
 
-        EkaResponse found = client.get("/abdm/v1/hiu/care-context/data/tx-1/entries/0", Map.of(EkaAbdmClient.H_HIP_ID, "TANUH"));
+        EkaResponse found = client.get("/abdm/v1/hiu/care-context/data/tx-1/entries/0", Map.of(EkaAbdmClient.H_HIP_ID, "test-hip"));
         client.patch("/abdm/v1/hiu/keyset", AbdmJson.read("{\"public_key\":\"k\",\"nonce\":\"n\"}"), null);
 
         assertEquals("c", found.body().at("/data/content").asText());
         eka.verify(getRequestedFor(urlEqualTo("/abdm/v1/hiu/care-context/data/tx-1/entries/0"))
-                .withHeader("Authorization", equalTo("Bearer eka-token-1")).withHeader("X-Hip-Id", equalTo("TANUH")));
+                .withHeader("Authorization", equalTo("Bearer eka-token-1")).withHeader("X-Hip-Id", equalTo("test-hip")));
         eka.verify(patchRequestedFor(urlEqualTo("/abdm/v1/hiu/keyset")).withRequestBody(equalToJson("{\"public_key\":\"k\",\"nonce\":\"n\"}")));
         verify(messageLog).outgoing(eq("GET"), eq("eka:/abdm/v1/hiu/care-context/data/tx-1/entries/0"), anyString(), isNull(), eq(200));
         verify(messageLog).outgoing(eq("PATCH"), eq("eka:/abdm/v1/hiu/keyset"), anyString(), any(), eq(200));
@@ -362,12 +362,12 @@ public class EkaAbdmClientTest {
     public void headersWithoutAValueAreLeftOut() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202)));
         Map<String, String> headers = new HashMap<>();
-        headers.put(EkaAbdmClient.H_HIP_ID, "TANUH");
+        headers.put(EkaAbdmClient.H_HIP_ID, "test-hip");
         headers.put(EkaAbdmClient.H_PATIENT_OID, null);
 
         client.post(LINK, AbdmJson.obj(), headers);
 
-        eka.verify(postRequestedFor(urlEqualTo(LINK)).withHeader("X-Hip-Id", equalTo("TANUH")).withoutHeader("X-Pt-Id"));
+        eka.verify(postRequestedFor(urlEqualTo(LINK)).withHeader("X-Hip-Id", equalTo("test-hip")).withoutHeader("X-Pt-Id"));
     }
 
     @Test

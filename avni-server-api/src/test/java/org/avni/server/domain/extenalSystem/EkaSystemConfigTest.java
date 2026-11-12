@@ -34,8 +34,8 @@ public class EkaSystemConfigTest {
 
     @Test
     public void hipIdsReadFromJsonList() {
-        EkaSystemConfig config = configWith(new JsonObject().with(EkaSystemConfig.HIP_IDS, Arrays.asList("TANUH", "TANUH-2")));
-        assertEquals(Arrays.asList("TANUH", "TANUH-2"), config.getHipIds());
+        EkaSystemConfig config = configWith(new JsonObject().with(EkaSystemConfig.HIP_IDS, Arrays.asList("test-hip", "test-hip-2")));
+        assertEquals(Arrays.asList("test-hip", "test-hip-2"), config.getHipIds());
     }
 
     @Test

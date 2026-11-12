@@ -97,7 +97,7 @@ public class EkaHipServiceTest {
         when(abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(INDIVIDUAL_ID)).thenReturn(Optional.of(link));
         when(assembler.assemble(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> new CareContextDocument(
                 ((org.avni.server.domain.AbstractEncounter) inv.getArgument(0)).getUuid(), "OPD Visit", null, "subject-1", "Asha Devi", "Female", null,
-                null, null, null, HIP_ID, "TANUH Health Centre", List.of()));
+                null, null, null, HIP_ID, "Test Health Centre", List.of()));
         when(builder.build(any())).thenAnswer(inv -> bundle(inv.getArgument(0)));
         when(store.insertDataFlow(anyString(), anyString(), any(), anyString(), anyString(), any())).thenReturn(42L);
     }
@@ -326,7 +326,7 @@ public class EkaHipServiceTest {
     public void anErroredWebhookStoresItsReasonWithoutThePatientsIdentifiers() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-2"))).thenReturn(List.of(row("enc-2", "LINK_REQUESTED")));
         JsonNode webhook = event("link-care-context-errored.json");
-        ((com.fasterxml.jackson.databind.node.ObjectNode) webhook.at("/data/error")).put("message", "No care context for demo.patient@sbx");
+        ((com.fasterxml.jackson.databind.node.ObjectNode) webhook.at("/data/error")).put("message", "No care context for test.patient@sbx");
 
         service.linkCareContext(webhook);
 
@@ -808,7 +808,7 @@ public class EkaHipServiceTest {
             reset(assembler);
             when(assembler.assemble(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> new CareContextDocument(
                     ((org.avni.server.domain.AbstractEncounter) inv.getArgument(0)).getUuid(), "OPD Visit", null, "subject-1", "Asha Devi", "Female", null,
-                    null, null, null, HIP_ID, "TANUH Health Centre", List.of()));
+                    null, null, null, HIP_ID, "Test Health Centre", List.of()));
             AbhaLink link = new AbhaLink();
             link.setAbhaNumber(c[0]);
             link.setAbhaAddress(c[1]);

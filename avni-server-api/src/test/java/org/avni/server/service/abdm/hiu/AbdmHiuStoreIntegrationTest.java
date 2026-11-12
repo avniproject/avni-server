@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // AbdmHiuStore's SQL against Postgres.
 @Sql(scripts = {"/test-data.sql"})
 @Transactional

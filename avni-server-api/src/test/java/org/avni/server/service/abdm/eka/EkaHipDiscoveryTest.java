@@ -40,7 +40,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-// DEMO-ONLY abdm-hackathon: patient-led linking through Eka (USER_INIT_LINK_601 to 607): the patient finds TANUH in their
+// Patient-led linking through Eka (USER_INIT_LINK_601 to 607): the patient finds the health centre in their
 // ABHA app, picks visits, and confirms with a code sent to the phone Avni holds for them. EKA_ABDM_SPEC.md section 2.7.
 public class EkaHipDiscoveryTest {
     private static final String ON_DISCOVER = "/abdm/v1/care-contexts/on-discover";
@@ -568,7 +568,7 @@ public class EkaHipDiscoveryTest {
     private static JsonNode discoverEvent() {
         return AbdmJson.read("{\"event\":\"abha.care_context_discover\",\"transaction_id\":\"wh-1\",\"data\":{\"abha_address\":\"asha.devi@sbx\"," +
                 "\"gender\":\"F\",\"identifiers\":[{\"type\":\"MOBILE\",\"value\":\"9876543210\"}],\"patient_name\":\"Asha Devi\"," +
-                "\"request_id\":\"req-1\",\"txn_id\":\"txn-1\",\"year_of_birth\":1990,\"hip_id\":\"TANUH\",\"oid\":\"oid-1\"}}");
+                "\"request_id\":\"req-1\",\"txn_id\":\"txn-1\",\"year_of_birth\":1990,\"hip_id\":\"test-hip\",\"oid\":\"oid-1\"}}");
     }
 
     private static JsonNode linkInitEvent(String careContext) {

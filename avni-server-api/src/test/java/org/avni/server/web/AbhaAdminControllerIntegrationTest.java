@@ -47,13 +47,13 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     @Test
     public void nonSuperAdminIsRefused() {
         setUser("demo-admin");
-        assertEquals(HttpStatus.FORBIDDEN, put(DEMO, config("TANUH"), null).getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, put(DEMO, config("test-hip"), null).getStatusCode());
         assertEquals(HttpStatus.FORBIDDEN, get(DEMO).getStatusCode());
     }
 
     @Test
     public void superAdminActingAsAnOrganisationIs400() {
-        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, config("TANUH"), DEMO).getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, config("test-hip"), DEMO).getStatusCode());
     }
 
     @Test
@@ -65,8 +65,8 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         jdbc.update("insert into organisation (name, db_user, media_directory, uuid, parent_organisation_id, schema_name, category_id, status_id, account_id) " +
                 "values ('eka-other', 'eka_other', 'eka-other', ?, 1, 'eka_other', 1, 1, ?)", otherOrganisation, accountId);
 
-        assertEquals(HttpStatus.NOT_FOUND, put(otherOrganisation, config("TANUH"), null).getStatusCode());
-        assertEquals(HttpStatus.NOT_FOUND, put(UUID.randomUUID().toString(), config("TANUH"), null).getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, put(otherOrganisation, config("test-hip"), null).getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, put(UUID.randomUUID().toString(), config("test-hip"), null).getStatusCode());
     }
 
     @Test
@@ -74,7 +74,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         // Loaded as super admin: once acting as one organisation, the other's users are filtered out.
         User demoAdmin = userRepository.findByUsername("demo-admin");
         User aDemoAdmin = userRepository.findByUsername("a-demo-admin");
-        assertEquals(HttpStatus.OK, put(DEMO, config("TANUH"), null).getStatusCode());
+        assertEquals(HttpStatus.OK, put(DEMO, config("test-hip"), null).getStatusCode());
 
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
         assertEquals(DEMO_ID, jdbc.queryForObject("select organisation_id from public.external_system_config where system_name = 'Eka'", Long.class));
@@ -90,7 +90,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void savedRowHoldsNoPlaintextSecret() throws Exception {
-        assertEquals(HttpStatus.OK, put(DEMO, config("TANUH"), null).getStatusCode());
+        assertEquals(HttpStatus.OK, put(DEMO, config("test-hip"), null).getStatusCode());
 
         String stored = storedConfig();
         assertFalse(stored, stored.contains("test-secret-value"));
@@ -102,7 +102,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void getHidesSecrets() throws Exception {
-        put(DEMO, config("TANUH", "TANUH-2"), null);
+        put(DEMO, config("test-hip", "test-hip-2"), null);
 
         ResponseEntity<String> response = get(DEMO);
 
@@ -110,7 +110,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         JsonNode body = mapper.readTree(response.getBody());
         assertEquals("sandbox", body.get("environment").asText());
         assertEquals("client-1", body.get("clientId").asText());
-        assertEquals("[\"TANUH\",\"TANUH-2\"]", body.get("hipIds").toString());
+        assertEquals("[\"test-hip\",\"test-hip-2\"]", body.get("hipIds").toString());
         assertEquals("demo-admin", body.get("avniSystemUser").asText());
         assertTrue(body.get("clientSecretSet").asBoolean());
         assertTrue(body.get("webhookSigningKeySet").asBoolean());
@@ -126,20 +126,20 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void omittedSecretKeepsStoredValue() throws Exception {
-        put(DEMO, config("TANUH"), null);
+        put(DEMO, config("test-hip"), null);
         EkaSystemConfig first = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
 
-        Map<String, Object> withoutSecrets = config("TANUH");
+        Map<String, Object> withoutSecrets = config("test-hip");
         withoutSecrets.remove("clientSecret");
         withoutSecrets.remove("webhookSigningKey");
-        withoutSecrets.put("hipIds", Arrays.asList("TANUH", "TANUH-3"));
+        withoutSecrets.put("hipIds", Arrays.asList("test-hip", "test-hip-3"));
         assertEquals(HttpStatus.OK, put(DEMO, withoutSecrets, null).getStatusCode());
         EkaSystemConfig second = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
-        assertEquals(Arrays.asList("TANUH", "TANUH-3"), second.getHipIds());
+        assertEquals(Arrays.asList("test-hip", "test-hip-3"), second.getHipIds());
         assertEquals(first.getEncryptedClientSecret(), second.getEncryptedClientSecret());
         assertEquals(first.getEncryptedWebhookSigningKey(), second.getEncryptedWebhookSigningKey());
 
-        Map<String, Object> newSecret = config("TANUH");
+        Map<String, Object> newSecret = config("test-hip");
         newSecret.put("clientSecret", "rotated-secret-value");
         put(DEMO, newSecret, null);
         assertEquals("rotated-secret-value", ekaCredentialCipher.decrypt(externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID).getEncryptedClientSecret()));
@@ -151,28 +151,28 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     // The stored secret belongs to the stored client and environment; keeping it for another would fail every login at Eka.
     @Test
     public void changingClientOrEnvironmentWithoutSecretIs400() {
-        put(DEMO, config("TANUH"), null);
+        put(DEMO, config("test-hip"), null);
 
-        Map<String, Object> otherClient = config("TANUH");
+        Map<String, Object> otherClient = config("test-hip");
         otherClient.remove("clientSecret");
         otherClient.put("clientId", "client-2");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherClient, null).getStatusCode());
 
-        Map<String, Object> otherEnvironment = config("TANUH");
+        Map<String, Object> otherEnvironment = config("test-hip");
         otherEnvironment.remove("clientSecret");
         otherEnvironment.put("environment", "production");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherEnvironment, null).getStatusCode());
 
-        Map<String, Object> otherClientWithSecret = config("TANUH");
+        Map<String, Object> otherClientWithSecret = config("test-hip");
         otherClientWithSecret.put("clientId", "client-2");
         assertEquals(HttpStatus.OK, put(DEMO, otherClientWithSecret, null).getStatusCode());
     }
 
     @Test
     public void omittedAvniSystemUserKeepsStoredValue() throws Exception {
-        put(DEMO, config("TANUH"), null);
+        put(DEMO, config("test-hip"), null);
 
-        Map<String, Object> withoutUser = config("TANUH");
+        Map<String, Object> withoutUser = config("test-hip");
         withoutUser.remove("avniSystemUser");
         assertEquals(HttpStatus.OK, put(DEMO, withoutUser, null).getStatusCode());
 
@@ -181,12 +181,12 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void recordSharingSettingsAreStoredWithTheSharingSecretEncryptedAndNeverReturned() throws Exception {
-        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("TANUH", "TANUH-2")), null).getStatusCode());
+        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("test-hip", "test-hip-2")), null).getStatusCode());
 
         String stored = storedConfig();
         assertFalse(stored, stored.contains("test-sharing-secret"));
         EkaSystemConfig config = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
-        assertEquals(Map.of("TANUH", "First Centre", "TANUH-2", "Second Centre"), config.getHipNames());
+        assertEquals(Map.of("test-hip", "First Centre", "test-hip-2", "Second Centre"), config.getHipNames());
         assertEquals("hiu-1", config.getHiuId());
         assertEquals("clinic-1", config.getClinicId());
         assertEquals("doctor-1", config.getDoctorOid());
@@ -195,7 +195,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
         ResponseEntity<String> response = get(DEMO);
         JsonNode body = mapper.readTree(response.getBody());
-        assertEquals("First Centre", body.at("/hipNames/TANUH").asText());
+        assertEquals("First Centre", body.at("/hipNames/test-hip").asText());
         assertEquals("hiu-1", body.get("hiuId").asText());
         assertEquals("clinic-1", body.get("clinicId").asText());
         assertEquals("doctor-1", body.get("doctorOid").asText());
@@ -209,7 +209,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     // The webhook ID is part of the address Eka is given: made once, by the server, and kept.
     @Test
     public void theWebhookIdIsMadeOnTheFirstSaveNeverTakenFromTheRequestAndNeverChanged() throws Exception {
-        Map<String, Object> request = config("TANUH");
+        Map<String, Object> request = config("test-hip");
         request.put("webhookId", "chosen-by-the-caller");
         assertEquals(HttpStatus.OK, put(DEMO, request, null).getStatusCode());
         String webhookId = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID).getWebhookId();
@@ -223,10 +223,10 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void omittedRecordSharingSettingsAreKept_andABlankOneIsCleared() throws Exception {
-        put(DEMO, withRecordSharing(config("TANUH", "TANUH-2")), null);
+        put(DEMO, withRecordSharing(config("test-hip", "test-hip-2")), null);
         EkaSystemConfig first = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
 
-        assertEquals(HttpStatus.OK, put(DEMO, config("TANUH", "TANUH-2"), null).getStatusCode());
+        assertEquals(HttpStatus.OK, put(DEMO, config("test-hip", "test-hip-2"), null).getStatusCode());
         EkaSystemConfig kept = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
         assertEquals(first.getHipNames(), kept.getHipNames());
         assertEquals("hiu-1", kept.getHiuId());
@@ -235,14 +235,14 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         assertEquals("sharing-client-1", kept.getSharingClientId());
         assertEquals(first.getEncryptedSharingClientSecret(), kept.getEncryptedSharingClientSecret());
 
-        Map<String, Object> noHiu = config("TANUH");
+        Map<String, Object> noHiu = config("test-hip");
         noHiu.put("hiuId", "");
         assertEquals(HttpStatus.OK, put(DEMO, noHiu, null).getStatusCode());
         EkaSystemConfig cleared = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
         assertNull(cleared.getHiuId());
-        assertEquals("a centre no longer listed keeps no name", Map.of("TANUH", "First Centre"), cleared.getHipNames());
+        assertEquals("a centre no longer listed keeps no name", Map.of("test-hip", "First Centre"), cleared.getHipNames());
 
-        Map<String, Object> noSharingClient = config("TANUH");
+        Map<String, Object> noSharingClient = config("test-hip");
         noSharingClient.put("sharingClientId", "");
         assertEquals(HttpStatus.OK, put(DEMO, noSharingClient, null).getStatusCode());
         EkaSystemConfig noClient = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
@@ -253,20 +253,20 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     // The stored sharing secret belongs to the stored sharing client and environment, as the M1 secret does.
     @Test
     public void aSharingClientWithoutItsSecretIs400() {
-        Map<String, Object> firstWithoutSecret = withRecordSharing(config("TANUH"));
+        Map<String, Object> firstWithoutSecret = withRecordSharing(config("test-hip"));
         firstWithoutSecret.remove("sharingClientSecret");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, firstWithoutSecret, null).getStatusCode());
 
-        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("TANUH")), null).getStatusCode());
-        Map<String, Object> otherClient = config("TANUH");
+        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("test-hip")), null).getStatusCode());
+        Map<String, Object> otherClient = config("test-hip");
         otherClient.put("sharingClientId", "sharing-client-2");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherClient, null).getStatusCode());
 
-        Map<String, Object> otherEnvironment = config("TANUH");
+        Map<String, Object> otherEnvironment = config("test-hip");
         otherEnvironment.put("environment", "production");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherEnvironment, null).getStatusCode());
 
-        Map<String, Object> secretWithoutClient = config("TANUH");
+        Map<String, Object> secretWithoutClient = config("test-hip");
         secretWithoutClient.put("sharingClientId", "");
         secretWithoutClient.put("sharingClientSecret", "test-sharing-secret");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, secretWithoutClient, null).getStatusCode());
@@ -275,13 +275,13 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     // The M1 client's token is handed to the phone; record sharing must never log in as that client (H1).
     @Test
     public void aSharingClientThatIsTheM1ClientIs400OnTheFirstSave() {
-        Map<String, Object> same = withRecordSharing(config("TANUH"));
+        Map<String, Object> same = withRecordSharing(config("test-hip"));
         same.put("sharingClientId", "client-1");
         ResponseEntity<String> response = put(DEMO, same, null);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertTrue(response.getBody(), response.getBody().contains("sharingClientId"));
 
-        Map<String, Object> sameWithSpaces = withRecordSharing(config("TANUH"));
+        Map<String, Object> sameWithSpaces = withRecordSharing(config("test-hip"));
         sameWithSpaces.put("sharingClientId", " client-1 ");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, sameWithSpaces, null).getStatusCode());
         assertEquals(Integer.valueOf(0), new JdbcTemplate(dataSource).queryForObject(
@@ -290,15 +290,15 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void anUpdateThatMakesTheSharingClientTheM1ClientIs400() throws Exception {
-        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("TANUH")), null).getStatusCode());
+        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("test-hip")), null).getStatusCode());
         EkaSystemConfig before = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
 
-        Map<String, Object> sharingBecomesM1 = config("TANUH");
+        Map<String, Object> sharingBecomesM1 = config("test-hip");
         sharingBecomesM1.put("sharingClientId", "client-1");
         sharingBecomesM1.put("sharingClientSecret", "test-secret-value");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, sharingBecomesM1, null).getStatusCode());
 
-        Map<String, Object> m1BecomesSharing = config("TANUH");
+        Map<String, Object> m1BecomesSharing = config("test-hip");
         m1BecomesSharing.put("clientId", "sharing-client-1");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, m1BecomesSharing, null).getStatusCode());
 
@@ -310,18 +310,18 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void aNameForACentreNotListedIs400() {
-        Map<String, Object> request = config("TANUH");
-        request.put("hipNames", Map.of("TANUH-9", "Elsewhere"));
+        Map<String, Object> request = config("test-hip");
+        request.put("hipNames", Map.of("test-hip-9", "Elsewhere"));
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, request, null).getStatusCode());
 
-        Map<String, Object> blankName = config("TANUH");
-        blankName.put("hipNames", Map.of("TANUH", " "));
+        Map<String, Object> blankName = config("test-hip");
+        blankName.put("hipNames", Map.of("test-hip", " "));
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, blankName, null).getStatusCode());
     }
 
     @Test
     public void missingEnvironmentIs400() {
-        Map<String, Object> request = config("TANUH");
+        Map<String, Object> request = config("test-hip");
         request.remove("environment");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, request, null).getStatusCode());
     }
@@ -337,7 +337,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         for (int i = 0; i < 6; i++) {
             results.add(pool.submit(() -> {
                 start.await();
-                return put(DEMO, config("TANUH"), null).getStatusCode();
+                return put(DEMO, config("test-hip"), null).getStatusCode();
             }));
         }
         start.countDown();
@@ -353,7 +353,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     // The Spring Data REST export would hand any of the organisation's users, field users included, the encrypted secrets.
     @Test
     public void ekaRowIsNotExposedOverSpringDataRest() {
-        put(DEMO, config("TANUH"), null);
+        put(DEMO, config("test-hip"), null);
         setUser("demo-admin");
 
         ResponseEntity<String> collection = template.getForEntity("/externalSystemConfigs", String.class);
@@ -367,38 +367,38 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
 
     @Test
     public void firstSaveWithoutSecretIs400() {
-        Map<String, Object> withoutSecret = config("TANUH");
+        Map<String, Object> withoutSecret = config("test-hip");
         withoutSecret.remove("clientSecret");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, withoutSecret, null).getStatusCode());
     }
 
     @Test
     public void hipIdListedByAnotherOrganisationIsRefused() {
-        assertEquals(HttpStatus.OK, put(DEMO, config("TANUH"), null).getStatusCode());
+        assertEquals(HttpStatus.OK, put(DEMO, config("test-hip"), null).getStatusCode());
 
-        Map<String, Object> clash = config("TANUH-2", "TANUH");
+        Map<String, Object> clash = config("test-hip-2", "test-hip");
         clash.put("avniSystemUser", "a-demo-admin");
         ResponseEntity<String> response = put(A_DEMO, clash, null);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertTrue(response.getBody(), response.getBody().contains("TANUH"));
-        assertEquals("the organisation's own health centre IDs are not a clash", HttpStatus.OK, put(DEMO, config("TANUH"), null).getStatusCode());
+        assertTrue(response.getBody(), response.getBody().contains("test-hip"));
+        assertEquals("the organisation's own health centre IDs are not a clash", HttpStatus.OK, put(DEMO, config("test-hip"), null).getStatusCode());
     }
 
     @Test
     public void unknownEnvironmentIs400() {
-        Map<String, Object> request = config("TANUH");
+        Map<String, Object> request = config("test-hip");
         request.put("environment", "staging");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, request, null).getStatusCode());
     }
 
     @Test
     public void avniSystemUserFromOtherOrganisationIs400() {
-        Map<String, Object> otherOrganisationsUser = config("TANUH");
+        Map<String, Object> otherOrganisationsUser = config("test-hip");
         otherOrganisationsUser.put("avniSystemUser", "a-demo-admin");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherOrganisationsUser, null).getStatusCode());
 
-        Map<String, Object> unknownUser = config("TANUH");
+        Map<String, Object> unknownUser = config("test-hip");
         unknownUser.put("avniSystemUser", "nobody@demo");
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, unknownUser, null).getStatusCode());
     }
@@ -420,7 +420,7 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     }
 
     private static Map<String, Object> withRecordSharing(Map<String, Object> request) {
-        Map<String, String> names = new HashMap<>(Map.of("TANUH", "First Centre", "TANUH-2", "Second Centre"));
+        Map<String, String> names = new HashMap<>(Map.of("test-hip", "First Centre", "test-hip-2", "Second Centre"));
         names.keySet().retainAll((List<?>) request.get("hipIds"));
         request.put("hipNames", names);
         request.put("hiuId", "hiu-1");

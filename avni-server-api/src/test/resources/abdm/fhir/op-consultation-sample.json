@@ -41,10 +41,10 @@
         "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000004",
         "display" : "Kavya R"
       } ],
-      "title" : "Hypertension Screening — TANUH Health Centre",
+      "title" : "Hypertension Screening — Test Health Centre",
       "custodian" : {
         "reference" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000005",
-        "display" : "TANUH Health Centre"
+        "display" : "Test Health Centre"
       },
       "section" : [ {
         "title" : "Findings",
@@ -149,9 +149,9 @@
           "text" : "Provider number"
         },
         "system" : "https://facility.ndhm.gov.in",
-        "value" : "TANUH"
+        "value" : "test-hip"
       } ],
-      "name" : "TANUH Health Centre"
+      "name" : "Test Health Centre"
     }
   }, {
     "fullUrl" : "urn:uuid:7b3e9c1a-5d2f-4a8b-9c0d-000000000006",
@@ -275,7 +275,7 @@
           "contentType" : "application/pdf",
           "language" : "en-IN",
           "data" : "JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFs0IDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nID4+CmVuZG9iago0IDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgNTk1IDg0Ml0gL1Jlc291cmNlcyA8PCAvRm9udCA8PCAvRjEgMyAwIFIgPj4gPj4gL0NvbnRlbnRzIDUgMCBSID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggNDYzID4+CnN0cmVhbQpCVAovRjEgMTQgVGYKMSAwIDAgMSA1MCA3OTIgVG0KKEh5cGVydGVuc2lvbiBTY3JlZW5pbmcgLSBUQU5VSCBIZWFsdGggQ2VudHJlKSBUagovRjEgMTAgVGYKMSAwIDAgMSA1MCA3NjQgVG0KKFBhdGllbnQ6IExha3NobWkgRGV2aSkgVGoKMSAwIDAgMSA1MCA3NTAgVG0KKEZhY2lsaXR5OiBUQU5VSCBIZWFsdGggQ2VudHJlKSBUagoxIDAgMCAxIDUwIDczNiBUbQooU2VlbiBieTogS2F2eWEgUikgVGoKMSAwIDAgMSA1MCA3MjIgVG0KKERhdGU6IDIwMjYtMTAtMjBUMDQ6NDU6MDAuMDAwWikgVGoKMSAwIDAgMSA1MCA3MDggVG0KKCkgVGoKMSAwIDAgMSA1MCA2OTQgVG0KKFN5c3RvbGljIGJsb29kIHByZXNzdXJlOiAxMzAgbW1IZykgVGoKMSAwIDAgMSA1MCA2ODAgVG0KKERpYXN0b2xpYyBibG9vZCBwcmVzc3VyZTogODUgbW1IZykgVGoKMSAwIDAgMSA1MCA2NjYgVG0KKFRvYmFjY28gdXNlOiBZZXMpIFRqCkVUCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDA5IDAwMDAwIG4gCjAwMDAwMDAwNTggMDAwMDAgbiAKMDAwMDAwMDExNSAwMDAwMCBuIAowMDAwMDAwMjEyIDAwMDAwIG4gCjAwMDAwMDAzMzggMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA2IC9Sb290IDEgMCBSID4+CnN0YXJ0eHJlZgo4NTIKJSVFT0YK",
-          "title" : "Hypertension Screening — TANUH Health Centre",
+          "title" : "Hypertension Screening — Test Health Centre",
           "creation" : "2026-10-20T04:45:00.000Z"
         }
       } ]

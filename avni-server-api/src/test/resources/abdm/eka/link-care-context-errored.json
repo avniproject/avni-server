@@ -7,8 +7,8 @@
   "business_id": "demo-business",
   "client_id": "demo-client",
   "data": {
-    "abha_address": "demo.patient@sbx",
-    "hip_id": "TANUH",
+    "abha_address": "test.patient@sbx",
+    "hip_id": "test-hip",
     "care_context_id": "enc-2",
     "status": "ERRORED",
     "error": {"code": "ABDM-1035", "message": "Invalid HIP ID"},
