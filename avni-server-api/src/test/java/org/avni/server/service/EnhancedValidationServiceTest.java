@@ -17,6 +17,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -133,5 +134,60 @@ public class EnhancedValidationServiceTest {
         decisions = Arrays.asList(decision);
 
         enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+    }
+
+    @Test
+    public void answerToAQuestionNotOnTheFormIsAValidationErrorNotACrash() {
+        entityConceptMap.put(firstNonCodedConcept.getUuid(), firstNonCodedConceptFormElement);
+        Concept notOnTheForm = new ConceptBuilder().withDataType(ConceptDataType.Text).withName("notOnTheForm").withUuid("a1b2c3d4-0000-4000-8000-000000000001").build();
+        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
+        when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
+        when(conceptRepository.findByUuid(notOnTheForm.getUuid())).thenReturn(notOnTheForm);
+        observationRequests.add(observationFor(notOnTheForm, "Dummy"));
+
+        try {
+            enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+            Assert.fail("expected a validation error");
+        } catch (ValidationException e) {
+            Assert.assertTrue(e.getMessage().contains(notOnTheForm.getUuid()));
+        }
+    }
+
+    @Test
+    public void answerToAQuestionNotOnTheFormIsSavedWhenValidationErrorsDoNotFail() throws ValidationException {
+        entityConceptMap.put(firstNonCodedConcept.getUuid(), firstNonCodedConceptFormElement);
+        Concept notOnTheForm = new ConceptBuilder().withDataType(ConceptDataType.Text).withName("notOnTheForm").withUuid("a1b2c3d4-0000-4000-8000-000000000001").build();
+        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(false);
+        when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
+        when(conceptRepository.findByUuid(notOnTheForm.getUuid())).thenReturn(notOnTheForm);
+        observationRequests.add(observationFor(notOnTheForm, "Dummy"));
+
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+    }
+
+    @Test
+    public void unknownDecisionNameIsAValidationErrorNotACrash() {
+        entityConceptMap.put(firstNonCodedConcept.getUuid(), firstNonCodedConceptFormElement);
+        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
+        when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
+        Decision decision = new Decision();
+        decision.setName("No such decision");
+        decision.setValue("x");
+        decisions.add(decision);
+
+        try {
+            enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+            Assert.fail("expected a validation error");
+        } catch (ValidationException e) {
+            Assert.assertTrue(e.getMessage().contains("No such decision"));
+        }
+    }
+
+    private ObservationRequest observationFor(Concept concept, Object value) {
+        ObservationRequest observationRequest = new ObservationRequest();
+        observationRequest.setConceptUUID(concept.getUuid());
+        observationRequest.setConceptName(concept.getName());
+        observationRequest.setValue(value);
+        return observationRequest;
     }
 }
