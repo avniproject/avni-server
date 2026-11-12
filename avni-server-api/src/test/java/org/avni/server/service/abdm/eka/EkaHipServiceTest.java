@@ -792,6 +792,58 @@ public class EkaHipServiceTest {
         verify(store, times(2)).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
     }
 
+    // The record sent names the patient by the verified ABHA, never the record's typed answers: a typed address that is not
+    // the verified one, or a typed answer with no number while the verified ABHA has one.
+    @Test
+    public void theRecordSentNamesThePatientByTheVerifiedAbha() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        String[][] cases = {
+                // typed number, typed address, verified address, expected address
+                {"12345678568912", "asha.devi", "asha.real@sbx", "asha.real@sbx"},
+                {null, "asha.devi", "asha.devi@sbx", "asha.devi@sbx"}};
+        for (String[] c : cases) {
+            reset(assembler);
+            when(assembler.assemble(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> new CareContextDocument(
+                    ((org.avni.server.domain.AbstractEncounter) inv.getArgument(0)).getUuid(), "OPD Visit", null, "subject-1", "Asha Devi", "Female", null,
+                    null, null, null, HIP_ID, "TANUH Health Centre", List.of()));
+            AbhaLink link = new AbhaLink();
+            link.setAbhaNumber(c[0]);
+            link.setAbhaAddress(c[1]);
+            when(abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(INDIVIDUAL_ID)).thenReturn(Optional.of(link));
+            when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                    .thenReturn(List.of(abhaEvent("linked", OID, c[2], "12345678568912")));
+            FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+
+            service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+            verify(assembler, times(2)).assemble(any(), any(), eq("12-3456-7856-8912"), eq(c[3]), eq(HIP_ID), any());
+        }
+    }
+
+    // A verified ABHA with a number and no address is still the patient's: linked and served under the number's default
+    // address, its 14 digits with the environment's suffix.
+    @Test
+    public void aVerifiedAbhaWithNoAddressLinksAndServesUnderItsNumbersDefaultAddress() {
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", OID, null, "12345678568912")));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals("12345678568912@sbx", body.getValue().get("abha_address").asText());
+
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) fetch.get("data")).put("abha_address", "12345678568912@sbx").remove("oid");
+
+        service.hipDataFetch(fetch);
+
+        verify(eka).postSlow(eq(ON_FETCH), any(), any());
+        verify(assembler, times(2)).assemble(any(), any(), eq("12-3456-7856-8912"), eq("12345678568912@sbx"), eq(HIP_ID), any());
+    }
+
     // The link goes to Eka under the verified ABHA's address, never a typed one.
     @Test
     public void linkingSendsTheVerifiedAbhasAddressNotTheTypedOne() {

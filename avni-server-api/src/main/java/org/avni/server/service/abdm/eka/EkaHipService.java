@@ -145,8 +145,8 @@ public class EkaHipService implements EkaHipEvents {
                 .orElse(null));
         if (abha == null) throw new NoVerifiedAbha();
         // The verified ABHA's own address: the record's ABHA answers are typed, and a typed one may be someone else's.
-        String abhaAddress = AbdmFlows.withSuffix(abha.getAbhaAddress(), abhaAddressSuffix);
-        if (abhaAddress == null) throw AbdmRequestException.conflict("This subject's verified ABHA has no address");
+        String abhaAddress = verifiedAddress(abha, abhaAddressSuffix);
+        if (abhaAddress == null) throw AbdmRequestException.conflict("This subject's verified ABHA has neither an address nor a number");
         return new EkaPatient(abhaAddress, abha.getEkaOid());
     }
 
@@ -433,17 +433,23 @@ public class EkaHipService implements EkaHipEvents {
         }
     }
 
+    // The verified ABHA's address, else its number's default address: its 14 digits with the environment's suffix.
+    static String verifiedAddress(AbhaEvent verified, String abhaAddressSuffix) {
+        String address = AbdmFlows.withSuffix(verified.getAbhaAddress(), abhaAddressSuffix);
+        if (address != null) return address;
+        String number = AbdmFlows.digitsOnly(verified.getAbhaNumber());
+        return number.length() == 14 && abhaAddressSuffix != null ? number + abhaAddressSuffix : null;
+    }
+
     private static final String NOT_THEIRS = "the ABHA asking is no longer the patient's";
     private static final String NAMES_NO_ABHA = "the request names no patient's ABHA";
 
     // Why the ABHA asking may not have the patient's records; null when it may. It must be the ABHA on the record, one Eka
     // verified (its record carries an Eka ID), named by that record itself: its Eka ID when Eka gives one, else its
     // address or its number's default address. The record's typed ABHA answers never count on their own.
-    private String abhaProblem(AbhaLink link, String subjectUuid, String requesterOid, String requesterAddress) {
+    private static String abhaProblem(AbhaLink link, Optional<AbhaEvent> verified, String requesterOid, String requesterAddress) {
         if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return NAMES_NO_ABHA;
         if (link == null) return NOT_THEIRS;
-        Optional<AbhaEvent> verified = AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
-                link.getAbhaNumber(), link.getAbhaAddress());
         if (verified.isEmpty()) return "the patient's ABHA is not verified with Eka";
         if (StringUtils.hasText(requesterOid)) return requesterOid.equals(verified.get().getEkaOid()) ? null : NOT_THEIRS;
         return AbdmFlows.namesAbha(requesterAddress, verified.get().getAbhaAddress(), verified.get().getAbhaNumber()) ? null : NOT_THEIRS;
@@ -476,14 +482,17 @@ public class EkaHipService implements EkaHipEvents {
                     return new Prepared(reference, null, "belongs to another patient");
                 }
                 AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
+                Optional<AbhaEvent> verified = link == null ? Optional.empty() : AbhaEventService.ofSavedAbha(
+                        abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(individual.getUuid()), link.getAbhaNumber(), link.getAbhaAddress());
                 // A visit stays linked at NHA under the ABHA it was linked with; once the record holds another ABHA, or
                 // none, or one Eka never verified, that ABHA gets nothing.
-                String abhaProblem = abhaProblem(link, individual.getUuid(), requesterOid, requesterAddress);
+                String abhaProblem = abhaProblem(link, verified, requesterOid, requesterAddress);
                 if (abhaProblem != null) return new Prepared(reference, null, abhaProblem);
+                // The record names the patient by the verified ABHA, never by the record's typed answers.
+                String number = AbdmFlows.digitsOnly(verified.get().getAbhaNumber());
                 CareContextDocument document = assembler.assemble(encounter, individual,
-                        link == null ? null : AbdmFlows.hyphenatedAbhaNumber(link.getAbhaNumber()),
-                        link == null ? null : AbdmFlows.withSuffix(link.getAbhaAddress(), orgSettings.getAbhaAddressSuffix()),
-                        hipId, orgSettings.getHipName(hipId));
+                        number.isEmpty() ? null : AbdmFlows.hyphenatedAbhaNumber(number),
+                        verifiedAddress(verified.get(), orgSettings.getAbhaAddressSuffix()), hipId, orgSettings.getHipName(hipId));
                 return new Prepared(reference, AbdmJson.write(builder.build(document)), null);
             });
         } catch (RuntimeException e) {
