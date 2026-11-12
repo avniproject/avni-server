@@ -132,6 +132,40 @@ public class EkaHipDiscoveryTest {
         assertEquals(0, sent(ON_DISCOVER).path("patients").size());
     }
 
+    // The record's ABHA answers are typed: a verified number with a typed address that is not the verified ABHA's matches
+    // nobody by that address, and still matches by the verified number.
+    @Test
+    public void aTypedAddressThatIsNotTheVerifiedAbhasOffersNothing_whileTheVerifiedNumberStillFindsThePatient() {
+        AbhaLink link = new AbhaLink();
+        link.setAbhaNumber("12345678568912");
+        link.setAbhaAddress("asha.devi");
+        when(abhaLinks.findByIndividualIdAndIsVoidedFalse(7L)).thenReturn(Optional.of(link));
+        AbhaEvent record = new AbhaEvent();
+        record.setSubjectUuid("subject-1");
+        record.setAction("linked");
+        record.setAbhaNumber("12345678568912");
+        record.setAbhaAddress("asha.real@sbx");
+        record.setEkaOid("oid-1");
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(record));
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(store.findSubjectsByAbhaNumber("12345678568912")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+
+        discovery.discover(discoverEvent());
+
+        assertEquals(0, sent(ON_DISCOVER).path("patients").size());
+        verify(linking, never()).loadPatient(anyString());
+
+        org.mockito.Mockito.reset(eka);
+        when(eka.postSlow(anyString(), any(), any())).thenReturn(new EkaResponse("r", 204, null));
+        ObjectNode byNumber = (ObjectNode) discoverEvent();
+        ((ObjectNode) byNumber.get("data")).remove("abha_address");
+        ((com.fasterxml.jackson.databind.node.ArrayNode) byNumber.at("/data/identifiers")).addObject().put("type", "ABHA_NUMBER").put("value", "12-3456-7856-8912");
+
+        discovery.discover(byNumber);
+
+        assertEquals("subject-1", sent(ON_DISCOVER).at("/patients/0/ref_num").asText());
+    }
+
     // Of two patients holding the typed ABHA, the one Eka verified is the one it is.
     @Test
     public void ofTwoHoldingTheTypedAbhaTheVerifiedOneIsOffered() {

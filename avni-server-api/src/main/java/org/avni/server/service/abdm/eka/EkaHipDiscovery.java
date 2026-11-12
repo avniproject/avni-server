@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.AbhaLinkRepository;
+import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmOrgContext;
@@ -119,12 +120,13 @@ public class EkaHipDiscovery {
     private Match find(JsonNode data, String abhaAddressSuffix) {
         String abhaAddress = AbdmFlows.firstNonNull(AbdmJson.text(data, "abha_address"), identifier(data, "ABHAADDRESS"));
         if (abhaAddress != null) {
-            Match m = one(verified(store.findSubjectsByAbhaAddress(abhaAddress, abhaAddressSuffix)));
+            Match m = one(verified(store.findSubjectsByAbhaAddress(abhaAddress, abhaAddressSuffix),
+                    record -> AbdmFlows.namesAbha(abhaAddress, record.getAbhaAddress(), record.getAbhaNumber())));
             if (m != null) return m;
         }
         String number = AbdmFlows.digitsOnly(identifier(data, "ABHANUMBER"));
         if (number.length() == 14) {
-            Match m = one(verified(store.findSubjectsByAbhaNumber(number)));
+            Match m = one(verified(store.findSubjectsByAbhaNumber(number), record -> number.equals(AbdmFlows.digitsOnly(record.getAbhaNumber()))));
             if (m != null) return m;
         }
         String name = AbdmJson.text(data, "patient_name");
@@ -144,12 +146,14 @@ public class EkaHipDiscovery {
         return m != null ? m : new Match(null, "No patient found at this facility");
     }
 
-    // Only subjects whose saved ABHA Eka verified (its record carries an Eka ID): a typed ABHA nobody checked, a digit off,
-    // would hand this patient's name and visits to whoever holds the ABHA typed.
-    private List<AbdmHipStore.Subject> verified(List<AbdmHipStore.Subject> subjects) {
+    // Only subjects whose saved ABHA Eka verified (its record carries an Eka ID), and only when the identifier asked is that
+    // record's own: the record's ABHA answers are typed, and a typed one nobody checked, a digit off, would hand this
+    // patient's name and visits to whoever holds the ABHA typed.
+    private List<AbdmHipStore.Subject> verified(List<AbdmHipStore.Subject> subjects, java.util.function.Predicate<AbhaEvent> asked) {
         return subjects.stream().filter(s -> orgContext.inReadOnlyTransaction(() -> abhaLinks.findByIndividualIdAndIsVoidedFalse(s.id())
                 .flatMap(link -> AbhaEventService.ofSavedAbha(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid()),
                         link.getAbhaNumber(), link.getAbhaAddress()))
+                .filter(asked)
                 .isPresent())).toList();
     }
 

@@ -754,17 +754,55 @@ public class EkaHipServiceTest {
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
     }
 
-    // The ABHA number's own default address (its 14 digits) is the same ABHA as the readable one on the record.
+    // The verified ABHA number's own default address (its 14 digits) is the same ABHA as its readable address.
     @Test
-    public void aRequestFromTheSavedNumbersDefaultAddressIsServed() {
+    public void aRequestFromTheVerifiedNumbersDefaultAddressIsServed() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", OID, "asha.devi@sbx", "12345678568912")));
         ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
-        ((ObjectNode) fetch.get("data")).put("oid", "oid-not-recorded").put("abha_address", "12345678568912@sbx");
+        ((ObjectNode) fetch.get("data")).put("abha_address", "12345678568912@sbx").remove("oid");
 
         service.hipDataFetch(fetch);
 
         verify(eka).postSlow(eq(ON_FETCH), any(), any());
+    }
+
+    // The record's ABHA answers are typed: the number may be the verified one while the address is not. Only the verified
+    // record's own identifiers count, and an Eka ID that is not the verified one refuses whatever address comes with it.
+    @Test
+    public void aTypedAddressThatIsNotTheVerifiedAbhasGetsNothing_norDoesAnotherEkaId() {
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", OID, "asha.real@sbx", "12345678568912")));
+        for (String[] asking : new String[][]{{null, "asha.devi@sbx"}, {"oid-someone-else", "asha.real@sbx"}}) {
+            reset(eka);
+            FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+            ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+            ObjectNode data = (ObjectNode) fetch.get("data");
+            data.put("abha_address", asking[1]);
+            if (asking[0] == null) data.remove("oid");
+            else data.put("oid", asking[0]);
+
+            service.hipDataFetch(fetch);
+
+            verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+        }
+        verify(store, times(2)).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
+    }
+
+    // The link goes to Eka under the verified ABHA's address, never a typed one.
+    @Test
+    public void linkingSendsTheVerifiedAbhasAddressNotTheTypedOne() {
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", OID, "asha.real@sbx", "12345678568912")));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals("asha.real@sbx", body.getValue().get("abha_address").asText());
     }
 
     // On 26 Oct Eka took over 10 s to take an on-fetch 3 times in 18, and each of those shares was lost.

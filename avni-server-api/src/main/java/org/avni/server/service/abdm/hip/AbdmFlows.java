@@ -57,6 +57,16 @@ public final class AbdmFlows {
             Pattern.compile("(?<![A-Za-z0-9])(?:\\+?91[- ]?|0)?(?:[6-9]\\d{9}|[6-9]\\d{4}[- ]\\d{5})" + WHOLE_END),
             Pattern.compile("(?<![\\w.])[\\w.]++@(?:sbx|abdm)\\b", Pattern.CASE_INSENSITIVE));
 
+    // Whether an ABHA address names this verified ABHA: its own address, or its number's default address (its 14 digits).
+    public static boolean namesAbha(String address, String verifiedAddress, String verifiedNumber) {
+        if (address == null || address.isBlank()) return false;
+        String asking = address.trim().split("@", 2)[0].toLowerCase(java.util.Locale.ROOT);
+        String name = verifiedAddress == null || verifiedAddress.isBlank() ? null
+                : verifiedAddress.trim().split("@", 2)[0].toLowerCase(java.util.Locale.ROOT);
+        String number = digitsOnly(verifiedNumber);
+        return asking.equals(name) || (number.length() == 14 && asking.equals(number));
+    }
+
     public static String withSuffix(String abhaAddress, String suffix) {
         if (abhaAddress == null || abhaAddress.isBlank()) return null;
         String a = abhaAddress.trim();

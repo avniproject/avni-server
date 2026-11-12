@@ -136,8 +136,9 @@ public class EkaHipService implements EkaHipEvents {
                 abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid), patient.abhaNumber(), patient.abhaAddress())
                 .orElse(null));
         if (abha == null) throw AbdmRequestException.conflict(NO_EKA_ID);
-        String abhaAddress = AbdmFlows.withSuffix(AbdmFlows.firstNonNull(patient.abhaAddress(), abha.getAbhaAddress()), abhaAddressSuffix);
-        if (abhaAddress == null) throw AbdmRequestException.conflict("This subject has no ABHA address");
+        // The verified ABHA's own address: the record's ABHA answers are typed, and a typed one may be someone else's.
+        String abhaAddress = AbdmFlows.withSuffix(abha.getAbhaAddress(), abhaAddressSuffix);
+        if (abhaAddress == null) throw AbdmRequestException.conflict("This subject's verified ABHA has no address");
         return new EkaPatient(abhaAddress, abha.getEkaOid());
     }
 
@@ -428,19 +429,16 @@ public class EkaHipService implements EkaHipEvents {
     private static final String NAMES_NO_ABHA = "the request names no patient's ABHA";
 
     // Why the ABHA asking may not have the patient's records; null when it may. It must be the ABHA on the record, one Eka
-    // verified (its record carries an Eka ID), asked by that Eka ID, its address, or the default address of its number.
+    // verified (its record carries an Eka ID), named by that record itself: its Eka ID when Eka gives one, else its
+    // address or its number's default address. The record's typed ABHA answers never count on their own.
     private String abhaProblem(AbhaLink link, String subjectUuid, String requesterOid, String requesterAddress) {
         if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return NAMES_NO_ABHA;
         if (link == null) return NOT_THEIRS;
         Optional<AbhaEvent> verified = AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
                 link.getAbhaNumber(), link.getAbhaAddress());
         if (verified.isEmpty()) return "the patient's ABHA is not verified with Eka";
-        if (StringUtils.hasText(requesterOid) && requesterOid.equals(verified.get().getEkaOid())) return null;
-        if (!StringUtils.hasText(requesterAddress)) return NOT_THEIRS;
-        String asking = requesterAddress.trim().split("@", 2)[0].toLowerCase(Locale.ROOT);
-        String savedName = link.getAbhaAddress() == null ? null : link.getAbhaAddress().trim().split("@", 2)[0].toLowerCase(Locale.ROOT);
-        String savedNumber = link.getAbhaNumber() == null ? "" : link.getAbhaNumber().replaceAll("[^0-9]", "");
-        return asking.equals(savedName) || (!savedNumber.isEmpty() && asking.equals(savedNumber)) ? null : NOT_THEIRS;
+        if (StringUtils.hasText(requesterOid)) return requesterOid.equals(verified.get().getEkaOid()) ? null : NOT_THEIRS;
+        return AbdmFlows.namesAbha(requesterAddress, verified.get().getAbhaAddress(), verified.get().getAbhaNumber()) ? null : NOT_THEIRS;
     }
 
     // ---- building
