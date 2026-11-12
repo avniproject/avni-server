@@ -198,6 +198,52 @@ public class AbdmJobRunnerTest {
         verify(jobRuns).failed(eq(1L), eq(TASK), anyString(), any());
     }
 
+    // F1: a duty such as erasure waits on no setting. When the system user is missing or cannot act for the organisation,
+    // the work given for that case runs for it with no user logged in, and the broken system user is still reported.
+    @Test
+    public void whenTheSystemUserCannotActTheWorkWithoutALoginRunsForTheOrganisation_andItIsStillReported() throws Exception {
+        organisation(1L, false, false, "user-of-no-organisation");
+        organisation(2L, false, false, null);
+        organisation(3L, false, false, "system-3");
+        List<Long> loggedIn = new ArrayList<>();
+        List<Long> withoutLogin = new ArrayList<>();
+        List<Object> usersDuringWithoutLogin = new ArrayList<>();
+
+        runner.forOrganisations(TASK, Duration.ofMinutes(4), () -> List.of(1L, 2L, 3L),
+                deadline -> loggedIn.add(UserContextHolder.getUserContext().getOrganisationId()),
+                organisationId -> {
+                    withoutLogin.add(organisationId);
+                    usersDuringWithoutLogin.add(UserContextHolder.getUserContext());
+                });
+
+        assertEquals(List.of(3L), loggedIn);
+        assertEquals(List.of(1L, 2L), withoutLogin);
+        assertEquals(java.util.Arrays.asList(null, null), usersDuringWithoutLogin);
+        verify(bugsnag, times(2)).notify(any(AbdmOrgContext.SystemUserException.class));
+        ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
+        verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
+        assertTrue(error.getValue(), error.getValue().contains("system user") && error.getValue().contains("without"));
+        verify(jobRuns).failed(eq(2L), eq(TASK), anyString(), any());
+        verify(jobRuns, never()).succeeded(eq(1L), any(), any());
+        verify(jobRuns).succeeded(eq(3L), eq(TASK), any());
+        assertNull(UserContextHolder.getUserContext());
+    }
+
+    @Test
+    public void aFailureOfTheWorkWithoutALoginIsReportedToo() throws Exception {
+        organisation(1L, false, false, null);
+        IllegalStateException failure = new IllegalStateException("database down");
+
+        runner.forOrganisations(TASK, Duration.ofMinutes(4), () -> List.of(1L), deadline -> fail("no login"), organisationId -> {
+            throw failure;
+        });
+
+        verify(bugsnag).notify(failure);
+        ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
+        verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
+        assertTrue(error.getValue(), error.getValue().contains("database down"));
+    }
+
     private void organisation(long id, boolean abha, boolean sharing, String systemUser) throws Exception {
         OrganisationConfig config = new OrganisationConfig();
         config.setOrganisationId(id);

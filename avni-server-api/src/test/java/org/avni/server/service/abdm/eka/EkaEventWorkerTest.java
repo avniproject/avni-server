@@ -33,9 +33,11 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -58,6 +60,7 @@ public class EkaEventWorkerTest {
     private ObjectProvider<EkaHiuEvents> hiuProvider;
     private final MovingClock clock = new MovingClock(NOW);
     private final List<AbdmOrganisation> ranAs = new ArrayList<>();
+    private final List<Boolean> withoutLogin = new ArrayList<>();
     private EkaEventWorker worker;
     private long nextId = 1;
 
@@ -71,6 +74,10 @@ public class EkaEventWorkerTest {
             ((Runnable) inv.getArgument(1)).run();
             return null;
         }).when(orgContext).runAs(any(), any());
+        when(orgContext.withoutLogin(any())).thenAnswer(inv -> {
+            withoutLogin.add(true);
+            return ((java.util.function.Supplier<?>) inv.getArgument(0)).get();
+        });
         ObjectProvider<EkaHipEvents> hipProvider = mock(ObjectProvider.class);
         hiuProvider = mock(ObjectProvider.class);
         ObjectProvider<EkaHipDiscovery> discoveryProvider = mock(ObjectProvider.class);
@@ -94,7 +101,7 @@ public class EkaEventWorkerTest {
         order.verify(hip).linkCareContext(handed.capture());
         order.verify(inbox).done(link.id());
         assertEquals("wh-link-1", handed.getValue().get("transaction_id").asText());
-        verify(hip, never()).hipDataFetch(any());
+        verify(hip, never()).hipDataFetch(any(), anyBoolean());
         verifyNoInteractions(hiu, bugsnag);
     }
 
@@ -116,9 +123,9 @@ public class EkaEventWorkerTest {
 
         worker.drain();
 
-        verify(hip).hipDataFetch(any());
+        verify(hip).hipDataFetch(any(), anyBoolean());
         verify(hiu).consentUpdate(any());
-        verify(hiu).hiuDataPush(any());
+        verify(hiu).hiuDataPush(any(), anyBoolean());
         verify(hip, never()).linkCareContext(any());
     }
 
@@ -132,7 +139,7 @@ public class EkaEventWorkerTest {
         worker.drain();
 
         verify(hip, times(2)).linkCareContext(any());
-        verify(hip).hipDataFetch(any());
+        verify(hip).hipDataFetch(any(), anyBoolean());
         verify(hiu).consentUpdate(any());
     }
 
@@ -209,10 +216,118 @@ public class EkaEventWorkerTest {
         verify(bugsnag).notify(failure);
     }
 
+    // F1: a patient's withdrawal is never given up. Before the cap it is tried again quietly, as any event is.
+    @Test
+    public void aWithdrawalThatFailsBeforeTheCapIsTriedAgainQuietly_neverToBeGivenUp() {
+        AbdmInbox.Event revoked = ending("REVOKED", 3);
+        doThrow(new IllegalStateException("database down")).when(hiu).consentUpdate(any());
+
+        worker.drain();
+
+        verify(inbox).retryUntilHandled(eq(revoked), contains("database down"), eq(NOW));
+        verify(inbox, never()).retry(any(), anyString(), any());
+        verify(inbox, never()).done(anyLong());
+        verifyNoInteractions(bugsnag);
+    }
+
+    // F1: from the cap on it keeps its body and is tried again slowly, and each try that fails alarms as not applied.
+    @Test
+    public void aWithdrawalPastTheCapIsTriedAgain_andAlarmsAsNotApplied() {
+        for (String status : List.of("REVOKED", "DENIED", "EXPIRED")) {
+            reset(inbox, bugsnag);
+            waiting.clear();
+            AbdmInbox.Event ended = ending(status, AbdmInbox.MAX_ATTEMPTS + 1);
+            doThrow(new IllegalStateException("database down")).when(hiu).consentUpdate(any());
+
+            worker.drain();
+
+            verify(inbox).retryUntilHandled(eq(ended), contains("database down"), eq(NOW));
+            verify(inbox, never()).retry(any(), anyString(), any());
+            ArgumentCaptor<Throwable> alarm = ArgumentCaptor.forClass(Throwable.class);
+            verify(bugsnag).notify(alarm.capture());
+            assertTrue(alarm.getValue() instanceof EkaEventWorker.WithdrawalNotApplied);
+            assertTrue(alarm.getValue().getMessage(), alarm.getValue().getMessage().startsWith("Withdrawal not applied"));
+        }
+    }
+
+    // A grant is not a withdrawal: at the cap it is given up as any other event is.
+    @Test
+    public void aGrantThatReachesTheCapIsGivenUpAsAnyEventIs() {
+        AbdmInbox.Event granted = stored("consent-update.json", "abha.consent_update", AbdmInbox.MAX_ATTEMPTS);
+        doThrow(new IllegalStateException("database down")).when(hiu).consentUpdate(any());
+        when(inbox.retry(eq(granted), anyString(), any())).thenReturn(true);
+
+        worker.drain();
+
+        verify(inbox).retry(eq(granted), anyString(), eq(NOW));
+        verify(inbox, never()).retryUntilHandled(any(), anyString(), any());
+    }
+
+    // F1: an organisation whose system user cannot act still has its patient's withdrawal applied, with no login, and is
+    // reported; the event is done.
+    @Test
+    public void withAnUnusableSystemUserAWithdrawalIsAppliedWithoutALogin_reported_andDone() {
+        AbdmInbox.Event revoked = ending("REVOKED", 1);
+        AbdmOrgContext.SystemUserException cannotAct = new AbdmOrgContext.SystemUserException(ORGANISATION, "its system user is voided", null);
+        doThrow(cannotAct).when(orgContext).runAs(any(), any());
+        when(hiu.endConsentWithoutLogin(eq(ORG), any())).thenReturn(true);
+
+        worker.drain();
+
+        verify(hiu).endConsentWithoutLogin(eq(ORG), any());
+        verify(hiu, never()).consentUpdate(any());
+        verify(inbox).done(revoked.id());
+        verify(bugsnag).notify(cannotAct);
+        assertEquals(List.of(true), withoutLogin);
+    }
+
+    // What is not held here yet (a request not mapped) waits for the next try, when the system user may act again.
+    @Test
+    public void withAnUnusableSystemUserAWithdrawalNotWhollyHeldHereWaitsForTheNextTry() {
+        AbdmInbox.Event revoked = ending("REVOKED", 1);
+        doThrow(new AbdmOrgContext.SystemUserException(ORGANISATION, "its system user is voided", null)).when(orgContext).runAs(any(), any());
+        when(hiu.endConsentWithoutLogin(eq(ORG), any())).thenReturn(false);
+
+        worker.drain();
+
+        verify(hiu).endConsentWithoutLogin(eq(ORG), any());
+        verify(inbox).retryUntilHandled(eq(revoked), contains("system user"), eq(NOW));
+        verify(inbox, never()).done(anyLong());
+    }
+
+    @Test
+    public void withAnUnusableSystemUserAnyOtherEventWaitsAsBefore_withNothingDoneWithoutALogin() {
+        AbdmInbox.Event link = stored("link-care-context.json", "abha.link_care_context", 1);
+        doThrow(new AbdmOrgContext.SystemUserException(ORGANISATION, "its system user is voided", null)).when(orgContext).runAs(any(), any());
+
+        worker.drain();
+
+        verify(inbox).retry(eq(link), contains("system user"), eq(NOW));
+        verify(hiu, never()).endConsentWithoutLogin(anyLong(), any());
+        assertTrue(withoutLogin.isEmpty());
+    }
+
+    // F6: a share's handler is told whether this is the inbox's last try, so a failure that may pass is thrown before it
+    // and recorded as final on it.
+    @Test
+    public void aShareIsToldWhetherItIsTheLastTry() {
+        stored("hip-data-fetch.json", "abha.hip_data_fetch", 1);
+        stored("hiu-data-push-webhook.json", "abha.hiu_data_push", AbdmInbox.MAX_ATTEMPTS - 1);
+        stored("hip-data-fetch.json", "abha.hip_data_fetch", AbdmInbox.MAX_ATTEMPTS);
+        stored("hiu-data-push-webhook.json", "abha.hiu_data_push", AbdmInbox.MAX_ATTEMPTS);
+
+        worker.drain();
+
+        verify(hip).hipDataFetch(any(), eq(false));
+        verify(hip).hipDataFetch(any(), eq(true));
+        verify(hiu).hiuDataPush(any(), eq(false));
+        verify(hiu).hiuDataPush(any(), eq(true));
+    }
+
     @Test
     public void aDataPushWaitingForItsGrantIsTriedAgain() {
         AbdmInbox.Event push = stored("hiu-data-push-webhook.json", "abha.hiu_data_push", 1);
-        doThrow(new AbdmNotReadyException("no grant yet")).when(hiu).hiuDataPush(any());
+        doThrow(new AbdmNotReadyException("no grant yet")).when(hiu).hiuDataPush(any(), anyBoolean());
 
         worker.drain();
 
@@ -258,7 +373,7 @@ public class EkaEventWorkerTest {
 
         verify(hiu).consentUpdate(any());
         verify(inbox).done(revoked.id());
-        verify(hiu, never()).hiuDataPush(any());
+        verify(hiu, never()).hiuDataPush(any(), anyBoolean());
         verify(inbox).fail(eq(push.id()), anyString(), eq(NOW));
         assertEquals(List.of(ORGANISATION), ranAs);
     }
@@ -295,6 +410,15 @@ public class EkaEventWorkerTest {
 
     private final List<AbdmInbox.Event> waiting = new ArrayList<>();
 
+    // A consent update that ends the consent with this status, on this try.
+    private AbdmInbox.Event ending(String status, int attempts) {
+        AbdmInbox.Event event = new AbdmInbox.Event(nextId++, ORG, "eka", "ending-" + nextId, "abha.consent_update", "CONSENT_UPDATE",
+                fixture("consent-update.json").replace("\"GRANTED\"", "\"" + status + "\""), attempts);
+        waiting.add(event);
+        when(inbox.claim(anyInt(), any())).thenReturn(new ArrayList<>(waiting), List.of());
+        return event;
+    }
+
     private AbdmInbox.Event stored(String fixture, String eventName, int attempts) {
         AbdmInbox.Event event = event(nextId++, fixture, eventName, attempts);
         waiting.add(event);
@@ -325,6 +449,10 @@ public class EkaEventWorkerTest {
 
         void advance(Duration by) {
             now = now.plus(by);
+        }
+
+        void set(Instant to) {
+            now = to;
         }
 
         @Override

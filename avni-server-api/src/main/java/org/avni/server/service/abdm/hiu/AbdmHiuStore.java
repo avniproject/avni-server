@@ -16,9 +16,12 @@ import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 // The HIU's ABDM state (V1_413, V1_414), all rows role HIU. In abdm_consent a consent request is the row with no consent_id; each
@@ -413,26 +416,75 @@ public class AbdmHiuStore {
 
     // Requests and artefacts past their erase date become EXPIRED (HIU_FLOW_301). Returns the requests expired.
     public int expireOverdueConsents() {
+        Long organisationId = orgContext.organisationId();
+        return organisationId == null ? 0 : expireOverdueConsents(organisationId);
+    }
+
+    // The same for the organisation named, needing no user.
+    public int expireOverdueConsents(long organisationId) {
         int requests = jdbc.update("update abdm_consent set status = 'EXPIRED', updated_at = now() where organisation_id = :org and role = 'HIU' " +
-                "and consent_id is null and status in ('GRANTED', 'REQUESTED', 'UNKNOWN') and data_erase_at is not null and data_erase_at < now()", params());
+                "and consent_id is null and status in ('GRANTED', 'REQUESTED', 'UNKNOWN') and data_erase_at is not null and data_erase_at < now()", params(organisationId));
         jdbc.update("update abdm_consent a set status = 'EXPIRED', updated_at = now() where a.organisation_id = :org and a.role = 'HIU' " +
                 "and a.consent_id is not null and a.status = 'GRANTED' and ((a.data_erase_at is not null and a.data_erase_at < now()) " +
                 "or exists (select 1 from abdm_consent r where r.organisation_id = a.organisation_id and r.role = 'HIU' and r.consent_id is null " +
-                "   and r.consent_request_id = a.consent_request_id and r.status = 'EXPIRED'))", params());
-        history("c.status = 'EXPIRED'", params(), "EXPIRED");
+                "   and r.consent_request_id = a.consent_request_id and r.status = 'EXPIRED'))", params(organisationId));
+        history("c.status = 'EXPIRED'", params(organisationId), "EXPIRED");
         return requests;
     }
 
     // Records whose artefact is no longer granted, or whose request was withdrawn, refused, expired or is past its erase
     // date, are deleted (HIU_FLOW_202, HIU_FLOW_301, AVNI-14). Returns how many.
     public int eraseRecordsOfEndedConsents() {
+        Long organisationId = orgContext.organisationId();
+        return organisationId == null ? 0 : eraseRecordsOfEndedConsents(organisationId);
+    }
+
+    // The same for the organisation named, needing no user.
+    public int eraseRecordsOfEndedConsents(long organisationId) {
         return jdbc.update("delete from abdm_health_information h where h.organisation_id = :org and (" +
                 "not exists (select 1 from abdm_consent a where a.organisation_id = h.organisation_id and a.role = 'HIU' and a.consent_id = h.consent_id " +
                 "   and a.status = 'GRANTED' and (a.data_erase_at is null or a.data_erase_at > now())) " +
                 "or exists (select 1 from abdm_consent a join abdm_consent r on r.organisation_id = a.organisation_id and r.role = 'HIU' " +
                 "   and r.consent_id is null and r.consent_request_id = a.consent_request_id " +
                 "   where a.organisation_id = h.organisation_id and a.role = 'HIU' and a.consent_id = h.consent_id " +
-                "   and (r.status in ('REVOKED', 'EXPIRED', 'DENIED') or (r.data_erase_at is not null and r.data_erase_at < now()))))", params());
+                "   and (r.status in ('REVOKED', 'EXPIRED', 'DENIED') or (r.data_erase_at is not null and r.data_erase_at < now()))))", params(organisationId));
+    }
+
+    // An ending applied as EkaHiuService.apply applies it, for the organisation named, needing no user; it supersedes updates
+    // parked earlier for its requests. True when all it names is held here; the rest waits for a logged-in try.
+    public boolean endWithoutLogin(long organisationId, String consentRequestId, Collection<String> artefactIds, String status) {
+        List<String> artefacts = artefactIds == null ? List.of() : artefactIds.stream().filter(a -> a != null && !a.isBlank()).distinct().toList();
+        Set<String> requests = new LinkedHashSet<>();
+        boolean whole = true;
+        if (consentRequestId != null) {
+            Boolean held = jdbc.queryForObject("select exists (select 1 from abdm_consent where organisation_id = :org and role = 'HIU' " +
+                    "and consent_id is null and consent_request_id = :cr)", params(organisationId).addValue("cr", consentRequestId, Types.VARCHAR), Boolean.class);
+            if (Boolean.TRUE.equals(held)) requests.add(consentRequestId);
+            else whole = false;
+        }
+        if (!artefacts.isEmpty()) {
+            List<Map<String, Object>> rows = jdbc.queryForList("select consent_id, consent_request_id from abdm_consent where organisation_id = :org " +
+                    "and role = 'HIU' and consent_id in (:ids)", params(organisationId).addValue("ids", artefacts));
+            if (consentRequestId == null) {
+                if (rows.stream().map(r -> r.get("consent_id")).distinct().count() < artefacts.size()) whole = false;
+                rows.forEach(r -> {
+                    if (r.get("consent_request_id") != null) requests.add((String) r.get("consent_request_id"));
+                });
+            }
+            jdbc.update("update abdm_consent set status = :status, updated_at = now() where organisation_id = :org and role = 'HIU' " +
+                    "and consent_id in (:ids)", params(organisationId).addValue("ids", artefacts).addValue("status", status, Types.VARCHAR));
+            history("c.consent_id in (:ids)", params(organisationId).addValue("ids", artefacts), status);
+        }
+        for (String request : requests) {
+            jdbc.update("update abdm_consent set status = :status, updated_at = now() where organisation_id = :org and role = 'HIU' " +
+                            "and consent_id is null and consent_request_id = :cr",
+                    params(organisationId).addValue("cr", request, Types.VARCHAR).addValue("status", status, Types.VARCHAR));
+            history("c.consent_id is null and c.consent_request_id = :cr", params(organisationId).addValue("cr", request, Types.VARCHAR), status);
+            jdbc.update("update abdm_parked_event set resolved_at = now() where organisation_id = :org and kind = 'consent_update' " +
+                    "and reference = :cr and resolved_at is null", params(organisationId).addValue("cr", request, Types.VARCHAR));
+        }
+        eraseRecordsOfEndedConsents(organisationId);
+        return whole;
     }
 
     // One row in abdm_consent_status per change, keyed by the abdm_consent row so it survives the request id being mapped.
@@ -448,6 +500,10 @@ public class AbdmHiuStore {
 
     private MapSqlParameterSource params() {
         return new MapSqlParameterSource("org", orgContext.organisationId());
+    }
+
+    private static MapSqlParameterSource params(long organisationId) {
+        return new MapSqlParameterSource("org", organisationId);
     }
 
     private static <T> Optional<T> one(List<T> rows) {

@@ -17,9 +17,10 @@ import java.util.Optional;
 
 // The Eka webhook inbox (abdm_inbound_event, V1_414 and V1_417). EkaWebhookController stores each verified event here
 // before Eka is answered 200; EkaEventWorker takes due events, handles each as its organisation and marks it done, or
-// puts it back for a later try after a growing wait, up to MAX_ATTEMPTS, after which it is FAILED. One row per event id
-// per organisation, so an event Eka delivers again has one effect. Nothing is held in memory: a restart loses nothing,
-// and a row left in progress by a stopped server is swept back.
+// puts it back for a later try after a growing wait, up to MAX_ATTEMPTS, after which it is FAILED. A consent's withdrawal,
+// refusal or expiry is never FAILED: past the cap it keeps its body and is tried every PAST_CAP_WAIT (retryUntilHandled).
+// One row per event id per organisation, so an event Eka delivers again has one effect. Nothing is held in memory: a
+// restart loses nothing, and a row left in progress by a stopped server is swept back.
 // A consent's updates are taken in the order they came, and an event of a consent (a data push) waits behind any update
 // of that consent that came before it, so a push finds its grant. A push holds nothing back: it may come before its grant.
 // A withdrawal naming only artefacts is stored under the consent of the waiting update that names them (pendingConsentKeyOf).
@@ -34,6 +35,8 @@ public class AbdmInbox {
     // 15 s, doubling to at most 30 minutes: an hour and a half from the first try to the last.
     static final Duration FIRST_WAIT = Duration.ofSeconds(15);
     public static final Duration MAX_WAIT = Duration.ofMinutes(30);
+    // A patient's withdrawal past the cap: slow enough not to flood the alarm, soon enough to apply within the hour of a fix.
+    public static final Duration PAST_CAP_WAIT = Duration.ofHours(1);
     // Longer than any handler takes (Eka calls time out within a minute), so only an abandoned row is swept.
     public static final Duration IN_PROGRESS_TIMEOUT = Duration.ofMinutes(15);
     private static final int MAX_ERROR = 1000;
@@ -126,6 +129,15 @@ public class AbdmInbox {
         return last;
     }
 
+    // Back for a later try, never FAILED, keeping its body: past the cap every PAST_CAP_WAIT.
+    public void retryUntilHandled(Event event, String error, Instant now) {
+        Duration wait = event.attempts() >= MAX_ATTEMPTS ? PAST_CAP_WAIT : waitAfter(event.attempts());
+        jdbc.update("update abdm_inbound_event set status = 'RECEIVED', next_attempt_at = :next, claimed_at = null, last_error = :error, " +
+                        "updated_at = :now where id = :id and status = 'IN_PROGRESS'",
+                new MapSqlParameterSource("id", event.id()).addValue("next", Timestamp.from(now.plus(wait)))
+                        .addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
+    }
+
     // Never to be handled, so its body, which can carry a patient's details, is not kept.
     public void fail(long id, String error, Instant now) {
         jdbc.update("update abdm_inbound_event set status = 'FAILED', body = null, claimed_at = null, last_error = :error, updated_at = :now " +
@@ -134,10 +146,12 @@ public class AbdmInbox {
     }
 
     // Rows in progress past the timeout were left by a server that stopped: back for another try, or FAILED on their last.
+    // A consent update is always put back: whether it may be given up depends on what it says, which its next try reads.
     public Sweep sweep(Instant now) {
+        String givenUp = "attempts >= :max and coalesce(route, '') <> '" + HOLDING_ROUTE + "'";
         List<String> statuses = jdbc.queryForList("update abdm_inbound_event set " +
-                        "status = case when attempts >= :max then 'FAILED' else 'RECEIVED' end, next_attempt_at = :now, claimed_at = null, " +
-                        "body = case when attempts >= :max then null else body end, " +
+                        "status = case when " + givenUp + " then 'FAILED' else 'RECEIVED' end, next_attempt_at = :now, claimed_at = null, " +
+                        "body = case when " + givenUp + " then null else body end, " +
                         "last_error = 'Left in progress past " + IN_PROGRESS_TIMEOUT.toMinutes() + " minutes', updated_at = :now " +
                         "where status = 'IN_PROGRESS' and claimed_at < :staleBefore returning status",
                 new MapSqlParameterSource("max", MAX_ATTEMPTS).addValue("now", Timestamp.from(now))
@@ -156,7 +170,11 @@ public class AbdmInbox {
     // Handled and given-up events of the organisation the thread acts for, received before the cutoff.
     public int purgeFinishedOlderThan(Instant before) {
         Long organisationId = orgContext.organisationId();
-        if (organisationId == null) return 0;
+        return organisationId == null ? 0 : purgeFinishedOlderThan(organisationId, before);
+    }
+
+    // The same for the organisation named, needing no user (AbdmJobRunner's work without a login).
+    public int purgeFinishedOlderThan(long organisationId, Instant before) {
         return jdbc.update("delete from abdm_inbound_event where organisation_id = :org and status in ('DONE', 'FAILED') and received_at < :before",
                 new MapSqlParameterSource("org", organisationId).addValue("before", Timestamp.from(before)));
     }

@@ -112,7 +112,11 @@ public class AbdmMessageLog {
     // The organisation the thread acts for only, named as well as filtered by row-level security; none without one.
     public void purgeOlderThan(Duration age) {
         Long organisationId = organisationId();
-        if (organisationId == null) return;
+        if (organisationId != null) purgeOlderThan(organisationId, age);
+    }
+
+    // The same for the organisation named, needing no user (AbdmJobRunner's work without a login).
+    public void purgeOlderThan(long organisationId, Duration age) {
         int deleted = jdbc.update("delete from abdm_message where organisation_id = :org and created_at < :cutoff",
                 new MapSqlParameterSource("org", organisationId).addValue("cutoff", Timestamp.from(Instant.now().minus(age))));
         logger.info("ABDM traffic older than {} days deleted: {} message(s)", age.toDays(), deleted);

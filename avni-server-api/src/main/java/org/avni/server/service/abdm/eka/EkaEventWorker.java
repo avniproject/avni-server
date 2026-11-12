@@ -31,6 +31,8 @@ import java.util.function.Consumer;
 // when an event comes in, and every few seconds for events waiting for another try. Each event is handed to its handler as
 // its organisation's system user, once the organisation is checked to still take it (EkaEventGate). A handler that
 // throws leaves the event for a later try; at the inbox's cap it fails, logged with its stack trace and sent to Bugsnag.
+// A consent's withdrawal, refusal or expiry is never given up: past the cap each failed try alarms as not applied, and
+// where the system user cannot act it is applied with no login.
 // Handlers come through ObjectProvider, so the server starts with either side missing.
 @Component
 public class EkaEventWorker {
@@ -50,6 +52,13 @@ public class EkaEventWorker {
     private final ObjectProvider<EkaHipDiscovery> discovery;
     private final Clock clock;
     private final AtomicBoolean woken = new AtomicBoolean();
+
+    // A patient's withdrawal, refusal or expiry still not applied after the inbox's cap of tries.
+    public static class WithdrawalNotApplied extends RuntimeException {
+        WithdrawalNotApplied(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 
     @Value("${abdm.inbox.cron:*/10 * * * * *}")
     private String inboxCron;
@@ -136,25 +145,56 @@ public class EkaEventWorker {
 
     private void handle(AbdmInbox.Event event) {
         String what = "Eka webhook " + event.eventName() + " " + event.eventId() + " of organisation " + event.organisationId();
+        boolean endsConsent = false;
         try {
             JsonNode body = AbdmJson.read(event.body());
+            endsConsent = routeOf(event) == EkaEventRoute.CONSENT_UPDATE && EkaHiuService.endsConsent(body);
             if (!gate.admits(event.organisationId(), routeOf(event), body)) {
                 inbox.fail(event.id(), "Record sharing is off for the organisation", clock.instant());
                 logger.warn("{} not handled: record sharing is off for the organisation", what);
                 return;
             }
             AbdmOrganisation organisation = orgContext.organisation(event.organisationId());
-            orgContext.runAs(organisation, () -> dispatch(event, body));
+            try {
+                orgContext.runAs(organisation, () -> dispatch(event, body));
+            } catch (AbdmOrgContext.SystemUserException e) {
+                if (!endsConsent || !appliedWithoutLogin(event, body, what, e)) throw e;
+            }
             inbox.done(event.id());
         } catch (AbdmNotReadyException e) {
-            retry(event, what, e, false);
+            retry(event, what, e, false, endsConsent);
         } catch (RuntimeException e) {
-            retry(event, what, e, true);
+            retry(event, what, e, true, endsConsent);
         }
     }
 
-    private void retry(AbdmInbox.Event event, String what, RuntimeException e, boolean unexpected) {
-        boolean failed = inbox.retry(event, e.getClass().getSimpleName() + ": " + e.getMessage(), clock.instant());
+    // The system user cannot act, so a patient's withdrawal is applied with no login; reported, as the user needs fixing.
+    private boolean appliedWithoutLogin(AbdmInbox.Event event, JsonNode body, String what, AbdmOrgContext.SystemUserException cause) {
+        EkaHiuEvents handler = hiu.getIfAvailable();
+        if (handler == null) return false;
+        boolean whole = orgContext.withoutLogin(() -> handler.endConsentWithoutLogin(event.organisationId(), body));
+        if (whole) {
+            logger.error("{} applied with no login: {}", what, cause.getMessage(), cause);
+            bugsnag.notify(cause);
+        }
+        return whole;
+    }
+
+    private void retry(AbdmInbox.Event event, String what, RuntimeException e, boolean unexpected, boolean endsConsent) {
+        String error = e.getClass().getSimpleName() + ": " + e.getMessage();
+        if (endsConsent) {
+            inbox.retryUntilHandled(event, error, clock.instant());
+            if (event.attempts() >= AbdmInbox.MAX_ATTEMPTS) {
+                WithdrawalNotApplied alarm = new WithdrawalNotApplied("Withdrawal not applied: " + what + " failed " + event.attempts()
+                        + " tries, and is tried again every " + AbdmInbox.PAST_CAP_WAIT.toMinutes() + " minutes: " + error, e);
+                logger.error(alarm.getMessage(), e);
+                bugsnag.notify(alarm);
+            } else {
+                logger.warn("{} failed on try {}; it will be tried again until it is applied", what, event.attempts(), e);
+            }
+            return;
+        }
+        boolean failed = inbox.retry(event, error, clock.instant());
         if (failed) {
             logger.error("{} given up after {} tries", what, event.attempts(), e);
             bugsnag.notify(e);
@@ -173,11 +213,13 @@ public class EkaEventWorker {
                     AbdmJson.text(body, "data.hip_id"), null, null, null);
             messageLog.incoming(AbdmPaths.IN_EKA_WEBHOOK + "#" + name, headers, body);
         }
+        // A share's handler throws a failure that may pass, for another try, until the inbox's last try.
+        boolean lastTry = event.attempts() >= AbdmInbox.MAX_ATTEMPTS;
         switch (routeOf(event)) {
             case LINK_CARE_CONTEXT -> handOver(hip, event, h -> h.linkCareContext(body));
-            case HIP_DATA_FETCH -> handOver(hip, event, h -> h.hipDataFetch(body));
+            case HIP_DATA_FETCH -> handOver(hip, event, h -> h.hipDataFetch(body, lastTry));
             case CONSENT_UPDATE -> handOver(hiu, event, h -> h.consentUpdate(body));
-            case HIU_DATA_PUSH -> handOver(hiu, event, h -> h.hiuDataPush(body));
+            case HIU_DATA_PUSH -> handOver(hiu, event, h -> h.hiuDataPush(body, lastTry));
             case DISCOVER -> handOver(discovery, event, d -> d.discover(body));
             case DISCOVER_LINK_INIT -> handOver(discovery, event, d -> d.linkInit(body));
             case DISCOVER_LINK_CONFIRM -> handOver(discovery, event, d -> d.linkConfirm(body));

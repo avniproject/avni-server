@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm.eka;
 
+import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -99,6 +100,7 @@ public class EkaHiuService implements EkaHiuEvents {
     private final AbhaEventRepository abhaEventRepository;
     private final AbdmRetry retry;
     private final AbdmAccess access;
+    private final Bugsnag bugsnag;
     // Per organisation: the key Eka has been given during this run.
     private final Map<Long, Keyset> registered = new ConcurrentHashMap<>();
 
@@ -115,7 +117,8 @@ public class EkaHiuService implements EkaHiuEvents {
     @Autowired
     public EkaHiuService(AbdmSettings settings, AbdmHiuStore store, EkaAbdmClient eka, FideliusCrypto crypto, EkaCredentialCipher cipher,
                          AbdmOrgContext orgContext, AbdmHipStore hipStore, AbhaEventRepository abhaEventRepository, AbdmRetry retry,
-                         AbdmAccess access) {
+                         AbdmAccess access, Bugsnag bugsnag) {
+        this.bugsnag = bugsnag;
         this.settings = settings;
         this.store = store;
         this.eka = eka;
@@ -228,11 +231,11 @@ public class EkaHiuService implements EkaHiuEvents {
         }
         String consentRequestId = consentInitIdOf(response == null ? null : response.body());
         if (consentRequestId == null) {
-            // Any 2xx is success (the spec's 204-with-a-body contradiction). Without Eka's id nothing can match the
-            // patient's answer to this request: it stays REQUESTED until it expires.
-            logger.warn("Eka consent request {}: Eka answered {} with no consent id; the patient's answer cannot be matched to it", uuid,
-                    response == null ? null : response.status());
-        } else if (rowId != null) {
+            // The request may still have reached the patient; without Eka's id, Eka's consent list settles it (UNKNOWN).
+            return unknown(out, rowId, uuid, "Eka answered HTTP " + (response == null ? null : response.status())
+                    + " with no consent id; the request may have reached the patient");
+        }
+        if (rowId != null) {
             store.setConsentRequestId(rowId, consentRequestId, REQUESTED);
             // Eka's consent_init_id is not ABDM's consent request id, which consent_update and the push name. Map it now
             // when Eka's list already has it; otherwise consentUpdate maps it the same way when the first update comes.
@@ -335,12 +338,27 @@ public class EkaHiuService implements EkaHiuEvents {
         consentUpdate(consentRequestId, status, artefacts);
     }
 
+    // The system user cannot act (EkaEventWorker): the ending is applied to what is held here, and Eka is asked nothing.
+    @Override
+    public boolean endConsentWithoutLogin(long organisationId, JsonNode event) {
+        if (!endsConsent(event)) return false;
+        String status = statusOf(event);
+        boolean whole = store.endWithoutLogin(organisationId, consentRequestIdOf(event), artefactIdsOf(event), status);
+        logger.warn("Eka consent update ({}) applied with no login for organisation {}{}", status, organisationId,
+                whole ? "" : "; what is not held here waits for the next try");
+        return whole;
+    }
+
     // Whether an abha.consent_update withdraws, refuses or expires its consent: taken even after record sharing is off.
     public static boolean endsConsent(JsonNode event) {
+        String status = statusOf(event);
+        return status != null && ENDING.contains(status);
+    }
+
+    private static String statusOf(JsonNode event) {
         JsonNode data = AbdmJson.at(event, "data");
         JsonNode notification = notificationOf(data);
-        String status = normaliseStatus(AbdmFlows.firstNonNull(AbdmJson.text(notification, "status"), AbdmJson.text(data, "status")));
-        return status != null && ENDING.contains(status);
+        return normaliseStatus(AbdmFlows.firstNonNull(AbdmJson.text(notification, "status"), AbdmJson.text(data, "status")));
     }
 
     // The consent request an abha.consent_update names; null when it names only artefacts.
@@ -570,10 +588,10 @@ public class EkaHiuService implements EkaHiuEvents {
         return request.hiuId() != null ? request.hiuId() : settings.current().getHiuId();
     }
 
-    // ---- abha.hiu_data_push (spec 3.7, 3.8)
+    // ---- abha.hiu_data_push (spec 3.7, 3.8). Safe to run again: a record already kept is not kept twice.
 
     @Override
-    public void hiuDataPush(JsonNode event) {
+    public void hiuDataPush(JsonNode event, boolean lastTry) {
         JsonNode data = AbdmJson.at(event, "data");
         if (data == null || !data.isObject()) {
             logger.warn("Eka HIU data push without data; ignored");
@@ -675,7 +693,14 @@ public class EkaHiuService implements EkaHiuEvents {
         try {
             eka.post(ON_PUSH, ack, patientHeaders(oid, partnerPatientId));
         } catch (RuntimeException e) {
-            logger.warn("Eka HIU on-push for {} failed: {}", transactionId, describe(e));
+            // A receipt may be sent twice, so one that may pass goes back to the inbox: the push is tried again whole.
+            if (!lastTry && !EkaAbdmClient.refusedForGood(e)) {
+                logger.warn("Eka HIU on-push for {} failed: {}; it will be tried again", transactionId, describe(e));
+                throw e;
+            }
+            IllegalStateException failed = new IllegalStateException("Eka HIU on-push for " + transactionId + " not sent: " + describe(e));
+            logger.warn(failed.getMessage());
+            bugsnag.notify(failed);
         }
     }
 

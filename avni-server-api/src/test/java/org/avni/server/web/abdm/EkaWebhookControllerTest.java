@@ -1,5 +1,6 @@
 package org.avni.server.web.abdm;
 
+import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.JsonObject;
@@ -60,6 +61,7 @@ public class EkaWebhookControllerTest {
     private AbdmHiuStore hiuStore;
     private AbdmInbox inbox;
     private EkaEventWorker worker;
+    private Bugsnag bugsnag;
     private MockMvc mvc;
 
     @Before
@@ -77,9 +79,10 @@ public class EkaWebhookControllerTest {
         inbox = mock(AbdmInbox.class);
         when(inbox.receive(anyLong(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any())).thenReturn(true);
         worker = mock(EkaEventWorker.class);
+        bugsnag = mock(Bugsnag.class);
         EkaWebhookVerifier verifier = new EkaWebhookVerifier(cipher, Clock.fixed(Instant.ofEpochSecond(NOW), ZoneOffset.UTC));
         mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(configRepository, verifier, new EkaEventGate(access, hiuStore), inbox,
-                worker)).build();
+                worker, bugsnag)).build();
     }
 
     private void organisation(String webhookId, long organisationId, String encryptedKey) {
@@ -150,6 +153,7 @@ public class EkaWebhookControllerTest {
                 .andExpect(content().json("{\"status\":\"not stored\"}", true));
 
         verifyNoInteractions(worker);
+        verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
     @Test
@@ -265,7 +269,34 @@ public class EkaWebhookControllerTest {
         send(body, signature(NOW - 181, body)).andExpect(status().isUnauthorized());
         send(body, signature(NOW + 181, body)).andExpect(status().isUnauthorized());
 
+        verifyNoInteractions(inbox, bugsnag);
+    }
+
+    // F8: Eka's own signature outside the time allowed, again and again, points at a clock rather than a replay: still
+    // refused, and reported, once per run of three. Another organisation's refusals are counted apart.
+    @Test
+    public void staleSignaturesStayRefused_andAreReportedWhenTheyRepeat() throws Exception {
+        String body = event("link-care-context.json");
+        send("webhook-2", body, signature(OTHER_KEY, NOW - 600, body)).andExpect(status().isUnauthorized());
+        send("webhook-2", body, signature(OTHER_KEY, NOW - 600, body)).andExpect(status().isUnauthorized());
+        send(body, signature(NOW - 600, body)).andExpect(status().isUnauthorized());
+        send(body, signature(NOW - 600, body)).andExpect(status().isUnauthorized());
+        verifyNoInteractions(bugsnag);
+
+        send(body, signature(NOW - 600, body)).andExpect(status().isUnauthorized())
+                .andExpect(content().json("{\"status\":\"rejected\"}", true));
+
+        verify(bugsnag, times(1)).notify(any(IllegalStateException.class));
         verifyNoInteractions(inbox);
+    }
+
+    // F8: a bad signature is not reported however often it comes: anyone can send one.
+    @Test
+    public void badSignaturesAreNotReportedHoweverOftenTheyCome() throws Exception {
+        String body = event("link-care-context.json");
+        for (int i = 0; i < 5; i++) send(body, "t=" + NOW + ",v1=deadbeef").andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(bugsnag, inbox);
     }
 
     @Test
@@ -286,13 +317,40 @@ public class EkaWebhookControllerTest {
         verify(inbox).receive(eq(ORG), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
     }
 
+    // F8: Avni cannot check the signature without the organisation's key: Avni's fault, not Eka's, so 500 (Eka sends it
+    // again) and an alarm, never a quiet 401. Nothing is stored and nothing internal is said.
     @Test
-    public void noSigningKeyMeansRefused() throws Exception {
+    public void noSigningKeyIs500AndAlarms_andNothingIsStored() throws Exception {
         organisation(WEBHOOK, ORG, null);
         String body = event("link-care-context.json");
 
-        send(body, signature(NOW, body)).andExpect(status().isUnauthorized());
+        send(body, signature(NOW, body)).andExpect(status().isInternalServerError())
+                .andExpect(content().json("{\"status\":\"not checked\"}", true));
 
+        verify(bugsnag).notify(any(IllegalStateException.class));
+        verifyNoInteractions(inbox, worker);
+    }
+
+    @Test
+    public void anUnreadableSigningKeyIs500AndAlarms_notA401() throws Exception {
+        when(cipher.decrypt("encrypted-key-1")).thenThrow(new IllegalStateException("the deployment's key changed"));
+        String body = event("link-care-context.json");
+
+        send(body, signature(NOW, body)).andExpect(status().isInternalServerError())
+                .andExpect(content().json("{\"status\":\"not checked\"}", true));
+
+        verify(bugsnag).notify(any(IllegalStateException.class));
+        verifyNoInteractions(inbox, worker);
+    }
+
+    @Test
+    public void anEmptySigningKeyIs500AndAlarms() throws Exception {
+        when(cipher.decrypt("encrypted-key-1")).thenReturn("");
+        String body = event("link-care-context.json");
+
+        send(body, signature(NOW, body)).andExpect(status().isInternalServerError());
+
+        verify(bugsnag).notify(any(IllegalStateException.class));
         verifyNoInteractions(inbox);
     }
 

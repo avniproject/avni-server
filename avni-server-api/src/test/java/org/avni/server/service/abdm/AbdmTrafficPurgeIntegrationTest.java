@@ -51,6 +51,7 @@ public class AbdmTrafficPurgeIntegrationTest extends AbstractControllerIntegrati
         message(SWITCHED_OFF, "old", "now() - interval '40 days'");
         message(SWITCHED_OFF, "recent", "now()");
         message(NO_SYSTEM_USER, "other-old", "now() - interval '40 days'");
+        message(NO_SYSTEM_USER, "other-recent", "now()");
         jdbc.update("insert into abdm_inbound_event (organisation_id, source, event_id, event_name, route, body, status, attempts, next_attempt_at, " +
                 "received_at) values (?, 'eka', 'failed-1', 'abha.hiu_data_push', 'HIU_DATA_PUSH', null, 'FAILED', 1, now(), now() - interval '40 days')",
                 SWITCHED_OFF);
@@ -61,8 +62,8 @@ public class AbdmTrafficPurgeIntegrationTest extends AbstractControllerIntegrati
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_inbound_event where organisation_id = ?", Integer.class,
                 SWITCHED_OFF));
         assertNotNull(jobRuns.of(SWITCHED_OFF).get(AbdmHousekeepingJob.TRAFFIC_PURGE).get("lastSuccessAt"));
-        // Another organisation's rows go only as that organisation, and one with no system user is reported, not skipped.
-        assertEquals(List.of("other-old"), jdbc.queryForList("select path from abdm_message where organisation_id = ?", String.class,
+        // F1: an organisation with no system user has its old rows deleted with no login, naming it, and is still reported.
+        assertEquals(List.of("other-recent"), jdbc.queryForList("select path from abdm_message where organisation_id = ?", String.class,
                 NO_SYSTEM_USER));
         String lastError = (String) jobRuns.of(NO_SYSTEM_USER).get(AbdmHousekeepingJob.TRAFFIC_PURGE).get("lastError");
         assertTrue(lastError, lastError.contains("system user"));

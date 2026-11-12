@@ -22,12 +22,13 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 // The admin page's Status tab answers even when record sharing is off, so the page can say what is missing.
 public class AbdmAdminControllerTest {
     private static final Set<String> SHAPE = Set.of("abhaEnabled", "recordSharingEnabled", "recordSharingOn", "hiuOn", "environment",
-            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue");
+            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue", "failedShares");
 
     private final EkaAbdmClient ekaClient = mock(EkaAbdmClient.class);
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
@@ -44,7 +45,7 @@ public class AbdmAdminControllerTest {
     }
 
     private AbdmAdminController controller(String publicBaseUrl) {
-        return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl), ekaClient,
+        return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl, 30), ekaClient,
                 organisationConfigService, access, settings, jobRuns, orgContext, hipStore);
     }
 
@@ -153,7 +154,27 @@ public class AbdmAdminControllerTest {
 
         assertEquals(Map.of(), status.get("jobs"));
         assertEquals(Map.of(), status.get("queue"));
+        assertEquals(0L, status.get("failedShares"));
         verifyNoInteractions(jobRuns, hipStore);
+    }
+
+    // F6: shares that ended FAILED within the traffic retention (abdm.message-retention-days) are counted, so a share that
+    // could not be made is seen; with record sharing off too, as nothing is asked of Eka.
+    @Test
+    public void theStatusCountsTheOrganisationsFailedSharesWithinTheRetention() {
+        when(settings.find()).thenReturn(Optional.empty());
+        when(orgContext.organisationId()).thenReturn(7L);
+        when(hipStore.failedSharesSince(any())).thenReturn(3L);
+        java.time.Instant before = java.time.Instant.now();
+
+        assertEquals(3L, controller.status().get("failedShares"));
+
+        org.mockito.ArgumentCaptor<java.time.Instant> since = org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
+        verify(hipStore).failedSharesSince(since.capture());
+        java.time.Duration window = java.time.Duration.between(since.getValue(), before);
+        assertTrue(window.toString(), window.compareTo(java.time.Duration.ofDays(30).minusMinutes(1)) > 0
+                && window.compareTo(java.time.Duration.ofDays(30).plusMinutes(1)) < 0);
+        verify(ekaClient, never()).checkToken();
     }
 
     // How many of the organisation's visits wait to be linked, are being linked, failed for now or for good, so a stuck

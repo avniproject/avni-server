@@ -164,6 +164,45 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         assertNull(row("e-1").get("body"));
     }
 
+    // F1: a patient's withdrawal, refusal or expiry is never given up. Past the cap it keeps its body and is tried again
+    // every PAST_CAP_WAIT, for as long as handling it fails.
+    @Test
+    public void anEventThatEndsAConsentIsNeverGivenUp_pastTheCapItKeepsItsBodyAndIsTriedAgainSlowly() {
+        receive(ORG, "revoke-1", "CONSENT_UPDATE", "cr-1", T0);
+        Instant now = T0;
+        for (int attempt = 1; attempt <= AbdmInbox.MAX_ATTEMPTS + 2; attempt++) {
+            AbdmInbox.Event taken = inbox.claim(10, now).get(0);
+            assertEquals(attempt, taken.attempts());
+
+            inbox.retryUntilHandled(taken, "IllegalStateException: database down", now);
+
+            Map<String, Object> row = row("revoke-1");
+            assertEquals("RECEIVED", row.get("status"));
+            assertEquals("{\"n\":\"revoke-1\"}", row.get("body"));
+            Instant next = ((Timestamp) row.get("next_attempt_at")).toInstant();
+            if (attempt >= AbdmInbox.MAX_ATTEMPTS) assertEquals(now.plus(AbdmInbox.PAST_CAP_WAIT), next);
+            now = next;
+        }
+        assertEquals(List.of("revoke-1"), inbox.claim(10, now).stream().map(AbdmInbox.Event::eventId).toList());
+    }
+
+    // F1: the sweep never gives up a consent update: it goes back for another try, and the worker decides on that try.
+    @Test
+    public void aConsentUpdateStuckInProgressOnItsLastTryIsSweptBack_notFailed() {
+        receiveBody(ORG, "revoke-1", "CONSENT_UPDATE", "cr-1", "{\"status\":\"REVOKED\"}", T0);
+        receive(ORG, "link-1", "LINK_CARE_CONTEXT", null, T0);
+        jdbc.update("update abdm_inbound_event set attempts = :max - 1", Map.of("max", AbdmInbox.MAX_ATTEMPTS));
+        inbox.claim(10, T0);
+
+        AbdmInbox.Sweep sweep = inbox.sweep(T0.plus(AbdmInbox.IN_PROGRESS_TIMEOUT).plusSeconds(1));
+
+        assertEquals(1, sweep.returned());
+        assertEquals(1, sweep.failed());
+        assertEquals("RECEIVED", row("revoke-1").get("status"));
+        assertEquals("{\"status\":\"REVOKED\"}", row("revoke-1").get("body"));
+        assertEquals("FAILED", row("link-1").get("status"));
+    }
+
     // A data push waits while an update of its consent that came before it is still to be handled, so it finds its grant.
     @Test
     public void aConsentsDataPushWaitsForAnUpdateOfThatConsentThatCameFirst() {
@@ -271,6 +310,22 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
         assertEquals(List.of("new-done", "old-waiting"), jdbc.queryForList("select event_id from abdm_inbound_event " +
                 "where organisation_id = :org order by event_id", Map.of("org", ORG), String.class));
+        assertEquals(Integer.valueOf(1), jdbc.queryForObject("select count(*) from abdm_inbound_event where organisation_id = :org",
+                Map.of("org", OTHER_ORG), Integer.class));
+    }
+
+    // F1: for an organisation whose system user cannot act, the purge runs with no user and names the organisation.
+    @Test
+    public void finishedEventsOfTheNamedOrganisationAreDeletedWithNoUserLoggedIn() {
+        receive(ORG, "old-done", "LINK_CARE_CONTEXT", null, T0.minus(Duration.ofDays(40)));
+        receive(ORG, "old-waiting", "LINK_CARE_CONTEXT", null, T0.minus(Duration.ofDays(40)));
+        receive(OTHER_ORG, "old-done", "LINK_CARE_CONTEXT", null, T0.minus(Duration.ofDays(40)));
+        jdbc.update("update abdm_inbound_event set status = 'DONE' where event_id = 'old-done'", Map.of());
+
+        assertEquals(1, inbox.purgeFinishedOlderThan(ORG, T0.minus(Duration.ofDays(30))));
+
+        assertEquals(List.of("old-waiting"), jdbc.queryForList("select event_id from abdm_inbound_event where organisation_id = :org",
+                Map.of("org", ORG), String.class));
         assertEquals(Integer.valueOf(1), jdbc.queryForObject("select count(*) from abdm_inbound_event where organisation_id = :org",
                 Map.of("org", OTHER_ORG), Integer.class));
     }

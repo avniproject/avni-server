@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 // Runs an ABDM job for each organisation with record sharing on (AbdmAccess), or for each one a selection names, as that
@@ -62,6 +63,12 @@ public class AbdmJobRunner {
     // For each organisation the selection names, whatever its switches: a duty such as erasing records when their consent
     // ends does not lapse when record sharing is switched off. The selection is read as the admin user, across organisations.
     public void forOrganisations(String task, Duration budget, Supplier<List<Long>> selection, Consumer<Instant> work) {
+        forOrganisations(task, budget, selection, work, null);
+    }
+
+    // As above; where the system user cannot act, withoutLogin runs for the organisation with no user, and it is still reported.
+    public void forOrganisations(String task, Duration budget, Supplier<List<Long>> selection, Consumer<Instant> work,
+                                 LongConsumer withoutLogin) {
         Instant runDeadline = clock.instant().plus(budget);
         try {
             List<Long> organisationIds;
@@ -77,7 +84,7 @@ public class AbdmJobRunner {
                 Instant now = clock.instant();
                 Duration left = Duration.between(now, runDeadline);
                 Instant deadline = left.isNegative() ? now : now.plus(left.dividedBy(organisationIds.size() - i));
-                runFor(organisationIds.get(i), task, deadline, work);
+                runFor(organisationIds.get(i), task, deadline, work, withoutLogin);
             }
         } finally {
             UserContextHolder.clear();
@@ -85,20 +92,34 @@ public class AbdmJobRunner {
         }
     }
 
-    private void runFor(long organisationId, String task, Instant deadline, Consumer<Instant> work) {
+    private void runFor(long organisationId, String task, Instant deadline, Consumer<Instant> work, LongConsumer withoutLogin) {
         AbdmOrganisation organisation = new AbdmOrganisation(organisationId, null, null);
         try {
             organisation = orgContext.organisation(organisationId);
-            orgContext.runAs(organisation, () -> work.accept(deadline));
+            try {
+                orgContext.runAs(organisation, () -> work.accept(deadline));
+            } catch (AbdmOrgContext.SystemUserException e) {
+                if (withoutLogin == null) throw e;
+                orgContext.withoutLogin(() -> {
+                    withoutLogin.accept(organisationId);
+                    return null;
+                });
+                report(organisationId, task, organisation, e, "; done without it, with no login");
+                return;
+            }
             jobRuns.succeeded(organisationId, task, clock.instant());
         } catch (RuntimeException e) {
-            logger.error("ABDM {} failed for {}", task, organisation, e);
-            bugsnag.notify(e);
-            try {
-                jobRuns.failed(organisationId, task, e.getClass().getSimpleName() + ": " + e.getMessage(), clock.instant());
-            } catch (RuntimeException recordFailure) {
-                logger.error("ABDM {}: the failure for {} could not be kept for the status page", task, organisation, recordFailure);
-            }
+            report(organisationId, task, organisation, e, "");
+        }
+    }
+
+    private void report(long organisationId, String task, AbdmOrganisation organisation, RuntimeException e, String outcome) {
+        logger.error("ABDM {} failed for {}{}", task, organisation, outcome, e);
+        bugsnag.notify(e);
+        try {
+            jobRuns.failed(organisationId, task, e.getClass().getSimpleName() + ": " + e.getMessage() + outcome, clock.instant());
+        } catch (RuntimeException recordFailure) {
+            logger.error("ABDM {}: the failure for {} could not be kept for the status page", task, organisation, recordFailure);
         }
     }
 

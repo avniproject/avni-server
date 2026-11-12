@@ -20,6 +20,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
@@ -57,6 +58,10 @@ public class AbdmHousekeepingJobTest {
             ((Consumer<Instant>) inv.getArgument(3)).accept(deadline);
             return null;
         }).when(runner).forOrganisations(anyString(), any(), any(), any());
+        doAnswer(inv -> {
+            ((Consumer<Instant>) inv.getArgument(3)).accept(deadline);
+            return null;
+        }).when(runner).forOrganisations(anyString(), any(), any(), any(), any());
     }
 
     private AbdmHousekeepingJob job(AbdmSettings settings) {
@@ -176,11 +181,17 @@ public class AbdmHousekeepingJobTest {
         job().purgeOldTraffic();
 
         ArgumentCaptor<Supplier<List<Long>>> holding = ArgumentCaptor.forClass(Supplier.class);
-        verify(runner).forOrganisations(eq(AbdmHousekeepingJob.TRAFFIC_PURGE), any(), holding.capture(), any());
+        ArgumentCaptor<LongConsumer> withoutLogin = ArgumentCaptor.forClass(LongConsumer.class);
+        verify(runner).forOrganisations(eq(AbdmHousekeepingJob.TRAFFIC_PURGE), any(), holding.capture(), any(), withoutLogin.capture());
         assertEquals(List.of(3L, 4L, 5L), holding.getValue().get());
         verify(runner, never()).forEachOrganisation(eq(AbdmHousekeepingJob.TRAFFIC_PURGE), any(), any());
         verify(messageLog).purgeOlderThan(Duration.ofDays(30));
         verify(inbox).purgeFinishedOlderThan(cutoff);
+
+        // F1: an organisation whose system user cannot act is purged with no login, each statement naming it.
+        withoutLogin.getValue().accept(4L);
+        verify(messageLog).purgeOlderThan(4L, Duration.ofDays(30));
+        verify(inbox).purgeFinishedOlderThan(4L, cutoff);
     }
 
     // Consents expire and their records are erased in every organisation holding them, record sharing on or not;
@@ -193,8 +204,12 @@ public class AbdmHousekeepingJobTest {
         job().expireConsentsAndEraseRecords();
 
         ArgumentCaptor<Supplier<List<Long>>> holding = ArgumentCaptor.forClass(Supplier.class);
-        verify(runner).forOrganisations(eq(AbdmHousekeepingJob.CONSENT_EXPIRY), any(), holding.capture(), any());
+        ArgumentCaptor<LongConsumer> withoutLogin = ArgumentCaptor.forClass(LongConsumer.class);
+        verify(runner).forOrganisations(eq(AbdmHousekeepingJob.CONSENT_EXPIRY), any(), holding.capture(), any(), withoutLogin.capture());
         assertEquals(List.of(7L), holding.getValue().get());
+        // F1: an organisation whose system user cannot act has its consents expired and records erased with no login.
+        withoutLogin.getValue().accept(7L);
+        verify(hiuData).expireAndErase(7L);
         verify(runner, never()).forEachOrganisation(eq(AbdmHousekeepingJob.CONSENT_EXPIRY), any(), any());
         verify(runner).forEachOrganisation(eq(AbdmHousekeepingJob.CONSENT_UPDATE_RETRY), any(), any());
         verify(hiuData).expireAndErase();

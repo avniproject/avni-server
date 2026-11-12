@@ -7,5 +7,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 public interface EkaHiuEvents {
     void consentUpdate(JsonNode event);
 
-    void hiuDataPush(JsonNode event);
+    // lastTry: the inbox will not try it again, so a failure that may pass is final.
+    void hiuDataPush(JsonNode event, boolean lastTry);
+
+    // Not as the organisation: its system user cannot act. True when all of the ending was applied.
+    boolean endConsentWithoutLogin(long organisationId, JsonNode event);
 }

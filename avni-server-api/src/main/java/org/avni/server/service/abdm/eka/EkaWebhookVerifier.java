@@ -27,13 +27,20 @@ public class EkaWebhookVerifier {
     public static final String HEADER = "Eka-Webhook-Signature";
     public static final long TOLERANCE_SECONDS = 180;
 
-    public record Result(boolean valid, String reason) {
+    // STALE: made with the key, outside the time allowed. KEY_UNUSABLE: Avni's own fault, the key is missing or unreadable.
+    public enum Kind {VALID, REFUSED, STALE, KEY_UNUSABLE}
+
+    public record Result(Kind kind, String reason) {
+        public boolean valid() {
+            return kind == Kind.VALID;
+        }
+
         static Result ok() {
-            return new Result(true, null);
+            return new Result(Kind.VALID, null);
         }
 
         static Result invalid(String reason) {
-            return new Result(false, reason);
+            return new Result(Kind.REFUSED, reason);
         }
     }
 
@@ -52,14 +59,14 @@ public class EkaWebhookVerifier {
 
     public Result verify(EkaSystemConfig settings, String header, String rawBody) {
         String encrypted = settings.getEncryptedWebhookSigningKey();
-        if (!StringUtils.hasText(encrypted)) return Result.invalid("no webhook signing key in the organisation's Eka settings");
+        if (!StringUtils.hasText(encrypted)) return new Result(Kind.KEY_UNUSABLE, "no webhook signing key in the organisation's Eka settings");
         String key;
         try {
             key = cipher.decrypt(encrypted);
         } catch (RuntimeException e) {
-            return Result.invalid("the signing key could not be read: " + e.getClass().getSimpleName());
+            return new Result(Kind.KEY_UNUSABLE, "the signing key could not be read: " + e.getClass().getSimpleName());
         }
-        if (!StringUtils.hasText(key)) return Result.invalid("the organisation's webhook signing key is empty");
+        if (!StringUtils.hasText(key)) return new Result(Kind.KEY_UNUSABLE, "the organisation's webhook signing key is empty");
         return check(header, rawBody, key, clock.instant().getEpochSecond());
     }
 
@@ -89,7 +96,7 @@ public class EkaWebhookVerifier {
         if (!matches) return Result.invalid("the signature does not match the body");
         long skew = nowEpochSeconds - timestamp;
         if (Math.abs(skew) > TOLERANCE_SECONDS) {
-            return Result.invalid("the signature is " + skew + " s old, outside " + TOLERANCE_SECONDS + " s");
+            return new Result(Kind.STALE, "the signature is " + skew + " s old, outside " + TOLERANCE_SECONDS + " s");
         }
         return Result.ok();
     }

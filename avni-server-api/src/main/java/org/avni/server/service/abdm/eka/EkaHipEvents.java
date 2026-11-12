@@ -8,5 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 public interface EkaHipEvents {
     void linkCareContext(JsonNode event);
 
-    void hipDataFetch(JsonNode event);
+    // lastTry: the inbox will not try it again, so a failure that may pass is final.
+    void hipDataFetch(JsonNode event, boolean lastTry);
 }

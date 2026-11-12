@@ -1,6 +1,7 @@
 package org.avni.server.service.abdm.hiu;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.framework.security.UserContextHolder;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +67,81 @@ public class AbdmHiuStoreIntegrationTest extends AbstractControllerIntegrationTe
 
         jdbc.update("update abdm_consent set status = 'REQUESTED' where uuid = 'c-3'");
         assertEquals(List.of(1L, 2L, 3L), store.organisationsHoldingConsentsOrRecords());
+    }
+
+    // F1: an ending applied with no user logged in names the organisation. Its request and artefact end, what was received
+    // under them goes, an update parked earlier for the request is superseded, and another organisation holding the same
+    // ids is left alone.
+    @Test
+    public void aConsentsEndingIsAppliedWithNoUser_forTheNamedOrganisationOnly() {
+        var jdbc = namedJdbc.getJdbcOperations();
+        clearHiu(jdbc);
+        for (long organisationId : new long[]{2L, 3L}) held(jdbc, organisationId);
+        jdbc.update("insert into abdm_parked_event (organisation_id, kind, reference, status, detail) values " +
+                "(2, 'consent_update', 'cr-1', 'GRANTED', '{\"artefacts\":[\"artefact-9\"]}'), " +
+                "(3, 'consent_update', 'cr-1', 'GRANTED', '{\"artefacts\":[\"artefact-9\"]}')");
+        UserContextHolder.clear();
+
+        assertTrue(store.endWithoutLogin(2L, "cr-1", List.of("artefact-1"), "REVOKED"));
+
+        assertEquals(List.of("REVOKED", "REVOKED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 2 order by id", String.class));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 2", Integer.class));
+        assertEquals(Integer.valueOf(2), jdbc.queryForObject("select count(*) from abdm_consent_status where organisation_id = 2 and status = 'REVOKED'",
+                Integer.class));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_parked_event where organisation_id = 2 and resolved_at is null",
+                Integer.class));
+        assertEquals(List.of("GRANTED", "GRANTED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 3 order by id", String.class));
+        assertEquals(Integer.valueOf(1), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 3", Integer.class));
+        assertEquals(Integer.valueOf(1), jdbc.queryForObject("select count(*) from abdm_parked_event where organisation_id = 3 and resolved_at is null",
+                Integer.class));
+    }
+
+    // An ending naming only artefacts ends the requests they were granted under, as the logged-in path does.
+    @Test
+    public void anEndingNamingOnlyArtefactsEndsTheRequestTheyWereGrantedUnder() {
+        var jdbc = namedJdbc.getJdbcOperations();
+        clearHiu(jdbc);
+        held(jdbc, 2L);
+
+        assertTrue(store.endWithoutLogin(2L, null, List.of("artefact-1"), "EXPIRED"));
+
+        assertEquals(List.of("EXPIRED", "EXPIRED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 2 order by id", String.class));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 2", Integer.class));
+    }
+
+    // What is not held here (a request not mapped yet, an artefact not made yet) is left for the logged-in path, which can
+    // park it or ask Eka; what is held is still ended and erased now.
+    @Test
+    public void anEndingNamingWhatIsNotHeldHereIsNotWhollyApplied_butWhatIsHeldStillEnds() {
+        var jdbc = namedJdbc.getJdbcOperations();
+        clearHiu(jdbc);
+        held(jdbc, 2L);
+
+        assertFalse(store.endWithoutLogin(2L, "cr-unmapped", List.of(), "REVOKED"));
+        assertFalse(store.endWithoutLogin(2L, null, List.of("artefact-1", "artefact-not-made"), "REVOKED"));
+
+        assertEquals(List.of("REVOKED", "REVOKED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 2 order by id", String.class));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 2", Integer.class));
+    }
+
+    private static void clearHiu(org.springframework.jdbc.core.JdbcOperations jdbc) {
+        jdbc.update("delete from abdm_health_information");
+        jdbc.update("delete from abdm_data_flow");
+        jdbc.update("delete from abdm_consent_status");
+        jdbc.update("delete from abdm_consent");
+        jdbc.update("delete from abdm_parked_event");
+    }
+
+    // A granted request cr-1 with artefact-1 and one record received under it.
+    private static void held(org.springframework.jdbc.core.JdbcOperations jdbc, long organisationId) {
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values (?, ?, 'HIU', 'cr-1', 'GRANTED')",
+                "r-" + organisationId, organisationId);
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, status) values (?, ?, 'HIU', 'cr-1', 'artefact-1', 'GRANTED')",
+                "a-" + organisationId, organisationId);
+        jdbc.update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status) values (?, ?, 'HIU', 'artefact-1', 'RECEIVED')",
+                "f-" + organisationId, organisationId);
+        jdbc.update("insert into abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id) " +
+                "values (?, (select id from abdm_data_flow where uuid = ?), 'tx-1', 'artefact-1')", organisationId, "f-" + organisationId);
     }
 
     @Test

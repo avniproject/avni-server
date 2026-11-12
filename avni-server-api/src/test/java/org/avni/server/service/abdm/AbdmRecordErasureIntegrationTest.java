@@ -9,12 +9,15 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManagerFactory;
+
 import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 // Records received under a consent are erased when it ends even after the organisation has switched record sharing
@@ -31,6 +34,10 @@ public class AbdmRecordErasureIntegrationTest extends AbstractControllerIntegrat
     private AbdmJobRuns jobRuns;
     @Autowired
     private NamedParameterJdbcTemplate namedJdbc;
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+    @Autowired
+    private AbdmOrgContext orgContext;
     private JdbcTemplate jdbc;
 
     @Before
@@ -79,6 +86,43 @@ public class AbdmRecordErasureIntegrationTest extends AbstractControllerIntegrat
 
         String lastError = (String) jobRuns.of(HOLDING).get(AbdmHousekeepingJob.CONSENT_EXPIRY).get("lastError");
         assertTrue(lastError, lastError.contains("system user"));
+    }
+
+    // F1: a voided system user cannot stop erasure. The consent still expires and its records are erased, with no login and
+    // in that organisation only; the broken system user is still reported.
+    @Test
+    public void withItsSystemUserVoidedAnOrganisationsRecordsAreStillErased_andTheSystemUserIsReported() {
+        heldPastEraseDate(HOLDING);
+        heldPastEraseDate(EMPTY);
+        assertEquals(1, jdbc.update("update users set is_voided = true where username = 'demo-admin'"));
+        // Voided behind Hibernate's back, so its caches (query results too) must forget the user.
+        entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getCache().evictAllRegions();
+        assertThrows(AbdmOrgContext.SystemUserException.class, () -> orgContext.runAs(orgContext.organisation(HOLDING), () -> {
+        }));
+
+        job.expireConsentsAndEraseRecords();
+
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = ?",
+                Integer.class, HOLDING));
+        assertEquals(Integer.valueOf(2), jdbc.queryForObject("select count(*) from abdm_consent where organisation_id = ? and status = 'EXPIRED'",
+                Integer.class, HOLDING));
+        String lastError = (String) jobRuns.of(HOLDING).get(AbdmHousekeepingJob.CONSENT_EXPIRY).get("lastError");
+        assertTrue(lastError, lastError.contains("system user"));
+        assertNull(jobRuns.of(EMPTY).get(AbdmHousekeepingJob.CONSENT_EXPIRY).get("lastError"));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = ?",
+                Integer.class, EMPTY));
+    }
+
+    private void heldPastEraseDate(long organisationId) {
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status, data_erase_at) " +
+                "values (?, ?, 'HIU', 'cr-1', 'GRANTED', now() - interval '1 day')", UUID.randomUUID().toString(), organisationId);
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, status, data_erase_at) " +
+                "values (?, ?, 'HIU', 'cr-1', 'artefact-1', 'GRANTED', now() - interval '1 day')", UUID.randomUUID().toString(), organisationId);
+        String flow = "flow-" + organisationId;
+        jdbc.update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status) values (?, ?, 'HIU', 'artefact-1', 'RECEIVED')",
+                flow, organisationId);
+        jdbc.update("insert into abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id) " +
+                "values (?, (select id from abdm_data_flow where uuid = ?), 'tx-1', 'artefact-1')", organisationId, flow);
     }
 
     private void ekaSettings(long organisationId, String systemUser) {

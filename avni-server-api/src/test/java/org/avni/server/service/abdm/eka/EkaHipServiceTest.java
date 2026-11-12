@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm.eka;
 
+import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.AbhaEventRepository;
@@ -68,13 +69,14 @@ public class EkaHipServiceTest {
     private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones = mock(org.avni.server.service.abdm.hip.AbdmPatientPhones.class);
     private final org.avni.server.dao.ProgramEncounterRepository programEncounterRepository = mock(org.avni.server.dao.ProgramEncounterRepository.class);
     private final IndividualRepository individualRepository = mock(IndividualRepository.class);
+    private final Bugsnag bugsnag = mock(Bugsnag.class);
     private final List<Map<String, Object>> view = List.of(Map.of("reference", "enc-2", "status", "LINK_REQUESTED"));
     private EkaHipService service;
 
     @Before
     public void setUp() {
         service = new EkaHipService(settings, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
-                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository);
+                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository, bugsnag);
 
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
                 1990, "12345678568912", "asha.devi", List.of(
@@ -420,7 +422,7 @@ public class EkaHipServiceTest {
                 .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2"))
                 .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_NAMES, Map.of("hip-1", "First Centre", "hip-2", "Second Centre")))),
                 store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository, abhaLinkRepository, assembler,
-                builder, crypto, phones, programEncounterRepository, individualRepository);
+                builder, crypto, phones, programEncounterRepository, individualRepository, bugsnag);
     }
 
     private void visitsRecordedAt(String enc2Hip, String enc1Hip) {
@@ -500,11 +502,12 @@ public class EkaHipServiceTest {
         ObjectNode e = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
         ((ObjectNode) e.get("data")).put("hip_id", "SOMEONE-ELSES-HIP");
 
-        service.hipDataFetch(e);
+        service.hipDataFetch(e, false);
 
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("HIP ID"));
         verify(eka, never()).postSlow(any(), any(), any());
         verifyNoInteractions(assembler);
+        verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
     @Test
@@ -516,7 +519,7 @@ public class EkaHipServiceTest {
         ((ObjectNode) e.get("data")).put("hip_id", "hip-2");
         when(store.findCareContextsByReferences("hip-2", List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
 
-        service.hipDataFetch(e);
+        service.hipDataFetch(e, false);
 
         verify(assembler, times(2)).assemble(any(), any(), any(), any(), eq("hip-2"), eq("Second Centre"));
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
@@ -532,7 +535,7 @@ public class EkaHipServiceTest {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
@@ -573,7 +576,7 @@ public class EkaHipServiceTest {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED")));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyRawBase64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyRawBase64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
@@ -590,7 +593,7 @@ public class EkaHipServiceTest {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), ""));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), ""), false);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
@@ -606,7 +609,7 @@ public class EkaHipServiceTest {
         when(encounterRepository.findByUuid("enc-2")).thenReturn(encounter("enc-2", other, new DateTime(2026, 5, 2, 10, 0)));
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
@@ -642,7 +645,7 @@ public class EkaHipServiceTest {
         ObjectNode e = (ObjectNode) event("hip-data-fetch.json");
         ((ObjectNode) e.get("data")).putArray("hi_types").add("Prescription");
 
-        service.hipDataFetch(e);
+        service.hipDataFetch(e, false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("asked for Prescription"));
@@ -653,7 +656,7 @@ public class EkaHipServiceTest {
         ObjectNode e = (ObjectNode) event("hip-data-fetch.json");
         ((ObjectNode) e.get("data")).remove("key_information");
 
-        service.hipDataFetch(e);
+        service.hipDataFetch(e, false);
 
         verifyNoInteractions(eka);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("key"));
@@ -665,9 +668,10 @@ public class EkaHipServiceTest {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaCallException(400, null, "Eka POST " + ON_FETCH + " refused with HTTP 400"));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("HTTP 400"));
+        verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
     // A visit stays linked at NHA under the ABHA it was linked with. Once the record holds another ABHA, or none, a
@@ -679,7 +683,7 @@ public class EkaHipServiceTest {
         ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
         ((ObjectNode) fetch.get("data")).put("oid", "oid-old-abha").put("abha_address", "old.abha@sbx");
 
-        service.hipDataFetch(fetch);
+        service.hipDataFetch(fetch, false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
@@ -693,7 +697,7 @@ public class EkaHipServiceTest {
         ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
         ((ObjectNode) fetch.get("data")).remove(List.of("oid", "abha_address"));
 
-        service.hipDataFetch(fetch);
+        service.hipDataFetch(fetch, false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verifyNoInteractions(assembler, builder);
@@ -708,7 +712,7 @@ public class EkaHipServiceTest {
                 "OPConsultation", "LINKED", "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), anotherPatients));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verifyNoInteractions(assembler, builder);
@@ -723,7 +727,7 @@ public class EkaHipServiceTest {
                 "OPConsultation", "PENDING", null, null, null, Instant.parse("2026-10-25T10:00:00Z"));
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), anotherPatients));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("more than one patient"));
@@ -739,7 +743,7 @@ public class EkaHipServiceTest {
         ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
         ((ObjectNode) fetch.get("data")).put("abha_address", "asha.devi@sbx").remove("oid");
 
-        service.hipDataFetch(fetch);
+        service.hipDataFetch(fetch, false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verifyNoInteractions(assembler);
@@ -752,7 +756,7 @@ public class EkaHipServiceTest {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         when(abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(INDIVIDUAL_ID)).thenReturn(Optional.empty());
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
     }
@@ -767,7 +771,7 @@ public class EkaHipServiceTest {
         ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
         ((ObjectNode) fetch.get("data")).put("abha_address", "12345678568912@sbx").remove("oid");
 
-        service.hipDataFetch(fetch);
+        service.hipDataFetch(fetch, false);
 
         verify(eka).postSlow(eq(ON_FETCH), any(), any());
     }
@@ -788,7 +792,7 @@ public class EkaHipServiceTest {
             if (asking[0] == null) data.remove("oid");
             else data.put("oid", asking[0]);
 
-            service.hipDataFetch(fetch);
+            service.hipDataFetch(fetch, false);
 
             verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         }
@@ -817,7 +821,7 @@ public class EkaHipServiceTest {
                     .thenReturn(List.of(abhaEvent("linked", OID, c[2], "12345678568912")));
             FideliusKeyMaterial requester = crypto.generateKeyMaterial();
 
-            service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+            service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
             verify(assembler, times(2)).assemble(any(), any(), eq("12-3456-7856-8912"), eq(c[3]), eq(HIP_ID), any());
         }
@@ -841,7 +845,7 @@ public class EkaHipServiceTest {
         ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
         ((ObjectNode) fetch.get("data")).put("abha_address", "12345678568912@sbx").remove("oid");
 
-        service.hipDataFetch(fetch);
+        service.hipDataFetch(fetch, false);
 
         verify(eka).postSlow(eq(ON_FETCH), any(), any());
         verify(assembler, times(2)).assemble(any(), any(), eq("12-3456-7856-8912"), eq("12345678568912@sbx"), eq(HIP_ID), any());
@@ -866,7 +870,7 @@ public class EkaHipServiceTest {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(eka).postSlow(eq(ON_FETCH), any(), any());
         verify(eka, never()).post(eq(ON_FETCH), any(), any());
@@ -879,7 +883,7 @@ public class EkaHipServiceTest {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(true, "Eka POST " + ON_FETCH + " did not answer within 60000 ms"));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(store).finishDataFlow(eq(42L), eq("UNANSWERED"), eq(2), contains("did not answer"));
         verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
@@ -892,22 +896,72 @@ public class EkaHipServiceTest {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaCallException(502, null, "Eka POST " + ON_FETCH + " refused with HTTP 502"));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verify(store).finishDataFlow(eq(42L), eq("UNANSWERED"), eq(2), contains("HTTP 502"));
         verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
     }
 
+    // F6: an on-fetch that may pass later (never reached Eka, an expired login, too many requests) is thrown, so the inbox
+    // tries the share again; this try is recorded as one to be made again, not as a failed share, and raises no alarm.
     @Test
-    public void anOnFetchThatNeverReachedEkaIsRecordedAsFailedWithNothingSent() {
+    public void anOnFetchThatMayPassLaterIsThrownForTheInboxToTryAgain_notRecordedAsFailed() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        for (EkaCallException e : List.of(new EkaAbdmClient.NoAnswer(false, "Eka POST " + ON_FETCH + " did not answer: ConnectException"),
+                new EkaCallException(401, null, "Eka POST " + ON_FETCH + " refused with HTTP 401"),
+                new EkaCallException(429, null, "Eka POST " + ON_FETCH + " refused with HTTP 429"))) {
+            reset(eka, store);
+            when(store.insertDataFlow(anyString(), anyString(), any(), anyString(), anyString(), any())).thenReturn(42L);
+            when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+            when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(e);
+
+            EkaCallException thrown = assertThrows(EkaCallException.class,
+                    () -> service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false));
+
+            assertSame(e, thrown);
+            verify(store).finishDataFlow(eq(42L), eq("RETRIED"), eq(0), contains(e.getMessage()));
+            verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
+        }
+        verifyNoInteractions(bugsnag);
+    }
+
+    // F6: on the inbox's last try nothing is left to try again: the share ends FAILED and is reported.
+    @Test
+    public void onTheLastTryAnOnFetchThatNeverReachedEkaEndsFailed_andIsReported() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         when(eka.postSlow(eq(ON_FETCH), any(), any())).thenThrow(new EkaAbdmClient.NoAnswer(false, "Eka POST " + ON_FETCH + " did not answer: ConnectException"));
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), true);
 
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("ConnectException"));
         verify(store, never()).finishDataFlow(eq(42L), eq("UNANSWERED"), anyInt(), any());
+        verify(bugsnag).notify(any(IllegalStateException.class));
+    }
+
+    // F6: a visit that could not be read (the database, say) may be read on the next try, so the share is tried again
+    // whole rather than sent without it; on the last try the rest is sent and that visit is named as not sent.
+    @Test
+    public void aVisitThatCouldNotBeReadIsTriedAgain_andOnTheLastTryTheRestIsSent() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(encounterRepository.findByUuid("enc-1")).thenThrow(new IllegalStateException("connection reset"));
+
+        assertThrows(IllegalStateException.class,
+                () -> service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false));
+
+        verify(eka, never()).postSlow(any(), any(), any());
+        verify(store).finishDataFlow(eq(42L), eq("RETRIED"), eq(0), contains("IllegalStateException"));
+        verifyNoInteractions(bugsnag);
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), true);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
+        assertEquals(1, body.getValue().get("entries").size());
+        assertEquals("enc-2", body.getValue().at("/entries/0/care_context_id").asText());
+        verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-1 (could not be prepared)"));
     }
 
     @Test
@@ -915,10 +969,11 @@ public class EkaHipServiceTest {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of());
 
-        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
         verifyNoInteractions(eka);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), anyString());
+        verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
     // ---- helpers

@@ -229,6 +229,13 @@ public class AbdmHipStore {
         return counts;
     }
 
+    // The organisation's shares (HIP data flows) that ended FAILED since the time given, for the admin page's status.
+    public long failedSharesSince(Instant since) {
+        Long failed = jdbc.queryForObject("select count(*) from abdm_data_flow where organisation_id = :org and role = 'HIP' " +
+                "and status = 'FAILED' and updated_at >= :since", params().addValue("since", Timestamp.from(since)), Long.class);
+        return failed == null ? 0 : failed;
+    }
+
     private MapSqlParameterSource counted(String error) {
         return params().addValue("error", error, Types.VARCHAR).addValue("maxAttempts", LINK_ATTEMPTS)
                 .addValue("firstWait", LINK_RETRY_WAIT.toSeconds());

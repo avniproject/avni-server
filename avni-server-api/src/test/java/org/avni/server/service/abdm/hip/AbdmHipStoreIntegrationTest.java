@@ -9,7 +9,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -439,6 +442,29 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
 
     private long idOf(String uuid) {
         return namedJdbc.getJdbcOperations().queryForObject("select id from individual where uuid = ?", Long.class, uuid);
+    }
+
+    // F6: the status page counts the organisation's shares that ended FAILED since the time given. A try to be made again,
+    // a share that went, an HIU flow, another organisation's and one older than the time are not counted.
+    @Test
+    public void failedSharesAreTheOrganisationsHipFlowsThatEndedFailedSinceTheTimeGiven() {
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("delete from abdm_health_information");
+        jdbc.update("delete from abdm_data_flow");
+        flow(2, "HIP", "FAILED", "now()");
+        flow(2, "HIP", "FAILED", "now() - interval '1 day'");
+        flow(2, "HIP", "FAILED", "now() - interval '40 days'");
+        flow(2, "HIP", "RETRIED", "now()");
+        flow(2, "HIP", "TRANSFERRED", "now()");
+        flow(2, "HIU", "FAILED", "now()");
+        flow(3, "HIP", "FAILED", "now()");
+
+        assertEquals(2L, store.failedSharesSince(Instant.now().minus(Duration.ofDays(30))));
+    }
+
+    private void flow(long organisationId, String role, String status, String updatedAt) {
+        namedJdbc.getJdbcOperations().update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status, updated_at) " +
+                "values (?, ?, ?, 'consent-1', ?, " + updatedAt + ")", UUID.randomUUID().toString(), organisationId, role, status);
     }
 
     private static AbdmHipStore.NewCareContext cc(String reference) {

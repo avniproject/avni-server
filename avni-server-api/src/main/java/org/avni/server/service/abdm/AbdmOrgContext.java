@@ -30,7 +30,7 @@ public class AbdmOrgContext {
 
     // The organisation's system user is missing, unknown, or not a user of that organisation.
     public static class SystemUserException extends RuntimeException {
-        SystemUserException(AbdmOrganisation organisation, String problem, Throwable cause) {
+        public SystemUserException(AbdmOrganisation organisation, String problem, Throwable cause) {
             super("ABDM work for " + organisation + " not run: " + problem, cause);
         }
     }
@@ -76,6 +76,23 @@ public class AbdmOrgContext {
                     && actingFor != null && actingFor == organisation.id();
             if (!usable) throw new SystemUserException(organisation, "its system user is not an active user of that organisation", null);
             work.run();
+        } finally {
+            UserContextHolder.clear();
+            SecurityContextHolder.clearContext();
+            if (previousUser != null) UserContextHolder.create(previousUser);
+            if (previousAuthentication != null) SecurityContextHolder.getContext().setAuthentication(previousAuthentication);
+        }
+    }
+
+    // No user, so connections take no organisation's role: for a duty the system user cannot do, each statement naming its
+    // organisation. Outside a transaction only (the worker, the job runner); the thread's user is put back.
+    public <T> T withoutLogin(Supplier<T> work) {
+        UserContext previousUser = UserContextHolder.getUserContext();
+        Authentication previousAuthentication = SecurityContextHolder.getContext().getAuthentication();
+        UserContextHolder.clear();
+        SecurityContextHolder.clearContext();
+        try {
+            return work.get();
         } finally {
             UserContextHolder.clear();
             SecurityContextHolder.clearContext();

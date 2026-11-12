@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm.eka;
 
+import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -72,6 +73,8 @@ public class EkaHipService implements EkaHipEvents {
     static final String FLOW_FAILED = "FAILED";
     // Eka did not answer an on-fetch it may still have taken: neither transferred nor failed.
     static final String FLOW_UNANSWERED = "UNANSWERED";
+    // This try failed in a way that may pass; the inbox tries the share again, under a flow of its own.
+    static final String FLOW_RETRIED = "RETRIED";
 
     // Eka documents LINKED and ERRORED; the rest are tolerated in case the sandbox says it differently.
     private static final Set<String> SAYS_LINKED = Set.of("LINKED", "SUCCESS", "SUCCESSFUL", "LINK_SUCCESS", "COMPLETED");
@@ -91,13 +94,15 @@ public class EkaHipService implements EkaHipEvents {
     private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones;
     private final org.avni.server.dao.ProgramEncounterRepository programEncounterRepository;
     private final IndividualRepository individualRepository;
+    private final Bugsnag bugsnag;
 
     public EkaHipService(AbdmSettings settings, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka, AbdmOrgContext orgContext,
                          AbhaEventRepository abhaEventRepository, EncounterRepository encounterRepository,
                          AbhaLinkRepository abhaLinkRepository, CareContextDocumentAssembler assembler, FhirBundleBuilder builder,
                          FideliusCrypto crypto, org.avni.server.service.abdm.hip.AbdmPatientPhones phones,
                          org.avni.server.dao.ProgramEncounterRepository programEncounterRepository,
-                         IndividualRepository individualRepository) {
+                         IndividualRepository individualRepository, Bugsnag bugsnag) {
+        this.bugsnag = bugsnag;
         this.programEncounterRepository = programEncounterRepository;
         this.individualRepository = individualRepository;
         this.settings = settings;
@@ -305,9 +310,10 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     // abha.hip_data_fetch: build each requested visit's bundle, encrypt it to the requester's key with a
-    // fresh key pair of ours, and post it on-fetch. Recorded as an HIP data flow.
+    // fresh key pair of ours, and post it on-fetch. Recorded as an HIP data flow. A failure that may pass is thrown for the
+    // inbox to try again, until its last try.
     @Override
-    public void hipDataFetch(JsonNode event) {
+    public void hipDataFetch(JsonNode event, boolean lastTry) {
         JsonNode data = dataOf(event);
         String eventId = AbdmJson.text(event, "transaction_id");
         // Spec 2.4: data.transaction_id is the one to echo; the top-level one only when it is empty. Unverified.
@@ -318,7 +324,7 @@ public class EkaHipService implements EkaHipEvents {
         EkaSystemConfig orgSettings = settings.current();
         Optional<String> hip = AbdmFlows.hipOfEvent(orgSettings, data);
         if (hip.isEmpty()) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "The request names a HIP ID that is not this organisation's");
+            failShare(flowId, transactionId, "The request names a HIP ID that is not this organisation's");
             logger.warn("Eka data fetch {} names a HIP ID that is not this organisation's; nothing sent", transactionId);
             return;
         }
@@ -329,13 +335,13 @@ public class EkaHipService implements EkaHipEvents {
         String requesterNonce = AbdmFlows.firstNonNull(AbdmJson.text(data, "key_information.nonce"),
                 AbdmJson.text(data, "key_material.nonce"), AbdmJson.text(data, "keyMaterial.nonce"));
         if (requesterKey == null || requesterNonce == null) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "The request carries no key_information (requester key and nonce)");
+            failShare(flowId, transactionId, "The request carries no key_information (requester key and nonce)");
             logger.warn("Eka data fetch {} has no key material; nothing sent", transactionId);
             return;
         }
         List<String> references = careContextIds(data);
         if (references.isEmpty()) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "The request names no care context");
+            failShare(flowId, transactionId, "The request names no care context");
             return;
         }
         String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
@@ -343,7 +349,7 @@ public class EkaHipService implements EkaHipEvents {
         String requesterAddress = AbdmJson.text(data, "abha_address");
         // Without the patient's ABHA there is nothing to check the visits' owner against.
         if (!StringUtils.hasText(oid) && !StringUtils.hasText(requesterAddress)) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: " + NAMES_NO_ABHA);
+            failShare(flowId, transactionId, "Not sent: " + NAMES_NO_ABHA);
             logger.warn("Eka data fetch {} names no patient's ABHA; nothing sent", transactionId);
             return;
         }
@@ -351,7 +357,7 @@ public class EkaHipService implements EkaHipEvents {
         List<AbdmHipStore.CareContext> known = store.findCareContextsByReferences(hipId, references);
         // One request is one patient's: visits of more than one, linked or not, are refused whole.
         if (known.stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: the visits asked for belong to more than one patient");
+            failShare(flowId, transactionId, "Not sent: the visits asked for belong to more than one patient");
             logger.warn("Eka data fetch {} asks for visits of more than one patient; nothing sent", transactionId);
             return;
         }
@@ -362,7 +368,7 @@ public class EkaHipService implements EkaHipEvents {
         List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
         boolean anyType = asked == null || asked.isEmpty();
         if (!anyType && !linkedHere.isEmpty() && linkedHere.values().stream().noneMatch(c -> asked.contains(c.hiType()))) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: no record of the types asked for is held here; asked for " + String.join(", ", asked));
+            failShare(flowId, transactionId, "Not sent: no record of the types asked for is held here; asked for " + String.join(", ", asked));
             logger.info("Eka data fetch {}: asked for record types not held here; nothing sent", transactionId);
             return;
         }
@@ -381,7 +387,14 @@ public class EkaHipService implements EkaHipEvents {
                     problems.add(reference + " (" + row.hiType() + ", not asked for)");
                     continue;
                 }
-                Prepared p = prepare(reference, patientUuid, oid, requesterAddress, hipId, orgSettings);
+                Prepared p;
+                try {
+                    p = prepare(reference, patientUuid, oid, requesterAddress, hipId, orgSettings);
+                } catch (RuntimeException e) {
+                    if (!lastTry) throw e;
+                    logger.warn("Eka: care context {} not prepared: {}", reference, e.getClass().getSimpleName());
+                    p = new Prepared(reference, null, "could not be prepared");
+                }
                 if (p.bundleJson() == null) {
                     problems.add(reference + " (" + p.problem() + ")");
                     continue;
@@ -400,13 +413,14 @@ public class EkaHipService implements EkaHipEvents {
                 entry.put("content", content);
             }
         } catch (RuntimeException e) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Transfer failed: " + e.getClass().getSimpleName());
-            logger.error("Eka data fetch {} failed: {}", transactionId, e.getClass().getSimpleName());
+            String error = "Transfer failed: " + e.getClass().getSimpleName();
+            if (!lastTry) throw retried(flowId, transactionId, error, e);
+            failShare(flowId, transactionId, error);
             return;
         }
         String notSent = problems.isEmpty() ? null : "Not sent: " + String.join(", ", problems);
         if (entries.isEmpty()) {
-            store.finishDataFlow(flowId, FLOW_FAILED, 0, notSent == null ? "No record could be sent" : notSent);
+            failShare(flowId, transactionId, notSent == null ? "No record could be sent" : notSent);
             logger.warn("Eka data fetch {}: no record could be sent", transactionId);
             return;
         }
@@ -424,14 +438,30 @@ public class EkaHipService implements EkaHipEvents {
             logger.info("Eka data fetch {}: {} records sent on-fetch", transactionId, entries.size());
         } catch (RuntimeException e) {
             if (!EkaAbdmClient.mayHaveActed(e)) {
-                store.finishDataFlow(flowId, FLOW_FAILED, 0, "On-fetch failed: " + e.getMessage());
-                logger.warn("Eka on-fetch for {} failed: {}", transactionId, e.getMessage());
+                String error = "On-fetch failed: " + e.getMessage();
+                if (!lastTry && !EkaAbdmClient.refusedForGood(e)) throw retried(flowId, transactionId, error, e);
+                failShare(flowId, transactionId, error);
                 return;
             }
             String unanswered = "Eka may have the records: " + e.getMessage() + (notSent == null ? "" : ". " + notSent);
             store.finishDataFlow(flowId, FLOW_UNANSWERED, entries.size(), unanswered);
             logger.warn("Eka on-fetch for {} not answered: {}", transactionId, e.getMessage());
         }
+    }
+
+    // A share that ends FAILED is seen: reported, and counted on the status page (AbdmHipStore.failedSharesSince).
+    private void failShare(long flowId, String transactionId, String error) {
+        store.finishDataFlow(flowId, FLOW_FAILED, 0, error);
+        IllegalStateException failed = new IllegalStateException("Eka data fetch " + transactionId + " not shared: " + error);
+        logger.warn(failed.getMessage());
+        bugsnag.notify(failed);
+    }
+
+    // This try's flow is closed as RETRIED, and the failure goes back to the inbox, which tries the share again.
+    private RuntimeException retried(long flowId, String transactionId, String error, RuntimeException cause) {
+        store.finishDataFlow(flowId, FLOW_RETRIED, 0, error + "; tried again");
+        logger.warn("Eka data fetch {}: {}; it will be tried again", transactionId, error);
+        return cause;
     }
 
     // The verified ABHA's address, else its number's default address: its 14 digits with the environment's suffix.
@@ -459,47 +489,43 @@ public class EkaHipService implements EkaHipEvents {
     // ---- building
 
     // Read in one transaction: the encounter, its patient and their ABHA, as a FHIR bundle from the HIP hipId. requesterOid
-    // and requesterAddress: the ABHA Eka asks for, which must still be the one on the patient's record.
+    // and requesterAddress: the ABHA Eka asks for, which must still be the one on the patient's record. A failure to read
+    // is thrown, as another try may read it.
     Prepared prepare(String reference, String expectedPatientUuid, String requesterOid, String requesterAddress, String hipId,
                      EkaSystemConfig orgSettings) {
-        try {
-            return orgContext.inReadOnlyTransaction(() -> {
-                org.avni.server.domain.AbstractEncounter encounter = encounterRepository.findByUuid(reference);
-                Individual individual = encounter == null ? null : ((Encounter) encounter).getIndividual();
-                if (encounter == null) {
-                    org.avni.server.domain.ProgramEncounter programmeVisit = programEncounterRepository.findByUuid(reference);
-                    encounter = programmeVisit;
-                    individual = programmeVisit == null || programmeVisit.getProgramEnrolment() == null ? null
-                            : programmeVisit.getProgramEnrolment().getIndividual();
-                }
-                if (encounter == null || encounter.isVoided() || encounter.getEncounterDateTime() == null) {
-                    return new Prepared(reference, null, "visit not found");
-                }
-                // Voiding a patient leaves their visits as they are, and a visit already linked stays linked at NHA.
-                if (individual == null || individual.isVoided()) {
-                    return new Prepared(reference, null, "patient removed");
-                }
-                if (expectedPatientUuid != null && (individual == null || !expectedPatientUuid.equals(individual.getUuid()))) {
-                    return new Prepared(reference, null, "belongs to another patient");
-                }
-                AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
-                Optional<AbhaEvent> verified = link == null ? Optional.empty() : AbhaEventService.ofSavedAbha(
-                        abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(individual.getUuid()), link.getAbhaNumber(), link.getAbhaAddress());
-                // A visit stays linked at NHA under the ABHA it was linked with; once the record holds another ABHA, or
-                // none, or one Eka never verified, that ABHA gets nothing.
-                String abhaProblem = abhaProblem(link, verified, requesterOid, requesterAddress);
-                if (abhaProblem != null) return new Prepared(reference, null, abhaProblem);
-                // The record names the patient by the verified ABHA, never by the record's typed answers.
-                String number = AbdmFlows.digitsOnly(verified.get().getAbhaNumber());
-                CareContextDocument document = assembler.assemble(encounter, individual,
-                        number.isEmpty() ? null : AbdmFlows.hyphenatedAbhaNumber(number),
-                        verifiedAddress(verified.get(), orgSettings.getAbhaAddressSuffix()), hipId, orgSettings.getHipName(hipId));
-                return new Prepared(reference, AbdmJson.write(builder.build(document)), null);
-            });
-        } catch (RuntimeException e) {
-            logger.warn("Eka: care context {} not prepared: {}", reference, e.getClass().getSimpleName());
-            return new Prepared(reference, null, "could not be prepared");
-        }
+        return orgContext.inReadOnlyTransaction(() -> {
+            org.avni.server.domain.AbstractEncounter encounter = encounterRepository.findByUuid(reference);
+            Individual individual = encounter == null ? null : ((Encounter) encounter).getIndividual();
+            if (encounter == null) {
+                org.avni.server.domain.ProgramEncounter programmeVisit = programEncounterRepository.findByUuid(reference);
+                encounter = programmeVisit;
+                individual = programmeVisit == null || programmeVisit.getProgramEnrolment() == null ? null
+                        : programmeVisit.getProgramEnrolment().getIndividual();
+            }
+            if (encounter == null || encounter.isVoided() || encounter.getEncounterDateTime() == null) {
+                return new Prepared(reference, null, "visit not found");
+            }
+            // Voiding a patient leaves their visits as they are, and a visit already linked stays linked at NHA.
+            if (individual == null || individual.isVoided()) {
+                return new Prepared(reference, null, "patient removed");
+            }
+            if (expectedPatientUuid != null && (individual == null || !expectedPatientUuid.equals(individual.getUuid()))) {
+                return new Prepared(reference, null, "belongs to another patient");
+            }
+            AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
+            Optional<AbhaEvent> verified = link == null ? Optional.empty() : AbhaEventService.ofSavedAbha(
+                    abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(individual.getUuid()), link.getAbhaNumber(), link.getAbhaAddress());
+            // A visit stays linked at NHA under the ABHA it was linked with; once the record holds another ABHA, or
+            // none, or one Eka never verified, that ABHA gets nothing.
+            String abhaProblem = abhaProblem(link, verified, requesterOid, requesterAddress);
+            if (abhaProblem != null) return new Prepared(reference, null, abhaProblem);
+            // The record names the patient by the verified ABHA, never by the record's typed answers.
+            String number = AbdmFlows.digitsOnly(verified.get().getAbhaNumber());
+            CareContextDocument document = assembler.assemble(encounter, individual,
+                    number.isEmpty() ? null : AbdmFlows.hyphenatedAbhaNumber(number),
+                    verifiedAddress(verified.get(), orgSettings.getAbhaAddressSuffix()), hipId, orgSettings.getHipName(hipId));
+            return new Prepared(reference, AbdmJson.write(builder.build(document)), null);
+        });
     }
 
     // Our key material for the requester to derive the shared key: X.509 public key, as the Eka library shares it.

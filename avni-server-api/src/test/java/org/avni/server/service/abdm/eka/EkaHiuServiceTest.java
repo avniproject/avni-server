@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm.eka;
 
+import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -38,6 +39,7 @@ import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIP_ID;
 import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIU_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -71,6 +73,7 @@ public class EkaHiuServiceTest {
     private static final String REGISTRATION = "MH1001";
     private AbdmSettings settings;
     private final AbdmAccess access = mock(AbdmAccess.class);
+    private final Bugsnag bugsnag = mock(Bugsnag.class);
     private EkaHiuService service;
     private FideliusKeyMaterial ours;
 
@@ -206,6 +209,25 @@ public class EkaHiuServiceTest {
         verify(store, never()).setConsentRequestId(anyLong(), any(), any());
     }
 
+    // F7: a 2xx with no id may still have reached the patient, so the request is UNKNOWN and settled from Eka's list, as
+    // one Eka never answered is; left REQUESTED, nothing could ever match the patient's answer to it.
+    @Test
+    public void aConsentCreateAnsweredWithNoIdIsUnknown_andNotSentAgain() {
+        for (EkaResponse noId : List.of(new EkaResponse("r-1", 200, AbdmJson.read("{}")), new EkaResponse("r-2", 204, null))) {
+            org.mockito.Mockito.reset(eka);
+            when(eka.postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenReturn(noId);
+
+            Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
+
+            assertEquals("UNKNOWN", answer.get("status"));
+            assertTrue(String.valueOf(answer.get("error")), String.valueOf(answer.get("error")).contains("no consent id"));
+            verify(eka, times(1)).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any());
+        }
+        verify(store, times(2)).markConsentUnknown(eq(5L), contains("no consent id"));
+        verify(store, never()).setConsentRequestId(anyLong(), any(), any());
+        verify(store, never()).failConsent(anyLong(), any());
+    }
+
     // A call that never reached Eka was not made: failed, and saying so rather than that Eka refused it.
     @Test
     public void aConsentCreateThatNeverReachedEkaFails() {
@@ -294,6 +316,30 @@ public class EkaHiuServiceTest {
         verify(store).setConsentRequestStatus("init-1", "GRANTED");
         verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
         verify(store).upsertArtefact("init-1", "artefact-2", "shyam@sbx", HIU_ID, "GRANTED");
+    }
+
+    // F1: when the organisation's system user cannot act, an ending goes to the store naming the organisation, with its
+    // status as ABDM's, and Eka is asked nothing; what the store could not find is said so.
+    @Test
+    public void anEndingAppliedWithoutALoginNamesTheOrganisation_andAsksEkaNothing() {
+        ObjectNode revoked = grantedUpdate("abdm-cr-1");
+        ((ObjectNode) revoked.at("/data/notification")).put("status", "revoked");
+        when(store.endWithoutLogin(2L, "abdm-cr-1", List.of("artefact-1"), "REVOKED")).thenReturn(true, false);
+
+        assertTrue(service.endConsentWithoutLogin(2L, revoked));
+        assertFalse(service.endConsentWithoutLogin(2L, revoked));
+
+        verify(store, times(2)).endWithoutLogin(2L, "abdm-cr-1", List.of("artefact-1"), "REVOKED");
+        verifyNoInteractions(eka);
+    }
+
+    // A grant needs Eka and the organisation's own user: it is never applied without a login.
+    @Test
+    public void aGrantIsNeverAppliedWithoutALogin() {
+        assertFalse(service.endConsentWithoutLogin(2L, grantedUpdate("abdm-cr-1")));
+
+        verify(store, never()).endWithoutLogin(anyLong(), any(), any(), any());
+        verifyNoInteractions(eka);
     }
 
     // A withdrawal, refusal or expiry erases what was received under the consent at once, not at the hourly erase.
@@ -478,7 +524,7 @@ public class EkaHiuServiceTest {
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
         ((ObjectNode) event.get("data")).put("consent_id", "abdm-A");
 
-        service.hiuDataPush(event);
+        service.hiuDataPush(event, false);
 
         verify(store).mapConsentRequestId(5L, "abdm-A");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
@@ -732,7 +778,7 @@ public class EkaHiuServiceTest {
         String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
         knownArtefactAndNewFlow();
 
-        service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()));
+        service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()), false);
 
         InOrder order = inOrder(store, eka);
         order.verify(store).setTransaction(31L, "dtx-1", "RECEIVING", null);
@@ -763,7 +809,7 @@ public class EkaHiuServiceTest {
         entry.put("media", "application/fhir+json");
         when(eka.get(eq("/abdm/v1/hiu/care-context/data/dtx-1/entries/ref-1"), any())).thenReturn(new EkaResponse("g-1", 200, entry));
 
-        service.hiuDataPush(push("", null, hip.publicKeyRawBase64(), hip.nonceBase64()));
+        service.hiuDataPush(push("", null, hip.publicKeyRawBase64(), hip.nonceBase64()), false);
 
         verify(eka).get(eq("/abdm/v1/hiu/care-context/data/dtx-1/entries/ref-1"), any());
         verify(store).insertHealthInformation(31L, "dtx-1", "artefact-1", "HIP-X", "cc-1", true, AbdmJson.write(AbdmJson.read(BUNDLE)));
@@ -777,7 +823,7 @@ public class EkaHiuServiceTest {
         String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), someoneElse.publicKeyX509Base64(), someoneElse.nonceBase64());
         knownArtefactAndNewFlow();
 
-        service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()));
+        service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()), false);
 
         verify(store, never()).insertHealthInformation(anyLong(), any(), any(), any(), any(), any(), any());
         verify(store).finishDataFlow(eq(31L), eq("FAILED"), eq(0), anyString());
@@ -800,7 +846,7 @@ public class EkaHiuServiceTest {
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
         ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-1");
 
-        service.hiuDataPush(event);
+        service.hiuDataPush(event, false);
 
         verify(store).insertHealthInformation(31L, "dtx-1", "artefact-1", "HIP-X", "cc-1", true, AbdmJson.write(AbdmJson.read(BUNDLE)));
         verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
@@ -820,7 +866,7 @@ public class EkaHiuServiceTest {
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
         ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-9");
 
-        assertThrows(AbdmNotReadyException.class, () -> service.hiuDataPush(event));
+        assertThrows(AbdmNotReadyException.class, () -> service.hiuDataPush(event, false));
 
         verify(store, never()).insertDataFlow(any(), any(), any(), any(), any(), any(), any());
         verify(store, never()).insertHealthInformation(anyLong(), any(), any(), any(), any(), any(), any());
@@ -836,10 +882,44 @@ public class EkaHiuServiceTest {
         ObjectNode event = push("CONTENT", null, "KEY", "NONCE");
         ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-1");
 
-        assertThrows(AbdmNotReadyException.class, () -> service.hiuDataPush(event));
+        assertThrows(AbdmNotReadyException.class, () -> service.hiuDataPush(event, false));
 
         verify(store, never()).insertDataFlow(any(), any(), any(), any(), any(), any(), any());
         verify(eka, never()).post(eq("/abdm/v1/hiu/care-context/data/on-push"), any(), any());
+    }
+
+    // F6: a receipt that may pass later is thrown, so the inbox tries the push again; what was kept is not kept twice, and
+    // no alarm is raised yet.
+    @Test
+    public void anOnPushThatMayPassLaterIsThrownForTheInboxToTryAgain() {
+        FideliusKeyMaterial hip = crypto.generateKeyMaterial();
+        String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
+        knownArtefactAndNewFlow();
+        EkaCallException down = new EkaCallException(503, null, "Eka POST " + EkaHiuService.ON_PUSH + " refused with HTTP 503");
+        when(eka.post(eq(EkaHiuService.ON_PUSH), any(), any())).thenThrow(down);
+
+        EkaCallException thrown = assertThrows(EkaCallException.class,
+                () -> service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()), false));
+
+        assertSame(down, thrown);
+        verify(store).insertHealthInformation(eq(31L), eq("dtx-1"), eq("artefact-1"), eq("HIP-X"), eq("cc-1"), eq(true), anyString());
+        verifyNoInteractions(bugsnag);
+    }
+
+    // F6: on the inbox's last try, and for a receipt Eka refused, nothing is tried again: the failure is reported.
+    @Test
+    public void anOnPushFailingOnTheLastTry_orRefusedByEka_isReported() {
+        FideliusKeyMaterial hip = crypto.generateKeyMaterial();
+        String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
+        knownArtefactAndNewFlow();
+        when(eka.post(eq(EkaHiuService.ON_PUSH), any(), any()))
+                .thenThrow(new EkaCallException(503, null, "Eka POST " + EkaHiuService.ON_PUSH + " refused with HTTP 503"))
+                .thenThrow(new EkaCallException(400, "ABDM-1080", "Eka POST " + EkaHiuService.ON_PUSH + " refused with HTTP 400"));
+
+        service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()), true);
+        service.hiuDataPush(push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64()), false);
+
+        verify(bugsnag, times(2)).notify(any(IllegalStateException.class));
     }
 
     // Some records kept and some not is not a full receipt.
@@ -856,7 +936,7 @@ public class EkaHiuServiceTest {
         second.put("content", bad);
         second.put("media", "application/fhir+json");
 
-        service.hiuDataPush(event);
+        service.hiuDataPush(event, false);
 
         verify(store).insertHealthInformation(eq(31L), eq("dtx-1"), eq("artefact-1"), eq("HIP-X"), eq("cc-1"), eq(true), anyString());
         verify(store).finishDataFlow(31L, "PARTIAL", 1, "Could not decrypt or read the record");
@@ -870,7 +950,7 @@ public class EkaHiuServiceTest {
 
     private EkaHiuService service() {
         return new EkaHiuService(settings, store, eka, crypto, cipher, AbdmTestSupport.orgContext(), hipStore, abhaEvents,
-                AbdmTestSupport.noWaitRetry(), access);
+                AbdmTestSupport.noWaitRetry(), access, bugsnag);
     }
 
     private void ekaListsConsents(String... consents) {

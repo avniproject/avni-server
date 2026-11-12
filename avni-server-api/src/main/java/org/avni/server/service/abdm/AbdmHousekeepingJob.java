@@ -25,8 +25,8 @@ import java.util.TreeSet;
 
 // Scheduled ABDM upkeep, on ABDM's own threads (AbdmScheduler), as each organisation's system user (AbdmJobRunner):
 // linking and the parked-update retry for organisations with record sharing on; the consent expiry and record erase, and
-// the traffic purge, for every organisation holding what they delete. The task names are the keys of "jobs" in
-// GET /web/abdm/status.
+// the traffic purge, for every organisation holding what they delete, with no login where its system user cannot act.
+// The task names are the keys of "jobs" in GET /web/abdm/status.
 @Component
 public class AbdmHousekeepingJob {
     private static final Logger logger = LoggerFactory.getLogger(AbdmHousekeepingJob.class);
@@ -98,6 +98,9 @@ public class AbdmHousekeepingJob {
         runner.forOrganisations(TRAFFIC_PURGE, UPKEEP_BUDGET, () -> holdingOldTraffic(cutoff), deadline -> {
             messageLog.purgeOlderThan(retention);
             inbox.purgeFinishedOlderThan(cutoff);
+        }, organisationId -> {
+            messageLog.purgeOlderThan(organisationId, retention);
+            inbox.purgeFinishedOlderThan(organisationId, cutoff);
         });
     }
 
@@ -110,7 +113,8 @@ public class AbdmHousekeepingJob {
     // Erasing records when their consent ends is owed by every organisation holding consents or records, whatever its
     // switches; settling requests Eka gave no clear answer to, and the retry, ask Eka, so only where record sharing is on.
     public void expireConsentsAndEraseRecords() {
-        runner.forOrganisations(CONSENT_EXPIRY, UPKEEP_BUDGET, hiuStore::organisationsHoldingConsentsOrRecords, deadline -> hiuData.expireAndErase());
+        runner.forOrganisations(CONSENT_EXPIRY, UPKEEP_BUDGET, hiuStore::organisationsHoldingConsentsOrRecords, deadline -> hiuData.expireAndErase(),
+                hiuData::expireAndErase);
         runner.forEachOrganisation(CONSENT_UPDATE_RETRY, UPKEEP_BUDGET, deadline -> {
             ekaHiu.settleUnknownRequests();
             ekaHiu.retryParkedUpdates();

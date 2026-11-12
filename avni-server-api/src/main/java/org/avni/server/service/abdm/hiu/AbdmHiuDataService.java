@@ -31,6 +31,15 @@ public class AbdmHiuDataService {
         if (expired > 0 || erased > 0) logger.info("ABDM HIU: {} consent request(s) expired, {} record(s) erased", expired, erased);
     }
 
+    // The same for the organisation named, needing no user: its system user cannot act, and erasure must not wait on it.
+    public void expireAndErase(long organisationId) {
+        int expired = store.expireOverdueConsents(organisationId);
+        int erased = store.eraseRecordsOfEndedConsents(organisationId);
+        if (expired > 0 || erased > 0) {
+            logger.info("ABDM HIU, organisation {} with no login: {} consent request(s) expired, {} record(s) erased", organisationId, expired, erased);
+        }
+    }
+
     // [{careContextReference, hipId, transactionId, receivedAt, checksumMatched, bundle}]. Nothing once the consent is
     // withdrawn, refused or expired, or past its erase date, and only records under an artefact still granted, whether or
     // not the hourly erase has run yet (HIU_FLOW_202, HIU_FLOW_301).

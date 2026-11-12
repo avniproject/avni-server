@@ -1,5 +1,6 @@
 package org.avni.server.web.abdm;
 
+import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
@@ -26,11 +27,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 // Eka Care posts each organisation's ABDM events to that organisation's own address, /api/v3/eka/webhook/{webhookId}
 // (its Eka settings' webhookId). In order: the address must name an organisation (else 404); the signature over the raw
@@ -38,6 +43,7 @@ import java.util.Optional;
 // the event (EkaEventGate: record sharing on, or a consent ending while it holds consents or records; else 404). Then the
 // event is stored (AbdmInbox) and only then answered 200: an event that could not be stored is not acknowledged, so Eka
 // delivers it again. EkaEventWorker handles it as the organisation.
+// Avni's own faults (a key it cannot read, a store that failed) answer 500, so Eka delivers again, and go to Bugsnag.
 // No Avni user: this path alone is open (ResourceProtectionStatus), so the signature is the check.
 @RestController
 public class EkaWebhookController {
@@ -45,21 +51,27 @@ public class EkaWebhookController {
     private static final String SOURCE = "eka";
     private static final int MAX_EVENT_ID = 100;
     private static final int MAX_TEXT = 255;
+    // Eka's own signature outside the time allowed this often points at a clock, this server's or Eka's, not a replay.
+    static final int STALE_REPEATS = 3;
+    static final Duration STALE_WINDOW = Duration.ofMinutes(15);
 
     private final ExternalSystemConfigRepository configRepository;
     private final EkaWebhookVerifier verifier;
     private final EkaEventGate gate;
     private final AbdmInbox inbox;
     private final EkaEventWorker worker;
+    private final Bugsnag bugsnag;
+    private final Map<Long, Deque<Instant>> staleRefusals = new ConcurrentHashMap<>();
 
     @Autowired
     public EkaWebhookController(ExternalSystemConfigRepository configRepository, EkaWebhookVerifier verifier, EkaEventGate gate,
-                                AbdmInbox inbox, EkaEventWorker worker) {
+                                AbdmInbox inbox, EkaEventWorker worker, Bugsnag bugsnag) {
         this.configRepository = configRepository;
         this.verifier = verifier;
         this.gate = gate;
         this.inbox = inbox;
         this.worker = worker;
+        this.bugsnag = bugsnag;
     }
 
     @PostMapping(AbdmPaths.IN_EKA_WEBHOOK + "/{webhookId}")
@@ -73,8 +85,15 @@ public class EkaWebhookController {
         long organisationId = settings.get().getOrganisationId();
         String rawBody = body == null ? "" : new String(body, StandardCharsets.UTF_8);
         EkaWebhookVerifier.Result result = verifier.verify(settings.get(), signature, rawBody);
+        if (result.kind() == EkaWebhookVerifier.Kind.KEY_UNUSABLE) {
+            IllegalStateException fault = new IllegalStateException("Eka webhook for organisation " + organisationId + " not checked: " + result.reason());
+            logger.error(fault.getMessage());
+            bugsnag.notify(fault);
+            return answer(HttpStatus.INTERNAL_SERVER_ERROR, "not checked", null);
+        }
         if (!result.valid()) {
             logger.warn("Eka webhook for organisation {} refused: {}", organisationId, result.reason());
+            if (result.kind() == EkaWebhookVerifier.Kind.STALE) staleRefused(organisationId);
             return answer(HttpStatus.UNAUTHORIZED, "rejected", null);
         }
         JsonNode event;
@@ -101,10 +120,30 @@ public class EkaWebhookController {
             }
         } catch (RuntimeException e) {
             logger.error("Eka webhook {} {} for organisation {} could not be stored, so it is not acknowledged", name, eventId, organisationId, e);
+            bugsnag.notify(new IllegalStateException("Eka webhook " + name + " for organisation " + organisationId + " not stored", e));
             return answer(HttpStatus.INTERNAL_SERVER_ERROR, "not stored", null);
         }
         worker.wake();
         return answer(HttpStatus.OK, "accepted", null);
+    }
+
+    // Reported once per STALE_REPEATS refusals of an organisation within STALE_WINDOW; one alone may be a replay.
+    private void staleRefused(long organisationId) {
+        Instant now = Instant.now();
+        Deque<Instant> refusals = staleRefusals.computeIfAbsent(organisationId, id -> new ArrayDeque<>());
+        boolean repeated;
+        synchronized (refusals) {
+            while (!refusals.isEmpty() && refusals.peekFirst().isBefore(now.minus(STALE_WINDOW))) refusals.pollFirst();
+            refusals.addLast(now);
+            repeated = refusals.size() >= STALE_REPEATS;
+            if (repeated) refusals.clear();
+        }
+        if (!repeated) return;
+        IllegalStateException fault = new IllegalStateException("Eka webhooks for organisation " + organisationId + " refused " + STALE_REPEATS
+                + " times within " + STALE_WINDOW.toMinutes() + " minutes: signed outside the " + EkaWebhookVerifier.TOLERANCE_SECONDS
+                + " s allowed; check this server's clock");
+        logger.error(fault.getMessage());
+        bugsnag.notify(fault);
     }
 
     // Eka's top-level transaction_id names the delivery; without one, the body itself, so a redelivery is still one event.

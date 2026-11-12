@@ -2,6 +2,7 @@ package org.avni.server.web.abdm;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmPaths;
 import org.avni.server.service.abdm.AbdmScheduler;
 import org.avni.server.service.abdm.AbdmTestScheduling;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
+import jakarta.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.time.Instant;
 import java.util.List;
@@ -46,6 +48,10 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
     private EkaEventWorker worker;
     @Autowired
     private AbdmScheduler scheduler;
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+    @Autowired
+    private AbdmOrgContext orgContext;
     private JdbcTemplate jdbc;
 
     @Before
@@ -142,6 +148,46 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
         assertEquals("REVOKED", jdbc.queryForObject("select status from abdm_consent where organisation_id = ? and consent_id = 'artefact-1'",
                 String.class, ORG));
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_inbound_event where event_id = 'push-1'", Integer.class));
+    }
+
+    // F1: the organisation's system user is voided, so no work can run as it; the patient's withdrawal still ends the
+    // consent and erases what was received under it, with no login and only in that organisation.
+    @Test
+    public void withItsSystemUserVoidedAWithdrawalStillEndsTheConsentAndErasesItsRecords_inThatOrganisationOnly() {
+        heldConsent(ORG);
+        heldConsent(3L);
+        assertEquals(1, jdbc.update("update users set is_voided = true where username = 'demo-admin'"));
+        // Voided behind Hibernate's back, so its caches (query results too) must forget the user.
+        entityManagerFactory.unwrap(org.hibernate.SessionFactory.class).getCache().evictAllRegions();
+        assertThrows(AbdmOrgContext.SystemUserException.class, () -> orgContext.runAs(orgContext.organisation(ORG), () -> {
+        }));
+        String revocation = "{\"event\":\"abha.consent_update\",\"transaction_id\":\"revoke-2\",\"data\":{\"status\":\"REVOKED\"," +
+                "\"notification\":{\"consentRequestId\":\"cr-1\",\"status\":\"REVOKED\",\"consentArtefacts\":{\"id\":\"artefact-1\"}}}}";
+
+        assertEquals(HttpStatus.OK, post(WEBHOOK, revocation, signed(revocation)).getStatusCode());
+        worker.drain();
+
+        assertEquals(List.of("DONE"), statuses("revoke-2"));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = ?",
+                Integer.class, ORG));
+        assertEquals(List.of("REVOKED", "REVOKED"), jdbc.queryForList("select status from abdm_consent where organisation_id = ? order by id",
+                String.class, ORG));
+        assertEquals(Integer.valueOf(1), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 3",
+                Integer.class));
+        assertEquals(List.of("GRANTED", "GRANTED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 3 order by id",
+                String.class));
+    }
+
+    private void heldConsent(long organisationId) {
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values (?, ?, 'HIU', 'cr-1', 'GRANTED')",
+                UUID.randomUUID().toString(), organisationId);
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, status) " +
+                "values (?, ?, 'HIU', 'cr-1', 'artefact-1', 'GRANTED')", UUID.randomUUID().toString(), organisationId);
+        String flow = "flow-" + organisationId;
+        jdbc.update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status) values (?, ?, 'HIU', 'artefact-1', 'RECEIVED')",
+                flow, organisationId);
+        jdbc.update("insert into abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id) " +
+                "values (?, (select id from abdm_data_flow where uuid = ?), 'tx-1', 'artefact-1')", organisationId, flow);
     }
 
     private void switches(boolean recordSharing) {
