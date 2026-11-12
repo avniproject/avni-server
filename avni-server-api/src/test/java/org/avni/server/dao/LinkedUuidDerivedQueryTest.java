@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 
 public class LinkedUuidDerivedQueryTest {
     @Test
-    public void derivedQueriesOnParentUuidFilterThroughTheParentNotTheLinkedUuidFormula() {
+    public void derivedQueriesOnParentUuidFilterThroughTheParentNotTheLinkedUuidField() {
         assertEquals(List.of("groupSubject.uuid"), filteredPaths("findByGroupSubjectUuidOrderByLastModifiedDateTimeAscIdAsc", GroupSubject.class));
         assertEquals(List.of("memberSubject.uuid"), filteredPaths("findByMemberSubjectUuidOrderByLastModifiedDateTimeAscIdAsc", GroupSubject.class));
         assertEquals(List.of("programEnrolment.uuid", "checklistDetail.name"), filteredPaths("findByProgramEnrolmentUuidAndChecklistDetailName", Checklist.class));
