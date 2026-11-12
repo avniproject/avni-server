@@ -9,7 +9,9 @@ import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmInbox;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.eka.EkaEventGate;
 import org.avni.server.service.abdm.eka.EkaEventWorker;
+import org.avni.server.service.abdm.hiu.AbdmHiuStore;
 import org.avni.server.service.abdm.eka.EkaWebhookVerifier;
 import org.avni.server.service.abha.EkaCredentialCipher;
 import org.junit.Before;
@@ -55,6 +57,7 @@ public class EkaWebhookControllerTest {
     private ExternalSystemConfigRepository configRepository;
     private EkaCredentialCipher cipher;
     private AbdmAccess access;
+    private AbdmHiuStore hiuStore;
     private AbdmInbox inbox;
     private EkaEventWorker worker;
     private MockMvc mvc;
@@ -70,11 +73,13 @@ public class EkaWebhookControllerTest {
         organisation("webhook-2", 2L, "encrypted-key-2");
         access = mock(AbdmAccess.class);
         when(access.recordSharingOn(anyLong())).thenReturn(true);
+        hiuStore = mock(AbdmHiuStore.class);
         inbox = mock(AbdmInbox.class);
         when(inbox.receive(anyLong(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any())).thenReturn(true);
         worker = mock(EkaEventWorker.class);
         EkaWebhookVerifier verifier = new EkaWebhookVerifier(cipher, Clock.fixed(Instant.ofEpochSecond(NOW), ZoneOffset.UTC));
-        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(configRepository, verifier, access, inbox, worker)).build();
+        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(configRepository, verifier, new EkaEventGate(access, hiuStore), inbox,
+                worker)).build();
     }
 
     private void organisation(String webhookId, long organisationId, String encryptedKey) {
@@ -186,6 +191,64 @@ public class EkaWebhookControllerTest {
         send(body, signature(NOW, body)).andExpect(status().isNotFound());
 
         verifyNoInteractions(inbox, worker);
+    }
+
+    // A patient's withdrawal is honoured, and what was received under the consent erased, after record sharing is off.
+    @Test
+    public void withRecordSharingOffAWithdrawalIsStillTaken_forAnOrganisationHoldingConsentsOrRecords() throws Exception {
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(true);
+        for (String status : new String[]{"REVOKED", "DENIED", "EXPIRED"}) {
+            String update = withStatus(event("consent-update.json"), status, "wh-" + status);
+
+            sendSigned(update).andExpect(status().isOk());
+
+            verify(inbox).receive(eq(ORG), eq("eka"), eq("wh-" + status), eq("abha.consent_update"), eq("CONSENT_UPDATE"),
+                    eq("consent-request-1"), eq(update), any());
+        }
+    }
+
+    @Test
+    public void withRecordSharingOffEveryOtherEventIsRefused() throws Exception {
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(true);
+
+        sendSigned(event("consent-update.json")).andExpect(status().isNotFound());
+        sendSigned(event("hiu-data-push-webhook.json")).andExpect(status().isNotFound());
+        sendSigned(event("hip-data-fetch.json")).andExpect(status().isNotFound());
+        sendSigned(event("link-care-context.json")).andExpect(status().isNotFound());
+
+        verifyNoInteractions(inbox, worker);
+    }
+
+    @Test
+    public void withRecordSharingOffAWithdrawalForAnOrganisationHoldingNothingIsRefused() throws Exception {
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(false);
+
+        sendSigned(withStatus(event("consent-update.json"), "REVOKED", "wh-revoked")).andExpect(status().isNotFound());
+
+        verifyNoInteractions(inbox, worker);
+    }
+
+    // The signature comes first, with sharing on or off.
+    @Test
+    public void withRecordSharingOffABadlySignedWithdrawalIs401() throws Exception {
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(true);
+        String update = withStatus(event("consent-update.json"), "REVOKED", "wh-revoked");
+
+        send(update, signature(OTHER_KEY, NOW, update)).andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(inbox, worker, hiuStore);
+    }
+
+    private static String withStatus(String update, String status, String id) {
+        ObjectNode event = (ObjectNode) AbdmJson.read(update);
+        ((ObjectNode) event.at("/data")).put("status", status);
+        ((ObjectNode) event.at("/data/notification")).put("status", status);
+        event.put("transaction_id", id);
+        return AbdmJson.write(event);
     }
 
     @Test

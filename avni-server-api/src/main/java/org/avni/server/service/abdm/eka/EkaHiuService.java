@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmNotReadyException;
 import org.avni.server.service.abdm.AbdmOrgContext;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -70,6 +72,8 @@ public class EkaHiuService implements EkaHiuEvents {
     public static final String FAILED = "FAILED";
     public static final String RECEIVED = "RECEIVED";
     public static final String PARTIAL = "PARTIAL";
+    // The statuses that end a consent: its records are erased.
+    private static final Set<String> ENDING = Set.of("REVOKED", "DENIED", "EXPIRED");
     private static final String LINKED = "LINKED";
 
     // ABDM's purpose codes to Eka's purpose strings, which must match exactly.
@@ -89,6 +93,7 @@ public class EkaHiuService implements EkaHiuEvents {
     private final AbdmHipStore hipStore;
     private final AbhaEventRepository abhaEventRepository;
     private final AbdmRetry retry;
+    private final AbdmAccess access;
     // Per organisation: the key Eka has been given during this run.
     private final Map<Long, Keyset> registered = new ConcurrentHashMap<>();
 
@@ -104,7 +109,8 @@ public class EkaHiuService implements EkaHiuEvents {
 
     @Autowired
     public EkaHiuService(AbdmSettings settings, AbdmHiuStore store, EkaAbdmClient eka, FideliusCrypto crypto, EkaCredentialCipher cipher,
-                         AbdmOrgContext orgContext, AbdmHipStore hipStore, AbhaEventRepository abhaEventRepository, AbdmRetry retry) {
+                         AbdmOrgContext orgContext, AbdmHipStore hipStore, AbhaEventRepository abhaEventRepository, AbdmRetry retry,
+                         AbdmAccess access) {
         this.settings = settings;
         this.store = store;
         this.eka = eka;
@@ -114,6 +120,7 @@ public class EkaHiuService implements EkaHiuEvents {
         this.hipStore = hipStore;
         this.abhaEventRepository = abhaEventRepository;
         this.retry = retry;
+        this.access = access;
     }
 
     // ---- consent request (spec 3.2). Answers {uuid, status}, plus error when it failed.
@@ -310,6 +317,14 @@ public class EkaHiuService implements EkaHiuEvents {
         consentUpdate(consentRequestId, status, artefacts);
     }
 
+    // Whether an abha.consent_update withdraws, refuses or expires its consent: taken even after record sharing is off.
+    public static boolean endsConsent(JsonNode event) {
+        JsonNode data = AbdmJson.at(event, "data");
+        JsonNode notification = notificationOf(data);
+        String status = normaliseStatus(AbdmFlows.firstNonNull(AbdmJson.text(notification, "status"), AbdmJson.text(data, "status")));
+        return status != null && ENDING.contains(status);
+    }
+
     // The consent request an abha.consent_update names; null when it names only artefacts.
     public static String consentRequestIdOf(JsonNode event) {
         JsonNode data = AbdmJson.at(event, "data");
@@ -326,7 +341,8 @@ public class EkaHiuService implements EkaHiuEvents {
     private void consentUpdate(String consentRequestId, String status, List<String> artefacts) {
         Optional<AbdmHiuStore.Consent> request = retry.find(() -> store.findConsentRequest(consentRequestId));
         boolean mappedEarlier = request.isPresent();
-        if (!mappedEarlier) request = matchThroughEka(consentRequestId);
+        // With record sharing off an ending update is still taken, but Eka is asked nothing.
+        if (!mappedEarlier && access.recordSharingOn()) request = matchThroughEka(consentRequestId);
         if (request.isEmpty()) {
             // Never filed under another request: with two waiting, that swapped their approvals (AVNI-24, 26 Oct).
             store.parkConsentUpdate(consentRequestId, status, artefacts);
@@ -344,6 +360,8 @@ public class EkaHiuService implements EkaHiuEvents {
         store.setConsentRequestStatus(consentRequestId, status);
         if (!GRANTED.equals(status)) {
             store.setArtefactStatus(artefacts, status);
+            // HIU_FLOW_202: what was received under a withdrawn, refused or expired consent goes now, not at the hourly erase.
+            if (ENDING.contains(status)) store.eraseRecordsOfEndedConsents();
             return;
         }
         // No fetch and no health-information request: Eka pushes the records itself (abha.hiu_data_push).

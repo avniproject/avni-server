@@ -12,6 +12,7 @@ import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmOrganisation;
 import org.avni.server.service.abdm.AbdmPaths;
 import org.avni.server.service.abdm.AbdmScheduler;
+import org.avni.server.service.abdm.hiu.AbdmHiuStore;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,6 +48,7 @@ public class EkaEventWorkerTest {
 
     private final AbdmInbox inbox = mock(AbdmInbox.class);
     private final AbdmAccess access = mock(AbdmAccess.class);
+    private final AbdmHiuStore hiuStore = mock(AbdmHiuStore.class);
     private final AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
     private final AbdmMessageLog messageLog = mock(AbdmMessageLog.class);
     private final Bugsnag bugsnag = mock(Bugsnag.class);
@@ -75,8 +77,8 @@ public class EkaEventWorkerTest {
         when(hipProvider.getIfAvailable()).thenReturn(hip);
         when(hiuProvider.getIfAvailable()).thenReturn(hiu);
         when(discoveryProvider.getIfAvailable()).thenReturn(discovery);
-        worker = new EkaEventWorker(inbox, access, orgContext, messageLog, mock(AbdmScheduler.class), bugsnag, hipProvider, hiuProvider,
-                discoveryProvider, clock);
+        worker = new EkaEventWorker(inbox, new EkaEventGate(access, hiuStore), orgContext, messageLog, mock(AbdmScheduler.class), bugsnag,
+                hipProvider, hiuProvider, discoveryProvider, clock);
     }
 
     @Test
@@ -240,6 +242,25 @@ public class EkaEventWorkerTest {
 
         verify(inbox).fail(eq(link.id()), anyString(), eq(NOW));
         verifyNoInteractions(hip, orgContext);
+    }
+
+    // A withdrawal queued or arriving after record sharing went off is still applied, so its records are erased.
+    @Test
+    public void withRecordSharingOffAWithdrawalIsStillHandledAsTheOrganisation() {
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(true);
+        AbdmInbox.Event revoked = new AbdmInbox.Event(nextId++, ORG, "eka", "revoked-1", "abha.consent_update", "CONSENT_UPDATE",
+                fixture("consent-update.json").replace("\"GRANTED\"", "\"REVOKED\""), 1);
+        AbdmInbox.Event push = stored("hiu-data-push-webhook.json", "abha.hiu_data_push", 1);
+        when(inbox.claim(anyInt(), any())).thenReturn(List.of(revoked, push), List.of());
+
+        worker.drain();
+
+        verify(hiu).consentUpdate(any());
+        verify(inbox).done(revoked.id());
+        verify(hiu, never()).hiuDataPush(any());
+        verify(inbox).fail(eq(push.id()), anyString(), eq(NOW));
+        assertEquals(List.of(ORGANISATION), ranAs);
     }
 
     @Test

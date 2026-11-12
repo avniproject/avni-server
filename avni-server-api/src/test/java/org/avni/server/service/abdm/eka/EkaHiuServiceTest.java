@@ -7,6 +7,7 @@ import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmNotReadyException;
@@ -69,6 +70,7 @@ public class EkaHiuServiceTest {
     private static final String REQUESTER = "Dr. A Sharma";
     private static final String REGISTRATION = "MH1001";
     private AbdmSettings settings;
+    private final AbdmAccess access = mock(AbdmAccess.class);
     private EkaHiuService service;
     private FideliusKeyMaterial ours;
 
@@ -78,6 +80,7 @@ public class EkaHiuServiceTest {
                 .with(EkaSystemConfig.CLINIC_ID, "clinic-1")
                 .with(EkaSystemConfig.DOCTOR_OID, "doctor-oid-1")));
         service = service();
+        when(access.recordSharingOn()).thenReturn(true);
         when(cipher.encrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(cipher.decrypt(anyString())).thenAnswer(inv -> ((String) inv.getArgument(0)).substring(4));
 
@@ -256,6 +259,48 @@ public class EkaHiuServiceTest {
         verify(store).setConsentRequestStatus("init-1", "GRANTED");
         verify(store).upsertArtefact("init-1", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
         verify(store).upsertArtefact("init-1", "artefact-2", "shyam@sbx", HIU_ID, "GRANTED");
+    }
+
+    // A withdrawal, refusal or expiry erases what was received under the consent at once, not at the hourly erase.
+    @Test
+    public void aWithdrawalErasesTheRecordsUnderItAtOnce_andAGrantErasesNothing() {
+        when(store.findConsentRequest("cr-1")).thenReturn(Optional.of(request(5, "cr-1", "GRANTED")));
+        ObjectNode revoked = grantedUpdate("cr-1");
+        ((ObjectNode) revoked.at("/data/notification")).put("status", "REVOKED");
+
+        service.consentUpdate(grantedUpdate("cr-1"));
+        verify(store, never()).eraseRecordsOfEndedConsents();
+
+        service.consentUpdate(revoked);
+
+        InOrder order = inOrder(store);
+        order.verify(store).setArtefactStatus(List.of("artefact-1"), "REVOKED");
+        order.verify(store).eraseRecordsOfEndedConsents();
+    }
+
+    // With record sharing off a withdrawal is still applied, but Eka is not asked to place one naming a request not known here.
+    @Test
+    public void withRecordSharingOffAWithdrawalForARequestNotKnownHereIsParked_andEkaIsNotAsked() {
+        when(access.recordSharingOn()).thenReturn(false);
+        when(store.findConsentRequest("cr-9")).thenReturn(Optional.empty());
+        when(store.waitingConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
+        ObjectNode revoked = grantedUpdate("cr-9");
+        ((ObjectNode) revoked.at("/data/notification")).put("status", "REVOKED");
+
+        service.consentUpdate(revoked);
+
+        verify(store).parkConsentUpdate("cr-9", "REVOKED", List.of("artefact-1"));
+        verifyNoInteractions(eka);
+    }
+
+    @Test
+    public void anUpdateEndsTheConsentWhenItWithdrawsRefusesOrExpiresIt() {
+        for (String status : new String[]{"REVOKED", "DENIED", "REJECTED", "EXPIRED"}) {
+            ObjectNode update = grantedUpdate("cr-1");
+            ((ObjectNode) update.at("/data/notification")).put("status", status);
+            assertTrue(status, EkaHiuService.endsConsent(update));
+        }
+        assertFalse(EkaHiuService.endsConsent(grantedUpdate("cr-1")));
     }
 
     @Test
@@ -701,7 +746,7 @@ public class EkaHiuServiceTest {
 
     private EkaHiuService service() {
         return new EkaHiuService(settings, store, eka, crypto, cipher, AbdmTestSupport.orgContext(), hipStore, abhaEvents,
-                AbdmTestSupport.noWaitRetry());
+                AbdmTestSupport.noWaitRetry(), access);
     }
 
     private void ekaListsConsents(String... consents) {

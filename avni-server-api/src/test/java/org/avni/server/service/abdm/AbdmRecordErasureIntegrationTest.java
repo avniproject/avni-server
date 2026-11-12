@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-// R10: records received under a consent are erased when it ends even after the organisation has switched record sharing
+// Records received under a consent are erased when it ends even after the organisation has switched record sharing
 // off; an organisation holding no consent or record is not touched. The real hourly job, runner and store.
 @Sql(scripts = {"/test-data.sql"})
 @Transactional

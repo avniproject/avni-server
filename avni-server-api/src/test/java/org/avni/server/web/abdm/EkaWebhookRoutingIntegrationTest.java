@@ -104,6 +104,33 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_inbound_event", Integer.class));
     }
 
+    // After record sharing is switched off, a patient's withdrawal is still taken, handled and its records erased;
+    // a data push for the same organisation is refused.
+    @Test
+    public void withRecordSharingOffAWithdrawalIsHandledAndItsRecordsErased_butADataPushIsRefused() throws InterruptedException {
+        switches(false);
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values (?, ?, 'HIU', 'cr-1', 'GRANTED')",
+                UUID.randomUUID().toString(), ORG);
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, consent_id, status) " +
+                "values (?, ?, 'HIU', 'cr-1', 'artefact-1', 'GRANTED')", UUID.randomUUID().toString(), ORG);
+        jdbc.update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status) values ('flow-1', ?, 'HIU', 'artefact-1', 'RECEIVED')", ORG);
+        jdbc.update("insert into abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id) " +
+                "values (?, (select id from abdm_data_flow where uuid = 'flow-1'), 'tx-1', 'artefact-1')", ORG);
+        String revocation = "{\"event\":\"abha.consent_update\",\"transaction_id\":\"revoke-1\",\"data\":{\"status\":\"REVOKED\"," +
+                "\"notification\":{\"consentRequestId\":\"cr-1\",\"status\":\"REVOKED\",\"consentArtefacts\":{\"id\":\"artefact-1\"}}}}";
+        String push = "{\"event\":\"abha.hiu_data_push\",\"transaction_id\":\"push-1\",\"data\":{\"consent_id\":\"cr-1\",\"entries\":[]}}";
+
+        assertEquals(HttpStatus.OK, post(WEBHOOK, revocation, signed(revocation)).getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, post(WEBHOOK, push, signed(push)).getStatusCode());
+
+        assertEquals("DONE", awaitStatus("revoke-1", "DONE"));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = ?",
+                Integer.class, ORG));
+        assertEquals("REVOKED", jdbc.queryForObject("select status from abdm_consent where organisation_id = ? and consent_id = 'artefact-1'",
+                String.class, ORG));
+        assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_inbound_event where event_id = 'push-1'", Integer.class));
+    }
+
     private void switches(boolean recordSharing) {
         jdbc.update("update organisation_config set settings = settings || jsonb_build_object('enableAbha', true, 'enableAbdmRecordSharing', ?) " +
                 "where organisation_id = ?", recordSharing, ORG);

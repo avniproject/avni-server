@@ -47,7 +47,7 @@ public class AbdmHiuStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of("abdm-D", "abdm-A"), store.parkedConsentRequestIds());
     }
 
-    // R10: the hourly expiry and erase visits every organisation with an HIU consent still open or a record still held,
+    // The hourly expiry and erase visits every organisation with an HIU consent still open or a record still held,
     // whatever its switches, and no other. Read across organisations, as the job runner reads before acting as each.
     @Test
     public void theOrganisationsHoldingConsentsOrRecordsAreThoseWithAnOpenConsentOrAKeptRecord() {

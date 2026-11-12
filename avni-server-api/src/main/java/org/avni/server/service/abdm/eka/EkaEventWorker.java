@@ -2,7 +2,6 @@ package org.avni.server.service.abdm.eka;
 
 import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmCallbackHeaders;
 import org.avni.server.service.abdm.AbdmInbox;
 import org.avni.server.service.abdm.AbdmJson;
@@ -30,7 +29,7 @@ import java.util.function.Consumer;
 
 // Handles the Eka webhook events EkaWebhookController stored (AbdmInbox), on ABDM's own threads (AbdmScheduler): at once
 // when an event comes in, and every few seconds for events waiting for another try. Each event is handed to its handler as
-// its organisation's system user, once that organisation's record sharing is checked to be still on. A handler that
+// its organisation's system user, once the organisation is checked to still take it (EkaEventGate). A handler that
 // throws leaves the event for a later try; at the inbox's cap it fails, logged with its stack trace and sent to Bugsnag.
 // Handlers come through ObjectProvider, so the server starts with either side missing.
 @Component
@@ -41,7 +40,7 @@ public class EkaEventWorker {
     private static final int BATCH = 10;
 
     private final AbdmInbox inbox;
-    private final AbdmAccess access;
+    private final EkaEventGate gate;
     private final AbdmOrgContext orgContext;
     private final AbdmMessageLog messageLog;
     private final AbdmScheduler scheduler;
@@ -58,17 +57,17 @@ public class EkaEventWorker {
     private String sweepCron;
 
     @Autowired
-    public EkaEventWorker(AbdmInbox inbox, AbdmAccess access, AbdmOrgContext orgContext, AbdmMessageLog messageLog, AbdmScheduler scheduler,
+    public EkaEventWorker(AbdmInbox inbox, EkaEventGate gate, AbdmOrgContext orgContext, AbdmMessageLog messageLog, AbdmScheduler scheduler,
                           Bugsnag bugsnag, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu,
                           ObjectProvider<EkaHipDiscovery> discovery) {
-        this(inbox, access, orgContext, messageLog, scheduler, bugsnag, hip, hiu, discovery, Clock.systemUTC());
+        this(inbox, gate, orgContext, messageLog, scheduler, bugsnag, hip, hiu, discovery, Clock.systemUTC());
     }
 
-    EkaEventWorker(AbdmInbox inbox, AbdmAccess access, AbdmOrgContext orgContext, AbdmMessageLog messageLog, AbdmScheduler scheduler,
+    EkaEventWorker(AbdmInbox inbox, EkaEventGate gate, AbdmOrgContext orgContext, AbdmMessageLog messageLog, AbdmScheduler scheduler,
                    Bugsnag bugsnag, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu,
                    ObjectProvider<EkaHipDiscovery> discovery, Clock clock) {
         this.inbox = inbox;
-        this.access = access;
+        this.gate = gate;
         this.orgContext = orgContext;
         this.messageLog = messageLog;
         this.scheduler = scheduler;
@@ -138,13 +137,14 @@ public class EkaEventWorker {
     private void handle(AbdmInbox.Event event) {
         String what = "Eka webhook " + event.eventName() + " " + event.eventId() + " of organisation " + event.organisationId();
         try {
-            if (!access.recordSharingOn(event.organisationId())) {
+            JsonNode body = AbdmJson.read(event.body());
+            if (!gate.admits(event.organisationId(), routeOf(event), body)) {
                 inbox.fail(event.id(), "Record sharing is off for the organisation", clock.instant());
                 logger.warn("{} not handled: record sharing is off for the organisation", what);
                 return;
             }
             AbdmOrganisation organisation = orgContext.organisation(event.organisationId());
-            orgContext.runAs(organisation, () -> dispatch(event));
+            orgContext.runAs(organisation, () -> dispatch(event, body));
             inbox.done(event.id());
         } catch (AbdmNotReadyException e) {
             retry(event, what, e, false);
@@ -165,8 +165,7 @@ public class EkaEventWorker {
         }
     }
 
-    private void dispatch(AbdmInbox.Event event) {
-        JsonNode body = AbdmJson.read(event.body());
+    private void dispatch(AbdmInbox.Event event, JsonNode body) {
         String name = event.eventName();
         // Traffic is logged on the first try only, so a retried event is one entry.
         if (event.attempts() == 1) {

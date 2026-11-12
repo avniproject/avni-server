@@ -154,7 +154,7 @@ public class AbdmJobRunnerTest {
         verify(bugsnag).notify(failure);
     }
 
-    // R10: erasing records when their consent ends does not lapse with the switch, so this work names its organisations.
+    // Erasing records when their consent ends does not lapse with the switch, so this work names its organisations.
     @Test
     public void namedOrganisationsAreRunWhateverTheirSwitches_asEachOnesSystemUser_andNoOthers() throws Exception {
         organisation(1L, false, false, "system-1");

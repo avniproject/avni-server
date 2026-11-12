@@ -89,19 +89,21 @@ public class AbdmInbox {
                 "where id = :id", new MapSqlParameterSource("id", id));
     }
 
-    // Back for a later try, or FAILED when this was the last; true when it is FAILED.
+    // Back for a later try, or FAILED when this was the last; true when it is FAILED. A FAILED row keeps no body.
     public boolean retry(Event event, String error, Instant now) {
         boolean last = event.attempts() >= MAX_ATTEMPTS;
         jdbc.update("update abdm_inbound_event set status = :status, next_attempt_at = :next, claimed_at = null, last_error = :error, " +
-                        "updated_at = :now where id = :id and status = 'IN_PROGRESS'",
+                        "body = case when :status = 'FAILED' then null else body end, updated_at = :now where id = :id and status = 'IN_PROGRESS'",
                 new MapSqlParameterSource("id", event.id()).addValue("status", last ? FAILED : RECEIVED, Types.VARCHAR)
                         .addValue("next", Timestamp.from(now.plus(waitAfter(event.attempts()))))
                         .addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
         return last;
     }
 
+    // Never to be handled, so its body, which can carry a patient's details, is not kept.
     public void fail(long id, String error, Instant now) {
-        jdbc.update("update abdm_inbound_event set status = 'FAILED', claimed_at = null, last_error = :error, updated_at = :now where id = :id",
+        jdbc.update("update abdm_inbound_event set status = 'FAILED', body = null, claimed_at = null, last_error = :error, updated_at = :now " +
+                        "where id = :id",
                 new MapSqlParameterSource("id", id).addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
     }
 
@@ -109,12 +111,20 @@ public class AbdmInbox {
     public Sweep sweep(Instant now) {
         List<String> statuses = jdbc.queryForList("update abdm_inbound_event set " +
                         "status = case when attempts >= :max then 'FAILED' else 'RECEIVED' end, next_attempt_at = :now, claimed_at = null, " +
+                        "body = case when attempts >= :max then null else body end, " +
                         "last_error = 'Left in progress past " + IN_PROGRESS_TIMEOUT.toMinutes() + " minutes', updated_at = :now " +
                         "where status = 'IN_PROGRESS' and claimed_at < :staleBefore returning status",
                 new MapSqlParameterSource("max", MAX_ATTEMPTS).addValue("now", Timestamp.from(now))
                         .addValue("staleBefore", Timestamp.from(now.minus(IN_PROGRESS_TIMEOUT))), String.class);
         int failed = (int) statuses.stream().filter(FAILED::equals).count();
         return new Sweep(statuses.size() - failed, failed);
+    }
+
+    // Organisations with handled or given-up events received before the cutoff, for the retention purge, which is owed
+    // whatever their switches. Across organisations: called by the job runner before it acts as each.
+    public List<Long> organisationsWithFinishedEventsBefore(Instant before) {
+        return jdbc.queryForList("select distinct organisation_id from abdm_inbound_event where status in ('DONE', 'FAILED') " +
+                "and received_at < :before order by 1", new MapSqlParameterSource("before", Timestamp.from(before)), Long.class);
     }
 
     // Handled and given-up events of the organisation the thread acts for, received before the cutoff.

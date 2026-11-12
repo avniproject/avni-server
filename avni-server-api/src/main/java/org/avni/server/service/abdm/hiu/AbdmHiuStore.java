@@ -379,6 +379,14 @@ public class AbdmHiuStore {
                 "union select organisation_id from abdm_health_information order by 1", new MapSqlParameterSource(), Long.class);
     }
 
+    // Whether the organisation has an HIU consent still open or a received record still held. Names the organisation, as
+    // the webhook asks it before acting as any.
+    public boolean holdsConsentsOrRecords(long organisationId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("select exists (select 1 from abdm_consent where organisation_id = :org and role = 'HIU' " +
+                "and status in ('REQUESTED', 'GRANTED')) or exists (select 1 from abdm_health_information where organisation_id = :org)",
+                new MapSqlParameterSource("org", organisationId), Boolean.class));
+    }
+
     // Requests and artefacts past their erase date become EXPIRED (HIU_FLOW_301). Returns the requests expired.
     public int expireOverdueConsents() {
         int requests = jdbc.update("update abdm_consent set status = 'EXPIRED', updated_at = now() where organisation_id = :org and role = 'HIU' " +

@@ -3,10 +3,10 @@ package org.avni.server.web.abdm;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
-import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmInbox;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.eka.EkaEventGate;
 import org.avni.server.service.abdm.eka.EkaEventRoute;
 import org.avni.server.service.abdm.eka.EkaEventWorker;
 import org.avni.server.service.abdm.eka.EkaHiuService;
@@ -34,9 +34,10 @@ import java.util.Optional;
 
 // Eka Care posts each organisation's ABDM events to that organisation's own address, /api/v3/eka/webhook/{webhookId}
 // (its Eka settings' webhookId). In order: the address must name an organisation (else 404); the signature over the raw
-// body, as received, must check with that organisation's key (else 401, saying nothing more); its record sharing must be
-// on (else 404). Then the event is stored (AbdmInbox) and only then answered 200: an event that could not be stored is
-// not acknowledged, so Eka delivers it again. EkaEventWorker handles it as the organisation.
+// body, as received, must check with that organisation's key (else 401, saying nothing more); the organisation must take
+// the event (EkaEventGate: record sharing on, or a consent ending while it holds consents or records; else 404). Then the
+// event is stored (AbdmInbox) and only then answered 200: an event that could not be stored is not acknowledged, so Eka
+// delivers it again. EkaEventWorker handles it as the organisation.
 // No Avni user: this path alone is open (ResourceProtectionStatus), so the signature is the check.
 @RestController
 public class EkaWebhookController {
@@ -47,16 +48,16 @@ public class EkaWebhookController {
 
     private final ExternalSystemConfigRepository configRepository;
     private final EkaWebhookVerifier verifier;
-    private final AbdmAccess access;
+    private final EkaEventGate gate;
     private final AbdmInbox inbox;
     private final EkaEventWorker worker;
 
     @Autowired
-    public EkaWebhookController(ExternalSystemConfigRepository configRepository, EkaWebhookVerifier verifier, AbdmAccess access,
+    public EkaWebhookController(ExternalSystemConfigRepository configRepository, EkaWebhookVerifier verifier, EkaEventGate gate,
                                 AbdmInbox inbox, EkaEventWorker worker) {
         this.configRepository = configRepository;
         this.verifier = verifier;
-        this.access = access;
+        this.gate = gate;
         this.inbox = inbox;
         this.worker = worker;
     }
@@ -76,11 +77,6 @@ public class EkaWebhookController {
             logger.warn("Eka webhook for organisation {} refused: {}", organisationId, result.reason());
             return answer(HttpStatus.UNAUTHORIZED, "rejected", null);
         }
-        if (!access.recordSharingOn(organisationId)) {
-            logger.warn("Eka webhook for organisation {} refused: its record sharing is off", organisationId);
-            return answer(HttpStatus.NOT_FOUND, "rejected", null);
-        }
-
         JsonNode event;
         try {
             event = AbdmJson.read(rawBody);
@@ -94,6 +90,10 @@ public class EkaWebhookController {
 
         String name = bounded(EkaEventRoute.eventName(event));
         EkaEventRoute route = EkaEventRoute.of(name);
+        if (!gate.admits(organisationId, route, event)) {
+            logger.warn("Eka webhook {} for organisation {} refused: its record sharing is off", name, organisationId);
+            return answer(HttpStatus.NOT_FOUND, "rejected", null);
+        }
         String eventId = eventId(event, rawBody);
         try {
             if (!inbox.receive(organisationId, SOURCE, eventId, name, route.name(), consentKey(route, event), rawBody, Instant.now())) {

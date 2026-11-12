@@ -132,10 +132,20 @@ public class AbdmMessageLog {
         return TextNode.valueOf(MASK);
     }
 
+    // The organisation the thread acts for only, named as well as filtered by row-level security; none without one.
     public void purgeOlderThan(Duration age) {
-        int deleted = jdbc.update("delete from abdm_message where created_at < :cutoff",
-                new MapSqlParameterSource("cutoff", Timestamp.from(Instant.now().minus(age))));
+        Long organisationId = organisationId();
+        if (organisationId == null) return;
+        int deleted = jdbc.update("delete from abdm_message where organisation_id = :org and created_at < :cutoff",
+                new MapSqlParameterSource("org", organisationId).addValue("cutoff", Timestamp.from(Instant.now().minus(age))));
         logger.info("ABDM traffic older than {} days deleted: {} message(s)", age.toDays(), deleted);
+    }
+
+    // Organisations with traffic older than the cutoff, for the retention purge, which is owed whatever their switches.
+    // Across organisations: called by the job runner before it acts as each.
+    public List<Long> organisationsWithTrafficBefore(Instant before) {
+        return jdbc.queryForList("select distinct organisation_id from abdm_message where created_at < :before order by 1",
+                new MapSqlParameterSource("before", Timestamp.from(before)), Long.class);
     }
 
     private static Long organisationId() {

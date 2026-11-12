@@ -115,16 +115,26 @@ public class AbdmHousekeepingJobTest {
         verify(hipStore, never()).failQueued(any(), any(), any());
     }
 
+    // Kept traffic and finished events can carry a patient's details, so the purge visits every organisation holding old
+    // ones, record sharing on or not.
     @Test
-    public void oldTrafficAndHandledWebhookEventsAreDeletedForTheOrganisation() {
+    @SuppressWarnings("unchecked")
+    public void oldTrafficAndFinishedWebhookEventsAreDeletedInEveryOrganisationHoldingThem() {
+        Instant cutoff = NOW.minus(Duration.ofDays(30));
+        when(messageLog.organisationsWithTrafficBefore(cutoff)).thenReturn(List.of(3L, 5L));
+        when(inbox.organisationsWithFinishedEventsBefore(cutoff)).thenReturn(List.of(5L, 4L));
+
         job().purgeOldTraffic();
 
-        verify(runner).forEachOrganisation(eq(AbdmHousekeepingJob.TRAFFIC_PURGE), any(), any());
+        ArgumentCaptor<Supplier<List<Long>>> holding = ArgumentCaptor.forClass(Supplier.class);
+        verify(runner).forOrganisations(eq(AbdmHousekeepingJob.TRAFFIC_PURGE), any(), holding.capture(), any());
+        assertEquals(List.of(3L, 4L, 5L), holding.getValue().get());
+        verify(runner, never()).forEachOrganisation(eq(AbdmHousekeepingJob.TRAFFIC_PURGE), any(), any());
         verify(messageLog).purgeOlderThan(Duration.ofDays(30));
-        verify(inbox).purgeFinishedOlderThan(NOW.minus(Duration.ofDays(30)));
+        verify(inbox).purgeFinishedOlderThan(cutoff);
     }
 
-    // R10: consents expire and their records are erased in every organisation holding them, record sharing on or not;
+    // Consents expire and their records are erased in every organisation holding them, record sharing on or not;
     // the retry, which asks Eka, only where record sharing is on.
     @Test
     @SuppressWarnings("unchecked")

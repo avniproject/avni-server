@@ -115,7 +115,7 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         assertTrue(inbox.retry(last, "IllegalStateException: database down", now));
 
         assertEquals("FAILED", row("e-1").get("status"));
-        assertNotNull(row("e-1").get("body"));
+        assertNull(row("e-1").get("body"));
         assertTrue(inbox.claim(10, now.plus(Duration.ofDays(1))).isEmpty());
     }
 
@@ -127,9 +127,11 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         inbox.fail(taken.id(), "Record sharing is off for the organisation", T0);
 
         assertEquals("FAILED", row("e-1").get("status"));
+        assertNull(row("e-1").get("body"));
         assertTrue(inbox.claim(10, T0.plus(Duration.ofDays(1))).isEmpty());
     }
 
+    // An event that will never be handled keeps no body: it can carry a patient's details.
     // A worker that died holding an event (a restart, a crash) leaves it in progress; the sweep puts it back.
     @Test
     public void anEventStuckInProgressIsSweptBack_andOneStillBeingWorkedIsLeft() {
@@ -158,6 +160,7 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
         assertEquals(1, sweep.failed());
         assertEquals("FAILED", row("e-1").get("status"));
+        assertNull(row("e-1").get("body"));
     }
 
     // A data push waits while an update of its consent that came before it is still to be handled, so it finds its grant.
@@ -207,6 +210,16 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
     }
 
     // Nothing about the queue lives in memory: a new inbox, as after a restart, takes what the old one stored.
+    @Test
+    public void theOrganisationsWithFinishedEventsBeforeACutoffAreListed() {
+        receive(ORG, "old-done", "LINK_CARE_CONTEXT", null, T0.minus(Duration.ofDays(40)));
+        receive(OTHER_ORG, "old-waiting", "LINK_CARE_CONTEXT", null, T0.minus(Duration.ofDays(40)));
+        receive(OTHER_ORG, "new-done", "LINK_CARE_CONTEXT", null, T0);
+        jdbc.update("update abdm_inbound_event set status = 'DONE' where event_id in ('old-done', 'new-done')", Map.of());
+
+        assertEquals(List.of(ORG), inbox.organisationsWithFinishedEventsBefore(T0.minus(Duration.ofDays(30))));
+    }
+
     @Test
     public void storedEventsSurviveARestart() {
         receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);

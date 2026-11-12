@@ -20,10 +20,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
-// Scheduled ABDM upkeep, on ABDM's own threads (AbdmScheduler), as each organisation's system user (AbdmJobRunner): for
-// organisations with record sharing on, and the consent expiry and record erase for every organisation holding consents
-// or records. The task names are the keys of "jobs" in GET /web/abdm/status.
+// Scheduled ABDM upkeep, on ABDM's own threads (AbdmScheduler), as each organisation's system user (AbdmJobRunner):
+// linking and the parked-update retry for organisations with record sharing on; the consent expiry and record erase, and
+// the traffic purge, for every organisation holding what they delete. The task names are the keys of "jobs" in
+// GET /web/abdm/status.
 @Component
 public class AbdmHousekeepingJob {
     private static final Logger logger = LoggerFactory.getLogger(AbdmHousekeepingJob.class);
@@ -87,13 +89,21 @@ public class AbdmHousekeepingJob {
         scheduler.schedule(linkCron, this::linkQueuedVisits);
     }
 
-    // Traffic, and webhook events handled or given up on, older than abdm.message-retention-days.
+    // Traffic, and webhook events handled or given up on, older than abdm.message-retention-days, in every organisation
+    // holding them: they can carry a patient's details, and the duty to delete them outlives the switch.
     public void purgeOldTraffic() {
         Duration retention = Duration.ofDays(messageRetentionDays);
-        runner.forEachOrganisation(TRAFFIC_PURGE, UPKEEP_BUDGET, deadline -> {
+        Instant cutoff = clock.instant().minus(retention);
+        runner.forOrganisations(TRAFFIC_PURGE, UPKEEP_BUDGET, () -> holdingOldTraffic(cutoff), deadline -> {
             messageLog.purgeOlderThan(retention);
-            inbox.purgeFinishedOlderThan(clock.instant().minus(retention));
+            inbox.purgeFinishedOlderThan(cutoff);
         });
+    }
+
+    private List<Long> holdingOldTraffic(Instant cutoff) {
+        TreeSet<Long> organisationIds = new TreeSet<>(messageLog.organisationsWithTrafficBefore(cutoff));
+        organisationIds.addAll(inbox.organisationsWithFinishedEventsBefore(cutoff));
+        return new ArrayList<>(organisationIds);
     }
 
     // Erasing records when their consent ends is owed by every organisation holding consents or records, whatever its
