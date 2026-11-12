@@ -30,8 +30,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-// DEMO-ONLY abdm-hackathon: HIP_INTI_LINK_505, "linking of health records should be done automatically once records have
-// been saved at HIP end". A saved visit is queued here, inside the save; AbdmHousekeepingJob links the queue.
+// Which visits are queued and under which HIP ID, with no transaction; AbdmSaveHooksIntegrationTest covers the after-commit write.
 public class AbdmVisitQueueTest {
     private final AbdmSettings settings = AbdmTestSupport.settings();
     private final AbdmHipStore store = mock(AbdmHipStore.class);

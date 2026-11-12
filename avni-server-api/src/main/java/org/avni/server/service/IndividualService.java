@@ -11,6 +11,7 @@ import org.avni.server.application.FormElementType;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.Subject;
 import org.avni.server.common.Messageable;
+import org.avni.server.common.SubjectIdentitySaved;
 import org.avni.server.dao.*;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
@@ -21,7 +22,6 @@ import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.abha.AbhaLinkService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.PhoneNumberUtil;
@@ -57,13 +57,12 @@ public class IndividualService implements ScopeAwareService<Individual> {
     private final ConceptService conceptService;
     private final ObjectMapper objectMapper;
     private final AccessControlService accessControlService;
-    private final AbhaLinkService abhaLinkService;
 
     private final List<SubjectTreeItemRepository> subjectTreeItemRepositories;
     private static final Logger logger = LoggerFactory.getLogger(IndividualService.class);
 
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository, CommentThreadRepository commentThreadRepository, AbhaLinkService abhaLinkService) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository, CommentThreadRepository commentThreadRepository) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -76,7 +75,6 @@ public class IndividualService implements ScopeAwareService<Individual> {
         this.addressLevelService = addressLevelService;
         this.conceptService = conceptService;
         this.accessControlService = accessControlService;
-        this.abhaLinkService = abhaLinkService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
 
         subjectTreeItemRepositories = Arrays.asList(individualRepository, encounterRepository, programEnrolmentRepository, programEncounterRepository, checklistItemRepository, checklistRepository, entityApprovalStatusRepository, subjectProgramEligibilityRepository, subjectMigrationRepository, individualRelationshipRepository, commentRepository, groupSubjectRepository, commentThreadRepository);
@@ -349,11 +347,10 @@ public class IndividualService implements ScopeAwareService<Individual> {
     }
 
     @Messageable(EntityType.Subject)
+    @SubjectIdentitySaved
     public Individual voidSubject(Individual individual) {
         individual.setVoided(true);
-        Individual savedIndividual = individualRepository.saveEntity(individual);
-        abhaLinkService.syncLink(savedIndividual);
-        return savedIndividual;
+        return individualRepository.saveEntity(individual);
     }
 
     @Override
@@ -382,11 +379,10 @@ public class IndividualService implements ScopeAwareService<Individual> {
     }
 
     @Messageable(EntityType.Subject)
+    @SubjectIdentitySaved
     public Individual save(Individual individual) {
         individual.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
-        Individual savedIndividual = individualRepository.saveEntity(individual);
-        abhaLinkService.syncLink(savedIndividual);
-        return savedIndividual;
+        return individualRepository.saveEntity(individual);
     }
 
     public String findPhoneNumber(long subjectId) {

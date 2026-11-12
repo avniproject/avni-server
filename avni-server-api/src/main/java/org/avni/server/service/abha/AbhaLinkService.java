@@ -49,14 +49,11 @@ public class AbhaLinkService {
         this.abhaRemovedEventWriter = abhaRemovedEventWriter;
     }
 
-    // Called after every save or void of a subject. Organisations with ABHA off pay one look at their settings and
-    // nothing more. A voided subject, or one with neither an ABHA Number nor an ABHA Address answer, has no live link;
+    // AbhaLinkAspect calls this after every save or void of a subject, only in an organisation with ABHA on.
+    // A voided subject, or one with neither an ABHA Number nor an ABHA Address answer, has no live link;
     // otherwise its one live link holds the current answers, updated in place when they change. An ABHA made with a
     // mobile number only has an address and no number, and is linked by the address.
     public void syncLink(Individual individual) {
-        if (!organisationConfigService.isAbhaEnabled()) {
-            return;
-        }
         Optional<AbhaLink> liveLink = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId());
         String number = individual.isVoided() ? "" : digitsOnly(answer(individual, ABHA_NUMBER_CONCEPT));
         if (!number.isEmpty() && number.length() != ABHA_NUMBER_DIGITS) {

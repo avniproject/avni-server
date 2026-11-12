@@ -5,6 +5,7 @@ import org.avni.messaging.domain.EntityType;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.common.EntityHelper;
+import org.avni.server.common.HealthRecordSaved;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -31,8 +32,6 @@ import java.util.stream.Stream;
 
 @Service
 public class ProgramEncounterService implements ScopeAwareService<ProgramEncounter> {
-    @Autowired
-    org.springframework.beans.factory.ObjectProvider<org.avni.server.service.abdm.hip.AbdmVisitQueue> abdmVisitQueue;
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ProgramEncounterService.class);
     @Autowired
     Bugsnag bugsnag;
@@ -143,6 +142,8 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
     }
 
     @Messageable(EntityType.ProgramEncounter)
+    // Its call to save bypasses the proxy, so this entry point carries the hook itself.
+    @HealthRecordSaved
     public ProgramEncounter saveProgramEncounter(ProgramEncounterRequest request) throws ValidationException {
         logger.info(String.format("Saving programEncounter with uuid %s", request.getUuid()));
         checkForSchedulingCompleteConstraintViolation(request);
@@ -225,6 +226,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
     }
 
     @Messageable(EntityType.ProgramEncounter)
+    @HealthRecordSaved
     public ProgramEncounter save(ProgramEncounter programEncounter) {
         ProgramEnrolment programEnrolment = programEncounter.getProgramEnrolment();
         Individual individual = programEnrolment.getIndividual();
@@ -234,9 +236,6 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
             programEncounter.setAddressId(individual.getAddressLevel().getId());
         }
         programEncounter = programEncounterRepository.saveEntity(programEncounter);
-        // DEMO-ONLY abdm-hackathon: queue the visit for ABDM linking (HIP_INTI_LINK_505); never fails the save.
-        ProgramEncounter saved = programEncounter;
-        if (abdmVisitQueue != null) abdmVisitQueue.ifAvailable(q -> q.queue(saved));
         return programEncounter;
     }
 

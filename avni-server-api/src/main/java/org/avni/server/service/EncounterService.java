@@ -4,6 +4,7 @@ import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.EntityType;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.common.HealthRecordSaved;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -44,8 +45,6 @@ public class EncounterService implements ScopeAwareService<Encounter> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterService.class);
     @Autowired
     Bugsnag bugsnag;
-    @Autowired
-    org.springframework.beans.factory.ObjectProvider<org.avni.server.service.abdm.hip.AbdmVisitQueue> abdmVisitQueue;
     private final EncounterRepository encounterRepository;
     private final ObservationService observationService;
     private final IndividualRepository individualRepository;
@@ -183,16 +182,14 @@ public class EncounterService implements ScopeAwareService<Encounter> {
     }
 
     @Messageable(EntityType.Encounter)
+    @HealthRecordSaved
     public Encounter save(Encounter encounter) {
         Individual individual = encounter.getIndividual();
         encounter.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
         if (individual.getAddressLevel() != null) {
             encounter.setAddressId(individual.getAddressLevel().getId());
         }
-        Encounter saved = encounterRepository.saveEntity(encounter);
-        // DEMO-ONLY abdm-hackathon: queue the visit for ABDM linking (HIP_INTI_LINK_505); never fails the save.
-        if (abdmVisitQueue != null) abdmVisitQueue.ifAvailable(q -> q.queue(saved));
-        return saved;
+        return encounterRepository.saveEntity(encounter);
     }
 
     public Page<Encounter> search(EncounterSearchRequest encounterSearchRequest) {
@@ -218,6 +215,8 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         return formMappingService.findBy(encounter.getIndividual().getSubjectType(), null, encounter.getEncounterType(), formType);
     }
 
+    // Its call to save bypasses the proxy, so this entry point carries the hook itself.
+    @HealthRecordSaved
     public Encounter patchEncounter(Encounter encounter, Map<String, Object> request) throws ValidationException, IOException {
         if (request.containsKey(ENCOUNTER_TYPE)) {
             String encounterTypeName = (String) request.get(ENCOUNTER_TYPE);
