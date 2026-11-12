@@ -32,6 +32,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
     public static final String FULL_NAME = "concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, ''))";
     private static final String NUMBER_PATTERN = "-?[0-9]{1,30}(\\.[0-9]{1,30})?";
+    private static final String STORED_NUMBER_PATTERN = "[ \\t\\n\\r\\f\\v]*[+-]?([0-9]{1,255}(\\.[0-9]{0,255})?|\\.[0-9]{1,255})([eE][+-]?[0-9]{1,4})?[ \\t\\n\\r\\f\\v]*";
     private static final String UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
 
@@ -429,19 +430,19 @@ public class BaseSubjectSearchQueryBuilder<T> {
                         BigDecimal value = new BigDecimal(c.getMinValue());
                         String param = "numericValueMin" + ci;
                         addParameter(param, value);
-                        conceptConditions.add("cast(" + tableAlias + ".observations ->> :" + conceptUuidParam + " as numeric)  >= :" + param);
+                        conceptConditions.add(observationAsNumber(tableAlias + ".observations ->> :" + conceptUuidParam) + " >= :" + param);
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
                         BigDecimal value = new BigDecimal(c.getMaxValue());
                         String param = "numericValueMax" + ci;
                         addParameter(param, value);
-                        conceptConditions.add("cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as numeric)  <= :" + param);
+                        conceptConditions.add(observationAsNumber(tableAlias + ".observations ->> :" + conceptUuidParam) + " <= :" + param);
                     }
                 } else {
                     BigDecimal value = new BigDecimal(c.getMinValue());
                     String param = "numericValueMin" + ci;
                     addParameter(param, value);
-                    conceptConditions.add("cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as numeric)  = :" + param);
+                    conceptConditions.add(observationAsNumber(tableAlias + ".observations ->> :" + conceptUuidParam) + " = :" + param);
                 }
             }
 
@@ -624,5 +625,9 @@ public class BaseSubjectSearchQueryBuilder<T> {
             clauses.add(generateWhereClause(programEnrolmentFilter(), String.join(" and ", conditions)));
         }
         return clauses;
+    }
+
+    private static String observationAsNumber(String observationValue) {
+        return String.format("(case when %1$s ~ '^%2$s$' then cast(%1$s as numeric) end)", observationValue, STORED_NUMBER_PATTERN);
     }
 }

@@ -713,7 +713,7 @@ public class SubjectSearchQueryBuilderTest {
         String sql = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(weight)).build(subjectType).getSql();
 
         assertThat(countOf(sql, "from program_enrolment penr where")).isEqualTo(1);
-        assertThat(sql).contains("as numeric)  >= :numericValueMin0 and cast(penr.observations ->>:conceptUuid0 as numeric)  <= :numericValueMax0");
+        assertThat(sql).contains(numericAnswer("penr") + " >= :numericValueMin0 and " + numericAnswer("penr") + " <= :numericValueMax0");
     }
 
     @Test
@@ -728,8 +728,23 @@ public class SubjectSearchQueryBuilderTest {
                 .build(subjectType).getSql();
 
         assertThat(countOf(sql, "from encounter e where")).isEqualTo(2);
-        assertThat(sql).contains("as numeric)  >= :numericValueMin0 and cast(e.observations ->>:conceptUuid0 as numeric)  <= :numericValueMax0")
+        assertThat(sql).contains(numericAnswer("e") + " >= :numericValueMin0 and " + numericAnswer("e") + " <= :numericValueMax0")
                 .contains("as date) >= cast(:encounterDateMin as date) and cast(e.encounter_date_time");
+    }
+
+    @Test
+    public void numericFilterReadsOnlyAnswersThatAreNumbers() {
+        Concept weight = new Concept("c-weight", "registration", "Numeric", null, null);
+        weight.setMinValue("5");
+        String sql = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(weight)).build(subjectType).getSql();
+
+        assertThat(sql).contains(numericAnswer("i") + " = :numericValueMin0")
+                .doesNotContain("cast(i.observations ->>:conceptUuid0 as numeric)");
+    }
+
+    private static String numericAnswer(String tableAlias) {
+        String answer = tableAlias + ".observations ->> :conceptUuid0";
+        return "(case when " + answer + " ~ '^[ \\t\\n\\r\\f\\v]*[+-]?([0-9]{1,255}(\\.[0-9]{0,255})?|\\.[0-9]{1,255})([eE][+-]?[0-9]{1,4})?[ \\t\\n\\r\\f\\v]*$' then cast(" + answer + " as numeric) end)";
     }
 
     private static int countOf(String text, String part) {
