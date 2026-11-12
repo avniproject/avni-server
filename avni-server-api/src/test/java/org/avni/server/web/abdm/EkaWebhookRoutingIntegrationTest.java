@@ -3,6 +3,9 @@ package org.avni.server.web.abdm;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.service.abdm.AbdmPaths;
+import org.avni.server.service.abdm.AbdmScheduler;
+import org.avni.server.service.abdm.AbdmTestScheduling;
+import org.avni.server.service.abdm.eka.EkaEventWorker;
 import org.avni.server.service.abdm.eka.EkaWebhookVerifier;
 import org.avni.server.service.abha.EkaCredentialCipher;
 import org.junit.Before;
@@ -24,7 +27,8 @@ import java.util.UUID;
 import static org.junit.Assert.*;
 
 // Eka's webhook end to end: over HTTP with no Avni user, through the security filters, to the organisation the address
-// names and into the database before the 200. Not @Transactional: the server's own threads must see the rows.
+// names and into the database before the 200. The worker the webhook wakes runs nothing in tests (AbdmTestScheduling):
+// each test drains the inbox itself, so no drain outlives it. Not @Transactional: the worker reads committed rows.
 @Sql(value = {"/tear-down.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrationTest {
@@ -38,6 +42,10 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
     private EkaCredentialCipher cipher;
     @Autowired
     private ExternalSystemConfigRepository configRepository;
+    @Autowired
+    private EkaEventWorker worker;
+    @Autowired
+    private AbdmScheduler scheduler;
     private JdbcTemplate jdbc;
 
     @Before
@@ -64,16 +72,19 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void aSignedEventIsInTheDatabaseWhenEkaIsAnswered_andIsThenHandledAsTheOrganisation() throws InterruptedException {
+    public void aSignedEventIsInTheDatabaseWhenEkaIsAnswered_andIsThenHandledAsTheOrganisation() {
         String body = "{\"event\":\"abha.routing_check\",\"transaction_id\":\"routing-1\",\"data\":{}}";
+        int wakes = ((AbdmTestScheduling.ManualScheduler) scheduler).executeRequests();
 
         ResponseEntity<String> response = post(WEBHOOK, body, signed(body));
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        List<String> stored = jdbc.queryForList("select status from abdm_inbound_event where organisation_id = ? and event_id = 'routing-1'",
-                String.class, ORG);
-        assertEquals(1, stored.size());
-        assertEquals("DONE", awaitStatus("routing-1", "DONE"));
+        assertEquals(List.of("RECEIVED"), statuses("routing-1"));
+        assertEquals(wakes + 1, ((AbdmTestScheduling.ManualScheduler) scheduler).executeRequests());
+
+        worker.drain();
+
+        assertEquals(List.of("DONE"), statuses("routing-1"));
     }
 
     @Test
@@ -107,7 +118,7 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
     // After record sharing is switched off, a patient's withdrawal is still taken, handled and its records erased;
     // a data push for the same organisation is refused.
     @Test
-    public void withRecordSharingOffAWithdrawalIsHandledAndItsRecordsErased_butADataPushIsRefused() throws InterruptedException {
+    public void withRecordSharingOffAWithdrawalIsHandledAndItsRecordsErased_butADataPushIsRefused() {
         switches(false);
         jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values (?, ?, 'HIU', 'cr-1', 'GRANTED')",
                 UUID.randomUUID().toString(), ORG);
@@ -123,7 +134,9 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
         assertEquals(HttpStatus.OK, post(WEBHOOK, revocation, signed(revocation)).getStatusCode());
         assertEquals(HttpStatus.NOT_FOUND, post(WEBHOOK, push, signed(push)).getStatusCode());
 
-        assertEquals("DONE", awaitStatus("revoke-1", "DONE"));
+        worker.drain();
+
+        assertEquals(List.of("DONE"), statuses("revoke-1"));
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = ?",
                 Integer.class, ORG));
         assertEquals("REVOKED", jdbc.queryForObject("select status from abdm_consent where organisation_id = ? and consent_id = 'artefact-1'",
@@ -148,15 +161,7 @@ public class EkaWebhookRoutingIntegrationTest extends AbstractControllerIntegrat
         return "t=" + t + ",v1=" + EkaWebhookVerifier.sign(KEY, t, body);
     }
 
-    // The worker is woken by the webhook and runs on ABDM's own threads; the test waits for it so nothing is left running.
-    private String awaitStatus(String eventId, String wanted) throws InterruptedException {
-        String status = null;
-        for (int i = 0; i < 100; i++) {
-            status = jdbc.queryForObject("select status from abdm_inbound_event where organisation_id = ? and event_id = ?", String.class,
-                    ORG, eventId);
-            if (wanted.equals(status)) return status;
-            Thread.sleep(100);
-        }
-        return status;
+    private List<String> statuses(String eventId) {
+        return jdbc.queryForList("select status from abdm_inbound_event where organisation_id = ? and event_id = ?", String.class, ORG, eventId);
     }
 }

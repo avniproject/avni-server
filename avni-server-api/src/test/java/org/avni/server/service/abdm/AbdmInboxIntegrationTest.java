@@ -25,7 +25,8 @@ import static org.junit.Assert.*;
 public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest {
     private static final long ORG = 2L;
     private static final long OTHER_ORG = 3L;
-    private static final Instant T0 = Instant.parse("2026-11-12T10:00:00Z");
+    // Far ahead of the real clock: a drain running at the real time never finds these rows due.
+    private static final Instant T0 = Instant.parse("2100-01-01T10:00:00Z");
 
     @Autowired
     private AbdmInbox inbox;
