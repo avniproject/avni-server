@@ -244,6 +244,20 @@ public class EkaAbdmClientTest {
         assertFalse(EkaAbdmClient.mayHaveActed(e));
     }
 
+    // A refusal of the request itself is final; an expired login, a timeout, too many requests, a server error or no
+    // answer are not: a later try may pass.
+    @Test
+    public void onlyARefusalOfTheRequestItselfIsFinal() {
+        for (int status : new int[]{400, 404, 409, 422}) {
+            assertTrue(String.valueOf(status), EkaAbdmClient.refusedForGood(new EkaCallException(status, null, "refused")));
+        }
+        for (int status : new int[]{0, 401, 403, 408, 429, 500, 503}) {
+            assertFalse(String.valueOf(status), EkaAbdmClient.refusedForGood(new EkaCallException(status, null, "refused")));
+        }
+        assertFalse(EkaAbdmClient.refusedForGood(new EkaAbdmClient.NoAnswer(true, "no answer")));
+        assertFalse(EkaAbdmClient.refusedForGood(new IllegalStateException("not Eka")));
+    }
+
     @Test
     public void aRefusalOfTheRequestItselfIsNotTriedAgain() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(400).withBody("{\"error\":{\"code\":\"ABDM-1080\",\"message\":\"Invalid\"}}")));

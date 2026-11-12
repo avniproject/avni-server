@@ -43,7 +43,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.FAILED;
+import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.FAILED_FINAL;
 import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.HI_TYPE;
 import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.LINKED;
 import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.LINK_REQUESTED;
@@ -53,7 +53,7 @@ import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.PENDING;
 // contexts, sent to Eka with the patient's Eka ID (recorded at M1) and no record, so Avni keeps custody (spec "Path B").
 // Eka answers 202 and reports each care context later on the abha.link_care_context webhook. Eka relays an HIU's request
 // on the abha.hip_data_fetch webhook and we answer on-fetch with the records encrypted to the requester's key.
-// Care-context rows and statuses are in AbdmHipStore: PENDING -> LINK_REQUESTED -> LINKED | FAILED.
+// Care-context rows and statuses are in AbdmHipStore: PENDING -> LINK_REQUESTED -> LINKED | FAILED | FAILED_FINAL.
 // HIP IDs are the organisation's (AbdmSettings): a visit is linked under its own (AbdmHipLinkingService.visitsByHip), and
 // an event is acted on only for the HIP ID it names when that is the organisation's (AbdmFlows.hipOfEvent).
 // Never logs an ABHA, an Eka ID, a key or a record.
@@ -153,10 +153,8 @@ public class EkaHipService implements EkaHipEvents {
             String hipId = ofHip.getKey();
             store.ensureCareContexts(patient.individualId(), hipId, patient.uuid(), HI_TYPE,
                     ofHip.getValue().stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
-            List<AbdmHipStore.CareContext> toLink = store.findCareContexts(patient.individualId(), hipId).stream()
-                    .filter(c -> !LINKED.equals(c.status()))
-                    .filter(c -> !queuedOnly || AbdmHipLinkingService.QUEUED.equals(c.status()) || AbdmHipLinkingService.FAILED.equals(c.status()))
-                    .toList();
+            List<AbdmHipStore.CareContext> toLink = queuedOnly ? store.findCareContextsDue(patient.individualId(), hipId)
+                    : store.findCareContexts(patient.individualId(), hipId).stream().filter(c -> !LINKED.equals(c.status())).toList();
             // One call per record type: a type Eka refuses fails only its own care contexts, never the patient's visits.
             Map<String, List<AbdmHipStore.CareContext>> byType = toLink.stream()
                     .collect(Collectors.groupingBy(AbdmHipStore.CareContext::hiType, LinkedHashMap::new, Collectors.toList()));
@@ -191,10 +189,13 @@ public class EkaHipService implements EkaHipEvents {
             applyAnswer(hipId, linkRequestId, response.body());
         } catch (RuntimeException e) {
             if (EkaAbdmClient.mayHaveActed(e)) {
-                // Eka may have linked them, and its webhook may have said so already: they stay requested, a LINKED stays.
+                // Eka may have linked them, and its webhook may have said so already: they stay requested, a LINKED stays,
+                // and the queue tries again once Eka has said nothing past the deadline.
                 store.settleLinkRequest(linkRequestId, LINK_REQUESTED, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
+            } else if (EkaAbdmClient.refusedForGood(e)) {
+                store.settleLinkRequest(linkRequestId, FAILED_FINAL, "Eka refused the link: " + e.getMessage());
             } else {
-                store.settleLinkRequest(linkRequestId, FAILED, "Eka link failed: " + e.getMessage());
+                store.failLinkRequest(linkRequestId, "Eka link failed: " + e.getMessage());
             }
             logger.warn("Eka link of care contexts for subject {} failed: {}", patient.uuid(), e.getMessage());
         }
@@ -212,7 +213,7 @@ public class EkaHipService implements EkaHipEvents {
                 if (reference == null) continue;
                 switch (outcome(status)) {
                     case LINKED -> linked.add(reference);
-                    case FAILED -> store.markStatus(hipId, List.of(reference), FAILED, failure(status, c));
+                    case FAILED -> store.markStatus(hipId, List.of(reference), FAILED_FINAL, failure(status, c));
                     default -> {
                     }
                 }
@@ -223,7 +224,7 @@ public class EkaHipService implements EkaHipEvents {
         String status = AbdmFlows.firstNonNull(AbdmJson.text(body, "status"), AbdmJson.text(body, "data.status"));
         switch (outcome(status)) {
             case LINKED -> store.markByLinkRequest(linkRequestId, LINKED, null);
-            case FAILED -> store.markByLinkRequest(linkRequestId, FAILED, failure(status, body));
+            case FAILED -> store.markByLinkRequest(linkRequestId, FAILED_FINAL, failure(status, body));
             default -> {
             }
         }
@@ -267,7 +268,8 @@ public class EkaHipService implements EkaHipEvents {
             store.markLinked(hipId, matched, "HIP");
             rows.stream().map(AbdmHipStore.CareContext::individualId).distinct().forEach(individualId -> tellPatientLinked(individualId, hipId));
         } else {
-            store.markStatus(hipId, matched, FAILED, failure(status, data));
+            // Eka reports ERRORED after its own retries: final.
+            store.markStatus(hipId, matched, FAILED_FINAL, failure(status, data));
         }
         logger.info("Eka link status {} applied to {} care contexts", status, matched.size());
     }

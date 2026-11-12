@@ -9,6 +9,7 @@ import org.avni.server.service.abdm.AbdmJobRuns;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.eka.EkaAbdmClient;
+import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 // The admin page's Status tab: what record sharing needs and which of it the organisation has, the address to give Eka
-// for its webhooks, and how each ABDM job last went for it. Answers even when record sharing is off, so the page can say
+// for its webhooks, how each ABDM job last went for it, and its visits by link status (queue). Answers even when record sharing is off, so the page can say
 // what is missing. The user's own organisation only. Organisation administrators only (EditOrganisationConfiguration).
 @RestController
 public class AbdmAdminController {
@@ -31,11 +32,12 @@ public class AbdmAdminController {
     private final AbdmSettings settings;
     private final AbdmJobRuns jobRuns;
     private final AbdmOrgContext orgContext;
+    private final AbdmHipStore hipStore;
 
     @Autowired
     public AbdmAdminController(AccessControlService accessControlService, AbdmConfig cfg, EkaAbdmClient ekaClient,
                                OrganisationConfigService organisationConfigService, AbdmAccess access, AbdmSettings settings,
-                               AbdmJobRuns jobRuns, AbdmOrgContext orgContext) {
+                               AbdmJobRuns jobRuns, AbdmOrgContext orgContext, AbdmHipStore hipStore) {
         this.accessControlService = accessControlService;
         this.cfg = cfg;
         this.ekaClient = ekaClient;
@@ -44,6 +46,7 @@ public class AbdmAdminController {
         this.settings = settings;
         this.jobRuns = jobRuns;
         this.orgContext = orgContext;
+        this.hipStore = hipStore;
     }
 
     @GetMapping("/web/abdm/status")
@@ -64,6 +67,7 @@ public class AbdmAdminController {
         status.put("session", session(recordSharingOn));
         Long organisationId = orgContext.organisationId();
         status.put("jobs", organisationId == null ? Map.of() : jobRuns.of(organisationId));
+        status.put("queue", organisationId == null ? Map.of() : hipStore.linkQueueCounts());
         return status;
     }
 

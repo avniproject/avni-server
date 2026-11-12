@@ -3,6 +3,7 @@ package org.avni.server.service.abdm;
 import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
+import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abdm.hiu.AbdmHiuDataService;
 import org.avni.server.service.abdm.hiu.AbdmHiuStore;
 import org.slf4j.Logger;
@@ -115,12 +116,14 @@ public class AbdmHousekeepingJob {
 
     // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient, under every
     // HIP ID of the organisation; each patient once, however many of its HIP IDs it has visits waiting under. No new
-    // patient is taken after the organisation's deadline.
+    // patient is taken after the organisation's deadline. The queue settles (AbdmHipStore): a link Eka never answered is
+    // queued again, a failure that may pass is tried again after a growing wait, and one that cannot is given up.
     public void linkQueuedVisits() {
         runner.forEachOrganisation(VISIT_LINKING, LINK_BUDGET, deadline -> {
             Map<String, List<String>> waiting = new LinkedHashMap<>();
             settings.find().ifPresent(orgSettings -> {
                 for (String hipId : orgSettings.getHipIds()) {
+                    hipStore.settleLinkQueue(hipId);
                     for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {
                         waiting.computeIfAbsent(subjectUuid, s -> new ArrayList<>()).add(hipId);
                     }
@@ -135,9 +138,14 @@ public class AbdmHousekeepingJob {
                 left--;
                 try {
                     ekaHip.linkCareContexts(patient.getKey(), true);
+                } catch (AbdmRequestException e) {
+                    // The patient's own record refuses it (no Eka ID, no ABHA address, removed): no later try changes that.
+                    patient.getValue().forEach(hipId -> hipStore.failQueuedForGood(patient.getKey(), hipId, e.getMessage()));
+                    logger.info("ABDM: visits of subject {} given up: {}", patient.getKey(), e.getMessage());
                 } catch (RuntimeException e) {
-                    patient.getValue().forEach(hipId -> hipStore.failQueued(patient.getKey(), hipId, e.getMessage()));
-                    logger.info("ABDM: visits of subject {} not linked: {}", patient.getKey(), e.getMessage());
+                    String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                    patient.getValue().forEach(hipId -> hipStore.failQueued(patient.getKey(), hipId, reason));
+                    logger.warn("ABDM: visits of subject {} not linked, to be tried again: {}", patient.getKey(), reason);
                 }
             }
         });

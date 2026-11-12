@@ -11,6 +11,7 @@ import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.eka.EkaCallException;
+import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.*;
 // The admin page's Status tab answers even when record sharing is off, so the page can say what is missing.
 public class AbdmAdminControllerTest {
     private static final Set<String> SHAPE = Set.of("abhaEnabled", "recordSharingEnabled", "recordSharingOn", "hiuOn", "environment",
-            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs");
+            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue");
 
     private final EkaAbdmClient ekaClient = mock(EkaAbdmClient.class);
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
@@ -34,6 +35,7 @@ public class AbdmAdminControllerTest {
     private final AbdmSettings settings = mock(AbdmSettings.class);
     private final AbdmJobRuns jobRuns = mock(AbdmJobRuns.class);
     private final AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
+    private final AbdmHipStore hipStore = mock(AbdmHipStore.class);
     private AbdmAdminController controller;
 
     @Before
@@ -43,7 +45,7 @@ public class AbdmAdminControllerTest {
 
     private AbdmAdminController controller(String publicBaseUrl) {
         return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl), ekaClient,
-                organisationConfigService, access, settings, jobRuns, orgContext);
+                organisationConfigService, access, settings, jobRuns, orgContext, hipStore);
     }
 
     @Test
@@ -143,12 +145,27 @@ public class AbdmAdminControllerTest {
     }
 
     @Test
-    public void withNoOrganisationTheStatusHasNoJobs() {
+    public void withNoOrganisationTheStatusHasNoJobsAndNoQueue() {
         when(settings.find()).thenReturn(Optional.empty());
         when(orgContext.organisationId()).thenReturn(null);
 
-        assertEquals(Map.of(), controller.status().get("jobs"));
-        verifyNoInteractions(jobRuns);
+        Map<String, Object> status = controller.status();
+
+        assertEquals(Map.of(), status.get("jobs"));
+        assertEquals(Map.of(), status.get("queue"));
+        verifyNoInteractions(jobRuns, hipStore);
+    }
+
+    // How many of the organisation's visits wait to be linked, are being linked, failed for now or for good, so a stuck
+    // or given-up visit shows; with record sharing off too, as nothing is asked of Eka.
+    @Test
+    public void theStatusCountsTheOrganisationsLinkQueueByStatus() {
+        when(settings.find()).thenReturn(Optional.empty());
+        when(orgContext.organisationId()).thenReturn(7L);
+        when(hipStore.linkQueueCounts()).thenReturn(Map.of("QUEUED", 2L, "FAILED_FINAL", 1L));
+
+        assertEquals(Map.of("QUEUED", 2L, "FAILED_FINAL", 1L), controller.status().get("queue"));
+        verify(ekaClient, never()).checkToken();
     }
 
     private void on() {

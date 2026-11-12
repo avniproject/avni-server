@@ -82,13 +82,14 @@ public class AbdmHousekeepingJobTest {
         verify(ekaHip).linkCareContexts("subject-1", true);
         verify(ekaHip).linkCareContexts("subject-2", true);
         verify(ekaHip).linkCareContexts("subject-3", true);
-        verify(hipStore).failQueued("subject-2", "hip-1", "Patient has no Eka ID");
-        verify(hipStore).failQueued("subject-2", "hip-2", "Patient has no Eka ID");
+        verify(hipStore).failQueuedForGood("subject-2", "hip-1", "Patient has no Eka ID");
+        verify(hipStore).failQueuedForGood("subject-2", "hip-2", "Patient has no Eka ID");
     }
 
-    // HIP_INTI_LINK_505: visits queued on save are linked without anyone pressing a button.
+    // HIP_INTI_LINK_505: visits queued on save are linked without anyone pressing a button. A patient Avni cannot link
+    // (no Eka ID, no ABHA address, removed) is given up: no later try changes that.
     @Test
-    public void queuedVisitsAreLinkedPatientByPatient_andOneThatFailsIsMarkedSoItWaitsBeforeTheNextTry() {
+    public void queuedVisitsAreLinkedPatientByPatient_andOneAvniCannotLinkIsGivenUp() {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
         when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(AbdmRequestException.conflict("Patient has no Eka ID"));
 
@@ -96,7 +97,35 @@ public class AbdmHousekeepingJobTest {
 
         verify(ekaHip).linkCareContexts("subject-1", true);
         verify(ekaHip).linkCareContexts("subject-2", true);
-        verify(hipStore).failQueued("subject-1", AbdmTestSupport.HIP_ID, "Patient has no Eka ID");
+        verify(hipStore).failQueuedForGood("subject-1", AbdmTestSupport.HIP_ID, "Patient has no Eka ID");
+        verify(hipStore, never()).failQueued(any(), any(), any());
+    }
+
+    // Anything else may pass: counted, and tried again after a growing wait (AbdmHipStore.failQueued).
+    @Test
+    public void aPatientWhoseLinkFailedOtherwiseIsTriedAgainLater() {
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
+        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(new IllegalStateException("database unavailable"));
+
+        job().linkQueuedVisits();
+
+        verify(hipStore).failQueued("subject-1", AbdmTestSupport.HIP_ID, "database unavailable");
+        verify(hipStore, never()).failQueuedForGood(any(), any(), any());
+    }
+
+    // Links Eka never answered are queued again, and a removed patient's visits given up, before the run picks patients.
+    @Test
+    public void theQueueIsSettledUnderEachHipIdBeforePatientsAreTaken() {
+        AbdmSettings twoHips = AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(
+                new JsonObject().with(EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2"))));
+
+        job(twoHips).linkQueuedVisits();
+
+        org.mockito.InOrder order = inOrder(hipStore);
+        order.verify(hipStore).settleLinkQueue("hip-1");
+        order.verify(hipStore).subjectsToLink("hip-1", 50);
+        order.verify(hipStore).settleLinkQueue("hip-2");
+        order.verify(hipStore).subjectsToLink("hip-2", 50);
     }
 
     @Test
@@ -113,6 +142,7 @@ public class AbdmHousekeepingJobTest {
         verify(ekaHip, never()).linkCareContexts(eq("subject-2"), anyBoolean());
         verify(ekaHip, never()).linkCareContexts(eq("subject-3"), anyBoolean());
         verify(hipStore, never()).failQueued(any(), any(), any());
+        verify(hipStore, never()).failQueuedForGood(any(), any(), any());
     }
 
     // Kept traffic and finished events can carry a patient's details, so the purge visits every organisation holding old

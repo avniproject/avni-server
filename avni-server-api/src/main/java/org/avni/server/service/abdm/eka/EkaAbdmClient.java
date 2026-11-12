@@ -145,6 +145,14 @@ public class EkaAbdmClient {
         return e instanceof EkaCallException call && call.getStatus() >= 500;
     }
 
+    // Eka refused the request itself: sending it again changes nothing. An expired login, a timeout, too many requests, a
+    // server error or no answer may all pass on a later try.
+    static boolean refusedForGood(RuntimeException e) {
+        if (!(e instanceof EkaCallException call)) return false;
+        int status = call.getStatus();
+        return status >= 400 && status < 500 && status != 401 && status != 403 && status != 408 && status != 429;
+    }
+
     // Eka did not answer. sent: the request may have reached Eka (a timeout), as against a connection never made.
     static class NoAnswer extends EkaCallException {
         final boolean sent;

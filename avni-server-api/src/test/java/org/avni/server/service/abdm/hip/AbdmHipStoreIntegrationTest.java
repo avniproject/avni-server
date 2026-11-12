@@ -159,6 +159,184 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals("LINKED", status.get("v-2"));
     }
 
+    // ---- the link queue
+
+    private static final String QUEUE_HIP = "QUEUE-HIP";
+    private static final String OTHER = "b2d4f6a8-1c3e-4a5b-9d7f-0e2c4a6b8d13";
+
+    // Eka's link webhook comes within minutes: a link it has said nothing about for half an hour is queued again, counted
+    // as a try; a younger one is left to its webhook.
+    @Test
+    public void aLinkEkaHasNotAnsweredForHalfAnHourIsQueuedAgain_andAYoungerOneWaits() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-old"), cc("v-young")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-old", "v-young"), "req-1");
+        age("v-old", "31 minutes");
+        age("v-young", "10 minutes");
+
+        store.settleLinkQueue(QUEUE_HIP);
+
+        assertEquals("QUEUED", column("v-old", "status"));
+        assertEquals(1, column("v-old", "attempts"));
+        assertEquals("LINK_REQUESTED", column("v-young", "status"));
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+    }
+
+    // A link the patient made from their own app is not the queue's to send again.
+    @Test
+    public void aPatientsOwnLinkEkaDidNotAnswerIsNotTakenOverByTheQueue() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+        store.markLinkRequestedIfPending(QUEUE_HIP, List.of("v-1"), "Eka gave no clear answer to on-confirm");
+        age("v-1", "2 hours");
+
+        store.settleLinkQueue(QUEUE_HIP);
+
+        assertEquals("LINK_REQUESTED", column("v-1", "status"));
+    }
+
+    @Test
+    public void aLinkEkaNeverAnswersIsGivenUpAtTheCap() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-1");
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set attempts = ? where reference = 'v-1'", AbdmHipStore.LINK_ATTEMPTS - 1);
+        age("v-1", "31 minutes");
+
+        store.settleLinkQueue(QUEUE_HIP);
+
+        assertEquals("FAILED_FINAL", column("v-1", "status"));
+        assertTrue((String) column("v-1", "error"), ((String) column("v-1", "error")).contains(AbdmHipStore.LINK_ATTEMPTS + " tries"));
+        assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
+    }
+
+    // A refusal that no later try can change (no Eka ID, a HIP ID Eka does not know) is final, however long it waits.
+    @Test
+    public void aFinalFailureIsNeverTakenAgain() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+
+        store.failQueuedForGood(KNOWN, QUEUE_HIP, "Patient has no Eka ID");
+        age("v-1", "30 days");
+
+        assertEquals("FAILED_FINAL", column("v-1", "status"));
+        assertEquals("Patient has no Eka ID", column("v-1", "error"));
+        assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
+        assertTrue(store.findCareContextsDue(knownId(), QUEUE_HIP).isEmpty());
+    }
+
+    // A failure that may pass waits an hour, then twice as long each time, and the sixth gives up.
+    @Test
+    public void aFailureThatMayPassIsTriedAgainAfterADoublingWait_andGivenUpAtTheCap() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+
+        for (int attempt = 1; attempt < AbdmHipStore.LINK_ATTEMPTS; attempt++) {
+            store.failQueued(KNOWN, QUEUE_HIP, "Eka did not answer");
+
+            assertEquals("FAILED", column("v-1", "status"));
+            assertEquals(attempt, column("v-1", "attempts"));
+            assertEquals(Long.valueOf(3600L << (attempt - 1)), namedJdbc.getJdbcOperations().queryForObject(
+                    "select extract(epoch from next_attempt_at - now())::bigint from abdm_care_context where reference = 'v-1'", Long.class));
+            assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
+            due("v-1");
+            assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+        }
+        store.failQueued(KNOWN, QUEUE_HIP, "Eka did not answer");
+
+        assertEquals("FAILED_FINAL", column("v-1", "status"));
+        due("v-1");
+        assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
+    }
+
+    // A link call that failed in a way a later try may not: counted and tried again after the wait, like a queued visit.
+    @Test
+    public void aLinkCallThatFailedIsCountedAndWaits_andAVisitAlreadyLinkedKeepsItsStatus() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-1", "v-2"), "req-1");
+        store.markLinked(QUEUE_HIP, List.of("v-2"), "HIP");
+
+        store.failLinkRequest("req-1", "Eka link failed: no connection");
+
+        assertEquals("FAILED", column("v-1", "status"));
+        assertEquals(1, column("v-1", "attempts"));
+        assertEquals("LINKED", column("v-2", "status"));
+        assertTrue(store.findCareContextsDue(knownId(), QUEUE_HIP).isEmpty());
+        due("v-1");
+        assertEquals(List.of("v-1"), store.findCareContextsDue(knownId(), QUEUE_HIP).stream().map(AbdmHipStore.CareContext::reference).toList());
+    }
+
+    // A removed patient's visits are never sent; their waiting visits are given up, with the reason.
+    @Test
+    public void aRemovedPatientIsSkipped_andTheirWaitingVisitsGivenUp() {
+        emptyQueue();
+        insertSubject(OTHER, "{}");
+        long other = idOf(OTHER);
+        namedJdbc.getJdbcOperations().update("update individual set is_voided = true where id = ?", other);
+        store.queueCareContexts(other, QUEUE_HIP, OTHER, "OPConsultation", List.of(cc("v-removed")));
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+
+        store.settleLinkQueue(QUEUE_HIP);
+
+        assertEquals("FAILED_FINAL", column("v-removed", "status"));
+        assertEquals("QUEUED", column("v-1", "status"));
+    }
+
+    @Test
+    public void theLongestWaitingPatientIsTakenFirst() {
+        emptyQueue();
+        insertSubject(OTHER, "{}");
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+        store.queueCareContexts(idOf(OTHER), QUEUE_HIP, OTHER, "OPConsultation", List.of(cc("v-2")));
+        age("v-1", "1 hour");
+        age("v-2", "2 hours");
+
+        assertEquals(List.of(OTHER, KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+        assertEquals(List.of(OTHER), store.subjectsToLink(QUEUE_HIP, 1));
+    }
+
+    // The status page shows how many visits wait, are being linked, failed for now or for good.
+    @Test
+    public void theQueueIsCountedByStatusForTheOrganisation() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2"), cc("v-3")));
+        store.failQueuedForGood(KNOWN, QUEUE_HIP, "Patient has no Eka ID");
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-4")));
+
+        assertEquals(java.util.Map.of("FAILED_FINAL", 3L, "QUEUED", 1L), store.linkQueueCounts());
+    }
+
+    private void emptyQueue() {
+        namedJdbc.getJdbcOperations().update("delete from abdm_care_context where organisation_id = 2");
+    }
+
+    private long knownId() {
+        return idOf(KNOWN);
+    }
+
+    private long idOf(String uuid) {
+        return namedJdbc.getJdbcOperations().queryForObject("select id from individual where uuid = ?", Long.class, uuid);
+    }
+
+    private static AbdmHipStore.NewCareContext cc(String reference) {
+        return new AbdmHipStore.NewCareContext(reference, "Visit " + reference);
+    }
+
+    private void age(String reference, String by) {
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set updated_at = now() - cast(? as interval) where reference = ?", by, reference);
+    }
+
+    private void due(String reference) {
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set next_attempt_at = now() - interval '1 second' where reference = ?", reference);
+    }
+
+    private Object column(String reference, String column) {
+        return namedJdbc.getJdbcOperations().queryForObject("select " + column + " from abdm_care_context where reference = ?", Object.class, reference);
+    }
+
     private void insertSubjectBornOn(String uuid, String dateOfBirth) {
         insertSubject(uuid, "{\"" + CONTACT_NUMBER_CONCEPT + "\": \"9282738493\"}");
         namedJdbc.getJdbcOperations().update("update individual set date_of_birth = ?::date where uuid = ?", dateOfBirth, uuid);

@@ -25,8 +25,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // The HIP's view of a subject: their completed visits as care contexts, each with its link state. EkaHipService links
-// them through Eka. Statuses: PENDING -> LINK_REQUESTED -> LINKED | FAILED. A visit queued on save (AbdmVisitQueue)
-// starts QUEUED instead, and only those are linked by AbdmHousekeepingJob.
+// them through Eka. Statuses: PENDING -> LINK_REQUESTED -> LINKED | FAILED | FAILED_FINAL. A visit queued on save
+// (AbdmVisitQueue) starts QUEUED instead, and only those are linked by AbdmHousekeepingJob. FAILED is tried again after
+// a growing wait; FAILED_FINAL never is (AbdmHipStore's link queue).
 // A visit is shared under one of the organisation's HIP IDs: the one its care context was made under, else the HIP ID of
 // the user who recorded it when that is one of the organisation's, else the organisation's first (visitsByHip).
 @Service
@@ -37,6 +38,7 @@ public class AbdmHipLinkingService {
     public static final String LINK_REQUESTED = "LINK_REQUESTED";
     public static final String LINKED = "LINKED";
     public static final String FAILED = "FAILED";
+    public static final String FAILED_FINAL = "FAILED_FINAL";
 
     // dates shown to the patient in India's time.
     private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormat.forPattern("d MMM yyyy").withLocale(Locale.ENGLISH)

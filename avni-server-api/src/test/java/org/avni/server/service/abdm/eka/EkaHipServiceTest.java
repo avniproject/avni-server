@@ -208,10 +208,12 @@ public class EkaHipServiceTest {
         assertEquals("enc-2", body.getValue().get("care_contexts").get(0).get("care_context_id").asText());
     }
 
-    // The job links what was queued on save, never a visit the patient may be linking from their own app.
+    // The job links what was queued on save and is due, never a visit the patient may be linking from their own app nor
+    // one still waiting out its wait after a failure.
     @Test
-    public void theJobLinksOnlyVisitsQueuedOnSave() {
-        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "QUEUED")));
+    public void theJobLinksOnlyVisitsQueuedOnSaveThatAreDue() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "FAILED"), row("enc-2", "QUEUED")));
+        when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-2", "QUEUED")));
 
         service.linkCareContexts("subject-1", true);
 
@@ -229,16 +231,36 @@ public class EkaHipServiceTest {
         verifyNoInteractions(eka);
     }
 
+    // Eka refusing the request itself (a HIP ID it does not know) is final: sending it again changes nothing.
     @Test
-    public void anEkaRefusalMarksTheVisitsFailedWithTheReason() {
+    public void anEkaRefusalGivesUpTheVisitsWithTheReason() {
         when(eka.post(eq(LINK), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1035", "Eka POST " + LINK + " refused with HTTP 400 ABDM-1035: Invalid HIP ID"));
 
         assertSame(view, service.linkCareContexts("subject-1"));
 
         ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
         verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
-        verify(store).settleLinkRequest(eq(linkRequestId.getValue()), eq("FAILED"), contains("Invalid HIP ID"));
+        verify(store).settleLinkRequest(eq(linkRequestId.getValue()), eq("FAILED_FINAL"), contains("Invalid HIP ID"));
+        verify(store, never()).failLinkRequest(anyString(), anyString());
         verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
+    }
+
+    // A call that never reached Eka, or a login Eka turned down, may pass later: counted, and tried again after a wait.
+    @Test
+    public void aLinkCallThatMayPassLaterIsCountedForAnotherTry() {
+        for (EkaCallException e : List.of(new EkaAbdmClient.NoAnswer(false, "Eka POST " + LINK + " did not answer: ConnectException"),
+                new EkaCallException(401, null, "Eka POST " + LINK + " refused with HTTP 401"))) {
+            reset(store, eka);
+            when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING")));
+            when(eka.post(eq(LINK), any(), any())).thenThrow(e);
+
+            service.linkCareContexts("subject-1");
+
+            ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
+            verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
+            verify(store).failLinkRequest(eq(linkRequestId.getValue()), contains(e.getMessage()));
+            verify(store, never()).settleLinkRequest(anyString(), anyString(), any());
+        }
     }
 
     // Eka may have linked them, and its webhook may already have said so: they stay requested, and a LINKED stays.
@@ -274,7 +296,7 @@ public class EkaHipServiceTest {
         service.linkCareContexts("subject-1");
 
         verify(store).markLinked(HIP_ID, List.of("enc-1"), "HIP");
-        verify(store).markStatus(HIP_ID, List.of("enc-2"), "FAILED", "duplicate");
+        verify(store).markStatus(HIP_ID, List.of("enc-2"), "FAILED_FINAL", "duplicate");
     }
 
     // ---- link status webhook
@@ -289,13 +311,14 @@ public class EkaHipServiceTest {
         verify(store, never()).markStatus(anyString(), any(), anyString(), any());
     }
 
+    // Eka reports ERRORED after its own retries (an unknown HIP ID, say): final.
     @Test
-    public void anErroredWebhookMarksItsCareContextFailedWithTheReason() {
+    public void anErroredWebhookGivesUpItsCareContextWithTheReason() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-2"))).thenReturn(List.of(row("enc-2", "LINK_REQUESTED")));
 
         service.linkCareContext(event("link-care-context-errored.json"));
 
-        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("FAILED"), contains("ABDM-1035"));
+        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("FAILED_FINAL"), contains("ABDM-1035"));
         verify(store, never()).markLinked(anyString(), any(), anyString());
     }
 
@@ -307,7 +330,7 @@ public class EkaHipServiceTest {
 
         service.linkCareContext(webhook);
 
-        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("FAILED"),
+        verify(store).markStatus(eq(HIP_ID), eq(List.of("enc-2")), eq("FAILED_FINAL"),
                 argThat(reason -> reason.contains("ABDM-1035") && !reason.contains("@sbx")));
     }
 
@@ -847,7 +870,7 @@ public class EkaHipServiceTest {
 
         ArgumentCaptor<String> requestIds = ArgumentCaptor.forClass(String.class);
         verify(store, times(2)).markLinkRequested(eq(HIP_ID), any(), requestIds.capture());
-        verify(store).settleLinkRequest(eq(requestIds.getAllValues().get(1)), eq("FAILED"), anyString());
+        verify(store).settleLinkRequest(eq(requestIds.getAllValues().get(1)), eq("FAILED_FINAL"), anyString());
         verify(store, never()).settleLinkRequest(eq(requestIds.getAllValues().get(0)), anyString(), anyString());
     }
 

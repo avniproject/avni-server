@@ -11,11 +11,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -99,21 +102,94 @@ public class AbdmHipStore {
                         rs.getString("abha_address"), rs.getLong("encounters"), rs.getLong("linked")));
     }
 
-    // Patients with visits queued on save (QUEUED), or whose last try failed over an hour ago.
+    // ---- the link queue (AbdmHousekeepingJob.linkQueuedVisits)
+
+    // Eka's link webhook comes within minutes; a link it has said nothing about for half an hour is tried again.
+    public static final Duration LINK_ANSWER_DEADLINE = Duration.ofMinutes(30);
+    // A try that may pass later waits an hour, then twice as long each time; the sixth, about a day and a half on, gives up.
+    public static final int LINK_ATTEMPTS = 6;
+    static final Duration LINK_RETRY_WAIT = Duration.ofHours(1);
+
+    // Queued on save, or failed in a way a later try may not and past its wait.
+    private static final String DUE = "(c.status = 'QUEUED' or (c.status = 'FAILED' and (c.next_attempt_at is null or c.next_attempt_at <= now())))";
+
+    // One more try that did not settle the link: FAILED until the next, waiting twice as long as the last; FAILED_FINAL,
+    // with the count, at the cap.
+    private static final String COUNTED_FAILURE = "attempts = c.attempts + 1, " +
+            "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'FAILED' end, " +
+            "error = case when c.attempts + 1 >= :maxAttempts then :error || '; given up after ' || (c.attempts + 1) || ' tries' else :error end, " +
+            "next_attempt_at = now() + make_interval(secs => :firstWait * power(2, least(c.attempts, 20))), updated_at = now()";
+
+    // Patients with visits due, longest waiting first; a removed patient is never taken.
     public List<String> subjectsToLink(String hipId, int limit) {
-        return jdbc.queryForList("select distinct i.uuid from abdm_care_context c join individual i on i.id = c.individual_id " +
-                        "where c.organisation_id = :org and c.hip_id = :hip and (c.status = 'QUEUED' " +
-                        "or (c.status = 'FAILED' and c.updated_at < now() - interval '1 hour')) limit :limit",
+        return jdbc.queryForList("select i.uuid from abdm_care_context c join individual i on i.id = c.individual_id " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and i.is_voided = false and " + DUE + " " +
+                        "group by i.uuid order by min(c.updated_at), i.uuid limit :limit",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("limit", limit), String.class);
     }
 
-    // A patient whose queued visits could not be linked: FAILED with the reason, so the next try waits an hour.
+    // The patient's visits under this HIP ID that are due, for the job to link.
+    public List<CareContext> findCareContextsDue(long individualId, String hipId) {
+        return jdbc.query("select * from abdm_care_context c where c.organisation_id = :org and c.individual_id = :ind and c.hip_id = :hip and " +
+                        DUE + " order by c.id",
+                params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR), CARE_CONTEXT);
+    }
+
+    // Before each run: a link Eka has said nothing about past the deadline is queued again, counted as a try (Avni's own
+    // links only, never one the patient made from their app); a removed patient's waiting visits are given up.
+    public void settleLinkQueue(String hipId) {
+        jdbc.update("update abdm_care_context c set attempts = c.attempts + 1, " +
+                        "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'QUEUED' end, " +
+                        "error = case when c.attempts + 1 >= :maxAttempts then 'Eka never said whether it linked them; given up after ' " +
+                        "  || (c.attempts + 1) || ' tries' else 'Eka said nothing within ' || :deadlineMinutes || ' minutes; queued again' end, " +
+                        "next_attempt_at = null, updated_at = now() " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and c.status = 'LINK_REQUESTED' and c.link_mode = 'HIP' " +
+                        "and c.updated_at < now() - make_interval(secs => :deadline)",
+                params().addValue("hip", hipId, Types.VARCHAR).addValue("maxAttempts", LINK_ATTEMPTS)
+                        .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()).addValue("deadlineMinutes", LINK_ANSWER_DEADLINE.toMinutes()));
+        jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = 'The patient was removed', updated_at = now() " +
+                        "from individual i where i.id = c.individual_id and i.is_voided = true and c.organisation_id = :org " +
+                        "and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED')",
+                params().addValue("hip", hipId, Types.VARCHAR));
+    }
+
+    // A patient whose visits could not be linked, in a way a later try may not: counted, and tried again after the wait.
     public void failQueued(String subjectUuid, String hipId, String reason) {
-        jdbc.update("update abdm_care_context c set status = 'FAILED', error = :reason, updated_at = now() from individual i " +
+        jdbc.update("update abdm_care_context c set " + COUNTED_FAILURE + " from individual i " +
                         "where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +
+                        "and c.status in ('QUEUED', 'FAILED')",
+                counted(reason).addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR));
+    }
+
+    // A patient Avni cannot link (no Eka ID, no ABHA address, removed): no later try changes that.
+    public void failQueuedForGood(String subjectUuid, String hipId, String reason) {
+        jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = :reason, next_attempt_at = null, updated_at = now() " +
+                        "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +
                         "and c.status in ('QUEUED', 'FAILED')",
                 params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
                         .addValue("reason", reason, Types.VARCHAR));
+    }
+
+    // A link call that failed in a way a later try may not, for its visits still LINK_REQUESTED: counted, tried again later.
+    public void failLinkRequest(String linkRequestId, String error) {
+        jdbc.update("update abdm_care_context c set " + COUNTED_FAILURE + " " +
+                        "where c.organisation_id = :org and c.link_request_id = :req and c.status = 'LINK_REQUESTED'",
+                counted(error).addValue("req", linkRequestId, Types.VARCHAR));
+    }
+
+    // {status: how many} of the organisation's visits, for the admin page's status.
+    public Map<String, Long> linkQueueCounts() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        jdbc.query("select status, count(*) as n from abdm_care_context where organisation_id = :org group by status order by status",
+                params(), rs -> {
+                    counts.put(rs.getString("status"), rs.getLong("n"));
+                });
+        return counts;
+    }
+
+    private MapSqlParameterSource counted(String error) {
+        return params().addValue("error", error, Types.VARCHAR).addValue("maxAttempts", LINK_ATTEMPTS)
+                .addValue("firstWait", LINK_RETRY_WAIT.toSeconds());
     }
 
     // ---- care contexts
@@ -160,7 +236,8 @@ public class AbdmHipStore {
     // linkRequestId null while the link token is still awaited.
     public void markLinkRequested(String hipId, Collection<String> references, String linkRequestId) {
         if (references == null || references.isEmpty()) return;
-        jdbc.update("update abdm_care_context set status = 'LINK_REQUESTED', link_mode = 'HIP', link_request_id = :req, error = null, updated_at = now() " +
+        jdbc.update("update abdm_care_context set status = 'LINK_REQUESTED', link_mode = 'HIP', link_request_id = :req, error = null, " +
+                        "next_attempt_at = null, updated_at = now() " +
                         "where organisation_id = :org and hip_id = :hip and reference in (:refs)",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("refs", references).addValue("req", linkRequestId, Types.VARCHAR));
     }
