@@ -104,7 +104,8 @@ public class AbdmHipStore {
 
     // ---- the link queue (AbdmHousekeepingJob.linkQueuedVisits)
 
-    // Eka's link webhook comes within minutes; a link it has said nothing about for half an hour is tried again.
+    // Eka's link webhook comes within minutes; a link it has said nothing about for half an hour is tried again, and each
+    // later unanswered one waits twice as long as the last, so an outage of hours does not use up the tries.
     public static final Duration LINK_ANSWER_DEADLINE = Duration.ofMinutes(30);
     // A try that may pass later waits an hour, then twice as long each time; the sixth, about a day and a half on, gives up.
     public static final int LINK_ATTEMPTS = 6;
@@ -135,18 +136,19 @@ public class AbdmHipStore {
                 params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR), CARE_CONTEXT);
     }
 
-    // Before each run: a link Eka has said nothing about past the deadline is queued again, counted as a try (Avni's own
-    // links only, never one the patient made from their app); a removed patient's waiting visits are given up.
+    // Before each run: a link Eka has said nothing about past its wait (the deadline, doubled for each earlier try) is
+    // queued again, counted as a try (Avni's own links only, never one the patient made from their app); a removed
+    // patient's waiting visits are given up.
     public void settleLinkQueue(String hipId) {
         jdbc.update("update abdm_care_context c set attempts = c.attempts + 1, " +
                         "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'QUEUED' end, " +
                         "error = case when c.attempts + 1 >= :maxAttempts then 'Eka never said whether it linked them; given up after ' " +
-                        "  || (c.attempts + 1) || ' tries' else 'Eka said nothing within ' || :deadlineMinutes || ' minutes; queued again' end, " +
+                        "  || (c.attempts + 1) || ' tries' else 'Eka gave no answer about the link; queued again' end, " +
                         "next_attempt_at = null, updated_at = now() " +
                         "where c.organisation_id = :org and c.hip_id = :hip and c.status = 'LINK_REQUESTED' and c.link_mode = 'HIP' " +
-                        "and c.updated_at < now() - make_interval(secs => :deadline)",
+                        "and c.updated_at < now() - make_interval(secs => :deadline * power(2, least(c.attempts, 20)))",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("maxAttempts", LINK_ATTEMPTS)
-                        .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()).addValue("deadlineMinutes", LINK_ANSWER_DEADLINE.toMinutes()));
+                        .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()));
         jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = 'The patient was removed', updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.is_voided = true and c.organisation_id = :org " +
                         "and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED')",

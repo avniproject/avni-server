@@ -191,6 +191,47 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
     }
 
+    // Each link Eka leaves unanswered waits twice as long as the last before it is sent again: 30 minutes, then 1, 2, 4
+    // and 8 hours, and the next is given up.
+    @Test
+    public void anUnansweredLinkWaitsTwiceAsLongEachTime() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+        for (int attempts = 0; attempts < AbdmHipStore.LINK_ATTEMPTS; attempts++) {
+            store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-" + attempts);
+            namedJdbc.getJdbcOperations().update("update abdm_care_context set attempts = ? where reference = 'v-1'", attempts);
+            long wait = AbdmHipStore.LINK_ANSWER_DEADLINE.toMinutes() << attempts;
+            age("v-1", (wait - 1) + " minutes");
+
+            store.settleLinkQueue(QUEUE_HIP);
+
+            assertEquals("attempts " + attempts, "LINK_REQUESTED", column("v-1", "status"));
+            age("v-1", (wait + 1) + " minutes");
+
+            store.settleLinkQueue(QUEUE_HIP);
+
+            assertEquals("attempts " + attempts, attempts + 1 < AbdmHipStore.LINK_ATTEMPTS ? "QUEUED" : "FAILED_FINAL", column("v-1", "status"));
+            assertEquals(attempts + 1, column("v-1", "attempts"));
+        }
+    }
+
+    // Eka out for an afternoon, every link unanswered, the job running every 5 minutes and sending each requeued visit at
+    // once: the visit is still waiting to be linked when Eka comes back, not given up.
+    @Test
+    public void anAfternoonOfUnansweredLinksDoesNotGiveTheVisitUp() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-0");
+        for (int minute = 5; minute <= 5 * 60; minute += 5) {
+            namedJdbc.getJdbcOperations().update("update abdm_care_context set updated_at = updated_at - interval '5 minutes' where reference = 'v-1'");
+            store.settleLinkQueue(QUEUE_HIP);
+            if ("QUEUED".equals(column("v-1", "status"))) store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-" + minute);
+        }
+
+        assertEquals("LINK_REQUESTED", column("v-1", "status"));
+        assertEquals(3, column("v-1", "attempts"));
+    }
+
     // A link the patient made from their own app is not the queue's to send again.
     @Test
     public void aPatientsOwnLinkEkaDidNotAnswerIsNotTakenOverByTheQueue() {
@@ -210,7 +251,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
         store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-1");
         namedJdbc.getJdbcOperations().update("update abdm_care_context set attempts = ? where reference = 'v-1'", AbdmHipStore.LINK_ATTEMPTS - 1);
-        age("v-1", "31 minutes");
+        age("v-1", "17 hours");
 
         store.settleLinkQueue(QUEUE_HIP);
 
