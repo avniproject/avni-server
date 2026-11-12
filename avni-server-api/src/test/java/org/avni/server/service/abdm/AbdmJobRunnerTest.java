@@ -154,6 +154,35 @@ public class AbdmJobRunnerTest {
         verify(bugsnag).notify(failure);
     }
 
+    // R10: erasing records when their consent ends does not lapse with the switch, so this work names its organisations.
+    @Test
+    public void namedOrganisationsAreRunWhateverTheirSwitches_asEachOnesSystemUser_andNoOthers() throws Exception {
+        organisation(1L, false, false, "system-1");
+        organisation(2L, true, true, "system-2");
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forOrganisations(TASK, Duration.ofMinutes(4), () -> List.of(1L), deadline -> ranFor.add(UserContextHolder.getUserContext().getOrganisationId()));
+
+        assertEquals(List.of(1L), ranFor);
+        verify(authService).authenticateByUserName("system-1", null);
+        verify(authService, never()).authenticateByUserName("system-2", null);
+        verify(organisationConfigService, never()).findAllWithFeatureEnabled(anyString());
+        verify(jobRuns).succeeded(eq(1L), eq(TASK), any());
+        assertNull(UserContextHolder.getUserContext());
+    }
+
+    @Test
+    public void aNamedOrganisationWithNoSystemUserIsReported_notSkippedSilently() throws Exception {
+        organisation(1L, false, false, null);
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forOrganisations(TASK, Duration.ofMinutes(4), () -> List.of(1L), deadline -> ranFor.add(1L));
+
+        assertTrue(ranFor.isEmpty());
+        verify(bugsnag).notify(any(AbdmOrgContext.SystemUserException.class));
+        verify(jobRuns).failed(eq(1L), eq(TASK), anyString(), any());
+    }
+
     private void organisation(long id, boolean abha, boolean sharing, String systemUser) throws Exception {
         OrganisationConfig config = new OrganisationConfig();
         config.setOrganisationId(id);

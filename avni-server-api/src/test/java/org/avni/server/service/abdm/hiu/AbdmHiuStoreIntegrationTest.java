@@ -47,6 +47,28 @@ public class AbdmHiuStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of("abdm-D", "abdm-A"), store.parkedConsentRequestIds());
     }
 
+    // R10: the hourly expiry and erase visits every organisation with an HIU consent still open or a record still held,
+    // whatever its switches, and no other. Read across organisations, as the job runner reads before acting as each.
+    @Test
+    public void theOrganisationsHoldingConsentsOrRecordsAreThoseWithAnOpenConsentOrAKeptRecord() {
+        var jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("delete from abdm_health_information");
+        jdbc.update("delete from abdm_data_flow");
+        jdbc.update("delete from abdm_consent_status");
+        jdbc.update("delete from abdm_consent");
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values ('c-1', 2, 'HIU', 'cr-1', 'GRANTED')");
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values ('c-2', 3, 'HIU', 'cr-2', 'EXPIRED')");
+        jdbc.update("insert into abdm_consent (uuid, organisation_id, role, consent_request_id, status) values ('c-3', 1, 'HIU', 'cr-3', 'DENIED')");
+        jdbc.update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status) values ('f-1', 3, 'HIU', 'artefact-2', 'RECEIVED')");
+        jdbc.update("insert into abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id) " +
+                "values (3, (select id from abdm_data_flow where uuid = 'f-1'), 'tx-2', 'artefact-2')");
+
+        assertEquals(List.of(2L, 3L), store.organisationsHoldingConsentsOrRecords());
+
+        jdbc.update("update abdm_consent set status = 'REQUESTED' where uuid = 'c-3'");
+        assertEquals(List.of(1L, 2L, 3L), store.organisationsHoldingConsentsOrRecords());
+    }
+
     @Test
     public void aParkedUpdateIsClaimedOnceAndCanBeReleased() {
         store.parkConsentUpdate("abdm-A", "GRANTED", List.of("artefact-1"));

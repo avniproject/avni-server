@@ -372,6 +372,13 @@ public class AbdmHiuStore {
                         .addValue("erase", AbdmFlows.iso(dataEraseAt), Types.VARCHAR));
     }
 
+    // Organisations with an HIU consent still open or a received record still held, for the hourly expiry and erase, which
+    // is owed whatever their switches. Across organisations: called by the job runner before it acts as each.
+    public List<Long> organisationsHoldingConsentsOrRecords() {
+        return jdbc.queryForList("select organisation_id from abdm_consent where role = 'HIU' and status in ('REQUESTED', 'GRANTED') " +
+                "union select organisation_id from abdm_health_information order by 1", new MapSqlParameterSource(), Long.class);
+    }
+
     // Requests and artefacts past their erase date become EXPIRED (HIU_FLOW_301). Returns the requests expired.
     public int expireOverdueConsents() {
         int requests = jdbc.update("update abdm_consent set status = 'EXPIRED', updated_at = now() where organisation_id = :org and role = 'HIU' " +

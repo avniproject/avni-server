@@ -8,8 +8,10 @@ import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abdm.hip.AbdmTestSupport;
 import org.avni.server.service.abdm.hiu.AbdmHiuDataService;
+import org.avni.server.service.abdm.hiu.AbdmHiuStore;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -18,6 +20,9 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import static org.junit.Assert.assertEquals;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -33,6 +38,7 @@ public class AbdmHousekeepingJobTest {
     private final AbdmMessageLog messageLog = mock(AbdmMessageLog.class);
     private final AbdmInbox inbox = mock(AbdmInbox.class);
     private final AbdmHiuDataService hiuData = mock(AbdmHiuDataService.class);
+    private final AbdmHiuStore hiuStore = mock(AbdmHiuStore.class);
     private final AbdmHipStore hipStore = mock(AbdmHipStore.class);
     private final EkaHipService ekaHip = mock(EkaHipService.class);
     private final EkaHiuService ekaHiu = mock(EkaHiuService.class);
@@ -47,11 +53,15 @@ public class AbdmHousekeepingJobTest {
             ((Consumer<Instant>) inv.getArgument(2)).accept(deadline);
             return null;
         }).when(runner).forEachOrganisation(anyString(), any(), any());
+        doAnswer(inv -> {
+            ((Consumer<Instant>) inv.getArgument(3)).accept(deadline);
+            return null;
+        }).when(runner).forOrganisations(anyString(), any(), any(), any());
     }
 
     private AbdmHousekeepingJob job(AbdmSettings settings) {
-        return new AbdmHousekeepingJob(runner, mock(AbdmScheduler.class), settings, messageLog, inbox, hiuData, hipStore, ekaHip, ekaHiu,
-                clock, 30);
+        return new AbdmHousekeepingJob(runner, mock(AbdmScheduler.class), settings, messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip,
+                ekaHiu, clock, 30);
     }
 
     private AbdmHousekeepingJob job() {
@@ -114,11 +124,19 @@ public class AbdmHousekeepingJobTest {
         verify(inbox).purgeFinishedOlderThan(NOW.minus(Duration.ofDays(30)));
     }
 
+    // R10: consents expire and their records are erased in every organisation holding them, record sharing on or not;
+    // the retry, which asks Eka, only where record sharing is on.
     @Test
-    public void endedConsentsAreExpiredAndTheirRecordsErased_andParkedConsentUpdatesRetried() {
+    @SuppressWarnings("unchecked")
+    public void endedConsentsAreExpiredAndTheirRecordsErasedWhereverTheyAreHeld_andParkedUpdatesRetriedWhereSharingIsOn() {
+        when(hiuStore.organisationsHoldingConsentsOrRecords()).thenReturn(List.of(7L));
+
         job().expireConsentsAndEraseRecords();
 
-        verify(runner).forEachOrganisation(eq(AbdmHousekeepingJob.CONSENT_EXPIRY), any(), any());
+        ArgumentCaptor<Supplier<List<Long>>> holding = ArgumentCaptor.forClass(Supplier.class);
+        verify(runner).forOrganisations(eq(AbdmHousekeepingJob.CONSENT_EXPIRY), any(), holding.capture(), any());
+        assertEquals(List.of(7L), holding.getValue().get());
+        verify(runner, never()).forEachOrganisation(eq(AbdmHousekeepingJob.CONSENT_EXPIRY), any(), any());
         verify(runner).forEachOrganisation(eq(AbdmHousekeepingJob.CONSENT_UPDATE_RETRY), any(), any());
         verify(hiuData).expireAndErase();
         verify(ekaHiu).retryParkedUpdates();

@@ -18,10 +18,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-// Runs an ABDM job for each organisation with record sharing on (AbdmAccess), as that organisation's system user, one
-// after another, as MessageSenderJob does for messaging. A failure, a missing system user included, is logged with its
-// stack trace, sent to Bugsnag and kept for the status page (AbdmJobRuns); the next organisation still runs.
+// Runs an ABDM job for each organisation with record sharing on (AbdmAccess), or for each one a selection names, as that
+// organisation's system user, one after another, as MessageSenderJob does for messaging. A failure, a missing system user
+// included, is logged with its stack trace, sent to Bugsnag and kept for the status page (AbdmJobRuns); the next
+// organisation still runs.
 // The run has a time budget; each organisation is given its share of what is left, as a deadline the work keeps to.
 @Component
 public class AbdmJobRunner {
@@ -52,23 +54,30 @@ public class AbdmJobRunner {
         this.clock = clock;
     }
 
+    // For each organisation with record sharing on: work that calls Eka or links or serves records.
     public void forEachOrganisation(String task, Duration budget, Consumer<Instant> work) {
+        forOrganisations(task, budget, this::sharingOrganisationIds, work);
+    }
+
+    // For each organisation the selection names, whatever its switches: a duty such as erasing records when their consent
+    // ends does not lapse when record sharing is switched off. The selection is read as the admin user, across organisations.
+    public void forOrganisations(String task, Duration budget, Supplier<List<Long>> selection, Consumer<Instant> work) {
         Instant runDeadline = clock.instant().plus(budget);
         try {
-            List<AbdmOrganisation> organisations;
+            List<Long> organisationIds;
             try {
-                organisations = sharingOrganisations();
+                authService.authenticateByUserName("admin", null);
+                organisationIds = selection.get();
             } catch (RuntimeException e) {
-                logger.error("ABDM {} not run: the organisations sharing records could not be read", task, e);
+                logger.error("ABDM {} not run: its organisations could not be read", task, e);
                 bugsnag.notify(e);
                 return;
             }
-            for (int i = 0; i < organisations.size(); i++) {
-                AbdmOrganisation organisation = organisations.get(i);
+            for (int i = 0; i < organisationIds.size(); i++) {
                 Instant now = clock.instant();
                 Duration left = Duration.between(now, runDeadline);
-                Instant deadline = left.isNegative() ? now : now.plus(left.dividedBy(organisations.size() - i));
-                runFor(organisation, task, deadline, work);
+                Instant deadline = left.isNegative() ? now : now.plus(left.dividedBy(organisationIds.size() - i));
+                runFor(organisationIds.get(i), task, deadline, work);
             }
         } finally {
             UserContextHolder.clear();
@@ -76,29 +85,30 @@ public class AbdmJobRunner {
         }
     }
 
-    private void runFor(AbdmOrganisation organisation, String task, Instant deadline, Consumer<Instant> work) {
+    private void runFor(long organisationId, String task, Instant deadline, Consumer<Instant> work) {
+        AbdmOrganisation organisation = new AbdmOrganisation(organisationId, null, null);
         try {
+            organisation = orgContext.organisation(organisationId);
             orgContext.runAs(organisation, () -> work.accept(deadline));
-            jobRuns.succeeded(organisation.id(), task, clock.instant());
+            jobRuns.succeeded(organisationId, task, clock.instant());
         } catch (RuntimeException e) {
             logger.error("ABDM {} failed for {}", task, organisation, e);
             bugsnag.notify(e);
             try {
-                jobRuns.failed(organisation.id(), task, e.getClass().getSimpleName() + ": " + e.getMessage(), clock.instant());
+                jobRuns.failed(organisationId, task, e.getClass().getSimpleName() + ": " + e.getMessage(), clock.instant());
             } catch (RuntimeException recordFailure) {
                 logger.error("ABDM {}: the failure for {} could not be kept for the status page", task, organisation, recordFailure);
             }
         }
     }
 
-    // Read as the admin user, as MessageSenderJob does: the switch first, then the rest of what AbdmAccess needs.
-    private List<AbdmOrganisation> sharingOrganisations() {
-        authService.authenticateByUserName("admin", null);
-        List<AbdmOrganisation> organisations = new ArrayList<>();
+    // As MessageSenderJob does: the switch first, then the rest of what AbdmAccess needs.
+    private List<Long> sharingOrganisationIds() {
+        List<Long> organisationIds = new ArrayList<>();
         for (OrganisationConfig config : organisationConfigService.findAllWithFeatureEnabled(OrganisationConfigSettingKey.enableAbdmRecordSharing.name())) {
             Long organisationId = config.getOrganisationId();
-            if (organisationId != null && access.recordSharingOn(organisationId)) organisations.add(orgContext.organisation(organisationId));
+            if (organisationId != null && access.recordSharingOn(organisationId)) organisationIds.add(organisationId);
         }
-        return organisations;
+        return organisationIds;
     }
 }

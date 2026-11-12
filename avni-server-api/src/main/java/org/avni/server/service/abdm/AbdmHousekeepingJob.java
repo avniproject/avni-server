@@ -4,6 +4,7 @@ import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hiu.AbdmHiuDataService;
+import org.avni.server.service.abdm.hiu.AbdmHiuStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Scheduled ABDM upkeep, on ABDM's own threads (AbdmScheduler), for each organisation with record sharing on, as its
-// system user (AbdmJobRunner). The task names are the keys of "jobs" in GET /web/abdm/status.
+// Scheduled ABDM upkeep, on ABDM's own threads (AbdmScheduler), as each organisation's system user (AbdmJobRunner): for
+// organisations with record sharing on, and the consent expiry and record erase for every organisation holding consents
+// or records. The task names are the keys of "jobs" in GET /web/abdm/status.
 @Component
 public class AbdmHousekeepingJob {
     private static final Logger logger = LoggerFactory.getLogger(AbdmHousekeepingJob.class);
@@ -40,6 +42,7 @@ public class AbdmHousekeepingJob {
     private final AbdmMessageLog messageLog;
     private final AbdmInbox inbox;
     private final AbdmHiuDataService hiuData;
+    private final AbdmHiuStore hiuStore;
     private final AbdmHipStore hipStore;
     private final EkaHipService ekaHip;
     private final EkaHiuService ekaHiu;
@@ -55,20 +58,21 @@ public class AbdmHousekeepingJob {
 
     @Autowired
     public AbdmHousekeepingJob(AbdmJobRunner runner, AbdmScheduler scheduler, AbdmSettings settings, AbdmMessageLog messageLog,
-                               AbdmInbox inbox, AbdmHiuDataService hiuData, AbdmHipStore hipStore, EkaHipService ekaHip,
-                               EkaHiuService ekaHiu, @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
-        this(runner, scheduler, settings, messageLog, inbox, hiuData, hipStore, ekaHip, ekaHiu, Clock.systemUTC(), messageRetentionDays);
+                               AbdmInbox inbox, AbdmHiuDataService hiuData, AbdmHiuStore hiuStore, AbdmHipStore hipStore,
+                               EkaHipService ekaHip, EkaHiuService ekaHiu, @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
+        this(runner, scheduler, settings, messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip, ekaHiu, Clock.systemUTC(), messageRetentionDays);
     }
 
     AbdmHousekeepingJob(AbdmJobRunner runner, AbdmScheduler scheduler, AbdmSettings settings, AbdmMessageLog messageLog,
-                        AbdmInbox inbox, AbdmHiuDataService hiuData, AbdmHipStore hipStore, EkaHipService ekaHip,
-                        EkaHiuService ekaHiu, Clock clock, int messageRetentionDays) {
+                        AbdmInbox inbox, AbdmHiuDataService hiuData, AbdmHiuStore hiuStore, AbdmHipStore hipStore,
+                        EkaHipService ekaHip, EkaHiuService ekaHiu, Clock clock, int messageRetentionDays) {
         this.runner = runner;
         this.scheduler = scheduler;
         this.settings = settings;
         this.messageLog = messageLog;
         this.inbox = inbox;
         this.hiuData = hiuData;
+        this.hiuStore = hiuStore;
         this.hipStore = hipStore;
         this.ekaHip = ekaHip;
         this.ekaHiu = ekaHiu;
@@ -92,8 +96,10 @@ public class AbdmHousekeepingJob {
         });
     }
 
+    // Erasing records when their consent ends is owed by every organisation holding consents or records, whatever its
+    // switches; the retry asks Eka, so only where record sharing is on.
     public void expireConsentsAndEraseRecords() {
-        runner.forEachOrganisation(CONSENT_EXPIRY, UPKEEP_BUDGET, deadline -> hiuData.expireAndErase());
+        runner.forOrganisations(CONSENT_EXPIRY, UPKEEP_BUDGET, hiuStore::organisationsHoldingConsentsOrRecords, deadline -> hiuData.expireAndErase());
         runner.forEachOrganisation(CONSENT_UPDATE_RETRY, UPKEEP_BUDGET, deadline -> ekaHiu.retryParkedUpdates());
     }
 
