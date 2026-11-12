@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.sync.SyncEntityName;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
+import java.util.List;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addUserFields;
@@ -49,9 +51,11 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final TxDataControllerHelper txDataControllerHelper;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
+    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.programEnrolmentRepository = programEnrolmentRepository;
@@ -197,5 +201,10 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         addAuditFields(programEncounter, resource);
         addUserFields(programEncounter.getFilledBy(), resource, "filledBy");
         return resource;
+    }
+
+    @Override
+    public void beforeProcess(List<ProgramEncounter> programEncounters) {
+        linkedParentUuidRepository.linkProgramEncounters(programEncounters);
     }
 }

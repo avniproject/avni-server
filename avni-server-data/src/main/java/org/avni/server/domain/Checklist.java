@@ -8,7 +8,6 @@ import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Formula;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class Checklist extends OrganisationAwareEntity implements SubjectLinkedS
     @JoinColumn(name = "program_enrolment_id")
     private ProgramEnrolment programEnrolment;
 
-    @Formula("(select pe.uuid from program_enrolment pe where pe.id = program_enrolment_id)")
+    @Transient
     private String linkedProgramEnrolmentUuid;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "checklist")
@@ -110,5 +109,9 @@ public class Checklist extends OrganisationAwareEntity implements SubjectLinkedS
     @JsonIgnore
     public String getLinkedProgramEnrolmentUuid() {
         return uuidOf(programEnrolment, linkedProgramEnrolmentUuid);
+    }
+
+    public void setLinkedProgramEnrolmentUuid(String linkedProgramEnrolmentUuid) {
+        this.linkedProgramEnrolmentUuid = linkedProgramEnrolmentUuid;
     }
 }

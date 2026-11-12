@@ -18,6 +18,7 @@ public interface RestControllerResourceProcessor<T> {
 
     default PagedModel<EntityModel<T>> wrap(Page<T> page) {
         PagedModel.PageMetadata pageMetadata = new PagedModel.PageMetadata(page.getSize(), page.getNumber(), page.getTotalElements(), page.getTotalPages());
+        beforeProcess(page.getContent());
         List<EntityModel<T>> resources = new ArrayList<>();
         for (T it : page) resources.add(this.process(EntityModel.of(it)));
         return PagedModel.of(resources, pageMetadata);
@@ -25,12 +26,14 @@ public interface RestControllerResourceProcessor<T> {
 
     default SlicedResources<EntityModel<T>> wrap(Slice<T> slice) {
         SlicedResources.SliceMetadata sliceMetadata = new SlicedResources.SliceMetadata(slice.getSize(), slice.getNumber(), slice.hasNext());
+        beforeProcess(slice.getContent());
         List<EntityModel<T>> resources = new ArrayList<>();
         for (T it : slice) resources.add(this.process(EntityModel.of(it)));
         return new SlicedResources<>(resources, sliceMetadata);
     }
 
     default List<EntityModel<T>> wrap(List<T> list) {
+        beforeProcess(list);
         return list.stream().map(t -> this.process(EntityModel.of(t))).collect(Collectors.toList());
     }
 
@@ -42,5 +45,8 @@ public interface RestControllerResourceProcessor<T> {
     default PagedModel<T> wrapListAsPage(List list) {
         PagedModel.PageMetadata pageMetadata = new PagedModel.PageMetadata(list.size(), 0, list.size(), 1);
         return PagedModel.of(list, pageMetadata);
+    }
+
+    default void beforeProcess(List<T> entities) {
     }
 }

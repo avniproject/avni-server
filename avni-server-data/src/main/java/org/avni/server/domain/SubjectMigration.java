@@ -8,7 +8,6 @@ import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.Formula;
 
 import java.util.Date;
 
@@ -23,7 +22,7 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @JoinColumn(name = "individual_id")
     private Individual individual;
 
-    @Formula("(select i.uuid from individual i where i.id = individual_id)")
+    @Transient
     private String linkedIndividualUuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -151,5 +150,9 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @JsonIgnore
     public String getLinkedIndividualUuid() {
         return uuidOf(individual, linkedIndividualUuid);
+    }
+
+    public void setLinkedIndividualUuid(String linkedIndividualUuid) {
+        this.linkedIndividualUuid = linkedIndividualUuid;
     }
 }

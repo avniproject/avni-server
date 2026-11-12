@@ -4,6 +4,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.domain.*;
@@ -33,6 +34,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
@@ -49,9 +51,11 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     private final FormMappingService formMappingService;
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final TxDataControllerHelper txDataControllerHelper;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public ProgramEnrolmentController(IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
+    public ProgramEnrolmentController(IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.individualRepository = individualRepository;
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
@@ -195,5 +199,10 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         resource.add(Link.of(programEnrolment.getLinkedIndividualUuid(), "individualUUID"));
         addAuditFields(programEnrolment, resource);
         return resource;
+    }
+
+    @Override
+    public void beforeProcess(List<ProgramEnrolment> programEnrolments) {
+        linkedParentUuidRepository.linkProgramEnrolments(programEnrolments);
     }
 }
