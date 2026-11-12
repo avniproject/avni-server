@@ -74,7 +74,7 @@ public class AbdmHousekeepingJobTest {
                 new JsonObject().with(EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2"))));
         when(hipStore.subjectsToLink("hip-1", 50)).thenReturn(List.of("subject-1", "subject-2"));
         when(hipStore.subjectsToLink("hip-2", 50)).thenReturn(List.of("subject-2", "subject-3"));
-        when(ekaHip.linkCareContexts("subject-2", true)).thenThrow(AbdmRequestException.conflict("Patient has no Eka ID"));
+        when(ekaHip.linkCareContexts("subject-2", true)).thenThrow(AbdmRequestException.conflict("This subject's verified ABHA has no address"));
 
         job(twoHips).linkQueuedVisits();
 
@@ -82,22 +82,35 @@ public class AbdmHousekeepingJobTest {
         verify(ekaHip).linkCareContexts("subject-1", true);
         verify(ekaHip).linkCareContexts("subject-2", true);
         verify(ekaHip).linkCareContexts("subject-3", true);
-        verify(hipStore).failQueuedForGood("subject-2", "hip-1", "Patient has no Eka ID");
-        verify(hipStore).failQueuedForGood("subject-2", "hip-2", "Patient has no Eka ID");
+        verify(hipStore).failQueuedForGood("subject-2", "hip-1", "This subject's verified ABHA has no address");
+        verify(hipStore).failQueuedForGood("subject-2", "hip-2", "This subject's verified ABHA has no address");
     }
 
     // HIP_INTI_LINK_505: visits queued on save are linked without anyone pressing a button. A patient Avni cannot link
-    // (no Eka ID, no ABHA address, removed) is given up: no later try changes that.
+    // (removed, a verified ABHA with no address) is given up: no later try changes that.
     @Test
     public void queuedVisitsAreLinkedPatientByPatient_andOneAvniCannotLinkIsGivenUp() {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
-        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(AbdmRequestException.conflict("Patient has no Eka ID"));
+        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(AbdmRequestException.notFound("Subject not found"));
 
         job().linkQueuedVisits();
 
         verify(ekaHip).linkCareContexts("subject-1", true);
         verify(ekaHip).linkCareContexts("subject-2", true);
-        verify(hipStore).failQueuedForGood("subject-1", AbdmTestSupport.HIP_ID, "Patient has no Eka ID");
+        verify(hipStore).failQueuedForGood("subject-1", AbdmTestSupport.HIP_ID, "Subject not found");
+        verify(hipStore, never()).failQueued(any(), any(), any());
+    }
+
+    // A patient whose ABHA Eka has not verified is neither given up nor tried again: they wait for a verified ABHA.
+    @Test
+    public void aPatientWithoutAVerifiedAbhaWaitsForOne() {
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
+        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(new EkaHipService.NoVerifiedAbha());
+
+        job().linkQueuedVisits();
+
+        verify(hipStore).awaitVerifiedAbha("subject-1", AbdmTestSupport.HIP_ID, EkaHipService.NO_EKA_ID);
+        verify(hipStore, never()).failQueuedForGood(any(), any(), any());
         verify(hipStore, never()).failQueued(any(), any(), any());
     }
 

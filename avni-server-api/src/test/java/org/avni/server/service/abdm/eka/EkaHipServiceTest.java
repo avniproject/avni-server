@@ -152,7 +152,7 @@ public class EkaHipServiceTest {
         when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
                 .thenReturn(List.of(abhaEvent("linked", null, "asha.devi@sbx")));
 
-        AbdmRequestException e = assertThrows(AbdmRequestException.class, () -> service.linkCareContexts("subject-1"));
+        AbdmRequestException e = assertThrows(EkaHipService.NoVerifiedAbha.class, () -> service.linkCareContexts("subject-1"));
 
         assertEquals(HttpStatus.CONFLICT, e.getStatus());
         assertEquals("Patient has no Eka ID: register or verify their ABHA through the app first", e.getMessage());

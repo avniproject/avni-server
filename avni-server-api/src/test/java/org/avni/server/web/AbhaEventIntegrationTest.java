@@ -187,6 +187,28 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals("verified", onlyRow().get("action"));
     }
 
+    // A visit that waited for its patient's ABHA to be verified is queued again, for the next linking run, once the phone
+    // saves a record of that ABHA with an Eka ID; with record sharing off nothing moves.
+    @Test
+    public void aVerifiedAbhaSavedFromThePhoneQueuesAgainTheVisitsWaitingForIt_onlyWithRecordSharingOn() {
+        readyFor(REGISTRAR, "HIP-1");
+        String subject = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        visitWaitingForAVerifiedAbha(subject, "visit-1");
+        recordSharing(false);
+        Map<String, Object> whileOff = event(UUID.randomUUID().toString(), "linked");
+        whileOff.put("subjectUUID", subject);
+
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, whileOff).getStatusCode());
+        assertEquals("AWAITING_VERIFIED_ABHA", careContextStatus("visit-1"));
+
+        recordSharing(true);
+        Map<String, Object> whileOn = event(UUID.randomUUID().toString(), "verified");
+        whileOn.put("subjectUUID", subject);
+
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, whileOn).getStatusCode());
+        assertEquals("QUEUED", careContextStatus("visit-1"));
+    }
+
     @Test
     public void removedActionFromPhoneRejected() {
         readyFor(REGISTRAR, "HIP-1");
@@ -439,6 +461,28 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
                 .with(EkaSystemConfig.ENCRYPTED_CLIENT_SECRET, ekaCredentialCipher.encrypt("test-secret-value"))
                 .with(EkaSystemConfig.HIP_IDS, Arrays.asList("HIP-1", "HIP-2")));
         externalSystemConfigRepository.save(row);
+    }
+
+    private void visitWaitingForAVerifiedAbha(String subjectUuid, String reference) {
+        new JdbcTemplate(dataSource).update("insert into abdm_care_context (uuid, organisation_id, individual_id, hip_id, patient_reference, " +
+                        "reference, display, hi_type, status, error) values (?, ?, (select id from individual where uuid = ?), 'HIP-1', ?, ?, " +
+                        "'OPD Visit', 'OPConsultation', 'AWAITING_VERIFIED_ABHA', 'Patient has no Eka ID')",
+                UUID.randomUUID().toString(), DEMO_ID, subjectUuid, subjectUuid, reference);
+    }
+
+    private String careContextStatus(String reference) {
+        return new JdbcTemplate(dataSource).queryForObject("select status from abdm_care_context where reference = ?", String.class, reference);
+    }
+
+    // Record sharing needs its switch and a record-sharing Eka client besides the ABHA settings readyFor stores.
+    private void recordSharing(boolean on) {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("update organisation_config set settings = settings || jsonb_build_object('enableAbdmRecordSharing', ?) where organisation_id = ?",
+                on, DEMO_ID);
+        jdbc.update("update external_system_config set config = config || jsonb_build_object(?::text, 'sharing-client-1', ?::text, ?::text) " +
+                        "where organisation_id = ? and system_name = 'Eka'",
+                EkaSystemConfig.SHARING_CLIENT_ID, EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET,
+                ekaCredentialCipher.encrypt("test-sharing-secret"), DEMO_ID);
     }
 
     private void clearHealthCentre(String username) {

@@ -141,6 +141,10 @@ public class AbdmHousekeepingJob {
                 left--;
                 try {
                     ekaHip.linkCareContexts(patient.getKey(), true);
+                } catch (EkaHipService.NoVerifiedAbha e) {
+                    // Linked once a worker verifies the ABHA with Eka (AbdmVerifiedAbhaAspect), not tried meanwhile.
+                    patient.getValue().forEach(hipId -> hipStore.awaitVerifiedAbha(patient.getKey(), hipId, e.getMessage()));
+                    logger.info("ABDM: visits of subject {} wait for an ABHA verified with Eka", patient.getKey());
                 } catch (AbdmRequestException e) {
                     // The patient's own record refuses it (no Eka ID, no ABHA address, removed): no later try changes that.
                     patient.getValue().forEach(hipId -> hipStore.failQueuedForGood(patient.getKey(), hipId, e.getMessage()));

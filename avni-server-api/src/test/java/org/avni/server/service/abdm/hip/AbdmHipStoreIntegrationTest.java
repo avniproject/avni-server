@@ -317,6 +317,41 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of("v-1"), store.findCareContextsDue(knownId(), QUEUE_HIP).stream().map(AbdmHipStore.CareContext::reference).toList());
     }
 
+    // A patient whose ABHA Eka has not verified waits for a verified one: not given up, and not tried by the job meanwhile.
+    @Test
+    public void aPatientWithoutAVerifiedAbhaWaits_andIsNotTakenByTheJob() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+
+        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID);
+        age("v-1", "30 days");
+
+        assertEquals("AWAITING_VERIFIED_ABHA", column("v-1", "status"));
+        assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
+        assertTrue(store.findCareContextsDue(knownId(), QUEUE_HIP).isEmpty());
+        assertEquals(java.util.Map.of("AWAITING_VERIFIED_ABHA", 1L), store.linkQueueCounts());
+    }
+
+    // Once the patient's ABHA is verified, their visits waiting for it, and any given up for want of it, are queued afresh;
+    // one given up for another reason stays given up.
+    @Test
+    public void aVerifiedAbhaQueuesAgainTheVisitsWaitingForIt() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2"), cc("v-3")));
+        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID);
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'FAILED_FINAL', attempts = 6, error = ? where reference = 'v-2'",
+                AbdmHipLinkingService.NO_EKA_ID + "; given up after 6 tries");
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'FAILED_FINAL', error = 'Eka refused the link' where reference = 'v-3'");
+
+        assertEquals(2, store.requeueForVerifiedAbha(KNOWN));
+
+        assertEquals("QUEUED", column("v-1", "status"));
+        assertEquals("QUEUED", column("v-2", "status"));
+        assertEquals(0, column("v-2", "attempts"));
+        assertEquals("FAILED_FINAL", column("v-3", "status"));
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+    }
+
     // A removed patient's visits are never sent; their waiting visits are given up, with the reason.
     @Test
     public void aRemovedPatientIsSkipped_andTheirWaitingVisitsGivenUp() {

@@ -1,5 +1,6 @@
 package org.avni.server.service.abha;
 
+import org.avni.server.common.AbhaRecordSaved;
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.AbhaEvent;
@@ -70,6 +71,7 @@ public class AbhaEventService {
     }
 
     // True when stored now, false when this uuid was already stored.
+    @AbhaRecordSaved
     public boolean recordEvent(AbhaEventRequest request) {
         AbhaAccess access = abhaService.checkAccess(request.getSubjectTypeUUID());
         if (!PHONE_ACTIONS.contains(request.getAction())) {

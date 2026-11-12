@@ -77,15 +77,36 @@ public class AbdmVisitQueue {
             logger.warn("ABDM: visit {} not queued for linking: {}", visit.getUuid(), e.getClass().getSimpleName());
             return;
         }
+        afterCommit(() -> write(queued));
+    }
+
+    // An ABHA record with an Eka ID was saved for the patient: their visits waiting for a verified ABHA are queued again,
+    // after the save commits and in a transaction of their own, so a failed write never touches the record.
+    public void requeueForVerifiedAbha(String subjectUuid) {
+        afterCommit(() -> {
+            try {
+                Runnable work = () -> {
+                    int requeued = store.requeueForVerifiedAbha(subjectUuid);
+                    if (requeued > 0) logger.info("ABDM: {} visit(s) of subject {} queued again, its ABHA verified", requeued, subjectUuid);
+                };
+                if (ownTransaction == null) work.run();
+                else ownTransaction.executeWithoutResult(status -> work.run());
+            } catch (RuntimeException e) {
+                logger.warn("ABDM: visits of subject {} not queued again: {}", subjectUuid, e.getClass().getSimpleName());
+            }
+        });
+    }
+
+    private void afterCommit(Runnable work) {
         if (ownTransaction != null && TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    write(queued);
+                    work.run();
                 }
             });
         } else {
-            write(queued);
+            work.run();
         }
     }
 

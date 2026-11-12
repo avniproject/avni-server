@@ -151,7 +151,7 @@ public class AbdmHipStore {
                         .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()));
         jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = 'The patient was removed', updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.is_voided = true and c.organisation_id = :org " +
-                        "and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED')",
+                        "and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED', 'AWAITING_VERIFIED_ABHA')",
                 params().addValue("hip", hipId, Types.VARCHAR));
     }
 
@@ -163,7 +163,25 @@ public class AbdmHipStore {
                 counted(reason).addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR));
     }
 
-    // A patient Avni cannot link (no Eka ID, no ABHA address, removed): no later try changes that.
+    // A patient whose ABHA Eka has not verified: their visits wait, untried, for a verified one (requeueForVerifiedAbha).
+    public void awaitVerifiedAbha(String subjectUuid, String hipId, String reason) {
+        jdbc.update("update abdm_care_context c set status = 'AWAITING_VERIFIED_ABHA', error = :reason, next_attempt_at = null, updated_at = now() " +
+                        "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +
+                        "and c.status in ('QUEUED', 'FAILED')",
+                params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
+                        .addValue("reason", reason, Types.VARCHAR));
+    }
+
+    // The patient's ABHA is verified now: their visits waiting for that, or failed or given up for want of it, are queued
+    // afresh under every HIP ID. Returns how many.
+    public int requeueForVerifiedAbha(String subjectUuid) {
+        return jdbc.update("update abdm_care_context c set status = 'QUEUED', attempts = 0, error = null, next_attempt_at = null, updated_at = now() " +
+                        "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org " +
+                        "and (c.status = 'AWAITING_VERIFIED_ABHA' or (c.status in ('FAILED', 'FAILED_FINAL') and position(:noEkaId in coalesce(c.error, '')) = 1))",
+                params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("noEkaId", AbdmHipLinkingService.NO_EKA_ID, Types.VARCHAR));
+    }
+
+    // A patient Avni cannot link (removed, a verified ABHA with no address): no later try changes that.
     public void failQueuedForGood(String subjectUuid, String hipId, String reason) {
         jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = :reason, next_attempt_at = null, updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +

@@ -65,7 +65,7 @@ public class EkaHipService implements EkaHipEvents {
     public static final String ON_FETCH_PATH = "/abdm/v1/hip/care-context/data/on-fetch";
     public static final String SMS_NOTIFY_PATH = "/abdm/v1/care-contexts/sms/notify";
     static final String MEDIA = "application/fhir+json";
-    public static final String NO_EKA_ID = "Patient has no Eka ID: register or verify their ABHA through the app first";
+    public static final String NO_EKA_ID = AbdmHipLinkingService.NO_EKA_ID;
     static final String FLOW_REQUESTED = "REQUESTED";
     static final String FLOW_TRANSFERRED = "TRANSFERRED";
     static final String FLOW_FAILED = "FAILED";
@@ -113,6 +113,13 @@ public class EkaHipService implements EkaHipEvents {
         this.phones = phones;
     }
 
+    // No Eka-verified ABHA on the patient's record yet: the queued visits wait for one instead of being given up.
+    public static final class NoVerifiedAbha extends AbdmRequestException {
+        public NoVerifiedAbha() {
+            super(org.springframework.http.HttpStatus.CONFLICT, NO_EKA_ID);
+        }
+    }
+
     // One visit's FHIR bundle as JSON, or why there is none.
     record Prepared(String reference, String bundleJson, String problem) {
     }
@@ -135,7 +142,7 @@ public class EkaHipService implements EkaHipEvents {
         AbhaEvent abha = orgContext.inReadOnlyTransaction(() -> AbhaEventService.ofSavedAbha(
                 abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid), patient.abhaNumber(), patient.abhaAddress())
                 .orElse(null));
-        if (abha == null) throw AbdmRequestException.conflict(NO_EKA_ID);
+        if (abha == null) throw new NoVerifiedAbha();
         // The verified ABHA's own address: the record's ABHA answers are typed, and a typed one may be someone else's.
         String abhaAddress = AbdmFlows.withSuffix(abha.getAbhaAddress(), abhaAddressSuffix);
         if (abhaAddress == null) throw AbdmRequestException.conflict("This subject's verified ABHA has no address");
