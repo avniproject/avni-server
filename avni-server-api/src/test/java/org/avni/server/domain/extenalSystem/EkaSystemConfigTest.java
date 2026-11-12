@@ -94,6 +94,17 @@ public class EkaSystemConfigTest {
         assertFalse(configWith(new JsonObject().with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1")).isSharingClientConfigured());
     }
 
+    // The M1 client's token is handed to the phone, so it can never be the record-sharing client.
+    @Test
+    public void aSharingClientThatIsTheM1ClientIsNotASharingClient() {
+        EkaSystemConfig config = configWith(new JsonObject()
+                .with(EkaSystemConfig.CLIENT_ID, "client-1")
+                .with(EkaSystemConfig.SHARING_CLIENT_ID, " client-1 ")
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1"));
+
+        assertFalse(config.isSharingClientConfigured());
+    }
+
     // A HIP ID offered (a recorder's, an event's) is used only when it is the organisation's; else its first.
     @Test
     public void aHipIdIsTheOrganisationsOwnElseItsFirst() {

@@ -272,6 +272,42 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, secretWithoutClient, null).getStatusCode());
     }
 
+    // The M1 client's token is handed to the phone; record sharing must never log in as that client (H1).
+    @Test
+    public void aSharingClientThatIsTheM1ClientIs400OnTheFirstSave() {
+        Map<String, Object> same = withRecordSharing(config("TANUH"));
+        same.put("sharingClientId", "client-1");
+        ResponseEntity<String> response = put(DEMO, same, null);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody(), response.getBody().contains("sharingClientId"));
+
+        Map<String, Object> sameWithSpaces = withRecordSharing(config("TANUH"));
+        sameWithSpaces.put("sharingClientId", " client-1 ");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, sameWithSpaces, null).getStatusCode());
+        assertEquals(Integer.valueOf(0), new JdbcTemplate(dataSource).queryForObject(
+                "select count(*) from public.external_system_config where system_name = 'Eka' and organisation_id = ?", Integer.class, DEMO_ID));
+    }
+
+    @Test
+    public void anUpdateThatMakesTheSharingClientTheM1ClientIs400() throws Exception {
+        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("TANUH")), null).getStatusCode());
+        EkaSystemConfig before = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+
+        Map<String, Object> sharingBecomesM1 = config("TANUH");
+        sharingBecomesM1.put("sharingClientId", "client-1");
+        sharingBecomesM1.put("sharingClientSecret", "test-secret-value");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, sharingBecomesM1, null).getStatusCode());
+
+        Map<String, Object> m1BecomesSharing = config("TANUH");
+        m1BecomesSharing.put("clientId", "sharing-client-1");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, m1BecomesSharing, null).getStatusCode());
+
+        EkaSystemConfig after = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+        assertEquals("client-1", after.getClientId());
+        assertEquals("sharing-client-1", after.getSharingClientId());
+        assertEquals(before.getEncryptedSharingClientSecret(), after.getEncryptedSharingClientSecret());
+    }
+
     @Test
     public void aNameForACentreNotListedIs400() {
         Map<String, Object> request = config("TANUH");

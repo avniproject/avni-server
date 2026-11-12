@@ -97,6 +97,10 @@ public class AbhaAdminService {
                 ? userOfOrganisation(request.getAvniSystemUser(), organisationId)
                 : stored.getString(AVNI_SYSTEM_USER);
         String sharingClientId = setClearOrKeep(request.getSharingClientId(), stored.getString(SHARING_CLIENT_ID));
+        // The phone is handed the M1 client's token, so record sharing needs a client of its own.
+        if (sharingClientId != null && sharingClientId.trim().equals(clientId)) {
+            throw new BadRequestError("sharingClientId must be a different Eka client from clientId");
+        }
         String encryptedSharingClientSecret = sharingClientSecret(request, sharingClientId, stored);
         row.setConfig(new JsonObject()
                 .with(ENVIRONMENT, request.getEnvironment())

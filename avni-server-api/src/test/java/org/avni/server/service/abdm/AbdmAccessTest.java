@@ -96,6 +96,16 @@ public class AbdmAccessTest {
         assertFalse(access.hiuOn());
     }
 
+    // A row saved before the check: the phone holds the M1 client's token, so a sharing client that is the M1 client is none.
+    @Test
+    public void aSharingClientThatIsTheM1ClientLeavesNothingOn() throws Exception {
+        switches(true, true);
+        settings(full().with(EkaSystemConfig.CLIENT_ID, " sharing-1 "));
+
+        assertFalse(access.recordSharingOn());
+        assertFalse(access.hiuOn());
+    }
+
     @Test
     public void withEverythingSetBothAreOn() throws Exception {
         switches(true, true);
@@ -150,6 +160,7 @@ public class AbdmAccessTest {
     private static JsonObject full() {
         return new JsonObject()
                 .with(EkaSystemConfig.ENVIRONMENT, "sandbox")
+                .with(EkaSystemConfig.CLIENT_ID, "client-1")
                 .with(EkaSystemConfig.HIP_IDS, List.of("hip-1"))
                 .with(EkaSystemConfig.HIU_ID, "hiu-1")
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-1")

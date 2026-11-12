@@ -322,6 +322,20 @@ public class EkaTokenServiceTest {
         eka.verify(0, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
+    // A row saved before the admin check: record sharing never logs in as the client whose token the phone holds.
+    @Test
+    public void aSharingClientThatIsTheM1ClientIssuesNoSharingToken() throws Exception {
+        configure(ORG, "client-1", "secret-1", " client-1 ", "secret-1");
+        stubLogin("client-1", "access-1", 1800, 0);
+
+        try {
+            service.getSharingToken(ORG);
+            fail("expected EkaNotConfiguredException");
+        } catch (EkaNotConfiguredException expected) {
+        }
+        eka.verify(0, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
     @Test
     public void aFailedSharingLoginLeavesTheM1TokenAlone() throws Exception {
         configure(ORG, "client-1", "secret-1", "sharing-1", "sharing-secret-1");

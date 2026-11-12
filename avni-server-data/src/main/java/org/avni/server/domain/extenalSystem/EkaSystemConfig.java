@@ -125,8 +125,13 @@ public class EkaSystemConfig {
         return get(ENCRYPTED_SHARING_CLIENT_SECRET);
     }
 
+    // The phone holds the M1 client's token, so a sharing client that is the M1 client is none.
     public boolean isSharingClientConfigured() {
-        return hasText(getSharingClientId()) && hasText(getEncryptedSharingClientSecret());
+        return hasText(getSharingClientId()) && hasText(getEncryptedSharingClientSecret()) && !isSharingClientTheM1Client();
+    }
+
+    public boolean isSharingClientTheM1Client() {
+        return hasText(getSharingClientId()) && getSharingClientId().trim().equals(getClientId() == null ? null : getClientId().trim());
     }
 
     public String getAvniSystemUser() {

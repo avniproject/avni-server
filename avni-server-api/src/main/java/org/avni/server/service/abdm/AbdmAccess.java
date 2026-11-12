@@ -55,6 +55,7 @@ public class AbdmAccess {
         }
     }
 
+    // isSharingClientConfigured is false when the sharing client is the M1 client, whose token the phone holds.
     private static boolean canShare(EkaSystemConfig settings) {
         return settings != null && !settings.getHipIds().isEmpty() && settings.isSharingClientConfigured();
     }

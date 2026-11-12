@@ -80,6 +80,10 @@ public class EkaTokenService {
         if (!StringUtils.hasText(credentials.clientId()) || !StringUtils.hasText(credentials.encryptedSecret())) {
             throw new EkaNotConfiguredException("Eka " + describe(key.client()) + " id or secret not set for organisation with id: " + organisationId);
         }
+        // The phone holds the M1 client's token: record sharing never logs in as that client.
+        if (key.client() == Client.SHARING && credentials.clientId().trim().equals(config.getClientId() == null ? null : config.getClientId().trim())) {
+            throw new EkaNotConfiguredException("Eka record-sharing client is the M1 client for organisation with id: " + organisationId);
+        }
         String settings = settingsOf(config, credentials);
         IssuedToken issued = tokens.get(key);
         if (isUsable(issued, settings, minRemaining)) {
