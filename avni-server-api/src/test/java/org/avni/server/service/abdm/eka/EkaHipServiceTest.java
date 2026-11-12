@@ -627,7 +627,7 @@ public class EkaHipServiceTest {
         visit.setEncounterDateTime(new DateTime(2026, 10, 26, 9, 0), null);
         when(programEncounterRepository.findByUuid("penc-1")).thenReturn(visit);
 
-        EkaHipService.Prepared prepared = service.prepare("penc-1", "subject-1");
+        EkaHipService.Prepared prepared = service.prepare("penc-1", "subject-1", OID, null, HIP_ID, settings.current());
 
         assertNotNull(prepared.problem(), prepared.bundleJson());
         verify(assembler).assemble(eq(visit), eq(patient), any(), any(), any(), any());
@@ -680,6 +680,36 @@ public class EkaHipServiceTest {
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
+    }
+
+    // Eka naming visits and no patient's ABHA leaves nothing to check the ABHA against: nothing is built or sent.
+    @Test
+    public void aDataRequestNamingNoPatientsAbhaIsRefused() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) fetch.get("data")).remove(List.of("oid", "abha_address"));
+
+        service.hipDataFetch(fetch);
+
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+        verifyNoInteractions(assembler, builder);
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("names no patient"));
+    }
+
+    // One request is one patient's: visits of two patients asked together are refused whole.
+    @Test
+    public void aDataRequestForVisitsOfMoreThanOnePatientIsRefused() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        AbdmHipStore.CareContext anotherPatients = new AbdmHipStore.CareContext(2, "cc-enc-2", 9L, HIP_ID, "subject-9", "enc-2", "Display enc-2",
+                "OPConsultation", "LINKED", "HIP", null, null, Instant.parse("2026-10-25T10:00:00Z"));
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), anotherPatients));
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+        verifyNoInteractions(assembler, builder);
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("more than one patient"));
     }
 
     // An ABHA typed on the record and never verified with Eka gets nothing, even when the request names that address.
@@ -835,7 +865,7 @@ public class EkaHipServiceTest {
         voided.setVoided(true);
         when(encounterRepository.findByUuid("enc-1")).thenReturn(encounter("enc-1", voided, new DateTime(2026, 3, 14, 10, 0)));
 
-        EkaHipService.Prepared prepared = service.prepare("enc-1", null);
+        EkaHipService.Prepared prepared = service.prepare("enc-1", null, OID, null, HIP_ID, settings.current());
 
         assertNull(prepared.bundleJson());
         verifyNoInteractions(builder);

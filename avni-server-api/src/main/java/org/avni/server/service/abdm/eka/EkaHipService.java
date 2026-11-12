@@ -331,10 +331,22 @@ public class EkaHipService implements EkaHipEvents {
         String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
         String oid = AbdmJson.text(data, "oid");
         String requesterAddress = AbdmJson.text(data, "abha_address");
+        // Without the patient's ABHA there is nothing to check the visits' owner against.
+        if (!StringUtils.hasText(oid) && !StringUtils.hasText(requesterAddress)) {
+            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: " + NAMES_NO_ABHA);
+            logger.warn("Eka data fetch {} names no patient's ABHA; nothing sent", transactionId);
+            return;
+        }
 
         Map<String, AbdmHipStore.CareContext> linkedHere = store.findCareContextsByReferences(hipId, references).stream()
                 .filter(c -> !PENDING.equals(c.status()))
                 .collect(Collectors.toMap(AbdmHipStore.CareContext::reference, c -> c, (a, b) -> a, LinkedHashMap::new));
+        // One request is one patient's: visits of more than one are refused whole.
+        if (linkedHere.values().stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
+            store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: the visits asked for belong to more than one patient");
+            logger.warn("Eka data fetch {} asks for visits of more than one patient; nothing sent", transactionId);
+            return;
+        }
         // Share only what the consent covers. Each care context holds one record type: a visit is OPConsultation.
         // No hi_types means the request does not narrow by type.
         List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
@@ -413,12 +425,12 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     private static final String NOT_THEIRS = "the ABHA asking is no longer the patient's";
+    private static final String NAMES_NO_ABHA = "the request names no patient's ABHA";
 
     // Why the ABHA asking may not have the patient's records; null when it may. It must be the ABHA on the record, one Eka
     // verified (its record carries an Eka ID), asked by that Eka ID, its address, or the default address of its number.
-    // When Eka names no ABHA there is nothing to check against.
     private String abhaProblem(AbhaLink link, String subjectUuid, String requesterOid, String requesterAddress) {
-        if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return null;
+        if (!StringUtils.hasText(requesterOid) && !StringUtils.hasText(requesterAddress)) return NAMES_NO_ABHA;
         if (link == null) return NOT_THEIRS;
         Optional<AbhaEvent> verified = AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
                 link.getAbhaNumber(), link.getAbhaAddress());
@@ -432,12 +444,6 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     // ---- building
-
-    // Under the organisation's first HIP ID.
-    Prepared prepare(String reference, String expectedPatientUuid) {
-        EkaSystemConfig orgSettings = settings.current();
-        return prepare(reference, expectedPatientUuid, null, null, orgSettings.hipIdOr(null), orgSettings);
-    }
 
     // Read in one transaction: the encounter, its patient and their ABHA, as a FHIR bundle from the HIP hipId. requesterOid
     // and requesterAddress: the ABHA Eka asks for, which must still be the one on the patient's record.
