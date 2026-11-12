@@ -260,17 +260,17 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
     }
 
-    // A refusal that no later try can change (no Eka ID, a HIP ID Eka does not know) is final, however long it waits.
+    // A refusal that no later try can change (a removed patient, a HIP ID Eka does not know) is final, however long it waits.
     @Test
     public void aFinalFailureIsNeverTakenAgain() {
         emptyQueue();
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
 
-        store.failQueuedForGood(KNOWN, QUEUE_HIP, "Patient has no Eka ID");
+        store.failQueuedForGood(KNOWN, QUEUE_HIP, "Subject not found");
         age("v-1", "30 days");
 
         assertEquals("FAILED_FINAL", column("v-1", "status"));
-        assertEquals("Patient has no Eka ID", column("v-1", "error"));
+        assertEquals("Subject not found", column("v-1", "error"));
         assertTrue(store.subjectsToLink(QUEUE_HIP, 50).isEmpty());
         assertTrue(store.findCareContextsDue(knownId(), QUEUE_HIP).isEmpty());
     }
@@ -323,7 +323,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         emptyQueue();
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
 
-        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID);
+        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID, store.databaseNow().plusSeconds(1));
         age("v-1", "30 days");
 
         assertEquals("AWAITING_VERIFIED_ABHA", column("v-1", "status"));
@@ -338,7 +338,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     public void aVerifiedAbhaQueuesAgainTheVisitsWaitingForIt() {
         emptyQueue();
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2"), cc("v-3")));
-        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID);
+        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID, store.databaseNow().plusSeconds(1));
         namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'FAILED_FINAL', attempts = 6, error = ? where reference = 'v-2'",
                 AbdmHipLinkingService.NO_EKA_ID + "; given up after 6 tries");
         namedJdbc.getJdbcOperations().update("update abdm_care_context set status = 'FAILED_FINAL', error = 'Eka refused the link' where reference = 'v-3'");
@@ -349,6 +349,22 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals("QUEUED", column("v-2", "status"));
         assertEquals(0, column("v-2", "attempts"));
         assertEquals("FAILED_FINAL", column("v-3", "status"));
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+    }
+
+    // The job found no verified ABHA, and before it wrote that the visits wait, a verified ABHA was saved and they were
+    // queued again: the job's write leaves them queued, as it moves only rows unchanged since it looked.
+    @Test
+    public void aVerifiedAbhaSavedWhileTheJobLookedIsNotUndoneByTheJob() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
+        age("v-1", "1 minute");
+        java.time.Instant jobLooked = store.databaseNow().minusSeconds(30);
+        store.requeueForVerifiedAbha(KNOWN);
+
+        store.awaitVerifiedAbha(KNOWN, QUEUE_HIP, AbdmHipLinkingService.NO_EKA_ID, jobLooked);
+
+        assertEquals("QUEUED", column("v-1", "status"));
         assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
     }
 
@@ -388,7 +404,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     public void theQueueIsCountedByStatusForTheOrganisation() {
         emptyQueue();
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2"), cc("v-3")));
-        store.failQueuedForGood(KNOWN, QUEUE_HIP, "Patient has no Eka ID");
+        store.failQueuedForGood(KNOWN, QUEUE_HIP, "Subject not found");
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-4")));
 
         assertEquals(java.util.Map.of("FAILED_FINAL", 3L, "QUEUED", 1L), store.linkQueueCounts());

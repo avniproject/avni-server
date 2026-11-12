@@ -139,14 +139,16 @@ public class AbdmHousekeepingJob {
                     return;
                 }
                 left--;
+                Instant[] lookedAt = new Instant[1];
                 try {
+                    lookedAt[0] = hipStore.databaseNow();
                     ekaHip.linkCareContexts(patient.getKey(), true);
                 } catch (EkaHipService.NoVerifiedAbha e) {
                     // Linked once a worker verifies the ABHA with Eka (AbdmVerifiedAbhaAspect), not tried meanwhile.
-                    patient.getValue().forEach(hipId -> hipStore.awaitVerifiedAbha(patient.getKey(), hipId, e.getMessage()));
+                    patient.getValue().forEach(hipId -> hipStore.awaitVerifiedAbha(patient.getKey(), hipId, e.getMessage(), lookedAt[0]));
                     logger.info("ABDM: visits of subject {} wait for an ABHA verified with Eka", patient.getKey());
                 } catch (AbdmRequestException e) {
-                    // The patient's own record refuses it (no Eka ID, no ABHA address, removed): no later try changes that.
+                    // The patient's own record refuses it (removed, a verified ABHA with no address): no later try changes that.
                     patient.getValue().forEach(hipId -> hipStore.failQueuedForGood(patient.getKey(), hipId, e.getMessage()));
                     logger.info("ABDM: visits of subject {} given up: {}", patient.getKey(), e.getMessage());
                 } catch (RuntimeException e) {

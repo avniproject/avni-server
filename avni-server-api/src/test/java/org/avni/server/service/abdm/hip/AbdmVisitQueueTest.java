@@ -35,6 +35,7 @@ public class AbdmVisitQueueTest {
     private final AbdmSettings settings = AbdmTestSupport.settings();
     private final AbdmHipStore store = mock(AbdmHipStore.class);
     private final AbhaLinkRepository abhaLinks = mock(AbhaLinkRepository.class);
+    private final org.avni.server.dao.AbhaEventRepository abhaEvents = mock(org.avni.server.dao.AbhaEventRepository.class);
     private Individual patient;
 
     @Before
@@ -107,7 +108,7 @@ public class AbdmVisitQueueTest {
         Encounter visit = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
         visit.setCreatedBy(userAt("hip-2"));
 
-        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks).queue(visit);
+        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, abhaEvents).queue(visit);
 
         verify(store).queueCareContexts(7L, "hip-2", "subject-1", "OPConsultation",
                 List.of(new AbdmHipStore.NewCareContext("enc-9", "OPD Visit, 2 May 2026")));
@@ -118,7 +119,7 @@ public class AbdmVisitQueueTest {
         Encounter elsewhere = visit("enc-8", new DateTime(2026, 5, 2, 10, 0));
         elsewhere.setCreatedBy(userAt("someone-elses-hip"));
         Encounter unknown = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
-        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks);
+        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, abhaEvents);
 
         q.queue(elsewhere);
         q.queue(unknown);
@@ -135,7 +136,7 @@ public class AbdmVisitQueueTest {
         when(store.findCareContextsByReferences("hip-1", List.of("enc-9"))).thenReturn(List.of(new AbdmHipStore.CareContext(1, "cc-1", 7L,
                 "hip-1", "subject-1", "enc-9", "OPD Visit, 2 May 2026", "OPConsultation", "LINKED", "HIP", null, null, null)));
 
-        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks).queue(visit);
+        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, abhaEvents).queue(visit);
 
         verify(store).queueCareContexts(eq(7L), eq("hip-1"), any(), any(), any());
         verify(store, never()).queueCareContexts(anyLong(), eq("hip-2"), any(), any(), any());
@@ -146,7 +147,7 @@ public class AbdmVisitQueueTest {
         AbdmSettings none = org.mockito.Mockito.mock(AbdmSettings.class);
         when(none.find()).thenReturn(Optional.empty());
 
-        new AbdmVisitQueue(none, store, abhaLinks).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
+        new AbdmVisitQueue(none, store, abhaLinks, abhaEvents).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
 
         verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
         org.mockito.Mockito.verifyNoInteractions(abhaLinks);
@@ -163,7 +164,41 @@ public class AbdmVisitQueueTest {
     }
 
     private AbdmVisitQueue queue() {
-        return new AbdmVisitQueue(settings, store, abhaLinks);
+        return new AbdmVisitQueue(settings, store, abhaLinks, abhaEvents);
+    }
+
+    // ---- a saved subject whose ABHA is verified
+
+    @Test
+    public void aSavedSubjectWhoseAbhaIsVerifiedHasItsWaitingVisitsQueuedAgain() {
+        holds("12345678568913", "oid-verified-1");
+
+        queue().requeueIfAbhaVerified(patient);
+
+        verify(store).requeueForVerifiedAbha("subject-1");
+    }
+
+    // The record still holds a typed ABHA no record verifies, or none: nothing would link yet, so nothing is queued.
+    @Test
+    public void aSavedSubjectWhoseAbhaIsNotVerifiedQueuesNothing() {
+        holds("12345678568913", null);
+        queue().requeueIfAbhaVerified(patient);
+
+        when(abhaLinks.findByIndividualIdAndIsVoidedFalse(7L)).thenReturn(Optional.empty());
+        queue().requeueIfAbhaVerified(patient);
+
+        verify(store, never()).requeueForVerifiedAbha(any());
+    }
+
+    private void holds(String abhaNumber, String ekaOid) {
+        AbhaLink link = new AbhaLink();
+        link.setAbhaNumber(abhaNumber);
+        when(abhaLinks.findByIndividualIdAndIsVoidedFalse(7L)).thenReturn(Optional.of(link));
+        org.avni.server.domain.AbhaEvent record = new org.avni.server.domain.AbhaEvent();
+        record.setAction("verified");
+        record.setAbhaNumber(abhaNumber);
+        record.setEkaOid(ekaOid);
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(record));
     }
 
     private Encounter visit(String uuid, DateTime at) {

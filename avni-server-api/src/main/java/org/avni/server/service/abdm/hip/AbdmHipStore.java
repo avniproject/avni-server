@@ -164,21 +164,32 @@ public class AbdmHipStore {
     }
 
     // A patient whose ABHA Eka has not verified: their visits wait, untried, for a verified one (requeueForVerifiedAbha).
-    public void awaitVerifiedAbha(String subjectUuid, String hipId, String reason) {
+    // The database's time, for a write that must move only rows unchanged since then (awaitVerifiedAbha).
+    public Instant databaseNow() {
+        return jdbc.queryForObject("select now()", new MapSqlParameterSource(), Timestamp.class).toInstant();
+    }
+
+    // Only rows unchanged since lookedAt, when the job found no verified ABHA: a visit queued again meanwhile by a verified
+    // ABHA being saved stays queued.
+    public void awaitVerifiedAbha(String subjectUuid, String hipId, String reason, Instant lookedAt) {
         jdbc.update("update abdm_care_context c set status = 'AWAITING_VERIFIED_ABHA', error = :reason, next_attempt_at = null, updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org and c.hip_id = :hip " +
-                        "and c.status in ('QUEUED', 'FAILED')",
+                        "and c.status in ('QUEUED', 'FAILED') and c.updated_at < :lookedAt",
                 params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("hip", hipId, Types.VARCHAR)
-                        .addValue("reason", reason, Types.VARCHAR));
+                        .addValue("reason", reason, Types.VARCHAR).addValue("lookedAt", Timestamp.from(lookedAt)));
     }
 
     // The patient's ABHA is verified now: their visits waiting for that, or failed or given up for want of it, are queued
-    // afresh under every HIP ID. Returns how many.
+    // afresh under every HIP ID. Their other queued or failed visits are touched, so a job that found no verified ABHA
+    // before this does not set them waiting (awaitVerifiedAbha). Returns how many were queued afresh.
     public int requeueForVerifiedAbha(String subjectUuid) {
-        return jdbc.update("update abdm_care_context c set status = 'QUEUED', attempts = 0, error = null, next_attempt_at = null, updated_at = now() " +
+        MapSqlParameterSource p = params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("noEkaId", AbdmHipLinkingService.NO_EKA_ID, Types.VARCHAR);
+        int requeued = jdbc.update("update abdm_care_context c set status = 'QUEUED', attempts = 0, error = null, next_attempt_at = null, updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.uuid = :uuid and c.organisation_id = :org " +
-                        "and (c.status = 'AWAITING_VERIFIED_ABHA' or (c.status in ('FAILED', 'FAILED_FINAL') and position(:noEkaId in coalesce(c.error, '')) = 1))",
-                params().addValue("uuid", subjectUuid, Types.VARCHAR).addValue("noEkaId", AbdmHipLinkingService.NO_EKA_ID, Types.VARCHAR));
+                        "and (c.status = 'AWAITING_VERIFIED_ABHA' or (c.status in ('FAILED', 'FAILED_FINAL') and position(:noEkaId in coalesce(c.error, '')) = 1))", p);
+        jdbc.update("update abdm_care_context c set updated_at = now() from individual i where i.id = c.individual_id and i.uuid = :uuid " +
+                "and c.organisation_id = :org and c.status in ('QUEUED', 'FAILED') and c.updated_at < now()", p);
+        return requeued;
     }
 
     // A patient Avni cannot link (removed, a verified ABHA with no address): no later try changes that.

@@ -53,7 +53,8 @@ import static org.avni.server.service.abdm.hip.AbdmHipLinkingService.PENDING;
 // contexts, sent to Eka with the patient's Eka ID (recorded at M1) and no record, so Avni keeps custody (spec "Path B").
 // Eka answers 202 and reports each care context later on the abha.link_care_context webhook. Eka relays an HIU's request
 // on the abha.hip_data_fetch webhook and we answer on-fetch with the records encrypted to the requester's key.
-// Care-context rows and statuses are in AbdmHipStore: PENDING -> LINK_REQUESTED -> LINKED | FAILED | FAILED_FINAL.
+// Care-context rows and statuses are in AbdmHipStore: PENDING -> LINK_REQUESTED -> LINKED | FAILED | FAILED_FINAL, and
+// AWAITING_VERIFIED_ABHA while the patient's ABHA is not verified with Eka.
 // HIP IDs are the organisation's (AbdmSettings): a visit is linked under its own (AbdmHipLinkingService.visitsByHip), and
 // an event is acted on only for the HIP ID it names when that is the organisation's (AbdmFlows.hipOfEvent).
 // Never logs an ABHA, an Eka ID, a key or a record.

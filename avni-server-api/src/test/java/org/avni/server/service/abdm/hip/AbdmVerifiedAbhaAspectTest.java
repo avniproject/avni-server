@@ -48,6 +48,30 @@ public class AbdmVerifiedAbhaAspectTest {
         verifyNoInteractions(access);
     }
 
+    // The phone posts a corrected ABHA's record before the corrected form syncs: when the form syncs, the patient's
+    // waiting visits are queued again if the ABHA now on their record is verified (AbdmVisitQueue checks after the save).
+    @Test
+    public void aSavedSubjectHasItsWaitingVisitsQueuedAgainIfItsAbhaIsVerified() {
+        when(access.recordSharingOn()).thenReturn(true);
+        org.avni.server.domain.Individual subject = new org.avni.server.domain.Individual();
+        subject.setId(7L);
+        subject.setUuid("subject-1");
+
+        aspect.requeueIfTheSavedAbhaIsVerified(subject);
+
+        verify(queue).requeueIfAbhaVerified(subject);
+    }
+
+    @Test
+    public void withRecordSharingOffASavedSubjectQueuesNothing() {
+        when(access.recordSharingOn()).thenReturn(false);
+
+        aspect.requeueIfTheSavedAbhaIsVerified(new org.avni.server.domain.Individual());
+        aspect.requeueIfTheSavedAbhaIsVerified(null);
+
+        verifyNoInteractions(queue);
+    }
+
     private static AbhaEventRequest request(String ekaOid) {
         AbhaEventRequest request = new AbhaEventRequest();
         request.setSubjectUUID("subject-1");

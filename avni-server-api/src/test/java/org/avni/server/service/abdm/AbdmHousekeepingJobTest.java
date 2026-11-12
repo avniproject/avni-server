@@ -101,15 +101,21 @@ public class AbdmHousekeepingJobTest {
         verify(hipStore, never()).failQueued(any(), any(), any());
     }
 
-    // A patient whose ABHA Eka has not verified is neither given up nor tried again: they wait for a verified ABHA.
+    // A patient whose ABHA Eka has not verified is neither given up nor tried again: they wait for a verified ABHA. The
+    // write moves only rows unchanged since the job looked, so a verified ABHA saved meanwhile is not undone.
     @Test
     public void aPatientWithoutAVerifiedAbhaWaitsForOne() {
+        Instant looked = Instant.parse("2026-11-12T09:59:00Z");
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
+        when(hipStore.databaseNow()).thenReturn(looked);
         when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(new EkaHipService.NoVerifiedAbha());
 
         job().linkQueuedVisits();
 
-        verify(hipStore).awaitVerifiedAbha("subject-1", AbdmTestSupport.HIP_ID, EkaHipService.NO_EKA_ID);
+        org.mockito.InOrder order = inOrder(hipStore, ekaHip);
+        order.verify(hipStore).databaseNow();
+        order.verify(ekaHip).linkCareContexts("subject-1", true);
+        order.verify(hipStore).awaitVerifiedAbha("subject-1", AbdmTestSupport.HIP_ID, EkaHipService.NO_EKA_ID, looked);
         verify(hipStore, never()).failQueuedForGood(any(), any(), any());
         verify(hipStore, never()).failQueued(any(), any(), any());
     }

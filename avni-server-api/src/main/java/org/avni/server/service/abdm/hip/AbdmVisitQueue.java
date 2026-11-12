@@ -1,6 +1,7 @@
 package org.avni.server.service.abdm.hip;
 
 import jakarta.persistence.PersistenceException;
+import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.domain.AbstractEncounter;
 import org.avni.server.domain.Encounter;
@@ -8,6 +9,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEncounter;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmSettings;
+import org.avni.server.service.abha.AbhaEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,23 +37,26 @@ public class AbdmVisitQueue {
     private final AbdmSettings settings;
     private final AbdmHipStore store;
     private final AbhaLinkRepository abhaLinkRepository;
+    private final AbhaEventRepository abhaEventRepository;
     private final TransactionTemplate ownTransaction;
 
     @Autowired
     public AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
-                          PlatformTransactionManager transactionManager) {
+                          PlatformTransactionManager transactionManager, AbhaEventRepository abhaEventRepository) {
         this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
+        this.abhaEventRepository = abhaEventRepository;
         this.ownTransaction = new TransactionTemplate(transactionManager);
         this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // Tests: runs at once, with no transaction of its own.
-    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository) {
+    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbhaEventRepository abhaEventRepository) {
         this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
+        this.abhaEventRepository = abhaEventRepository;
         this.ownTransaction = null;
     }
 
@@ -83,18 +88,36 @@ public class AbdmVisitQueue {
     // An ABHA record with an Eka ID was saved for the patient: their visits waiting for a verified ABHA are queued again,
     // after the save commits and in a transaction of their own, so a failed write never touches the record.
     public void requeueForVerifiedAbha(String subjectUuid) {
-        afterCommit(() -> {
-            try {
-                Runnable work = () -> {
-                    int requeued = store.requeueForVerifiedAbha(subjectUuid);
-                    if (requeued > 0) logger.info("ABDM: {} visit(s) of subject {} queued again, its ABHA verified", requeued, subjectUuid);
-                };
-                if (ownTransaction == null) work.run();
-                else ownTransaction.executeWithoutResult(status -> work.run());
-            } catch (RuntimeException e) {
-                logger.warn("ABDM: visits of subject {} not queued again: {}", subjectUuid, e.getClass().getSimpleName());
-            }
-        });
+        afterCommit(() -> inOwnTransaction(subjectUuid, () -> requeue(subjectUuid)));
+    }
+
+    // A saved subject whose ABHA now has a record with an Eka ID, as when a corrected ABHA's record came before its form:
+    // their visits waiting for a verified ABHA are queued again, after the save commits, reading what it committed.
+    public void requeueIfAbhaVerified(Individual subject) {
+        if (subject == null || subject.getId() == null || subject.getUuid() == null) return;
+        long individualId = subject.getId();
+        String subjectUuid = subject.getUuid();
+        afterCommit(() -> inOwnTransaction(subjectUuid, () -> {
+            boolean verified = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individualId)
+                    .flatMap(link -> AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
+                            link.getAbhaNumber(), link.getAbhaAddress()))
+                    .isPresent();
+            if (verified) requeue(subjectUuid);
+        }));
+    }
+
+    private void requeue(String subjectUuid) {
+        int requeued = store.requeueForVerifiedAbha(subjectUuid);
+        if (requeued > 0) logger.info("ABDM: {} visit(s) of subject {} queued again, its ABHA verified", requeued, subjectUuid);
+    }
+
+    private void inOwnTransaction(String subjectUuid, Runnable work) {
+        try {
+            if (ownTransaction == null) work.run();
+            else ownTransaction.executeWithoutResult(status -> work.run());
+        } catch (RuntimeException e) {
+            logger.warn("ABDM: visits of subject {} not queued again: {}", subjectUuid, e.getClass().getSimpleName());
+        }
     }
 
     private void afterCommit(Runnable work) {

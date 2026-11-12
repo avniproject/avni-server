@@ -17,6 +17,9 @@ import org.avni.server.service.ProgramEncounterService;
 import org.avni.server.service.abdm.hip.AbdmCareContextAspect;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmVisitQueue;
+import org.avni.server.service.abdm.eka.EkaAbdmClient;
+import org.avni.server.service.abdm.eka.EkaHipService;
+import org.avni.server.service.abdm.eka.EkaResponse;
 import org.avni.server.service.abha.AbhaLinkAspect;
 import org.avni.server.service.abha.AbhaLinkService;
 import org.avni.server.service.builder.*;
@@ -46,6 +49,8 @@ import java.util.UUID;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 // Visit and subject saves reach ABDM and ABHA only through the save hooks, which check the organisation's switch first.
@@ -115,6 +120,29 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
     private Concept abhaNumber;
     private Individual patient;
     private ProgramEnrolment enrolment;
+
+    @Autowired
+    private org.avni.server.service.abdm.hip.AbdmVerifiedAbhaAspect verifiedAbhaAspect;
+    @Autowired
+    private EkaHipService ekaHipService;
+    @Autowired
+    private org.avni.server.dao.IndividualRepository individualRepository;
+    private EkaAbdmClient realEka;
+    private final EkaAbdmClient eka = mock(EkaAbdmClient.class);
+
+    @Before
+    public void answerLinksAsEka() {
+        Object target = org.springframework.test.util.AopTestUtils.getTargetObject(ekaHipService);
+        realEka = (EkaAbdmClient) ReflectionTestUtils.getField(target, "eka");
+        ReflectionTestUtils.setField(target, "eka", eka);
+        when(eka.post(any(), any(), any())).thenReturn(new EkaResponse("r-1", 202, null));
+    }
+
+    @After
+    public void restoreEka() {
+        Object target = org.springframework.test.util.AopTestUtils.getTargetObject(ekaHipService);
+        ReflectionTestUtils.setField(target, "eka", realEka);
+    }
 
     @Before
     public void spyOnTheHooks() {
@@ -294,6 +322,85 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
 
         setUser(userRepository.getDefaultSuperAdmin());
         assertEquals(Integer.valueOf(0), new JdbcTemplate(dataSource).queryForObject("select count(*) from public.individual where uuid = ?", Integer.class, subject.getUuid()));
+    }
+
+    // ---- a corrected ABHA, verified before the corrected form syncs
+
+    private static final String CORRECTED_ABHA = "12345678568913";
+
+    // The worker typed a wrong ABHA, then verified the right one. The phone posts the verified record first: its hook
+    // queues the visit, but the record still holds the wrong ABHA, so the job finds nothing verified and the visit waits.
+    // When the corrected form syncs, the visit is queued again, and the next job run links it.
+    @Test
+    public void aCorrectedAbhaVerifiedBeforeTheFormSyncsIsLinkedOnceTheFormSyncs() {
+        switches(true, true);
+        Encounter visit = inTransaction(() -> encounterService.save(completedVisit()));
+        verifiedAbhaRecord(CORRECTED_ABHA);
+        verifiedAbhaAspect.requeueVisitsWaitingForIt(verifiedAbhaRequest(CORRECTED_ABHA), true);
+
+        linkingJob().linkQueuedVisits();
+
+        assertEquals(List.of(visit.getUuid() + " " + HIP_ID + " AWAITING_VERIFIED_ABHA"), careContexts());
+        verify(eka, never()).post(eq(EkaHipService.LINK_PATH), any(), any());
+
+        inTransaction(() -> individualService.save(withAbhaNumber(CORRECTED_ABHA)));
+
+        assertEquals(List.of(visit.getUuid() + " " + HIP_ID + " QUEUED"), careContexts());
+
+        linkingJob().linkQueuedVisits();
+
+        assertEquals(List.of(visit.getUuid() + " " + HIP_ID + " LINK_REQUESTED"), careContexts());
+        verify(eka).post(eq(EkaHipService.LINK_PATH), argThat(body -> "oid-verified-1".equals(body.path("oid").asText())), any());
+    }
+
+    @Test
+    public void withRecordSharingOffACorrectedAbhaSyncingQueuesNothing() {
+        switches(true, true);
+        Encounter visit = inTransaction(() -> encounterService.save(completedVisit()));
+        linkingJob().linkQueuedVisits();
+        verifiedAbhaRecord(CORRECTED_ABHA);
+        switches(true, false);
+
+        inTransaction(() -> individualService.save(withAbhaNumber(CORRECTED_ABHA)));
+
+        assertEquals(List.of(visit.getUuid() + " " + HIP_ID + " AWAITING_VERIFIED_ABHA"), careContexts());
+    }
+
+    // The job as scheduled, run here as the organisation's user, with Eka answering every link with 202.
+    @SuppressWarnings("unchecked")
+    private AbdmHousekeepingJob linkingJob() {
+        AbdmJobRunner runner = mock(AbdmJobRunner.class);
+        doAnswer(inv -> {
+            ((java.util.function.Consumer<java.time.Instant>) inv.getArgument(2)).accept(java.time.Instant.now().plusSeconds(240));
+            return null;
+        }).when(runner).forEachOrganisation(any(), any(), any());
+        return new AbdmHousekeepingJob(runner, mock(AbdmScheduler.class), realSettings, mock(AbdmMessageLog.class), mock(AbdmInbox.class),
+                mock(org.avni.server.service.abdm.hiu.AbdmHiuDataService.class), mock(org.avni.server.service.abdm.hiu.AbdmHiuStore.class),
+                realHipStore, ekaHipService, mock(org.avni.server.service.abdm.eka.EkaHiuService.class), java.time.Clock.systemUTC(), 30);
+    }
+
+    private Individual withAbhaNumber(String number) {
+        Individual saved = individualRepository.findByUuid(patient.getUuid());
+        ObservationCollection observations = new ObservationCollection();
+        observations.put(abhaNumber.getUuid(), number);
+        saved.setObservations(observations);
+        return saved;
+    }
+
+    private void verifiedAbhaRecord(String abhaNumber) {
+        asSuperAdmin(jdbc -> jdbc.update("insert into public.abha_event (uuid, organisation_id, subject_uuid, user_id, hip_id, action, route, " +
+                        "abha_number, abha_address, eka_oid, occurred_at, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values (?, ?, ?, ?, ?, 'verified', 'abha_number', ?, 'asha.real@sbx', 'oid-verified-1', now(), ?, ?, now(), now())",
+                UUID.randomUUID().toString(), organisation.getOrganisationId(), patient.getUuid(), organisation.getUser().getId(), HIP_ID,
+                abhaNumber, organisation.getUser().getId(), organisation.getUser().getId()));
+    }
+
+    private org.avni.server.service.abha.AbhaEventRequest verifiedAbhaRequest(String abhaNumber) {
+        org.avni.server.service.abha.AbhaEventRequest request = new org.avni.server.service.abha.AbhaEventRequest();
+        request.setSubjectUUID(patient.getUuid());
+        request.setAbhaNumber(abhaNumber);
+        request.setEkaOid("oid-verified-1");
+        return request;
     }
 
     // The hooks' after-advice runs after @Messageable's, so messaging sees each save as it did before the hooks.
