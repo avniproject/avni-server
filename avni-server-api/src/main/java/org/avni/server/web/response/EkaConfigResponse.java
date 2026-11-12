@@ -4,8 +4,9 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 
-// The stored Eka settings without either secret; each secret shows only as set or not set.
+// The stored Eka settings without any secret; each secret shows only as set or not set.
 public class EkaConfigResponse {
     private final String organisationUUID;
     private final String environment;
@@ -14,6 +15,13 @@ public class EkaConfigResponse {
     private final String avniSystemUser;
     private final boolean clientSecretSet;
     private final boolean webhookSigningKeySet;
+    private final Map<String, String> hipNames;
+    private final String hiuId;
+    private final String clinicId;
+    private final String doctorOid;
+    private final String webhookId;
+    private final String sharingClientId;
+    private final boolean sharingClientSecretSet;
 
     public EkaConfigResponse(String organisationUUID, EkaSystemConfig config) {
         this.organisationUUID = organisationUUID;
@@ -23,6 +31,13 @@ public class EkaConfigResponse {
         this.avniSystemUser = config.getAvniSystemUser();
         this.clientSecretSet = StringUtils.hasText(config.getEncryptedClientSecret());
         this.webhookSigningKeySet = StringUtils.hasText(config.getEncryptedWebhookSigningKey());
+        this.hipNames = config.getHipNames();
+        this.hiuId = config.getHiuId();
+        this.clinicId = config.getClinicId();
+        this.doctorOid = config.getDoctorOid();
+        this.webhookId = config.getWebhookId();
+        this.sharingClientId = config.getSharingClientId();
+        this.sharingClientSecretSet = StringUtils.hasText(config.getEncryptedSharingClientSecret());
     }
 
     public String getOrganisationUUID() {
@@ -51,5 +66,33 @@ public class EkaConfigResponse {
 
     public boolean isWebhookSigningKeySet() {
         return webhookSigningKeySet;
+    }
+
+    public Map<String, String> getHipNames() {
+        return hipNames;
+    }
+
+    public String getHiuId() {
+        return hiuId;
+    }
+
+    public String getClinicId() {
+        return clinicId;
+    }
+
+    public String getDoctorOid() {
+        return doctorOid;
+    }
+
+    public String getWebhookId() {
+        return webhookId;
+    }
+
+    public String getSharingClientId() {
+        return sharingClientId;
+    }
+
+    public boolean isSharingClientSecretSet() {
+        return sharingClientSecretSet;
     }
 }

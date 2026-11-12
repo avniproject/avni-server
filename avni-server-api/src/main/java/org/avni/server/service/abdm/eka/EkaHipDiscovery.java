@@ -3,8 +3,9 @@ package org.avni.server.service.abdm.eka;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmTime;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -29,13 +31,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Patient-led linking through Eka (USER_INIT_LINK_601 to 607; EKA_ABDM_SPEC.md 2.7): the patient finds the facility in
 // their ABHA app, Eka asks us who they are (care_context_discover), the patient picks visits (link_init) and confirms
 // with a code we send to the phone Avni holds for them (link_confirm). NHA: "every HIP must answer discovery".
 // A patient is found by ABHA address, then ABHA number, then, as NHA asks (USER_INIT_LINK_603), by the verified mobile
 // narrowed by gender, year of birth and a tolerant name match (AbdmNames). Only one patient is ever offered: when more
-// than one matches, none is. Never logs a name, an ABHA, a phone or a code.
+// than one matches, none is. Each step is for one of the organisation's HIP IDs: the one the event names, which must be
+// the organisation's (else the event is not answered), else the one the visits asked for are shared under, else its first.
+// Only the visits shared under that HIP ID are offered and linked (AbdmHipLinkingService.visitsByHip).
+// Never logs a name, an ABHA, a phone or a code.
 @Component
 public class EkaHipDiscovery {
     private static final Logger logger = LoggerFactory.getLogger(EkaHipDiscovery.class);
@@ -47,16 +51,16 @@ public class EkaHipDiscovery {
     private static final int MAX_ATTEMPTS = 3;
     private static final String MORE_THAN_ONE = "More than one patient matches at this facility; please ask the facility";
 
-    private final AbdmConfig cfg;
+    private final AbdmSettings settings;
     private final AbdmHipStore store;
     private final AbdmHipLinkingService linking;
     private final EkaAbdmClient eka;
     private final AbdmPatientPhones phones;
     private final AbdmPhoneOtp otp;
 
-    public EkaHipDiscovery(AbdmConfig cfg, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka,
+    public EkaHipDiscovery(AbdmSettings settings, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka,
                            AbdmPatientPhones phones, AbdmPhoneOtp otp) {
-        this.cfg = cfg;
+        this.settings = settings;
         this.store = store;
         this.linking = linking;
         this.eka = eka;
@@ -68,18 +72,22 @@ public class EkaHipDiscovery {
 
     public void discover(JsonNode event) {
         JsonNode data = dataOf(event);
+        EkaSystemConfig orgSettings = settings.current();
+        String named = namedHipId(data);
+        if (notOurs(named, orgSettings, "discovery")) return;
         ObjectNode reply = AbdmJson.obj();
         reply.put("request_id", AbdmJson.text(data, "request_id"));
         reply.put("txn_id", AbdmJson.text(data, "txn_id"));
         ArrayNode patients = reply.putArray("patients");
-        Match match = find(data);
+        Match match = find(data, orgSettings.getAbhaAddressSuffix());
+        String hipId = orgSettings.hipIdOr(named);
         if (match.subject() == null) {
             reply.set("error", error(REFUSED, match.why()));
         } else {
             AbdmHipLinkingService.Patient p = linking.loadPatient(match.subject().uuid());
-            String hipId = cfg.getHipId();
+            List<AbdmHipLinkingService.Visit> here = AbdmHipLinkingService.visitsByHip(p, orgSettings, store).getOrDefault(hipId, List.of());
             store.ensureCareContexts(p.individualId(), hipId, p.uuid(), AbdmHipLinkingService.HI_TYPE,
-                    p.visits().stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
+                    here.stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
             List<AbdmHipStore.CareContext> unlinked = store.findCareContexts(p.individualId(), hipId).stream()
                     .filter(c -> !AbdmHipLinkingService.LINKED.equals(c.status()))
                     .collect(Collectors.toList());
@@ -89,16 +97,16 @@ public class EkaHipDiscovery {
                 patients.add(patientEntry(p.uuid(), p.name(), unlinked));
             }
         }
-        send(ON_DISCOVER, reply, data);
+        send(ON_DISCOVER, reply, data, hipId);
     }
 
     private record Match(AbdmHipStore.Subject subject, String why) {
     }
 
-    private Match find(JsonNode data) {
+    private Match find(JsonNode data, String abhaAddressSuffix) {
         String abhaAddress = AbdmFlows.firstNonNull(AbdmJson.text(data, "abha_address"), identifier(data, "ABHAADDRESS"));
         if (abhaAddress != null) {
-            Match m = one(store.findSubjectsByAbhaAddress(abhaAddress, cfg.getAbhaAddressSuffix()));
+            Match m = one(store.findSubjectsByAbhaAddress(abhaAddress, abhaAddressSuffix));
             if (m != null) return m;
         }
         String number = AbdmFlows.digitsOnly(identifier(data, "ABHANUMBER"));
@@ -134,6 +142,9 @@ public class EkaHipDiscovery {
 
     public void linkInit(JsonNode event) {
         JsonNode data = dataOf(event);
+        EkaSystemConfig orgSettings = settings.current();
+        String named = namedHipId(data);
+        if (notOurs(named, orgSettings, "link init")) return;
         String transactionId = AbdmJson.text(data, "txn_id");
         ObjectNode reply = AbdmJson.obj();
         reply.put("request_id", AbdmJson.text(data, "request_id"));
@@ -157,12 +168,14 @@ public class EkaHipDiscovery {
         }
         Optional<AbdmHipStore.Subject> subject = patientReference == null ? Optional.empty() : store.findSubjectByUuid(patientReference);
         String problem = null;
+        String hipId = orgSettings.hipIdOr(named);
         if (subject.isEmpty() || references.isEmpty()) {
             problem = "Patient or visits not found at this facility";
         } else {
-            Set<String> theirs = linking.loadPatient(subject.get().uuid()).visits().stream().map(AbdmHipLinkingService.Visit::reference)
-                    .collect(Collectors.toSet());
+            AbdmHipLinkingService.Patient p = linking.loadPatient(subject.get().uuid());
+            Set<String> theirs = p.visits().stream().map(AbdmHipLinkingService.Visit::reference).collect(Collectors.toSet());
             if (!theirs.containsAll(references)) problem = "A visit asked for is not this patient's";
+            else hipId = hipFor(named, AbdmHipLinkingService.visitsByHip(p, orgSettings, store), references, orgSettings);
         }
         Optional<String> phone = problem == null ? phones.phoneOf(subject.get().id()) : Optional.empty();
         if (problem == null && phone.isEmpty()) problem = "This facility holds no phone number to send the code to";
@@ -178,13 +191,16 @@ public class EkaHipDiscovery {
             reply.put("otp_expiry", AbdmTime.format(expiry));
             logger.info("Eka discovery link {}: code sent for {} visit(s)", linkReference, references.size());
         }
-        send(ON_INIT, reply, data);
+        send(ON_INIT, reply, data, hipId);
     }
 
     // ---- 3: abha.context_discover_link_confirm -> on-confirm
 
     public void linkConfirm(JsonNode event) {
         JsonNode data = dataOf(event);
+        EkaSystemConfig orgSettings = settings.current();
+        String named = namedHipId(data);
+        if (notOurs(named, orgSettings, "link confirm")) return;
         String linkReference = AbdmFlows.firstNonNull(AbdmJson.text(data, "linkRefNumber"), AbdmJson.text(data, "link_ref_number"));
         String code = AbdmJson.text(data, "token");
         ObjectNode reply = AbdmJson.obj();
@@ -207,15 +223,16 @@ public class EkaHipDiscovery {
             } else {
                 AbdmHipLinkingService.Patient p = linking.loadPatient(subject.get().uuid());
                 Set<String> asked = Set.copyOf(request.careContextRefs());
-                List<AbdmHipStore.NewCareContext> theirs = p.visits().stream().filter(v -> asked.contains(v.reference()))
+                Map<String, List<AbdmHipLinkingService.Visit>> byHip = AbdmHipLinkingService.visitsByHip(p, orgSettings, store);
+                String hipId = hipFor(named, byHip, asked, orgSettings);
+                List<AbdmHipStore.NewCareContext> theirs = byHip.getOrDefault(hipId, List.of()).stream().filter(v -> asked.contains(v.reference()))
                         .map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).collect(Collectors.toList());
-                String hipId = cfg.getHipId();
                 store.ensureCareContexts(p.individualId(), hipId, p.uuid(), AbdmHipLinkingService.HI_TYPE, theirs);
                 List<String> refs = theirs.stream().map(AbdmHipStore.NewCareContext::reference).collect(Collectors.toList());
                 List<AbdmHipStore.CareContext> rows = store.findCareContextsByReferences(hipId, refs);
                 patients.add(patientEntry(p.uuid(), p.name(), rows));
                 // Calling on-confirm is what links them (EKA_ABDM_SPEC.md 2.7), so Avni records the outcome only after it.
-                switch (send(ON_CONFIRM, reply, data)) {
+                switch (send(ON_CONFIRM, reply, data, hipId)) {
                     case ACCEPTED -> {
                         store.markLinked(hipId, refs, "USER");
                         store.setLinkRequestStatus(request.id(), "LINKED");
@@ -232,7 +249,29 @@ public class EkaHipDiscovery {
                 return;
             }
         }
-        send(ON_CONFIRM, reply, data);
+        send(ON_CONFIRM, reply, data, orgSettings.hipIdOr(named));
+    }
+
+    private static String namedHipId(JsonNode data) {
+        String named = AbdmFlows.firstNonNull(AbdmJson.text(data, "hip_id"), AbdmJson.text(data, "hipId"));
+        return named == null ? null : named.trim();
+    }
+
+    // An event for a HIP ID that is not the organisation's is not answered: Avni never speaks for another's centre.
+    private static boolean notOurs(String named, EkaSystemConfig orgSettings, String step) {
+        if (named == null || orgSettings.hasHipId(named)) return false;
+        logger.warn("Eka {} names a HIP ID that is not this organisation's; not answered", step);
+        return true;
+    }
+
+    // The HIP ID named, else the one the first visit asked for is shared under, else the organisation's first.
+    private static String hipFor(String named, Map<String, List<AbdmHipLinkingService.Visit>> byHip, Collection<String> asked,
+                                 EkaSystemConfig orgSettings) {
+        if (named != null) return named;
+        return byHip.entrySet().stream()
+                .filter(e -> e.getValue().stream().anyMatch(v -> asked.contains(v.reference())))
+                .map(Map.Entry::getKey).findFirst()
+                .orElse(orgSettings.hipIdOr(null));
     }
 
     // ---- small pieces
@@ -254,11 +293,11 @@ public class EkaHipDiscovery {
     private enum Sent {ACCEPTED, REFUSED, UNANSWERED}
 
     // Replies go on the slow limit, as on-fetch does: Eka took over 10 s to answer on-fetch 3 times in 18 on 26 Oct.
-    private Sent send(String path, ObjectNode reply, JsonNode data) {
+    private Sent send(String path, ObjectNode reply, JsonNode data, String hipId) {
         Map<String, String> headers = new LinkedHashMap<>();
         String oid = AbdmJson.text(data, "oid");
         if (StringUtils.hasText(oid)) headers.put(EkaAbdmClient.H_PATIENT_OID, oid);
-        headers.put(EkaAbdmClient.H_HIP_ID, cfg.getHipId());
+        headers.put(EkaAbdmClient.H_HIP_ID, hipId);
         try {
             eka.postSlow(path, reply, headers);
             return Sent.ACCEPTED;

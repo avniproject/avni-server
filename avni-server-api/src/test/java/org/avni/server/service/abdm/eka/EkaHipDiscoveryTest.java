@@ -2,7 +2,7 @@ package org.avni.server.service.abdm.eka;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 // DEMO-ONLY abdm-hackathon: patient-led linking through Eka (USER_INIT_LINK_601 to 607): the patient finds TANUH in their
@@ -41,7 +43,7 @@ public class EkaHipDiscoveryTest {
     private static final String ON_INIT = "/abdm/v1/care-contexts/discover/link/on-init";
     private static final String ON_CONFIRM = "/abdm/v1/care-contexts/discover/link/on-confirm";
 
-    private final AbdmConfig cfg = AbdmTestSupport.config();
+    private final AbdmSettings settings = AbdmTestSupport.settings();
     private final AbdmHipStore store = mock(AbdmHipStore.class);
     private final AbdmHipLinkingService linking = mock(AbdmHipLinkingService.class);
     private final EkaAbdmClient eka = mock(EkaAbdmClient.class);
@@ -51,7 +53,7 @@ public class EkaHipDiscoveryTest {
 
     @Before
     public void setUp() {
-        discovery = new EkaHipDiscovery(cfg, store, linking, eka, phones, otp);
+        discovery = new EkaHipDiscovery(settings, store, linking, eka, phones, otp);
         when(eka.postSlow(anyString(), any(), any())).thenReturn(new EkaResponse("r", 204, null));
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
                 "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z")),
@@ -156,6 +158,55 @@ public class EkaHipDiscoveryTest {
                 "\"identifiers\":[{\"type\":\"MOBILE\",\"value\":\"9876543210\"}],\"request_id\":\"req-2\",\"txn_id\":\"txn-2\",\"year_of_birth\":1990}}"));
 
         verify(store, never()).findSubjectsByPhone(any(), any(), any(), anyInt());
+    }
+
+    // ---- HIP IDs: each step is for the centre it names, which must be one of the organisation's
+
+    @Test
+    public void aDiscoveryNamingAHipIdNotTheOrganisationsIsNotAnswered() {
+        ObjectNode event = (ObjectNode) discoverEvent();
+        ((ObjectNode) event.get("data")).put("hip_id", "SOMEONE-ELSES-HIP");
+
+        discovery.discover(event);
+
+        verifyNoInteractions(eka);
+        verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void aLinkConfirmNamingAHipIdNotTheOrganisationsIsNotAnswered() {
+        ObjectNode event = (ObjectNode) confirmEvent("424242");
+        ((ObjectNode) event.get("data")).put("hip_id", "SOMEONE-ELSES-HIP");
+
+        discovery.linkConfirm(event);
+
+        verifyNoInteractions(eka, otp);
+        verify(store, never()).markLinked(any(), any(), any());
+    }
+
+    // A patient discovering one of the organisation's centres is offered only the visits shared under it.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void discoveryAtOneCentreOffersOnlyTheVisitsSharedUnderIt() {
+        discovery = new EkaHipDiscovery(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
+                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")))), store, linking, eka, phones, otp);
+        when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
+                "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z"), "hip-2"),
+                new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T10:00:00Z"), null))));
+        when(store.findCareContexts(7, "hip-2")).thenReturn(List.of(), List.of(row("enc-2", "PENDING")));
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        ObjectNode event = (ObjectNode) discoverEvent();
+        ((ObjectNode) event.get("data")).put("hip_id", "hip-2");
+
+        discovery.discover(event);
+
+        verify(store).ensureCareContexts(7L, "hip-2", "subject-1", "OPConsultation",
+                List.of(new AbdmHipStore.NewCareContext("enc-2", "OPD Visit, 2 May 2026")));
+        verify(store, never()).ensureCareContexts(anyLong(), eq("hip-1"), any(), any(), any());
+        ArgumentCaptor<java.util.Map<String, String>> headers = ArgumentCaptor.forClass(java.util.Map.class);
+        verify(eka).postSlow(eq(ON_DISCOVER), any(), headers.capture());
+        assertEquals("hip-2", headers.getValue().get(EkaAbdmClient.H_HIP_ID));
+        assertEquals(1, sent(ON_DISCOVER).at("/patients/0/care_contexts").size());
     }
 
     // ---- link init

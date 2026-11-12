@@ -21,9 +21,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.avni.server.domain.extenalSystem.EkaSystemConfig.*;
@@ -35,6 +39,7 @@ import static org.avni.server.domain.extenalSystem.EkaSystemConfig.*;
 public class AbhaAdminService {
     private static final Set<String> ENVIRONMENTS = Set.of("sandbox", "production");
     private static final long EKA_SETTINGS_SAVE_LOCK = 1087_000_001L;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final EntityManager entityManager;
     private final OrganisationRepository organisationRepository;
@@ -91,13 +96,22 @@ public class AbhaAdminService {
         String avniSystemUser = StringUtils.hasText(request.getAvniSystemUser())
                 ? userOfOrganisation(request.getAvniSystemUser(), organisationId)
                 : stored.getString(AVNI_SYSTEM_USER);
+        String sharingClientId = setClearOrKeep(request.getSharingClientId(), stored.getString(SHARING_CLIENT_ID));
+        String encryptedSharingClientSecret = sharingClientSecret(request, sharingClientId, stored);
         row.setConfig(new JsonObject()
                 .with(ENVIRONMENT, request.getEnvironment())
                 .with(CLIENT_ID, clientId)
                 .with(ENCRYPTED_CLIENT_SECRET, encryptedClientSecret)
                 .with(HIP_IDS, hipIds)
                 .with(AVNI_SYSTEM_USER, avniSystemUser)
-                .with(ENCRYPTED_WEBHOOK_SIGNING_KEY, encryptOrKeep(request.getWebhookSigningKey(), stored.getString(ENCRYPTED_WEBHOOK_SIGNING_KEY))));
+                .with(ENCRYPTED_WEBHOOK_SIGNING_KEY, encryptOrKeep(request.getWebhookSigningKey(), stored.getString(ENCRYPTED_WEBHOOK_SIGNING_KEY)))
+                .with(HIP_NAMES, hipNames(request.getHipNames(), stored, hipIds))
+                .with(HIU_ID, setClearOrKeep(request.getHiuId(), stored.getString(HIU_ID)))
+                .with(CLINIC_ID, setClearOrKeep(request.getClinicId(), stored.getString(CLINIC_ID)))
+                .with(DOCTOR_OID, setClearOrKeep(request.getDoctorOid(), stored.getString(DOCTOR_OID)))
+                .with(WEBHOOK_ID, StringUtils.hasText(stored.getString(WEBHOOK_ID)) ? stored.getString(WEBHOOK_ID) : newWebhookId())
+                .with(SHARING_CLIENT_ID, sharingClientId)
+                .with(ENCRYPTED_SHARING_CLIENT_SECRET, encryptedSharingClientSecret));
         row.setVoided(false);
         ExternalSystemConfig saved = externalSystemConfigRepository.save(row);
         return new EkaConfigResponse(organisationUUID, new EkaSystemConfig(saved));
@@ -172,5 +186,62 @@ public class AbhaAdminService {
 
     private String encryptOrKeep(String plaintext, String storedEncrypted) {
         return StringUtils.hasText(plaintext) ? ekaCredentialCipher.encrypt(plaintext) : storedEncrypted;
+    }
+
+    // Left out keeps the stored value, blank clears it, anything else replaces it.
+    private static String setClearOrKeep(String given, String stored) {
+        if (given == null) return stored;
+        return StringUtils.hasText(given) ? given.trim() : null;
+    }
+
+    // Checked as the M1 secret is: the stored one belongs to the stored sharing client and environment.
+    private String sharingClientSecret(EkaConfigRequest request, String sharingClientId, JsonObject stored) {
+        boolean secretGiven = StringUtils.hasText(request.getSharingClientSecret());
+        if (sharingClientId == null) {
+            if (secretGiven) throw new BadRequestError("sharingClientSecret is given without a sharingClientId");
+            return null;
+        }
+        if (secretGiven) return ekaCredentialCipher.encrypt(request.getSharingClientSecret());
+        String storedSecret = stored.getString(ENCRYPTED_SHARING_CLIENT_SECRET);
+        if (storedSecret == null) {
+            throw new BadRequestError("sharingClientSecret is required when a sharing client is first set up");
+        }
+        if (!sharingClientId.equals(stored.getString(SHARING_CLIENT_ID)) || !request.getEnvironment().equals(stored.getString(ENVIRONMENT))) {
+            throw new BadRequestError("sharingClientSecret is required when sharingClientId or environment changes");
+        }
+        return storedSecret;
+    }
+
+    // Names only for the centres listed; when left out, the stored names of centres still listed are kept.
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> hipNames(Map<String, String> given, JsonObject stored, List<String> hipIds) {
+        Map<String, String> names = new LinkedHashMap<>();
+        if (given == null) {
+            Object storedNames = stored.get(HIP_NAMES);
+            if (storedNames instanceof Map) {
+                ((Map<String, String>) storedNames).forEach((hipId, name) -> {
+                    if (hipIds.contains(hipId)) names.put(hipId, name);
+                });
+            }
+            return names;
+        }
+        for (Map.Entry<String, String> entry : given.entrySet()) {
+            String hipId = entry.getKey() == null ? null : entry.getKey().trim();
+            if (!hipIds.contains(hipId)) {
+                throw new BadRequestError("hipNames names %s, which is not in hipIds", entry.getKey());
+            }
+            if (!StringUtils.hasText(entry.getValue())) {
+                throw new BadRequestError("hipNames must not give %s a blank name", hipId);
+            }
+            names.put(hipId, entry.getValue().trim());
+        }
+        return names;
+    }
+
+    // Part of the webhook address Eka is given: random, opaque, and never changed once made.
+    private static String newWebhookId() {
+        byte[] bytes = new byte[24];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

@@ -28,9 +28,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-// DEMO-ONLY abdm-hackathon: never merged.
-// Eka Care's ABDM Connect API, with the current organisation's Eka settings (base URL) and access token, the
-// ones M1 uses (ExternalSystemConfigRepository.getEkaSystemConfig, EkaTokenService). Sends Authorization: Bearer plus
+// Eka Care's ABDM Connect API, with the current organisation's Eka settings (base URL) and the token of its record-sharing
+// client (EkaTokenService.getSharingToken), never the M1 client's, which the phone holds. Sends Authorization: Bearer plus
 // the given headers (X-Pt-Id, X-Partner-Pt-Id, X-Hip-Id ...). Any non-2xx answer throws EkaCallException with Eka's
 // error code and message; a call that does not answer throws it with status 0. Never logs a body, a token or an ID of a
 // patient. The requestId in the response is a fresh UUID for the traffic log.
@@ -100,22 +99,7 @@ public class EkaAbdmClient {
         return exchange("GET", path, null, headers, answerTimeout);
     }
 
-    // The organisation's Eka base URL, for the admin screen.
-    // Whether this organisation's Eka settings point at Eka's sandbox, where test data may go.
-    public boolean isSandbox() {
-        return config(organisationId()).isSandbox();
-    }
-
-    public String baseUrl() {
-        return baseUrlOf(config(organisationId()));
-    }
-
-    // The organisation's Eka client ID (not a secret), for the admin screen.
-    public String clientId() {
-        return config(organisationId()).getClientId();
-    }
-
-    // Throws when no Eka token can be had for the organisation; for the admin screen.
+    // Throws when the record-sharing client cannot log in; for the admin screen.
     public void checkToken() {
         token(organisationId());
     }
@@ -271,9 +255,9 @@ public class EkaAbdmClient {
 
     private String token(Long organisationId) {
         try {
-            return tokenService.getAccessToken(organisationId).getAccessToken();
+            return tokenService.getSharingToken(organisationId).getAccessToken();
         } catch (EkaNotConfiguredException e) {
-            throw new EkaCallException(0, null, "Eka client id or secret not set for this organisation");
+            throw new EkaCallException(0, null, "Eka record-sharing client id or secret not set for this organisation");
         } catch (RuntimeException e) {
             throw new EkaCallException(0, null, "Eka login failed: " + e.getMessage());
         }

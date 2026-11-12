@@ -391,6 +391,10 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return isFeatureEnabled(OrganisationConfigSettingKey.enableAbha.name());
     }
 
+    public boolean isAbdmRecordSharingEnabled() {
+        return isFeatureEnabled(OrganisationConfigSettingKey.enableAbdmRecordSharing.name());
+    }
+
     public boolean isFailOnValidationErrorEnabled() {
         return isFeatureEnabled(OrganisationConfigSettingKey.failOnValidationError.name());
     }

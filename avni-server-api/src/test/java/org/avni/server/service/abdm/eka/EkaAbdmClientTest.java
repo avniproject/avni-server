@@ -29,7 +29,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public class EkaAbdmClientTest {
     private static final String LINK = "/abdm/v1/care-contexts/link";
 
@@ -49,7 +48,7 @@ public class EkaAbdmClientTest {
         configRepository = mock(ExternalSystemConfigRepository.class);
         when(configRepository.getEkaSystemConfig(1L)).thenReturn(mock(EkaSystemConfig.class));
         tokenService = mock(EkaTokenService.class);
-        when(tokenService.getAccessToken(1L)).thenReturn(new EkaToken("eka-token-1", Instant.now().plusSeconds(3600)));
+        when(tokenService.getSharingToken(1L)).thenReturn(new EkaToken("eka-token-1", Instant.now().plusSeconds(3600)));
         messageLog = mock(AbdmMessageLog.class);
         client = new EkaAbdmClient(orgContext, configRepository, tokenService, messageLog, config -> baseUrl,
                 Duration.ofSeconds(2), Duration.ofMillis(700), Duration.ofSeconds(3), Duration.ofMillis(10));
@@ -297,7 +296,7 @@ public class EkaAbdmClientTest {
 
     @Test
     public void aFailedEkaLoginMeansNoCall() throws Exception {
-        when(tokenService.getAccessToken(1L)).thenThrow(new EkaAuthException("Eka login failed with HTTP 401"));
+        when(tokenService.getSharingToken(1L)).thenThrow(new EkaAuthException("Eka login failed with HTTP 401"));
 
         EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 
@@ -318,9 +317,35 @@ public class EkaAbdmClientTest {
     }
 
     @Test
-    public void tokenCheckAndBaseUrlUseTheOrganisationsSettings() throws Exception {
-        assertEquals("http://localhost:" + eka.port(), client.baseUrl());
+    public void theTokenCheckLogsInWithTheSharingClient() throws Exception {
+        when(tokenService.getSharingToken(1L)).thenReturn(new EkaToken("sharing-token-1", Instant.now().plusSeconds(3600)));
+
         client.checkToken();
-        verify(tokenService).getAccessToken(1L);
+
+        verify(tokenService).getSharingToken(1L);
+        verify(tokenService, never()).getAccessToken(any());
+    }
+
+    // The M1 token is handed to the phone; record sharing must never act with it.
+    @Test
+    public void recordSharingCallsCarryTheSharingClientsTokenNeverTheM1One() throws Exception {
+        when(tokenService.getSharingToken(1L)).thenReturn(new EkaToken("sharing-token-1", Instant.now().plusSeconds(3600)));
+        eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202)));
+
+        client.post(LINK, AbdmJson.obj(), Map.of());
+
+        eka.verify(postRequestedFor(urlEqualTo(LINK)).withHeader("Authorization", equalTo("Bearer sharing-token-1")));
+        verify(tokenService, never()).getAccessToken(any());
+    }
+
+    @Test
+    public void withoutASharingClientNoCallIsMade() throws Exception {
+        when(tokenService.getSharingToken(1L)).thenThrow(new EkaNotConfiguredException("no sharing client"));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+
+        assertTrue(e.getMessage(), e.getMessage().contains("record-sharing client"));
+        assertEquals(0, eka.getAllServeEvents().size());
+        verify(tokenService, never()).getAccessToken(any());
     }
 }

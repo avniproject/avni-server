@@ -10,7 +10,7 @@ import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.AbhaLink;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.Individual;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.crypto.FideliusCrypto;
 import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
@@ -49,14 +49,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public class EkaHipServiceTest {
     private static final long INDIVIDUAL_ID = 7L;
     private static final String OID = "eka-oid-0001";
     private static final String LINK = "/abdm/v1/care-contexts/link";
     private static final String ON_FETCH = "/abdm/v1/hip/care-context/data/on-fetch";
 
-    private final AbdmConfig cfg = AbdmTestSupport.config();
+    private final AbdmSettings settings = AbdmTestSupport.settings();
     private final AbdmHipStore store = mock(AbdmHipStore.class);
     private final AbdmHipLinkingService linking = mock(AbdmHipLinkingService.class);
     private final EkaAbdmClient eka = mock(EkaAbdmClient.class);
@@ -74,7 +73,7 @@ public class EkaHipServiceTest {
 
     @Before
     public void setUp() {
-        service = new EkaHipService(cfg, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
+        service = new EkaHipService(settings, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
                 abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository);
 
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
@@ -86,7 +85,6 @@ public class EkaHipServiceTest {
                 .thenReturn(List.of(abhaEvent("linked", OID, "asha.devi@sbx")));
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-2", "PENDING")));
         when(eka.post(anyString(), any(), any())).thenReturn(new EkaResponse("r-1", 202, null));
-        when(eka.isSandbox()).thenReturn(true);
 
         Individual patient = new Individual();
         patient.setId(INDIVIDUAL_ID);
@@ -387,6 +385,117 @@ public class EkaHipServiceTest {
 
         verify(store, never()).markLinked(anyString(), any(), anyString());
         verify(store, never()).markStatus(anyString(), any(), anyString(), any());
+    }
+
+    // ---- HIP IDs: the organisation's, never one fixed for the server
+
+    private EkaHipService withTwoHips() {
+        return new EkaHipService(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
+                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2"))
+                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_NAMES, Map.of("hip-1", "First Centre", "hip-2", "Second Centre")))),
+                store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository, abhaLinkRepository, assembler,
+                builder, crypto, phones, programEncounterRepository, individualRepository);
+    }
+
+    private void visitsRecordedAt(String enc2Hip, String enc1Hip) {
+        when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
+                1990, "12345678568912", "asha.devi", List.of(
+                new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T18:00:00Z"), enc2Hip),
+                new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T04:30:00Z"), enc1Hip))));
+    }
+
+    // Avni starts the link: each visit under the HIP ID of the user who recorded it, else the organisation's first.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void visitsRecordedAtTwoOfTheOrganisationsCentresAreLinkedEachUnderItsOwnHipId() {
+        EkaHipService service = withTwoHips();
+        visitsRecordedAt("hip-2", null);
+        when(store.findCareContexts(INDIVIDUAL_ID, "hip-1")).thenReturn(List.of(), List.of(row("enc-1", "PENDING")));
+        when(store.findCareContexts(INDIVIDUAL_ID, "hip-2")).thenReturn(List.of(), List.of(row("enc-2", "PENDING")));
+
+        service.linkCareContexts("subject-1");
+
+        verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq("hip-1"), eq("subject-1"), eq("OPConsultation"),
+                eq(List.of(new AbdmHipStore.NewCareContext("enc-1", "OPD Visit, 14 Mar 2026"))));
+        verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq("hip-2"), eq("subject-1"), eq("OPConsultation"),
+                eq(List.of(new AbdmHipStore.NewCareContext("enc-2", "OPD Visit, 2 May 2026"))));
+        verify(store).markLinkRequested(eq("hip-1"), eq(List.of("enc-1")), anyString());
+        verify(store).markLinkRequested(eq("hip-2"), eq(List.of("enc-2")), anyString());
+        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+        verify(eka, times(2)).post(eq(LINK), any(), headers.capture());
+        assertEquals(List.of("hip-2", "hip-1"), headers.getAllValues().stream().map(h -> h.get(EkaAbdmClient.H_HIP_ID)).toList());
+    }
+
+    @Test
+    public void aVisitKeepsTheHipIdItsCareContextWasMadeUnder() {
+        EkaHipService service = withTwoHips();
+        visitsRecordedAt("hip-2", null);
+        when(store.findCareContexts(INDIVIDUAL_ID, "hip-1")).thenReturn(List.of(row("enc-2", "LINKED"), row("enc-1", "PENDING")));
+
+        service.linkCareContexts("subject-1");
+
+        verify(store).ensureCareContexts(eq(INDIVIDUAL_ID), eq("hip-1"), any(), any(), any());
+        verify(store, never()).ensureCareContexts(anyLong(), eq("hip-2"), any(), any(), any());
+        verify(store, never()).markLinkRequested(eq("hip-2"), any(), any());
+    }
+
+    @Test
+    public void aLinkStatusNamingAHipIdNotTheOrganisationsIsDropped() {
+        ObjectNode e = (ObjectNode) event("link-care-context.json");
+        ((ObjectNode) e.get("data")).put("hip_id", "SOMEONE-ELSES-HIP");
+
+        service.linkCareContext(e);
+
+        verify(store, never()).findCareContextsByReferences(any(), any());
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store, never()).markStatus(any(), any(), any(), any());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void aLinkStatusIsAppliedUnderTheHipIdItNames_andThePatientIsTextedAsThatCentre() {
+        EkaHipService service = withTwoHips();
+        ObjectNode e = (ObjectNode) event("link-care-context.json");
+        ((ObjectNode) e.get("data")).put("hip_id", "hip-2");
+        when(store.findCareContextsByReferences("hip-2", List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
+        when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.of("9876543210"));
+
+        service.linkCareContext(e);
+
+        verify(store).markLinked("hip-2", List.of("enc-1"), "HIP");
+        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+        verify(eka).post(eq("/abdm/v1/care-contexts/sms/notify"), any(), headers.capture());
+        assertEquals("hip-2", headers.getValue().get(EkaAbdmClient.H_HIP_ID));
+    }
+
+    @Test
+    public void aDataFetchNamingAHipIdNotTheOrganisationsSendsNothing() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        ObjectNode e = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) e.get("data")).put("hip_id", "SOMEONE-ELSES-HIP");
+
+        service.hipDataFetch(e);
+
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("HIP ID"));
+        verify(eka, never()).postSlow(any(), any(), any());
+        verifyNoInteractions(assembler);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void aDataFetchIsAnsweredAsTheCentreItNames() {
+        EkaHipService service = withTwoHips();
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        ObjectNode e = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
+        ((ObjectNode) e.get("data")).put("hip_id", "hip-2");
+        when(store.findCareContextsByReferences("hip-2", List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+
+        service.hipDataFetch(e);
+
+        verify(assembler, times(2)).assemble(any(), any(), any(), any(), eq("hip-2"), eq("Second Centre"));
+        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
+        verify(eka).postSlow(eq(ON_FETCH), any(), headers.capture());
+        assertEquals("hip-2", headers.getValue().get(EkaAbdmClient.H_HIP_ID));
     }
 
     // ---- data fetch (self-custody)

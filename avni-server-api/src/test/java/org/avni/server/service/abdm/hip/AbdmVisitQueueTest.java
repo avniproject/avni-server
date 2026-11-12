@@ -7,7 +7,7 @@ import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEncounter;
 import org.avni.server.domain.ProgramEnrolment;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,9 +15,15 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Optional;
 
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.User;
+import org.avni.server.domain.UserSettings;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+
 import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIP_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -27,7 +33,7 @@ import static org.mockito.Mockito.when;
 // DEMO-ONLY abdm-hackathon: HIP_INTI_LINK_505, "linking of health records should be done automatically once records have
 // been saved at HIP end". A saved visit is queued here, inside the save; AbdmHousekeepingJob links the queue.
 public class AbdmVisitQueueTest {
-    private final AbdmConfig cfg = AbdmTestSupport.config();
+    private final AbdmSettings settings = AbdmTestSupport.settings();
     private final AbdmHipStore store = mock(AbdmHipStore.class);
     private final AbhaLinkRepository abhaLinks = mock(AbhaLinkRepository.class);
     private Individual patient;
@@ -96,8 +102,69 @@ public class AbdmVisitQueueTest {
         queue().queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
     }
 
+    // Avni starts this link: the visit goes under the HIP ID of the user who recorded it, when it is the organisation's.
+    @Test
+    public void aVisitIsQueuedUnderTheHipIdOfTheUserWhoRecordedIt() {
+        Encounter visit = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
+        visit.setCreatedBy(userAt("hip-2"));
+
+        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks).queue(visit);
+
+        verify(store).queueCareContexts(7L, "hip-2", "subject-1", "OPConsultation",
+                List.of(new AbdmHipStore.NewCareContext("enc-9", "OPD Visit, 2 May 2026")));
+    }
+
+    @Test
+    public void aVisitRecordedByAUserOfNoneOfTheOrganisationsHipIdsIsQueuedUnderItsFirst() {
+        Encounter elsewhere = visit("enc-8", new DateTime(2026, 5, 2, 10, 0));
+        elsewhere.setCreatedBy(userAt("someone-elses-hip"));
+        Encounter unknown = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
+        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks);
+
+        q.queue(elsewhere);
+        q.queue(unknown);
+
+        verify(store).queueCareContexts(7L, "hip-1", "subject-1", "OPConsultation", List.of(new AbdmHipStore.NewCareContext("enc-8", "OPD Visit, 2 May 2026")));
+        verify(store).queueCareContexts(7L, "hip-1", "subject-1", "OPConsultation", List.of(new AbdmHipStore.NewCareContext("enc-9", "OPD Visit, 2 May 2026")));
+    }
+
+    // A visit whose care context exists is never queued under a second HIP ID, which would link it twice.
+    @Test
+    public void aVisitWithACareContextKeepsTheHipIdItWasMadeUnder() {
+        Encounter visit = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
+        visit.setCreatedBy(userAt("hip-2"));
+        when(store.findCareContextsByReferences("hip-1", List.of("enc-9"))).thenReturn(List.of(new AbdmHipStore.CareContext(1, "cc-1", 7L,
+                "hip-1", "subject-1", "enc-9", "OPD Visit, 2 May 2026", "OPConsultation", "LINKED", "HIP", null, null, null)));
+
+        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks).queue(visit);
+
+        verify(store).queueCareContexts(eq(7L), eq("hip-1"), any(), any(), any());
+        verify(store, never()).queueCareContexts(anyLong(), eq("hip-2"), any(), any(), any());
+    }
+
+    @Test
+    public void anOrganisationWithoutEkaSettingsQueuesNothing() {
+        AbdmSettings none = org.mockito.Mockito.mock(AbdmSettings.class);
+        when(none.find()).thenReturn(Optional.empty());
+
+        new AbdmVisitQueue(none, store, abhaLinks).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
+
+        verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
+        org.mockito.Mockito.verifyNoInteractions(abhaLinks);
+    }
+
+    private static EkaSystemConfig twoHips() {
+        return AbdmTestSupport.ekaSettings(new JsonObject().with(EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")));
+    }
+
+    private static User userAt(String hipId) {
+        User user = new User();
+        user.setSettings(new JsonObject().with(UserSettings.ABHA_HIP_ID, hipId));
+        return user;
+    }
+
     private AbdmVisitQueue queue() {
-        return new AbdmVisitQueue(cfg, store, abhaLinks);
+        return new AbdmVisitQueue(settings, store, abhaLinks);
     }
 
     private Encounter visit(String uuid, DateTime at) {

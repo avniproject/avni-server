@@ -4,8 +4,11 @@ import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.AbhaLink;
 import org.avni.server.domain.Individual;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.domain.User;
+import org.avni.server.domain.UserSettings;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmOrgContext;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -14,16 +17,18 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // The HIP's view of a subject: their completed visits as care contexts, each with its link state. EkaHipService links
 // them through Eka. Statuses: PENDING -> LINK_REQUESTED -> LINKED | FAILED. A visit queued on save (AbdmVisitQueue)
 // starts QUEUED instead, and only those are linked by AbdmHousekeepingJob.
+// A visit is shared under one of the organisation's HIP IDs: the one its care context was made under, else the HIP ID of
+// the user who recorded it when that is one of the organisation's, else the organisation's first (visitsByHip).
 @Service
 public class AbdmHipLinkingService {
     public static final String HI_TYPE = "OPConsultation";
@@ -37,23 +42,27 @@ public class AbdmHipLinkingService {
     private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormat.forPattern("d MMM yyyy").withLocale(Locale.ENGLISH)
             .withZone(DateTimeZone.forID("Asia/Kolkata"));
 
-    private final AbdmConfig cfg;
+    private final AbdmSettings settings;
     private final AbdmHipStore store;
     private final AbdmOrgContext orgContext;
     private final IndividualRepository individualRepository;
     private final AbhaLinkRepository abhaLinkRepository;
 
-    public AbdmHipLinkingService(AbdmConfig cfg, AbdmHipStore store, AbdmOrgContext orgContext,
+    public AbdmHipLinkingService(AbdmSettings settings, AbdmHipStore store, AbdmOrgContext orgContext,
                                  IndividualRepository individualRepository, AbhaLinkRepository abhaLinkRepository) {
-        this.cfg = cfg;
+        this.settings = settings;
         this.store = store;
         this.orgContext = orgContext;
         this.individualRepository = individualRepository;
         this.abhaLinkRepository = abhaLinkRepository;
     }
 
-    // One visit that can be shared: an encounter's uuid, its display and when it happened.
-    public record Visit(String reference, String display, Instant at) {
+    // One visit that can be shared: an encounter's uuid, its display, when it happened, and the HIP ID in the settings of
+    // the user who recorded it (any, or none).
+    public record Visit(String reference, String display, Instant at, String recorderHipId) {
+        public Visit(String reference, String display, Instant at) {
+            this(reference, display, at, null);
+        }
     }
 
     // A subject as linking needs it, read in one read-only transaction.
@@ -63,19 +72,28 @@ public class AbdmHipLinkingService {
 
     // ---- web
 
+    // Every patient with an ABHA, with their visits linked under any of the organisation's HIP IDs.
     public List<Map<String, Object>> patientsWithAbha() {
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (AbdmHipStore.PatientRow r : store.patientsWithAbha(cfg.getHipId())) {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("subjectUUID", r.subjectUuid());
-            m.put("name", r.name());
-            m.put("abhaNumberMasked", AbdmFlows.maskedAbhaNumber(r.abhaNumber()));
-            m.put("abhaAddress", AbdmFlows.withSuffix(r.abhaAddress(), cfg.getAbhaAddressSuffix()));
-            m.put("encounters", r.encounters());
-            m.put("linked", r.linked());
-            out.add(m);
+        EkaSystemConfig orgSettings = settings.current();
+        Map<String, Map<String, Object>> bySubject = new LinkedHashMap<>();
+        for (String hipId : orgSettings.getHipIds()) {
+            for (AbdmHipStore.PatientRow r : store.patientsWithAbha(hipId)) {
+                Map<String, Object> m = bySubject.get(r.subjectUuid());
+                if (m != null) {
+                    m.put("linked", (Long) m.get("linked") + r.linked());
+                    continue;
+                }
+                m = new LinkedHashMap<>();
+                m.put("subjectUUID", r.subjectUuid());
+                m.put("name", r.name());
+                m.put("abhaNumberMasked", AbdmFlows.maskedAbhaNumber(r.abhaNumber()));
+                m.put("abhaAddress", AbdmFlows.withSuffix(r.abhaAddress(), orgSettings.getAbhaAddressSuffix()));
+                m.put("encounters", r.encounters());
+                m.put("linked", r.linked());
+                bySubject.put(r.subjectUuid(), m);
+            }
         }
-        return out;
+        return new ArrayList<>(bySubject.values());
     }
 
     public List<Map<String, Object>> careContexts(String subjectUuid) {
@@ -111,8 +129,32 @@ public class AbdmHipLinkingService {
         return java.util.stream.Stream.concat(general, programme)
                 .filter(e -> e.getEncounterDateTime() != null && e.getCancelDateTime() == null)
                 .sorted(Comparator.comparing((org.avni.server.domain.AbstractEncounter e) -> e.getEncounterDateTime()).reversed())
-                .map(e -> new Visit(e.getUuid(), display(e), e.getEncounterDateTime().toDate().toInstant()))
+                .map(e -> new Visit(e.getUuid(), display(e), e.getEncounterDateTime().toDate().toInstant(), recorderHipId(e)))
                 .collect(Collectors.toList());
+    }
+
+    // The HIP ID in the settings of the user who recorded the visit; null when there is none.
+    public static String recorderHipId(org.avni.server.domain.AbstractEncounter encounter) {
+        User recorder = encounter.getCreatedBy();
+        if (recorder == null || recorder.getSettings() == null) return null;
+        Object hipId = recorder.getSettings().get(UserSettings.ABHA_HIP_ID);
+        return hipId instanceof String text && !text.isBlank() ? text.trim() : null;
+    }
+
+    // The patient's visits by the HIP ID each is shared under, in their order (see the class comment). A visit keeps the
+    // HIP ID its care context was made under, so it is never linked twice.
+    public static Map<String, List<Visit>> visitsByHip(Patient patient, EkaSystemConfig orgSettings, AbdmHipStore store) {
+        if (orgSettings.getHipIds().isEmpty()) throw AbdmRequestException.conflict("The organisation has no HIP ID");
+        Map<String, String> madeUnder = new HashMap<>();
+        for (String hipId : orgSettings.getHipIds()) {
+            for (AbdmHipStore.CareContext c : store.findCareContexts(patient.individualId(), hipId)) madeUnder.putIfAbsent(c.reference(), hipId);
+        }
+        Map<String, List<Visit>> byHip = new LinkedHashMap<>();
+        for (Visit v : patient.visits()) {
+            String hipId = madeUnder.containsKey(v.reference()) ? madeUnder.get(v.reference()) : orgSettings.hipIdOr(v.recorderHipId());
+            byHip.computeIfAbsent(hipId, k -> new ArrayList<>()).add(v);
+        }
+        return byHip;
     }
 
     public static String display(org.avni.server.domain.AbstractEncounter encounter) {
@@ -128,10 +170,12 @@ public class AbdmHipLinkingService {
         return "O";
     }
 
-    // Every visit with its link state, plus rows whose visit has since gone.
+    // Every visit with its link state, plus rows whose visit has since gone, under any of the organisation's HIP IDs.
     private List<Map<String, Object>> view(Patient patient) {
         Map<String, AbdmHipStore.CareContext> rows = new LinkedHashMap<>();
-        for (AbdmHipStore.CareContext c : store.findCareContexts(patient.individualId(), cfg.getHipId())) rows.put(c.reference(), c);
+        for (String hipId : settings.current().getHipIds()) {
+            for (AbdmHipStore.CareContext c : store.findCareContexts(patient.individualId(), hipId)) rows.putIfAbsent(c.reference(), c);
+        }
         List<Map<String, Object>> out = new ArrayList<>();
         for (Visit v : patient.visits()) {
             AbdmHipStore.CareContext row = rows.remove(v.reference());

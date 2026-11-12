@@ -5,7 +5,8 @@ import org.avni.server.domain.AbstractEncounter;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEncounter;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,29 +16,29 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // HIP_INTI_LINK_505: "linking of health records should be done automatically once records have been saved at HIP end".
 // EncounterService.save and ProgramEncounterService.save hand each saved visit here. A completed visit of a patient
 // holding an ABHA becomes a QUEUED care context; AbdmHousekeepingJob.linkQueuedVisits links the queue through Eka.
 // What is needed is read during the save; the row is written after the save commits, in a transaction of its own, so
-// nothing here can fail or slow a sync.
+// nothing here can fail or slow a sync. An organisation without Eka settings, or without a HIP ID, queues nothing.
+// Avni starts this link, so the visit goes under the HIP ID of the user who recorded it when that is one of the
+// organisation's, else the organisation's first; a visit whose care context exists keeps the HIP ID it was made under.
 @Component
 public class AbdmVisitQueue {
     private static final Logger logger = LoggerFactory.getLogger(AbdmVisitQueue.class);
 
-    private final AbdmConfig cfg;
+    private final AbdmSettings settings;
     private final AbdmHipStore store;
     private final AbhaLinkRepository abhaLinkRepository;
     private final TransactionTemplate ownTransaction;
 
     @Autowired
-    public AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
+    public AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
                           PlatformTransactionManager transactionManager) {
-        this.cfg = cfg;
+        this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
         this.ownTransaction = new TransactionTemplate(transactionManager);
@@ -45,14 +46,14 @@ public class AbdmVisitQueue {
     }
 
     // Tests: runs at once, with no transaction of its own.
-    AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository) {
-        this.cfg = cfg;
+    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository) {
+        this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
         this.ownTransaction = null;
     }
 
-    private record Queued(long individualId, String subjectUuid, String hipId, AbdmHipStore.NewCareContext careContext) {
+    private record Queued(long individualId, String subjectUuid, List<String> hipIds, String hipId, AbdmHipStore.NewCareContext careContext) {
     }
 
     public void queue(AbstractEncounter visit) {
@@ -60,10 +61,12 @@ public class AbdmVisitQueue {
         Queued queued;
         try {
             if (visit.isVoided() || visit.getEncounterDateTime() == null || visit.getCancelDateTime() != null) return;
-            if (!StringUtils.hasText(cfg.getHipId())) return;
+            EkaSystemConfig orgSettings = settings.find().orElse(null);
+            if (orgSettings == null || orgSettings.getHipIds().isEmpty()) return;
             Individual individual = patientOf(visit);
             if (individual == null || individual.getId() == null) return;
-            queued = new Queued(individual.getId(), individual.getUuid(), cfg.getHipId(),
+            queued = new Queued(individual.getId(), individual.getUuid(), List.copyOf(orgSettings.getHipIds()),
+                    orgSettings.hipIdOr(AbdmHipLinkingService.recorderHipId(visit)),
                     new AbdmHipStore.NewCareContext(visit.getUuid(), AbdmHipLinkingService.display(visit)));
         } catch (RuntimeException e) {
             logger.warn("ABDM: visit {} not queued for linking: {}", visit.getUuid(), e.getClass().getSimpleName());
@@ -85,13 +88,21 @@ public class AbdmVisitQueue {
         try {
             Runnable work = () -> {
                 if (abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(q.individualId()).isEmpty()) return;
-                store.queueCareContexts(q.individualId(), q.hipId(), q.subjectUuid(), AbdmHipLinkingService.HI_TYPE, List.of(q.careContext()));
+                store.queueCareContexts(q.individualId(), hipIdOf(q), q.subjectUuid(), AbdmHipLinkingService.HI_TYPE, List.of(q.careContext()));
             };
             if (ownTransaction == null) work.run();
             else ownTransaction.executeWithoutResult(status -> work.run());
         } catch (RuntimeException e) {
             logger.warn("ABDM: visit {} not queued for linking: {}", q.careContext().reference(), e.getClass().getSimpleName());
         }
+    }
+
+    // The HIP ID the visit's care context was made under, if it has one; else the one chosen at save.
+    private String hipIdOf(Queued q) {
+        for (String hipId : q.hipIds()) {
+            if (!store.findCareContextsByReferences(hipId, List.of(q.careContext().reference())).isEmpty()) return hipId;
+        }
+        return q.hipId();
     }
 
     private static Individual patientOf(AbstractEncounter visit) {

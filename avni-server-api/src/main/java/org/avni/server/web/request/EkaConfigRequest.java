@@ -1,6 +1,7 @@
 package org.avni.server.web.request;
 
 import java.util.List;
+import java.util.Map;
 
 public class EkaConfigRequest {
     private String environment;
@@ -9,6 +10,12 @@ public class EkaConfigRequest {
     private List<String> hipIds;
     private String avniSystemUser;
     private String webhookSigningKey;
+    private Map<String, String> hipNames;
+    private String hiuId;
+    private String clinicId;
+    private String doctorOid;
+    private String sharingClientId;
+    private String sharingClientSecret;
 
     public String getEnvironment() {
         return environment;
@@ -58,10 +65,59 @@ public class EkaConfigRequest {
         this.webhookSigningKey = webhookSigningKey;
     }
 
+    public Map<String, String> getHipNames() {
+        return hipNames;
+    }
+
+    public void setHipNames(Map<String, String> hipNames) {
+        this.hipNames = hipNames;
+    }
+
+    public String getHiuId() {
+        return hiuId;
+    }
+
+    public void setHiuId(String hiuId) {
+        this.hiuId = hiuId;
+    }
+
+    public String getClinicId() {
+        return clinicId;
+    }
+
+    public void setClinicId(String clinicId) {
+        this.clinicId = clinicId;
+    }
+
+    public String getDoctorOid() {
+        return doctorOid;
+    }
+
+    public void setDoctorOid(String doctorOid) {
+        this.doctorOid = doctorOid;
+    }
+
+    public String getSharingClientId() {
+        return sharingClientId;
+    }
+
+    public void setSharingClientId(String sharingClientId) {
+        this.sharingClientId = sharingClientId;
+    }
+
+    public String getSharingClientSecret() {
+        return sharingClientSecret;
+    }
+
+    public void setSharingClientSecret(String sharingClientSecret) {
+        this.sharingClientSecret = sharingClientSecret;
+    }
+
     // Never print the secrets.
     @Override
     public String toString() {
         return "EkaConfigRequest{environment=" + environment + ", clientId=" + clientId + ", hipIds=" + hipIds
-                + ", avniSystemUser=" + avniSystemUser + "}";
+                + ", avniSystemUser=" + avniSystemUser + ", hipNames=" + hipNames + ", hiuId=" + hiuId + ", clinicId=" + clinicId
+                + ", doctorOid=" + doctorOid + ", sharingClientId=" + sharingClientId + "}";
     }
 }

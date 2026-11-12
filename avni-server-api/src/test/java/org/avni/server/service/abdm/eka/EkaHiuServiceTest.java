@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.domain.AbhaEvent;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.crypto.FideliusCrypto;
 import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
@@ -52,7 +54,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-// DEMO-ONLY abdm-hackathon: Avni as HIU through Eka Care. Real Fidelius crypto, everything else mocked.
+// Avni as HIU through Eka Care. Real Fidelius crypto, everything else mocked.
 public class EkaHiuServiceTest {
     private static final String BUNDLE = "{\"resourceType\":\"Bundle\",\"type\":\"collection\",\"entry\":[]}";
     private static final String KEYSET = EkaHiuService.KEYSET_CONSENT_ID;
@@ -63,17 +65,18 @@ public class EkaHiuServiceTest {
     private final EkaCredentialCipher cipher = mock(EkaCredentialCipher.class);
     private final AbdmHipStore hipStore = mock(AbdmHipStore.class);
     private final AbhaEventRepository abhaEvents = mock(AbhaEventRepository.class);
-    private AbdmConfig cfg;
+    private static final String REQUESTER = "Dr. A Sharma";
+    private static final String REGISTRATION = "MH1001";
+    private AbdmSettings settings;
     private EkaHiuService service;
     private FideliusKeyMaterial ours;
 
     @Before
     public void setUp() {
-        cfg = AbdmTestSupport.config();
-        when(cfg.getEkaClinicId()).thenReturn("clinic-1");
-        when(cfg.getEkaDoctorOid()).thenReturn("doctor-oid-1");
-        when(cfg.getEkaRequesterName()).thenReturn("Dr. Demo");
-        service = service("x509");
+        settings = AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new JsonObject()
+                .with(EkaSystemConfig.CLINIC_ID, "clinic-1")
+                .with(EkaSystemConfig.DOCTOR_OID, "doctor-oid-1")));
+        service = service();
         when(cipher.encrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(cipher.decrypt(anyString())).thenAnswer(inv -> ((String) inv.getArgument(0)).substring(4));
 
@@ -93,7 +96,7 @@ public class EkaHiuServiceTest {
     @SuppressWarnings("unchecked")
     public void aConsentRequestIsStoredThenSentToEkaWithItsBodyAndHeadersAndEkasIdIsKept() {
         Map<String, Object> answer = service.requestConsent("shyam", LocalDate.of(2026, 1, 1), LocalDate.of(2026, 10, 20),
-                List.of("OPConsultation", "Prescription"), "CAREMGT", "Dr. A Sharma");
+                List.of("OPConsultation", "Prescription"), "CAREMGT", REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
@@ -129,8 +132,8 @@ public class EkaHiuServiceTest {
 
     @Test
     public void theStoredHiuKeyIsRegisteredOncePerRunAsX509WithItsNonce() {
-        service.requestConsent("shyam", null, null, null, null, null);
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka, times(1)).patch(eq("/abdm/v1/hiu/keyset"), body.capture(), eq(Map.of()));
@@ -140,11 +143,10 @@ public class EkaHiuServiceTest {
     }
 
     @Test
-    public void withNoStoredKeyAFreshOneIsStoredEncryptedThenRegistered_inTheRawFormWhenAskedFor() {
-        service = service("raw");
+    public void withNoStoredKeyAFreshOneIsStoredEncryptedThenRegisteredAsX509() {
         when(store.findDataFlowsByConsent(KEYSET)).thenReturn(List.of());
 
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<String> privateKey = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> publicKey = ArgumentCaptor.forClass(String.class);
@@ -152,17 +154,26 @@ public class EkaHiuServiceTest {
         assertTrue(privateKey.getValue().startsWith("enc:"));
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).patch(eq("/abdm/v1/hiu/keyset"), body.capture(), any());
-        byte[] raw = Base64.getDecoder().decode(body.getValue().get("public_key").asText());
-        assertEquals(65, raw.length);
-        assertEquals(0x04, raw[0]);
-        assertFalse(publicKey.getValue().equals(body.getValue().get("public_key").asText()));
+        assertEquals(publicKey.getValue(), body.getValue().get("public_key").asText());
+    }
+
+    // ABDM names the doctor asking on every consent request; there is no default doctor.
+    @Test
+    public void aConsentRequestWithoutTheRequestersNameOrRegistrationNumberIsABadRequest() {
+        for (String[] requester : new String[][]{{null, REGISTRATION}, {" ", REGISTRATION}, {REQUESTER, null}, {REQUESTER, ""}}) {
+            AbdmRequestException e = assertThrows(AbdmRequestException.class,
+                    () -> service.requestConsent("shyam", null, null, null, null, requester[0], requester[1]));
+            assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, e.getStatus());
+        }
+        verify(store, never()).insertConsentRequest(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verifyNoInteractions(eka);
     }
 
     @Test
     public void ekaRefusingTheConsentFailsTheRowWithItsMessage() {
         when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1040", "Invalid HIU ID"));
 
-        Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, null);
+        Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         verify(store).failConsent(eq(5L), contains("Invalid HIU ID"));
         verify(store, never()).setConsentRequestId(anyLong(), any(), any());
@@ -173,7 +184,7 @@ public class EkaHiuServiceTest {
     public void ekaRefusingOurKeyFailsTheRowAndNoConsentIsSent() {
         when(eka.patch(eq("/abdm/v1/hiu/keyset"), any(), any())).thenThrow(new EkaCallException(400, null, "Invalid public key"));
 
-        Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, null);
+        Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         verify(store).failConsent(eq(5L), contains("Invalid public key"));
         verify(eka, never()).post(eq(EkaHiuService.CONSENT_CREATE), any(), any());
@@ -186,7 +197,7 @@ public class EkaHiuServiceTest {
         when(hipStore.findSubjectsByAbhaAddress(any(), any())).thenReturn(List.of());
         when(store.findEkaPatientByAbhaAddress(any())).thenReturn(Optional.empty());
 
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
@@ -205,7 +216,7 @@ public class EkaHiuServiceTest {
         when(hipStore.findSubjectsByAbhaAddress(any(), any())).thenReturn(List.of());
         when(store.findEkaPatientByAbhaAddress(any())).thenReturn(Optional.of(new AbdmHiuStore.EkaPatientRow("oid-2", "subject-2")));
 
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
@@ -343,7 +354,7 @@ public class EkaHiuServiceTest {
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
         when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
 
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         verify(store).setConsentRequestId(5L, "abdm-A", "REQUESTED");
         verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
@@ -469,7 +480,7 @@ public class EkaHiuServiceTest {
     @Test
     public void theExpiryAskedForIsSentAndKept() {
         LocalDate expiry = LocalDate.now().plusDays(10);
-        service.requestConsent("shyam", null, null, null, null, null, expiry);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION, expiry);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
@@ -481,8 +492,8 @@ public class EkaHiuServiceTest {
 
     @Test
     public void anExpiryThatHasPassedOrAPurposeEkaCannotCarryIsRefused() {
-        assertThrows(AbdmRequestException.class, () -> service.requestConsent("shyam", null, null, null, null, null, LocalDate.now().minusDays(1)));
-        assertThrows(AbdmRequestException.class, () -> service.requestConsent("shyam", null, null, null, "BTG", null, null));
+        assertThrows(AbdmRequestException.class, () -> service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION, LocalDate.now().minusDays(1)));
+        assertThrows(AbdmRequestException.class, () -> service.requestConsent("shyam", null, null, null, "BTG", REQUESTER, REGISTRATION, null));
         verify(store, never()).insertConsentRequest(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
@@ -507,7 +518,7 @@ public class EkaHiuServiceTest {
         when(abhaEvents.findFirstBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(Optional.of(other));
         when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(other, abhaEvent("created", "oid-1", "shyam@sbx")));
 
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
@@ -521,7 +532,7 @@ public class EkaHiuServiceTest {
                 new AbdmHipStore.Subject(8, "subject-2", "Shyam K")));
         when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-2")).thenReturn(List.of(abhaEvent("created", "oid-2", "shyam@sbx")));
 
-        service.requestConsent("shyam", null, null, null, null, null);
+        service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
@@ -533,7 +544,7 @@ public class EkaHiuServiceTest {
     public void somethingThatIsNotAnAbhaAddressIsRefusedBeforeAnythingIsStoredOrSent() {
         for (String notAnAddress : List.of("Shyam Kumar", "rm -rf /", "shyam@abdm", ".shyam@sbx", "a@sbx")) {
             assertThrows(notAnAddress, AbdmRequestException.class,
-                    () -> service.requestConsent(notAnAddress, null, null, null, null, null));
+                    () -> service.requestConsent(notAnAddress, null, null, null, null, REQUESTER, REGISTRATION));
         }
         verify(store, never()).insertConsentRequest(any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verifyNoInteractions(eka);
@@ -644,9 +655,9 @@ public class EkaHiuServiceTest {
 
     // ---- helpers
 
-    private EkaHiuService service(String keyForm) {
-        return new EkaHiuService(cfg, store, eka, crypto, cipher, AbdmTestSupport.orgContext(), hipStore, abhaEvents,
-                AbdmTestSupport.noWaitRetry(), keyForm, "MH1001");
+    private EkaHiuService service() {
+        return new EkaHiuService(settings, store, eka, crypto, cipher, AbdmTestSupport.orgContext(), hipStore, abhaEvents,
+                AbdmTestSupport.noWaitRetry());
     }
 
     private void ekaListsConsents(String... consents) {

@@ -294,6 +294,84 @@ public class EkaTokenServiceTest {
         eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)));
     }
 
+    // Record sharing logs in with a client of its own, so the key handed to the phone for ABHA never acts for record sharing.
+    @Test
+    public void theSharingClientHasATokenOfItsOwnBesideTheM1One() throws Exception {
+        configure(ORG, "client-1", "secret-1", "sharing-1", "sharing-secret-1");
+        stubLogin("client-1", "access-1", 1800, 0);
+        stubLogin("sharing-1", "sharing-access-1", 1800, 0);
+
+        assertEquals("access-1", service.getAccessToken(ORG).getAccessToken());
+        assertEquals("sharing-access-1", service.getSharingToken(ORG).getAccessToken());
+        assertEquals("access-1", service.getSessionToken(ORG).getAccessToken());
+        assertEquals("sharing-access-1", service.getSharingToken(ORG).getAccessToken());
+
+        eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)).withRequestBody(matchingJsonPath("$.client_id", equalTo("client-1"))));
+        eka.verify(1, postRequestedFor(urlEqualTo(LOGIN_PATH)).withRequestBody(matchingJsonPath("$.client_id", equalTo("sharing-1"))));
+    }
+
+    @Test
+    public void withoutASharingClientNoSharingTokenIsIssued() throws Exception {
+        stubLogin("client-1", "access-1", 1800, 0);
+
+        try {
+            service.getSharingToken(ORG);
+            fail("expected EkaNotConfiguredException");
+        } catch (EkaNotConfiguredException expected) {
+        }
+        eka.verify(0, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
+    @Test
+    public void aFailedSharingLoginLeavesTheM1TokenAlone() throws Exception {
+        configure(ORG, "client-1", "secret-1", "sharing-1", "sharing-secret-1");
+        stubLogin("client-1", "access-1", 1800, 0);
+        eka.stubFor(post(urlEqualTo(LOGIN_PATH)).withRequestBody(matchingJsonPath("$.client_id", equalTo("sharing-1")))
+                .willReturn(aResponse().withStatus(401)));
+
+        try {
+            service.getSharingToken(ORG);
+            fail("expected EkaAuthException");
+        } catch (EkaAuthException expected) {
+        }
+        assertEquals("access-1", service.getAccessToken(ORG).getAccessToken());
+    }
+
+    @Test
+    public void aChangedSharingSecretRenewsOnlyTheSharingToken() throws Exception {
+        String m1Secret = cipher.encrypt("secret-1");
+        configureEncrypted(ORG, "client-1", m1Secret, "sharing-1", cipher.encrypt("sharing-secret-1"));
+        stubLogin("client-1", "access-1", 1800, 0);
+        stubLogin("sharing-1", "sharing-access-1", 1800, 0);
+        EkaToken m1 = service.getAccessToken(ORG);
+        service.getSharingToken(ORG);
+
+        configureEncrypted(ORG, "client-1", m1Secret, "sharing-1", cipher.encrypt("sharing-secret-2"));
+        eka.resetMappings();
+        stubLogin("sharing-1", "sharing-access-2", 1800, 0);
+
+        assertEquals("sharing-access-2", service.getSharingToken(ORG).getAccessToken());
+        assertSame(m1, service.getAccessToken(ORG));
+    }
+
+    @Test
+    public void aSlowSharingLoginDoesNotHoldUpTheM1TokenOfTheSameOrganisation() throws Exception {
+        configure(ORG, "client-1", "secret-1", "sharing-1", "sharing-secret-1");
+        stubLogin("sharing-1", "sharing-access-1", 1800, 3000);
+        stubLogin("client-1", "access-1", 1800, 0);
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        Future<EkaToken> slow = pool.submit(() -> service.getSharingToken(ORG));
+        Thread.sleep(300);
+
+        Instant start = Instant.now();
+        assertEquals("access-1", service.getAccessToken(ORG).getAccessToken());
+        Duration waited = Duration.between(start, Instant.now());
+
+        assertTrue("waited " + waited, waited.compareTo(Duration.ofSeconds(2)) < 0);
+        assertEquals("sharing-access-1", slow.get(10, TimeUnit.SECONDS).getAccessToken());
+        pool.shutdown();
+    }
+
     // Runs as staging and live do, with org.avni's additivity off, so the server's own lines stop at org.avni and never
     // reach ROOT. Captures at both, with everything at DEBUG.
     @Test
@@ -364,10 +442,23 @@ public class EkaTokenServiceTest {
     }
 
     private void configure(Long organisationId, String clientId, String clientSecret) throws EkaNotConfiguredException {
+        configure(organisationId, clientId, clientSecret, null, null);
+    }
+
+    private void configure(Long organisationId, String clientId, String clientSecret, String sharingClientId, String sharingClientSecret)
+            throws EkaNotConfiguredException {
+        configureEncrypted(organisationId, clientId, cipher.encrypt(clientSecret), sharingClientId,
+                sharingClientSecret == null ? null : cipher.encrypt(sharingClientSecret));
+    }
+
+    private void configureEncrypted(Long organisationId, String clientId, String encryptedSecret, String sharingClientId,
+                                    String encryptedSharingSecret) throws EkaNotConfiguredException {
         EkaSystemConfig config = mock(EkaSystemConfig.class);
         when(config.getBaseUrl()).thenAnswer(invocation -> baseUrl());
         when(config.getClientId()).thenReturn(clientId);
-        when(config.getEncryptedClientSecret()).thenReturn(cipher.encrypt(clientSecret));
+        when(config.getEncryptedClientSecret()).thenReturn(encryptedSecret);
+        when(config.getSharingClientId()).thenReturn(sharingClientId);
+        when(config.getEncryptedSharingClientSecret()).thenReturn(encryptedSharingSecret);
         when(repository.getEkaSystemConfig(organisationId)).thenReturn(config);
     }
 

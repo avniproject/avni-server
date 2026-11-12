@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 // DEMO-ONLY abdm-hackathon: never merged.
 // Scheduled ABDM upkeep, as the bridge's one organisation (AbdmOrgContext). Without abdm.system-user nothing runs.
@@ -18,6 +22,7 @@ public class AbdmHousekeepingJob {
     private static final int LINK_BATCH = 50;
 
     private final AbdmConfig cfg;
+    private final AbdmSettings settings;
     private final AbdmOrgContext orgContext;
     private final AbdmMessageLog messageLog;
     private final org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData;
@@ -27,7 +32,7 @@ public class AbdmHousekeepingJob {
     private final int messageRetentionDays;
 
     @Autowired
-    public AbdmHousekeepingJob(AbdmConfig cfg, AbdmOrgContext orgContext, AbdmMessageLog messageLog,
+    public AbdmHousekeepingJob(AbdmConfig cfg, AbdmSettings settings, AbdmOrgContext orgContext, AbdmMessageLog messageLog,
                                org.avni.server.service.abdm.hiu.AbdmHiuDataService hiuData,
                                org.avni.server.service.abdm.hip.AbdmHipStore hipStore,
                                org.avni.server.service.abdm.eka.EkaHipService ekaHip,
@@ -38,6 +43,7 @@ public class AbdmHousekeepingJob {
         this.ekaHiu = ekaHiu;
         this.hiuData = hiuData;
         this.cfg = cfg;
+        this.settings = settings;
         this.orgContext = orgContext;
         this.messageLog = messageLog;
         this.messageRetentionDays = messageRetentionDays;
@@ -54,19 +60,27 @@ public class AbdmHousekeepingJob {
         runAsOrg("retry of parked consent updates", ekaHiu::retryParkedUpdates);
     }
 
-    // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient.
+    // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient, under every
+    // HIP ID of the organisation; each patient once, however many of its HIP IDs it has visits waiting under.
     @Scheduled(cron = "${abdm.housekeeping.link-cron:0 */5 * * * *}", zone = "Asia/Kolkata")
     public void linkQueuedVisits() {
         runAsOrg("linking of queued visits", () -> {
-            String hipId = cfg.getHipId();
-            for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {
+            Map<String, List<String>> waiting = new LinkedHashMap<>();
+            settings.find().ifPresent(orgSettings -> {
+                for (String hipId : orgSettings.getHipIds()) {
+                    for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {
+                        waiting.computeIfAbsent(subjectUuid, s -> new ArrayList<>()).add(hipId);
+                    }
+                }
+            });
+            waiting.forEach((subjectUuid, hipIds) -> {
                 try {
                     ekaHip.linkCareContexts(subjectUuid, true);
                 } catch (RuntimeException e) {
-                    hipStore.failQueued(subjectUuid, hipId, e.getMessage());
+                    hipIds.forEach(hipId -> hipStore.failQueued(subjectUuid, hipId, e.getMessage()));
                     logger.info("ABDM: visits of subject {} not linked: {}", subjectUuid, e.getMessage());
                 }
-            }
+            });
         });
     }
 

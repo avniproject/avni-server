@@ -1,6 +1,7 @@
 package org.avni.server.service.abdm.hip;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmTime;
 import org.springframework.util.DigestUtils;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 // Small pieces both the HIP and the HIU flows use.
@@ -83,5 +85,13 @@ public final class AbdmFlows {
     public static String firstNonNull(String... values) {
         for (String v : values) if (v != null && !v.isBlank()) return v;
         return null;
+    }
+
+    // The HIP ID an Eka event names, when it is one of the organisation's; an event naming none is for the organisation's
+    // first. Empty for an event naming a HIP ID that is not the organisation's: it is not acted on.
+    public static Optional<String> hipOfEvent(EkaSystemConfig orgSettings, JsonNode data) {
+        String named = firstNonNull(AbdmJson.text(data, "hip_id"), AbdmJson.text(data, "hipId"));
+        if (named == null) return Optional.ofNullable(orgSettings.hipIdOr(null));
+        return orgSettings.hasHipId(named.trim()) ? Optional.of(named.trim()) : Optional.empty();
     }
 }

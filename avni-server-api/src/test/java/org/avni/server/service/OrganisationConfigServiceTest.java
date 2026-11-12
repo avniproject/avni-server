@@ -85,6 +85,28 @@ public class OrganisationConfigServiceTest {
     }
 
     @Test
+    public void shouldCheckIfAbdmRecordSharingEnabled() {
+        OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
+        long organisationId = 27L;
+        UserContext context = new UserContext();
+        Organisation organisation = new Organisation();
+        organisation.setId(organisationId);
+        context.setOrganisation(organisation);
+        UserContextHolder.create(context);
+
+        OrganisationConfig abhaOnly = new OrganisationConfig();
+        abhaOnly.setSettings(new JsonObject().with(OrganisationConfigSettingKey.enableAbha.name(), true));
+        OrganisationConfig withSharing = new OrganisationConfig();
+        withSharing.setSettings(new JsonObject().with(OrganisationConfigSettingKey.enableAbdmRecordSharing.name(), true));
+        when(organisationConfigRepository.findByOrganisationId(organisationId)).thenReturn(null).thenReturn(abhaOnly).thenReturn(withSharing);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null, null);
+
+        assertThat(organisationConfigService.isAbdmRecordSharingEnabled(), is(false));
+        assertThat(organisationConfigService.isAbdmRecordSharingEnabled(), is(false));
+        assertThat(organisationConfigService.isAbdmRecordSharingEnabled(), is(true));
+    }
+
+    @Test
     public void shouldRemoveVoidedAddressLevelTypeFromCustomRegistrationLocations() {
         // Setup
         OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);

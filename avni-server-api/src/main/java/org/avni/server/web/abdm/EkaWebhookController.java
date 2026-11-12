@@ -3,7 +3,6 @@ package org.avni.server.web.abdm;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.service.abdm.AbdmAsync;
 import org.avni.server.service.abdm.AbdmCallbackHeaders;
-import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmInboundEvents;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmMessageLog;
@@ -30,16 +29,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Eka Care posts every ABDM event here, on one URL, routed on the envelope's "event" field (spec section 5).
-// The raw body is kept as received, because the signature is over those exact bytes. The signature is checked per
-// abdm.eka.webhook-verify: off skips it, log records the outcome and carries on, enforce answers 401 to a bad one.
+// The raw body is kept as received, because the signature is over those exact bytes. Every event's signature is checked,
+// and a missing or bad one is answered 401 with nothing done; no setting turns the check off.
 // Then 200 at once, and the work goes to an AbdmAsync thread as the organisation: log the event, hand it to the HIP or
 // HIU handler. Handlers come through ObjectProvider, so the server starts with either side missing.
 // Eka's retry policy is undocumented, so delivery is taken as at-least-once: an event id (the top-level transaction_id)
 // already taken (abdm_inbound_event, AbdmInboundEvents) is dropped. An event whose handling fails is released from it, so
 // Eka's redelivery is handled.
-// With no abdm.eka.webhook-verify setting the signature is enforced.
 // No Avni user: this path alone is open (ResourceProtectionStatus), so the signature is the check.
 @RestController
 public class EkaWebhookController {
@@ -60,7 +57,6 @@ public class EkaWebhookController {
     private static final Set<String> DISCOVER_LINK_INIT = Set.of("carecontextdiscoverlinkinit");
     private static final Set<String> DISCOVER_LINK_CONFIRM = Set.of("contextdiscoverlinkconfirm", "carecontextdiscoverlinkconfirm");
 
-    private final AbdmConfig cfg;
     private final EkaWebhookVerifier verifier;
     private final AbdmAsync async;
     private final AbdmMessageLog messageLog;
@@ -70,11 +66,10 @@ public class EkaWebhookController {
     private final ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery;
 
     @Autowired
-    public EkaWebhookController(AbdmConfig cfg, EkaWebhookVerifier verifier, AbdmAsync async, AbdmMessageLog messageLog,
+    public EkaWebhookController(EkaWebhookVerifier verifier, AbdmAsync async, AbdmMessageLog messageLog,
                                 AbdmInboundEvents inboundEvents, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu,
                                 ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery) {
         this.discovery = discovery;
-        this.cfg = cfg;
         this.verifier = verifier;
         this.async = async;
         this.messageLog = messageLog;
@@ -87,16 +82,10 @@ public class EkaWebhookController {
     public ResponseEntity<Map<String, String>> receive(@RequestBody(required = false) byte[] body,
                                                        @RequestHeader(value = EkaWebhookVerifier.HEADER, required = false) String signature) {
         String rawBody = body == null ? "" : new String(body, StandardCharsets.UTF_8);
-        // No setting means enforce: an unsigned event is refused unless someone chose otherwise.
-        String verify = cfg.getEkaWebhookVerify() == null ? "enforce" : cfg.getEkaWebhookVerify().trim().toLowerCase(Locale.ROOT);
-        if (!"off".equals(verify)) {
-            EkaWebhookVerifier.Result result = verifier.verify(signature, rawBody);
-            if ("enforce".equals(verify) && !result.valid()) {
-                logger.warn("Eka webhook refused: {}", result.reason());
-                return answer(HttpStatus.UNAUTHORIZED, "rejected", result.reason());
-            }
-            if (result.valid()) logger.info("Eka webhook signature valid");
-            else logger.warn("Eka webhook signature not valid ({}); accepted because abdm.eka.webhook-verify={}", result.reason(), verify);
+        EkaWebhookVerifier.Result result = verifier.verify(signature, rawBody);
+        if (!result.valid()) {
+            logger.warn("Eka webhook refused: {}", result.reason());
+            return answer(HttpStatus.UNAUTHORIZED, "rejected", result.reason());
         }
 
         JsonNode event;

@@ -7,7 +7,7 @@ import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Gender;
 import org.avni.server.domain.Individual;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
@@ -34,13 +34,13 @@ public class AbdmHipLinkingServiceTest {
     private final AbdmHipStore store = mock(AbdmHipStore.class);
     private final IndividualRepository individualRepository = mock(IndividualRepository.class);
     private final AbhaLinkRepository abhaLinkRepository = mock(AbhaLinkRepository.class);
-    private AbdmConfig cfg;
+    private AbdmSettings settings;
     private AbdmHipLinkingService service;
 
     @Before
     public void setUp() {
-        cfg = AbdmTestSupport.config();
-        service = new AbdmHipLinkingService(cfg, store, AbdmTestSupport.orgContext(), individualRepository, abhaLinkRepository);
+        settings = AbdmTestSupport.settings();
+        service = new AbdmHipLinkingService(settings, store, AbdmTestSupport.orgContext(), individualRepository, abhaLinkRepository);
         Individual individual = individual();
         when(individualRepository.findByUuid("subject-1")).thenReturn(individual);
         AbhaLink link = new AbhaLink();
@@ -113,6 +113,55 @@ public class AbdmHipLinkingServiceTest {
         assertEquals("asha.devi@sbx", p.get("abhaAddress"));
         assertEquals(3L, p.get("encounters"));
         assertEquals(1L, p.get("linked"));
+    }
+
+    @Test
+    public void recordedVisitsCarryTheHipIdOfTheUserWhoRecordedThem() {
+        Individual patient = individual();
+        org.avni.server.domain.User recorder = new org.avni.server.domain.User();
+        recorder.setSettings(new org.avni.server.domain.JsonObject().with(org.avni.server.domain.UserSettings.ABHA_HIP_ID, "hip-2"));
+        patient.getEncounters().stream().filter(e -> e.getUuid().equals("enc-2")).forEach(e -> e.setCreatedBy(recorder));
+
+        List<AbdmHipLinkingService.Visit> visits = AbdmHipLinkingService.visits(patient);
+
+        assertEquals("hip-2", visits.get(0).recorderHipId());
+        assertEquals(null, visits.get(1).recorderHipId());
+    }
+
+    // A centre's visits are counted under each of the organisation's HIP IDs, and a patient listed once.
+    @Test
+    public void thePatientListCountsVisitsLinkedUnderEveryHipIdOfTheOrganisation() {
+        service = new AbdmHipLinkingService(AbdmTestSupport.settings(twoHips()), store, AbdmTestSupport.orgContext(), individualRepository,
+                abhaLinkRepository);
+        when(store.patientsWithAbha("hip-1")).thenReturn(List.of(new AbdmHipStore.PatientRow("subject-1", "Asha Devi", DIGITS, "asha.devi", 3, 1),
+                new AbdmHipStore.PatientRow("subject-2", "Ravi Kumar", DIGITS, "ravi.kumar", 1, 0)));
+        when(store.patientsWithAbha("hip-2")).thenReturn(List.of(new AbdmHipStore.PatientRow("subject-1", "Asha Devi", DIGITS, "asha.devi", 3, 2),
+                new AbdmHipStore.PatientRow("subject-2", "Ravi Kumar", DIGITS, "ravi.kumar", 1, 0)));
+
+        List<Map<String, Object>> patients = service.patientsWithAbha();
+
+        assertEquals(2, patients.size());
+        assertEquals("subject-1", patients.get(0).get("subjectUUID"));
+        assertEquals(3L, patients.get(0).get("linked"));
+        assertEquals(0L, patients.get(1).get("linked"));
+    }
+
+    @Test
+    public void aPatientsCareContextsAreShownUnderEveryHipIdOfTheOrganisation() {
+        service = new AbdmHipLinkingService(AbdmTestSupport.settings(twoHips()), store, AbdmTestSupport.orgContext(), individualRepository,
+                abhaLinkRepository);
+        when(store.findCareContexts(INDIVIDUAL_ID, "hip-1")).thenReturn(List.of(row("enc-1", "LINKED", null)));
+        when(store.findCareContexts(INDIVIDUAL_ID, "hip-2")).thenReturn(List.of(row("enc-2", "LINK_REQUESTED", null)));
+
+        List<Map<String, Object>> view = service.careContexts("subject-1");
+
+        assertEquals("LINK_REQUESTED", view.get(0).get("status"));
+        assertEquals("LINKED", view.get(1).get("status"));
+    }
+
+    private static org.avni.server.domain.extenalSystem.EkaSystemConfig twoHips() {
+        return AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
+                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")));
     }
 
     private static AbdmHipStore.CareContext row(String reference, String status, String linkRequestId) {

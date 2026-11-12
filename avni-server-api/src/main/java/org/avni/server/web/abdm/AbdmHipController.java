@@ -1,6 +1,7 @@
 package org.avni.server.web.abdm;
 
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
@@ -17,24 +18,28 @@ import java.util.List;
 import java.util.Map;
 
 // The webapp's HIP screens: patients with an ABHA, their visits as care contexts, and linking them through Eka.
+// Each endpoint checks the privilege, then answers 404 unless the organisation's record sharing is on (AbdmAccess).
 // Not @Transactional: linking calls Eka, and its webhook must see what was written before the call.
 @RestController
 public class AbdmHipController {
     private final AbdmHipLinkingService linkingService;
     private final EkaHipService ekaHipService;
     private final AccessControlService accessControlService;
+    private final AbdmAccess access;
 
     public AbdmHipController(AbdmHipLinkingService linkingService, EkaHipService ekaHipService,
-                             AccessControlService accessControlService) {
+                             AccessControlService accessControlService, AbdmAccess access) {
         this.linkingService = linkingService;
         this.ekaHipService = ekaHipService;
         this.accessControlService = accessControlService;
+        this.access = access;
     }
 
     @GetMapping("/web/abdm/hip/patients")
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> patients() {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        access.requireRecordSharingOn();
         return linkingService.patientsWithAbha();
     }
 
@@ -42,6 +47,7 @@ public class AbdmHipController {
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> careContexts(@PathVariable("uuid") String uuid) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        access.requireRecordSharingOn();
         return linkingService.careContexts(uuid);
     }
 
@@ -49,6 +55,7 @@ public class AbdmHipController {
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> link(@PathVariable("uuid") String uuid) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        access.requireRecordSharingOn();
         return ekaHipService.linkCareContexts(uuid);
     }
 

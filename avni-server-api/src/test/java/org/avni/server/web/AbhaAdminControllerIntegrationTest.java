@@ -180,6 +180,110 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
     }
 
     @Test
+    public void recordSharingSettingsAreStoredWithTheSharingSecretEncryptedAndNeverReturned() throws Exception {
+        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("TANUH", "TANUH-2")), null).getStatusCode());
+
+        String stored = storedConfig();
+        assertFalse(stored, stored.contains("test-sharing-secret"));
+        EkaSystemConfig config = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+        assertEquals(Map.of("TANUH", "First Centre", "TANUH-2", "Second Centre"), config.getHipNames());
+        assertEquals("hiu-1", config.getHiuId());
+        assertEquals("clinic-1", config.getClinicId());
+        assertEquals("doctor-1", config.getDoctorOid());
+        assertEquals("sharing-client-1", config.getSharingClientId());
+        assertEquals("test-sharing-secret", ekaCredentialCipher.decrypt(config.getEncryptedSharingClientSecret()));
+
+        ResponseEntity<String> response = get(DEMO);
+        JsonNode body = mapper.readTree(response.getBody());
+        assertEquals("First Centre", body.at("/hipNames/TANUH").asText());
+        assertEquals("hiu-1", body.get("hiuId").asText());
+        assertEquals("clinic-1", body.get("clinicId").asText());
+        assertEquals("doctor-1", body.get("doctorOid").asText());
+        assertEquals("sharing-client-1", body.get("sharingClientId").asText());
+        assertTrue(body.get("sharingClientSecretSet").asBoolean());
+        assertEquals(config.getWebhookId(), body.get("webhookId").asText());
+        assertFalse(response.getBody(), response.getBody().contains("test-sharing-secret"));
+        assertFalse(response.getBody(), response.getBody().toLowerCase().contains("encrypted"));
+    }
+
+    // The webhook ID is part of the address Eka is given: made once, by the server, and kept.
+    @Test
+    public void theWebhookIdIsMadeOnTheFirstSaveNeverTakenFromTheRequestAndNeverChanged() throws Exception {
+        Map<String, Object> request = config("TANUH");
+        request.put("webhookId", "chosen-by-the-caller");
+        assertEquals(HttpStatus.OK, put(DEMO, request, null).getStatusCode());
+        String webhookId = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID).getWebhookId();
+        assertNotNull(webhookId);
+        assertTrue(webhookId, webhookId.length() >= 20);
+        assertNotEquals("chosen-by-the-caller", webhookId);
+
+        assertEquals(HttpStatus.OK, put(DEMO, request, null).getStatusCode());
+        assertEquals(webhookId, externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID).getWebhookId());
+    }
+
+    @Test
+    public void omittedRecordSharingSettingsAreKept_andABlankOneIsCleared() throws Exception {
+        put(DEMO, withRecordSharing(config("TANUH", "TANUH-2")), null);
+        EkaSystemConfig first = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+
+        assertEquals(HttpStatus.OK, put(DEMO, config("TANUH", "TANUH-2"), null).getStatusCode());
+        EkaSystemConfig kept = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+        assertEquals(first.getHipNames(), kept.getHipNames());
+        assertEquals("hiu-1", kept.getHiuId());
+        assertEquals("clinic-1", kept.getClinicId());
+        assertEquals("doctor-1", kept.getDoctorOid());
+        assertEquals("sharing-client-1", kept.getSharingClientId());
+        assertEquals(first.getEncryptedSharingClientSecret(), kept.getEncryptedSharingClientSecret());
+
+        Map<String, Object> noHiu = config("TANUH");
+        noHiu.put("hiuId", "");
+        assertEquals(HttpStatus.OK, put(DEMO, noHiu, null).getStatusCode());
+        EkaSystemConfig cleared = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+        assertNull(cleared.getHiuId());
+        assertEquals("a centre no longer listed keeps no name", Map.of("TANUH", "First Centre"), cleared.getHipNames());
+
+        Map<String, Object> noSharingClient = config("TANUH");
+        noSharingClient.put("sharingClientId", "");
+        assertEquals(HttpStatus.OK, put(DEMO, noSharingClient, null).getStatusCode());
+        EkaSystemConfig noClient = externalSystemConfigRepository.getEkaSystemConfig(DEMO_ID);
+        assertNull(noClient.getSharingClientId());
+        assertNull("the secret belongs to the client cleared", noClient.getEncryptedSharingClientSecret());
+    }
+
+    // The stored sharing secret belongs to the stored sharing client and environment, as the M1 secret does.
+    @Test
+    public void aSharingClientWithoutItsSecretIs400() {
+        Map<String, Object> firstWithoutSecret = withRecordSharing(config("TANUH"));
+        firstWithoutSecret.remove("sharingClientSecret");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, firstWithoutSecret, null).getStatusCode());
+
+        assertEquals(HttpStatus.OK, put(DEMO, withRecordSharing(config("TANUH")), null).getStatusCode());
+        Map<String, Object> otherClient = config("TANUH");
+        otherClient.put("sharingClientId", "sharing-client-2");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherClient, null).getStatusCode());
+
+        Map<String, Object> otherEnvironment = config("TANUH");
+        otherEnvironment.put("environment", "production");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, otherEnvironment, null).getStatusCode());
+
+        Map<String, Object> secretWithoutClient = config("TANUH");
+        secretWithoutClient.put("sharingClientId", "");
+        secretWithoutClient.put("sharingClientSecret", "test-sharing-secret");
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, secretWithoutClient, null).getStatusCode());
+    }
+
+    @Test
+    public void aNameForACentreNotListedIs400() {
+        Map<String, Object> request = config("TANUH");
+        request.put("hipNames", Map.of("TANUH-9", "Elsewhere"));
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, request, null).getStatusCode());
+
+        Map<String, Object> blankName = config("TANUH");
+        blankName.put("hipNames", Map.of("TANUH", " "));
+        assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, blankName, null).getStatusCode());
+    }
+
+    @Test
     public void missingEnvironmentIs400() {
         Map<String, Object> request = config("TANUH");
         request.remove("environment");
@@ -276,6 +380,18 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         request.put("hipIds", Arrays.asList(hipIds));
         request.put("avniSystemUser", "demo-admin");
         request.put("webhookSigningKey", "test-signing-key");
+        return request;
+    }
+
+    private static Map<String, Object> withRecordSharing(Map<String, Object> request) {
+        Map<String, String> names = new HashMap<>(Map.of("TANUH", "First Centre", "TANUH-2", "Second Centre"));
+        names.keySet().retainAll((List<?>) request.get("hipIds"));
+        request.put("hipNames", names);
+        request.put("hiuId", "hiu-1");
+        request.put("clinicId", "clinic-1");
+        request.put("doctorOid", "doctor-1");
+        request.put("sharingClientId", "sharing-client-1");
+        request.put("sharingClientSecret", "test-sharing-secret");
         return request;
     }
 

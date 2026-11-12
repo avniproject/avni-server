@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.domain.AbhaEvent;
-import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmOrgContext;
+import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmTime;
 import org.avni.server.service.abdm.crypto.FideliusCrypto;
 import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
@@ -21,7 +22,6 @@ import org.avni.server.service.abha.EkaCredentialCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriUtils;
@@ -32,8 +32,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,13 +41,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Avni as HIU through Eka Care's ABDM Connect API, spec EKA_ABDM_SPEC.md section 3. Asks for consent
 // (consents/create), hears Eka's abha.consent_update and abha.hiu_data_push webhooks, decrypts each entry with our HIU
 // key and keeps the FHIR bundle (AbdmHiuStore), which the webapp's HIU screens read.
 // Eka pushes the records on its own once consent is granted: Avni sends no health-information request.
-// Field names are read with fallbacks wherever the spec marks them unverified. Never logs an ABHA address, an OID, a
-// key, a nonce, a body or a record.
+// The HIU ID, clinic, doctor and ABHA address suffix are the organisation's (AbdmSettings); the requester comes with each
+// request. Field names are read with fallbacks wherever the spec marks them unverified. Never logs an ABHA address, an
+// OID, a key, a nonce, a body or a record.
 @Component
 public class EkaHiuService implements EkaHiuEvents {
     private static final Logger logger = LoggerFactory.getLogger(EkaHiuService.class);
@@ -62,7 +60,7 @@ public class EkaHiuService implements EkaHiuEvents {
     public static final String ON_PUSH = "/abdm/v1/hiu/care-context/data/on-push";
     private static final String ENTRY = "/abdm/v1/hiu/care-context/data/%s/entries/%s";
 
-    // The HIU key is kept as an abdm_data_flow row of this consent id (consent_id is not null there). DEMO-ONLY.
+    // The HIU key is kept as an abdm_data_flow row of this consent id (consent_id is not null there).
     public static final String KEYSET_CONSENT_ID = "EKA-HIU-KEYSET";
     private static final String KEYSET_STATUS = "KEYSET";
 
@@ -79,7 +77,7 @@ public class EkaHiuService implements EkaHiuEvents {
             "DSRCH", "Disease Specific Health Research");
     private static final String DEFAULT_PURPOSE = "Care management";
 
-    private final AbdmConfig cfg;
+    private final AbdmSettings settings;
     private final AbdmHiuStore store;
     private final EkaAbdmClient eka;
     private final FideliusCrypto crypto;
@@ -88,8 +86,6 @@ public class EkaHiuService implements EkaHiuEvents {
     private final AbdmHipStore hipStore;
     private final AbhaEventRepository abhaEventRepository;
     private final AbdmRetry retry;
-    private final String keyForm;
-    private final String requesterRegistrationNumber;
     // Per organisation: the key Eka has been given during this run.
     private final Map<Long, Keyset> registered = new ConcurrentHashMap<>();
 
@@ -104,11 +100,9 @@ public class EkaHiuService implements EkaHiuEvents {
     }
 
     @Autowired
-    public EkaHiuService(AbdmConfig cfg, AbdmHiuStore store, EkaAbdmClient eka, FideliusCrypto crypto, EkaCredentialCipher cipher,
-                         AbdmOrgContext orgContext, AbdmHipStore hipStore, AbhaEventRepository abhaEventRepository, AbdmRetry retry,
-                         @Value("${abdm.eka.hiu-key-form:x509}") String keyForm,
-                         @Value("${abdm.eka.requester-registration-number:MH1001}") String requesterRegistrationNumber) {
-        this.cfg = cfg;
+    public EkaHiuService(AbdmSettings settings, AbdmHiuStore store, EkaAbdmClient eka, FideliusCrypto crypto, EkaCredentialCipher cipher,
+                         AbdmOrgContext orgContext, AbdmHipStore hipStore, AbhaEventRepository abhaEventRepository, AbdmRetry retry) {
+        this.settings = settings;
         this.store = store;
         this.eka = eka;
         this.crypto = crypto;
@@ -117,24 +111,29 @@ public class EkaHiuService implements EkaHiuEvents {
         this.hipStore = hipStore;
         this.abhaEventRepository = abhaEventRepository;
         this.retry = retry;
-        this.keyForm = keyForm;
-        this.requesterRegistrationNumber = requesterRegistrationNumber;
     }
 
     // ---- consent request (spec 3.2). Answers {uuid, status}, plus error when it failed.
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
-                                              String purposeCode, String requesterName) {
-        return requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName, null);
+                                              String purposeCode, String requesterName, String requesterRegistrationNumber) {
+        return requestConsent(abhaAddress, from, to, hiTypes, purposeCode, requesterName, requesterRegistrationNumber, null);
     }
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
-                                              String purposeCode, String requesterName, LocalDate expiryDate) {
-        String address = AbdmFlows.withSuffix(abhaAddress, cfg.getAbhaAddressSuffix());
+                                              String purposeCode, String requesterName, String requesterRegistrationNumber,
+                                              LocalDate expiryDate) {
+        EkaSystemConfig orgSettings = settings.current();
+        String suffix = orgSettings.getAbhaAddressSuffix();
+        String address = AbdmFlows.withSuffix(abhaAddress, suffix);
         if (address == null) throw AbdmRequestException.badRequest("abhaAddress is required");
-        if (!isAbhaAddress(address, cfg.getAbhaAddressSuffix())) {
-            throw AbdmRequestException.badRequest("Not an ABHA address: expected a name of letters, digits, '.' or '_' ending in "
-                    + (StringUtils.hasText(cfg.getAbhaAddressSuffix()) ? cfg.getAbhaAddressSuffix() : "@abdm or @sbx"));
+        if (!isAbhaAddress(address, suffix)) {
+            throw AbdmRequestException.badRequest("Not an ABHA address: expected a name of letters, digits, '.' or '_' ending in " + suffix);
+        }
+        // ABDM names the doctor asking on every consent request.
+        if (!StringUtils.hasText(requesterName)) throw AbdmRequestException.badRequest("requesterName is required");
+        if (!StringUtils.hasText(requesterRegistrationNumber)) {
+            throw AbdmRequestException.badRequest("requesterRegistrationNumber is required");
         }
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         LocalDate fromDate = from == null ? today.minusYears(5) : from;
@@ -148,8 +147,6 @@ public class EkaHiuService implements EkaHiuEvents {
         if (expiryDate != null && !expiryDate.isAfter(LocalDate.now(ZoneOffset.UTC))) {
             throw AbdmRequestException.badRequest("'expiry' must be after today");
         }
-        String requester = StringUtils.hasText(requesterName) ? requesterName
-                : StringUtils.hasText(cfg.getEkaRequesterName()) ? cfg.getEkaRequesterName() : "Dr. Demo";
 
         Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         Instant periodFrom = fromDate.atStartOfDay(ZoneOffset.UTC).toInstant();
@@ -162,7 +159,7 @@ public class EkaHiuService implements EkaHiuEvents {
         String uuid = UUID.randomUUID().toString();
         String initRequestId = UUID.randomUUID().toString();
         // Persist first: the request is on the HIU screen whatever Eka says.
-        store.insertConsentRequest(uuid, address, cfg.getHiuId(), purpose, String.join(",", types), periodFrom, periodTo, expiry,
+        store.insertConsentRequest(uuid, address, orgSettings.getHiuId(), purpose, String.join(",", types), periodFrom, periodTo, expiry,
                 initRequestId, REQUESTED);
         Long rowId = store.findConsentRequestByInitRequest(initRequestId).map(AbdmHiuStore.Consent::id).orElse(null);
 
@@ -191,18 +188,16 @@ public class EkaHiuService implements EkaHiuEvents {
         period.put("to", rfc3339(periodTo));
         period.put("expiry", rfc3339(expiry));
         ObjectNode hiu = body.putObject("hiu");
-        putIfText(hiu, "clinic_id", cfg.getEkaClinicId());
-        putIfText(hiu, "d_oid", cfg.getEkaDoctorOid());
+        putIfText(hiu, "clinic_id", orgSettings.getClinicId());
+        putIfText(hiu, "d_oid", orgSettings.getDoctorOid());
         ObjectNode req = hiu.putObject("requester");
-        req.put("name", requester);
-        if (StringUtils.hasText(requesterRegistrationNumber)) {
-            ObjectNode identifier = req.putObject("identifier");
-            identifier.put("system", "https://www.nmc.org.in");
-            identifier.put("type", "MR");
-            identifier.put("value", requesterRegistrationNumber);
-        }
-        if (!StringUtils.hasText(cfg.getEkaClinicId()) || !StringUtils.hasText(cfg.getEkaDoctorOid())) {
-            logger.warn("Eka consent request {}: abdm.eka.clinic-id or abdm.eka.doctor-oid is not set", uuid);
+        req.put("name", requesterName.trim());
+        ObjectNode identifier = req.putObject("identifier");
+        identifier.put("system", "https://www.nmc.org.in");
+        identifier.put("type", "MR");
+        identifier.put("value", requesterRegistrationNumber.trim());
+        if (!StringUtils.hasText(orgSettings.getClinicId()) || !StringUtils.hasText(orgSettings.getDoctorOid())) {
+            logger.warn("Eka consent request {}: the organisation's Eka settings have no clinicId or doctorOid", uuid);
         }
 
         try {
@@ -220,7 +215,7 @@ public class EkaHiuService implements EkaHiuEvents {
                 String abdmId = abdmIdOf(consentRequestId, patient, address);
                 if (abdmId != null && !abdmId.equals(consentRequestId)) {
                     store.setConsentRequestId(rowId, abdmId, REQUESTED);
-                    applyParked(abdmId, address, cfg.getHiuId());
+                    applyParked(abdmId, address, orgSettings.getHiuId());
                 }
             }
         } catch (RuntimeException e) {
@@ -249,11 +244,12 @@ public class EkaHiuService implements EkaHiuEvents {
         if (keyset != null) return keyset;
         keyset = store.findDataFlowsByConsent(KEYSET_CONSENT_ID).stream().findFirst().map(Keyset::of).orElseGet(this::newKeyset);
         ObjectNode body = AbdmJson.obj();
-        body.put("public_key", rawKeyForm() ? rawPoint(keyset.publicKeyX509()) : keyset.publicKeyX509());
+        // X.509 (SubjectPublicKeyInfo), the form Eka takes.
+        body.put("public_key", keyset.publicKeyX509());
         body.put("nonce", keyset.nonce());
         eka.patch(KEYSET_PATH, body, Map.of());
         registered.put(key, keyset);
-        logger.info("Eka HIU key {} registered with Eka ({})", keyset.id(), rawKeyForm() ? "raw point" : "X.509");
+        logger.info("Eka HIU key {} registered with Eka", keyset.id());
         return keyset;
     }
 
@@ -263,15 +259,6 @@ public class EkaHiuService implements EkaHiuEvents {
         String encrypted = cipher.encrypt(keys.privateKeyBase64());
         long id = store.insertDataFlow(KEYSET_CONSENT_ID, null, encrypted, keys.publicKeyX509Base64(), keys.nonceBase64(), expiry, KEYSET_STATUS);
         return new Keyset(id, encrypted, keys.publicKeyX509Base64(), keys.nonceBase64(), expiry);
-    }
-
-    private boolean rawKeyForm() {
-        return "raw".equalsIgnoreCase(keyForm == null ? null : keyForm.trim());
-    }
-
-    private static String rawPoint(String x509Base64) {
-        org.bouncycastle.jce.interfaces.ECPublicKey key = (org.bouncycastle.jce.interfaces.ECPublicKey) FideliusCrypto.parsePublicKey(x509Base64);
-        return Base64.getEncoder().encodeToString(key.getQ().getEncoded(false));
     }
 
     // Every key a push may have been encrypted to: this run's first, then every stored one, newest first.
@@ -454,7 +441,7 @@ public class EkaHiuService implements EkaHiuEvents {
     }
 
     private String hiuIdOf(AbdmHiuStore.Consent request) {
-        return request.hiuId() != null ? request.hiuId() : cfg.getHiuId();
+        return request.hiuId() != null ? request.hiuId() : settings.current().getHiuId();
     }
 
     // ---- abha.hiu_data_push (spec 3.7, 3.8)
@@ -645,9 +632,10 @@ public class EkaHiuService implements EkaHiuEvents {
             ObjectNode p = body.putObject("patient");
             p.put("oid", patient.oid());
             p.put("health_id", abhaAddress);
+            EkaSystemConfig orgSettings = settings.current();
             ObjectNode hiu = body.putObject("hiu");
-            putIfText(hiu, "clinic_id", cfg.getEkaClinicId());
-            putIfText(hiu, "d_oid", cfg.getEkaDoctorOid());
+            putIfText(hiu, "clinic_id", orgSettings.getClinicId());
+            putIfText(hiu, "d_oid", orgSettings.getDoctorOid());
             EkaResponse response = eka.post(CONSENT_LIST, body, patientHeaders(patient.oid(), patient.subjectUuid()));
             JsonNode consents = response == null ? null
                     : firstPresent(AbdmJson.at(response.body(), "consents"), AbdmJson.at(response.body(), "data.consents"));
@@ -658,15 +646,14 @@ public class EkaHiuService implements EkaHiuEvents {
         }
     }
 
-    // NHA's pattern for an ABHA address, with the environment's suffix (@sbx in the sandbox, @abdm in production).
+    // NHA's pattern for an ABHA address, ending in the suffix of the organisation's Eka environment.
     static boolean isAbhaAddress(String address, String suffix) {
-        if (address == null) return false;
+        if (address == null || suffix == null) return false;
         int at = address.lastIndexOf('@');
         if (at < 0) return false;
         String name = address.substring(0, at);
         String domain = address.substring(at);
-        boolean domainOk = StringUtils.hasText(suffix) ? domain.equalsIgnoreCase(suffix) : domain.matches("@(abdm|sbx)");
-        return domainOk && name.matches("[a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]");
+        return domain.equalsIgnoreCase(suffix) && name.matches("[a-zA-Z0-9][a-zA-Z0-9_.]+[a-zA-Z0-9]");
     }
 
     // ---- patient
@@ -675,7 +662,7 @@ public class EkaHiuService implements EkaHiuEvents {
     // never a later lookup of another ABHA left unsaved; else the latest ABHA event naming the address. Read-only.
     EkaPatient findPatient(String address, String asTyped) {
         try {
-            List<AbdmHipStore.Subject> subjects = hipStore.findSubjectsByAbhaAddress(address, cfg.getAbhaAddressSuffix());
+            List<AbdmHipStore.Subject> subjects = hipStore.findSubjectsByAbhaAddress(address, settings.current().getAbhaAddressSuffix());
             if (subjects.size() > 1) {
                 // Never guessed between: which of them the request is for cannot be told from the address.
                 logger.warn("Eka patient lookup: {} patients hold this ABHA address; none is picked", subjects.size());
@@ -702,11 +689,13 @@ public class EkaHiuService implements EkaHiuEvents {
 
     // ---- small pieces
 
+    // An HIU call speaks for no one centre: it carries the organisation's first HIP ID.
     private Map<String, String> patientHeaders(String oid, String partnerPatientId) {
         Map<String, String> headers = new LinkedHashMap<>();
         if (StringUtils.hasText(oid)) headers.put(EkaAbdmClient.H_PATIENT_OID, oid);
         if (StringUtils.hasText(partnerPatientId)) headers.put(EkaAbdmClient.H_PARTNER_PATIENT_ID, partnerPatientId);
-        if (StringUtils.hasText(cfg.getHipId())) headers.put(EkaAbdmClient.H_HIP_ID, cfg.getHipId());
+        String hipId = settings.current().hipIdOr(null);
+        if (StringUtils.hasText(hipId)) headers.put(EkaAbdmClient.H_HIP_ID, hipId);
         return headers;
     }
 

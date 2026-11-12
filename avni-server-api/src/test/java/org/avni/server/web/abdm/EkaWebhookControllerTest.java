@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmAsync;
-import org.avni.server.service.abdm.AbdmConfig;
 import org.avni.server.service.abdm.AbdmJson;
 import org.avni.server.service.abdm.AbdmInboundEvents;
 import org.avni.server.service.abdm.AbdmMessageLog;
@@ -42,12 +41,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public class EkaWebhookControllerTest {
     private static final long NOW = 1761370000L;
     private static final String KEY = "local-test-signing-key";
 
-    private AbdmConfig cfg;
     private ExternalSystemConfigRepository configRepository;
     private EkaCredentialCipher cipher;
     private AbdmAsync async;
@@ -62,8 +59,6 @@ public class EkaWebhookControllerTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        cfg = mock(AbdmConfig.class);
-        when(cfg.getEkaWebhookVerify()).thenReturn("log");
         AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
         when(orgContext.organisationId()).thenReturn(1L);
         doAnswer(inv -> {
@@ -92,7 +87,7 @@ public class EkaWebhookControllerTest {
         discovery = mock(org.avni.server.service.abdm.eka.EkaHipDiscovery.class);
         ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discoveryProvider = mock(ObjectProvider.class);
         when(discoveryProvider.getIfAvailable()).thenReturn(discovery);
-        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(cfg, verifier, async, messageLog, inboundEvents, hipProvider, hiuProvider,
+        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(verifier, async, messageLog, inboundEvents, hipProvider, hiuProvider,
                 discoveryProvider)).build();
     }
 
@@ -112,6 +107,10 @@ public class EkaWebhookControllerTest {
         var request = post(AbdmPaths.IN_EKA_WEBHOOK).contentType(MediaType.APPLICATION_JSON).content(body);
         if (signature != null) request.header(EkaWebhookVerifier.HEADER, signature);
         return mvc.perform(request);
+    }
+
+    private ResultActions sendSigned(String body) throws Exception {
+        return send(body, signature(NOW, body));
     }
 
     private static String renamed(String body, String eventName, String id) {
@@ -158,10 +157,10 @@ public class EkaWebhookControllerTest {
         String link = event("link-care-context.json");
         String fetch = event("hip-data-fetch.json");
 
-        send(renamed(link, "LINK_CARE_CONTEXT", "v-1"), null).andExpect(status().isOk());
-        send(renamed(link, "abha.care_context_link", "v-2"), null).andExpect(status().isOk());
-        send(renamed(fetch, "abdm.hip-data-fetch", "v-3"), null).andExpect(status().isOk());
-        send(renamed(fetch, "abha.consentUpdate", "v-4"), null).andExpect(status().isOk());
+        sendSigned(renamed(link, "LINK_CARE_CONTEXT", "v-1")).andExpect(status().isOk());
+        sendSigned(renamed(link, "abha.care_context_link", "v-2")).andExpect(status().isOk());
+        sendSigned(renamed(fetch, "abdm.hip-data-fetch", "v-3")).andExpect(status().isOk());
+        sendSigned(renamed(fetch, "abha.consentUpdate", "v-4")).andExpect(status().isOk());
 
         verify(hip, times(2)).linkCareContext(any());
         verify(hip).hipDataFetch(any());
@@ -182,7 +181,7 @@ public class EkaWebhookControllerTest {
     public void theDiscoveryConfirmEventIsNotTakenForALinkStatus() throws Exception {
         String body = renamed(event("link-care-context.json"), "abha.context_discover_link_confirm", "confirm-1");
 
-        send(body, null).andExpect(status().isOk());
+        sendSigned(body).andExpect(status().isOk());
 
         verifyNoInteractions(hip, hiu);
         verify(discovery).linkConfirm(any());
@@ -191,8 +190,8 @@ public class EkaWebhookControllerTest {
     // USER_INIT_LINK_601 to 607: the three discovery events reach patient-led linking (EKA_ABDM_SPEC.md 2.7).
     @Test
     public void eachDiscoveryEventGoesToPatientLedLinking() throws Exception {
-        send(renamed(event("link-care-context.json"), "abha.care_context_discover", "d-1"), null).andExpect(status().isOk());
-        send(renamed(event("link-care-context.json"), "abha.care_context_discover_link_init", "d-2"), null).andExpect(status().isOk());
+        sendSigned(renamed(event("link-care-context.json"), "abha.care_context_discover", "d-1")).andExpect(status().isOk());
+        sendSigned(renamed(event("link-care-context.json"), "abha.care_context_discover_link_init", "d-2")).andExpect(status().isOk());
 
         verify(discovery).discover(any());
         verify(discovery).linkInit(any());
@@ -200,17 +199,7 @@ public class EkaWebhookControllerTest {
     }
 
     @Test
-    public void inLogModeABadSignatureIsStillAcceptedAndHandled() throws Exception {
-        String body = event("link-care-context.json");
-
-        send(body, "t=" + NOW + ",v1=deadbeef").andExpect(status().isOk());
-
-        verify(hip).linkCareContext(any());
-    }
-
-    @Test
-    public void inEnforceModeABadSignatureIsRefusedAndNothingIsHandled() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("enforce");
+    public void aBadSignatureIsRefusedAndNothingIsHandled() throws Exception {
         String body = event("link-care-context.json");
 
         send(body, "t=" + NOW + ",v1=deadbeef").andExpect(status().isUnauthorized());
@@ -219,17 +208,14 @@ public class EkaWebhookControllerTest {
     }
 
     @Test
-    public void inEnforceModeAMissingSignatureIsRefused() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("enforce");
-
+    public void aMissingSignatureIsRefused() throws Exception {
         send(event("link-care-context.json"), null).andExpect(status().isUnauthorized());
 
         verifyNoInteractions(hip);
     }
 
     @Test
-    public void inEnforceModeAStaleTimestampIsRefusedEvenWithTheRightKey() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("enforce");
+    public void aStaleTimestampIsRefusedEvenWithTheRightKey() throws Exception {
         String body = event("link-care-context.json");
 
         send(body, signature(NOW - 181, body)).andExpect(status().isUnauthorized());
@@ -239,8 +225,7 @@ public class EkaWebhookControllerTest {
     }
 
     @Test
-    public void inEnforceModeAChangedBodyIsRefused() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("enforce");
+    public void aChangedBodyIsRefused() throws Exception {
         String body = event("link-care-context.json");
 
         send(body.replace("LINKED", "ERRORED"), signature(NOW, body)).andExpect(status().isUnauthorized());
@@ -249,8 +234,7 @@ public class EkaWebhookControllerTest {
     }
 
     @Test
-    public void inEnforceModeAValidSignatureWithinThreeMinutesIsAccepted() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("enforce");
+    public void aValidSignatureWithinThreeMinutesIsAccepted() throws Exception {
         String body = event("link-care-context.json");
 
         send(body, signature(NOW - 179, body)).andExpect(status().isOk());
@@ -259,8 +243,7 @@ public class EkaWebhookControllerTest {
     }
 
     @Test
-    public void inEnforceModeNoSigningKeyMeansRefused() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("enforce");
+    public void noSigningKeyMeansRefused() throws Exception {
         EkaSystemConfig noKey = mock(EkaSystemConfig.class);
         when(configRepository.getEkaSystemConfig(1L)).thenReturn(noKey);
         String body = event("link-care-context.json");
@@ -268,16 +251,6 @@ public class EkaWebhookControllerTest {
         send(body, signature(NOW, body)).andExpect(status().isUnauthorized());
 
         verifyNoInteractions(hip);
-    }
-
-    @Test
-    public void offModeSkipsTheCheckEntirely() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn("off");
-
-        send(event("link-care-context.json"), null).andExpect(status().isOk());
-
-        verify(hip).linkCareContext(any());
-        verifyNoInteractions(configRepository, cipher);
     }
 
     @Test
@@ -327,19 +300,19 @@ public class EkaWebhookControllerTest {
         verify(hip, times(2)).linkCareContext(any());
     }
 
-    // With no setting, an unsigned webhook used to be accepted (the default was log).
+    // H3: no setting turns the check off; an unsigned event of every kind is refused and nothing is handled.
     @Test
-    public void withNoModeConfiguredAnUnsignedEventIsRefused() throws Exception {
-        when(cfg.getEkaWebhookVerify()).thenReturn(null);
+    public void anUnsignedEventIsAlwaysRefused() throws Exception {
+        for (String name : new String[]{"link-care-context.json", "hip-data-fetch.json", "consent-update.json", "hiu-data-push-webhook.json"}) {
+            send(event(name), null).andExpect(status().isUnauthorized());
+        }
 
-        send(event("link-care-context.json"), null).andExpect(status().isUnauthorized());
-
-        verifyNoInteractions(hip);
+        verifyNoInteractions(async, messageLog, hip, hiu, discovery);
     }
 
     @Test
     public void aBodyThatIsNotJsonIsABadRequest() throws Exception {
-        send("not json", null).andExpect(status().isBadRequest());
+        sendSigned("not json").andExpect(status().isBadRequest());
 
         verifyNoInteractions(hip, hiu, async);
     }
