@@ -310,7 +310,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         parameters.put("searchAllPath", searchAllPath(searchString));
         whereClauses.add("(" + FULL_NAME + " ilike :searchAll" +
                 " or " + answersContainSearchAll("i.observations") +
-                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and " + answersContainSearchAll("penr.observations") + "))");
+                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false" + exitRule() + tickedProgramsRule() + " and " + answersContainSearchAll("penr.observations") + "))");
         return (T) this;
     }
 
@@ -535,8 +535,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
         List<String> conditions = new ArrayList<>();
         if (hasPrograms) {
-            hasProgramFilter = true;
-            addParameter("programFilterUuids", programUuids);
+            withTickedPrograms(programUuids);
             conditions.add("exists (select 1 from program_enrolment pf_penr join program pf_p on pf_p.id = pf_penr.program_id" +
                     " where pf_penr.individual_id = i.id and pf_penr.is_voided is false and pf_p.uuid in (:programFilterUuids)" +
                     (includeExited ? "" : " and pf_penr.program_exit_date_time is null") + ")");
@@ -579,15 +578,34 @@ public class BaseSubjectSearchQueryBuilder<T> {
     }
 
     protected String programEnrolmentFilter() {
-        return withExitRule(PROGRAM_ENROLMENT_FILTER);
+        return withTickedProgramsRule(withExitRule(PROGRAM_ENROLMENT_FILTER));
     }
 
     protected String programEncounterFilter() {
-        return withExitRule(PROGRAM_ENCOUNTER_FILTER);
+        return withTickedProgramsRule(withExitRule(PROGRAM_ENCOUNTER_FILTER));
     }
 
     private String withExitRule(String filter) {
-        return includeExitedEnrolments ? filter : filter.replace("penr.is_voided is false\n", "penr.is_voided is false and penr.program_exit_date_time is null\n");
+        return filter.replace("penr.is_voided is false\n", "penr.is_voided is false" + exitRule() + "\n");
+    }
+
+    private String exitRule() {
+        return includeExitedEnrolments ? "" : " and penr.program_exit_date_time is null";
+    }
+
+    public T withTickedPrograms(List<String> programUuids) {
+        if (programUuids == null || programUuids.isEmpty()) return (T) this;
+        hasProgramFilter = true;
+        addParameter("programFilterUuids", programUuids);
+        return (T) this;
+    }
+
+    private String tickedProgramsRule() {
+        return hasProgramFilter ? " and penr.program_id in (select pf_program.id from program pf_program where pf_program.uuid in (:programFilterUuids))" : "";
+    }
+
+    private String withTickedProgramsRule(String filter) {
+        return filter.substring(0, filter.length() - 1) + tickedProgramsRule() + "\n";
     }
 
     protected String rangeCondition(RangeFilter rangeFilter, String parameterPrefix, String minFilter, String maxFilter) {
@@ -617,12 +635,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     private List<String> allWhereClauses() {
         List<String> clauses = new ArrayList<>(whereClauses);
         if (!programEnrolmentConditions.isEmpty()) {
-            List<String> conditions = new ArrayList<>();
-            if (hasProgramFilter) {
-                conditions.add("penr.program_id in (select pf_program.id from program pf_program where pf_program.uuid in (:programFilterUuids))");
-            }
-            conditions.addAll(programEnrolmentConditions);
-            clauses.add(generateWhereClause(programEnrolmentFilter(), String.join(" and ", conditions)));
+            clauses.add(generateWhereClause(programEnrolmentFilter(), String.join(" and ", programEnrolmentConditions)));
         }
         return clauses;
     }

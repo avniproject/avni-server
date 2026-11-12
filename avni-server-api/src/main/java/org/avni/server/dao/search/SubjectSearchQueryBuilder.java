@@ -41,6 +41,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
         return this
                 .withTimeZone(request.getTimeZone())
                 .withIncludeExitedEnrolments(request.isIncludeExitedEnrolments())
+                .withTickedPrograms(request.getPrograms())
                 .withNameFilter(request.getName())
                 .withConceptsFilter(request.getConcept())
                 .withSearchAll(request.getSearchAll())
