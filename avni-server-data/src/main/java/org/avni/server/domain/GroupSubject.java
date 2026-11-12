@@ -8,7 +8,6 @@ import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Formula;
 import org.joda.time.DateTime;
 
 import java.util.Date;
@@ -29,10 +28,10 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @JoinColumn(name = "member_subject_id")
     private Individual memberSubject;
 
-    @Formula("(select i.uuid from individual i where i.id = group_subject_id)")
+    @Transient
     private String linkedGroupSubjectUuid;
 
-    @Formula("(select i.uuid from individual i where i.id = member_subject_id)")
+    @Transient
     private String linkedMemberSubjectUuid;
 
     @NotNull
@@ -191,5 +190,13 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getGroupSubject(), this.getMemberSubject());
+    }
+
+    public void setLinkedGroupSubjectUuid(String linkedGroupSubjectUuid) {
+        this.linkedGroupSubjectUuid = linkedGroupSubjectUuid;
+    }
+
+    public void setLinkedMemberSubjectUuid(String linkedMemberSubjectUuid) {
+        this.linkedMemberSubjectUuid = linkedMemberSubjectUuid;
     }
 }

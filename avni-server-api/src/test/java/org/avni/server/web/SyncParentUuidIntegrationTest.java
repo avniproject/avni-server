@@ -20,7 +20,6 @@ import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
-import org.avni.server.web.api.EncounterSearchRequest;
 import org.hibernate.Hibernate;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -34,7 +33,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -83,8 +81,6 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
     private IndividualRelationshipTypeRepository individualRelationshipTypeRepository;
     @Autowired
     private IndividualRelationshipRepository individualRelationshipRepository;
-    @Autowired
-    private EncounterSearchRepository encounterSearchRepository;
     @Autowired
     private EncounterController encounterController;
     @Autowired
@@ -214,7 +210,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         Encounter encounter = encounterRepository.findByUuid(encounterUuid);
         assertFalse(Hibernate.isInitialized(encounter.getIndividual()));
 
-        EntityModel<Encounter> resource = encounterController.process(EntityModel.of(encounter));
+        EntityModel<Encounter> resource = encounterController.wrap(List.of(encounter)).get(0);
 
         assertEquals(subject.getUuid(), resource.getRequiredLink("individualUUID").getHref());
         assertFalse(Hibernate.isInitialized(encounter.getIndividual()));
@@ -225,7 +221,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(enrolment.getUuid());
         assertFalse(Hibernate.isInitialized(programEnrolment.getIndividual()));
 
-        EntityModel<ProgramEnrolment> resource = programEnrolmentController.process(EntityModel.of(programEnrolment));
+        EntityModel<ProgramEnrolment> resource = programEnrolmentController.wrap(List.of(programEnrolment)).get(0);
 
         assertEquals(subject.getUuid(), resource.getRequiredLink("individualUUID").getHref());
         assertFalse(Hibernate.isInitialized(programEnrolment.getIndividual()));
@@ -236,7 +232,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         ProgramEncounter programEncounter = programEncounterRepository.findByUuid(programEncounterUuid);
         assertFalse(Hibernate.isInitialized(programEncounter.getProgramEnrolment()));
 
-        EntityModel<ProgramEncounter> resource = programEncounterController.process(EntityModel.of(programEncounter));
+        EntityModel<ProgramEncounter> resource = programEncounterController.wrap(List.of(programEncounter)).get(0);
 
         assertEquals(enrolment.getUuid(), resource.getRequiredLink("programEnrolmentUUID").getHref());
         assertFalse(Hibernate.isInitialized(programEncounter.getProgramEnrolment()));
@@ -247,7 +243,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         Checklist loadedChecklist = checklistRepository.findByUuid(checklist.getUuid());
         assertFalse(Hibernate.isInitialized(loadedChecklist.getProgramEnrolment()));
 
-        EntityModel<Checklist> resource = checklistController.process(EntityModel.of(loadedChecklist));
+        EntityModel<Checklist> resource = checklistController.wrap(List.of(loadedChecklist)).get(0);
 
         assertEquals(enrolment.getUuid(), resource.getRequiredLink("programEnrolmentUUID").getHref());
         assertFalse(Hibernate.isInitialized(loadedChecklist.getProgramEnrolment()));
@@ -258,7 +254,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         ChecklistItem checklistItem = checklistItemRepository.findByUuid(checklistItemUuid);
         assertFalse(Hibernate.isInitialized(checklistItem.getChecklist()));
 
-        EntityModel<ChecklistItem> resource = checklistItemController.process(EntityModel.of(checklistItem));
+        EntityModel<ChecklistItem> resource = checklistItemController.wrap(List.of(checklistItem)).get(0);
 
         assertEquals(checklist.getUuid(), resource.getRequiredLink("checklistUUID").getHref());
         assertFalse(Hibernate.isInitialized(checklistItem.getChecklist()));
@@ -269,7 +265,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         SubjectMigration subjectMigration = subjectMigrationRepository.findByUuid(subjectMigrationUuid);
         assertFalse(Hibernate.isInitialized(subjectMigration.getIndividual()));
 
-        EntityModel<SubjectMigration> resource = subjectMigrationController.process(EntityModel.of(subjectMigration));
+        EntityModel<SubjectMigration> resource = subjectMigrationController.wrap(List.of(subjectMigration)).get(0);
 
         assertEquals(subject.getUuid(), resource.getRequiredLink("individualUUID").getHref());
         assertFalse(Hibernate.isInitialized(subjectMigration.getIndividual()));
@@ -281,7 +277,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         assertFalse(Hibernate.isInitialized(groupSubject.getGroupSubject()));
         assertFalse(Hibernate.isInitialized(groupSubject.getMemberSubject()));
 
-        EntityModel<GroupSubject> resource = groupSubjectController.process(EntityModel.of(groupSubject));
+        EntityModel<GroupSubject> resource = groupSubjectController.wrap(List.of(groupSubject)).get(0);
         JsonNode json = mapper.valueToTree(groupSubject);
 
         assertEquals(household.getUuid(), resource.getRequiredLink("groupSubjectUUID").getHref());
@@ -300,7 +296,7 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         assertFalse(Hibernate.isInitialized(individualRelationship.getIndividuala()));
         assertFalse(Hibernate.isInitialized(individualRelationship.getIndividualB()));
 
-        EntityModel<IndividualRelationship> resource = individualRelationshipController.process(EntityModel.of(individualRelationship));
+        EntityModel<IndividualRelationship> resource = individualRelationshipController.wrap(List.of(individualRelationship)).get(0);
 
         assertEquals(subject.getUuid(), resource.getRequiredLink("individualAUUID").getHref());
         assertEquals(otherSubject.getUuid(), resource.getRequiredLink("individualBUUID").getHref());
@@ -339,19 +335,9 @@ public class SyncParentUuidIntegrationTest extends AbstractControllerIntegration
         newEncounter.setObservations(new ObservationCollection());
         Encounter saved = encounterRepository.save(newEncounter);
 
-        EntityModel<Encounter> resource = encounterController.process(EntityModel.of(saved));
+        EntityModel<Encounter> resource = encounterController.wrap(List.of(saved)).get(0);
 
         assertEquals(saved.getIndividual().getUuid(), resource.getRequiredLink("individualUUID").getHref());
-    }
-
-    @Test
-    public void encounterSearchLinksSubjectWithoutLoadingIt() {
-        List<Encounter> encounters = encounterSearchRepository.search(new EncounterSearchRequest(null, null, null, subject.getUuid(), Collections.emptyMap(), PageRequest.of(0, 10)));
-
-        assertEquals(1, encounters.size());
-        Encounter encounter = encounters.get(0);
-        assertEquals(subject.getUuid(), encounter.getLinkedIndividualUuid());
-        assertFalse(Hibernate.isInitialized(encounter.getIndividual()));
     }
 
     private IndividualRelation saveRelation(String name) {

@@ -5,6 +5,7 @@ import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.ChecklistItemDetailRepository;
 import org.avni.server.dao.ChecklistItemRepository;
 import org.avni.server.dao.ChecklistRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Checklist;
@@ -28,6 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
@@ -40,9 +42,11 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
     private final ChecklistDetailRepository checklistDetailRepository;
     private final UserService userService;
     private ScopeBasedSyncService<ChecklistItem> scopeBasedSyncService;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public ChecklistItemController(ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, ObservationService observationService, ChecklistItemDetailRepository checklistItemDetailRepository, ChecklistDetailRepository checklistDetailRepository, UserService userService, ScopeBasedSyncService<ChecklistItem> scopeBasedSyncService) {
+    public ChecklistItemController(ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, ObservationService observationService, ChecklistItemDetailRepository checklistItemDetailRepository, ChecklistDetailRepository checklistDetailRepository, UserService userService, ScopeBasedSyncService<ChecklistItem> scopeBasedSyncService, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.checklistRepository = checklistRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.observationService = observationService;
@@ -129,4 +133,8 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
         return resource;
     }
 
+    @Override
+    public void beforeProcess(List<ChecklistItem> checklistItems) {
+        linkedParentUuidRepository.linkChecklistItems(checklistItems);
+    }
 }

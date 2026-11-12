@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.service.SubjectSyncResponseBuilderService;
 import org.avni.server.web.resourceProcessors.*;
 import org.avni.server.web.response.SyncSubjectResponse;
@@ -20,13 +21,16 @@ import java.util.HashMap;
 public class SyncSubjectController{
 
     private SubjectSyncResponseBuilderService subjectSyncResponseBuilderService;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public SyncSubjectController(SubjectSyncResponseBuilderService subjectSyncResponseBuilderService) {
+    public SyncSubjectController(SubjectSyncResponseBuilderService subjectSyncResponseBuilderService, LinkedParentUuidRepository linkedParentUuidRepository) {
         this.subjectSyncResponseBuilderService = subjectSyncResponseBuilderService;
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
     }
 
     public EntityModel<HashMap<String, Object>> process(SyncSubjectResponse syncSubjectResponse) {
+        linkParentUuids(syncSubjectResponse);
         HashMap<String, Object> result = new HashMap<>();
         result.put("individual", new IndividualResourceProcessor().process(EntityModel.of(syncSubjectResponse.getIndividual())));
         result.put("programEnrolments", syncSubjectResponse.getProgramEnrolments().stream().map(programEnrolment -> new ProgramEnrolmentResourceProcessor().process(EntityModel.of(programEnrolment))));
@@ -44,5 +48,15 @@ public class SyncSubjectController{
     @ResponseBody
     public ResponseEntity<EntityModel<HashMap<String, Object>>> getSubjectDetailsForSync(@PathVariable String uuid) {
         return ResponseEntity.ok(process(subjectSyncResponseBuilderService.getSubject(uuid))) ;
+    }
+
+    private void linkParentUuids(SyncSubjectResponse syncSubjectResponse) {
+        linkedParentUuidRepository.linkProgramEnrolments(syncSubjectResponse.getProgramEnrolments());
+        linkedParentUuidRepository.linkProgramEncounters(syncSubjectResponse.getProgramEncounters());
+        linkedParentUuidRepository.linkEncounters(syncSubjectResponse.getEncounters());
+        linkedParentUuidRepository.linkChecklists(syncSubjectResponse.getChecklists());
+        linkedParentUuidRepository.linkChecklistItems(syncSubjectResponse.getChecklistItems());
+        linkedParentUuidRepository.linkGroupSubjects(syncSubjectResponse.getGroupSubjects());
+        linkedParentUuidRepository.linkIndividualRelationships(syncSubjectResponse.getIndividualRelationships());
     }
 }

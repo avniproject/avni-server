@@ -10,7 +10,6 @@ import org.avni.server.domain.EncounterType.EncounterTypeProjection;
 import org.avni.server.domain.sync.SubjectLinkedSyncEntity;
 import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Formula;
 import org.joda.time.DateTime;
 import org.springframework.data.rest.core.config.Projection;
 
@@ -26,7 +25,7 @@ public class Encounter extends AbstractEncounter implements MessageableEntity, S
     @JoinColumn(name = "individual_id")
     private Individual individual;
 
-    @Formula("(select i.uuid from individual i where i.id = individual_id)")
+    @Transient
     private String linkedIndividualUuid;
 
     @Column(updatable = false)
@@ -85,5 +84,9 @@ public class Encounter extends AbstractEncounter implements MessageableEntity, S
     @JsonIgnore
     public String getLinkedIndividualUuid() {
         return uuidOf(individual, linkedIndividualUuid);
+    }
+
+    public void setLinkedIndividualUuid(String linkedIndividualUuid) {
+        this.linkedIndividualUuid = linkedIndividualUuid;
     }
 }

@@ -4,6 +4,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
@@ -53,9 +54,11 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     private final GroupSubjectService groupSubjectService;
     private final AccessControlService accessControlService;
     private final TxDataControllerHelper txDataControllerHelper;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService, GroupSubjectService groupSubjectService, AccessControlService accessControlService, TxDataControllerHelper txDataControllerHelper) {
+    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService, GroupSubjectService groupSubjectService, AccessControlService accessControlService, TxDataControllerHelper txDataControllerHelper, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.groupSubjectRepository = groupSubjectRepository;
         this.userService = userService;
         this.individualRepository = individualRepository;
@@ -203,4 +206,8 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
         return resource;
     }
 
+    @Override
+    public void beforeProcess(List<GroupSubject> groupSubjects) {
+        linkedParentUuidRepository.linkGroupSubjects(groupSubjects);
+    }
 }

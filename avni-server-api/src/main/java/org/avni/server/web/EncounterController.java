@@ -7,6 +7,7 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -58,6 +59,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final TxDataControllerHelper txDataControllerHelper;
     private final SubjectMigrationService subjectMigrationService;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
     public EncounterController(IndividualRepository individualRepository,
@@ -66,7 +68,8 @@ public class EncounterController extends AbstractController<Encounter> implement
                                ObservationService observationService,
                                UserService userService,
                                Bugsnag bugsnag,
-                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper, SubjectMigrationService subjectMigrationService) {
+                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper, SubjectMigrationService subjectMigrationService, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
@@ -292,5 +295,10 @@ public class EncounterController extends AbstractController<Encounter> implement
         addAuditFields(encounter, resource);
         addUserFields(encounter.getFilledBy(), resource, "filledBy");
         return resource;
+    }
+
+    @Override
+    public void beforeProcess(List<Encounter> encounters) {
+        linkedParentUuidRepository.linkEncounters(encounters);
     }
 }

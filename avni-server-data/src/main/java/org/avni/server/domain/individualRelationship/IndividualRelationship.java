@@ -12,7 +12,6 @@ import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -39,10 +38,10 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @JoinColumn(name = "individual_b_id")
     private Individual individualB;
 
-    @Formula("(select i.uuid from individual i where i.id = individual_a_id)")
+    @Transient
     private String linkedIndividualAUuid;
 
-    @Formula("(select i.uuid from individual i where i.id = individual_b_id)")
+    @Transient
     private String linkedIndividualBUuid;
 
     @Column
@@ -147,5 +146,13 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @JsonIgnore
     public String getLinkedIndividualBUuid() {
         return uuidOf(individualB, linkedIndividualBUuid);
+    }
+
+    public void setLinkedIndividualAUuid(String linkedIndividualAUuid) {
+        this.linkedIndividualAUuid = linkedIndividualAUuid;
+    }
+
+    public void setLinkedIndividualBUuid(String linkedIndividualBUuid) {
+        this.linkedIndividualBUuid = linkedIndividualBUuid;
     }
 }

@@ -9,7 +9,6 @@ import org.avni.server.domain.sync.SyncDisabledEntityHelper;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -37,7 +36,7 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @JoinColumn(name = "checklist_id")
     private Checklist checklist;
 
-    @Formula("(select c.uuid from checklist c where c.id = checklist_id)")
+    @Transient
     private String linkedChecklistUuid;
 
     @Column(updatable = false)
@@ -110,5 +109,9 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @JsonIgnore
     public String getLinkedChecklistUuid() {
         return uuidOf(checklist, linkedChecklistUuid);
+    }
+
+    public void setLinkedChecklistUuid(String linkedChecklistUuid) {
+        this.linkedChecklistUuid = linkedChecklistUuid;
     }
 }
