@@ -40,9 +40,11 @@ import java.util.stream.Collectors;
 // with a code we send to the phone Avni holds for them (link_confirm). NHA: "every HIP must answer discovery".
 // A patient is found by ABHA address, then ABHA number, each only when Eka verified the ABHA on their record, then, as
 // NHA asks (USER_INIT_LINK_603), by the verified mobile narrowed by gender, year of birth and a tolerant name match
-// (AbdmNames). Only one patient is ever offered: when more than one matches, none is. Each step is for one of the organisation's HIP IDs: the one the event names, which must be
-// the organisation's (else the event is not answered), else the one the visits asked for are shared under, else its first.
-// Only the visits shared under that HIP ID are offered and linked (AbdmHipLinkingService.visitsByHip).
+// (AbdmNames). Only one patient is ever offered: when more than one matches, none is.
+// Each step is for one of the organisation's HIP IDs: the one the event names, which must be the organisation's (else the
+// event is not answered), else the one the visits asked for are shared under, else its first. Only the visits shared
+// under that HIP ID are offered, asked for and linked (AbdmHipLinkingService.visitsByHip); the link request keeps it, and
+// the confirm links exactly the visits asked for under it, or none.
 // Never logs a name, an ABHA, a phone or a code.
 @Component
 public class EkaHipDiscovery {
@@ -193,9 +195,9 @@ public class EkaHipDiscovery {
             problem = "Patient or visits not found at this facility";
         } else {
             AbdmHipLinkingService.Patient p = linking.loadPatient(subject.get().uuid());
-            Set<String> theirs = p.visits().stream().map(AbdmHipLinkingService.Visit::reference).collect(Collectors.toSet());
-            if (!theirs.containsAll(references)) problem = "A visit asked for is not this patient's";
-            else hipId = hipFor(named, AbdmHipLinkingService.visitsByHip(p, orgSettings, store), references, orgSettings);
+            Map<String, List<AbdmHipLinkingService.Visit>> byHip = AbdmHipLinkingService.visitsByHip(p, orgSettings, store);
+            hipId = hipFor(named, byHip, references, orgSettings);
+            if (!referencesOf(byHip, hipId).containsAll(references)) problem = "A visit asked for is not this patient's at this facility";
         }
         Optional<String> phone = problem == null ? phones.phoneOf(subject.get().id()) : Optional.empty();
         if (problem == null && phone.isEmpty()) problem = "This facility holds no phone number to send the code to";
@@ -206,7 +208,7 @@ public class EkaHipDiscovery {
             String linkReference = UUID.randomUUID().toString();
             Instant expiry = Instant.now().plus(CODE_LIFETIME);
             store.insertLinkRequest(transactionId, linkReference, subject.get().id(), AbdmJson.text(data, "abha_address"), references,
-                    "OTP_SENT", expiry);
+                    "OTP_SENT", expiry, hipId);
             reply.put("ref_num", linkReference);
             reply.put("otp_expiry", AbdmTime.format(expiry));
             logger.info("Eka discovery link {}: code sent for {} visit(s)", linkReference, references.size());
@@ -244,7 +246,14 @@ public class EkaHipDiscovery {
                 AbdmHipLinkingService.Patient p = linking.loadPatient(subject.get().uuid());
                 Set<String> asked = Set.copyOf(request.careContextRefs());
                 Map<String, List<AbdmHipLinkingService.Visit>> byHip = AbdmHipLinkingService.visitsByHip(p, orgSettings, store);
-                String hipId = hipFor(named, byHip, asked, orgSettings);
+                String hipId = request.hipId() != null ? request.hipId() : hipFor(named, byHip, asked, orgSettings);
+                // Exactly the visits asked for, under the centre the code was sent for: never fewer, never another centre.
+                if ((named != null && !named.equals(hipId)) || !referencesOf(byHip, hipId).containsAll(asked)) {
+                    store.setLinkRequestStatus(request.id(), "FAILED");
+                    reply.set("error", error(REFUSED, "The visits asked for are no longer all at this facility; please start again"));
+                    send(ON_CONFIRM, reply, data, hipId);
+                    return;
+                }
                 List<AbdmHipStore.NewCareContext> theirs = byHip.getOrDefault(hipId, List.of()).stream().filter(v -> asked.contains(v.reference()))
                         .map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).collect(Collectors.toList());
                 store.ensureCareContexts(p.individualId(), hipId, p.uuid(), AbdmHipLinkingService.HI_TYPE, theirs);
@@ -282,6 +291,10 @@ public class EkaHipDiscovery {
         if (named == null || orgSettings.hasHipId(named)) return false;
         logger.warn("Eka {} names a HIP ID that is not this organisation's; not answered", step);
         return true;
+    }
+
+    private static Set<String> referencesOf(Map<String, List<AbdmHipLinkingService.Visit>> byHip, String hipId) {
+        return byHip.getOrDefault(hipId, List.of()).stream().map(AbdmHipLinkingService.Visit::reference).collect(Collectors.toSet());
     }
 
     // The HIP ID named, else the one the first visit asked for is shared under, else the organisation's first.

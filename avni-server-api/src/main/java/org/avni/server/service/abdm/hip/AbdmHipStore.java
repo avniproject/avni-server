@@ -47,7 +47,7 @@ public class AbdmHipStore {
     }
 
     public record LinkRequest(long id, String transactionId, String linkReference, Long individualId, String abhaAddress,
-                              List<String> careContextRefs, String status, Instant expiresAt) {
+                              List<String> careContextRefs, String status, Instant expiresAt, String hipId) {
     }
 
     public record Subject(long id, String uuid, String name) {
@@ -284,13 +284,15 @@ public class AbdmHipStore {
     // ---- user-initiated link requests
 
     public void insertLinkRequest(String transactionId, String linkReference, Long individualId, String abhaAddress,
-                                  List<String> careContextRefs, String status, Instant expiresAt) {
-        jdbc.update("insert into abdm_link_request (organisation_id, transaction_id, link_reference, individual_id, abha_address, care_context_refs, status, expires_at) " +
-                        "values (:org, :tx, :ref, :ind, :address, cast(:refs as jsonb), :status, cast(:expires as timestamptz))",
+                                  List<String> careContextRefs, String status, Instant expiresAt, String hipId) {
+        jdbc.update("insert into abdm_link_request (organisation_id, transaction_id, link_reference, individual_id, abha_address, care_context_refs, " +
+                        "status, expires_at, hip_id) values (:org, :tx, :ref, :ind, :address, cast(:refs as jsonb), :status, " +
+                        "cast(:expires as timestamptz), :hip)",
                 params().addValue("tx", transactionId, Types.VARCHAR).addValue("ref", linkReference, Types.VARCHAR)
                         .addValue("ind", individualId, Types.BIGINT).addValue("address", abhaAddress, Types.VARCHAR)
                         .addValue("refs", AbdmJson.write(AbdmJson.M.valueToTree(careContextRefs)), Types.VARCHAR)
-                        .addValue("status", status, Types.VARCHAR).addValue("expires", AbdmFlows.iso(expiresAt), Types.VARCHAR));
+                        .addValue("status", status, Types.VARCHAR).addValue("expires", AbdmFlows.iso(expiresAt), Types.VARCHAR)
+                        .addValue("hip", hipId, Types.VARCHAR));
     }
 
     public Optional<LinkRequest> findLinkRequest(String linkReference) {
@@ -391,6 +393,7 @@ public class AbdmHipStore {
 
     private static final RowMapper<LinkRequest> LINK_REQUEST = (rs, n) -> new LinkRequest(rs.getLong("id"), rs.getString("transaction_id"),
             rs.getString("link_reference"), nullableLong(rs, "individual_id"), rs.getString("abha_address"),
-            AbdmFlows.texts(AbdmJson.read(rs.getString("care_context_refs")), null), rs.getString("status"), instant(rs, "expires_at"));
+            AbdmFlows.texts(AbdmJson.read(rs.getString("care_context_refs")), null), rs.getString("status"), instant(rs, "expires_at"),
+            rs.getString("hip_id"));
 
 }

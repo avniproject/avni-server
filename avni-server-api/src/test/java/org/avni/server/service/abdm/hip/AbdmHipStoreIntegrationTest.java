@@ -159,6 +159,15 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals("LINKED", status.get("v-2"));
     }
 
+    // A patient-led link is confirmed under the centre its code was sent for.
+    @Test
+    public void aLinkRequestKeepsTheCentreItWasMadeAt() {
+        store.insertLinkRequest("txn-1", "link-ref-1", knownId(), "asha.devi@sbx", List.of("v-1"), "OTP_SENT",
+                java.time.Instant.now().plusSeconds(600), "hip-2");
+
+        assertEquals("hip-2", store.findLinkRequest("link-ref-1").orElseThrow().hipId());
+    }
+
     // ---- the link queue
 
     private static final String QUEUE_HIP = "QUEUE-HIP";

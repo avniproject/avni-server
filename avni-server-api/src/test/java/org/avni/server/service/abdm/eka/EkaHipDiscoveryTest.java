@@ -271,7 +271,8 @@ public class EkaHipDiscoveryTest {
 
         verify(otp).send("9876543210");
         ArgumentCaptor<String> reference = ArgumentCaptor.forClass(String.class);
-        verify(store).insertLinkRequest(eq("txn-1"), reference.capture(), eq(7L), eq("asha.devi@sbx"), eq(List.of("enc-2")), eq("OTP_SENT"), any());
+        verify(store).insertLinkRequest(eq("txn-1"), reference.capture(), eq(7L), eq("asha.devi@sbx"), eq(List.of("enc-2")), eq("OTP_SENT"), any(),
+                eq(HIP_ID));
         JsonNode reply = sent(ON_INIT);
         assertEquals(reference.getValue(), reply.get("ref_num").asText());
         assertFalse(reply.path("otp_expiry").asText().isEmpty());
@@ -286,7 +287,7 @@ public class EkaHipDiscoveryTest {
         discovery.linkInit(linkInitEvent("enc-2"));
 
         verify(otp, never()).send(anyString());
-        verify(store, never()).insertLinkRequest(any(), any(), any(), any(), anyList(), any(), any());
+        verify(store, never()).insertLinkRequest(any(), any(), any(), any(), anyList(), any(), any(), any());
         assertTrue(sent(ON_INIT).at("/error/message").asText().length() > 0);
     }
 
@@ -300,7 +301,85 @@ public class EkaHipDiscoveryTest {
         assertTrue(sent(ON_INIT).at("/error/message").asText().length() > 0);
     }
 
+    // A link request is for one centre: a visit of the patient's shared under another of the organisation's HIP IDs is
+    // not offered at this one, so it cannot be asked for here.
+    @Test
+    public void linkInitForAVisitSharedUnderAnotherOfTheOrganisationsCentresIsRefused() {
+        twoCentres();
+        when(store.findSubjectByUuid("subject-1")).thenReturn(Optional.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        ObjectNode event = (ObjectNode) linkInitEvent("enc-2");
+        ((ObjectNode) event.get("data")).put("hip_id", "hip-1");
+
+        discovery.linkInit(event);
+
+        verify(otp, never()).send(anyString());
+        verify(store, never()).insertLinkRequest(any(), any(), any(), any(), anyList(), any(), any(), any());
+        assertTrue(sent(ON_INIT).at("/error/message").asText().length() > 0);
+    }
+
+    @Test
+    public void linkInitKeepsTheCentreTheVisitsAreSharedUnder() {
+        twoCentres();
+        when(store.findSubjectByUuid("subject-1")).thenReturn(Optional.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(otp.send("9876543210")).thenReturn(true);
+
+        discovery.linkInit(linkInitEvent("enc-2"));
+
+        verify(store).insertLinkRequest(eq("txn-1"), anyString(), eq(7L), eq("asha.devi@sbx"), eq(List.of("enc-2")), eq("OTP_SENT"), any(), eq("hip-2"));
+    }
+
     // ---- link confirm
+
+    // The confirm links under the centre the code was sent for, and only when every visit asked for is still shared
+    // there: a request is never marked linked with fewer visits than asked, or none.
+    @Test
+    public void aConfirmIsRefusedWhenTheVisitsToLinkAreNoLongerTheOnesAsked() {
+        twoCentres();
+        when(store.findLinkRequest("link-1")).thenReturn(Optional.of(new AbdmHipStore.LinkRequest(31L, "txn-1", "link-1", 7L, "asha.devi@sbx",
+                List.of("enc-2", "enc-1"), "OTP_SENT", Instant.now().plusSeconds(300), "hip-2")));
+        when(store.findSubjectById(7)).thenReturn(Optional.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(otp.verify("9876543210", "424242")).thenReturn(true);
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
+        verify(store).setLinkRequestStatus(31L, "FAILED");
+        JsonNode reply = sent(ON_CONFIRM);
+        assertEquals(0, reply.path("patients").size());
+        assertTrue(reply.at("/error/message").asText().length() > 0);
+    }
+
+    @Test
+    public void aConfirmNamingAnotherCentreThanTheCodeWasSentForIsRefused() {
+        twoCentres();
+        when(store.findLinkRequest("link-1")).thenReturn(Optional.of(new AbdmHipStore.LinkRequest(31L, "txn-1", "link-1", 7L, "asha.devi@sbx",
+                List.of("enc-2"), "OTP_SENT", Instant.now().plusSeconds(300), "hip-2")));
+        when(store.findSubjectById(7)).thenReturn(Optional.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(otp.verify("9876543210", "424242")).thenReturn(true);
+        ObjectNode event = (ObjectNode) confirmEvent("424242");
+        ((ObjectNode) event.get("data")).put("hip_id", "hip-1");
+
+        discovery.linkConfirm(event);
+
+        verify(store, never()).markLinked(any(), any(), any());
+        verify(store).setLinkRequestStatus(31L, "FAILED");
+    }
+
+    @Test
+    public void aConfirmLinksUnderTheCentreTheCodeWasSentFor() {
+        twoCentres();
+        when(store.findLinkRequest("link-1")).thenReturn(Optional.of(new AbdmHipStore.LinkRequest(31L, "txn-1", "link-1", 7L, "asha.devi@sbx",
+                List.of("enc-2"), "OTP_SENT", Instant.now().plusSeconds(300), "hip-2")));
+        when(store.findSubjectById(7)).thenReturn(Optional.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+        when(otp.verify("9876543210", "424242")).thenReturn(true);
+        when(store.findCareContextsByReferences("hip-2", List.of("enc-2"))).thenReturn(List.of(row("enc-2", "PENDING")));
+
+        discovery.linkConfirm(confirmEvent("424242"));
+
+        verify(store).markLinked("hip-2", List.of("enc-2"), "USER");
+        verify(store).setLinkRequestStatus(31L, "LINKED");
+    }
 
     @Test
     public void theRightCodeLinksTheVisitsAndAnswersWithThem() {
@@ -418,6 +497,15 @@ public class EkaHipDiscoveryTest {
 
     // ---- helpers
 
+    // The organisation has two centres: enc-2 was recorded at hip-2, enc-1 at none, so it goes under the first, hip-1.
+    private void twoCentres() {
+        discovery = discovery(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
+                .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")))));
+        when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(7, "subject-1", "Asha Devi", "F", 1990,
+                "12345678568912", "asha.devi", List.of(new AbdmHipLinkingService.Visit("enc-2", "OPD Visit, 2 May 2026", Instant.parse("2026-05-02T10:00:00Z"), "hip-2"),
+                new AbdmHipLinkingService.Visit("enc-1", "OPD Visit, 14 Mar 2026", Instant.parse("2026-03-14T10:00:00Z"), null))));
+    }
+
     private EkaHipDiscovery discovery(AbdmSettings settings) {
         return new EkaHipDiscovery(settings, store, linking, eka, phones, otp, AbdmTestSupport.orgContext(), abhaLinks, abhaEvents);
     }
@@ -471,7 +559,7 @@ public class EkaHipDiscoveryTest {
     }
 
     private static AbdmHipStore.LinkRequest linkRequest(Instant expiresAt) {
-        return new AbdmHipStore.LinkRequest(31L, "txn-1", "link-1", 7L, "asha.devi@sbx", List.of("enc-2"), "OTP_SENT", expiresAt);
+        return new AbdmHipStore.LinkRequest(31L, "txn-1", "link-1", 7L, "asha.devi@sbx", List.of("enc-2"), "OTP_SENT", expiresAt, HIP_ID);
     }
 
     private static AbdmHipStore.CareContext row(String reference, String status) {
