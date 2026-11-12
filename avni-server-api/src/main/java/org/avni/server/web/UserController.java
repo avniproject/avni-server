@@ -89,6 +89,7 @@ public class UserController {
     @RequestMapping(value = {"/user", "/user/accountOrgAdmin"}, method = RequestMethod.POST)
     public ResponseEntity createUser(@RequestBody UserContract userContract) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+        assertOnlySuperAdminGrantsAccountAdmin(userContract);
         try {
             if (isUserNameInvalid(userContract.getUsername())) {
                 throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
@@ -132,11 +133,16 @@ public class UserController {
     @PutMapping(value = {"/user/{id}", "/user/accountOrgAdmin/{id}"})
     public ResponseEntity updateUser(@RequestBody UserContract userContract, @PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+        assertOnlySuperAdminGrantsAccountAdmin(userContract);
         try {
             User user = userRepository.findByUsername(userContract.getUsername());
             if (user == null)
                 return ResponseEntity.badRequest()
                         .body(String.format("User with username '%s' not found", userContract.getUsername()));
+            if (userService.isAdmin(user)) {
+                // An organisation admin must not edit, re-email or demote Avni staff.
+                accessControlService.assertIsSuperAdmin();
+            }
             User currentUser = userService.getCurrentUser();
             user.setAuditInfo(currentUser);
             resetSyncService.recordSyncAttributeValueChangeForUser(user, userContract, UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
@@ -151,6 +157,16 @@ public class UserController {
             return WebResponseUtil.createBadRequestResponse(ex, logger);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
+        }
+    }
+
+    /**
+     * accountIds makes the user an account admin, i.e. Avni super admin across every organisation in those accounts.
+     * EditUserConfiguration is an organisation privilege, so on its own it must not be enough to grant that.
+     */
+    private void assertOnlySuperAdminGrantsAccountAdmin(UserContract userContract) {
+        if (!userContract.getAccountIds().isEmpty()) {
+            accessControlService.assertIsSuperAdmin();
         }
     }
 

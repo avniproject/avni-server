@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.CustomQueryRepository;
 import org.avni.server.domain.CustomQuery;
+import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.web.request.CustomQueryContract;
 import org.springframework.stereotype.Service;
 
@@ -9,29 +9,15 @@ import java.util.List;
 
 @Service
 public class CustomQueryService {
-    private final CustomQueryRepository customQueryRepository;
 
-    public CustomQueryService(CustomQueryRepository customQueryRepository) {
-        this.customQueryRepository = customQueryRepository;
-    }
-
-    private void upsertCustomQuery(CustomQuery customQuery) {
-        CustomQuery savedQuery = customQueryRepository.findByUuid(customQuery.getUuid());
-        if (savedQuery == null) {
-            customQueryRepository.save(customQuery);
-        }else{
-            savedQuery.setName(customQuery.getName());
-            savedQuery.setQuery(customQuery.getQuery());
-            savedQuery.setVoided(customQuery.isVoided());
-            savedQuery.setVersion(customQuery.getVersion());
-            customQueryRepository.save(savedQuery);
-        }
-    }
-
+    /**
+     * A saved query is raw SQL that /executeQuery later runs, so a bundle must never be able to add or change one.
+     * This holds for every uploader: an organisation's admin (including a self-signup trial admin) would otherwise
+     * plant SQL, and Avni staff cannot launch a bundle upload anyway. Saved queries are added by the Avni team directly.
+     */
     public void processCustomQueries(List<CustomQueryContract> customQueryContracts) {
-        customQueryContracts.stream()
-                .map(this::dtoToEntity)
-                .forEach(this::upsertCustomQuery);
+        if (customQueryContracts == null || customQueryContracts.isEmpty()) return;
+        throw AvniAccessException.createForSavedQueriesInBundle();
     }
 
     public CustomQuery dtoToEntity(CustomQueryContract customQueryContract){

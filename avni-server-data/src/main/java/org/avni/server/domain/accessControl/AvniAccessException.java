@@ -26,6 +26,10 @@ public class AvniAccessException extends RuntimeException {
         return new AvniAccessException(String.format("User %s is not admin", user.getUsername()));
     }
 
+    public static AvniAccessException createForSavedQueriesInBundle() {
+        return new AvniAccessException("Saved queries (customQueries.json) cannot be uploaded in a bundle. Remove customQueries.json from the bundle and ask the Avni team to add the query.");
+    }
+
     public static AvniAccessException createForAdmin(User user) {
         return new AvniAccessException(String.format("User %s is admin, operation disallowed", user.getUsername()));
     }
