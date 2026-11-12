@@ -657,6 +657,99 @@ public class SubjectSearchQueryBuilderTest {
         return keyValues;
     }
 
+    @Test
+    public void enrolmentDateFilterLeavesOutExitedEnrolments() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withProgramEnrolmentDateFilter(new DateRange("2026-01-01", "2026-03-31"))
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false and penr.program_exit_date_time is null");
+    }
+
+    @Test
+    public void programEncounterDateFilterLeavesOutVisitsOfExitedEnrolments() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withProgramEncounterDateFilter(new DateRange("2026-04-01", "2026-04-30"))
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("penc.is_voided is false and penr.is_voided is false and penr.program_exit_date_time is null");
+    }
+
+    @Test
+    public void enrolmentAndProgramEncounterConceptFiltersLeaveOutExitedEnrolments() {
+        String enrolmentSql = new SubjectSearchQueryBuilder()
+                .withConceptsFilter(Collections.singletonList(new Concept("c-notes", "programEnrolment", "Notes", null, "three")))
+                .build(subjectType).getSql();
+        String visitSql = new SubjectSearchQueryBuilder()
+                .withConceptsFilter(Collections.singletonList(new Concept("c-notes", "programEncounter", "Notes", null, "three")))
+                .build(subjectType).getSql();
+
+        assertThat(enrolmentSql).contains("penr.is_voided is false and penr.program_exit_date_time is null");
+        assertThat(visitSql).contains("penr.is_voided is false and penr.program_exit_date_time is null");
+    }
+
+    @Test
+    public void tickedProgrammeEnrolmentDateAndEnrolmentAnswerMustBeOnTheSameEnrolment() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withConceptsFilter(Collections.singletonList(new Concept("c-notes", "programEnrolment", "Notes", null, "three")))
+                .withProgramEnrolmentDateFilter(new DateRange("2026-01-01", "2026-01-31"))
+                .withProgramsFilter(Collections.singletonList("p-a"), false, false)
+                .build(subjectType).getSql();
+
+        assertThat(countOf(sql, "from program_enrolment penr where")).isEqualTo(1);
+        assertThat(sql.substring(sql.indexOf("from program_enrolment penr where")))
+                .contains("penr.program_id in (select pf_program.id from program pf_program where pf_program.uuid in (:programFilterUuids))")
+                .contains("penr.observations->> :conceptUuid0 ilike :textValue0")
+                .contains("cast(penr.enrolment_date_time at time zone 'Asia/Kolkata' as date) >= cast(trim(:programEnrolmentDateMin) as date)")
+                .contains("cast(penr.enrolment_date_time at time zone 'Asia/Kolkata' as date) <= cast(trim(:programEnrolmentDateMax) as date)");
+    }
+
+    @Test
+    public void bothEndsOfARangeMustBeMetByTheSameEnrolment() {
+        Concept weight = new Concept("c-weight", "programEnrolment", "Numeric", null, null);
+        weight.setWidget("Range");
+        weight.setMinValue("10");
+        weight.setMaxValue("20");
+        String sql = new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(weight)).build(subjectType).getSql();
+
+        assertThat(countOf(sql, "from program_enrolment penr where")).isEqualTo(1);
+        assertThat(sql).contains("as numeric)  >= :numericValueMin0 and cast(penr.observations ->>:conceptUuid0 as numeric)  <= :numericValueMax0");
+    }
+
+    @Test
+    public void bothEndsOfAVisitRangeMustBeMetByTheSameVisit() {
+        Concept weight = new Concept("c-weight", "encounter", "Numeric", null, null);
+        weight.setWidget("Range");
+        weight.setMinValue("10");
+        weight.setMaxValue("20");
+        String sql = new SubjectSearchQueryBuilder()
+                .withConceptsFilter(Collections.singletonList(weight))
+                .withEncounterDateFilter(new DateRange("2026-01-01", "2026-01-31"))
+                .build(subjectType).getSql();
+
+        assertThat(countOf(sql, "from encounter e where")).isEqualTo(2);
+        assertThat(sql).contains("as numeric)  >= :numericValueMin0 and cast(e.observations ->>:conceptUuid0 as numeric)  <= :numericValueMax0")
+                .contains("as date) >= cast(:encounterDateMin as date) and cast(e.encounter_date_time");
+    }
+
+    private static int countOf(String text, String part) {
+        return text.split(java.util.regex.Pattern.quote(part), -1).length - 1;
+    }
+
+    @Test
+    public void includeExitedKeepsExitedEnrolmentsInTheEnrolmentLevelFilters() {
+        String sql = new SubjectSearchQueryBuilder()
+                .withIncludeExitedEnrolments(true)
+                .withConceptsFilter(Collections.singletonList(new Concept("c-notes", "programEnrolment", "Notes", null, "three")))
+                .withProgramEnrolmentDateFilter(new DateRange("2026-02-01", "2026-02-01"))
+                .withProgramEncounterDateFilter(new DateRange("2026-04-01", "2026-04-30"))
+                .withProgramsFilter(Collections.singletonList("p-qa"), true, false)
+                .build(subjectType).getSql();
+
+        assertThat(sql).contains("from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n")
+                .doesNotContain("program_exit_date_time is null");
+    }
+
     private List<Map<String, Object>> configureColumns(org.avni.server.domain.Concept... concepts) {
         List<Map<String, Object>> resultConcepts = new ArrayList<>();
         for (int i = 0; i < concepts.length; i++) {

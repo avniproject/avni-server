@@ -40,6 +40,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
     public SubjectSearchQueryBuilder withSubjectSearchFilter(SubjectSearchRequest request, SubjectType subjectType) {
         return this
                 .withTimeZone(request.getTimeZone())
+                .withIncludeExitedEnrolments(request.isIncludeExitedEnrolments())
                 .withNameFilter(request.getName())
                 .withConceptsFilter(request.getConcept())
                 .withSearchAll(request.getSearchAll())
@@ -87,15 +88,17 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
         return withRangeFilter(dateRange,
                         "programEncounterDate",
                         localDate("penc.encounter_date_time") + " >= cast(:rangeParam as date)",
-                        localDate("penc.encounter_date_time") + " <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
+                        localDate("penc.encounter_date_time") + " <= cast(:rangeParam as date)", programEncounterFilter());
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withRangeFilter(dateRange,
+        String condition = rangeCondition(dateRange,
                         "programEnrolmentDate",
                         localDate("penr.enrolment_date_time") + " >= cast(trim(:rangeParam) as date)",
-                        localDate("penr.enrolment_date_time") + " <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
+                        localDate("penr.enrolment_date_time") + " <= cast(trim(:rangeParam) as date)");
+        if (condition != null) addScopedCondition("programEnrolment", condition);
+        return this;
     }
 
     @Override
