@@ -351,21 +351,6 @@ public class EkaHiuServiceTest {
         verify(store).claimParked(77L);
     }
 
-    // A parked update was applied only when another update came; every path that maps a request applies it now.
-    @Test
-    public void approvalThatMapsTheRequestToAbdmsIdAppliesTheUpdateParkedForThatId() {
-        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
-        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
-
-        service.approveInSandbox("init-1");
-
-        verify(store).mapConsentRequestId(5L, "abdm-A");
-        verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
-        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
-        verify(store).claimParked(77L);
-    }
-
     @Test
     public void aPushThatMatchesItsRequestThroughEkaAppliesTheUpdateParkedForIt() {
         when(store.findArtefact("abdm-A")).thenReturn(Optional.empty());
@@ -529,22 +514,6 @@ public class EkaHiuServiceTest {
         assertEquals("oid-1", body.getValue().at("/patient/oid").asText());
     }
 
-    // The holder of an address may have no lookup of their own (an upload, a typed answer) while another patient's record
-    // holds a lookup of that address, left unsaved: its Eka ID is the ABHA's, but the patient is the holder, never the other.
-    @Test
-    public void aLookupOfTheAddressUnderAnotherPatientIsNeverTakenForTheirs() {
-        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of());
-        when(store.findEkaPatientByAbhaAddress(any())).thenReturn(Optional.of(new AbdmHiuStore.EkaPatientRow("oid-shyam", "subject-other")));
-        when(hipStore.findSubjectByUuid("subject-other")).thenReturn(Optional.of(new AbdmHipStore.Subject(99, "subject-other", "Someone Else")));
-        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-shyam"), any(), any())).thenReturn(new EkaResponse("a-1", 204, null));
-
-        service.approveInSandbox("init-1");
-
-        verify(hipStore).findCareContexts(7, HIP_ID);
-        verify(hipStore, never()).findCareContexts(eq(99L), any());
-    }
-
     // Two patients holding one ABHA address: neither is picked (the first one used to be).
     @Test
     public void twoPatientsHoldingTheAddressAreNotGuessedBetween() {
@@ -671,62 +640,6 @@ public class EkaHiuServiceTest {
         verify(store, never()).insertHealthInformation(anyLong(), any(), any(), any(), any(), any(), any());
         verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
         verify(eka, never()).post(eq("/abdm/v1/hiu/care-context/data/on-push"), any(), any());
-    }
-
-    // ---- sandbox approval
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void approvingInTheSandboxPassesThePatientsOidAndOurLinkedCareContexts() {
-        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(hipStore.findCareContexts(7, HIP_ID)).thenReturn(List.of(careContext("enc-1", "Visit 12 Oct", "LINKED"),
-                careContext("enc-2", "Visit 13 Oct", "FAILED")));
-        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenReturn(new EkaResponse("a-1", 204, null));
-
-        Map<String, Object> answer = service.approveInSandbox("init-1");
-
-        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), headers.capture());
-        JsonNode b = body.getValue();
-        assertEquals("init-1", b.get("id").asText());
-        assertEquals("view", b.get("access_mode").asText());
-        assertEquals("OPConsultation", b.at("/hi_types/0").asText());
-        assertEquals("2026-01-01T00:00:00.000Z", b.at("/duration/from").asText());
-        assertEquals(HIP_ID, b.at("/consent_artefacts/0/hip_id").asText());
-        assertEquals("enc-1", b.at("/consent_artefacts/0/care_contexts/0/id").asText());
-        assertEquals(1, b.at("/consent_artefacts/0/care_contexts").size());
-        assertEquals("oid-1", headers.getValue().get(EkaAbdmClient.H_PATIENT_OID));
-        assertEquals(true, answer.get("ok"));
-        assertEquals(204, answer.get("httpStatus"));
-    }
-
-    @Test
-    public void approvalUsesTheAbdmConsentIdThatEkasListGivesForOurRequest() {
-        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(eka.post(eq("/abdm/v1/consents/list"), any(), any())).thenReturn(new EkaResponse("l-1", 200,
-                AbdmJson.read("{\"consents\":[{\"consent_id\":\"abdm-cr-1\",\"consent_init_id\":\"init-1\",\"status\":\"REQUESTED\"}]}")));
-
-        service.approveInSandbox("init-1");
-
-        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), body.capture(), any());
-        assertEquals("abdm-cr-1", body.getValue().get("id").asText());
-        verify(store).mapConsentRequestId(5L, "abdm-cr-1");
-        verify(store, never()).setConsentRequestId(anyLong(), any(), any());
-    }
-
-    @Test
-    public void ekasRefusalOfAnApprovalIsReturnedAsItCame() {
-        when(store.findConsentRequest("init-1")).thenReturn(Optional.of(request(5, "init-1", "REQUESTED")));
-        when(eka.postSlow(eq("/abdm/v1/consents/approve?oid=oid-1"), any(), any())).thenThrow(new EkaCallException(491, null, "SessionExpiredTryAgain"));
-
-        Map<String, Object> answer = service.approveInSandbox("init-1");
-
-        assertEquals(false, answer.get("ok"));
-        assertEquals(491, answer.get("httpStatus"));
-        assertEquals("SessionExpiredTryAgain", answer.get("error"));
-        assertNotNull(answer.get("hint"));
     }
 
     // ---- helpers

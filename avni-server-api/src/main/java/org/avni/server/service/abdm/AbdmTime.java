@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // ABDM's TIMESTAMP and date fields: ISO 8601 UTC with milliseconds always present. Instant.toString() drops ".000",
 // which ABDM rejects.
 public final class AbdmTime {

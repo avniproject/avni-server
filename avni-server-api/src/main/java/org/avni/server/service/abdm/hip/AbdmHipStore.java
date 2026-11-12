@@ -71,7 +71,7 @@ public class AbdmHipStore {
                 params().addValue("uuid", uuid, Types.VARCHAR), SUBJECT));
     }
 
-    // DEMO-ONLY: no index on the address; a lower() scan of abha_link is fine at demo scale.
+    // no index on the address; a lower() scan of abha_link is fine at demo scale.
     public List<Subject> findSubjectsByAbhaAddress(String abhaAddress, String suffix) {
         return jdbc.query("select i.id, i.uuid, " + NAME + " as name from abha_link l join individual i on i.id = l.individual_id " +
                         "where l.organisation_id = :org and l.is_voided = false and i.is_voided = false " +

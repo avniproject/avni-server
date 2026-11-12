@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // The tolerant name match NHA asks of patient-led linking once the mobile number has matched (USER_INIT_LINK_603): an
 // ABHA name from Aadhaar often carries an initial or a word Avni's record does not. Names are compared as words of
 // letters in any script, in any order and case; every word of the shorter name must match a different word of the

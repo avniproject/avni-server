@@ -20,7 +20,6 @@ import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
 import org.avni.server.service.abdm.fhir.CareContextDocument;
 import org.avni.server.service.abdm.fhir.CareContextDocumentAssembler;
 import org.avni.server.service.abdm.fhir.FhirBundleBuilder;
-import org.avni.server.service.abdm.fhir.SampleRecords;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
@@ -89,17 +88,15 @@ public class EkaHipService implements EkaHipEvents {
     private final org.avni.server.service.abdm.hip.AbdmPatientPhones phones;
     private final org.avni.server.dao.ProgramEncounterRepository programEncounterRepository;
     private final IndividualRepository individualRepository;
-    private final SampleRecords samples;
 
     public EkaHipService(AbdmConfig cfg, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka, AbdmOrgContext orgContext,
                          AbhaEventRepository abhaEventRepository, EncounterRepository encounterRepository,
                          AbhaLinkRepository abhaLinkRepository, CareContextDocumentAssembler assembler, FhirBundleBuilder builder,
                          FideliusCrypto crypto, org.avni.server.service.abdm.hip.AbdmPatientPhones phones,
                          org.avni.server.dao.ProgramEncounterRepository programEncounterRepository,
-                         IndividualRepository individualRepository, SampleRecords samples) {
+                         IndividualRepository individualRepository) {
         this.programEncounterRepository = programEncounterRepository;
         this.individualRepository = individualRepository;
-        this.samples = samples;
         this.cfg = cfg;
         this.store = store;
         this.linking = linking;
@@ -143,11 +140,6 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     public List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly) {
-        return linkCareContexts(subjectUuid, queuedOnly, c -> true);
-    }
-
-    // only: which of the subject's rows this call may link (adding samples links just the samples added).
-    private List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly, java.util.function.Predicate<AbdmHipStore.CareContext> only) {
         AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
         EkaPatient ekaPatient = ekaPatient(subjectUuid, patient);
         String abhaAddress = ekaPatient.abhaAddress();
@@ -159,13 +151,7 @@ public class EkaHipService implements EkaHipEvents {
         List<AbdmHipStore.CareContext> toLink = store.findCareContexts(patient.individualId(), hipId).stream()
                 .filter(c -> !LINKED.equals(c.status()))
                 .filter(c -> !queuedOnly || AbdmHipLinkingService.QUEUED.equals(c.status()) || AbdmHipLinkingService.FAILED.equals(c.status()))
-                .filter(only)
                 .toList();
-        // Samples are test data: never linked by the hourly job, and never off Eka's sandbox, so one left behind by a
-        // switch to production never reaches a real patient's record.
-        if (toLink.stream().anyMatch(EkaHipService::isSample) && (queuedOnly || !eka.isSandbox())) {
-            toLink = toLink.stream().filter(c -> !isSample(c)).toList();
-        }
         if (toLink.isEmpty()) return linking.careContexts(subjectUuid);
         // One call per record type: a type Eka refuses fails only its own care contexts, never the patient's visits.
         Map<String, List<AbdmHipStore.CareContext>> byType = toLink.stream()
@@ -330,8 +316,8 @@ public class EkaHipService implements EkaHipEvents {
         Map<String, AbdmHipStore.CareContext> linkedHere = store.findCareContextsByReferences(hipId, references).stream()
                 .filter(c -> !PENDING.equals(c.status()))
                 .collect(Collectors.toMap(AbdmHipStore.CareContext::reference, c -> c, (a, b) -> a, LinkedHashMap::new));
-        // Share only what the consent covers. Each care context holds one record type: a visit is OPConsultation, a
-        // sample record (SampleRecords) its own type. No hi_types means the request does not narrow by type.
+        // Share only what the consent covers. Each care context holds one record type: a visit is OPConsultation.
+        // No hi_types means the request does not narrow by type.
         List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
         boolean anyType = asked == null || asked.isEmpty();
         if (!anyType && !linkedHere.isEmpty() && linkedHere.values().stream().noneMatch(c -> asked.contains(c.hiType()))) {
@@ -354,8 +340,7 @@ public class EkaHipService implements EkaHipEvents {
                     problems.add(reference + " (" + row.hiType() + ", not asked for)");
                     continue;
                 }
-                Prepared p = isSample(row) ? prepareSample(row, patientUuid, oid, requesterAddress)
-                        : prepare(reference, patientUuid, oid, requesterAddress);
+                Prepared p = prepare(reference, patientUuid, oid, requesterAddress);
                 if (p.bundleJson() == null) {
                     problems.add(reference + " (" + p.problem() + ")");
                     continue;
@@ -370,7 +355,7 @@ public class EkaHipService implements EkaHipEvents {
                 ObjectNode entry = entries.addObject();
                 entry.put("care_context_id", reference);
                 entry.put("media", MEDIA);
-                entry.put("checksum", AbdmFlows.md5Hex(p.bundleJson())); // DEMO-ONLY: algorithm unverified
+                entry.put("checksum", AbdmFlows.md5Hex(p.bundleJson())); // algorithm unverified
                 entry.put("content", content);
             }
         } catch (RuntimeException e) {
@@ -467,76 +452,6 @@ public class EkaHipService implements EkaHipEvents {
             logger.warn("Eka: care context {} not prepared: {}", reference, e.getClass().getSimpleName());
             return new Prepared(reference, null, "could not be prepared");
         }
-    }
-
-    // A sample is a row stored as a sample's own record type, never a visit: an encounter's id is the client's choice and
-    // could look like a sample's reference.
-    static boolean isSample(AbdmHipStore.CareContext row) {
-        String template = SampleRecords.templateOf(row.reference());
-        return template != null && !HI_TYPE.equals(row.hiType()) && SampleRecords.hiTypeOf(template).equals(row.hiType());
-    }
-
-    // A sample record (M3 test data, SampleRecords): its template, filled with the patient whose care context it is. The
-    // same checks as a visit: the patient is still there, is the one Eka names, and still holds the ABHA asking.
-    Prepared prepareSample(AbdmHipStore.CareContext row, String expectedPatientUuid, String requesterOid, String requesterAddress) {
-        String reference = row.reference();
-        String template = SampleRecords.templateOf(reference);
-        if (template == null) return new Prepared(reference, null, "not a sample record");
-        try {
-            if (!eka.isSandbox()) {
-                return new Prepared(reference, null, "test data, served only while this organisation uses Eka's sandbox");
-            }
-            return orgContext.inReadOnlyTransaction(() -> {
-                Individual individual = individualRepository.findById(row.individualId()).orElse(null);
-                if (individual == null || individual.isVoided()) {
-                    return new Prepared(reference, null, "patient removed");
-                }
-                if (expectedPatientUuid != null && !expectedPatientUuid.equals(individual.getUuid())) {
-                    return new Prepared(reference, null, "belongs to another patient");
-                }
-                AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
-                if (!stillTheirAbha(link, individual.getUuid(), requesterOid, requesterAddress)) {
-                    return new Prepared(reference, null, "the ABHA asking is no longer the patient's");
-                }
-                CareContextDocument patient = new CareContextDocument(null, null, null, individual.getUuid(), individual.getFullName(),
-                        individual.getGender() == null ? null : individual.getGender().getName(), individual.getDateOfBirth(),
-                        link == null ? null : AbdmFlows.hyphenatedAbhaNumber(link.getAbhaNumber()),
-                        link == null ? null : AbdmFlows.withSuffix(link.getAbhaAddress(), cfg.getAbhaAddressSuffix()),
-                        null, cfg.getHipId(), cfg.getHipName(), List.of());
-                return new Prepared(reference, AbdmJson.write(samples.build(template, patient)), null);
-            });
-        } catch (RuntimeException e) {
-            logger.warn("Eka: sample record {} not prepared: {}", reference, e.getClass().getSimpleName());
-            return new Prepared(reference, null, "could not be prepared");
-        }
-    }
-
-    // ---- sample records (M3 test data)
-
-    // Adds a sample record of each type asked for (every type when none is named) as care contexts of this subject, then
-    // links those samples, and nothing else. Test data: only on Eka's sandbox. Refused before anything is written when a type is
-    // unknown, the organisation is not on the sandbox, or the patient has no ABHA at Eka to link to.
-    public List<Map<String, Object>> addSampleRecords(String subjectUuid, List<String> hiTypes) {
-        List<String> types = hiTypes == null || hiTypes.isEmpty() ? List.copyOf(SampleRecords.FORMS.keySet()) : hiTypes;
-        List<String> unknown = types.stream().filter(t -> !SampleRecords.FORMS.containsKey(t)).toList();
-        if (!unknown.isEmpty()) {
-            throw AbdmRequestException.badRequest("No sample records of type " + String.join(", ", unknown)
-                    + ". Known types: " + String.join(", ", SampleRecords.FORMS.keySet()));
-        }
-        if (!eka.isSandbox()) {
-            throw AbdmRequestException.conflict("Sample records are test data: they can be added only while this organisation uses Eka's sandbox");
-        }
-        AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
-        ekaPatient(subjectUuid, patient);
-        Set<String> added = new java.util.HashSet<>();
-        for (String type : types) {
-            List<AbdmHipStore.NewCareContext> rows = SampleRecords.FORMS.get(type).stream()
-                    .map(t -> new AbdmHipStore.NewCareContext(SampleRecords.reference(t, patient.uuid()), SampleRecords.title(t))).toList();
-            store.ensureCareContexts(patient.individualId(), cfg.getHipId(), patient.uuid(), type, rows);
-            rows.forEach(r -> added.add(r.reference()));
-        }
-        // Only the samples just added: the patient's real visits are linked by Link or the hourly job, never by this.
-        return linkCareContexts(subjectUuid, false, c -> added.contains(c.reference()) && isSample(c));
     }
 
     // Our key material for the requester to derive the shared key: X.509 public key, as the Eka library shares it.

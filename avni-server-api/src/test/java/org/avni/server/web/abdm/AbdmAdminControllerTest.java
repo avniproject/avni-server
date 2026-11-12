@@ -1,10 +1,8 @@
 package org.avni.server.web.abdm;
 
 import org.avni.server.service.abdm.AbdmConfig;
-import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.eka.EkaCallException;
-import org.avni.server.service.abdm.hip.AbdmAutoLink;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,7 +16,6 @@ import static org.mockito.Mockito.*;
 // DEMO-ONLY abdm-hackathon: never merged.
 public class AbdmAdminControllerTest {
     private EkaAbdmClient ekaClient;
-    private final AbdmAutoLink autoLink = new AbdmAutoLink(true);
     private AbdmAdminController controller;
 
     @Before
@@ -27,7 +24,7 @@ public class AbdmAdminControllerTest {
         when(ekaClient.baseUrl()).thenReturn("https://api.dev.eka.care");
         AbdmConfig cfg = new AbdmConfig(new MockEnvironment(), "https://demo.example.org/", "TANUH", "TANUH Health Centre",
                 "TANUH-HIU", "", "", "@sbx", "", "", "Dr. Demo", "log");
-        controller = new AbdmAdminController(mock(AccessControlService.class), cfg, mock(AbdmMessageLog.class), ekaClient, autoLink);
+        controller = new AbdmAdminController(mock(AccessControlService.class), cfg, ekaClient);
     }
 
     @Test
@@ -51,16 +48,5 @@ public class AbdmAdminControllerTest {
 
         assertEquals(false, session.get("ok"));
         assertTrue(((String) session.get("error")).contains("Eka login failed"));
-    }
-
-    // Linking on save, shown on the Status tab and switched there while the server runs (HIP_INTI_LINK_505).
-    @Test
-    public void linkingOnSaveIsReportedAndCanBeSwitched() {
-        assertEquals(true, controller.status().get("autoLink"));
-
-        assertEquals(Map.of("autoLink", false), controller.setAutoLink(Map.of("on", false)));
-
-        assertFalse(autoLink.isOn());
-        assertEquals(false, controller.status().get("autoLink"));
     }
 }

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Avni as HIU: the consent requests as the admin page lists them. EkaHiuService asks for consent through Eka and records
 // the answers.
 @Service

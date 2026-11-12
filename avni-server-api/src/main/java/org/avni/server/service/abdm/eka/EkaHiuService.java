@@ -59,7 +59,6 @@ public class EkaHiuService implements EkaHiuEvents {
     public static final String CONSENT_LIST = "/abdm/v1/consents/list";
     // Patients whose consent list the hourly retry asks Eka for, at most, in one run.
     static final int RETRY_PATIENTS = 10;
-    public static final String CONSENT_APPROVE = "/abdm/v1/consents/approve";
     public static final String ON_PUSH = "/abdm/v1/hiu/care-context/data/on-push";
     private static final String ENTRY = "/abdm/v1/hiu/care-context/data/%s/entries/%s";
 
@@ -177,7 +176,7 @@ public class EkaHiuService implements EkaHiuEvents {
 
         EkaPatient patient = findPatient(address, abhaAddress);
         if (patient.oid() == null) {
-            // DEMO-ONLY: sent by ABHA address alone; Eka may refuse it without the patient's OID.
+            // sent by ABHA address alone; Eka may refuse it without the patient's OID.
             logger.warn("Eka consent request {}: no Eka OID recorded for the patient; sending the ABHA address only", uuid);
         }
         ObjectNode body = AbdmJson.obj();
@@ -242,7 +241,7 @@ public class EkaHiuService implements EkaHiuEvents {
     // ---- HIU key (spec 3.1)
 
     // Once per run per organisation: the newest stored key, else a fresh one stored first, sent to Eka.
-    // DEMO-ONLY: the private key is kept under the Eka credentials key (EkaCredentialCipher); keys are never rotated.
+    // the private key is kept under the Eka credentials key (EkaCredentialCipher); keys are never rotated.
     synchronized Keyset ensureKeyset() {
         Long organisationId = orgContext.organisationId();
         long key = organisationId == null ? 0L : organisationId;
@@ -529,7 +528,7 @@ public class EkaHiuService implements EkaHiuEvents {
                             String checksum = content[1];
                             Boolean matched = checksum == null ? null : AbdmFlows.md5Hex(plaintext).equalsIgnoreCase(checksum);
                             if (Boolean.FALSE.equals(matched)) {
-                                // DEMO-ONLY: logged, not enforced; the checksum algorithm is undocumented (spec 2.5).
+                                // logged, not enforced; the checksum algorithm is undocumented (spec 2.5).
                                 logger.warn("Eka HIU data push {}: checksum mismatch for care context {}", transactionId, careContextId);
                             }
                             store.insertHealthInformation(flowId, transactionId, flowConsentId, hipId, careContextId, matched, AbdmJson.write(bundle));
@@ -617,112 +616,6 @@ public class EkaHiuService implements EkaHiuEvents {
             return null;
         }
         return granted.get().get(0);
-    }
-
-    // ---- sandbox approval (spec 3.5): acting as the patient, as a PHR app would
-
-    public Map<String, Object> approveInSandbox(String consentRequestId) {
-        return approveInSandbox(consentRequestId, null);
-    }
-
-    // overrides (optional): {hipId, careContexts: [{id, display}] or ["id", ...]}. Default: our HIP and the patient's
-    // care contexts linked there. Eka's answer, or its refusal, comes back as it came.
-    public Map<String, Object> approveInSandbox(String consentRequestIdOrUuid, JsonNode overrides) {
-        AbdmHiuStore.Consent request = store.findConsentRequest(consentRequestIdOrUuid)
-                .or(() -> store.findConsentRequestByUuid(consentRequestIdOrUuid))
-                .orElseThrow(() -> AbdmRequestException.notFound("Consent request not found"));
-        if (request.consentRequestId() == null) {
-            throw AbdmRequestException.conflict("Eka has not given this consent request an id yet");
-        }
-        EkaPatient patient = findPatient(request.abhaAddress(), request.abhaAddress());
-        if (patient.oid() == null) {
-            throw AbdmRequestException.badRequest("No Eka OID is recorded for this patient's ABHA; create or verify it through Eka first");
-        }
-        String consentId = abdmConsentId(request, patient);
-        List<String> hiTypes = request.hiTypes() == null ? List.of("OPConsultation")
-                : Arrays.stream(request.hiTypes().split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
-        String hipId = AbdmFlows.firstNonNull(AbdmJson.text(overrides, "hipId"), cfg.getHipId());
-        Instant now = Instant.now();
-        String from = AbdmTime.format(request.dateFrom() != null ? request.dateFrom() : now.minus(3650, ChronoUnit.DAYS));
-        String to = AbdmTime.format(request.dateTo() != null ? request.dateTo() : now);
-        String eraseAt = AbdmTime.format(request.dataEraseAt() != null ? request.dataEraseAt() : now.plus(30, ChronoUnit.DAYS));
-
-        ObjectNode body = AbdmJson.obj();
-        body.put("id", consentId);
-        body.put("access_mode", "view");
-        ArrayNode types = body.putArray("hi_types");
-        hiTypes.forEach(types::add);
-        ObjectNode duration = body.putObject("duration");
-        duration.put("from", from);
-        duration.put("to", to);
-        body.put("erase_at", eraseAt);
-        ObjectNode artefact = body.putArray("consent_artefacts").addObject();
-        artefact.put("hip_id", hipId);
-        artefact.put("access_mode", "view");
-        artefact.set("hi_types", types.deepCopy());
-        artefact.set("duration", duration.deepCopy());
-        artefact.put("erase_at", eraseAt);
-        artefact.set("care_contexts", careContexts(overrides, patient, hipId));
-
-        String path = CONSENT_APPROVE + "?oid=" + UriUtils.encodeQueryParam(patient.oid(), StandardCharsets.UTF_8);
-        Map<String, Object> out = new LinkedHashMap<>();
-        out.put("consentRequestId", consentId);
-        try {
-            EkaResponse response = eka.postSlow(path, body, patientHeaders(patient.oid(), patient.subjectUuid()));
-            out.put("ok", true);
-            out.put("httpStatus", response == null ? null : response.status());
-            out.put("body", response == null ? null : response.body());
-        } catch (EkaCallException e) {
-            out.put("ok", false);
-            out.put("httpStatus", e.getStatus());
-            out.put("abdmCode", e.getAbdmCode());
-            out.put("error", e.getMessage());
-            if (e.getStatus() == 491) {
-                out.put("hint", "The patient's ABHA session at Eka has lapsed: log the patient in again (ABHA login or session verify), then approve");
-            }
-        } catch (RuntimeException e) {
-            out.put("ok", false);
-            out.put("error", describe(e));
-        }
-        logger.info("Eka sandbox approval of consent request {}: {}", consentId, out.get("ok"));
-        return out;
-    }
-
-    private ArrayNode careContexts(JsonNode overrides, EkaPatient patient, String hipId) {
-        ArrayNode out = AbdmJson.arr();
-        JsonNode given = AbdmJson.at(overrides, "careContexts");
-        if (given != null && given.isArray()) {
-            for (JsonNode c : given) {
-                String id = c.isValueNode() ? c.asText() : AbdmFlows.firstNonNull(AbdmJson.text(c, "id"), AbdmJson.text(c, "reference"));
-                if (id == null) continue;
-                ObjectNode n = out.addObject();
-                n.put("id", id);
-                n.put("display", c.isValueNode() ? id : AbdmFlows.firstNonNull(AbdmJson.text(c, "display"), id));
-            }
-            return out;
-        }
-        if (patient.individualId() == null) return out;
-        try {
-            for (AbdmHipStore.CareContext c : hipStore.findCareContexts(patient.individualId(), hipId)) {
-                if (!LINKED.equalsIgnoreCase(c.status())) continue;
-                ObjectNode n = out.addObject();
-                n.put("id", c.reference());
-                n.put("display", c.display() != null ? c.display() : c.reference());
-            }
-        } catch (RuntimeException e) {
-            logger.warn("Eka sandbox approval: linked care contexts not read: {}", e.getClass().getSimpleName());
-        }
-        return out;
-    }
-
-    // Eka's consent list maps its consent_init_id to ABDM's consent id (spec 3.3); when they differ, ABDM's is kept.
-    private String abdmConsentId(AbdmHiuStore.Consent request, EkaPatient patient) {
-        String id = request.consentRequestId();
-        String abdmId = abdmIdOf(id, patient, request.abhaAddress());
-        if (abdmId == null || abdmId.equals(id)) return id;
-        mapToAbdmId(request, abdmId);
-        logger.info("Eka consent request {} is ABDM consent request {}", id, abdmId);
-        return abdmId;
     }
 
     // ABDM's consent request id for Eka's consent_init_id, from the patient's consent list; null when not listed.

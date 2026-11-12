@@ -23,7 +23,6 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // The webapp's HIU screens: ask a patient for consent, follow the requests, read the records received.
 // Not @Transactional: requesting consent calls Eka.
 @RestController

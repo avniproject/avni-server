@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Avni as HIU, the records half: the records received under a consent request, and their expiry and erasure.
 // EkaHiuService receives, decrypts and stores them.
 @Service

@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // A care context as an ABDM OPConsultation FHIR R4 document bundle, built with Jackson (no HAPI). Composition first,
 // then Patient, Practitioner, Organization, Encounter, one Observation per answer, and a DocumentReference carrying the
 // visit as a PDF. Never writes a null: a missing value leaves its field out. Checked against NRCES 6.5.0 with NHA's
@@ -31,7 +30,7 @@ public class FhirBundleBuilder {
     // NRCES tells an ABHA number (HIN) from an ABHA address (ABHA) by this type code; it publishes no system for either.
     static final String NDHM_IDENTIFIER_TYPE = "https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code";
     private static final ZoneId AVNI_DATE_ZONE = ZoneId.of("Asia/Kolkata");
-    // DEMO-ONLY: media, references to other records and nested groups are not shared.
+    // media, references to other records and nested groups are not shared.
     private static final Set<String> NOT_SHARED = Set.of("Image", "ImageV2", "Video", "Audio", "File", "Subject", "Location", "Id",
             "QuestionGroup", "Encounter", "GroupAffiliation");
 
@@ -49,14 +48,6 @@ public class FhirBundleBuilder {
     public FhirBundleBuilder(Supplier<String> idSupplier, Clock clock) {
         this.idSupplier = idSupplier;
         this.clock = clock;
-    }
-
-    String nextId() {
-        return idSupplier.get();
-    }
-
-    java.time.Instant now() {
-        return clock.instant();
     }
 
     public ObjectNode build(CareContextDocument d) {
@@ -148,7 +139,7 @@ public class FhirBundleBuilder {
 
         ObjectNode section = c.putArray("section").addObject();
         section.put("title", "Findings");
-        // DEMO-ONLY coding: every answer goes under one physical-examination section, whatever the form asked.
+        // coding: every answer goes under one physical-examination section, whatever the form asked.
         section.set("code", codeable(SNOMED, "425044008", "Physical exam section"));
         if (observations.isEmpty()) {
             section.set("emptyReason", codeable("http://terminology.hl7.org/CodeSystem/list-empty-reason", "nilknown", "Nil Known"));
@@ -163,8 +154,7 @@ public class FhirBundleBuilder {
         return c;
     }
 
-    // Also used by SampleRecords, to put the Avni subject into a sample record.
-    ObjectNode patient(CareContextDocument d, String id) {
+    private ObjectNode patient(CareContextDocument d, String id) {
         ObjectNode p = resource("Patient", id, "Patient");
         ArrayNode identifiers = AbdmJson.arr();
         if (hasText(d.abhaNumber())) identifiers.add(abhaNumberIdentifier(d.abhaNumber()));
@@ -182,8 +172,7 @@ public class FhirBundleBuilder {
         return p;
     }
 
-    // Also used by SampleRecords, to name this HIP as a sample record's custodian.
-    ObjectNode organisation(CareContextDocument d, String id) {
+    private ObjectNode organisation(CareContextDocument d, String id) {
         ObjectNode o = resource("Organization", id, "Organization");
         if (hasText(d.hipId())) {
             ObjectNode identifier = o.putArray("identifier").addObject();
@@ -212,7 +201,7 @@ public class FhirBundleBuilder {
     private ObjectNode observation(CareContextDocument.Item item, String patientId, String encounterId, String visitTime) {
         if (item == null || !hasText(item.name()) || item.value() == null) return null;
         String dataType = item.dataType() == null ? "Text" : item.dataType();
-        if (NOT_SHARED.contains(dataType)) return null; // DEMO-ONLY: media not shared
+        if (NOT_SHARED.contains(dataType)) return null; // media not shared
 
         ObjectNode value = AbdmJson.obj();
         boolean hasValue = switch (dataType) {

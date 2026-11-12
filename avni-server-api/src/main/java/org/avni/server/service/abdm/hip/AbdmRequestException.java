@@ -2,7 +2,6 @@ package org.avni.server.service.abdm.hip;
 
 import org.springframework.http.HttpStatus;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // A web request the ABDM screens cannot act on: unknown subject, no ABHA, bad input. The message is shown to the user and
 // never carries an ABHA number, address or token.
 public class AbdmRequestException extends RuntimeException {

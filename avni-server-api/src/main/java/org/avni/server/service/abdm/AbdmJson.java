@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.util.ObjectMapperSingleton;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Bodies are read as trees, tolerating missing fields, because the v3 field names are not verified against the sandbox.
 public final class AbdmJson {
     public static final ObjectMapper M = ObjectMapperSingleton.getObjectMapper();

@@ -1,6 +1,5 @@
 package org.avni.server.service.abdm.eka;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Eka refused or did not answer. abdmCode is ABDM's own error code (e.g. ABDM-1035) when Eka's body named one.
 // The message never carries a token, a secret or a patient's details.
 public class EkaCallException extends RuntimeException {

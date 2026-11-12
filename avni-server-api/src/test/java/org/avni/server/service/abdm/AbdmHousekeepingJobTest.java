@@ -4,7 +4,6 @@ import org.junit.Test;
 
 import java.time.Duration;
 
-import org.avni.server.service.abdm.hip.AbdmAutoLink;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -25,10 +24,8 @@ public class AbdmHousekeepingJobTest {
     private final org.avni.server.service.abdm.eka.EkaHipService ekaHip = mock(org.avni.server.service.abdm.eka.EkaHipService.class);
     private final org.avni.server.service.abdm.eka.EkaHiuService ekaHiu = mock(org.avni.server.service.abdm.eka.EkaHiuService.class);
 
-    private final AbdmAutoLink autoLink = new AbdmAutoLink(true);
-
     private AbdmHousekeepingJob job() {
-        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, ekaHip, ekaHiu, autoLink, 30);
+        return new AbdmHousekeepingJob(cfg, orgContext, messageLog, hiuData, hipStore, ekaHip, ekaHiu, 30);
     }
 
     @Test
@@ -76,24 +73,6 @@ public class AbdmHousekeepingJobTest {
 
         verify(hiuData).expireAndErase();
         verify(ekaHiu).retryParkedUpdates();
-    }
-
-    // A test of linking from the patient's app needs visits nothing has linked first.
-    @Test
-    public void withLinkingOnSaveSwitchedOffTheJobLinksNothing() {
-        when(cfg.getSystemUser()).thenReturn("abdm-system");
-        when(cfg.getHipId()).thenReturn("TANUH");
-        doAnswer(inv -> {
-            ((Runnable) inv.getArgument(0)).run();
-            return null;
-        }).when(orgContext).runAsOrg(any(Runnable.class));
-        when(hipStore.subjectsToLink("TANUH", 50)).thenReturn(java.util.List.of("subject-1"));
-        autoLink.set(false);
-
-        job().linkQueuedVisits();
-
-        verify(hipStore, never()).subjectsToLink(any(), anyInt());
-        verify(ekaHip, never()).linkCareContexts(any(), anyBoolean());
     }
 
     @Test

@@ -24,7 +24,6 @@ public class AbdmHousekeepingJob {
     private final org.avni.server.service.abdm.hip.AbdmHipStore hipStore;
     private final org.avni.server.service.abdm.eka.EkaHipService ekaHip;
     private final org.avni.server.service.abdm.eka.EkaHiuService ekaHiu;
-    private final org.avni.server.service.abdm.hip.AbdmAutoLink autoLink;
     private final int messageRetentionDays;
 
     @Autowired
@@ -33,12 +32,10 @@ public class AbdmHousekeepingJob {
                                org.avni.server.service.abdm.hip.AbdmHipStore hipStore,
                                org.avni.server.service.abdm.eka.EkaHipService ekaHip,
                                org.avni.server.service.abdm.eka.EkaHiuService ekaHiu,
-                               org.avni.server.service.abdm.hip.AbdmAutoLink autoLink,
                                @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
         this.hipStore = hipStore;
         this.ekaHip = ekaHip;
         this.ekaHiu = ekaHiu;
-        this.autoLink = autoLink;
         this.hiuData = hiuData;
         this.cfg = cfg;
         this.orgContext = orgContext;
@@ -60,7 +57,6 @@ public class AbdmHousekeepingJob {
     // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient.
     @Scheduled(cron = "${abdm.housekeeping.link-cron:0 */5 * * * *}", zone = "Asia/Kolkata")
     public void linkQueuedVisits() {
-        if (!autoLink.isOn()) return;
         runAsOrg("linking of queued visits", () -> {
             String hipId = cfg.getHipId();
             for (String subjectUuid : hipStore.subjectsToLink(hipId, LINK_BATCH)) {

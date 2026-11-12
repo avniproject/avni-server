@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // A plain-text PDF (A4, Helvetica, uncompressed), for the PDF copy NHA's simple bundle form allows. No library: the
 // server has none, and a page of lines needs only the PDF 1.4 basics. Helvetica covers Latin-1 only: other characters
 // (Kannada, Devanagari) print as '?', so the structured record stays the one to read.

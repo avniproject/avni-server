@@ -125,7 +125,7 @@ public class CareContextDocumentAssembler {
                 if (element.getConcept() != null) order.putIfAbsent(element.getConcept().getUuid(), position++);
             }
         } catch (RuntimeException e) {
-            // DEMO-ONLY: ordering is cosmetic, so a form that cannot be read must not stop the share.
+            // ordering is cosmetic, so a form that cannot be read must not stop the share.
             logger.warn("ABDM: encounter form not read for ordering answers ({})", e.getClass().getSimpleName());
         }
         return order;

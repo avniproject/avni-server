@@ -33,7 +33,7 @@ public class AbdmHipLinkingService {
     public static final String LINKED = "LINKED";
     public static final String FAILED = "FAILED";
 
-    // DEMO-ONLY: dates shown to the patient in India's time.
+    // dates shown to the patient in India's time.
     private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormat.forPattern("d MMM yyyy").withLocale(Locale.ENGLISH)
             .withZone(DateTimeZone.forID("Asia/Kolkata"));
 

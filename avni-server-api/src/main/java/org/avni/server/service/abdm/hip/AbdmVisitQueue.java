@@ -24,7 +24,7 @@ import java.util.List;
 // EncounterService.save and ProgramEncounterService.save hand each saved visit here. A completed visit of a patient
 // holding an ABHA becomes a QUEUED care context; AbdmHousekeepingJob.linkQueuedVisits links the queue through Eka.
 // What is needed is read during the save; the row is written after the save commits, in a transaction of its own, so
-// nothing here can fail or slow a sync. AbdmAutoLink switches it off, from abdm.auto-link or the admin screen.
+// nothing here can fail or slow a sync.
 @Component
 public class AbdmVisitQueue {
     private static final Logger logger = LoggerFactory.getLogger(AbdmVisitQueue.class);
@@ -32,26 +32,23 @@ public class AbdmVisitQueue {
     private final AbdmConfig cfg;
     private final AbdmHipStore store;
     private final AbhaLinkRepository abhaLinkRepository;
-    private final AbdmAutoLink autoLink;
     private final TransactionTemplate ownTransaction;
 
     @Autowired
     public AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
-                          AbdmAutoLink autoLink, PlatformTransactionManager transactionManager) {
+                          PlatformTransactionManager transactionManager) {
         this.cfg = cfg;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
-        this.autoLink = autoLink;
         this.ownTransaction = new TransactionTemplate(transactionManager);
         this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // Tests: runs at once, with no transaction of its own.
-    AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbdmAutoLink autoLink) {
+    AbdmVisitQueue(AbdmConfig cfg, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository) {
         this.cfg = cfg;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
-        this.autoLink = autoLink;
         this.ownTransaction = null;
     }
 
@@ -59,7 +56,7 @@ public class AbdmVisitQueue {
     }
 
     public void queue(AbstractEncounter visit) {
-        if (!autoLink.isOn() || visit == null) return;
+        if (visit == null) return;
         Queued queued;
         try {
             if (visit.isVoided() || visit.getEncounterDateTime() == null || visit.getCancelDateTime() != null) return;

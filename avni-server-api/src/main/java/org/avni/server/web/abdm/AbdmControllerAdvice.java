@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // ABDM controllers only. Ordered first, because the global ErrorInterceptors handles every exception type and Spring
 // takes the first advice with any matching handler, not the closest match.
 @RestControllerAdvice(basePackages = "org.avni.server.web.abdm")

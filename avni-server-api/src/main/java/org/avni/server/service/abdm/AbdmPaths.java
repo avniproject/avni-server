@@ -1,6 +1,5 @@
 package org.avni.server.service.abdm;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 public final class AbdmPaths {
     private AbdmPaths() {
     }

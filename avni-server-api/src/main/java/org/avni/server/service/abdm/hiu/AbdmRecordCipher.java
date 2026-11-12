@@ -9,7 +9,6 @@ import org.springframework.util.StringUtils;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Health records received from other providers are kept encrypted (AVNI-14), under a deploy key of their own,
 // abdm.records.base64EncodedEncryptionKey (ABDM_RECORDS_KEY): not the Eka credentials key. Without it nothing is stored.
 @Component

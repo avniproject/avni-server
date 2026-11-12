@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Small pieces both the HIP and the HIU flows use.
 public final class AbdmFlows {
     public static final String CRYPTO_ALG = "ECDH";
@@ -62,7 +61,7 @@ public final class AbdmFlows {
         return a.contains("@") || suffix == null ? a : a + suffix;
     }
 
-    // DEMO-ONLY: ABDM's checksum algorithm is unverified; md5 hex of the plaintext bundle, logged, never enforced.
+    // ABDM's checksum algorithm is unverified; md5 hex of the plaintext bundle, logged, never enforced.
     public static String md5Hex(String plaintext) {
         return DigestUtils.md5DigestAsHex(plaintext.getBytes(StandardCharsets.UTF_8));
     }

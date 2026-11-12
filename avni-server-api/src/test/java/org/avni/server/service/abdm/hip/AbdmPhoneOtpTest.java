@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -14,32 +16,30 @@ import static org.mockito.Mockito.when;
 
 public class AbdmPhoneOtpTest {
     private final PhoneNumberVerificationService service = mock(PhoneNumberVerificationService.class);
+    private final AbdmPhoneOtp otp = new AbdmPhoneOtp(service);
 
-    private String codeChecked(boolean isDev, boolean msg91InDev, String typed) throws Exception {
+    @Test
+    public void theCodeTypedGoesToTheCheckAsTyped() throws Exception {
         when(service.verifyOTP(any())).thenReturn(new PhoneNumberVerificationResponse(true, null));
-        new AbdmPhoneOtp(service, isDev, msg91InDev).verify("9000000000", typed);
+
+        assertTrue(otp.verify("9000000000", "654321"));
+
         ArgumentCaptor<PhoneNumberVerificationRequest> asked = ArgumentCaptor.forClass(PhoneNumberVerificationRequest.class);
         verify(service).verifyOTP(asked.capture());
-        return asked.getValue().getOtp();
+        assertEquals("654321", asked.getValue().getOtp());
     }
 
     @Test
-    public void aDevServerThatTextsNothingTakesSixDigitsForItsFixedCode() throws Exception {
-        assertEquals("1234", codeChecked(true, false, "123456"));
+    public void aCodeTheServiceRejectsIsNotAccepted() throws Exception {
+        when(service.verifyOTP(any())).thenReturn(new PhoneNumberVerificationResponse(false, null));
+
+        assertFalse(otp.verify("9000000000", "123456"));
     }
 
     @Test
-    public void anyOtherCodeGoesToTheCheckAsTyped() throws Exception {
-        assertEquals("654321", codeChecked(true, false, "654321"));
-    }
+    public void aFailureToSendIsNotASend() throws Exception {
+        when(service.sendOTP(any())).thenThrow(new RuntimeException("down"));
 
-    @Test
-    public void aDevServerThatTextsRealCodesChecksSixDigitsAsTyped() throws Exception {
-        assertEquals("123456", codeChecked(true, true, "123456"));
-    }
-
-    @Test
-    public void aLiveServerChecksSixDigitsAsTyped() throws Exception {
-        assertEquals("123456", codeChecked(false, false, "123456"));
+        assertFalse(otp.send("9000000000"));
     }
 }

@@ -5,7 +5,6 @@ import org.joda.time.LocalDate;
 import java.time.Instant;
 import java.util.List;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // One care context (one Avni encounter) ready to become a FHIR document: the patient, the visit and its answers.
 public record CareContextDocument(String encounterUuid, String encounterTypeName, Instant encounterDateTime,
                                   String patientUuid, String patientName, String gender, LocalDate dateOfBirth,
