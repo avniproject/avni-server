@@ -25,11 +25,14 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 // Record sharing is on for an organisation only when ABHA and record sharing are switched on and its Eka settings can
-// share: a HIP ID and a record-sharing client. Receiving records (HIU) needs an HIU ID besides.
+// share: a HIP ID, a record-sharing client, and the system user and signing key every webhook and job needs. Receiving
+// records (HIU) needs an HIU ID besides.
 public class AbdmAccessTest {
     private static final long ORG = 5L;
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
@@ -125,6 +128,32 @@ public class AbdmAccessTest {
         assertFalse(access.hiuOn());
     }
 
+    // Every webhook is checked with the signing key and every job runs as the system user: without either, all of them fail.
+    @Test
+    public void withoutTheSystemUserOrTheWebhookSigningKeyNothingIsOn() throws Exception {
+        switches(true, true);
+        for (String missing : List.of(EkaSystemConfig.AVNI_SYSTEM_USER, EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY)) {
+            for (String blank : new String[]{null, " "}) {
+                settings(full().with(missing, blank));
+
+                assertFalse(missing, access.recordSharingOn());
+                assertFalse(missing, access.hiuOn());
+                assertFalse(missing, access.recordSharingOn(ORG));
+            }
+        }
+    }
+
+    // Both switches are read from one read of the organisation's settings.
+    @Test
+    public void theSwitchesCostOneReadOfTheOrganisationsSettings() throws Exception {
+        switches(false, true);
+
+        assertFalse(access.recordSharingOn());
+
+        verify(organisationConfigService, times(1)).getOrganisationConfigByOrgId(ORG);
+        verifyNoMoreInteractions(organisationConfigService);
+    }
+
     @Test
     public void whenOffTheRequiresAnswerNotFound() throws Exception {
         switches(true, true);
@@ -182,8 +211,7 @@ public class AbdmAccessTest {
     }
 
     private void switches(boolean abha, boolean recordSharing) {
-        when(organisationConfigService.isAbhaEnabled()).thenReturn(abha);
-        when(organisationConfigService.isAbdmRecordSharingEnabled()).thenReturn(recordSharing);
+        switchesOf(ORG, abha, recordSharing);
     }
 
     private void settings(JsonObject json) throws Exception {
@@ -199,6 +227,8 @@ public class AbdmAccessTest {
                 .with(EkaSystemConfig.HIP_IDS, List.of("hip-1"))
                 .with(EkaSystemConfig.HIU_ID, "hiu-1")
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-1")
-                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1");
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1")
+                .with(EkaSystemConfig.AVNI_SYSTEM_USER, "system-user-1")
+                .with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, "encrypted-key-1");
     }
 }

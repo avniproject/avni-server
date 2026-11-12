@@ -154,8 +154,10 @@ public class AbdmGateTest {
     }
 
     private void settings(boolean abha, boolean recordSharing, JsonObject json) throws Exception {
-        when(organisationConfigService.isAbhaEnabled()).thenReturn(abha);
-        when(organisationConfigService.isAbdmRecordSharingEnabled()).thenReturn(recordSharing);
+        org.avni.server.domain.OrganisationConfig config = new org.avni.server.domain.OrganisationConfig();
+        config.setOrganisationId(ORG);
+        config.setSettings(new JsonObject().with("enableAbha", abha).with("enableAbdmRecordSharing", recordSharing));
+        when(organisationConfigService.getOrganisationConfigByOrgId(ORG)).thenReturn(config);
         ExternalSystemConfig row = new ExternalSystemConfig();
         row.setConfig(json);
         when(configRepository.getEkaSystemConfig(ORG)).thenReturn(new EkaSystemConfig(row));
@@ -167,6 +169,8 @@ public class AbdmGateTest {
                 .with(EkaSystemConfig.HIP_IDS, List.of("hip-1"))
                 .with(EkaSystemConfig.HIU_ID, "hiu-1")
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-1")
-                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1");
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1")
+                .with(EkaSystemConfig.AVNI_SYSTEM_USER, "system-user-1")
+                .with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, "encrypted-key-1");
     }
 }

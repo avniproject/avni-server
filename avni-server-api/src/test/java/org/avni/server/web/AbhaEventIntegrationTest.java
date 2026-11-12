@@ -474,15 +474,17 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
         return new JdbcTemplate(dataSource).queryForObject("select status from abdm_care_context where reference = ?", String.class, reference);
     }
 
-    // Record sharing needs its switch and a record-sharing Eka client besides the ABHA settings readyFor stores.
+    // Record sharing needs its switch, a record-sharing Eka client, a system user and a webhook signing key besides the
+    // ABHA settings readyFor stores.
     private void recordSharing(boolean on) {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
         jdbc.update("update organisation_config set settings = settings || jsonb_build_object('enableAbdmRecordSharing', ?) where organisation_id = ?",
                 on, DEMO_ID);
-        jdbc.update("update external_system_config set config = config || jsonb_build_object(?::text, 'sharing-client-1', ?::text, ?::text) " +
-                        "where organisation_id = ? and system_name = 'Eka'",
+        jdbc.update("update external_system_config set config = config || jsonb_build_object(?::text, 'sharing-client-1', ?::text, ?::text, " +
+                        "?::text, 'demo-admin', ?::text, ?::text) where organisation_id = ? and system_name = 'Eka'",
                 EkaSystemConfig.SHARING_CLIENT_ID, EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET,
-                ekaCredentialCipher.encrypt("test-sharing-secret"), DEMO_ID);
+                ekaCredentialCipher.encrypt("test-sharing-secret"), EkaSystemConfig.AVNI_SYSTEM_USER,
+                EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, ekaCredentialCipher.encrypt("test-signing-key"), DEMO_ID);
     }
 
     private void clearHealthCentre(String username) {

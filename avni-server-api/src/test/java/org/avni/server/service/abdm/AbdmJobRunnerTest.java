@@ -29,6 +29,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -119,9 +120,23 @@ public class AbdmJobRunnerTest {
         verify(jobRuns).succeeded(eq(2L), eq(TASK), any());
     }
 
+    // Without a system user an organisation cannot share records (AbdmAccess): the job does not run for it, and nothing fails.
     @Test
-    public void anOrganisationWithRecordSharingOnButNoSystemUserIsReported_notSkippedSilently() throws Exception {
+    public void anOrganisationWithNoSystemUserIsNotSharingRecords_soTheJobSkipsIt() throws Exception {
         organisation(1L, true, true, null);
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(1L));
+
+        assertTrue(ranFor.isEmpty());
+        verifyNoInteractions(bugsnag);
+        verify(jobRuns, never()).failed(anyLong(), any(), any(), any());
+    }
+
+    // A system user named that cannot act for the organisation (removed, or another organisation's) is reported.
+    @Test
+    public void anOrganisationWhoseSystemUserCannotActForItIsReported_notSkippedSilently() throws Exception {
+        organisation(1L, true, true, "user-of-no-organisation");
         List<Long> ranFor = new ArrayList<>();
 
         runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(1L));
@@ -193,7 +208,8 @@ public class AbdmJobRunnerTest {
                 .with(EkaSystemConfig.HIP_IDS, List.of("hip-" + id))
                 .with(EkaSystemConfig.CLIENT_ID, "m1-client")
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-client")
-                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted");
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted")
+                .with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, "encrypted-key");
         if (systemUser != null) eka.with(EkaSystemConfig.AVNI_SYSTEM_USER, systemUser);
         ExternalSystemConfig row = new ExternalSystemConfig();
         row.setOrganisationId(id);
