@@ -250,4 +250,13 @@ public class ReportCard extends OrganisationAwareEntity {
     public void setOnActionCompletion(ReportCardActionCompletion onActionCompletion) {
         this.onActionCompletion = onActionCompletion;
     }
+
+    public String getActionDetailApprovalStatus() {
+        return actionDetail != null ? actionDetail.getString("approvalStatus") : null;
+    }
+
+    public void setActionDetailApprovalStatus(String approvalStatus) {
+        this.actionDetail = new JsonObject(new HashMap<>());
+        this.actionDetail.with("approvalStatus", approvalStatus);
+    }
 }

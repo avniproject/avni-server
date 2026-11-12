@@ -4,5 +4,6 @@ public enum ReportCardAction {
     ViewSubjectProfile,
     DoVisit,
     MarkAttendance,
-    OpenDashboard
+    OpenDashboard,
+    ApproveReject
 }

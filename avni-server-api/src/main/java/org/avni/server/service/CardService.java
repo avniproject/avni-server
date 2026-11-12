@@ -73,7 +73,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID(), reportCardRequest.getActionDetailDashboardUUID());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID(), reportCardRequest.getActionDetailDashboardUUID(), reportCardRequest.getActionDetailApprovalStatus());
         linkCustomCardConfig(card, reportCardRequest);
         cardRepository.save(card);
         return card;
@@ -88,7 +88,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(reportCardRequest, card);
         buildStandardReportCardType(reportCardRequest, card);
         buildAction(reportCardRequest.getAction(), card);
-        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID(), reportCardRequest.getActionDetailDashboardUUID());
+        buildActionDetail(card, reportCardRequest.getActionDetailSubjectTypeUUID(), reportCardRequest.getActionDetailProgramUUID(), reportCardRequest.getActionDetailEncounterTypeUUID(), reportCardRequest.getActionDetailVisitType(), reportCardRequest.getActionDetailAttendanceTypeUUID(), reportCardRequest.getActionDetailDashboardUUID(), reportCardRequest.getActionDetailApprovalStatus());
         CustomCardConfig previousConfig = card.getCustomCardConfig();
         upsertAndLinkCustomCardConfig(card, reportCardRequest.getCustomCardConfig());
         voidOrphanedCustomCardConfig(card, previousConfig);
@@ -102,7 +102,7 @@ public class CardService implements NonScopeAwareService {
         buildCard(request, existingCard);
         buildStandardReportCardType(request, existingCard);
         buildAction(request.getAction(), existingCard);
-        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType(), request.getActionDetailAttendanceTypeUUID(), request.getActionDetailDashboardUUID());
+        buildActionDetail(existingCard, request.getActionDetailSubjectTypeUUID(), request.getActionDetailProgramUUID(), request.getActionDetailEncounterTypeUUID(), request.getActionDetailVisitType(), request.getActionDetailAttendanceTypeUUID(), request.getActionDetailDashboardUUID(), request.getActionDetailApprovalStatus());
         linkCustomCardConfig(existingCard, request);
         return cardRepository.save(existingCard);
     }
@@ -256,7 +256,7 @@ public class CardService implements NonScopeAwareService {
         card.setCustomCardConfig(config);
     }
 
-    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType, String attendanceTypeUUID, String dashboardUUID) {
+    private void buildActionDetail(ReportCard card, String subjectTypeUUID, String programUUID, String encounterTypeUUID, String visitType, String attendanceTypeUUID, String dashboardUUID, String approvalStatus) {
         ReportCardAction action = card.getAction();
         if (action == ReportCardAction.DoVisit) {
             buildDoVisitActionDetail(card, subjectTypeUUID, programUUID, encounterTypeUUID, visitType);
@@ -268,6 +268,10 @@ public class CardService implements NonScopeAwareService {
         }
         if (action == ReportCardAction.OpenDashboard) {
             buildOpenDashboardActionDetail(card, dashboardUUID);
+            return;
+        }
+        if (action == ReportCardAction.ApproveReject) {
+            buildApproveRejectActionDetail(card, approvalStatus);
             return;
         }
         // For ViewSubjectProfile (and any future action without its own detail
@@ -476,5 +480,19 @@ public class CardService implements NonScopeAwareService {
             savedCards.put(standardReportCardType.getType(), cardRepository.save(reportCard));
         });
         return savedCards;
+    }
+
+    private void buildApproveRejectActionDetail(ReportCard card, String approvalStatus) {
+        if (card.getStandardReportCardType() != null) {
+            throw new BadRequestError("Approve or Reject action is only for a card on a custom query, not a standard card");
+        }
+        if (!StringUtils.hasText(approvalStatus)) {
+            throw new BadRequestError("Approval status is required when action is ApproveReject");
+        }
+        boolean known = Arrays.stream(ApprovalStatus.Status.values()).anyMatch(status -> status.name().equals(approvalStatus));
+        if (!known) {
+            throw new BadRequestError(String.format("Invalid approval status '%s'. Allowed values: %s", approvalStatus, Arrays.toString(ApprovalStatus.Status.values())));
+        }
+        card.setActionDetailApprovalStatus(approvalStatus);
     }
 }

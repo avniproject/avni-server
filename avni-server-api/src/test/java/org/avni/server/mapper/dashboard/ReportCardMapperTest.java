@@ -147,4 +147,31 @@ public class ReportCardMapperTest {
         assertEquals("OpenDashboard", uploaded.getAction());
         assertEquals("dashboard-uuid", uploaded.getActionDetailDashboardUUID());
     }
+
+    @Test
+    public void toWebResponseAndBundleCarryApproveRejectActionAndApprovalStatus() {
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-9");
+        card.setName("Card");
+        card.setAction(ReportCardAction.ApproveReject);
+        card.setActionDetailApprovalStatus("Rejected");
+
+        ReportCardWebResponse web = mapper.toWebResponse(card);
+        assertEquals("ApproveReject", web.getAction());
+        assertEquals("Rejected", web.getActionDetailApprovalStatus());
+        assertNull(web.getActionDetailDashboardUUID());
+
+        assertEquals("Rejected", mapper.toBundle(card).getActionDetailApprovalStatus());
+    }
+
+    @Test
+    public void toWebResponseHasNoApprovalStatusForOtherActions() {
+        ReportCard card = new ReportCard();
+        card.setUuid("card-uuid-10");
+        card.setName("Card");
+        card.setAction(ReportCardAction.OpenDashboard);
+        card.setActionDetailDashboardUUID("dashboard-uuid");
+
+        assertNull(mapper.toWebResponse(card).getActionDetailApprovalStatus());
+    }
 }

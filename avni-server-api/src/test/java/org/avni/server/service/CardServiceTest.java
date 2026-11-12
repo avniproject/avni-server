@@ -30,6 +30,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.domain.ReportCard;
+import org.avni.server.domain.StandardReportCardType;
 import org.avni.server.domain.ReportCardAction;
 import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
@@ -810,6 +811,127 @@ public class CardServiceTest {
         assertEquals(ReportCardAction.OpenDashboard, existingCard.getAction());
         assertEquals(DASHBOARD_UUID, existingCard.getActionDetailDashboardUUID());
         assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
+    }
+
+    @Test
+    public void saveCard_stores_approval_status_for_approve_reject_on_a_custom_query_card() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("'use strict'; ({params}) => []");
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("Pending");
+        // The web app sends every action field whatever the action is, so leftovers of other actions arrive too.
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard saved = cardService.saveCard(request);
+
+        assertEquals(ReportCardAction.ApproveReject, saved.getAction());
+        assertEquals("Pending", saved.getActionDetailApprovalStatus());
+        assertEquals(Set.of("approvalStatus"), saved.getActionDetail().keySet());
+        assertNull(saved.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void uploadCard_stores_each_approval_status_for_approve_reject() {
+        for (String status : new String[]{"Pending", "Approved", "Rejected"}) {
+            when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+            ReportCardBundleRequest bundleRequest = newBundleRequest();
+            bundleRequest.setAction("ApproveReject");
+            bundleRequest.setActionDetailApprovalStatus(status);
+
+            cardService.uploadCard(bundleRequest);
+        }
+
+        ArgumentCaptor<ReportCard> savedCards = ArgumentCaptor.forClass(ReportCard.class);
+        verify(cardRepository, org.mockito.Mockito.times(3)).save(savedCards.capture());
+        assertEquals(java.util.List.of("Pending", "Approved", "Rejected"),
+                savedCards.getAllValues().stream().map(ReportCard::getActionDetailApprovalStatus).toList());
+    }
+
+    @Test
+    public void saveCard_rejects_approve_reject_without_approval_status() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ApproveReject");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when approval status is missing");
+        } catch (BadRequestError e) {
+            assertEquals("Approval status is required when action is ApproveReject", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_approve_reject_with_unknown_approval_status() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("pending");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError for an approval status that is not Pending, Approved or Rejected");
+        } catch (BadRequestError e) {
+            assertEquals("Invalid approval status 'pending'. Allowed values: [Pending, Approved, Rejected]", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_approve_reject_on_a_standard_card() {
+        StandardReportCardType pendingApproval = new StandardReportCardType();
+        pendingApproval.setType(org.avni.server.domain.StandardReportCardTypeType.PendingApproval);
+        when(standardReportCardTypeRepository.findById(11L)).thenReturn(java.util.Optional.of(pendingApproval));
+        ReportCardWebRequest request = newWebRequest();
+        request.setStandardReportCardTypeId(11L);
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("Pending");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError for Approve or Reject on a standard card");
+        } catch (BadRequestError e) {
+            assertEquals("Approve or Reject action is only for a card on a custom query, not a standard card", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void editCard_clears_approval_status_when_action_changes_to_view_subject_profile() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.ApproveReject);
+        existingCard.setActionDetailApprovalStatus("Rejected");
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ViewSubjectProfile");
+        request.setActionDetailApprovalStatus("Rejected");
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailApprovalStatus());
+    }
+
+    @Test
+    public void editCard_replaces_open_dashboard_target_with_approval_status() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("Approved");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(request, 7L);
+
+        assertEquals(Set.of("approvalStatus"), existingCard.getActionDetail().keySet());
+        assertEquals("Approved", existingCard.getActionDetailApprovalStatus());
     }
 
     private ReportCardWebRequest newWebRequest() {

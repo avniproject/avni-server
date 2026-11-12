@@ -24,6 +24,7 @@ public class ReportCardWebResponse extends ReportCardContract {
     private String actionDetailVisitType;
     private String actionDetailAttendanceTypeUUID;
     private String actionDetailDashboardUUID;
+    private String actionDetailApprovalStatus;
     private String customCardConfigUUID;
 
     public List<SubjectTypeContract> getStandardReportCardInputSubjectTypes() {
@@ -112,6 +113,14 @@ public class ReportCardWebResponse extends ReportCardContract {
 
     public void setActionDetailAttendanceTypeUUID(String actionDetailAttendanceTypeUUID) {
         this.actionDetailAttendanceTypeUUID = actionDetailAttendanceTypeUUID;
+    }
+
+    public String getActionDetailApprovalStatus() {
+        return actionDetailApprovalStatus;
+    }
+
+    public void setActionDetailApprovalStatus(String actionDetailApprovalStatus) {
+        this.actionDetailApprovalStatus = actionDetailApprovalStatus;
     }
 
     public String getActionDetailDashboardUUID() {
