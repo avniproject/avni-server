@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 // Marks a method that returns a saved visit, for hooks that act on saved health records after it returns.
+// Never on a @Transactional method: its hooks outrank the transaction advice, so they would run after that commit, outside it.
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface HealthRecordSaved {

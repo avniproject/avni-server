@@ -148,7 +148,7 @@ public class AbdmHousekeepingJob {
                     patient.getValue().forEach(hipId -> hipStore.awaitVerifiedAbha(patient.getKey(), hipId, e.getMessage(), lookedAt[0]));
                     logger.info("ABDM: visits of subject {} wait for an ABHA verified with Eka", patient.getKey());
                 } catch (AbdmRequestException e) {
-                    // The patient's own record refuses it (removed, a verified ABHA with no address): no later try changes that.
+                    // The patient's own record refuses it (removed, a verified ABHA with neither address nor number): no later try changes that.
                     patient.getValue().forEach(hipId -> hipStore.failQueuedForGood(patient.getKey(), hipId, e.getMessage()));
                     logger.info("ABDM: visits of subject {} given up: {}", patient.getKey(), e.getMessage());
                 } catch (RuntimeException e) {

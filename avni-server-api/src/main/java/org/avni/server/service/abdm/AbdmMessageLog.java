@@ -22,11 +22,9 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-// The abdm_message table: every ABDM message in and out, for the demo's traffic view. Never the session call.
+// The abdm_message table: every ABDM message in and out, redacted, so a failed exchange can be traced. Never the session call.
 // Swallows its own failures: a log row is never a reason to fail a flow. Each insert runs in its own transaction, so a
 // failed insert cannot abort a caller's transaction. Bodies are kept only as redact leaves them, and AbdmHousekeepingJob
 // deletes rows older than abdm.message-retention-days.
@@ -35,12 +33,9 @@ import java.util.Map;
 @Component
 public class AbdmMessageLog {
     private static final Logger logger = LoggerFactory.getLogger(AbdmMessageLog.class);
-    private static final int MAX_RECENT = 500;
     public static final String MASK = "***";
     private static final String INSERT = "insert into abdm_message (organisation_id, direction, method, path, request_id, http_status, body) " +
             "values (:organisationId, :direction, :method, :path, :requestId, :httpStatus, cast(:body as jsonb))";
-    private static final String RECENT = "select id, direction, method, path, request_id, http_status, created_at, body::text as body " +
-            "from abdm_message order by id desc limit :limit";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final TransactionTemplate ownTransaction;
@@ -58,24 +53,6 @@ public class AbdmMessageLog {
 
     public void incoming(String path, AbdmCallbackHeaders headers, JsonNode body) {
         insert("IN", "POST", path, headers == null ? null : headers.requestId(), body, 202);
-    }
-
-    public List<Map<String, Object>> recent(int limit) {
-        int bounded = Math.max(1, Math.min(limit, MAX_RECENT));
-        return jdbc.query(RECENT, new MapSqlParameterSource("limit", bounded), (rs, rowNum) -> {
-            Map<String, Object> row = new LinkedHashMap<>();
-            row.put("id", rs.getLong("id"));
-            row.put("direction", rs.getString("direction"));
-            row.put("method", rs.getString("method"));
-            row.put("path", rs.getString("path"));
-            row.put("requestId", rs.getString("request_id"));
-            int status = rs.getInt("http_status");
-            row.put("httpStatus", rs.wasNull() ? null : status);
-            Timestamp createdAt = rs.getTimestamp("created_at");
-            row.put("createdAt", createdAt == null ? null : AbdmTime.format(createdAt.toInstant()));
-            row.put("body", readQuietly(rs.getString("body")));
-            return row;
-        });
     }
 
     private void insert(String direction, String method, String path, String requestId, JsonNode body, Integer httpStatus) {
@@ -96,7 +73,7 @@ public class AbdmMessageLog {
         }
     }
 
-    // What the traffic view may keep: ids, statuses, record types, dates and errors. Every other value, at any depth, is
+    // What the traffic log may keep: ids, statuses, record types, dates and errors. Every other value, at any depth, is
     // masked, so a name, an ABHA, an Eka OID, a phone number, a record or a key never reaches the table (AVNI-13).
     private static final Set<String> KEPT = Set.of("service", "event", "event_time", "timestamp", "transaction_id", "transactionId",
             "request_id", "requestId", "txn_id", "status", "consent_id", "consentId", "consent_request_id", "consentRequestId",
@@ -155,13 +132,5 @@ public class AbdmMessageLog {
 
     private static String truncate(String value, int max) {
         return value == null || value.length() <= max ? value : value.substring(0, max);
-    }
-
-    private static JsonNode readQuietly(String json) {
-        try {
-            return AbdmJson.read(json);
-        } catch (RuntimeException e) {
-            return null;
-        }
     }
 }
