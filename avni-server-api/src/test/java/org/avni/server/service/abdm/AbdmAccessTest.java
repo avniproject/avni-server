@@ -3,6 +3,7 @@ package org.avni.server.service.abdm;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
@@ -144,6 +145,40 @@ public class AbdmAccessTest {
 
         assertFalse(access.recordSharingOn());
         assertFalse(access.hiuOn());
+    }
+
+    // A webhook or a job has no user: the organisation is named, and its own switches and Eka settings are read.
+    @Test
+    public void forANamedOrganisationRecordSharingIsOnOnlyWithBothSwitchesAndEkaSettingsThatCanShare() throws Exception {
+        UserContextHolder.clear();
+        switchesOf(ORG, true, true);
+        settings(full());
+        assertTrue(access.recordSharingOn(ORG));
+
+        settings(full().with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, null));
+        assertFalse(access.recordSharingOn(ORG));
+
+        when(configRepository.getEkaSystemConfig(ORG)).thenThrow(new EkaNotConfiguredException("none"));
+        assertFalse(access.recordSharingOn(ORG));
+    }
+
+    @Test
+    public void forANamedOrganisationWithASwitchOffNothingIsOn_andNoEkaSettingIsRead() throws Exception {
+        switchesOf(ORG, false, true);
+        assertFalse(access.recordSharingOn(ORG));
+        switchesOf(ORG, true, false);
+        assertFalse(access.recordSharingOn(ORG));
+        when(organisationConfigService.getOrganisationConfigByOrgId(ORG)).thenReturn(null);
+        assertFalse(access.recordSharingOn(ORG));
+
+        verify(configRepository, never()).getEkaSystemConfig(any());
+    }
+
+    private void switchesOf(long organisationId, boolean abha, boolean recordSharing) {
+        OrganisationConfig config = new OrganisationConfig();
+        config.setOrganisationId(organisationId);
+        config.setSettings(new JsonObject().with("enableAbha", abha).with("enableAbdmRecordSharing", recordSharing));
+        when(organisationConfigService.getOrganisationConfigByOrgId(organisationId)).thenReturn(config);
     }
 
     private void switches(boolean abha, boolean recordSharing) {

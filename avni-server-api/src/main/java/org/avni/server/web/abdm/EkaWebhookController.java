@@ -1,91 +1,84 @@
 package org.avni.server.web.abdm;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.avni.server.service.abdm.AbdmAsync;
-import org.avni.server.service.abdm.AbdmCallbackHeaders;
-import org.avni.server.service.abdm.AbdmInboundEvents;
+import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.service.abdm.AbdmAccess;
+import org.avni.server.service.abdm.AbdmInbox;
 import org.avni.server.service.abdm.AbdmJson;
-import org.avni.server.service.abdm.AbdmMessageLog;
 import org.avni.server.service.abdm.AbdmPaths;
-import org.avni.server.service.abdm.eka.EkaHipEvents;
-import org.avni.server.service.abdm.eka.EkaHiuEvents;
+import org.avni.server.service.abdm.eka.EkaEventRoute;
+import org.avni.server.service.abdm.eka.EkaEventWorker;
+import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.eka.EkaWebhookVerifier;
 import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.Optional;
 
-// Eka Care posts every ABDM event here, on one URL, routed on the envelope's "event" field (spec section 5).
-// The raw body is kept as received, because the signature is over those exact bytes. Every event's signature is checked,
-// and a missing or bad one is answered 401 with nothing done; no setting turns the check off.
-// Then 200 at once, and the work goes to an AbdmAsync thread as the organisation: log the event, hand it to the HIP or
-// HIU handler. Handlers come through ObjectProvider, so the server starts with either side missing.
-// Eka's retry policy is undocumented, so delivery is taken as at-least-once: an event id (the top-level transaction_id)
-// already taken (abdm_inbound_event, AbdmInboundEvents) is dropped. An event whose handling fails is released from it, so
-// Eka's redelivery is handled.
+// Eka Care posts each organisation's ABDM events to that organisation's own address, /api/v3/eka/webhook/{webhookId}
+// (its Eka settings' webhookId). In order: the address must name an organisation (else 404); the signature over the raw
+// body, as received, must check with that organisation's key (else 401, saying nothing more); its record sharing must be
+// on (else 404). Then the event is stored (AbdmInbox) and only then answered 200: an event that could not be stored is
+// not acknowledged, so Eka delivers it again. EkaEventWorker handles it as the organisation.
 // No Avni user: this path alone is open (ResourceProtectionStatus), so the signature is the check.
 @RestController
 public class EkaWebhookController {
     private static final Logger logger = LoggerFactory.getLogger(EkaWebhookController.class);
     private static final String SOURCE = "eka";
+    private static final int MAX_EVENT_ID = 100;
+    private static final int MAX_TEXT = 255;
 
-    enum Route {LINK_CARE_CONTEXT, HIP_DATA_FETCH, CONSENT_UPDATE, HIU_DATA_PUSH, DISCOVER, DISCOVER_LINK_INIT, DISCOVER_LINK_CONFIRM, NONE}
-
-    // Event names squashed to letters and digits, without the "abha"/"abdm" prefix: the spec's names and close variants.
-    private static final Set<String> LINK_CARE_CONTEXT = Set.of("linkcarecontext", "linkcarecontexts", "carecontextlink",
-            "carecontextlinked", "carecontextlinkstatus", "linkcarecontextstatus");
-    private static final Set<String> HIP_DATA_FETCH = Set.of("hipdatafetch", "datafetch", "hipdatarequest", "hiphealthinformationrequest");
-    private static final Set<String> CONSENT_UPDATE = Set.of("consentupdate", "consentupdated", "consentstatus", "consentstatusupdate",
-            "consentnotify");
-    private static final Set<String> HIU_DATA_PUSH = Set.of("hiudatapush", "datapush", "hiudatatransfer", "hiuhealthinformationtransfer");
-    // Patient-led linking (spec 2.7): Eka's three names, as published.
-    private static final Set<String> DISCOVER = Set.of("carecontextdiscover");
-    private static final Set<String> DISCOVER_LINK_INIT = Set.of("carecontextdiscoverlinkinit");
-    private static final Set<String> DISCOVER_LINK_CONFIRM = Set.of("contextdiscoverlinkconfirm", "carecontextdiscoverlinkconfirm");
-
+    private final ExternalSystemConfigRepository configRepository;
     private final EkaWebhookVerifier verifier;
-    private final AbdmAsync async;
-    private final AbdmMessageLog messageLog;
-    private final AbdmInboundEvents inboundEvents;
-    private final ObjectProvider<EkaHipEvents> hip;
-    private final ObjectProvider<EkaHiuEvents> hiu;
-    private final ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery;
+    private final AbdmAccess access;
+    private final AbdmInbox inbox;
+    private final EkaEventWorker worker;
 
     @Autowired
-    public EkaWebhookController(EkaWebhookVerifier verifier, AbdmAsync async, AbdmMessageLog messageLog,
-                                AbdmInboundEvents inboundEvents, ObjectProvider<EkaHipEvents> hip, ObjectProvider<EkaHiuEvents> hiu,
-                                ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discovery) {
-        this.discovery = discovery;
+    public EkaWebhookController(ExternalSystemConfigRepository configRepository, EkaWebhookVerifier verifier, AbdmAccess access,
+                                AbdmInbox inbox, EkaEventWorker worker) {
+        this.configRepository = configRepository;
         this.verifier = verifier;
-        this.async = async;
-        this.messageLog = messageLog;
-        this.inboundEvents = inboundEvents;
-        this.hip = hip;
-        this.hiu = hiu;
+        this.access = access;
+        this.inbox = inbox;
+        this.worker = worker;
     }
 
-    @PostMapping(AbdmPaths.IN_EKA_WEBHOOK)
-    public ResponseEntity<Map<String, String>> receive(@RequestBody(required = false) byte[] body,
+    @PostMapping(AbdmPaths.IN_EKA_WEBHOOK + "/{webhookId}")
+    public ResponseEntity<Map<String, String>> receive(@PathVariable String webhookId, @RequestBody(required = false) byte[] body,
                                                        @RequestHeader(value = EkaWebhookVerifier.HEADER, required = false) String signature) {
+        Optional<EkaSystemConfig> settings = configRepository.findEkaSystemConfigByWebhookId(webhookId);
+        if (settings.isEmpty()) {
+            logger.warn("Eka webhook refused: no organisation has this webhook address");
+            return answer(HttpStatus.NOT_FOUND, "rejected", null);
+        }
+        long organisationId = settings.get().getOrganisationId();
         String rawBody = body == null ? "" : new String(body, StandardCharsets.UTF_8);
-        EkaWebhookVerifier.Result result = verifier.verify(signature, rawBody);
+        EkaWebhookVerifier.Result result = verifier.verify(settings.get(), signature, rawBody);
         if (!result.valid()) {
-            logger.warn("Eka webhook refused: {}", result.reason());
-            return answer(HttpStatus.UNAUTHORIZED, "rejected", result.reason());
+            logger.warn("Eka webhook for organisation {} refused: {}", organisationId, result.reason());
+            return answer(HttpStatus.UNAUTHORIZED, "rejected", null);
+        }
+        if (!access.recordSharingOn(organisationId)) {
+            logger.warn("Eka webhook for organisation {} refused: its record sharing is off", organisationId);
+            return answer(HttpStatus.NOT_FOUND, "rejected", null);
         }
 
         JsonNode event;
@@ -95,71 +88,51 @@ public class EkaWebhookController {
             event = null;
         }
         if (event == null || !event.isObject()) {
-            logger.warn("Eka webhook refused: the body is not a JSON object");
+            logger.warn("Eka webhook for organisation {} refused: the body is not a JSON object", organisationId);
             return answer(HttpStatus.BAD_REQUEST, "rejected", "the body is not a JSON object");
         }
 
-        String name = eventName(event);
-        String eventId = AbdmFlows.firstNonNull(AbdmJson.text(event, "transaction_id"), AbdmJson.text(event, "event_id"),
-                AbdmJson.text(event, "id"));
-        AbdmCallbackHeaders headers = new AbdmCallbackHeaders(AbdmPaths.IN_EKA_WEBHOOK, eventId, AbdmJson.text(event, "timestamp"),
-                AbdmJson.text(event, "data.hip_id"), null, null, null);
-        JsonNode received = event;
-        async.submit("Eka webhook " + name, () -> {
-            if (eventId != null && !inboundEvents.claim(SOURCE, eventId)) {
-                logger.info("Eka webhook {} {} already handled; ignored", name, eventId);
-                return;
+        String name = bounded(EkaEventRoute.eventName(event));
+        EkaEventRoute route = EkaEventRoute.of(name);
+        String eventId = eventId(event, rawBody);
+        try {
+            if (!inbox.receive(organisationId, SOURCE, eventId, name, route.name(), consentKey(route, event), rawBody, Instant.now())) {
+                logger.info("Eka webhook {} {} for organisation {} was stored before; accepted again", name, eventId, organisationId);
             }
-            messageLog.incoming(AbdmPaths.IN_EKA_WEBHOOK + "#" + name, headers, received);
-            try {
-                dispatch(route(name), name, eventId, received);
-            } catch (RuntimeException e) {
-                if (eventId != null) inboundEvents.release(SOURCE, eventId);
-                logger.warn("Eka webhook {} {} failed ({}); released for Eka's next delivery", name, eventId, e.getClass().getSimpleName());
-            }
-        });
+        } catch (RuntimeException e) {
+            logger.error("Eka webhook {} {} for organisation {} could not be stored, so it is not acknowledged", name, eventId, organisationId, e);
+            return answer(HttpStatus.INTERNAL_SERVER_ERROR, "not stored", null);
+        }
+        worker.wake();
         return answer(HttpStatus.OK, "accepted", null);
     }
 
-    private void dispatch(Route route, String name, String eventId, JsonNode event) {
-        switch (route) {
-            case LINK_CARE_CONTEXT -> handle(hip, name, eventId, h -> h.linkCareContext(event));
-            case HIP_DATA_FETCH -> handle(hip, name, eventId, h -> h.hipDataFetch(event));
-            case CONSENT_UPDATE -> handle(hiu, name, eventId, h -> h.consentUpdate(event));
-            case HIU_DATA_PUSH -> handle(hiu, name, eventId, h -> h.hiuDataPush(event));
-            case DISCOVER -> handle(discovery, name, eventId, d -> d.discover(event));
-            case DISCOVER_LINK_INIT -> handle(discovery, name, eventId, d -> d.linkInit(event));
-            case DISCOVER_LINK_CONFIRM -> handle(discovery, name, eventId, d -> d.linkConfirm(event));
-            default -> logger.info("Eka webhook {} {} ignored: nothing handles this event", name, eventId);
+    // Eka's top-level transaction_id names the delivery; without one, the body itself, so a redelivery is still one event.
+    private static String eventId(JsonNode event, String rawBody) {
+        String id = AbdmFlows.firstNonNull(AbdmJson.text(event, "transaction_id"), AbdmJson.text(event, "event_id"), AbdmJson.text(event, "id"));
+        return id != null && !id.isBlank() && id.length() <= MAX_EVENT_ID ? id : "sha256:" + sha256(rawBody);
+    }
+
+    // The consent an HIU event concerns: the inbox handles a consent's events in the order they came.
+    private static String consentKey(EkaEventRoute route, JsonNode event) {
+        String key = switch (route) {
+            case CONSENT_UPDATE -> EkaHiuService.consentRequestIdOf(event);
+            case HIU_DATA_PUSH -> EkaHiuService.pushConsentIdOf(event);
+            default -> null;
+        };
+        return bounded(key);
+    }
+
+    static String sha256(String text) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
         }
     }
 
-    private static <T> void handle(ObjectProvider<T> handlers, String name, String eventId, Consumer<T> work) {
-        T handler = handlers.getIfAvailable();
-        if (handler == null) {
-            logger.warn("Eka webhook {} {} has no handler; logged only", name, eventId);
-            return;
-        }
-        work.accept(handler);
-    }
-
-    // The ABDM events carry "event"; "event_type" is what Eka's non-ABDM events use and is not read.
-    static String eventName(JsonNode event) {
-        String name = AbdmFlows.firstNonNull(AbdmJson.text(event, "event"), AbdmJson.text(event, "event_name"));
-        return name == null ? "unknown" : name.trim();
-    }
-
-    static Route route(String name) {
-        String key = name == null ? "" : name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
-        key = key.replaceFirst("^(abha|abdm)", "");
-        if (LINK_CARE_CONTEXT.contains(key)) return Route.LINK_CARE_CONTEXT;
-        if (HIP_DATA_FETCH.contains(key)) return Route.HIP_DATA_FETCH;
-        if (CONSENT_UPDATE.contains(key)) return Route.CONSENT_UPDATE;
-        if (HIU_DATA_PUSH.contains(key)) return Route.HIU_DATA_PUSH;
-        if (DISCOVER.contains(key)) return Route.DISCOVER;
-        if (DISCOVER_LINK_INIT.contains(key)) return Route.DISCOVER_LINK_INIT;
-        if (DISCOVER_LINK_CONFIRM.contains(key)) return Route.DISCOVER_LINK_CONFIRM;
-        return Route.NONE;
+    private static String bounded(String text) {
+        return text == null || text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT);
     }
 
     private static ResponseEntity<Map<String, String>> answer(HttpStatus status, String outcome, String reason) {

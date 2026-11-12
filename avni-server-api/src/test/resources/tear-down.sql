@@ -20,6 +20,7 @@ DELETE FROM abdm_link_request where 1 = 1;
 DELETE FROM abdm_care_context where 1 = 1;
 DELETE FROM abdm_parked_event where 1 = 1;
 DELETE FROM abdm_inbound_event where 1 = 1;
+DELETE FROM abdm_job_run where 1 = 1;
 DELETE FROM abdm_message where 1 = 1;
 DELETE FROM abha_link where 1 = 1;
 DELETE FROM individual where 1 = 1;

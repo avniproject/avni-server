@@ -7,6 +7,7 @@ import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.AbdmNotReadyException;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmTime;
@@ -67,6 +68,8 @@ public class EkaHiuService implements EkaHiuEvents {
     public static final String REQUESTED = "REQUESTED";
     public static final String GRANTED = "GRANTED";
     public static final String FAILED = "FAILED";
+    public static final String RECEIVED = "RECEIVED";
+    public static final String PARTIAL = "PARTIAL";
     private static final String LINKED = "LINKED";
 
     // ABDM's purpose codes to Eka's purpose strings, which must match exactly.
@@ -278,11 +281,8 @@ public class EkaHiuService implements EkaHiuEvents {
     @Override
     public void consentUpdate(JsonNode event) {
         JsonNode data = AbdmJson.at(event, "data");
-        JsonNode notification = AbdmJson.at(data, "notification");
-        if (notification == null || !notification.isObject()) notification = data;
-        String consentRequestId = AbdmFlows.firstNonNull(AbdmJson.text(notification, "consentRequestId"),
-                AbdmJson.text(notification, "consent_request_id"), AbdmJson.text(data, "consentRequestId"),
-                AbdmJson.text(data, "consent_request_id"));
+        JsonNode notification = notificationOf(data);
+        String consentRequestId = consentRequestIdOf(event);
         String status = normaliseStatus(AbdmFlows.firstNonNull(AbdmJson.text(notification, "status"), AbdmJson.text(data, "status")));
         List<String> artefacts = artefactIds(firstPresent(AbdmJson.at(notification, "consentArtefacts"),
                 AbdmJson.at(notification, "consent_artefacts"), AbdmJson.at(data, "consent_artefacts")));
@@ -308,6 +308,19 @@ public class EkaHiuService implements EkaHiuEvents {
             return;
         }
         consentUpdate(consentRequestId, status, artefacts);
+    }
+
+    // The consent request an abha.consent_update names; null when it names only artefacts.
+    public static String consentRequestIdOf(JsonNode event) {
+        JsonNode data = AbdmJson.at(event, "data");
+        JsonNode notification = notificationOf(data);
+        return AbdmFlows.firstNonNull(AbdmJson.text(notification, "consentRequestId"), AbdmJson.text(notification, "consent_request_id"),
+                AbdmJson.text(data, "consentRequestId"), AbdmJson.text(data, "consent_request_id"));
+    }
+
+    private static JsonNode notificationOf(JsonNode data) {
+        JsonNode notification = AbdmJson.at(data, "notification");
+        return notification == null || !notification.isObject() ? data : notification;
     }
 
     private void consentUpdate(String consentRequestId, String status, List<String> artefacts) {
@@ -368,9 +381,9 @@ public class EkaHiuService implements EkaHiuEvents {
     }
 
     // Hourly (AbdmHousekeepingJob): an update parked because no request carried its id is applied once one does,
-    // whether another path has mapped the request since or Eka's consent list now gives the match. The run shares the
-    // scheduler thread with other jobs, so it asks Eka about RETRY_PATIENTS patients at most, those with the newest
-    // requests first; an older request is still matched when its push, approval or next update comes.
+    // whether another path has mapped the request since or Eka's consent list now gives the match. To keep each run short
+    // it asks Eka about RETRY_PATIENTS patients at most, those with the newest requests first; an older request is still
+    // matched when its push, approval or next update comes.
     public void retryParkedUpdates() {
         List<String> unmatched = new ArrayList<>();
         for (String id : store.parkedConsentRequestIds()) {
@@ -453,7 +466,7 @@ public class EkaHiuService implements EkaHiuEvents {
             logger.warn("Eka HIU data push without data; ignored");
             return;
         }
-        String consentId = AbdmFlows.firstNonNull(AbdmJson.text(data, "consent_id"), AbdmJson.text(data, "consentId"));
+        String consentId = pushConsentIdOf(event);
         // data.transaction_id names the data flow; the top-level one names the webhook delivery (spec 3.7).
         String dataTransactionId = AbdmFlows.firstNonNull(AbdmJson.text(data, "transaction_id"), AbdmJson.text(data, "transactionId"));
         String transactionId = dataTransactionId != null ? dataTransactionId : AbdmJson.text(event, "transaction_id");
@@ -470,11 +483,8 @@ public class EkaHiuService implements EkaHiuEvents {
             return;
         }
         // Eka's push names the consent request; the records and our receipt belong to its granted artefact (AVNI-16).
-        String flowConsentId = grantedArtefactFor(consentId);
-        if (flowConsentId == null) {
-            logger.warn("Eka HIU data push {} for consent {}: no granted consent of ours covers it; nothing kept, no receipt", transactionId, consentId);
-            return;
-        }
+        String flowConsentId = grantedArtefactFor(consentId, transactionId);
+        if (flowConsentId == null) return;
 
         List<Keyset> keys = decryptionKeys();
         AbdmHiuStore.DataFlow flow = store.findDataFlowByTransaction(transactionId).orElse(null);
@@ -540,8 +550,9 @@ public class EkaHiuService implements EkaHiuEvents {
         }
 
         int total = earlier + received;
-        store.finishDataFlow(flowId, total > 0 ? "RECEIVED" : FAILED, total,
-                total > 0 ? null : (lastProblem != null ? lastProblem : "No record could be read"));
+        // Some records kept and some not is PARTIAL, with the last problem, not a full receipt.
+        String flowStatus = total == 0 ? FAILED : lastProblem == null ? RECEIVED : PARTIAL;
+        store.finishDataFlow(flowId, flowStatus, total, total > 0 ? lastProblem : (lastProblem != null ? lastProblem : "No record could be read"));
         logger.info("Eka HIU data push {} for consent {}: {} record(s) kept", transactionId, consentId, received);
 
         ObjectNode ack = AbdmJson.obj();
@@ -583,26 +594,36 @@ public class EkaHiuService implements EkaHiuEvents {
         throw last != null ? last : new IllegalStateException("No HIU key");
     }
 
+    // The consent an abha.hiu_data_push names: a consent request of ours, or one of its artefacts.
+    public static String pushConsentIdOf(JsonNode event) {
+        JsonNode data = AbdmJson.at(event, "data");
+        return AbdmFlows.firstNonNull(AbdmJson.text(data, "consent_id"), AbdmJson.text(data, "consentId"));
+    }
+
     // The artefact a push belongs to: the id itself when it is an artefact of ours, else the one granted artefact of the
-    // consent request it names. consent_update may still be on its way. Null when none, or
-    // when the request has several and the push cannot say which (no guessing).
-    private String grantedArtefactFor(String consentId) {
-        if (consentId == null) return null;
+    // consent request it names. Before the grant is applied the push waits (AbdmNotReadyException), and the inbox tries it
+    // again up to its cap. Null, logged, when it names no consent, or a request with several artefacts and not which one.
+    private String grantedArtefactFor(String consentId, String transactionId) {
+        if (consentId == null) {
+            logger.warn("Eka HIU data push {} names no consent; nothing kept, no receipt", transactionId);
+            return null;
+        }
         if (store.findArtefact(consentId).isPresent()) return consentId;
         Optional<AbdmHiuStore.Consent> request = store.findConsentRequest(consentId);
         if (request.isEmpty()) request = matchThroughEka(consentId);
-        if (request.isEmpty()) return null;
-        Optional<List<String>> granted = retry.find(() -> {
-            List<String> ids = store.findArtefacts(List.of(consentId)).stream()
-                    .filter(a -> GRANTED.equals(a.status())).map(AbdmHiuStore.Artefact::consentId).toList();
-            return ids.isEmpty() ? Optional.empty() : Optional.of(ids);
-        });
-        if (granted.isEmpty()) return null;
-        if (granted.get().size() > 1) {
-            logger.warn("Eka HIU data push for consent request {}: {} granted artefacts and the push names none of them", consentId, granted.get().size());
+        if (request.isEmpty()) {
+            throw new AbdmNotReadyException("Eka HIU data push " + transactionId + " for consent " + consentId + ": no request of ours carries it yet");
+        }
+        List<String> granted = store.findArtefacts(List.of(consentId)).stream()
+                .filter(a -> GRANTED.equals(a.status())).map(AbdmHiuStore.Artefact::consentId).toList();
+        if (granted.isEmpty()) {
+            throw new AbdmNotReadyException("Eka HIU data push " + transactionId + " for consent " + consentId + ": no grant applied yet");
+        }
+        if (granted.size() > 1) {
+            logger.warn("Eka HIU data push for consent request {}: {} granted artefacts and the push names none of them", consentId, granted.size());
             return null;
         }
-        return granted.get().get(0);
+        return granted.get(0);
     }
 
     // ABDM's consent request id for Eka's consent_init_id, from the patient's consent list; null when not listed.

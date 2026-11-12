@@ -5,6 +5,8 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmJobRuns;
+import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -16,9 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// The admin page's Status tab: what record sharing needs and which of it the organisation has, and the address to give
-// Eka for its webhooks. Answers even when record sharing is off, so the page can say what is missing. Organisation
-// administrators only (EditOrganisationConfiguration).
+// The admin page's Status tab: what record sharing needs and which of it the organisation has, the address to give Eka
+// for its webhooks, and how each ABDM job last went for it. Answers even when record sharing is off, so the page can say
+// what is missing. The user's own organisation only. Organisation administrators only (EditOrganisationConfiguration).
 @RestController
 public class AbdmAdminController {
     private final AccessControlService accessControlService;
@@ -27,16 +29,21 @@ public class AbdmAdminController {
     private final OrganisationConfigService organisationConfigService;
     private final AbdmAccess access;
     private final AbdmSettings settings;
+    private final AbdmJobRuns jobRuns;
+    private final AbdmOrgContext orgContext;
 
     @Autowired
     public AbdmAdminController(AccessControlService accessControlService, AbdmConfig cfg, EkaAbdmClient ekaClient,
-                               OrganisationConfigService organisationConfigService, AbdmAccess access, AbdmSettings settings) {
+                               OrganisationConfigService organisationConfigService, AbdmAccess access, AbdmSettings settings,
+                               AbdmJobRuns jobRuns, AbdmOrgContext orgContext) {
         this.accessControlService = accessControlService;
         this.cfg = cfg;
         this.ekaClient = ekaClient;
         this.organisationConfigService = organisationConfigService;
         this.access = access;
         this.settings = settings;
+        this.jobRuns = jobRuns;
+        this.orgContext = orgContext;
     }
 
     @GetMapping("/web/abdm/status")
@@ -55,6 +62,8 @@ public class AbdmAdminController {
         status.put("sharingClientConfigured", eka != null && eka.isSharingClientConfigured());
         status.put("webhookUrl", cfg.webhookUrl(eka == null ? null : eka.getWebhookId()));
         status.put("session", session(recordSharingOn));
+        Long organisationId = orgContext.organisationId();
+        status.put("jobs", organisationId == null ? Map.of() : jobRuns.of(organisationId));
         return status;
     }
 

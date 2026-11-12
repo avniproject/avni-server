@@ -1,10 +1,7 @@
 package org.avni.server.service.abdm.eka;
 
-import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
-import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abha.EkaCredentialCipher;
-import org.avni.server.service.abha.EkaNotConfiguredException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -19,14 +16,12 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicReference;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // Eka's webhook signature (developer.eka.care connect/webhooks/webhook-signature): header
 // "Eka-Webhook-Signature: t=<epoch seconds>,v1=<hex HMAC-SHA256 of t + "." + raw body>", keyed with the signing key given
 // at registration as plain UTF-8 text, compared in constant time, within 3 minutes of now.
-// The key is the organisation's encrypted webhook signing key in its Eka settings. A webhook has no Avni user, so it is
-// read as the configured demo organisation (AbdmOrgContext.runAsOrg). Never logs the key, the header or the body.
+// The key is the encrypted webhook signing key in the Eka settings of the organisation the webhook address names. Never
+// logs the key, the header or the body.
 @Component
 public class EkaWebhookVerifier {
     public static final String HEADER = "Eka-Webhook-Signature";
@@ -42,48 +37,30 @@ public class EkaWebhookVerifier {
         }
     }
 
-    private final AbdmOrgContext orgContext;
-    private final ExternalSystemConfigRepository configRepository;
     private final EkaCredentialCipher cipher;
     private final Clock clock;
 
     @Autowired
-    public EkaWebhookVerifier(AbdmOrgContext orgContext, ExternalSystemConfigRepository configRepository, EkaCredentialCipher cipher) {
-        this(orgContext, configRepository, cipher, Clock.systemUTC());
+    public EkaWebhookVerifier(EkaCredentialCipher cipher) {
+        this(cipher, Clock.systemUTC());
     }
 
-    public EkaWebhookVerifier(AbdmOrgContext orgContext, ExternalSystemConfigRepository configRepository, EkaCredentialCipher cipher,
-                              Clock clock) {
-        this.orgContext = orgContext;
-        this.configRepository = configRepository;
+    public EkaWebhookVerifier(EkaCredentialCipher cipher, Clock clock) {
         this.cipher = cipher;
         this.clock = clock;
     }
 
-    public Result verify(String header, String rawBody) {
+    public Result verify(EkaSystemConfig settings, String header, String rawBody) {
+        String encrypted = settings.getEncryptedWebhookSigningKey();
+        if (!StringUtils.hasText(encrypted)) return Result.invalid("no webhook signing key in the organisation's Eka settings");
         String key;
         try {
-            key = signingKey();
+            key = cipher.decrypt(encrypted);
         } catch (RuntimeException e) {
-            return Result.invalid("the signing key could not be read: " + e.getMessage());
+            return Result.invalid("the signing key could not be read: " + e.getClass().getSimpleName());
         }
-        if (!StringUtils.hasText(key)) return Result.invalid("no webhook signing key in the organisation's Eka settings");
+        if (!StringUtils.hasText(key)) return Result.invalid("the organisation's webhook signing key is empty");
         return check(header, rawBody, key, clock.instant().getEpochSecond());
-    }
-
-    private String signingKey() {
-        AtomicReference<String> key = new AtomicReference<>();
-        orgContext.runAsOrg(() -> {
-            EkaSystemConfig config;
-            try {
-                config = configRepository.getEkaSystemConfig(orgContext.organisationId());
-            } catch (EkaNotConfiguredException e) {
-                throw new IllegalStateException("Eka is not set up for the organisation");
-            }
-            String encrypted = config == null ? null : config.getEncryptedWebhookSigningKey();
-            key.set(StringUtils.hasText(encrypted) ? cipher.decrypt(encrypted) : null);
-        });
-        return key.get();
     }
 
     public static Result check(String header, String rawBody, String key, long nowEpochSeconds) {

@@ -14,7 +14,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // A patient's phone number, read as the rest of Avni reads it (IndividualService.findPhoneNumber), in a read-only
 // transaction as the organisation, and the concepts it is read from, for finding a patient by phone. Never logged.
 @Component

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // The HIP's ABDM state (V1_413): care contexts, patient-led link requests, and a record of each data request Eka relayed.
 // Plain JDBC, one autocommitted statement each, so a correlation row is visible to the webhook thread as soon as it is
 // written. organisation_id is set here: the Hibernate interceptor does not see these statements.

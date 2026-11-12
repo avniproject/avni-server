@@ -1,6 +1,8 @@
 package org.avni.server.service.abdm;
 
+import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.framework.security.UserContextHolder;
@@ -29,6 +31,14 @@ public class AbdmAccess {
         return canShare(switchedOnSettings());
     }
 
+    // For a named organisation, when there is no user (a webhook, a job): its own switches and Eka settings.
+    public boolean recordSharingOn(long organisationId) {
+        OrganisationConfig config = organisationConfigService.getOrganisationConfigByOrgId(organisationId);
+        if (config == null || !config.isFeatureEnabled(OrganisationConfigSettingKey.enableAbha.name())
+                || !config.isFeatureEnabled(OrganisationConfigSettingKey.enableAbdmRecordSharing.name())) return false;
+        return canShare(ekaSettings(organisationId));
+    }
+
     // Record sharing on, and an HIU ID to receive records under.
     public boolean hiuOn() {
         EkaSystemConfig settings = switchedOnSettings();
@@ -48,6 +58,10 @@ public class AbdmAccess {
         Long organisationId = currentOrganisationId();
         if (organisationId == null) return null;
         if (!organisationConfigService.isAbhaEnabled() || !organisationConfigService.isAbdmRecordSharingEnabled()) return null;
+        return ekaSettings(organisationId);
+    }
+
+    private EkaSystemConfig ekaSettings(long organisationId) {
         try {
             return externalSystemConfigRepository.getEkaSystemConfig(organisationId);
         } catch (EkaNotConfiguredException e) {

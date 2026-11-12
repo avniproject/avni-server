@@ -28,9 +28,9 @@ public class ResourceProtectionStatus {
             "/api/user/generateToken",
             "/open",
             "/.well-known/**",
-            // DEMO-ONLY abdm-hackathon: Eka's webhook carries no Avni user; its signature is checked instead
-            // (EkaWebhookVerifier).
-            "/api/v3/eka/webhook"
+            // Eka's webhook carries no Avni user; the organisation it names and that organisation's signing key check it
+            // instead (EkaWebhookController).
+            "/api/v3/eka/webhook/*"
     );
 
     public static boolean isProtected(HttpServletRequest request) {

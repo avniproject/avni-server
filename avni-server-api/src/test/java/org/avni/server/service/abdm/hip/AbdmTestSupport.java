@@ -3,7 +3,6 @@ package org.avni.server.service.abdm.hip;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
-import org.avni.server.service.abdm.AbdmAsync;
 import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 
@@ -13,8 +12,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,16 +56,6 @@ public final class AbdmTestSupport {
         when(orgContext.organisationId()).thenReturn(1L);
         when(orgContext.inReadOnlyTransaction(any())).thenAnswer(inv -> ((Supplier<Object>) inv.getArgument(0)).get());
         return orgContext;
-    }
-
-    // Runs submitted work at once, on the test thread.
-    public static AbdmAsync inlineAsync() {
-        AbdmAsync async = mock(AbdmAsync.class);
-        doAnswer(inv -> {
-            ((Runnable) inv.getArgument(1)).run();
-            return null;
-        }).when(async).submit(anyString(), any(Runnable.class));
-        return async;
     }
 
     public static AbdmRetry noWaitRetry() {

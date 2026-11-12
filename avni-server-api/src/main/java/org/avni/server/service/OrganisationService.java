@@ -1097,7 +1097,7 @@ public class OrganisationService {
     // Child tables before the rows they reference; abdm_care_context and abdm_link_request reference individual.
     private static final List<String> ABDM_TABLES_CHILD_FIRST = Arrays.asList("abdm_health_information", "abdm_data_flow",
             "abdm_consent_status", "abdm_consent", "abdm_care_context", "abdm_link_request", "abdm_parked_event",
-            "abdm_inbound_event", "abdm_message");
+            "abdm_inbound_event", "abdm_job_run", "abdm_message");
 
     public void deleteDataFromPublicTableForOrg(String tableName, Organisation organisation) {
         String query = String.format("delete from public.%s where organisation_id = %d and organisation_id > 1", tableName, organisation.getId());

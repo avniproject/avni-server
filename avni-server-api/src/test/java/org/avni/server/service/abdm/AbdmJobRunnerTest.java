@@ -1,0 +1,178 @@
+package org.avni.server.service.abdm;
+
+import com.bugsnag.Bugsnag;
+import org.avni.server.dao.OrganisationRepository;
+import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.Organisation;
+import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.User;
+import org.avni.server.domain.UserContext;
+import org.avni.server.domain.extenalSystem.EkaSystemConfig;
+import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
+import org.avni.server.framework.security.AuthService;
+import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.abha.EkaNotConfiguredException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+// ABDM's jobs run for each organisation with record sharing on, as that organisation's system user, one at a time; one
+// organisation's failure is logged, sent to Bugsnag and kept for the status page, and the next organisation still runs.
+public class AbdmJobRunnerTest {
+    private static final Instant NOW = Instant.parse("2026-11-12T10:00:00Z");
+    private static final String TASK = "visitLinking";
+
+    private final AuthService authService = mock(AuthService.class);
+    private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
+    private final ExternalSystemConfigRepository configRepository = mock(ExternalSystemConfigRepository.class);
+    private final OrganisationRepository organisationRepository = mock(OrganisationRepository.class);
+    private final AbdmJobRuns jobRuns = mock(AbdmJobRuns.class);
+    private final Bugsnag bugsnag = mock(Bugsnag.class);
+    private final List<OrganisationConfig> sharingSwitchedOn = new ArrayList<>();
+    private AbdmJobRunner runner;
+
+    @Before
+    public void setUp() {
+        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository);
+        AbdmOrgContext orgContext = new AbdmOrgContext(authService, organisationRepository, configRepository, mock(PlatformTransactionManager.class));
+        runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag,
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        when(organisationConfigService.findAllWithFeatureEnabled("enableAbdmRecordSharing")).thenReturn(sharingSwitchedOn);
+        when(authService.authenticateByUserName(anyString(), any())).thenAnswer(inv -> {
+            String username = inv.getArgument(0);
+            UserContext context = new UserContext();
+            User user = new User();
+            user.setUsername(username);
+            context.setUser(user);
+            if (username.startsWith("system-")) {
+                Organisation organisation = new Organisation();
+                organisation.setId(Long.parseLong(username.substring("system-".length())));
+                context.setOrganisation(organisation);
+            }
+            UserContextHolder.create(context);
+            return context;
+        });
+    }
+
+    @After
+    public void clear() {
+        UserContextHolder.clear();
+    }
+
+    @Test
+    public void theJobRunsOnlyForOrganisationsWithBothSwitchesAndEkaSettings_asEachOnesSystemUser() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, false, true, "system-2");
+        organisation(3L, true, true, null);
+        organisation(4L, true, true, "system-4");
+        when(configRepository.getEkaSystemConfig(3L)).thenThrow(new EkaNotConfiguredException("none"));
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(UserContextHolder.getUserContext().getOrganisationId()));
+
+        assertEquals(List.of(1L, 4L), ranFor);
+        verify(authService).authenticateByUserName("admin", null);
+        verify(authService).authenticateByUserName("system-1", null);
+        verify(authService).authenticateByUserName("system-4", null);
+        verify(authService, never()).authenticateByUserName("system-2", null);
+        verify(jobRuns).succeeded(eq(1L), eq(TASK), any());
+        verify(jobRuns).succeeded(eq(4L), eq(TASK), any());
+        verifyNoInteractions(bugsnag);
+        assertNull(UserContextHolder.getUserContext());
+    }
+
+    @Test
+    public void oneOrganisationsFailureIsReportedWithTheOrganisation_andTheNextStillRuns() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, true, true, "system-2");
+        IllegalStateException failure = new IllegalStateException("database down");
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> {
+            Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+            if (organisationId == 1L) throw failure;
+            ranFor.add(organisationId);
+        });
+
+        assertEquals(List.of(2L), ranFor);
+        verify(bugsnag).notify(failure);
+        ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
+        verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
+        assertTrue(error.getValue(), error.getValue().contains("database down"));
+        verify(jobRuns, never()).succeeded(eq(1L), any(), any());
+        verify(jobRuns).succeeded(eq(2L), eq(TASK), any());
+    }
+
+    @Test
+    public void anOrganisationWithRecordSharingOnButNoSystemUserIsReported_notSkippedSilently() throws Exception {
+        organisation(1L, true, true, null);
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(1L));
+
+        assertTrue(ranFor.isEmpty());
+        verify(bugsnag).notify(any(AbdmOrgContext.SystemUserException.class));
+        ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
+        verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
+        assertTrue(error.getValue(), error.getValue().contains("system user"));
+    }
+
+    @Test
+    public void eachOrganisationGetsItsShareOfWhatIsLeftOfTheRunsTime() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, true, true, "system-2");
+        List<Instant> deadlines = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadlines::add);
+
+        assertEquals(List.of(NOW.plus(Duration.ofMinutes(2)), NOW.plus(Duration.ofMinutes(4))), deadlines);
+    }
+
+    @Test
+    public void whenTheOrganisationsCannotBeReadTheFailureIsReported() {
+        RuntimeException failure = new RuntimeException("no database");
+        when(organisationConfigService.findAllWithFeatureEnabled(anyString())).thenThrow(failure);
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+
+        verify(bugsnag).notify(failure);
+    }
+
+    private void organisation(long id, boolean abha, boolean sharing, String systemUser) throws Exception {
+        OrganisationConfig config = new OrganisationConfig();
+        config.setOrganisationId(id);
+        config.setSettings(new JsonObject().with("enableAbha", abha).with("enableAbdmRecordSharing", sharing));
+        if (sharing) sharingSwitchedOn.add(config);
+        when(organisationConfigService.getOrganisationConfigByOrgId(id)).thenReturn(config);
+        JsonObject eka = new JsonObject()
+                .with(EkaSystemConfig.HIP_IDS, List.of("hip-" + id))
+                .with(EkaSystemConfig.CLIENT_ID, "m1-client")
+                .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-client")
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted");
+        if (systemUser != null) eka.with(EkaSystemConfig.AVNI_SYSTEM_USER, systemUser);
+        ExternalSystemConfig row = new ExternalSystemConfig();
+        row.setOrganisationId(id);
+        row.setConfig(eka);
+        when(configRepository.getEkaSystemConfig(id)).thenReturn(new EkaSystemConfig(row));
+        Organisation organisation = new Organisation();
+        organisation.setId(id);
+        organisation.setName("Org " + id);
+        when(organisationRepository.findOne(id)).thenReturn(organisation);
+    }
+}

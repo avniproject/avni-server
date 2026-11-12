@@ -9,6 +9,7 @@ import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.AbdmNotReadyException;
 import org.avni.server.service.abdm.crypto.FideliusCrypto;
 import org.avni.server.service.abdm.crypto.FideliusKeyMaterial;
 import org.avni.server.service.abdm.hip.AbdmFlows;
@@ -369,6 +370,8 @@ public class EkaHiuServiceTest {
         when(store.waitingConsentRequests()).thenReturn(List.of(request(5, "init-1", "REQUESTED")));
         ekaListsConsents("{\"consent_id\":\"abdm-A\",\"consent_init_id\":\"init-1\"}");
         when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+        // The grant the parked update applies, as the store then holds it.
+        when(store.findArtefacts(List.of("abdm-A"))).thenReturn(List.of(new AbdmHiuStore.Artefact("abdm-A", "artefact-1", "GRANTED", null, 0)));
         FideliusKeyMaterial hip = crypto.generateKeyMaterial();
         String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
@@ -379,6 +382,7 @@ public class EkaHiuServiceTest {
         verify(store).mapConsentRequestId(5L, "abdm-A");
         verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
         verify(store).claimParked(77L);
+        verify(store).insertHealthInformation(anyLong(), eq("dtx-1"), eq("artefact-1"), eq("HIP-X"), eq("cc-1"), eq(true), anyString());
     }
 
     // The hourly retry: an update parked because Eka's list did not have the id yet is applied once it does.
@@ -636,8 +640,9 @@ public class EkaHiuServiceTest {
         assertEquals("artefact-1", ack.getValue().get("consent_id").asText());
     }
 
+    // H4: a push that comes before its grant is applied is left for the inbox to try again, never dropped.
     @Test
-    public void aPushNoGrantedConsentOfOursCoversIsNeitherKeptNorAcknowledgedWithAWrongId() {
+    public void aPushNoGrantedConsentOfOursCoversYetWaits_andNothingIsKeptOrAcknowledgedWithAWrongId() {
         FideliusKeyMaterial hip = crypto.generateKeyMaterial();
         String content = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
         when(store.findArtefact("abdm-cr-9")).thenReturn(Optional.empty());
@@ -646,11 +651,50 @@ public class EkaHiuServiceTest {
         ObjectNode event = push(content, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
         ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-9");
 
-        service.hiuDataPush(event);
+        assertThrows(AbdmNotReadyException.class, () -> service.hiuDataPush(event));
 
+        verify(store, never()).insertDataFlow(any(), any(), any(), any(), any(), any(), any());
         verify(store, never()).insertHealthInformation(anyLong(), any(), any(), any(), any(), any(), any());
         verify(store, never()).upsertArtefact(any(), any(), any(), any(), any());
         verify(eka, never()).post(eq("/abdm/v1/hiu/care-context/data/on-push"), any(), any());
+    }
+
+    @Test
+    public void aPushForARequestWhoseGrantIsNotAppliedYetWaits() {
+        when(store.findArtefact("abdm-cr-1")).thenReturn(Optional.empty());
+        when(store.findConsentRequest("abdm-cr-1")).thenReturn(Optional.of(request(5, "abdm-cr-1", "REQUESTED")));
+        when(store.findArtefacts(List.of("abdm-cr-1"))).thenReturn(List.of());
+        ObjectNode event = push("CONTENT", null, "KEY", "NONCE");
+        ((ObjectNode) event.get("data")).put("consent_id", "abdm-cr-1");
+
+        assertThrows(AbdmNotReadyException.class, () -> service.hiuDataPush(event));
+
+        verify(store, never()).insertDataFlow(any(), any(), any(), any(), any(), any(), any());
+        verify(eka, never()).post(eq("/abdm/v1/hiu/care-context/data/on-push"), any(), any());
+    }
+
+    // Some records kept and some not is not a full receipt.
+    @Test
+    public void aPushWithOneEntryThatCouldNotBeReadIsPartial() {
+        FideliusKeyMaterial hip = crypto.generateKeyMaterial();
+        FideliusKeyMaterial someoneElse = crypto.generateKeyMaterial();
+        String good = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), ours.publicKeyX509Base64(), ours.nonceBase64());
+        String bad = crypto.encrypt(BUNDLE, hip.privateKeyBase64(), hip.nonceBase64(), someoneElse.publicKeyX509Base64(), someoneElse.nonceBase64());
+        knownArtefactAndNewFlow();
+        ObjectNode event = push(good, AbdmFlows.md5Hex(BUNDLE), hip.publicKeyX509Base64(), hip.nonceBase64());
+        ObjectNode second = ((ArrayNode) event.at("/data/entries")).addObject();
+        second.put("care_context_id", "cc-2");
+        second.put("content", bad);
+        second.put("media", "application/fhir+json");
+
+        service.hiuDataPush(event);
+
+        verify(store).insertHealthInformation(eq(31L), eq("dtx-1"), eq("artefact-1"), eq("HIP-X"), eq("cc-1"), eq(true), anyString());
+        verify(store).finishDataFlow(31L, "PARTIAL", 1, "Could not decrypt or read the record");
+        ArgumentCaptor<JsonNode> ack = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq("/abdm/v1/hiu/care-context/data/on-push"), ack.capture(), any());
+        assertTrue(ack.getValue().at("/status_response/0/success").asBoolean());
+        assertFalse(ack.getValue().at("/status_response/1/success").asBoolean());
     }
 
     // ---- helpers

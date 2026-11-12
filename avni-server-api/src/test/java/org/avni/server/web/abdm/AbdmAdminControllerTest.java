@@ -6,6 +6,8 @@ import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.abdm.AbdmAccess;
 import org.avni.server.service.abdm.AbdmConfig;
+import org.avni.server.service.abdm.AbdmJobRuns;
+import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.eka.EkaCallException;
@@ -24,12 +26,14 @@ import static org.mockito.Mockito.*;
 // The admin page's Status tab answers even when record sharing is off, so the page can say what is missing.
 public class AbdmAdminControllerTest {
     private static final Set<String> SHAPE = Set.of("abhaEnabled", "recordSharingEnabled", "recordSharingOn", "hiuOn", "environment",
-            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session");
+            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs");
 
     private final EkaAbdmClient ekaClient = mock(EkaAbdmClient.class);
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
     private final AbdmAccess access = mock(AbdmAccess.class);
     private final AbdmSettings settings = mock(AbdmSettings.class);
+    private final AbdmJobRuns jobRuns = mock(AbdmJobRuns.class);
+    private final AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
     private AbdmAdminController controller;
 
     @Before
@@ -38,8 +42,8 @@ public class AbdmAdminControllerTest {
     }
 
     private AbdmAdminController controller(String publicBaseUrl) {
-        return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl, "", ""), ekaClient,
-                organisationConfigService, access, settings);
+        return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl), ekaClient,
+                organisationConfigService, access, settings, jobRuns, orgContext);
     }
 
     @Test
@@ -120,6 +124,31 @@ public class AbdmAdminControllerTest {
 
         assertEquals(false, session.get("ok"));
         assertTrue(((String) session.get("error")).contains("Eka login failed"));
+    }
+
+    // Each job's last success and last error, for the user's own organisation only.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void theStatusCarriesTheOrganisationsJobRuns() {
+        when(settings.find()).thenReturn(Optional.empty());
+        when(orgContext.organisationId()).thenReturn(7L);
+        Map<String, Object> linking = new java.util.LinkedHashMap<>();
+        linking.put("lastSuccessAt", "2026-11-12T10:00:00.000Z");
+        linking.put("lastError", null);
+        when(jobRuns.of(7L)).thenReturn(Map.of("visitLinking", linking));
+
+        Map<String, Map<String, Object>> jobs = (Map<String, Map<String, Object>>) controller.status().get("jobs");
+
+        assertEquals(Map.of("visitLinking", linking), jobs);
+    }
+
+    @Test
+    public void withNoOrganisationTheStatusHasNoJobs() {
+        when(settings.find()).thenReturn(Optional.empty());
+        when(orgContext.organisationId()).thenReturn(null);
+
+        assertEquals(Map.of(), controller.status().get("jobs"));
+        verifyNoInteractions(jobRuns);
     }
 
     private void on() {

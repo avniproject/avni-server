@@ -25,7 +25,7 @@ public class AbdmDeleteDataIntegrationTest extends AbstractControllerIntegration
     // Every ABDM table this test fills. A new abdm_* table fails abdmTablesAreTheOnesThisTestFills until it is added
     // here and to delete data.
     private static final List<String> ABDM_TABLES = List.of("abdm_care_context", "abdm_consent", "abdm_consent_status",
-            "abdm_data_flow", "abdm_health_information", "abdm_inbound_event", "abdm_link_request", "abdm_message",
+            "abdm_data_flow", "abdm_health_information", "abdm_inbound_event", "abdm_job_run", "abdm_link_request", "abdm_message",
             "abdm_parked_event");
     private static final String SUBJECT_TYPE = "9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3";
 
@@ -105,7 +105,8 @@ public class AbdmDeleteDataIntegrationTest extends AbstractControllerIntegration
         jdbc.update("insert into public.abdm_health_information (organisation_id, data_flow_id, transaction_id, consent_id) " +
                 "values (?, (select id from public.abdm_data_flow where organisation_id = ?), 'txn-1', 'consent-1')", org, org);
         jdbc.update("insert into public.abdm_parked_event (organisation_id, kind, reference) values (?, 'consent', 'request-1')", org);
-        jdbc.update("insert into public.abdm_inbound_event (organisation_id, source, event_id) values (?, 'eka', 'event-1')", org);
+        jdbc.update("insert into public.abdm_inbound_event (organisation_id, source, event_id, status) values (?, 'eka', 'event-1', 'RECEIVED')", org);
+        jdbc.update("insert into public.abdm_job_run (organisation_id, task, last_success_at) values (?, 'visitLinking', now())", org);
     }
 
     private static Integer count(JdbcTemplate jdbc, String table, long org) {

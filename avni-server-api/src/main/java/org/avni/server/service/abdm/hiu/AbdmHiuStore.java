@@ -21,7 +21,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // The HIU's ABDM state (V1_413, V1_414), all rows role HIU. In abdm_consent a consent request is the row with no consent_id; each
 // artefact granted under it is a row of its own carrying the request's consent_request_id. Plain JDBC, autocommitted per
 // statement; organisation_id set here. Every lookup names the role: one organisation can be both HIP and HIU, and the

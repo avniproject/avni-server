@@ -1,24 +1,20 @@
 package org.avni.server.web.abdm;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
-import org.avni.server.service.abdm.AbdmAsync;
+import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
+import org.avni.server.service.abdm.AbdmAccess;
+import org.avni.server.service.abdm.AbdmInbox;
 import org.avni.server.service.abdm.AbdmJson;
-import org.avni.server.service.abdm.AbdmInboundEvents;
-import org.avni.server.service.abdm.AbdmMessageLog;
-import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmPaths;
-import org.avni.server.service.abdm.eka.EkaHipEvents;
-import org.avni.server.service.abdm.eka.EkaHiuEvents;
+import org.avni.server.service.abdm.eka.EkaEventWorker;
 import org.avni.server.service.abdm.eka.EkaWebhookVerifier;
-import org.avni.server.service.abdm.hip.AbdmTestSupport;
 import org.avni.server.service.abha.EkaCredentialCipher;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.ObjectProvider;
+import org.mockito.InOrder;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -30,65 +26,63 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// Eka posts each organisation's events to its own address, /api/v3/eka/webhook/{webhookId}. The address names the
+// organisation, that organisation's key checks the signature, its record sharing must be on, and the event is stored
+// (AbdmInbox) before Eka is answered 200. Handling is EkaEventWorker's, tested on its own.
 public class EkaWebhookControllerTest {
     private static final long NOW = 1761370000L;
     private static final String KEY = "local-test-signing-key";
+    private static final String OTHER_KEY = "another-organisations-key";
+    private static final String WEBHOOK = "webhook-1";
+    private static final long ORG = 1L;
 
     private ExternalSystemConfigRepository configRepository;
     private EkaCredentialCipher cipher;
-    private AbdmAsync async;
-    private AbdmMessageLog messageLog;
-    private EkaHipEvents hip;
-    private EkaHiuEvents hiu;
-    private ObjectProvider<EkaHiuEvents> hiuProvider;
+    private AbdmAccess access;
+    private AbdmInbox inbox;
+    private EkaEventWorker worker;
     private MockMvc mvc;
-    private AbdmInboundEvents inboundEvents;
-    private org.avni.server.service.abdm.eka.EkaHipDiscovery discovery;
 
     @Before
-    @SuppressWarnings("unchecked")
-    public void setUp() throws Exception {
-        AbdmOrgContext orgContext = mock(AbdmOrgContext.class);
-        when(orgContext.organisationId()).thenReturn(1L);
-        doAnswer(inv -> {
-            ((Runnable) inv.getArgument(0)).run();
-            return null;
-        }).when(orgContext).runAsOrg(any(Runnable.class));
+    public void setUp() {
         configRepository = mock(ExternalSystemConfigRepository.class);
-        EkaSystemConfig ekaConfig = mock(EkaSystemConfig.class);
-        when(ekaConfig.getEncryptedWebhookSigningKey()).thenReturn("encrypted-key");
-        when(configRepository.getEkaSystemConfig(1L)).thenReturn(ekaConfig);
         cipher = mock(EkaCredentialCipher.class);
-        when(cipher.decrypt("encrypted-key")).thenReturn(KEY);
-        EkaWebhookVerifier verifier = new EkaWebhookVerifier(orgContext, configRepository, cipher,
-                Clock.fixed(Instant.ofEpochSecond(NOW), ZoneOffset.UTC));
+        when(cipher.decrypt("encrypted-key-1")).thenReturn(KEY);
+        when(cipher.decrypt("encrypted-key-2")).thenReturn(OTHER_KEY);
+        when(configRepository.findEkaSystemConfigByWebhookId(anyString())).thenReturn(Optional.empty());
+        organisation(WEBHOOK, ORG, "encrypted-key-1");
+        organisation("webhook-2", 2L, "encrypted-key-2");
+        access = mock(AbdmAccess.class);
+        when(access.recordSharingOn(anyLong())).thenReturn(true);
+        inbox = mock(AbdmInbox.class);
+        when(inbox.receive(anyLong(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any())).thenReturn(true);
+        worker = mock(EkaEventWorker.class);
+        EkaWebhookVerifier verifier = new EkaWebhookVerifier(cipher, Clock.fixed(Instant.ofEpochSecond(NOW), ZoneOffset.UTC));
+        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(configRepository, verifier, access, inbox, worker)).build();
+    }
 
-        async = AbdmTestSupport.inlineAsync();
-        messageLog = mock(AbdmMessageLog.class);
-        hip = mock(EkaHipEvents.class);
-        hiu = mock(EkaHiuEvents.class);
-        ObjectProvider<EkaHipEvents> hipProvider = mock(ObjectProvider.class);
-        hiuProvider = mock(ObjectProvider.class);
-        when(hipProvider.getIfAvailable()).thenReturn(hip);
-        when(hiuProvider.getIfAvailable()).thenReturn(hiu);
-        inboundEvents = mock(AbdmInboundEvents.class);
-        when(inboundEvents.claim(anyString(), anyString())).thenReturn(true);
-        discovery = mock(org.avni.server.service.abdm.eka.EkaHipDiscovery.class);
-        ObjectProvider<org.avni.server.service.abdm.eka.EkaHipDiscovery> discoveryProvider = mock(ObjectProvider.class);
-        when(discoveryProvider.getIfAvailable()).thenReturn(discovery);
-        mvc = MockMvcBuilders.standaloneSetup(new EkaWebhookController(verifier, async, messageLog, inboundEvents, hipProvider, hiuProvider,
-                discoveryProvider)).build();
+    private void organisation(String webhookId, long organisationId, String encryptedKey) {
+        ExternalSystemConfig row = new ExternalSystemConfig();
+        row.setOrganisationId(organisationId);
+        row.setConfig(new JsonObject().with(EkaSystemConfig.WEBHOOK_ID, webhookId)
+                .with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, encryptedKey));
+        when(configRepository.findEkaSystemConfigByWebhookId(webhookId)).thenReturn(Optional.of(new EkaSystemConfig(row)));
     }
 
     static String event(String name) {
@@ -100,13 +94,21 @@ public class EkaWebhookControllerTest {
     }
 
     private static String signature(long t, String body) {
-        return "t=" + t + ",v1=" + EkaWebhookVerifier.sign(KEY, String.valueOf(t), body);
+        return signature(KEY, t, body);
+    }
+
+    private static String signature(String key, long t, String body) {
+        return "t=" + t + ",v1=" + EkaWebhookVerifier.sign(key, String.valueOf(t), body);
+    }
+
+    private ResultActions send(String webhookId, String body, String signature) throws Exception {
+        var request = post(AbdmPaths.IN_EKA_WEBHOOK + "/" + webhookId).contentType(MediaType.APPLICATION_JSON).content(body);
+        if (signature != null) request.header(EkaWebhookVerifier.HEADER, signature);
+        return mvc.perform(request);
     }
 
     private ResultActions send(String body, String signature) throws Exception {
-        var request = post(AbdmPaths.IN_EKA_WEBHOOK).contentType(MediaType.APPLICATION_JSON).content(body);
-        if (signature != null) request.header(EkaWebhookVerifier.HEADER, signature);
-        return mvc.perform(request);
+        return send(WEBHOOK, body, signature);
     }
 
     private ResultActions sendSigned(String body) throws Exception {
@@ -116,102 +118,81 @@ public class EkaWebhookControllerTest {
     private static String renamed(String body, String eventName, String id) {
         ObjectNode event = (ObjectNode) AbdmJson.read(body);
         event.put("event", eventName);
-        event.put("transaction_id", id);
+        if (id == null) event.remove("transaction_id");
+        else event.put("transaction_id", id);
         return AbdmJson.write(event);
     }
 
     @Test
-    public void aSignedLinkEventIsAcceptedLoggedAndHandedToTheHip() throws Exception {
+    public void aSignedEventIsStoredForItsOrganisationAsReceived_thenAccepted_thenTheWorkerIsWoken() throws Exception {
         String body = event("link-care-context.json");
 
-        send(body, signature(NOW, body)).andExpect(status().isOk());
+        sendSigned(body).andExpect(status().isOk()).andExpect(content().json("{\"status\":\"accepted\"}"));
 
-        ArgumentCaptor<JsonNode> logged = ArgumentCaptor.forClass(JsonNode.class);
-        verify(messageLog).incoming(eq(AbdmPaths.IN_EKA_WEBHOOK + "#abha.link_care_context"), any(), logged.capture());
-        assertEquals("enc-1", logged.getValue().at("/data/care_context_id").asText());
-        ArgumentCaptor<JsonNode> handed = ArgumentCaptor.forClass(JsonNode.class);
-        verify(hip).linkCareContext(handed.capture());
-        assertEquals("wh-link-1", handed.getValue().get("transaction_id").asText());
-        verify(hip, never()).hipDataFetch(any());
-        verifyNoInteractions(hiu);
+        InOrder order = inOrder(inbox, worker);
+        order.verify(inbox).receive(eq(ORG), eq("eka"), eq("wh-link-1"), eq("abha.link_care_context"), eq("LINK_CARE_CONTEXT"),
+                isNull(), eq(body), any());
+        order.verify(worker).wake();
+    }
+
+    // The 200 tells Eka the event is ours; an event that could not be stored is not acknowledged, so Eka sends it again.
+    @Test
+    public void anEventThatCannotBeStoredIsNotAcknowledged() throws Exception {
+        when(inbox.receive(anyLong(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any()))
+                .thenThrow(new IllegalStateException("database down"));
+
+        sendSigned(event("link-care-context.json")).andExpect(status().isInternalServerError())
+                .andExpect(content().json("{\"status\":\"not stored\"}", true));
+
+        verifyNoInteractions(worker);
     }
 
     @Test
-    public void eachEventGoesToItsHandler() throws Exception {
-        String fetch = event("hip-data-fetch.json");
-        String consent = event("consent-update.json");
-        String push = event("hiu-data-push-webhook.json");
-
-        send(fetch, signature(NOW, fetch)).andExpect(status().isOk());
-        send(consent, signature(NOW, consent)).andExpect(status().isOk());
-        send(push, signature(NOW, push)).andExpect(status().isOk());
-
-        verify(hip).hipDataFetch(any());
-        verify(hiu).consentUpdate(any());
-        verify(hiu).hiuDataPush(any());
-        verify(hip, never()).linkCareContext(any());
-    }
-
-    @Test
-    public void closeVariantsOfTheEventNamesAreRoutedToo() throws Exception {
-        String link = event("link-care-context.json");
-        String fetch = event("hip-data-fetch.json");
-
-        sendSigned(renamed(link, "LINK_CARE_CONTEXT", "v-1")).andExpect(status().isOk());
-        sendSigned(renamed(link, "abha.care_context_link", "v-2")).andExpect(status().isOk());
-        sendSigned(renamed(fetch, "abdm.hip-data-fetch", "v-3")).andExpect(status().isOk());
-        sendSigned(renamed(fetch, "abha.consentUpdate", "v-4")).andExpect(status().isOk());
-
-        verify(hip, times(2)).linkCareContext(any());
-        verify(hip).hipDataFetch(any());
-        verify(hiu).consentUpdate(any());
-    }
-
-    @Test
-    public void anEventWithoutAHandlerIsLoggedAndIgnored() throws Exception {
-        String body = renamed(event("link-care-context.json"), "abha.created", "created-1");
-
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-
-        verify(messageLog).incoming(eq(AbdmPaths.IN_EKA_WEBHOOK + "#abha.created"), any(), any());
-        verifyNoInteractions(hip, hiu);
-    }
-
-    @Test
-    public void theDiscoveryConfirmEventIsNotTakenForALinkStatus() throws Exception {
-        String body = renamed(event("link-care-context.json"), "abha.context_discover_link_confirm", "confirm-1");
-
-        sendSigned(body).andExpect(status().isOk());
-
-        verifyNoInteractions(hip, hiu);
-        verify(discovery).linkConfirm(any());
-    }
-
-    // USER_INIT_LINK_601 to 607: the three discovery events reach patient-led linking (EKA_ABDM_SPEC.md 2.7).
-    @Test
-    public void eachDiscoveryEventGoesToPatientLedLinking() throws Exception {
-        sendSigned(renamed(event("link-care-context.json"), "abha.care_context_discover", "d-1")).andExpect(status().isOk());
-        sendSigned(renamed(event("link-care-context.json"), "abha.care_context_discover_link_init", "d-2")).andExpect(status().isOk());
-
-        verify(discovery).discover(any());
-        verify(discovery).linkInit(any());
-        verifyNoInteractions(hip, hiu);
-    }
-
-    @Test
-    public void aBadSignatureIsRefusedAndNothingIsHandled() throws Exception {
+    public void anUnknownWebhookIdIs404_andNothingIsReadOrStored() throws Exception {
         String body = event("link-care-context.json");
 
-        send(body, "t=" + NOW + ",v1=deadbeef").andExpect(status().isUnauthorized());
+        send("no-such-webhook", body, signature(NOW, body)).andExpect(status().isNotFound());
 
-        verifyNoInteractions(async, messageLog, hip, hiu);
+        verifyNoInteractions(cipher, access, inbox, worker);
+    }
+
+    @Test
+    public void aBadSignatureIs401WithNoInternalDetail_andNothingIsStored() throws Exception {
+        String body = event("link-care-context.json");
+
+        send(body, "t=" + NOW + ",v1=deadbeef").andExpect(status().isUnauthorized())
+                .andExpect(content().json("{\"status\":\"rejected\"}", true));
+
+        verifyNoInteractions(inbox, worker);
+    }
+
+    // The key is the organisation's that the address names, never another's.
+    @Test
+    public void anEventSignedWithAnotherOrganisationsKeyIsRefused() throws Exception {
+        String body = event("link-care-context.json");
+
+        send("webhook-2", body, signature(KEY, NOW, body)).andExpect(status().isUnauthorized());
+        send("webhook-2", body, signature(OTHER_KEY, NOW, body)).andExpect(status().isOk());
+
+        verify(inbox).receive(eq(2L), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
+        verify(inbox, never()).receive(eq(ORG), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
+    }
+
+    @Test
+    public void anOrganisationWithRecordSharingOffIs404_evenWithAValidSignature() throws Exception {
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        String body = event("link-care-context.json");
+
+        send(body, signature(NOW, body)).andExpect(status().isNotFound());
+
+        verifyNoInteractions(inbox, worker);
     }
 
     @Test
     public void aMissingSignatureIsRefused() throws Exception {
         send(event("link-care-context.json"), null).andExpect(status().isUnauthorized());
 
-        verifyNoInteractions(hip);
+        verifyNoInteractions(inbox);
     }
 
     @Test
@@ -221,7 +202,7 @@ public class EkaWebhookControllerTest {
         send(body, signature(NOW - 181, body)).andExpect(status().isUnauthorized());
         send(body, signature(NOW + 181, body)).andExpect(status().isUnauthorized());
 
-        verifyNoInteractions(hip);
+        verifyNoInteractions(inbox);
     }
 
     @Test
@@ -230,7 +211,7 @@ public class EkaWebhookControllerTest {
 
         send(body.replace("LINKED", "ERRORED"), signature(NOW, body)).andExpect(status().isUnauthorized());
 
-        verifyNoInteractions(hip);
+        verifyNoInteractions(inbox);
     }
 
     @Test
@@ -239,93 +220,72 @@ public class EkaWebhookControllerTest {
 
         send(body, signature(NOW - 179, body)).andExpect(status().isOk());
 
-        verify(hip).linkCareContext(any());
+        verify(inbox).receive(eq(ORG), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any());
     }
 
     @Test
     public void noSigningKeyMeansRefused() throws Exception {
-        EkaSystemConfig noKey = mock(EkaSystemConfig.class);
-        when(configRepository.getEkaSystemConfig(1L)).thenReturn(noKey);
+        organisation(WEBHOOK, ORG, null);
         String body = event("link-care-context.json");
 
         send(body, signature(NOW, body)).andExpect(status().isUnauthorized());
 
-        verifyNoInteractions(hip);
+        verifyNoInteractions(inbox);
     }
 
-    @Test
-    public void aRepeatedEventIdIsHandledOnce() throws Exception {
-        String body = event("link-care-context.json");
-        when(inboundEvents.claim("eka", "wh-link-1")).thenReturn(true, false);
-
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-
-        verify(hip, times(1)).linkCareContext(any());
-        verify(messageLog, times(1)).incoming(any(), any(), any());
-    }
-
-    // AVNI-15: the in-memory list of seen events was lost on every restart.
-    @Test
-    public void anEventTheDatabaseHasAlreadySeenIsNotHandledAgain_asAfterARestart() throws Exception {
-        String body = event("link-care-context.json");
-        when(inboundEvents.claim("eka", "wh-link-1")).thenReturn(false);
-
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-
-        verifyNoInteractions(hip);
-        verify(messageLog, never()).incoming(any(), any(), any());
-    }
-
-    @Test
-    public void anEventWhoseHandlingFailsIsReleasedSoARedeliveryIsHandled() throws Exception {
-        String body = event("link-care-context.json");
-        doThrow(new IllegalStateException("database down")).when(hip).linkCareContext(any());
-
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-
-        verify(inboundEvents).claim("eka", "wh-link-1");
-        verify(inboundEvents).release("eka", "wh-link-1");
-    }
-
-    // The release was undone by an in-memory list of seen ids, checked first and never cleared, so the redelivery was dropped.
-    @Test
-    public void aRedeliveryAfterAFailedHandlingIsHandled() throws Exception {
-        String body = event("link-care-context.json");
-        doThrow(new IllegalStateException("database down")).doNothing().when(hip).linkCareContext(any());
-
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-
-        verify(hip, times(2)).linkCareContext(any());
-    }
-
-    // H3: no setting turns the check off; an unsigned event of every kind is refused and nothing is handled.
+    // H3: no setting turns the check off; an unsigned event of every kind is refused and nothing is stored.
     @Test
     public void anUnsignedEventIsAlwaysRefused() throws Exception {
         for (String name : new String[]{"link-care-context.json", "hip-data-fetch.json", "consent-update.json", "hiu-data-push-webhook.json"}) {
             send(event(name), null).andExpect(status().isUnauthorized());
         }
 
-        verifyNoInteractions(async, messageLog, hip, hiu, discovery);
+        verifyNoInteractions(inbox, worker);
+    }
+
+    // Eka may deliver an event again; the inbox keeps one row per event id and organisation, and Eka is answered 200 again.
+    @Test
+    public void aRepeatedEventIsAcceptedAgain() throws Exception {
+        String body = event("link-care-context.json");
+        when(inbox.receive(anyLong(), anyString(), anyString(), anyString(), anyString(), any(), anyString(), any())).thenReturn(true, false);
+
+        sendSigned(body).andExpect(status().isOk());
+        sendSigned(body).andExpect(status().isOk());
+
+        verify(inbox, times(2)).receive(eq(ORG), eq("eka"), eq("wh-link-1"), anyString(), anyString(), any(), anyString(), any());
+    }
+
+    @Test
+    public void anEventWithoutAnIdIsKeyedByItsBody_soARedeliveryIsStillOneEvent() throws Exception {
+        String body = renamed(event("link-care-context.json"), "abha.link_care_context", null);
+
+        sendSigned(body).andExpect(status().isOk());
+        sendSigned(body).andExpect(status().isOk());
+
+        verify(inbox, times(2)).receive(eq(ORG), eq("eka"), eq("sha256:" + EkaWebhookController.sha256(body)), anyString(), anyString(),
+                any(), anyString(), any());
+    }
+
+    // A consent's events are handled in the order they came, so they carry the consent they are about.
+    @Test
+    public void consentUpdatesAndDataPushesAreStoredWithTheConsentTheyConcern() throws Exception {
+        String update = event("consent-update.json");
+        String push = event("hiu-data-push-webhook.json");
+
+        sendSigned(update).andExpect(status().isOk());
+        sendSigned(push).andExpect(status().isOk());
+
+        verify(inbox).receive(eq(ORG), eq("eka"), eq("wh-consent-1"), eq("abha.consent_update"), eq("CONSENT_UPDATE"),
+                eq("consent-request-1"), eq(update), any());
+        verify(inbox).receive(eq(ORG), eq("eka"), eq("wh-push-1"), eq("abha.hiu_data_push"), eq("HIU_DATA_PUSH"),
+                eq("artefact-1"), eq(push), any());
     }
 
     @Test
     public void aBodyThatIsNotJsonIsABadRequest() throws Exception {
         sendSigned("not json").andExpect(status().isBadRequest());
 
-        verifyNoInteractions(hip, hiu, async);
-    }
-
-    @Test
-    public void withoutAnHiuHandlerAConsentUpdateIsOnlyLogged() throws Exception {
-        when(hiuProvider.getIfAvailable()).thenReturn(null);
-        String body = event("consent-update.json");
-
-        send(body, signature(NOW, body)).andExpect(status().isOk());
-
-        verify(messageLog).incoming(eq(AbdmPaths.IN_EKA_WEBHOOK + "#abha.consent_update"), any(), any());
-        verifyNoInteractions(hiu);
+        verifyNoInteractions(inbox, worker);
     }
 
     @Test
@@ -345,5 +305,12 @@ public class EkaWebhookControllerTest {
         // openssl: printf '%s' '1761370000.{"a":1}' | openssl dgst -sha256 -hmac 'local-test-signing-key'
         assertEquals("d9630c36f83ef54ff692e59f69762969ae02faa933c018f3ed446eb68ed7750c",
                 EkaWebhookVerifier.sign(KEY, String.valueOf(NOW), "{\"a\":1}"));
+    }
+
+    @Test
+    public void theEventsAreRoutedByName_closeVariantsIncluded() {
+        assertEquals(List.of("LINK_CARE_CONTEXT", "LINK_CARE_CONTEXT", "HIP_DATA_FETCH", "CONSENT_UPDATE", "HIU_DATA_PUSH", "NONE"),
+                List.of("abha.link_care_context", "LINK_CARE_CONTEXT", "abdm.hip-data-fetch", "abha.consentUpdate", "abha.hiu_data_push",
+                        "abha.created").stream().map(name -> org.avni.server.service.abdm.eka.EkaEventRoute.of(name).name()).toList());
     }
 }

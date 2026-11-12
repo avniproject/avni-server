@@ -14,9 +14,8 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.*;
 
-// DEMO-ONLY abdm-hackathon: never merged.
 // An Avni encounter and its patient as a CareContextDocument. Call inside a transaction (lazy observations, concepts)
-// and with an organisation's user context (AbdmOrgContext.runAsOrg): ConceptRepository.findByUuid reads it.
+// and with an organisation's user context (AbdmOrgContext.runAs): ConceptRepository.findByUuid reads it.
 // Values are resolved here rather than through ConceptService.getObservationValue, which needs an API request context
 // (ApiRequestContextHolder) that a callback thread does not have: coded answers become answer names, everything else
 // is passed through raw with its concept's data type and unit, and FhirBundleBuilder decides what is shared.
