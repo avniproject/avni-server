@@ -277,7 +277,7 @@ public class EkaHipService implements EkaHipEvents {
             store.markLinked(hipId, matched, "HIP");
             rows.stream().map(AbdmHipStore.CareContext::individualId).distinct().forEach(individualId -> tellPatientLinked(individualId, hipId));
         } else {
-            // Eka reports ERRORED after its own retries: final.
+            // Taken as final on the unverified belief that Eka reports ERRORED only after its own retries.
             store.markStatus(hipId, matched, FAILED_FINAL, failure(status, data));
         }
         logger.info("Eka link status {} applied to {} care contexts", status, matched.size());
@@ -296,7 +296,8 @@ public class EkaHipService implements EkaHipEvents {
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put(EkaAbdmClient.H_HIP_ID, hipId);
         try {
-            eka.post(SMS_NOTIFY_PATH, body, headers);
+            // Each try reaches the patient's phone, so it is never sent again after a server error.
+            eka.postAtMostOnce(SMS_NOTIFY_PATH, body, headers);
             logger.info("Eka text message sent to the patient of subject {} for a linked record", individualId);
         } catch (RuntimeException e) {
             logger.warn("Eka text message for subject {} not sent: {}", individualId, e.getMessage());

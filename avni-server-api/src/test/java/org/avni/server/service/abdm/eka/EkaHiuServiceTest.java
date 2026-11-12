@@ -328,6 +328,27 @@ public class EkaHiuServiceTest {
         verifyNoInteractions(eka);
     }
 
+    // With record sharing off, a withdrawal replays the grant parked before it and then withdraws it, erasing what was
+    // received; the replayed grant does not ask Eka for its terms.
+    @Test
+    public void withRecordSharingOffAWithdrawalAfterAParkedGrantIsAppliedInOrderAndErases_andEkaIsNotAsked() {
+        when(access.recordSharingOn()).thenReturn(false);
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "REQUESTED")));
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+        ObjectNode revoked = grantedUpdate("abdm-A");
+        ((ObjectNode) revoked.at("/data/notification")).put("status", "REVOKED");
+
+        service.consentUpdate(revoked);
+
+        InOrder order = inOrder(store);
+        order.verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
+        order.verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+        order.verify(store).setConsentRequestStatus("abdm-A", "REVOKED");
+        order.verify(store).setArtefactStatus(List.of("artefact-1"), "REVOKED");
+        order.verify(store).eraseRecordsOfEndedConsents();
+        verifyNoInteractions(eka);
+    }
+
     @Test
     public void anUpdateEndsTheConsentWhenItWithdrawsRefusesOrExpiresIt() {
         for (String status : new String[]{"REVOKED", "DENIED", "REJECTED", "EXPIRED"}) {

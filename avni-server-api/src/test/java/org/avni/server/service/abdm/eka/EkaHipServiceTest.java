@@ -355,8 +355,10 @@ public class EkaHipServiceTest {
         service.linkCareContext(event("link-care-context.json"));
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).post(eq("/abdm/v1/care-contexts/sms/notify"), body.capture(), any());
+        verify(eka).postAtMostOnce(eq("/abdm/v1/care-contexts/sms/notify"), body.capture(), any());
         assertEquals("9876543210", body.getValue().get("mobile_number").asText());
+        // Each try reaches the patient's phone: never sent again after a server error.
+        verify(eka, never()).post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any());
     }
 
     @Test
@@ -367,6 +369,7 @@ public class EkaHipServiceTest {
         service.linkCareContext(event("link-care-context.json"));
 
         verify(store).markLinked(HIP_ID, List.of("enc-1"), "HIP");
+        verify(eka, never()).postAtMostOnce(eq("/abdm/v1/care-contexts/sms/notify"), any(), any());
         verify(eka, never()).post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any());
     }
 
@@ -392,7 +395,7 @@ public class EkaHipServiceTest {
     public void aTextMessageEkaRefusesLeavesTheLinkAsItIs() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1"))).thenReturn(List.of(row("enc-1", "LINK_REQUESTED")));
         when(phones.phoneOf(INDIVIDUAL_ID)).thenReturn(Optional.of("9876543210"));
-        when(eka.post(eq("/abdm/v1/care-contexts/sms/notify"), any(), any())).thenThrow(new EkaCallException(500, null, "down"));
+        when(eka.postAtMostOnce(eq("/abdm/v1/care-contexts/sms/notify"), any(), any())).thenThrow(new EkaCallException(500, null, "down"));
 
         service.linkCareContext(event("link-care-context.json"));
 
@@ -487,7 +490,7 @@ public class EkaHipServiceTest {
 
         verify(store).markLinked("hip-2", List.of("enc-1"), "HIP");
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).post(eq("/abdm/v1/care-contexts/sms/notify"), any(), headers.capture());
+        verify(eka).postAtMostOnce(eq("/abdm/v1/care-contexts/sms/notify"), any(), headers.capture());
         assertEquals("hip-2", headers.getValue().get(EkaAbdmClient.H_HIP_ID));
     }
 

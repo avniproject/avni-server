@@ -394,7 +394,8 @@ public class EkaHiuService implements EkaHiuEvents {
         for (String consentId : artefacts) {
             store.upsertArtefact(consentRequestId, consentId, abhaAddress, hiuId, GRANTED);
         }
-        keepGrantedTerms(consentRequestId, abhaAddress);
+        // A grant replayed before a withdrawal after record sharing is off: Eka is asked nothing.
+        if (access.recordSharingOn()) keepGrantedTerms(consentRequestId, abhaAddress);
         logger.info("Eka consent request {} {} with {} artefact(s)", consentRequestId, status, artefacts.size());
     }
 
