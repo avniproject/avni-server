@@ -198,6 +198,46 @@ public class EkaAbdmClientTest {
         eka.verify(2, postRequestedFor(urlEqualTo(LINK)));
     }
 
+    // A consent request reaches the patient's phone each time Eka takes it: after a server error or no answer it is never
+    // sent again, as the patient could get three requests and approve one Avni has no record of.
+    private static final String CREATE = "/abdm/v1/consents/create";
+
+    @Test
+    public void aCreateThatGotAServerErrorIsNotSentAgain_andEkaMayHaveActed() {
+        eka.stubFor(post(urlEqualTo(CREATE)).willReturn(aResponse().withStatus(502)));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.postAtMostOnce(CREATE, AbdmJson.obj(), Map.of()));
+
+        assertEquals(502, e.getStatus());
+        assertTrue(EkaAbdmClient.mayHaveActed(e));
+        eka.verify(1, postRequestedFor(urlEqualTo(CREATE)));
+    }
+
+    @Test
+    public void aCreateThatGotNoAnswerIsNotSentAgain_andEkaMayHaveActed() {
+        eka.stubFor(post(urlEqualTo(CREATE)).willReturn(aResponse().withStatus(200).withFixedDelay(3500)));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.postAtMostOnce(CREATE, AbdmJson.obj(), Map.of()));
+
+        assertEquals(0, e.getStatus());
+        assertTrue(EkaAbdmClient.mayHaveActed(e));
+        eka.verify(1, postRequestedFor(urlEqualTo(CREATE)));
+    }
+
+    // Too many requests means Eka took nothing, so trying again cannot make a second request.
+    @Test
+    public void aCreateEkaTurnedAwayAsTooManyIsSentAgain() {
+        eka.stubFor(post(urlEqualTo(CREATE)).inScenario("busy").whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)
+                .willReturn(aResponse().withStatus(429)).willSetStateTo("free"));
+        eka.stubFor(post(urlEqualTo(CREATE)).inScenario("busy").whenScenarioStateIs("free")
+                .willReturn(aResponse().withStatus(200).withBody("{\"consent_init_id\":\"init-1\"}")));
+
+        EkaResponse response = client.postAtMostOnce(CREATE, AbdmJson.obj(), Map.of());
+
+        assertEquals(200, response.status());
+        eka.verify(2, postRequestedFor(urlEqualTo(CREATE)));
+    }
+
     @Test
     public void tooManyRequestsIsTriedAgain() {
         eka.stubFor(get(urlEqualTo(LINK)).inScenario("busy").whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)

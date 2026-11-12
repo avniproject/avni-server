@@ -106,6 +106,49 @@ public class AbdmHiuStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of("w-requested"), store.waitingConsentRequests().stream().map(AbdmHiuStore.Consent::uuid).toList());
     }
 
+    // A request Eka gave no clear answer to is UNKNOWN, with why; settled once, by whichever path matches it first.
+    @Test
+    public void anUnknownRequestIsListedUntilSettledOnce() {
+        for (String uuid : List.of("u-unknown", "u-requested")) {
+            store.insertConsentRequest(uuid, "shyam@sbx", "HIU-1", "CAREMGT", "OPConsultation", null, null, null, "init-" + uuid, "REQUESTED");
+        }
+        store.markConsentUnknown(idOf("u-unknown"), "Eka did not answer");
+
+        assertEquals(List.of("u-unknown"), store.unknownConsentRequests().stream().map(AbdmHiuStore.Consent::uuid).toList());
+        assertEquals("UNKNOWN", store.findConsentRequestByUuid("u-unknown").orElseThrow().status());
+        assertEquals("Eka did not answer", store.findConsentRequestByUuid("u-unknown").orElseThrow().error());
+
+        assertTrue(store.settleUnknownConsent(idOf("u-unknown"), "abdm-A"));
+        assertFalse(store.settleUnknownConsent(idOf("u-unknown"), "abdm-B"));
+
+        AbdmHiuStore.Consent settled = store.findConsentRequest("abdm-A").orElseThrow();
+        assertEquals("u-unknown", settled.uuid());
+        assertEquals("REQUESTED", settled.status());
+        assertEquals(null, settled.error());
+        assertTrue(store.unknownConsentRequests().isEmpty());
+        assertEquals(List.of("REQUESTED", "UNKNOWN", "REQUESTED"), namedJdbc.getJdbcOperations().queryForList("select s.status " +
+                "from abdm_consent_status s join abdm_consent c on c.id = s.consent_row_id where c.uuid = 'u-unknown' order by s.id", String.class));
+    }
+
+    // An UNKNOWN request is still open: past its expiry it expires, and the hourly job visits its organisation.
+    @Test
+    public void anUnknownRequestExpiresAndKeepsItsOrganisationVisited() {
+        var jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("delete from abdm_health_information");
+        jdbc.update("delete from abdm_data_flow");
+        jdbc.update("delete from abdm_consent_status");
+        jdbc.update("delete from abdm_consent");
+        store.insertConsentRequest("u-1", "shyam@sbx", "HIU-1", "CAREMGT", "OPConsultation", null, null,
+                java.time.Instant.now().minusSeconds(60), "init-u-1", "REQUESTED");
+        store.markConsentUnknown(idOf("u-1"), "Eka did not answer");
+
+        assertEquals(List.of(2L), store.organisationsHoldingConsentsOrRecords());
+        assertTrue(store.holdsConsentsOrRecords(2L));
+
+        assertEquals(1, store.expireOverdueConsents());
+        assertEquals("EXPIRED", store.findConsentRequestByUuid("u-1").orElseThrow().status());
+    }
+
     private long idOf(String uuid) {
         return store.findConsentRequestByUuid(uuid).orElseThrow().id();
     }

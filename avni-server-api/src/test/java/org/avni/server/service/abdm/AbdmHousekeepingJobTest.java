@@ -165,7 +165,7 @@ public class AbdmHousekeepingJobTest {
     }
 
     // Consents expire and their records are erased in every organisation holding them, record sharing on or not;
-    // the retry, which asks Eka, only where record sharing is on.
+    // the retry and the settling of requests Eka gave no clear answer to, which ask Eka, only where record sharing is on.
     @Test
     @SuppressWarnings("unchecked")
     public void endedConsentsAreExpiredAndTheirRecordsErasedWhereverTheyAreHeld_andParkedUpdatesRetriedWhereSharingIsOn() {
@@ -180,6 +180,8 @@ public class AbdmHousekeepingJobTest {
         verify(runner).forEachOrganisation(eq(AbdmHousekeepingJob.CONSENT_UPDATE_RETRY), any(), any());
         verify(hiuData).expireAndErase();
         verify(ekaHiu).retryParkedUpdates();
+        verify(ekaHiu).settleUnknownRequests();
+        verify(runner, never()).forOrganisations(eq(AbdmHousekeepingJob.CONSENT_UPDATE_RETRY), any(), any(), any());
     }
 
     // A clock the test moves forward.

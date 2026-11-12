@@ -29,6 +29,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -72,6 +73,10 @@ public class EkaHiuService implements EkaHiuEvents {
     public static final String FAILED = "FAILED";
     public static final String RECEIVED = "RECEIVED";
     public static final String PARTIAL = "PARTIAL";
+    // Eka gave no clear answer to the create: the request may be with the patient. Settled from their consent list.
+    public static final String UNKNOWN = "UNKNOWN";
+    // Eka makes a request within the create call's limit; five minutes allows for Avni's and Eka's clocks.
+    static final Duration UNKNOWN_MATCH_WINDOW = Duration.ofMinutes(5);
     // The statuses that end a consent: its records are erased.
     private static final Set<String> ENDING = Set.of("REVOKED", "DENIED", "EXPIRED");
     private static final String LINKED = "LINKED";
@@ -123,7 +128,7 @@ public class EkaHiuService implements EkaHiuEvents {
         this.access = access;
     }
 
-    // ---- consent request (spec 3.2). Answers {uuid, status}, plus error when it failed.
+    // ---- consent request (spec 3.2). Answers {uuid, status}, plus error when it failed or its outcome is UNKNOWN.
 
     public Map<String, Object> requestConsent(String abhaAddress, LocalDate from, LocalDate to, List<String> hiTypes,
                                               String purposeCode, String requesterName, String requesterRegistrationNumber) {
@@ -210,28 +215,42 @@ public class EkaHiuService implements EkaHiuEvents {
             logger.warn("Eka consent request {}: the organisation's Eka settings have no clinicId or doctorOid", uuid);
         }
 
+        // Never sent twice: each create reaches the patient's phone, and approving an earlier one would be lost.
+        EkaResponse response;
         try {
-            EkaResponse response = eka.postSlow(CONSENT_CREATE, body, patientHeaders(patient.oid(), patient.subjectUuid()));
-            String consentRequestId = consentInitIdOf(response == null ? null : response.body());
-            if (consentRequestId == null) {
-                // Any 2xx is success (the spec's 204-with-a-body contradiction). Without Eka's id nothing can match the
-                // patient's answer to this request: it stays REQUESTED until it expires.
-                logger.warn("Eka consent request {}: Eka answered {} with no consent id; the patient's answer cannot be matched to it", uuid,
-                        response == null ? null : response.status());
-            } else if (rowId != null) {
-                store.setConsentRequestId(rowId, consentRequestId, REQUESTED);
-                // Eka's consent_init_id is not ABDM's consent request id, which consent_update and the push name. Map it now
-                // when Eka's list already has it; otherwise consentUpdate maps it the same way when the first update comes.
-                String abdmId = abdmIdOf(consentRequestId, patient, address);
-                if (abdmId != null && !abdmId.equals(consentRequestId)) {
-                    store.setConsentRequestId(rowId, abdmId, REQUESTED);
-                    applyParked(abdmId, address, orgSettings.getHiuId());
-                }
-            }
+            response = eka.postAtMostOnce(CONSENT_CREATE, body, patientHeaders(patient.oid(), patient.subjectUuid()));
         } catch (RuntimeException e) {
-            return failed(out, rowId, uuid, "Eka refused the consent request: " + describe(e));
+            if (EkaAbdmClient.mayHaveActed(e)) {
+                return unknown(out, rowId, uuid, "Eka gave no clear answer; the request may have reached the patient: " + describe(e));
+            }
+            boolean reachedEka = e instanceof EkaCallException call && call.getStatus() > 0;
+            return failed(out, rowId, uuid, (reachedEka ? "Eka refused the consent request: " : "The consent request did not reach Eka: ") + describe(e));
+        }
+        String consentRequestId = consentInitIdOf(response == null ? null : response.body());
+        if (consentRequestId == null) {
+            // Any 2xx is success (the spec's 204-with-a-body contradiction). Without Eka's id nothing can match the
+            // patient's answer to this request: it stays REQUESTED until it expires.
+            logger.warn("Eka consent request {}: Eka answered {} with no consent id; the patient's answer cannot be matched to it", uuid,
+                    response == null ? null : response.status());
+        } else if (rowId != null) {
+            store.setConsentRequestId(rowId, consentRequestId, REQUESTED);
+            // Eka's consent_init_id is not ABDM's consent request id, which consent_update and the push name. Map it now
+            // when Eka's list already has it; otherwise consentUpdate maps it the same way when the first update comes.
+            String abdmId = abdmIdOf(consentRequestId, patient, address);
+            if (abdmId != null && !abdmId.equals(consentRequestId)) {
+                store.setConsentRequestId(rowId, abdmId, REQUESTED);
+                applyParked(abdmId, address, orgSettings.getHiuId());
+            }
         }
         out.put("status", REQUESTED);
+        return out;
+    }
+
+    private Map<String, Object> unknown(Map<String, Object> out, Long rowId, String uuid, String error) {
+        if (rowId != null) store.markConsentUnknown(rowId, error);
+        logger.warn("Eka consent request {}: outcome unknown: {}", uuid, error);
+        out.put("status", UNKNOWN);
+        out.put("error", error);
         return out;
     }
 
@@ -426,19 +445,84 @@ public class EkaHiuService implements EkaHiuEvents {
         }
     }
 
+    // Requests Eka gave no clear answer to (UNKNOWN), hourly where record sharing is on: the patient's consent list at Eka
+    // settles each one it can tell apart (unknownRequestOf), newest first, RETRY_PATIENTS patients at most. One it cannot
+    // stays UNKNOWN for the next run, or for the patient's answer, until it expires.
+    public void settleUnknownRequests() {
+        Map<String, List<AbdmHiuStore.Consent>> byPatient = new LinkedHashMap<>();
+        for (AbdmHiuStore.Consent r : store.unknownConsentRequests()) {
+            if (r.abhaAddress() != null) byPatient.computeIfAbsent(r.abhaAddress().toLowerCase(Locale.ROOT), a -> new ArrayList<>()).add(r);
+        }
+        int asked = 0;
+        for (List<AbdmHiuStore.Consent> requests : byPatient.values()) {
+            if (asked >= RETRY_PATIENTS) break;
+            String address = requests.get(0).abhaAddress();
+            EkaPatient patient = findPatient(address, address);
+            if (patient.oid() == null) continue;
+            asked++;
+            JsonNode consents = consentList(patient, address);
+            if (consents == null) continue;
+            for (JsonNode entry : consents) {
+                String id = AbdmFlows.firstNonNull(AbdmJson.text(entry, "consent_id"), AbdmJson.text(entry, "consent_init_id"));
+                AbdmHiuStore.Consent request = id == null ? null : unknownRequestOf(entry, requests, consents);
+                if (request != null) settleUnknown(request, id);
+            }
+        }
+    }
+
+    // Files an UNKNOWN request under the id Eka's list gives it, then applies any update that came for that id meanwhile.
+    // False when another path settled it first.
+    private boolean settleUnknown(AbdmHiuStore.Consent request, String id) {
+        if (!store.settleUnknownConsent(request.id(), id)) return false;
+        logger.info("Eka consent request {}, whose create Eka gave no clear answer to, is {} at Eka", request.uuid(), id);
+        applyParked(id, request.abhaAddress(), hiuIdOf(request));
+        return true;
+    }
+
+    // The UNKNOWN request a consent in the patient's list at Eka is, told apart by when Eka made it (c_at): a consent no
+    // request of ours carries, made within UNKNOWN_MATCH_WINDOW of exactly one UNKNOWN request, which is that close to no
+    // other such consent. Null when that cannot be told: nothing is guessed.
+    private AbdmHiuStore.Consent unknownRequestOf(JsonNode entry, List<AbdmHiuStore.Consent> requests, JsonNode consents) {
+        Instant made = instantOf(AbdmJson.text(entry, "c_at"));
+        if (made == null || carried(entry)) return null;
+        List<AbdmHiuStore.Consent> near = requests.stream().filter(r -> UNKNOWN.equals(r.status()) && close(r.createdAt(), made)).toList();
+        if (near.size() != 1) return null;
+        AbdmHiuStore.Consent request = near.get(0);
+        for (JsonNode other : consents) {
+            if (other != entry && close(request.createdAt(), instantOf(AbdmJson.text(other, "c_at"))) && !carried(other)) return null;
+        }
+        return request;
+    }
+
+    // Whether a request of ours already carries this consent of the list, by ABDM's id or Eka's.
+    private boolean carried(JsonNode entry) {
+        String abdmId = AbdmJson.text(entry, "consent_id");
+        String initId = AbdmJson.text(entry, "consent_init_id");
+        return (abdmId != null && store.findConsentRequest(abdmId).isPresent()) || (initId != null && store.findConsentRequest(initId).isPresent());
+    }
+
+    private static boolean close(Instant a, Instant b) {
+        return a != null && b != null && Duration.between(a, b).abs().compareTo(UNKNOWN_MATCH_WINDOW) <= 0;
+    }
+
     private Optional<AbdmHiuStore.Consent> matchThroughEka(String abdmId) {
         return Optional.ofNullable(matchThroughEka(List.of(abdmId), Integer.MAX_VALUE).get(abdmId));
     }
 
     // ABDM's consent request ids to our requests: Eka's consent list, per patient with a request waiting
     // (AbdmHiuStore.waitingConsentRequests, newest first), gives the consent_init_id Eka answered our create with, which
-    // is what the request carries until it is matched. One list per patient, for patientsToAsk patients at most.
+    // is what the request carries until it is matched. A request whose create Eka gave no clear answer to (UNKNOWN)
+    // carries none, and is matched by when Eka made the consent (unknownRequestOf). One list per patient, for
+    // patientsToAsk patients at most.
     private Map<String, AbdmHiuStore.Consent> matchThroughEka(Collection<String> abdmIds, int patientsToAsk) {
         Map<String, AbdmHiuStore.Consent> matched = new LinkedHashMap<>();
         Map<String, List<AbdmHiuStore.Consent>> byPatient = new LinkedHashMap<>();
         for (AbdmHiuStore.Consent r : store.waitingConsentRequests()) {
             if (r.consentRequestId() == null || r.abhaAddress() == null) continue;
             byPatient.computeIfAbsent(r.abhaAddress().toLowerCase(Locale.ROOT), a -> new ArrayList<>()).add(r);
+        }
+        for (AbdmHiuStore.Consent r : store.unknownConsentRequests()) {
+            if (r.abhaAddress() != null) byPatient.computeIfAbsent(r.abhaAddress().toLowerCase(Locale.ROOT), a -> new ArrayList<>()).add(r);
         }
         int asked = 0;
         for (List<AbdmHiuStore.Consent> requests : byPatient.values()) {
@@ -451,15 +535,18 @@ public class EkaHiuService implements EkaHiuEvents {
             for (String abdmId : abdmIds) {
                 if (matched.containsKey(abdmId)) continue;
                 String initId = initIdOf(abdmId, consents);
-                if (initId == null) continue;
                 for (AbdmHiuStore.Consent r : requests) {
-                    if (initId.equals(r.consentRequestId()) && !matched.containsValue(r)) {
+                    if (initId != null && initId.equals(r.consentRequestId()) && !matched.containsValue(r)) {
                         mapToAbdmId(r, abdmId);
                         logger.info("Eka consent request {} (Eka's {}) is request {}", abdmId, initId, r.uuid());
                         matched.put(abdmId, r);
                         break;
                     }
                 }
+                if (matched.containsKey(abdmId)) continue;
+                JsonNode entry = entryOf(abdmId, consents);
+                AbdmHiuStore.Consent unknown = entry == null ? null : unknownRequestOf(entry, requests, consents);
+                if (unknown != null && !matched.containsValue(unknown) && settleUnknown(unknown, abdmId)) matched.put(abdmId, unknown);
             }
         }
         return matched;
@@ -657,9 +744,15 @@ public class EkaHiuService implements EkaHiuEvents {
 
     // Eka's consent_init_id for ABDM's consent request id; null when not listed.
     private static String initIdOf(String abdmId, JsonNode consents) {
+        JsonNode entry = entryOf(abdmId, consents);
+        return entry == null ? null : AbdmJson.text(entry, "consent_init_id");
+    }
+
+    // The consent in the patient's list with ABDM's consent request id; null when not listed.
+    private static JsonNode entryOf(String abdmId, JsonNode consents) {
         if (consents == null) return null;
         for (JsonNode c : consents) {
-            if (abdmId.equals(AbdmJson.text(c, "consent_id"))) return AbdmJson.text(c, "consent_init_id");
+            if (abdmId.equals(AbdmJson.text(c, "consent_id"))) return c;
         }
         return null;
     }

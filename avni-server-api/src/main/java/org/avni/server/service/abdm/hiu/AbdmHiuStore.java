@@ -119,6 +119,29 @@ public class AbdmHiuStore {
                 params().addValue("id", id).addValue("cr", consentRequestId, Types.VARCHAR));
     }
 
+    // Eka gave no clear answer to the create: it may have made the request, so it is neither failed nor sent again.
+    public void markConsentUnknown(long id, String error) {
+        jdbc.update("update abdm_consent set status = 'UNKNOWN', error = :error, updated_at = now() where organisation_id = :org and id = :id",
+                params().addValue("id", id).addValue("error", error, Types.VARCHAR));
+        history("c.id = :id", params().addValue("id", id), "UNKNOWN");
+    }
+
+    // Requests Eka gave no clear answer to, newest first.
+    public List<Consent> unknownConsentRequests() {
+        return jdbc.query("select * from abdm_consent where organisation_id = :org and role = 'HIU' and consent_id is null " +
+                "and status = 'UNKNOWN' order by created_at desc, id desc", params(), CONSENT);
+    }
+
+    // An UNKNOWN request found at Eka: it carries the id and waits for the patient's answer. False when another path
+    // settled it first.
+    public boolean settleUnknownConsent(long id, String consentRequestId) {
+        int updated = jdbc.update("update abdm_consent set consent_request_id = :cr, status = 'REQUESTED', error = null, updated_at = now() " +
+                        "where organisation_id = :org and id = :id and status = 'UNKNOWN'",
+                params().addValue("id", id).addValue("cr", consentRequestId, Types.VARCHAR));
+        if (updated == 1) history("c.id = :id", params().addValue("id", id), "REQUESTED");
+        return updated == 1;
+    }
+
     public void failConsent(long id, String error) {
         jdbc.update("update abdm_consent set status = 'FAILED', error = :error, updated_at = now() where organisation_id = :org and id = :id",
                 params().addValue("id", id).addValue("error", error, Types.VARCHAR));
@@ -372,10 +395,11 @@ public class AbdmHiuStore {
                         .addValue("erase", AbdmFlows.iso(dataEraseAt), Types.VARCHAR));
     }
 
-    // Organisations with an HIU consent still open or a received record still held, for the hourly expiry and erase, which
-    // is owed whatever their switches. Across organisations: called by the job runner before it acts as each.
+    // Organisations with an HIU consent still open (UNKNOWN may be open at Eka) or a received record still held, for the
+    // hourly expiry and erase, which is owed whatever their switches. Across organisations: called by the job runner
+    // before it acts as each.
     public List<Long> organisationsHoldingConsentsOrRecords() {
-        return jdbc.queryForList("select organisation_id from abdm_consent where role = 'HIU' and status in ('REQUESTED', 'GRANTED') " +
+        return jdbc.queryForList("select organisation_id from abdm_consent where role = 'HIU' and status in ('REQUESTED', 'GRANTED', 'UNKNOWN') " +
                 "union select organisation_id from abdm_health_information order by 1", new MapSqlParameterSource(), Long.class);
     }
 
@@ -383,14 +407,14 @@ public class AbdmHiuStore {
     // the webhook asks it before acting as any.
     public boolean holdsConsentsOrRecords(long organisationId) {
         return Boolean.TRUE.equals(jdbc.queryForObject("select exists (select 1 from abdm_consent where organisation_id = :org and role = 'HIU' " +
-                "and status in ('REQUESTED', 'GRANTED')) or exists (select 1 from abdm_health_information where organisation_id = :org)",
+                "and status in ('REQUESTED', 'GRANTED', 'UNKNOWN')) or exists (select 1 from abdm_health_information where organisation_id = :org)",
                 new MapSqlParameterSource("org", organisationId), Boolean.class));
     }
 
     // Requests and artefacts past their erase date become EXPIRED (HIU_FLOW_301). Returns the requests expired.
     public int expireOverdueConsents() {
         int requests = jdbc.update("update abdm_consent set status = 'EXPIRED', updated_at = now() where organisation_id = :org and role = 'HIU' " +
-                "and consent_id is null and status in ('GRANTED', 'REQUESTED') and data_erase_at is not null and data_erase_at < now()", params());
+                "and consent_id is null and status in ('GRANTED', 'REQUESTED', 'UNKNOWN') and data_erase_at is not null and data_erase_at < now()", params());
         jdbc.update("update abdm_consent a set status = 'EXPIRED', updated_at = now() where a.organisation_id = :org and a.role = 'HIU' " +
                 "and a.consent_id is not null and a.status = 'GRANTED' and ((a.data_erase_at is not null and a.data_erase_at < now()) " +
                 "or exists (select 1 from abdm_consent r where r.organisation_id = a.organisation_id and r.role = 'HIU' and r.consent_id is null " +

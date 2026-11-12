@@ -108,10 +108,13 @@ public class AbdmHousekeepingJob {
     }
 
     // Erasing records when their consent ends is owed by every organisation holding consents or records, whatever its
-    // switches; the retry asks Eka, so only where record sharing is on.
+    // switches; settling requests Eka gave no clear answer to, and the retry, ask Eka, so only where record sharing is on.
     public void expireConsentsAndEraseRecords() {
         runner.forOrganisations(CONSENT_EXPIRY, UPKEEP_BUDGET, hiuStore::organisationsHoldingConsentsOrRecords, deadline -> hiuData.expireAndErase());
-        runner.forEachOrganisation(CONSENT_UPDATE_RETRY, UPKEEP_BUDGET, deadline -> ekaHiu.retryParkedUpdates());
+        runner.forEachOrganisation(CONSENT_UPDATE_RETRY, UPKEEP_BUDGET, deadline -> {
+            ekaHiu.settleUnknownRequests();
+            ekaHiu.retryParkedUpdates();
+        });
     }
 
     // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient, under every

@@ -34,7 +34,9 @@ import java.util.function.Function;
 // error code and message; a call that does not answer throws it with status 0. Never logs a body, a token or an ID of a
 // patient. The requestId in the response is a fresh UUID for the traffic log.
 // The JDK HTTP client as EkaRestClient uses it: HTTP/1.1, 5 s to connect, 10 s for the whole exchange (60 s for postSlow),
-// a Content-Length body. Server errors and 429 are tried up to three times (exchange). A 401 is not retried: EkaTokenService has no way to drop a token, and renews it 15 minutes before it expires.
+// a Content-Length body. Server errors and 429 are tried up to three times (exchange), except for a call that makes
+// something at Eka (postAtMostOnce). A 401 is not retried: EkaTokenService has no way to drop a token, and renews it 15
+// minutes before it expires.
 @Component
 public class EkaAbdmClient {
     private static final Logger logger = LoggerFactory.getLogger(EkaAbdmClient.class);
@@ -87,6 +89,13 @@ public class EkaAbdmClient {
         return exchange("POST", path, body, headers, slowAnswerTimeout);
     }
 
+    // For a call that makes something at Eka each time it is taken (consent create: each one reaches the patient's
+    // phone). Sent again only when Eka surely took nothing (no connection, or 429), never after a server error or no
+    // answer, so the patient gets at most one request; on the slow limit.
+    public EkaResponse postAtMostOnce(String path, JsonNode body, Map<String, String> headers) {
+        return exchange("POST", path, body, headers, slowAnswerTimeout, false);
+    }
+
     public EkaResponse post(String path, JsonNode body, Map<String, String> headers) {
         return exchange("POST", path, body, headers, answerTimeout);
     }
@@ -106,14 +115,22 @@ public class EkaAbdmClient {
 
     // Up to ATTEMPTS tries, backing off, for a server error, 429, a call that never reached Eka, or a read that did not
     // answer (AVNI-17). A write that did not answer is not sent again: Eka may have acted on it. A write that got a server
-    // error is sent again, and its outcome keeps that the earlier try may have been acted on (mayHaveActed).
+    // error is sent again unless it makes something (postAtMostOnce), and its outcome keeps that the earlier try may have
+    // been acted on (mayHaveActed).
     private EkaResponse exchange(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout) {
+        return exchange(method, path, body, headers, timeout, true);
+    }
+
+    private EkaResponse exchange(String method, String path, JsonNode body, Map<String, String> headers, Duration timeout,
+                                 boolean resendAfterServerError) {
         boolean actedOnBefore = false;
         for (int attempt = 1; ; attempt++) {
             try {
                 return exchangeOnce(method, path, body, headers, timeout);
             } catch (EkaCallException e) {
-                if (attempt >= ATTEMPTS || !worthTryingAgain(method, e)) throw actedOnBefore ? e.afterATryEkaMayHaveActedOn() : e;
+                if (attempt >= ATTEMPTS || !worthTryingAgain(method, e, resendAfterServerError)) {
+                    throw actedOnBefore ? e.afterATryEkaMayHaveActedOn() : e;
+                }
                 actedOnBefore |= mayHaveActed(e);
                 logger.info("Eka {} {}: try {} of {} after {}", method, withoutQuery(path), attempt + 1, ATTEMPTS,
                         e.getStatus() == 0 ? "no answer" : "HTTP " + e.getStatus());
@@ -122,9 +139,10 @@ public class EkaAbdmClient {
         }
     }
 
-    private static boolean worthTryingAgain(String method, EkaCallException e) {
+    private static boolean worthTryingAgain(String method, EkaCallException e, boolean resendAfterServerError) {
         int status = e.getStatus();
-        if (status == 429 || status >= 500) return true;
+        if (status == 429) return true;
+        if (status >= 500) return resendAfterServerError;
         if (e instanceof NoAnswer noAnswer) return !noAnswer.sent || "GET".equals(method);
         return false;
     }

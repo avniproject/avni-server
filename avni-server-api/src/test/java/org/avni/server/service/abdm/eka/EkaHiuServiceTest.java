@@ -90,7 +90,7 @@ public class EkaHiuServiceTest {
         when(store.claimParked(anyLong())).thenReturn(true);
         when(hipStore.findSubjectsByAbhaAddress("shyam@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Shyam")));
         when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(abhaEvent("created", "oid-1", "shyam@sbx")));
-        when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
+        when(eka.postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
                 .thenReturn(new EkaResponse("r-1", 200, AbdmJson.read("{\"consent_init_id\":\"init-1\"}")));
     }
 
@@ -104,7 +104,7 @@ public class EkaHiuServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).postSlow(eq("/abdm/v1/consents/create"), body.capture(), headers.capture());
+        verify(eka).postAtMostOnce(eq("/abdm/v1/consents/create"), body.capture(), headers.capture());
         JsonNode b = body.getValue();
         assertEquals("oid-1", b.at("/patient/oid").asText());
         assertEquals("shyam@sbx", b.at("/patient/health_id").asText());
@@ -128,7 +128,7 @@ public class EkaHiuServiceTest {
                 eq("OPConsultation,Prescription"), eq(Instant.parse("2026-01-01T00:00:00Z")), eq(Instant.parse("2026-10-20T23:59:59Z")),
                 any(Instant.class), anyString(), eq("REQUESTED"));
         order.verify(eka).patch(eq("/abdm/v1/hiu/keyset"), any(), any());
-        order.verify(eka).postSlow(eq("/abdm/v1/consents/create"), any(), any());
+        order.verify(eka).postAtMostOnce(eq("/abdm/v1/consents/create"), any(), any());
         order.verify(store).setConsentRequestId(5L, "init-1", "REQUESTED");
         assertEquals("REQUESTED", answer.get("status"));
         assertNotNull(answer.get("uuid"));
@@ -175,13 +175,48 @@ public class EkaHiuServiceTest {
 
     @Test
     public void ekaRefusingTheConsentFailsTheRowWithItsMessage() {
-        when(eka.postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1040", "Invalid HIU ID"));
+        when(eka.postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1040", "Invalid HIU ID"));
 
         Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         verify(store).failConsent(eq(5L), contains("Invalid HIU ID"));
         verify(store, never()).setConsentRequestId(anyLong(), any(), any());
         assertEquals("FAILED", answer.get("status"));
+    }
+
+    // Eka gave no clear answer: it may have made the request, and the patient may be looking at it. The request is neither
+    // failed nor sent again; it is UNKNOWN until the patient's consent list at Eka, or their answer, settles it.
+    @Test
+    public void aConsentCreateEkaDidNotAnswerIsUnknown_andNotSentAgain() {
+        for (EkaCallException e : List.of(new EkaAbdmClient.NoAnswer(true, "Eka POST /abdm/v1/consents/create did not answer within 60000 ms"),
+                new EkaCallException(502, null, "Eka POST /abdm/v1/consents/create refused with HTTP 502"))) {
+            org.mockito.Mockito.reset(eka);
+            when(eka.postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any())).thenThrow(e);
+
+            Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
+
+            assertEquals("UNKNOWN", answer.get("status"));
+            assertTrue(String.valueOf(answer.get("error")), String.valueOf(answer.get("error")).contains(e.getMessage()));
+            verify(eka, times(1)).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any());
+            verify(eka, never()).postSlow(eq(EkaHiuService.CONSENT_CREATE), any(), any());
+            verify(eka, never()).post(eq(EkaHiuService.CONSENT_CREATE), any(), any());
+        }
+        verify(store, times(2)).markConsentUnknown(eq(5L), anyString());
+        verify(store, never()).failConsent(anyLong(), any());
+        verify(store, never()).setConsentRequestId(anyLong(), any(), any());
+    }
+
+    // A call that never reached Eka was not made: failed, and saying so rather than that Eka refused it.
+    @Test
+    public void aConsentCreateThatNeverReachedEkaFails() {
+        when(eka.postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any()))
+                .thenThrow(new EkaAbdmClient.NoAnswer(false, "Eka POST /abdm/v1/consents/create did not answer: ConnectException"));
+
+        Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
+
+        assertEquals("FAILED", answer.get("status"));
+        verify(store).failConsent(eq(5L), contains("did not reach Eka"));
+        verify(store, never()).markConsentUnknown(anyLong(), any());
     }
 
     @Test
@@ -191,7 +226,7 @@ public class EkaHiuServiceTest {
         Map<String, Object> answer = service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         verify(store).failConsent(eq(5L), contains("Invalid public key"));
-        verify(eka, never()).post(eq(EkaHiuService.CONSENT_CREATE), any(), any());
+        verify(eka, never()).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), any(), any());
         assertEquals("FAILED", answer.get("status"));
     }
 
@@ -205,7 +240,7 @@ public class EkaHiuServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
+        verify(eka).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
         assertTrue(body.getValue().at("/patient/oid").isMissingNode());
         assertEquals("shyam@sbx", body.getValue().at("/patient/health_id").asText());
         assertFalse(headers.getValue().containsKey(EkaAbdmClient.H_PATIENT_OID));
@@ -224,7 +259,7 @@ public class EkaHiuServiceTest {
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
+        verify(eka).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), body.capture(), headers.capture());
         assertEquals("oid-2", body.getValue().at("/patient/oid").asText());
         assertFalse(headers.getValue().containsKey(EkaAbdmClient.H_PARTNER_PATIENT_ID));
     }
@@ -430,6 +465,74 @@ public class EkaHiuServiceTest {
         verify(store).insertHealthInformation(anyLong(), eq("dtx-1"), eq("artefact-1"), eq("HIP-X"), eq("cc-1"), eq(true), anyString());
     }
 
+    // ---- requests Eka gave no clear answer to (UNKNOWN)
+
+    private static final Instant ASKED = Instant.parse("2026-11-12T09:00:00Z");
+
+    @Test
+    public void anUnknownRequestIsSettledFromThePatientsConsentListAtEka() {
+        when(store.unknownConsentRequests()).thenReturn(List.of(unknown(5, ASKED)));
+        when(store.settleUnknownConsent(5L, "abdm-A")).thenReturn(true);
+        ekaListsConsents(listed("abdm-A", "init-9", "REQUESTED", ASKED.plusSeconds(20)));
+
+        service.settleUnknownRequests();
+
+        verify(store).settleUnknownConsent(5L, "abdm-A");
+        verify(store, never()).setConsentRequestStatus(any(), any());
+    }
+
+    // The patient answered while the request was UNKNOWN: their grant, parked for want of a request carrying its id, is
+    // applied once the list settles which request it is.
+    @Test
+    public void anUnknownRequestThePatientGrantedTakesTheGrantParkedForIt() {
+        when(store.unknownConsentRequests()).thenReturn(List.of(unknown(5, ASKED)));
+        when(store.settleUnknownConsent(5L, "abdm-A")).thenReturn(true);
+        ekaListsConsents(listed("abdm-A", "init-9", "GRANTED", ASKED.plusSeconds(20)));
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+
+        service.settleUnknownRequests();
+
+        verify(store).settleUnknownConsent(5L, "abdm-A");
+        verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+    }
+
+    // A grant that comes while the request is UNKNOWN is matched to it the same way, and applied at once.
+    @Test
+    public void aGrantForAnUnknownRequestIsMatchedToIt() {
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.empty());
+        when(store.unknownConsentRequests()).thenReturn(List.of(unknown(5, ASKED)));
+        when(store.settleUnknownConsent(5L, "abdm-A")).thenReturn(true);
+        ekaListsConsents(listed("abdm-A", "init-9", "GRANTED", ASKED.plusSeconds(20)));
+
+        service.consentUpdate(grantedUpdate("abdm-A"));
+
+        verify(store).settleUnknownConsent(5L, "abdm-A");
+        verify(store).setConsentRequestStatus("abdm-A", "GRANTED");
+        verify(store).upsertArtefact("abdm-A", "artefact-1", "shyam@sbx", HIU_ID, "GRANTED");
+        verify(store, never()).parkConsentUpdate(any(), any(), any());
+    }
+
+    // Nothing is guessed: a consent another request of ours carries, one made well before or after the request, or one
+    // that two UNKNOWN requests are equally close to, settles nothing.
+    @Test
+    public void anUnknownRequestIsNotSettledByAConsentThatCannotBeToldToBeIts() {
+        when(store.findConsentRequest("init-6")).thenReturn(Optional.of(request(6, "init-6", "REQUESTED")));
+        when(store.unknownConsentRequests()).thenReturn(List.of(unknown(5, ASKED)));
+        ekaListsConsents(listed("abdm-B", "init-6", "REQUESTED", ASKED.plusSeconds(20)),
+                listed("abdm-C", "init-7", "REQUESTED", ASKED.plusSeconds(600)),
+                listed("abdm-D", "init-8", "REQUESTED", null));
+
+        service.settleUnknownRequests();
+
+        when(store.unknownConsentRequests()).thenReturn(List.of(unknown(6, ASKED.plusSeconds(30)), unknown(5, ASKED)));
+        ekaListsConsents(listed("abdm-A", "init-9", "REQUESTED", ASKED.plusSeconds(20)));
+
+        service.settleUnknownRequests();
+
+        verify(store, never()).settleUnknownConsent(anyLong(), any());
+    }
+
     // The hourly retry: an update parked because Eka's list did not have the id yet is applied once it does.
     @Test
     public void theRetryAppliesAParkedUpdateOnceEkasListMatchesItsRequest() {
@@ -532,7 +635,7 @@ public class EkaHiuServiceTest {
         service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION, expiry);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
+        verify(eka).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
         Instant end = expiry.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().minusSeconds(1);
         assertEquals(end.toString(), body.getValue().at("/period/expiry").asText());
         verify(store).insertConsentRequest(anyString(), eq("shyam@sbx"), eq(HIU_ID), eq("CAREMGT"), eq("OPConsultation"), any(), any(),
@@ -570,7 +673,7 @@ public class EkaHiuServiceTest {
         service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
+        verify(eka).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
         assertEquals("oid-1", body.getValue().at("/patient/oid").asText());
     }
 
@@ -584,7 +687,7 @@ public class EkaHiuServiceTest {
         service.requestConsent("shyam", null, null, null, null, REQUESTER, REGISTRATION);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
-        verify(eka).postSlow(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
+        verify(eka).postAtMostOnce(eq(EkaHiuService.CONSENT_CREATE), body.capture(), any());
         assertTrue(body.getValue().at("/patient/oid").isMissingNode());
     }
 
@@ -787,6 +890,17 @@ public class EkaHiuServiceTest {
         return new AbdmHiuStore.Consent(id, "uuid-" + id, consentRequestId, null, "init-request-" + id, "shyam@sbx", null, HIU_ID,
                 "CAREMGT", "OPConsultation", Instant.parse("2026-01-01T00:00:00Z"), Instant.parse("2026-10-20T23:59:59Z"),
                 Instant.parse("2026-11-24T00:00:00Z"), status, null, null, null);
+    }
+
+    private static AbdmHiuStore.Consent unknown(long id, Instant createdAt) {
+        return new AbdmHiuStore.Consent(id, "uuid-" + id, null, null, "init-request-" + id, "shyam@sbx", null, HIU_ID,
+                "CAREMGT", "OPConsultation", null, null, Instant.parse("2026-12-12T00:00:00Z"), "UNKNOWN", "Eka did not answer", createdAt, createdAt);
+    }
+
+    // One consent of the patient's list at Eka (spec 3.3); c_at is when Eka made it.
+    private static String listed(String consentId, String initId, String status, Instant madeAt) {
+        return "{\"consent_id\":\"" + consentId + "\",\"consent_init_id\":\"" + initId + "\",\"status\":\"" + status + "\"" +
+                (madeAt == null ? "" : ",\"c_at\":\"" + madeAt + "\"") + "}";
     }
 
     private static AbdmHiuStore.Consent artefactOf(String consentRequestId, String consentId) {
