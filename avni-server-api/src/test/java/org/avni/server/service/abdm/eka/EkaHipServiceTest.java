@@ -712,6 +712,20 @@ public class EkaHipServiceTest {
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("more than one patient"));
     }
 
+    // A visit of another patient only discovered here, not linked, still makes the request one for two patients.
+    @Test
+    public void aDataRequestAlsoNamingAnotherPatientsUnlinkedVisitIsRefused() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        AbdmHipStore.CareContext anotherPatients = new AbdmHipStore.CareContext(2, "cc-enc-2", 9L, HIP_ID, "subject-9", "enc-2", "Display enc-2",
+                "OPConsultation", "PENDING", null, null, null, Instant.parse("2026-10-25T10:00:00Z"));
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), anotherPatients));
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"));
+
+        verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("more than one patient"));
+    }
+
     // An ABHA typed on the record and never verified with Eka gets nothing, even when the request names that address.
     @Test
     public void visitsAreNotSentToAnAbhaOnTheRecordThatEkaNeverVerified() {

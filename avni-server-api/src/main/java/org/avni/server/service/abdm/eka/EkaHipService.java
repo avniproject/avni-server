@@ -338,15 +338,15 @@ public class EkaHipService implements EkaHipEvents {
             return;
         }
 
-        Map<String, AbdmHipStore.CareContext> linkedHere = store.findCareContextsByReferences(hipId, references).stream()
-                .filter(c -> !PENDING.equals(c.status()))
-                .collect(Collectors.toMap(AbdmHipStore.CareContext::reference, c -> c, (a, b) -> a, LinkedHashMap::new));
-        // One request is one patient's: visits of more than one are refused whole.
-        if (linkedHere.values().stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
+        List<AbdmHipStore.CareContext> known = store.findCareContextsByReferences(hipId, references);
+        // One request is one patient's: visits of more than one, linked or not, are refused whole.
+        if (known.stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
             store.finishDataFlow(flowId, FLOW_FAILED, 0, "Not sent: the visits asked for belong to more than one patient");
             logger.warn("Eka data fetch {} asks for visits of more than one patient; nothing sent", transactionId);
             return;
         }
+        Map<String, AbdmHipStore.CareContext> linkedHere = known.stream().filter(c -> !PENDING.equals(c.status()))
+                .collect(Collectors.toMap(AbdmHipStore.CareContext::reference, c -> c, (a, b) -> a, LinkedHashMap::new));
         // Share only what the consent covers. Each care context holds one record type: a visit is OPConsultation.
         // No hi_types means the request does not narrow by type.
         List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
