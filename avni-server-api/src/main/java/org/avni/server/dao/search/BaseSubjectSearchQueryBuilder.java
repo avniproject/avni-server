@@ -32,11 +32,19 @@ public class BaseSubjectSearchQueryBuilder<T> {
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
     public static final String FULL_NAME = "concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, ''))";
     private static final String NUMBER_PATTERN = "-?[0-9]{1,30}(\\.[0-9]{1,30})?";
+    private static final String PART_OF_A_NUMBER_PATTERN = "-?[0-9]*\\.?[0-9]+\\.?";
     private static final String STORED_NUMBER_PATTERN = "[ \\t\\n\\r\\f\\v]*[+-]?([0-9]{1,255}(\\.[0-9]{0,255})?|\\.[0-9]{1,255})([eE][+-]?[0-9]{1,4})?[ \\t\\n\\r\\f\\v]*";
     private static final String UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
 
     private String orderByClause = "";
+    private String searchAllExactFirst;
+    private String searchAllText;
+    private String searchAllExactAnswer;
+    private static final String VALUE_START = "(: |\\[|, )";
+    private static final String VALUE_END = "[,}\\]]";
+    // An answer follows its question's uuid key, or "phoneNumber" in a PhoneNumber answer; inside a text answer a quote is stored as \", so this can't match there.
+    private static final String ANSWER_OF_A_QUESTION = "\"([0-9a-fA-F-]{36}|phoneNumber)\": ";
 
     protected final Set<String> whereClauses = new HashSet<>();
     private final Map<String, Object> parameters = new HashMap<>();
@@ -70,8 +78,13 @@ public class BaseSubjectSearchQueryBuilder<T> {
             removePaginationFilters();
         } else {
             String offsetLimitClause = "offset :offset limit :limit";
+            boolean exactMatchesFirst = orderByClause.isEmpty() && searchAllExactFirst != null && groupByClause.isEmpty();
+            if (exactMatchesFirst) {
+                parameters.put("searchAllExact", searchAllText);
+                parameters.put("searchAllExactAnswer", searchAllExactAnswer);
+            }
             finalQuery = query.append("\n")
-                    .append(orderByClause)
+                    .append(exactMatchesFirst ? "order by " + searchAllExactFirst + ", i.id desc" : orderByClause)
                     .append("\n")
                     .append(offsetLimitClause)
                     .toString();
@@ -303,20 +316,44 @@ public class BaseSubjectSearchQueryBuilder<T> {
     }
 
     public T withSearchAll(String typedText) {
-        String searchString = typedText == null ? null : typedText.replace("\u0000", "");
+        String searchString = SubjectSearchRequest.trimLikeThePhone(typedText == null ? null : typedText.replace("\u0000", ""));
         if (StringUtils.isEmpty(searchString)) return (T) this;
+        boolean partOfANumber = searchString.matches(PART_OF_A_NUMBER_PATTERN);
         parameters.put("searchAll", containsPattern(searchString));
         parameters.put("searchAllStored", containsPattern(asStoredInJson(searchString)));
         parameters.put("searchAllPath", searchAllPath(searchString));
+        if (partOfANumber) parameters.put("searchAllNumber", numberValueContaining(searchString));
         whereClauses.add("(" + FULL_NAME + " ilike :searchAll" +
-                " or " + answersContainSearchAll("i.observations") +
-                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false" + exitRule() + tickedProgramsRule() + " and " + answersContainSearchAll("penr.observations") + "))");
+                " or " + answersContainSearchAll("i.observations", partOfANumber) +
+                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false" + exitRule() + tickedProgramsRule() + " and " + answersContainSearchAll("penr.observations", partOfANumber) + "))");
+        if (partOfANumber) {
+            searchAllText = searchString;
+            searchAllExactAnswer = answerValueEqualTo(searchString);
+            searchAllExactFirst = "(case when lower(" + FULL_NAME + ") = lower(:searchAllExact) or cast(i.observations as text) ~* :searchAllExactAnswer then 0 else 1 end)";
+        }
         return (T) this;
     }
 
-    private static String answersContainSearchAll(String observations) {
-        return String.format("(case when cast(%1$s as text) ilike :searchAllStored then jsonb_path_exists(%1$s, cast(:searchAllPath as jsonpath), '{}', true) else false end)",
-                observations);
+    private static String answersContainSearchAll(String observations, boolean partOfANumber) {
+        String numberContains = partOfANumber ? String.format(" or cast(%1$s as text) ~ :searchAllNumber", observations) : "";
+        return String.format("(case when cast(%1$s as text) ilike :searchAllStored then (jsonb_path_exists(%1$s, cast(:searchAllPath as jsonpath), '{}', true)%2$s) else false end)",
+                observations, numberContains);
+    }
+
+    // In jsonb's text a value follows ": " (or "[" / ", " in a list) and ends at ",", "}" or "]"; a number has no quotes, so digits in keys or uuids never match.
+    static String numberValueContaining(String typedNumber) {
+        String before = typedNumber.startsWith("-") ? "" : "-?[0-9.]*";
+        return VALUE_START + before + regexLiteral(typedNumber) + "[0-9.]*" + VALUE_END;
+    }
+
+    static String answerValueEqualTo(String typedText) {
+        String asString = "\"" + regexLiteral(asStoredInJson(typedText)) + "\"";
+        String asNumber = typedText.matches(NUMBER_PATTERN) ? "|" + regexLiteral(new BigDecimal(typedText).toPlainString()) : "";
+        return ANSWER_OF_A_QUESTION + "(" + asString + asNumber + ")[,}]";
+    }
+
+    private static String regexLiteral(String text) {
+        return text.replaceAll("([\\\\^$.|?*+()\\[\\]{}])", "\\\\$1");
     }
 
     static String asStoredInJson(String value) {

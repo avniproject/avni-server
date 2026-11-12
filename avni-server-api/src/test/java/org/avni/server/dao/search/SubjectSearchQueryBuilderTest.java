@@ -400,7 +400,7 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getSql()).contains("(concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, '')) ilike :searchAll");
         assertThat(query.getParameters().get("searchAll")).isEqualTo("%Sunita\\_Test 100\\%%");
         assertThat(query.getParameters().get("searchAllStored")).isEqualTo("%Sunita\\_Test 100\\%%");
-        assertThat(query.getSql()).contains("(case when cast(i.observations as text) ilike :searchAllStored then jsonb_path_exists(i.observations, cast(:searchAllPath as jsonpath), '{}', true) else false end)");
+        assertThat(query.getSql()).contains("(case when cast(i.observations as text) ilike :searchAllStored then (jsonb_path_exists(i.observations, cast(:searchAllPath as jsonpath), '{}', true)) else false end)");
     }
 
     @Test
@@ -801,6 +801,20 @@ public class SubjectSearchQueryBuilderTest {
     }
 
     private static final String FULL_NAME_SEARCH = BaseSubjectSearchQueryBuilder.FULL_NAME + " ilike :searchAll";
+
+    @Test
+    public void exactMatchesComeFirstOnlyForANumberWhenNoSortIsChosen() {
+        String number = new SubjectSearchQueryBuilder().withSearchAll("98765").build(subjectType).getSql();
+        String word = new SubjectSearchQueryBuilder().withSearchAll("asha").build(subjectType).getSql();
+        PageDetails byName = new PageDetails();
+        byName.setSortColumn("fullName");
+        byName.setSortOrder(SortOrder.asc);
+        String numberSorted = new SubjectSearchQueryBuilder().withSearchAll("98765").withPaginationFilters(byName).build(subjectType).getSql();
+
+        assertThat(number).contains("order by (case when lower(").contains(":searchAllExactAnswer");
+        assertThat(word).doesNotContain("searchAllExact");
+        assertThat(numberSorted).doesNotContain("searchAllExact");
+    }
 
     private static String programmeVisitClause(String sql) {
         return sql.substring(sql.indexOf("join program_encounter penc"));

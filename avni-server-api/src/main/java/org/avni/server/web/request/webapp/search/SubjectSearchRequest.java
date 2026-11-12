@@ -151,8 +151,7 @@ public class SubjectSearchRequest {
     }
 
     private String trim(String item) {
-        if (item == null) return item;
-        return item.trim();
+        return trimLikeThePhone(item);
     }
 
     public List<String> getPrograms() {
@@ -209,5 +208,17 @@ public class SubjectSearchRequest {
 
     public void setTimeZone(String timeZone) {
         this.timeZone = timeZone;
+    }
+
+    public static String trimLikeThePhone(String text) {
+        if (text == null) return null;
+        int start = 0, end = text.length();
+        while (start < end && isSpaceTheyTrim(text.charAt(start))) start++;
+        while (end > start && isSpaceTheyTrim(text.charAt(end - 1))) end--;
+        return text.substring(start, end);
+    }
+
+    private static boolean isSpaceTheyTrim(char c) {
+        return c <= ' ' || c == '\u00A0' || c == '\uFEFF' || c == '\u2028' || c == '\u2029' || Character.getType(c) == Character.SPACE_SEPARATOR;
     }
 }

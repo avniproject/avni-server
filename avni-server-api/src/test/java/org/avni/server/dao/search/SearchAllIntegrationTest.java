@@ -79,6 +79,10 @@ public class SearchAllIntegrationTest extends AbstractControllerIntegrationTest 
     }
 
     private Set<String> searchAll(String text) {
+        return searchAllInOrder(text, "fullName").stream().collect(Collectors.toSet());
+    }
+
+    private List<String> searchAllInOrder(String text, String sortColumn) {
         SubjectSearchRequest request = new SubjectSearchRequest();
         request.setSubjectType(subjectType.getUuid());
         request.setSearchAll(text);
@@ -86,11 +90,17 @@ public class SearchAllIntegrationTest extends AbstractControllerIntegrationTest 
         PageDetails page = new PageDetails();
         page.setPageNumber(0);
         page.setNumberOfRecordPerPage(100);
-        page.setSortColumn("fullName");
-        page.setSortOrder(SortOrder.asc);
+        page.setSortColumn(sortColumn);
+        page.setSortOrder(sortColumn == null ? null : SortOrder.asc);
         request.setPageElement(page);
         List<Map<String, Object>> rows = subjectSearchRepository.search(request, new SubjectSearchQueryBuilder());
-        return rows.stream().map(row -> (String) row.get("uuid")).collect(Collectors.toSet());
+        return rows.stream().map(row -> (String) row.get("uuid")).collect(Collectors.toList());
+    }
+
+    private Individual subjectWithNumber(String firstName, Object number) {
+        Individual individual = subject(firstName, null, "Number", null);
+        individual.setObservations(ObservationCollectionBuilder.withOneObservation(answerConcept, number));
+        return testSubjectService.save(individual);
     }
 
     @Test
@@ -167,7 +177,9 @@ public class SearchAllIntegrationTest extends AbstractControllerIntegrationTest 
         assertThat(searchAll("0f8c1a77")).isEmpty();
         assertThat(searchAll("\\n")).isEmpty();
         assertThat(searchAll("nothing\u0000 special")).hasSize(1);
-        assertThat(searchAll("452")).isEmpty();
+        assertThat(searchAll("452")).containsExactly(numeric.getUuid());
+        assertThat(searchAll("2.5")).containsExactly(decimal.getUuid());
+        assertThat(searchAll("4444")).isEmpty();
         assertThat(searchAll("12.5")).containsExactly(decimal.getUuid());
         assertThat(searchAll("TRUE")).containsExactly(yes.getUuid());
         assertThat(searchAll("tru")).isEmpty();
@@ -227,5 +239,58 @@ public class SearchAllIntegrationTest extends AbstractControllerIntegrationTest 
             String stored = jdbc.queryForObject("select cast(to_jsonb(cast(? as text)) as text)", String.class, value);
             assertThat("\"" + BaseSubjectSearchQueryBuilder.asStoredInJson(value) + "\"").isEqualTo(stored);
         }
+    }
+
+
+    @Test
+    public void typedTextIsTrimmedAndBlankTextIsNoSearch() {
+        setUpOrganisation("searchalld");
+        Individual sunita = subject("Sunita", null, null, null);
+        Individual ravi = subject("Ravi", null, null, "mango orchard");
+
+        assertThat(searchAll("Sunita ")).containsExactly(sunita.getUuid());
+        assertThat(searchAll(" Sunita")).containsExactly(sunita.getUuid());
+        assertThat(searchAll("\u00A0Sunita\u3000")).containsExactly(sunita.getUuid());
+        assertThat(searchAll("\u2003\uFEFF")).containsExactlyInAnyOrder(sunita.getUuid(), ravi.getUuid());
+        assertThat(searchAll("\t mango\n")).containsExactly(ravi.getUuid());
+        assertThat(searchAll("   ")).containsExactlyInAnyOrder(sunita.getUuid(), ravi.getUuid());
+        assertThat(searchAll(" \u0000 ")).containsExactlyInAnyOrder(sunita.getUuid(), ravi.getUuid());
+    }
+
+    @Test
+    public void partOfANumberMatchesAndExactMatchesComeFirst() {
+        setUpOrganisation("searchalle");
+        Individual phone = subjectWithNumber("Phone", 9876543210L);
+        Individual exact = subjectWithNumber("Exact", 98765);
+        Individual textNumber = subject("Typed", null, "Number", "call 9876500000");
+        subjectWithNumber("Other", 12345);
+        Individual named = subject("98765", null, null, null);
+        Individual listedInText = subject("Listed", null, "Number", "x, 98765, y");
+        Individual phoneAnswer = subject("Phone", null, "Answer", null);
+        ObservationCollection phoneValue = new ObservationCollection();
+        phoneValue.put("verified", false);
+        phoneValue.put("phoneNumber", "98765");
+        phoneAnswer.setObservations(ObservationCollectionBuilder.withOneObservation(answerConcept, phoneValue));
+        testSubjectService.save(phoneAnswer);
+        Individual grouped = subject("Grouped", null, "Number", null);
+        ObservationCollection groupAnswer = new ObservationCollection();
+        groupAnswer.put("6a5b4c3d-1111-2222-3333-444455556666", 7798765);
+        grouped.setObservations(ObservationCollectionBuilder.withOneObservation(answerConcept, Collections.singletonList(groupAnswer)));
+        testSubjectService.save(grouped);
+        subject("Coded", null, "Number", "0f8c1a77-2b5e-4c3d-9a1b-798765543210");
+
+        assertThat(searchAll("98765")).containsExactlyInAnyOrder(phone.getUuid(), exact.getUuid(), textNumber.getUuid(), named.getUuid(), grouped.getUuid(), listedInText.getUuid(), phoneAnswer.getUuid());
+        assertThat(searchAll("4444")).isEmpty();
+        assertThat(searchAll("-98765")).isEmpty();
+
+        List<String> defaultOrder = searchAllInOrder("98765", null);
+        assertThat(defaultOrder.subList(0, 3)).containsExactlyInAnyOrder(exact.getUuid(), named.getUuid(), phoneAnswer.getUuid());
+        assertThat(defaultOrder.subList(3, 7)).containsExactlyInAnyOrder(phone.getUuid(), textNumber.getUuid(), grouped.getUuid(), listedInText.getUuid());
+
+        Individual asha = subject("Asha", null, null, null);
+        Individual ashanti = subject("Ashanti", null, null, null);
+        assertThat(searchAllInOrder("ASHA", null)).containsExactly(ashanti.getUuid(), asha.getUuid());
+
+        assertThat(searchAllInOrder("98765", "fullName")).containsExactly(named.getUuid(), exact.getUuid(), grouped.getUuid(), listedInText.getUuid(), phoneAnswer.getUuid(), phone.getUuid(), textNumber.getUuid());
     }
 }
