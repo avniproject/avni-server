@@ -42,6 +42,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -167,13 +168,29 @@ public class EkaHipService implements EkaHipEvents {
         String abhaAddress = ekaPatient.abhaAddress();
         String oid = ekaPatient.oid();
 
-        // Avni starts the link: each visit goes under the HIP ID it is shared under.
-        for (Map.Entry<String, List<AbdmHipLinkingService.Visit>> ofHip : AbdmHipLinkingService.visitsByHip(patient, orgSettings, store).entrySet()) {
-            String hipId = ofHip.getKey();
-            store.ensureCareContexts(patient.individualId(), hipId, patient.uuid(), HI_TYPE,
-                    ofHip.getValue().stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
-            List<AbdmHipStore.CareContext> toLink = queuedOnly ? store.findCareContextsDue(patient.individualId(), hipId)
+        // Avni starts the link: each visit goes under the HIP ID it is shared under. Every HIP ID is looked at, as one with no
+        // current visit left may still hold visits removed since they were queued.
+        Map<String, List<AbdmHipLinkingService.Visit>> byHip = AbdmHipLinkingService.visitsByHip(patient, orgSettings, store);
+        Set<String> current = patient.visits().stream().map(AbdmHipLinkingService.Visit::reference).collect(Collectors.toSet());
+        Set<String> hipIds = new LinkedHashSet<>(byHip.keySet());
+        hipIds.addAll(orgSettings.getHipIds());
+        for (String hipId : hipIds) {
+            List<AbdmHipLinkingService.Visit> visits = byHip.getOrDefault(hipId, List.of());
+            if (!visits.isEmpty()) {
+                store.ensureCareContexts(patient.individualId(), hipId, patient.uuid(), HI_TYPE,
+                        visits.stream().map(v -> new AbdmHipStore.NewCareContext(v.reference(), v.display())).toList());
+            }
+            List<AbdmHipStore.CareContext> waiting = queuedOnly ? store.findCareContextsDue(patient.individualId(), hipId)
                     : store.findCareContexts(patient.individualId(), hipId).stream().filter(c -> !LINKED.equals(c.status())).toList();
+            // A visit voided or cancelled since its care context was made is no longer the patient's to share.
+            List<String> removed = waiting.stream().filter(c -> HI_TYPE.equals(c.hiType()) && !current.contains(c.reference()))
+                    .map(AbdmHipStore.CareContext::reference).toList();
+            if (!removed.isEmpty()) {
+                store.giveUpRemovedVisits(List.of(hipId), removed);
+                logger.info("ABDM: {} visit(s) of subject {} given up under a HIP ID: no longer the patient's", removed.size(), patient.uuid());
+            }
+            if (visits.isEmpty()) continue;
+            List<AbdmHipStore.CareContext> toLink = waiting.stream().filter(c -> !removed.contains(c.reference())).toList();
             // One call per record type: a type Eka refuses fails only its own care contexts, never the patient's visits.
             Map<String, List<AbdmHipStore.CareContext>> byType = toLink.stream()
                     .collect(Collectors.groupingBy(AbdmHipStore.CareContext::hiType, LinkedHashMap::new, Collectors.toList()));

@@ -97,6 +97,36 @@ public class AbdmVisitQueueTest {
         verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
     }
 
+    // F4: a save that voids or cancels a visit gives up its waiting care context, under whichever of the organisation's HIP
+    // IDs it was made; a visit not yet done has none to give up.
+    @Test
+    public void aVisitVoidedOrCancelledHasItsWaitingCareContextGivenUp() {
+        Encounter planned = visit("enc-1", null);
+        Encounter cancelled = visit("enc-2", new DateTime(2026, 5, 2, 10, 0));
+        cancelled.setCancelDateTime(new DateTime(2026, 5, 2, 11, 0));
+        Encounter voided = visit("enc-3", new DateTime(2026, 5, 2, 10, 0));
+        voided.setVoided(true);
+
+        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords);
+        q.queue(planned);
+        q.queue(cancelled);
+        q.queue(voided);
+
+        verify(store).giveUpRemovedVisits(List.of("hip-1", "hip-2"), List.of("enc-2"));
+        verify(store).giveUpRemovedVisits(List.of("hip-1", "hip-2"), List.of("enc-3"));
+        verify(store, never()).giveUpRemovedVisits(any(), eq(List.of("enc-1")));
+        org.mockito.Mockito.verifyNoInteractions(abhaLinks);
+    }
+
+    @Test
+    public void aFailureToGiveUpARemovedVisitNeverFailsTheSave() {
+        Encounter voided = visit("enc-3", new DateTime(2026, 5, 2, 10, 0));
+        voided.setVoided(true);
+        doThrow(new IllegalStateException("table missing")).when(store).giveUpRemovedVisits(any(), any());
+
+        queue().queue(voided);
+    }
+
     @Test
     public void aFailureToQueueNeverFailsTheSave() {
         doThrow(new IllegalStateException("table missing")).when(store).queueCareContexts(anyLong(), any(), any(), any(), any());

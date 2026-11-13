@@ -111,8 +111,21 @@ public class AbdmHipStore {
     public static final int LINK_ATTEMPTS = 6;
     static final Duration LINK_RETRY_WAIT = Duration.ofHours(1);
 
+    // Why a visit voided, cancelled, or of an enrolment voided, is given up: it is no longer the patient's to share.
+    public static final String VISIT_REMOVED = "The visit was removed";
+    // Statuses of a visit not yet linked nor being linked, which a removed visit leaves; one Eka may be linking is Eka's.
+    private static final String NOT_YET_SENT = "('PENDING', 'QUEUED', 'FAILED', 'AWAITING_VERIFIED_ABHA')";
+    // A visit's care context whose visit is still the patient's, read as AbdmHipLinkingService.visits reads it: done, not
+    // cancelled, not voided, in an enrolment not voided. Another record type is not a visit.
+    private static final String VISIT_IS_CURRENT = "(c.hi_type <> '" + AbdmHipLinkingService.HI_TYPE + "' " +
+            "or exists (select 1 from encounter e where e.uuid = c.reference and e.individual_id = c.individual_id and not e.is_voided " +
+            "  and e.encounter_date_time is not null and e.cancel_date_time is null) " +
+            "or exists (select 1 from program_encounter pe join program_enrolment pen on pen.id = pe.program_enrolment_id " +
+            "  where pe.uuid = c.reference and pen.individual_id = c.individual_id and not pe.is_voided and not pen.is_voided " +
+            "  and pe.encounter_date_time is not null and pe.cancel_date_time is null))";
+
     // Queued on save, or failed in a way a later try may not and past its wait.
-    private static final String DUE = "(c.status = 'QUEUED' or (c.status = 'FAILED' and (c.next_attempt_at is null or c.next_attempt_at <= now())))";
+    private static final String DUE ="(c.status = 'QUEUED' or (c.status = 'FAILED' and (c.next_attempt_at is null or c.next_attempt_at <= now())))";
 
     // One more try that did not settle the link: FAILED until the next, waiting twice as long as the last; FAILED_FINAL,
     // with the count, at the cap.
@@ -138,7 +151,8 @@ public class AbdmHipStore {
 
     // Before each run: a link Eka has said nothing about past its wait (the deadline, doubled for each earlier try) is
     // queued again, counted as a try (Avni's own links only, never one the patient made from their app); a removed
-    // patient's waiting visits are given up.
+    // patient's waiting visits are given up, and so are waiting visits no longer the patient's (voided or cancelled since
+    // they were queued), so none is linked and none holds the queue.
     public void settleLinkQueue(String hipId) {
         jdbc.update("update abdm_care_context c set attempts = c.attempts + 1, " +
                         "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'QUEUED' end, " +
@@ -153,6 +167,19 @@ public class AbdmHipStore {
                         "from individual i where i.id = c.individual_id and i.is_voided = true and c.organisation_id = :org " +
                         "and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED', 'AWAITING_VERIFIED_ABHA')",
                 params().addValue("hip", hipId, Types.VARCHAR));
+        jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = :removed, next_attempt_at = null, updated_at = now() " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED', 'AWAITING_VERIFIED_ABHA') " +
+                        "and not " + VISIT_IS_CURRENT,
+                params().addValue("hip", hipId, Types.VARCHAR).addValue("removed", VISIT_REMOVED, Types.VARCHAR));
+    }
+
+    // Visits found no longer the patient's (voided, cancelled) by the Link button, the job or the save that removed them:
+    // given up under these HIP IDs while not yet linked nor being linked.
+    public void giveUpRemovedVisits(Collection<String> hipIds, Collection<String> references) {
+        if (hipIds == null || hipIds.isEmpty() || references == null || references.isEmpty()) return;
+        jdbc.update("update abdm_care_context set status = 'FAILED_FINAL', error = :removed, next_attempt_at = null, updated_at = now() " +
+                        "where organisation_id = :org and hip_id in (:hips) and reference in (:refs) and status in " + NOT_YET_SENT,
+                params().addValue("hips", hipIds).addValue("refs", references).addValue("removed", VISIT_REMOVED, Types.VARCHAR));
     }
 
     // A patient whose visits could not be linked, in a way a later try may not: counted, and tried again after the wait.
@@ -274,17 +301,20 @@ public class AbdmHipStore {
     }
 
     // A visit saved while linking on save is on: QUEUED for AbdmHousekeepingJob. A row already known as PENDING (seen by
-    // discovery or listed) is queued too; one being linked, linked or failed keeps its status.
+    // discovery or listed) is queued too, and so is one given up as removed, as the visit saved done is the patient's
+    // again; one being linked, linked or failed keeps its status.
     public void queueCareContexts(long individualId, String hipId, String patientReference, String hiType, List<NewCareContext> careContexts) {
+        String requeued = "(abdm_care_context.status = 'PENDING' or (abdm_care_context.status = 'FAILED_FINAL' and abdm_care_context.error = :removed))";
         for (NewCareContext c : careContexts) {
             jdbc.update("insert into abdm_care_context (uuid, organisation_id, individual_id, hip_id, patient_reference, reference, display, hi_type, status) " +
                             "values (:uuid, :org, :ind, :hip, :patient, :ref, :display, :hiType, 'QUEUED') " +
                             "on conflict (organisation_id, hip_id, reference) do update set display = excluded.display, " +
-                            "status = case when abdm_care_context.status = 'PENDING' then 'QUEUED' else abdm_care_context.status end",
+                            "status = case when " + requeued + " then 'QUEUED' else abdm_care_context.status end, " +
+                            "error = case when " + requeued + " then null else abdm_care_context.error end",
                     params().addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR).addValue("ind", individualId)
                             .addValue("hip", hipId, Types.VARCHAR).addValue("patient", patientReference, Types.VARCHAR)
                             .addValue("ref", c.reference(), Types.VARCHAR).addValue("display", c.display(), Types.VARCHAR)
-                            .addValue("hiType", hiType, Types.VARCHAR));
+                            .addValue("hiType", hiType, Types.VARCHAR).addValue("removed", VISIT_REMOVED, Types.VARCHAR));
         }
     }
 

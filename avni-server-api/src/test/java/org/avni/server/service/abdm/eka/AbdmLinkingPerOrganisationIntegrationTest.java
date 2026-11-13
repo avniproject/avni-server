@@ -167,6 +167,18 @@ public class AbdmLinkingPerOrganisationIntegrationTest extends AbstractControlle
         assertEquals(rowOfABefore, careContextRow(orgA));
     }
 
+    // F4: a visit voided after it was queued, where nothing settled it on save, is given up by the job and never sent.
+    @Test
+    public void aVisitVoidedAfterItWasQueuedIsNeverLinked() {
+        asSuperAdmin(jdbc -> jdbc.update("update public.encounter set is_voided = true where uuid = ?", orgA.visitUuid()), null);
+
+        linkingJobTurnOf(orgA).linkQueuedVisits();
+
+        assertEquals(0, eka.findAll(postRequestedFor(urlEqualTo(EkaHipService.LINK_PATH))).size());
+        assertEquals(List.of(orgA.visitUuid() + " hip-a FAILED_FINAL"), careContexts(orgA));
+        assertEquals(AbdmHipStore.VISIT_REMOVED, careContextRow(orgA).get("error"));
+    }
+
     // The job as scheduled, through the real runner, which runs the turn of the one organisation named.
     @SuppressWarnings("unchecked")
     private AbdmHousekeepingJob linkingJobTurnOf(Org org) {

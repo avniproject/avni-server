@@ -90,6 +90,8 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
     @Autowired
     private EncounterRepository encounterRepository;
     @Autowired
+    private org.avni.server.dao.ProgramEncounterRepository programEncounterRepository;
+    @Autowired
     private ExternalSystemConfigRepository externalSystemConfigRepository;
     @Autowired
     private TestDataSetupService testDataSetupService;
@@ -212,6 +214,54 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
         ProgramEncounter programVisit = inTransaction(() -> programEncounterService.save(completedProgramVisit()));
 
         assertEquals(List.of(visit.getUuid() + " " + HIP_ID + " QUEUED", programVisit.getUuid() + " " + HIP_ID + " QUEUED"), careContexts());
+    }
+
+    // F4: a visit voided or cancelled after it was queued is given up as removed once that save commits, so the job never
+    // links it.
+    @Test
+    public void aVisitVoidedOrCancelledAfterItWasQueuedIsGivenUp() {
+        switches(true, true);
+        Encounter voided = inTransaction(() -> encounterService.save(completedVisit()));
+        Encounter cancelled = inTransaction(() -> encounterService.save(completedVisit()));
+        ProgramEncounter programVisit = inTransaction(() -> programEncounterService.save(completedProgramVisit()));
+        Encounter kept = inTransaction(() -> encounterService.save(completedVisit()));
+
+        inTransaction(() -> {
+            Encounter visit = encounterRepository.findByUuid(voided.getUuid());
+            visit.setVoided(true);
+            return encounterService.save(visit);
+        });
+        inTransaction(() -> {
+            Encounter visit = encounterRepository.findByUuid(cancelled.getUuid());
+            visit.setCancelDateTime(DateTime.now());
+            return encounterService.save(visit);
+        });
+        inTransaction(() -> {
+            ProgramEncounter visit = programEncounterRepository.findByUuid(programVisit.getUuid());
+            visit.setVoided(true);
+            return programEncounterService.save(visit);
+        });
+
+        assertEquals(List.of(voided.getUuid() + " " + HIP_ID + " FAILED_FINAL", cancelled.getUuid() + " " + HIP_ID + " FAILED_FINAL",
+                programVisit.getUuid() + " " + HIP_ID + " FAILED_FINAL", kept.getUuid() + " " + HIP_ID + " QUEUED"), careContexts());
+        assertEquals(List.of(AbdmHipStore.VISIT_REMOVED), errorsOf(voided, cancelled, programVisit));
+    }
+
+    // F4: behind the gate: with record sharing off, voiding a queued visit touches nothing ABDM holds.
+    @Test
+    public void withRecordSharingOffVoidingAQueuedVisitChangesNothing() {
+        switches(true, true);
+        Encounter queued = inTransaction(() -> encounterService.save(completedVisit()));
+        switches(true, false);
+
+        inTransaction(() -> {
+            Encounter visit = encounterRepository.findByUuid(queued.getUuid());
+            visit.setVoided(true);
+            return encounterService.save(visit);
+        });
+
+        assertEquals(List.of(queued.getUuid() + " " + HIP_ID + " QUEUED"), careContexts());
+        verify(abdmHipStore, never()).giveUpRemovedVisits(any(), any());
     }
 
     // The sync push of a programme visit (saveProgramEncounter) and the external API's PATCH of a visit (patchEncounter)
@@ -521,6 +571,15 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
         asSuperAdmin(jdbc -> rows.addAll(jdbc.query("select reference, hip_id, status from public.abdm_care_context where organisation_id = ? order by id",
                 (rs, i) -> rs.getString(1) + " " + rs.getString(2) + " " + rs.getString(3), organisation.getOrganisationId())));
         return rows;
+    }
+
+    // The distinct reasons the visits' care contexts carry.
+    private List<String> errorsOf(AbstractEncounter... visits) {
+        List<String> errors = new ArrayList<>();
+        List<String> references = java.util.Arrays.stream(visits).map(AbstractEncounter::getUuid).toList();
+        asSuperAdmin(jdbc -> errors.addAll(new NamedParameterJdbcTemplate(jdbc).queryForList("select distinct error from public.abdm_care_context " +
+                "where reference in (:refs)", java.util.Map.of("refs", references), String.class)));
+        return errors;
     }
 
     private boolean saved(AbstractEncounter visit) {

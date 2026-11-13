@@ -180,6 +180,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     @Test
     public void aLinkEkaHasNotAnsweredForHalfAnHourIsQueuedAgain_andAYoungerOneWaits() {
         emptyQueue();
+        visits("v-old", "v-young");
         store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-old"), cc("v-young")));
         store.markLinkRequested(QUEUE_HIP, List.of("v-old", "v-young"), "req-1");
         age("v-old", "31 minutes");
@@ -198,6 +199,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     @Test
     public void anUnansweredLinkWaitsTwiceAsLongEachTime() {
         emptyQueue();
+        visits("v-1");
         store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
         for (int attempts = 0; attempts < AbdmHipStore.LINK_ATTEMPTS; attempts++) {
             store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-" + attempts);
@@ -222,6 +224,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     @Test
     public void anAfternoonOfUnansweredLinksDoesNotGiveTheVisitUp() {
         emptyQueue();
+        visits("v-1");
         store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
         store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-0");
         for (int minute = 5; minute <= 5 * 60; minute += 5) {
@@ -250,6 +253,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     @Test
     public void aLinkEkaNeverAnswersIsGivenUpAtTheCap() {
         emptyQueue();
+        visits("v-1");
         store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
         store.markLinkRequested(QUEUE_HIP, List.of("v-1"), "req-1");
         namedJdbc.getJdbcOperations().update("update abdm_care_context set attempts = ? where reference = 'v-1'", AbdmHipStore.LINK_ATTEMPTS - 1);
@@ -397,6 +401,8 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         insertSubject(OTHER, "{}");
         long other = idOf(OTHER);
         namedJdbc.getJdbcOperations().update("update individual set is_voided = true where id = ?", other);
+        visitOf(OTHER, "v-removed");
+        visits("v-1");
         store.queueCareContexts(other, QUEUE_HIP, OTHER, "OPConsultation", List.of(cc("v-removed")));
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
 
@@ -405,7 +411,100 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         store.settleLinkQueue(QUEUE_HIP);
 
         assertEquals("FAILED_FINAL", column("v-removed", "status"));
+        assertEquals("The patient was removed", column("v-removed", "error"));
         assertEquals("QUEUED", column("v-1", "status"));
+    }
+
+    // F4: a visit voided, cancelled, or of an enrolment voided after it was queued is given up as removed when the queue
+    // settles, whether it waits, failed for now or waits for a verified ABHA; one Eka may be linking is left to Eka.
+    @Test
+    public void aVisitRemovedAfterItWasQueuedIsGivenUpWhenTheQueueSettles() {
+        emptyQueue();
+        visits("v-live", "v-voided", "v-cancelled", "v-failed", "v-awaiting", "v-requested");
+        programmeVisitOf(KNOWN, "v-unenrolled");
+        programmeVisitOf(KNOWN, "v-programme");
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-live"), cc("v-voided"), cc("v-cancelled"),
+                cc("v-failed"), cc("v-awaiting"), cc("v-unenrolled"), cc("v-programme"), cc("v-never-saved")));
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-requested")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-requested"), "req-1");
+        jdbc.update("update abdm_care_context set status = 'FAILED', next_attempt_at = now() + interval '1 hour' where reference = 'v-failed'");
+        jdbc.update("update abdm_care_context set status = 'AWAITING_VERIFIED_ABHA' where reference = 'v-awaiting'");
+        jdbc.update("update encounter set is_voided = true where uuid in ('v-voided', 'v-failed', 'v-awaiting', 'v-requested')");
+        jdbc.update("update encounter set cancel_date_time = now() where uuid = 'v-cancelled'");
+        jdbc.update("update program_enrolment set is_voided = true where id = (select program_enrolment_id from program_encounter where uuid = 'v-unenrolled')");
+
+        store.settleLinkQueue(QUEUE_HIP);
+
+        for (String removed : List.of("v-voided", "v-cancelled", "v-failed", "v-awaiting", "v-unenrolled", "v-never-saved")) {
+            assertEquals(removed, "FAILED_FINAL", column(removed, "status"));
+            assertEquals(removed, AbdmHipStore.VISIT_REMOVED, column(removed, "error"));
+        }
+        assertEquals("QUEUED", column("v-live", "status"));
+        assertEquals("QUEUED", column("v-programme", "status"));
+        assertEquals("LINK_REQUESTED", column("v-requested", "status"));
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+    }
+
+    // F4: patients whose only queued visits were removed never fill the job's batch ahead of a patient with a live visit.
+    @Test
+    public void fiftyPatientsWhoseQueuedVisitsWereRemovedDoNotHoldUpTheQueue() {
+        emptyQueue();
+        for (int n = 0; n < 50; n++) {
+            String subject = String.format("0a0b0c0d-0000-4000-8000-%012d", n);
+            insertSubject(subject, "{}");
+            String visit = "removed-visit-" + n;
+            visitOf(subject, visit);
+            store.queueCareContexts(idOf(subject), QUEUE_HIP, subject, "OPConsultation", List.of(cc(visit)));
+        }
+        namedJdbc.getJdbcOperations().update("update encounter set is_voided = true where uuid like 'removed-visit-%'");
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set updated_at = now() - interval '1 day' where reference like 'removed-visit-%'");
+        visits("v-live");
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-live")));
+        assertFalse(store.subjectsToLink(QUEUE_HIP, 50).contains(KNOWN));
+
+        store.settleLinkQueue(QUEUE_HIP);
+
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+        assertEquals(java.util.Map.of("FAILED_FINAL", 50L, "QUEUED", 1L), store.linkQueueCounts());
+    }
+
+    // F4: what the Link button and the job give up on finding a visit gone: only visits waiting, failed for now or waiting
+    // for a verified ABHA, under the HIP IDs named; one linked, being linked or given up for another reason keeps its status.
+    @Test
+    public void removedVisitsAreGivenUpOnlyWhileTheyWait() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-pending")));
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-queued"), cc("v-linked"), cc("v-requested"), cc("v-refused")));
+        store.queueCareContexts(knownId(), "OTHER-HIP", KNOWN, "OPConsultation", List.of(cc("v-elsewhere")));
+        store.markLinked(QUEUE_HIP, List.of("v-linked"), "HIP");
+        store.markLinkRequested(QUEUE_HIP, List.of("v-requested"), "req-1");
+        store.markStatus(QUEUE_HIP, List.of("v-refused"), "FAILED_FINAL", "Eka refused the link");
+
+        store.giveUpRemovedVisits(List.of(QUEUE_HIP), List.of("v-pending", "v-queued", "v-linked", "v-requested", "v-refused", "v-elsewhere"));
+
+        assertEquals(AbdmHipStore.VISIT_REMOVED, column("v-pending", "error"));
+        assertEquals("FAILED_FINAL", column("v-queued", "status"));
+        assertEquals(AbdmHipStore.VISIT_REMOVED, column("v-queued", "error"));
+        assertEquals("LINKED", column("v-linked", "status"));
+        assertEquals("LINK_REQUESTED", column("v-requested", "status"));
+        assertEquals("Eka refused the link", column("v-refused", "error"));
+        assertEquals("QUEUED", column("v-elsewhere", "status"));
+    }
+
+    // F4: a visit given up as removed and saved again as done (its void undone) is queued again.
+    @Test
+    public void aVisitGivenUpAsRemovedIsQueuedAgainWhenSavedAgain() {
+        emptyQueue();
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        store.giveUpRemovedVisits(List.of(QUEUE_HIP), List.of("v-1"));
+        store.markStatus(QUEUE_HIP, List.of("v-2"), "FAILED_FINAL", "Eka refused the link");
+
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+
+        assertEquals("QUEUED", column("v-1", "status"));
+        assertEquals(null, column("v-1", "error"));
+        assertEquals("FAILED_FINAL", column("v-2", "status"));
     }
 
     @Test
@@ -434,6 +533,33 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
 
     private void emptyQueue() {
         namedJdbc.getJdbcOperations().update("delete from abdm_care_context where organisation_id = 2");
+    }
+
+    private static final String ENCOUNTER_TYPE = "(select id from encounter_type where uuid = '3a1535d0-81fd-48fc-85b5-dc9da81064a3')";
+
+    // Done visits of the known subject, so the queue's settling finds them current.
+    private void visits(String... references) {
+        for (String reference : references) visitOf(KNOWN, reference);
+    }
+
+    private void visitOf(String subjectUuid, String reference) {
+        namedJdbc.getJdbcOperations().update("INSERT INTO encounter (organisation_id, individual_id, encounter_type_id, observations, encounter_date_time, " +
+                "uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, address_id) VALUES (2, " +
+                "(select id from individual where uuid = ?), " + ENCOUNTER_TYPE + ", '{}'::jsonb, now() - interval '1 day', ?, 1, 1, 1, now(), now(), 1)",
+                subjectUuid, reference);
+    }
+
+    // A done programme visit, in an enrolment of its own.
+    private void programmeVisitOf(String subjectUuid, String reference) {
+        String enrolment = UUID.randomUUID().toString();
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("INSERT INTO program_enrolment (organisation_id, individual_id, program_id, enrolment_date_time, uuid, version, created_by_id, " +
+                "last_modified_by_id, created_date_time, last_modified_date_time, address_id) VALUES (2, (select id from individual where uuid = ?), " +
+                "(select id from program where uuid = 'db62a322-0ec2-4bb0-ac24-296dc7216c9a'), now(), ?, 1, 1, 1, now(), now(), 1)", subjectUuid, enrolment);
+        jdbc.update("INSERT INTO program_encounter (organisation_id, program_enrolment_id, encounter_type_id, observations, encounter_date_time, uuid, " +
+                "version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, individual_id, address_id) VALUES (2, " +
+                "(select id from program_enrolment where uuid = ?), " + ENCOUNTER_TYPE + ", '{}'::jsonb, now() - interval '1 day', ?, 1, 1, 1, now(), now(), " +
+                "(select id from individual where uuid = ?), 1)", enrolment, reference, subjectUuid);
     }
 
     private long knownId() {

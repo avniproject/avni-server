@@ -25,6 +25,7 @@ import java.util.List;
 // HIP_INTI_LINK_505: "linking of health records should be done automatically once records have been saved at HIP end".
 // AbdmCareContextAspect hands each saved visit here, only for an organisation with record sharing on. A completed visit
 // of a patient holding an ABHA becomes a QUEUED care context; AbdmHousekeepingJob.linkQueuedVisits links the queue through Eka.
+// A visit voided or cancelled has its waiting care context given up, so it is never linked.
 // What is needed is read during the save; the row is written after the save commits, in a transaction of its own, so
 // a failed write never touches the visit. An organisation without Eka settings, or without a HIP ID, queues nothing.
 // Avni starts this link, so the visit goes under the HIP ID of the user who recorded it when that is one of the
@@ -64,9 +65,13 @@ public class AbdmVisitQueue {
 
     public void queue(AbstractEncounter visit) {
         if (visit == null) return;
+        if (visit.isVoided() || visit.getCancelDateTime() != null) {
+            giveUpRemoved(visit);
+            return;
+        }
         Queued queued;
         try {
-            if (visit.isVoided() || visit.getEncounterDateTime() == null || visit.getCancelDateTime() != null) return;
+            if (visit.getEncounterDateTime() == null) return;
             EkaSystemConfig orgSettings = settings.find().orElse(null);
             if (orgSettings == null || orgSettings.getHipIds().isEmpty()) return;
             Individual individual = patientOf(visit);
@@ -82,6 +87,32 @@ public class AbdmVisitQueue {
             return;
         }
         afterCommit(() -> write(queued));
+    }
+
+    // A visit voided or cancelled: its care context, if one waits, is given up after the save commits, under whichever of
+    // the organisation's HIP IDs it was made, so the job never links it.
+    private void giveUpRemoved(AbstractEncounter visit) {
+        List<String> hipIds;
+        try {
+            EkaSystemConfig orgSettings = settings.find().orElse(null);
+            if (orgSettings == null || orgSettings.getHipIds().isEmpty()) return;
+            hipIds = List.copyOf(orgSettings.getHipIds());
+        } catch (DataAccessException | PersistenceException e) {
+            // Postgres has aborted the save's transaction; swallowed, the commit would drop the visit without an error.
+            throw e;
+        } catch (RuntimeException e) {
+            logger.warn("ABDM: removed visit {} not given up: {}", visit.getUuid(), e.getClass().getSimpleName());
+            return;
+        }
+        String reference = visit.getUuid();
+        afterCommit(() -> {
+            try {
+                if (ownTransaction == null) store.giveUpRemovedVisits(hipIds, List.of(reference));
+                else ownTransaction.executeWithoutResult(status -> store.giveUpRemovedVisits(hipIds, List.of(reference)));
+            } catch (RuntimeException e) {
+                logger.warn("ABDM: removed visit {} not given up: {}", reference, e.getClass().getSimpleName());
+            }
+        });
     }
 
     // An ABHA record with an Eka ID was saved for the patient: if it verifies the ABHA on their saved record, their visits

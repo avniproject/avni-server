@@ -283,6 +283,50 @@ public class EkaHipServiceTest {
         assertEquals("enc-2", body.getValue().get("care_contexts").get(0).get("care_context_id").asText());
     }
 
+    // F4: a visit voided or cancelled since it was queued is no longer one of the patient's visits: given up as removed,
+    // never sent, and the rest are linked.
+    @Test
+    public void theJobGivesUpAQueuedVisitRemovedSinceItWasQueued_andLinksTheRest() {
+        when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "QUEUED"), row("enc-3", "QUEUED")));
+
+        service.linkCareContexts("subject-1", true);
+
+        verify(store).giveUpRemovedVisits(List.of(HIP_ID), List.of("enc-3"));
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(1, body.getValue().get("care_contexts").size());
+        assertEquals("enc-1", body.getValue().get("care_contexts").get(0).get("care_context_id").asText());
+    }
+
+    // F4: the Link button sends only the patient's current visits too.
+    @Test
+    public void theLinkButtonGivesUpAVisitRemovedSinceItsCareContextWasMade() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row("enc-3", "FAILED"), row("enc-4", "LINKED")));
+
+        service.linkCareContexts("subject-1");
+
+        verify(store).giveUpRemovedVisits(List.of(HIP_ID), List.of("enc-3"));
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(1, body.getValue().get("care_contexts").size());
+        assertEquals("enc-1", body.getValue().get("care_contexts").get(0).get("care_context_id").asText());
+    }
+
+    // F4: a HIP ID under which the patient has no current visit left still has its removed visits given up, so they do
+    // not wait there forever and hold the patient at the head of the queue.
+    @Test
+    public void aRemovedVisitUnderAHipIdWithNoCurrentVisitIsGivenUp() {
+        EkaHipService service = withTwoHips();
+        visitsRecordedAt(null, null);
+        when(store.findCareContextsDue(INDIVIDUAL_ID, "hip-2")).thenReturn(List.of(row("enc-9", "QUEUED")));
+
+        service.linkCareContexts("subject-1", true);
+
+        verify(store).giveUpRemovedVisits(List.of("hip-2"), List.of("enc-9"));
+        verify(store, never()).ensureCareContexts(anyLong(), eq("hip-2"), any(), any(), any());
+        verify(store, never()).markLinkRequested(eq("hip-2"), any(), any());
+    }
+
     @Test
     public void nothingToLinkMeansNoCall() {
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
