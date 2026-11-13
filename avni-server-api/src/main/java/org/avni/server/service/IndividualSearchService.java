@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.SubjectSearchRepository;
 import org.avni.server.dao.search.SubjectSearchQueryBuilder;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.SearchSubjectEnrolledProgram;
 import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
@@ -38,10 +39,10 @@ public class IndividualSearchService {
         long resultsEnd = new DateTime().getMillis();
         Long totalCount = subjectSearchRequest.getIncludeDisplayCount() ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : -1l;
         logger.info(String.format("Subject search: Time Taken: %dms. Sorted: %s", (resultsEnd - startTime), subjectSearchRequest.getPageElement().getSortColumn()));
-        return constructIndividual(searchResults, totalCount, subjectSearchRequest.isIncludeExitedEnrolments());
+        return constructIndividual(searchResults, totalCount, subjectSearchRequest.isIncludeExitedEnrolments(), subjectSearchRequest.getPrograms());
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, Long totalCount, boolean includeExitedEnrolments) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, Long totalCount, boolean includeExitedEnrolments, List<String> tickedProgramUuids) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
@@ -51,18 +52,19 @@ public class IndividualSearchService {
                 .collect(Collectors.toList());
 
         List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = individualIds.isEmpty() ? Collections.emptyList() :
-                includeExitedEnrolments ? programEnrolmentRepository.findActiveAndExitedEnrolmentsByIndividualIds(individualIds) :
-                        programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds);
+                programEnrolmentRepository.findEnrolmentsByIndividualIds(individualIds, includeExitedEnrolments, UserContextHolder.getUserContext().getOrganisationId());
+        boolean isAnyProgramTicked = tickedProgramUuids != null && !tickedProgramUuids.isEmpty();
+        Map<Long, List<EnrolmentContract>> enrolmentsByIndividualId = searchSubjectEnrolledPrograms.stream()
+                .filter(enrolledProgram -> !enrolledProgram.isExited() || !isAnyProgramTicked || tickedProgramUuids.contains(enrolledProgram.getProgram().getUuid()))
+                .collect(Collectors.groupingBy(SearchSubjectEnrolledProgram::getId,
+                        Collectors.mapping(enrolledProgram -> EnrolmentContract.fromProgram(enrolledProgram.getProgram(), enrolledProgram.getOperationalProgramName(), enrolledProgram.getProgramExitDateTime()), Collectors.toList())));
 
         Map<Long, String> titleLineages = addressLevelService.getTitleLineages(addressIds);
 
         List<Map<String, Object>> listOfRecords = individualList.stream()
                 .peek(individualRecord -> {
                     Long individualId = Long.valueOf((Integer) individualRecord.get("id"));
-                    individualRecord.put("enrolments", searchSubjectEnrolledPrograms.stream()
-                            .filter(x -> x.getId().equals(individualId))
-                            .map(searchSubjectEnrolledProgram -> EnrolmentContract.fromProgram(searchSubjectEnrolledProgram.getProgram(), searchSubjectEnrolledProgram.getProgramExitDateTime()))
-                            .collect(Collectors.toList()));
+                    individualRecord.put("enrolments", enrolmentsByIndividualId.getOrDefault(individualId, Collections.emptyList()));
                     individualRecord.put("addressLevel", titleLineages.get((Long) individualRecord.get("addressId")));
                 }).collect(Collectors.toList());
         recordsMap.put("totalElements", totalCount);
