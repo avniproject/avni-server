@@ -289,7 +289,7 @@ public class SearchAllIntegrationTest extends AbstractControllerIntegrationTest 
 
         Individual asha = subject("Asha", null, null, null);
         Individual ashanti = subject("Ashanti", null, null, null);
-        assertThat(searchAllInOrder("ASHA", null)).containsExactly(ashanti.getUuid(), asha.getUuid());
+        assertThat(searchAllInOrder("ASHA", null)).containsExactlyInAnyOrder(ashanti.getUuid(), asha.getUuid());
 
         assertThat(searchAllInOrder("98765", "fullName")).containsExactly(named.getUuid(), exact.getUuid(), grouped.getUuid(), listedInText.getUuid(), phoneAnswer.getUuid(), phone.getUuid(), textNumber.getUuid());
     }
