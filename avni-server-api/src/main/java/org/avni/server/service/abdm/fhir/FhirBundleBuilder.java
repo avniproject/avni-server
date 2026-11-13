@@ -30,9 +30,9 @@ public class FhirBundleBuilder {
     // NRCES tells an ABHA number (HIN) from an ABHA address (ABHA) by this type code; it publishes no system for either.
     static final String NDHM_IDENTIFIER_TYPE = "https://nrces.in/ndhm/fhir/r4/CodeSystem/ndhm-identifier-type-code";
     private static final ZoneId AVNI_DATE_ZONE = ZoneId.of("Asia/Kolkata");
-    // media, references to other records and nested groups are not shared.
+    // Media, references to other records, nested groups, phone numbers and identifiers (Id) are not shared.
     private static final Set<String> NOT_SHARED = Set.of("Image", "ImageV2", "Video", "Audio", "File", "Subject", "Location", "Id",
-            "QuestionGroup", "Encounter", "GroupAffiliation");
+            "QuestionGroup", "Encounter", "GroupAffiliation", "PhoneNumber");
 
     private final Supplier<String> idSupplier;
     private final Clock clock;

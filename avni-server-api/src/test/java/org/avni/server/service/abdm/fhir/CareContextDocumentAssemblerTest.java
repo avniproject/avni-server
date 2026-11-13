@@ -172,6 +172,33 @@ public class CareContextDocumentAssemblerTest {
                 "Tobacco use", "Weight"), names);
     }
 
+    // F11: a text question Avni takes as a contact number (the concept's primary_contact or contact_number set to yes, as
+    // ConceptService.findContactNumberConcept and the app read it) is a phone number, and is not shared.
+    @Test
+    public void aTextAnswerAvniTakesAsAContactNumberIsLeftOut() {
+        Concept mobile = concept("Mobile number", "Text", "c-mobile", null);
+        Concept husbandsMobile = concept("Husband's mobile", "Text", "c-husband-mobile", null);
+        Concept remarks = concept("Remarks", "Text", "c-remarks", null);
+        KeyValues contact = new KeyValues();
+        contact.add(new KeyValue(KeyType.contact_number, "yes"));
+        mobile.setKeyValues(contact);
+        KeyValues primary = new KeyValues();
+        primary.add(new KeyValue(KeyType.primary_contact, "yes"));
+        husbandsMobile.setKeyValues(primary);
+        KeyValues notContact = new KeyValues();
+        notContact.add(new KeyValue(KeyType.contact_number, "no"));
+        remarks.setKeyValues(notContact);
+        encounter.getObservations().put("c-mobile", "9000000001");
+        encounter.getObservations().put("c-husband-mobile", "9000000002");
+        encounter.getObservations().put("c-remarks", "Advised rest");
+
+        CareContextDocument d = assemble();
+
+        assertNull(item(d, "Mobile number"));
+        assertNull(item(d, "Husband's mobile"));
+        assertEquals("Advised rest", item(d, "Remarks").value());
+    }
+
     @Test
     public void practitionerFallsBackToLastModifiedByAndThenToNothing() {
         encounter.setFilledBy(null);

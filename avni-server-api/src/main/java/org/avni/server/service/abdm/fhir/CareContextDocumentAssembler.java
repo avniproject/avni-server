@@ -3,6 +3,9 @@ package org.avni.server.service.abdm.fhir;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.application.KeyType;
+import org.avni.server.application.KeyValues;
+import org.avni.server.application.ValueType;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.*;
 import org.avni.server.service.FormMappingService;
@@ -18,7 +21,8 @@ import java.util.*;
 // and with an organisation's user context (AbdmOrgContext.runAs): ConceptRepository.findByUuid reads it.
 // Values are resolved here rather than through ConceptService.getObservationValue, which needs an API request context
 // (ApiRequestContextHolder) that a callback thread does not have: coded answers become answer names, everything else
-// is passed through raw with its concept's data type and unit, and FhirBundleBuilder decides what is shared.
+// is passed through raw with its concept's data type and unit, and FhirBundleBuilder decides by data type what is
+// shared. A text answer Avni takes as a contact number is left out here, as only its concept says so.
 @Component
 public class CareContextDocumentAssembler {
     private static final Logger logger = LoggerFactory.getLogger(CareContextDocumentAssembler.class);
@@ -60,7 +64,7 @@ public class CareContextDocumentAssembler {
         List<Concept> concepts = new ArrayList<>();
         for (String conceptUuid : observations.keySet()) {
             Concept concept = conceptRepository.findByUuid(conceptUuid);
-            if (concept != null) concepts.add(concept);
+            if (concept != null && !isContactNumber(concept)) concepts.add(concept);
         }
         Map<String, Integer> formOrder = formOrder(encounterType, formType);
         concepts.sort(Comparator.<Concept>comparingInt(c -> formOrder.getOrDefault(c.getUuid(), Integer.MAX_VALUE))
@@ -86,6 +90,14 @@ public class CareContextDocumentAssembler {
             return names.isEmpty() ? null : names;
         }
         return null;
+    }
+
+    // A phone number kept as text: marked as Avni marks a contact number (ConceptService.findContactNumberConcept).
+    private static boolean isContactNumber(Concept concept) {
+        KeyValues keyValues = concept.getKeyValues();
+        ValueType[] yes = {ValueType.yes};
+        return keyValues != null && (keyValues.containsOneOfTheValues(KeyType.contact_number, yes)
+                || keyValues.containsOneOfTheValues(KeyType.primary_contact, yes));
     }
 
     // The question's standard codes, from its concept's key-values loincCode and snomedCode (set by the implementer).

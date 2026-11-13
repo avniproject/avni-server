@@ -185,6 +185,32 @@ public class FhirBundleBuilderTest {
         assertEquals(1, bundle.at("/entry/0/resource/section/0/entry").size());
     }
 
+    // F11: a phone number is not shared, whether kept as Avni keeps it ({phoneNumber, verified}) or as plain text, and
+    // neither it nor an identifier (Id, from an identifier source) is printed in the visit's PDF.
+    @Test
+    public void phoneAndIdentifierAnswersAreNotShared_norPrintedInThePdf() {
+        Map<String, Object> phone = new LinkedHashMap<>();
+        phone.put("phoneNumber", "9000000001");
+        phone.put("verified", false);
+        CareContextDocument d = doc(null, null,
+                new CareContextDocument.Item("Mobile", "PhoneNumber", phone, null),
+                new CareContextDocument.Item("Alternate mobile", "PhoneNumber", "9000000002", null),
+                new CareContextDocument.Item("Card number", "Id", "CARD-0001", null),
+                new CareContextDocument.Item("Pulse", "Numeric", 72, "bpm"));
+        ObjectNode bundle = builder().build(d);
+
+        List<JsonNode> obs = resources(bundle, "Observation");
+        assertEquals(1, obs.size());
+        assertEquals("Pulse", obs.get(0).at("/code/text").asText());
+        String pdf = new String(java.util.Base64.getDecoder().decode(resources(bundle, "DocumentReference").get(0)
+                .at("/content/0/attachment/data").asText()), StandardCharsets.ISO_8859_1);
+        assertTrue(pdf.contains("Pulse: 72 bpm"));
+        for (String withheld : List.of("Mobile", "9000000001", "9000000002", "Card number", "CARD-0001")) {
+            assertFalse(withheld, pdf.contains(withheld));
+        }
+        assertFalse(AbdmJson.write(bundle).contains("900000000"));
+    }
+
     // NRCES tells the two apart by type code (ndhm-identifier-type-code HIN = the number, ABHA = the address) and publishes
     // no system for the address; NRCES's own samples carry the number as MR under healthid.ndhm.gov.in, so the number
     // carries both codes (abdm-docs shared.fhir.abha-identifiers).
