@@ -26,7 +26,8 @@ import java.util.Map;
 // for its webhooks, how each ABDM job last went for it, its visits by link status (queue), and its shares that ended
 // FAILED or that Eka never answered within the traffic retention (failedShares, unansweredShares), and which tabs the
 // user may use (privileges). Answers even when record sharing is off, so the page can say
-// what is missing. The user's own organisation only. Organisation administrators only (EditOrganisationConfiguration).
+// what is missing. The user's own organisation only. For a user who may edit the organisation's settings, share records
+// or view them.
 @RestController
 public class AbdmAdminController {
     private final AccessControlService accessControlService;
@@ -58,7 +59,8 @@ public class AbdmAdminController {
 
     @GetMapping("/web/abdm/status")
     public Map<String, Object> status() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkHasAnyOfSpecificPrivileges(List.of(PrivilegeType.EditOrganisationConfiguration,
+                PrivilegeType.ShareAbdmRecords, PrivilegeType.ViewAbdmRecords));
         EkaSystemConfig eka = settings.find().orElse(null);
         boolean recordSharingOn = access.recordSharingOn();
         boolean abhaEnabled = organisationConfigService.isAbhaEnabled();

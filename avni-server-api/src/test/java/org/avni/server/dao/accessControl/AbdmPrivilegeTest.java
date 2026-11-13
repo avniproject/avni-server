@@ -24,6 +24,7 @@ import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupService;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.abdm.AbdmAdminController;
 import org.avni.server.web.request.GroupPrivilegeBundleContract;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,8 @@ public class AbdmPrivilegeTest extends AbstractControllerIntegrationTest {
     private TestGroupService testGroupService;
     @Autowired
     private OrganisationConfigRepository organisationConfigRepository;
+    @Autowired
+    private AbdmAdminController abdmAdminController;
 
     @Test
     public void bothPrivilegesExistUnderAbdm() {
@@ -150,6 +153,31 @@ public class AbdmPrivilegeTest extends AbstractControllerIntegrationTest {
         accessControlService.checkPrivilege(user, PrivilegeType.ShareAbdmRecords);
     }
 
+    // The ABDM page's status opens to a user who may edit the organisation's settings, share records or view them.
+    @Test
+    public void theStatusOpensToAUserHoldingOnlyTheOrganisationSettingsPrivilege() {
+        assertTheStatusOpensWith(PrivilegeType.EditOrganisationConfiguration, "abdmstatusedit");
+    }
+
+    @Test
+    public void theStatusOpensToAUserHoldingOnlyTheSharePrivilege() {
+        assertTheStatusOpensWith(PrivilegeType.ShareAbdmRecords, "abdmstatusshare");
+    }
+
+    @Test
+    public void theStatusOpensToAUserHoldingOnlyTheViewPrivilege() {
+        assertTheStatusOpensWith(PrivilegeType.ViewAbdmRecords, "abdmstatusview");
+    }
+
+    @Test
+    public void theStatusIsRefusedToAUserHoldingNoneOfTheThree() {
+        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation("abdmstatusnone");
+        setUser(organisation.getUser());
+        grant(organisation.getGroup(), PrivilegeType.EditUserGroup);
+
+        assertThrows(AvniAccessException.class, () -> abdmAdminController.status());
+    }
+
     // A user whose group may edit the organisation's settings is refused both until each is granted to the group.
     @Test
     public void aUserHasEachOnlyOnceTheirGroupIsGrantedIt() {
@@ -222,6 +250,16 @@ public class AbdmPrivilegeTest extends AbstractControllerIntegrationTest {
         groupPrivilegeRepository.flush();
 
         accessControlService.checkPrivilege(user, PrivilegeType.ShareAbdmRecords);
+    }
+
+    private void assertTheStatusOpensWith(PrivilegeType type, String organisationName) {
+        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation(organisationName);
+        setUser(organisation.getUser());
+        grant(organisation.getGroup(), type);
+
+        Map<String, Object> status = abdmAdminController.status();
+
+        assertEquals(false, status.get("recordSharingOn"));
     }
 
     private List<PrivilegeType> offered(TestDataSetupService.TestOrganisationData organisation) {

@@ -31,6 +31,8 @@ public class AbdmAdminControllerTest {
     private static final Set<String> SHAPE = Set.of("abhaEnabled", "recordSharingEnabled", "recordSharingOn", "hiuOn", "environment",
             "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue", "failedShares", "unansweredShares",
             "privileges");
+    private static final List<PrivilegeType> STATUS_PRIVILEGES = List.of(PrivilegeType.EditOrganisationConfiguration,
+            PrivilegeType.ShareAbdmRecords, PrivilegeType.ViewAbdmRecords);
 
     private final AccessControlService accessControlService = mock(AccessControlService.class);
     private final EkaAbdmClient ekaClient = mock(EkaAbdmClient.class);
@@ -53,8 +55,7 @@ public class AbdmAdminControllerTest {
                 new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
     }
 
-    // F10: the page shows its HIP tab to a user who may share, and its HIU tab to one who may view; the status itself stays
-    // on the organisation-settings privilege.
+    // F10: the page shows its HIP tab to a user who may share, and its HIU tab to one who may view.
     @Test
     @SuppressWarnings("unchecked")
     public void theStatusSaysWhichOfSharingAndViewingTheUserMayDo() {
@@ -65,7 +66,7 @@ public class AbdmAdminControllerTest {
         Map<String, Object> status = controller.status();
 
         assertEquals(Map.of("share", true, "view", false), status.get("privileges"));
-        verify(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        verify(accessControlService).checkHasAnyOfSpecificPrivileges(STATUS_PRIVILEGES);
 
         reset(accessControlService);
         doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.ShareAbdmRecords))
@@ -74,10 +75,21 @@ public class AbdmAdminControllerTest {
         assertEquals(Map.of("share", false, "view", true), controller.status().get("privileges"));
     }
 
+    // The status opens to a user who may edit the organisation's settings, share records or view them.
     @Test
-    public void withoutTheOrganisationSettingsPrivilegeThereIsNoStatus() {
-        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.EditOrganisationConfiguration))
-                .when(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+    public void theStatusAsksForAnyOfTheSettingsShareAndViewPrivileges() {
+        when(settings.find()).thenReturn(Optional.empty());
+
+        controller.status();
+
+        verify(accessControlService).checkHasAnyOfSpecificPrivileges(STATUS_PRIVILEGES);
+        verify(accessControlService, never()).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+    }
+
+    @Test
+    public void withNoneOfTheThreePrivilegesThereIsNoStatus() {
+        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(STATUS_PRIVILEGES))
+                .when(accessControlService).checkHasAnyOfSpecificPrivileges(STATUS_PRIVILEGES);
 
         assertThrows(org.avni.server.domain.accessControl.AvniAccessException.class, () -> controller.status());
         verifyNoInteractions(settings, ekaClient, hipStore);
