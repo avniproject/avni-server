@@ -28,6 +28,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -193,7 +194,7 @@ public class AbdmGateTest {
         Exception e = assertThrows(Exception.class, () -> mvc.perform(request));
         Throwable cause = e;
         while (cause != null && !(cause instanceof AvniAccessException)) cause = cause.getCause();
-        org.junit.Assert.assertNotNull(e.toString(), cause);
+        assertNotNull(e.toString(), cause);
     }
 
     private void settings(boolean abha, boolean recordSharing, JsonObject json) throws Exception {

@@ -517,7 +517,8 @@ public class EkaHipServiceTest {
         verify(store, never()).markStatus(anyString(), any(), anyString(), any());
     }
 
-    // Eka reports ERRORED after its own retries (an unknown HIP ID, say): final.
+    // Eka reports ERRORED (an unknown HIP ID, say): taken as final on the unverified belief that Eka reports ERRORED only
+    // after its own retries.
     @Test
     public void anErroredWebhookGivesUpItsCareContextWithTheReason() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-2"))).thenReturn(List.of(row("enc-2", "LINK_REQUESTED")));

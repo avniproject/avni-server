@@ -2,6 +2,7 @@ package org.avni.server.service.abdm.hiu;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.service.abdm.AbdmJson;
+import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -12,8 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIU_ID;
-import org.avni.server.service.abdm.hip.AbdmRequestException;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -110,9 +109,9 @@ public class AbdmHiuDataServiceTest {
         service.records("uuid-3");
 
         InOrder order = inOrder(reads, store);
-        order.verify(reads).logged("uuid-3");
+        order.verify(reads).log("uuid-3");
         order.verify(store).records("cr-1");
-        verify(reads, times(2)).logged("uuid-3");
+        verify(reads, times(2)).log("uuid-3");
     }
 
     @Test
@@ -128,7 +127,7 @@ public class AbdmHiuDataServiceTest {
     @Test
     public void whenTheReadCannotBeLoggedNoRecordIsRead() {
         when(store.findConsentRequestByUuid("uuid-3")).thenReturn(Optional.of(requestWith("GRANTED", null)));
-        doThrow(new IllegalStateException("database down")).when(reads).logged("uuid-3");
+        doThrow(new IllegalStateException("database down")).when(reads).log("uuid-3");
 
         assertThrows(IllegalStateException.class, () -> service.records("uuid-3"));
 

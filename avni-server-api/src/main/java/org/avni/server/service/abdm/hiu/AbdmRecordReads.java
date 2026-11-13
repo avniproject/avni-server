@@ -21,7 +21,7 @@ public class AbdmRecordReads {
         this.orgContext = orgContext;
     }
 
-    public void logged(String consentRequestUuid) {
+    public void log(String consentRequestUuid) {
         User user = UserContextHolder.getUser();
         Long organisationId = orgContext.organisationId();
         if (user == null || user.getId() == null || organisationId == null) {

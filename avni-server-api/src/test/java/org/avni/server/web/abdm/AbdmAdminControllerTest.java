@@ -1,6 +1,7 @@
 package org.avni.server.web.abdm;
 
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
@@ -60,7 +61,7 @@ public class AbdmAdminControllerTest {
     @SuppressWarnings("unchecked")
     public void theStatusSaysWhichOfSharingAndViewingTheUserMayDo() {
         when(settings.find()).thenReturn(Optional.empty());
-        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.ViewAbdmRecords))
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.ViewAbdmRecords))
                 .when(accessControlService).checkPrivilege(PrivilegeType.ViewAbdmRecords);
 
         Map<String, Object> status = controller.status();
@@ -69,7 +70,7 @@ public class AbdmAdminControllerTest {
         verify(accessControlService).checkHasAnyOfSpecificPrivileges(STATUS_PRIVILEGES);
 
         reset(accessControlService);
-        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.ShareAbdmRecords))
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.ShareAbdmRecords))
                 .when(accessControlService).checkPrivilege(PrivilegeType.ShareAbdmRecords);
 
         assertEquals(Map.of("share", false, "view", true), controller.status().get("privileges"));
@@ -88,10 +89,10 @@ public class AbdmAdminControllerTest {
 
     @Test
     public void withNoneOfTheThreePrivilegesThereIsNoStatus() {
-        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(STATUS_PRIVILEGES))
+        doThrow(AvniAccessException.createNoPrivilegeException(STATUS_PRIVILEGES))
                 .when(accessControlService).checkHasAnyOfSpecificPrivileges(STATUS_PRIVILEGES);
 
-        assertThrows(org.avni.server.domain.accessControl.AvniAccessException.class, () -> controller.status());
+        assertThrows(AvniAccessException.class, () -> controller.status());
         verifyNoInteractions(settings, ekaClient, hipStore);
     }
 

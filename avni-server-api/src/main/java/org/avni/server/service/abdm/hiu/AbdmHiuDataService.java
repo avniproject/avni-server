@@ -48,7 +48,7 @@ public class AbdmHiuDataService {
     public List<Map<String, Object>> records(String consentRequestUuid) {
         AbdmHiuStore.Consent request = store.findConsentRequestByUuid(consentRequestUuid)
                 .orElseThrow(() -> AbdmRequestException.notFound("Consent request not found"));
-        reads.logged(consentRequestUuid);
+        reads.log(consentRequestUuid);
         List<Map<String, Object>> out = new ArrayList<>();
         if (ENDED.contains(request.status())) return out;
         // A request Eka refused never got an id there, so nothing can have arrived under it.

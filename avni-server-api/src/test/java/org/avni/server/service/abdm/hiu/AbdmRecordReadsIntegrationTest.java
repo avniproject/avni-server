@@ -36,8 +36,8 @@ public class AbdmRecordReadsIntegrationTest extends AbstractControllerIntegratio
         namedJdbc.getJdbcOperations().update("delete from abdm_record_read");
         setUser("demo-user");
 
-        reads.logged("request-uuid-1");
-        reads.logged("request-uuid-1");
+        reads.log("request-uuid-1");
+        reads.log("request-uuid-1");
 
         List<Map<String, Object>> rows = namedJdbc.getJdbcOperations().queryForList(
                 "select organisation_id, user_id, consent_request_uuid, read_at from abdm_record_read order by id");
@@ -53,7 +53,7 @@ public class AbdmRecordReadsIntegrationTest extends AbstractControllerIntegratio
     public void withNoUserTheReadIsRefused() {
         UserContextHolder.clear();
 
-        assertThrows(IllegalStateException.class, () -> reads.logged("request-uuid-1"));
+        assertThrows(IllegalStateException.class, () -> reads.log("request-uuid-1"));
     }
 
     // The test data scripts delete users, which a logged read points at, so they clear the reads first.
@@ -73,7 +73,7 @@ public class AbdmRecordReadsIntegrationTest extends AbstractControllerIntegratio
 
     private void aReadIsLogged() {
         setUser("demo-user");
-        reads.logged("request-uuid-1");
+        reads.log("request-uuid-1");
         UserContextHolder.clear();
     }
 
