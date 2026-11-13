@@ -38,6 +38,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.query.EscapeCharacter;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.rest.webmvc.support.RepositoryEntityLinks;
 import org.springframework.hateoas.Link;
@@ -46,10 +47,13 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -121,8 +125,10 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
         Page<Form> forms = formRepository.findAll((root, query, builder) -> {
             Predicate predicate = builder.equal(root.get("organisationId"), organisationId);
-            if (name != null)
-                predicate = builder.and(predicate, builder.like(builder.upper(root.get("name")), "%" + name.toUpperCase() + "%"));
+            if (StringUtils.hasText(name)) {
+                Expression<String> pattern = ((HibernateCriteriaBuilder) builder).value(containsPattern(name));
+                predicate = builder.and(predicate, builder.like(builder.lower(root.get("name")), builder.lower(pattern), EscapeCharacter.DEFAULT.getEscapeCharacter()));
+            }
             if (!includeVoided)
                 predicate = builder.and(predicate, builder.equal(root.get("isVoided"), false));
             return predicate;
@@ -513,5 +519,9 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             logger.error(format("Error serving form share template %s: %s", fileName, e.getMessage()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Error serving %s", fileName));
         }
+    }
+
+    static String containsPattern(String name) {
+        return "%" + EscapeCharacter.DEFAULT.escape(name.trim()) + "%";
     }
 }
