@@ -28,8 +28,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
@@ -353,5 +355,23 @@ public class MediaControllerRoutingTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("true", response.getBody());
+    }
+
+    @Test
+    public void downloadStreamOfAnotherOrganisationsObjectIsRefusedWithoutReadingIt() throws Exception {
+        String otherOrganisationUrl = "https://bucket.s3.ap-south-1.amazonaws.com/otherorgdir/photo.jpg";
+        doThrow(new AccessDeniedException("not authorized")).when(defaultS3Service).generateMediaDownloadUrl(otherOrganisationUrl);
+
+        assertEquals(HttpStatus.FORBIDDEN, controller.downloadFile(otherOrganisationUrl, "photo.jpg").getStatusCode());
+        verify(defaultS3Service, never()).getObjectContentFromUrl(anyString());
+    }
+
+    @Test
+    public void downloadStreamOfTheOrganisationsOwnObjectIsRead() throws Exception {
+        when(defaultS3Service.getObjectContentFromUrl(NORMAL_URL)).thenReturn(new ByteArrayInputStream(new byte[0]));
+
+        assertEquals(HttpStatus.OK, controller.downloadFile(NORMAL_URL, "photo.jpg").getStatusCode());
+        verify(defaultS3Service).generateMediaDownloadUrl(NORMAL_URL);
+        verify(defaultS3Service).getObjectContentFromUrl(NORMAL_URL);
     }
 }

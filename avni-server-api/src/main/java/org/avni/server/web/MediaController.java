@@ -525,13 +525,25 @@ public class MediaController {
     }
 
     @GetMapping("/web/media/downloadStream")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ResponseEntity<InputStreamResource> downloadFile(@RequestParam String s3Url, @RequestParam String fileName) throws IOException {
-        InputStreamResource resource = new InputStreamResource(s3Service.getObjectContentFromUrl(s3Url));
+        S3Service storage = storageFor(s3Url);
+        try {
+            checkMediaBelongsToCurrentOrganisation(storage, s3Url);
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        InputStreamResource resource = new InputStreamResource(storage.getObjectContentFromUrl(s3Url));
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                 .contentType(MediaType.parseMediaType("application/octet-stream"))
                 .body(resource);
+    }
+
+    private void checkMediaBelongsToCurrentOrganisation(S3Service storage, String url) {
+        storage.generateMediaDownloadUrl(url);
     }
 }
