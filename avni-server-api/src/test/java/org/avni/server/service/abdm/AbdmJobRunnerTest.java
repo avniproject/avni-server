@@ -45,6 +45,7 @@ public class AbdmJobRunnerTest {
     private final OrganisationRepository organisationRepository = mock(OrganisationRepository.class);
     private final AbdmJobRuns jobRuns = mock(AbdmJobRuns.class);
     private final Bugsnag bugsnag = mock(Bugsnag.class);
+    private final AbdmScheduler scheduler = mock(AbdmScheduler.class);
     private final List<OrganisationConfig> sharingSwitchedOn = new ArrayList<>();
     private AbdmJobRunner runner;
 
@@ -52,8 +53,10 @@ public class AbdmJobRunnerTest {
     public void setUp() {
         AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
         AbdmOrgContext orgContext = new AbdmOrgContext(authService, organisationRepository, configRepository, mock(PlatformTransactionManager.class));
-        runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag,
+        runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler,
                 Clock.fixed(NOW, ZoneOffset.UTC));
+        // Each failure here is the first since a success, so it is sent to Bugsnag (AbdmJobRuns.failed decides).
+        when(jobRuns.failed(anyLong(), anyString(), any(), any())).thenReturn(true);
         when(organisationConfigService.findAllWithFeatureEnabled("enableAbdmRecordSharing")).thenReturn(sharingSwitchedOn);
         when(authService.authenticateByUserName(anyString(), any())).thenAnswer(inv -> {
             String username = inv.getArgument(0);
@@ -119,6 +122,41 @@ public class AbdmJobRunnerTest {
         assertTrue(error.getValue(), error.getValue().contains("database down"));
         verify(jobRuns, never()).succeeded(eq(1L), any(), any());
         verify(jobRuns).succeeded(eq(2L), eq(TASK), any());
+    }
+
+    // Carried from R2-3's review: an organisation whose run keeps failing alarms on the first failure after a success, then
+    // at most hourly (AbdmJobRuns.failed says when); every failure is still kept for the status page.
+    @Test
+    public void aFailureNotDueAnAlarmIsKeptForTheStatusPageButNotSentToBugsnag() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, true, true, "user-of-no-organisation");
+        when(jobRuns.failed(anyLong(), anyString(), any(), any())).thenReturn(false);
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> {
+            throw new IllegalStateException("Eka POST link refused with HTTP 503");
+        });
+
+        verify(jobRuns).failed(eq(1L), eq(TASK), contains("503"), any());
+        verify(jobRuns).failed(eq(2L), eq(TASK), contains("system user"), any());
+        verifyNoInteractions(bugsnag);
+    }
+
+    // Carried from R2-2's review: the scheduler stopping is seen even if the pool cleared the thread's interrupt flag.
+    @Test
+    public void aRunTakesNoFurtherOrganisationOnceTheSchedulerIsStopping_andReportsNothing() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, true, true, "system-2");
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> {
+            ranFor.add(UserContextHolder.getUserContext().getOrganisationId());
+            when(scheduler.toldToStop()).thenReturn(true);
+            throw new IllegalStateException("could not get a connection");
+        });
+
+        assertEquals(List.of(1L), ranFor);
+        verifyNoInteractions(bugsnag);
+        verify(jobRuns, never()).failed(anyLong(), any(), any(), any());
     }
 
     // F13: without a system user an organisation cannot share records (AbdmAccess), though both its switches are on: the

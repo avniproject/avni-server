@@ -616,6 +616,7 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
     public void aVisitGivenUpAsRemovedIsQueuedAgainWhenSavedAgain() {
         emptyQueue();
         store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        namedJdbc.getJdbcOperations().update("update abdm_care_context set attempts = 3 where reference in ('v-1', 'v-2')");
         store.giveUpRemovedVisits(List.of(QUEUE_HIP), List.of("v-1"));
         store.markStatus(QUEUE_HIP, List.of("v-2"), "FAILED_FINAL", "Eka refused the link");
 
@@ -623,7 +624,10 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
 
         assertEquals("QUEUED", column("v-1", "status"));
         assertEquals(null, column("v-1", "error"));
+        // Carried from R2-3's review: queued afresh, with every try ahead of it.
+        assertEquals(0, column("v-1", "attempts"));
         assertEquals("FAILED_FINAL", column("v-2", "status"));
+        assertEquals(3, column("v-2", "attempts"));
     }
 
     @Test

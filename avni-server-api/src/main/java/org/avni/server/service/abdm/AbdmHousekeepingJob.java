@@ -126,7 +126,8 @@ public class AbdmHousekeepingJob {
     // HIP ID of the organisation; each patient once, however many of its HIP IDs it has visits waiting under. No new
     // patient is taken after the organisation's deadline. The queue settles (AbdmHipStore): a link Eka never answered is
     // queued again, a failure that may pass is tried again after a growing wait, and one that cannot is given up. Eka
-    // failing for every patient costs no visit a try and stops the organisation's run, which is recorded as failed.
+    // failing before it has taken any link this run costs no visit a try and stops the organisation's run, which is
+    // recorded as failed; once it has taken one, a later patient's failure is that patient's, counted (R21).
     public void linkQueuedVisits() {
         runner.forEachOrganisation(VISIT_LINKING, LINK_BUDGET, deadline -> {
             Map<String, List<String>> waiting = new LinkedHashMap<>();
@@ -139,8 +140,10 @@ public class AbdmHousekeepingJob {
                 }
             });
             int left = waiting.size();
+            // R21: once Eka has taken a patient's link this run, a failure of Eka's own for a later patient is that patient's.
+            boolean ekaTookALink = false;
             for (Map.Entry<String, List<String>> patient : waiting.entrySet()) {
-                if (!clock.instant().isBefore(deadline) || Thread.currentThread().isInterrupted()) {
+                if (!clock.instant().isBefore(deadline) || toldToStop()) {
                     logger.info("ABDM linking: {} patient(s) left for the next run", left);
                     return;
                 }
@@ -148,7 +151,7 @@ public class AbdmHousekeepingJob {
                 Instant[] lookedAt = new Instant[1];
                 try {
                     lookedAt[0] = hipStore.databaseNow();
-                    ekaHip.linkCareContexts(patient.getKey(), true);
+                    if (ekaHip.linkQueued(patient.getKey(), ekaTookALink)) ekaTookALink = true;
                 } catch (EkaHipService.NoVerifiedAbha e) {
                     // Linked once a worker verifies the ABHA with Eka (AbdmVerifiedAbhaAspect), not tried meanwhile.
                     patient.getValue().forEach(hipId -> hipStore.awaitVerifiedAbha(patient.getKey(), hipId, e.getMessage(), lookedAt[0]));
@@ -158,12 +161,12 @@ public class AbdmHousekeepingJob {
                     patient.getValue().forEach(hipId -> hipStore.failQueuedForGood(patient.getKey(), hipId, e.getMessage()));
                     logger.info("ABDM: visits of subject {} given up: {}", patient.getKey(), e.getMessage());
                 } catch (EkaCallException e) {
-                    // Eka failing for every patient (EkaHipService.link): nothing was counted, and the rest would fail the
-                    // same way. The run stops; the runner records it as failed and reports it.
+                    // Eka failing for every patient, before it took any link this run (EkaHipService.link): nothing was
+                    // counted, and the rest would fail the same way. The run stops; the runner records it as failed.
                     logger.warn("ABDM linking stopped, Eka failing for every patient; {} patient(s) left for the next run", left + 1);
                     throw e;
                 } catch (RuntimeException e) {
-                    if (Thread.currentThread().isInterrupted()) {
+                    if (toldToStop()) {
                         // Told to stop: the failure is the stop's, so no try is counted against the patient's visits.
                         logger.info("ABDM linking told to stop; {} patient(s) left for the next run", left + 1);
                         return;
@@ -174,5 +177,10 @@ public class AbdmHousekeepingJob {
                 }
             }
         });
+    }
+
+    // The scheduler stopping, seen even when a pool has cleared the thread's interrupt, or the thread interrupted.
+    private boolean toldToStop() {
+        return scheduler.toldToStop() || Thread.currentThread().isInterrupted();
     }
 }

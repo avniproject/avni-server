@@ -84,14 +84,14 @@ public class AbdmHousekeepingJobTest {
                 new JsonObject().with(EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2"))));
         when(hipStore.subjectsToLink("hip-1", 50)).thenReturn(List.of("subject-1", "subject-2"));
         when(hipStore.subjectsToLink("hip-2", 50)).thenReturn(List.of("subject-2", "subject-3"));
-        when(ekaHip.linkCareContexts("subject-2", true)).thenThrow(AbdmRequestException.conflict("This subject's verified ABHA has neither an address nor a number"));
+        when(ekaHip.linkQueued(eq("subject-2"), anyBoolean())).thenThrow(AbdmRequestException.conflict("This subject's verified ABHA has neither an address nor a number"));
 
         job(twoHips).linkQueuedVisits();
 
         verify(runner).forEachOrganisation(eq(AbdmHousekeepingJob.VISIT_LINKING), any(), any());
-        verify(ekaHip).linkCareContexts("subject-1", true);
-        verify(ekaHip).linkCareContexts("subject-2", true);
-        verify(ekaHip).linkCareContexts("subject-3", true);
+        verify(ekaHip).linkQueued(eq("subject-1"), anyBoolean());
+        verify(ekaHip).linkQueued(eq("subject-2"), anyBoolean());
+        verify(ekaHip).linkQueued(eq("subject-3"), anyBoolean());
         verify(hipStore).failQueuedForGood("subject-2", "hip-1", "This subject's verified ABHA has neither an address nor a number");
         verify(hipStore).failQueuedForGood("subject-2", "hip-2", "This subject's verified ABHA has neither an address nor a number");
     }
@@ -101,12 +101,12 @@ public class AbdmHousekeepingJobTest {
     @Test
     public void queuedVisitsAreLinkedPatientByPatient_andOneAvniCannotLinkIsGivenUp() {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
-        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(AbdmRequestException.notFound("Subject not found"));
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenThrow(AbdmRequestException.notFound("Subject not found"));
 
         job().linkQueuedVisits();
 
-        verify(ekaHip).linkCareContexts("subject-1", true);
-        verify(ekaHip).linkCareContexts("subject-2", true);
+        verify(ekaHip).linkQueued(eq("subject-1"), anyBoolean());
+        verify(ekaHip).linkQueued(eq("subject-2"), anyBoolean());
         verify(hipStore).failQueuedForGood("subject-1", AbdmTestSupport.HIP_ID, "Subject not found");
         verify(hipStore, never()).failQueued(any(), any(), any());
     }
@@ -118,13 +118,13 @@ public class AbdmHousekeepingJobTest {
         Instant looked = Instant.parse("2026-11-12T09:59:00Z");
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
         when(hipStore.databaseNow()).thenReturn(looked);
-        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(new EkaHipService.NoVerifiedAbha());
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenThrow(new EkaHipService.NoVerifiedAbha());
 
         job().linkQueuedVisits();
 
         org.mockito.InOrder order = inOrder(hipStore, ekaHip);
         order.verify(hipStore).databaseNow();
-        order.verify(ekaHip).linkCareContexts("subject-1", true);
+        order.verify(ekaHip).linkQueued(eq("subject-1"), anyBoolean());
         order.verify(hipStore).awaitVerifiedAbha("subject-1", AbdmTestSupport.HIP_ID, EkaHipService.NO_EKA_ID, looked);
         verify(hipStore, never()).failQueuedForGood(any(), any(), any());
         verify(hipStore, never()).failQueued(any(), any(), any());
@@ -136,7 +136,7 @@ public class AbdmHousekeepingJobTest {
         Instant looked = Instant.parse("2026-11-12T09:59:00Z");
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
         when(hipStore.databaseNow()).thenReturn(looked);
-        when(ekaHip.linkCareContexts("subject-1", true))
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean()))
                 .thenThrow(new EkaHipService.NoVerifiedAbha(org.avni.server.service.abha.AbhaVerifiedRecords.HELD_BY_ANOTHER));
 
         job().linkQueuedVisits();
@@ -149,7 +149,7 @@ public class AbdmHousekeepingJobTest {
     @Test
     public void aPatientWhoseLinkFailedOtherwiseIsTriedAgainLater() {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
-        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(new IllegalStateException("database unavailable"));
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenThrow(new IllegalStateException("database unavailable"));
 
         job().linkQueuedVisits();
 
@@ -165,14 +165,75 @@ public class AbdmHousekeepingJobTest {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
         org.avni.server.service.abdm.eka.EkaCallException lapsedKey = new org.avni.server.service.abdm.eka.EkaCallException(0, null,
                 "Eka login failed: Eka login failed with HTTP 401");
-        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(lapsedKey);
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenThrow(lapsedKey);
 
         assertSame(lapsedKey, org.junit.Assert.assertThrows(org.avni.server.service.abdm.eka.EkaCallException.class, () -> job().linkQueuedVisits()));
 
-        verify(ekaHip, never()).linkCareContexts(eq("subject-2"), anyBoolean());
+        verify(ekaHip, never()).linkQueued(eq("subject-2"), anyBoolean());
         verify(hipStore, never()).failQueued(any(), any(), any());
         verify(hipStore, never()).failQueuedForGood(any(), any(), any());
         verify(hipStore, never()).awaitVerifiedAbha(any(), any(), any(), any());
+    }
+
+    // R21: until Eka has taken a link in this run, a failure of Eka's own stops the run uncounted (above); once it has, the
+    // next patients' links go with that said, so a failure Eka gives only them is theirs, counted (EkaHipService.linkQueued),
+    // and the run goes on. A patient Eka always fails is then given up at LINK_ATTEMPTS instead of stopping every run.
+    @Test
+    public void onceEkaHasTakenALinkInTheRunTheNextPatientsFailuresAreTheirs_andTheRunGoesOn() {
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2", "subject-3", "subject-4"));
+        when(ekaHip.linkQueued("subject-1", false)).thenReturn(false);
+        when(ekaHip.linkQueued("subject-2", false)).thenReturn(true);
+        when(ekaHip.linkQueued("subject-3", true)).thenReturn(false);
+        when(ekaHip.linkQueued("subject-4", true)).thenReturn(false);
+
+        job().linkQueuedVisits();
+
+        org.mockito.InOrder order = inOrder(ekaHip);
+        order.verify(ekaHip).linkQueued("subject-1", false);
+        order.verify(ekaHip).linkQueued("subject-2", false);
+        order.verify(ekaHip).linkQueued("subject-3", true);
+        order.verify(ekaHip).linkQueued("subject-4", true);
+    }
+
+    // R21: the stop holds only while no patient in the run has linked; a later run starts over, uncounted.
+    @Test
+    public void inANewRunNoPatientHasLinkedYet() {
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenReturn(true);
+
+        job().linkQueuedVisits();
+        job().linkQueuedVisits();
+
+        verify(ekaHip, times(2)).linkQueued("subject-1", false);
+    }
+
+    // Carried from R2-2's review: the scheduler stopping is seen even if the pool cleared the thread's interrupt flag.
+    @Test
+    public void aRunStopsWhenTheSchedulerIsStopping_evenWithoutAnInterrupt() {
+        AbdmScheduler stopping = mock(AbdmScheduler.class);
+        when(stopping.toldToStop()).thenReturn(true);
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
+
+        new AbdmHousekeepingJob(runner, stopping, AbdmTestSupport.settings(), messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip,
+                ekaHiu, clock, new AbdmConfig(null, 30)).linkQueuedVisits();
+
+        verify(ekaHip, never()).linkQueued(any(), anyBoolean());
+    }
+
+    @Test
+    public void aFailureWhileTheSchedulerIsStoppingCountsAgainstNoVisit() {
+        AbdmScheduler scheduler = mock(AbdmScheduler.class);
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenAnswer(inv -> {
+            when(scheduler.toldToStop()).thenReturn(true);
+            throw new IllegalStateException("could not get a connection");
+        });
+
+        new AbdmHousekeepingJob(runner, scheduler, AbdmTestSupport.settings(), messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip,
+                ekaHiu, clock, new AbdmConfig(null, 30)).linkQueuedVisits();
+
+        verify(ekaHip, never()).linkQueued(eq("subject-2"), anyBoolean());
+        verify(hipStore, never()).failQueued(any(), any(), any());
     }
 
     // Carried from R2-1: a run told to stop (the server shutting down) takes no further patient, and a failure on the way
@@ -180,7 +241,7 @@ public class AbdmHousekeepingJobTest {
     @Test
     public void aRunToldToStopTakesNoFurtherPatient_andCountsNothing() {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
-        when(ekaHip.linkCareContexts("subject-1", true)).thenAnswer(inv -> {
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenAnswer(inv -> {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("could not get a connection: interrupted");
         });
@@ -190,7 +251,7 @@ public class AbdmHousekeepingJobTest {
             org.junit.Assert.assertTrue(Thread.interrupted());
         }
 
-        verify(ekaHip, never()).linkCareContexts(eq("subject-2"), anyBoolean());
+        verify(ekaHip, never()).linkQueued(eq("subject-2"), anyBoolean());
         verify(hipStore, never()).failQueued(any(), any(), any());
         verify(hipStore, never()).failQueuedForGood(any(), any(), any());
     }
@@ -213,16 +274,16 @@ public class AbdmHousekeepingJobTest {
     @Test
     public void linkingTakesNoNewPatientAfterTheDeadline_andLeavesTheRestForTheNextRun() {
         when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2", "subject-3"));
-        when(ekaHip.linkCareContexts("subject-1", true)).thenAnswer(inv -> {
+        when(ekaHip.linkQueued(eq("subject-1"), anyBoolean())).thenAnswer(inv -> {
             clock.advance(Duration.ofMinutes(5));
-            return null;
+            return true;
         });
 
         job().linkQueuedVisits();
 
-        verify(ekaHip).linkCareContexts("subject-1", true);
-        verify(ekaHip, never()).linkCareContexts(eq("subject-2"), anyBoolean());
-        verify(ekaHip, never()).linkCareContexts(eq("subject-3"), anyBoolean());
+        verify(ekaHip).linkQueued(eq("subject-1"), anyBoolean());
+        verify(ekaHip, never()).linkQueued(eq("subject-2"), anyBoolean());
+        verify(ekaHip, never()).linkQueued(eq("subject-3"), anyBoolean());
         verify(hipStore, never()).failQueued(any(), any(), any());
         verify(hipStore, never()).failQueuedForGood(any(), any(), any());
     }

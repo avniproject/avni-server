@@ -276,7 +276,7 @@ public class EkaHipServiceTest {
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "FAILED"), row("enc-2", "QUEUED")));
         when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-2", "QUEUED")));
 
-        service.linkCareContexts("subject-1", true);
+        service.linkQueued("subject-1", false);
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).post(eq(LINK), body.capture(), any());
@@ -290,7 +290,7 @@ public class EkaHipServiceTest {
     public void theJobGivesUpAQueuedVisitRemovedSinceItWasQueued_andLinksTheRest() {
         when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "QUEUED"), row("enc-3", "QUEUED")));
 
-        service.linkCareContexts("subject-1", true);
+        service.linkQueued("subject-1", false);
 
         verify(store).giveUpRemovedVisits(List.of(HIP_ID), List.of("enc-3"));
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
@@ -321,7 +321,7 @@ public class EkaHipServiceTest {
         visitsRecordedAt(null, null);
         when(store.findCareContextsDue(INDIVIDUAL_ID, "hip-2")).thenReturn(List.of(row("enc-9", "QUEUED")));
 
-        service.linkCareContexts("subject-1", true);
+        service.linkQueued("subject-1", false);
 
         verify(store).giveUpRemovedVisits(List.of("hip-2"), List.of("enc-9"));
         verify(store, never()).ensureCareContexts(anyLong(), eq("hip-2"), any(), any(), any());
@@ -418,6 +418,69 @@ public class EkaHipServiceTest {
         verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
         verify(store).failLinkRequest(eq(linkRequestId.getValue()), contains("connection pool closed"));
         verify(store, never()).putBackLinkRequest(anyString(), anyString());
+    }
+
+    // R21: the job learns whether Eka took a link of this patient's (answered 2xx), so later patients' failures can be judged.
+    @Test
+    public void theJobLearnsWhetherEkaTookALinkOfThePatients() {
+        when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "QUEUED")));
+
+        assertTrue(service.linkQueued("subject-1", false));
+
+        when(eka.post(eq(LINK), any(), any())).thenThrow(new EkaCallException(400, "ABDM-1035", "Eka POST " + LINK + " refused with HTTP 400"));
+        assertFalse(service.linkQueued("subject-1", false));
+
+        when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of());
+        assertFalse(service.linkQueued("subject-1", false));
+    }
+
+    // R21: once Eka has taken another patient's link in this run, its failing this patient's (its login, 401, 403, no
+    // answer) is about this patient: counted like any failure that may pass, not thrown, so the run goes on, and a patient
+    // Eka always fails is given up at the cap instead of stopping every run.
+    @Test
+    public void onceEkaHasTakenALinkInTheRunAFailureItTookNothingFromIsCountedAgainstThePatient() {
+        for (EkaCallException e : List.of(new EkaCallException(0, null, "Eka login failed: Eka login failed with HTTP 401"),
+                new EkaCallException(403, null, "Eka POST " + LINK + " refused with HTTP 403"),
+                new EkaAbdmClient.NoAnswer(false, "Eka POST " + LINK + " did not answer: ConnectException"))) {
+            reset(store, eka);
+            when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "QUEUED")));
+            when(eka.post(eq(LINK), any(), any())).thenThrow(e);
+
+            assertFalse(service.linkQueued("subject-1", true));
+
+            ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
+            verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
+            verify(store).failLinkRequest(eq(linkRequestId.getValue()), contains(e.getMessage()));
+            verify(store, never()).putBackLinkRequest(anyString(), anyString());
+        }
+    }
+
+    // R21: the same for a failure Eka may have acted on (a server error, no answer to a call it received): the visits wait
+    // for its webhook as a link it took would, and are counted when the deadline passes with no word (the counted wait).
+    @Test
+    public void onceEkaHasTakenALinkInTheRunAFailureItMayHaveActedOnWaitsCounted() {
+        for (EkaCallException e : List.of(new EkaCallException(503, null, "Eka POST " + LINK + " refused with HTTP 503"),
+                new EkaAbdmClient.NoAnswer(true, "Eka POST " + LINK + " did not answer within 10000 ms"))) {
+            reset(store, eka);
+            when(store.findCareContextsDue(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "QUEUED")));
+            when(eka.post(eq(LINK), any(), any())).thenThrow(e);
+
+            assertFalse(service.linkQueued("subject-1", true));
+
+            ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
+            verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
+            verify(store).settleLinkRequest(eq(linkRequestId.getValue()), eq("LINK_REQUESTED"), contains("may have linked them"));
+            verify(store, never()).awaitLinkAnswer(anyString(), anyString());
+            verify(store, never()).failLinkRequest(anyString(), anyString());
+        }
+    }
+
+    // Carried from R2-3's review: the server going away (57P01-57P03) and too many connections (53300) pass too.
+    @Test
+    public void theServerGoingAwayOrRunningOutOfConnectionsIsADatabaseFaultThatMayPass() {
+        for (String state : List.of("57P01", "57P02", "57P03", "53300")) {
+            assertTrue(state, EkaHipService.transientDatabaseFault(new RuntimeException(new java.sql.SQLException("database fault", state))));
+        }
     }
 
     @Test

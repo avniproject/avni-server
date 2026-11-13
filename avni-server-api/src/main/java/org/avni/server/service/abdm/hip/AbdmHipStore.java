@@ -340,7 +340,7 @@ public class AbdmHipStore {
 
     // A visit saved while linking on save is on: QUEUED for AbdmHousekeepingJob. A row already known as PENDING (seen by
     // discovery or listed) is queued too, and so is one given up as removed, as the visit saved done is the patient's
-    // again; one being linked, linked or failed keeps its status.
+    // again, with every try ahead of it; one being linked, linked or failed keeps its status.
     public void queueCareContexts(long individualId, String hipId, String patientReference, String hiType, List<NewCareContext> careContexts) {
         String requeued = "(abdm_care_context.status = 'PENDING' or (abdm_care_context.status = 'FAILED_FINAL' and abdm_care_context.error = :removed))";
         for (NewCareContext c : careContexts) {
@@ -348,7 +348,8 @@ public class AbdmHipStore {
                             "values (:uuid, :org, :ind, :hip, :patient, :ref, :display, :hiType, 'QUEUED') " +
                             "on conflict (organisation_id, hip_id, reference) do update set display = excluded.display, " +
                             "status = case when " + requeued + " then 'QUEUED' else abdm_care_context.status end, " +
-                            "error = case when " + requeued + " then null else abdm_care_context.error end",
+                            "error = case when " + requeued + " then null else abdm_care_context.error end, " +
+                            "attempts = case when " + requeued + " then 0 else abdm_care_context.attempts end",
                     params().addValue("uuid", UUID.randomUUID().toString(), Types.VARCHAR).addValue("ind", individualId)
                             .addValue("hip", hipId, Types.VARCHAR).addValue("patient", patientReference, Types.VARCHAR)
                             .addValue("ref", c.reference(), Types.VARCHAR).addValue("display", c.display(), Types.VARCHAR)

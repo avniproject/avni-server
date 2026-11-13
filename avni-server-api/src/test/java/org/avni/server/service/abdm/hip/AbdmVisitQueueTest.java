@@ -119,6 +119,24 @@ public class AbdmVisitQueueTest {
         org.mockito.Mockito.verifyNoInteractions(abhaLinks);
     }
 
+    // Carried from R2-3's review: a scheduled visit cancelled or voided before it was done never had a care context, so its
+    // save reads nothing and opens no transaction after the commit.
+    @Test
+    public void aScheduledVisitCancelledOrVoidedBeforeItWasDoneTouchesNothing() {
+        Encounter cancelled = visit("enc-1", null);
+        cancelled.setCancelDateTime(new DateTime(2026, 5, 2, 11, 0));
+        Encounter voided = visit("enc-2", null);
+        voided.setVoided(true);
+        AbdmSettings watched = AbdmTestSupport.settings();
+
+        AbdmVisitQueue q = new AbdmVisitQueue(watched, store, abhaLinks, verifiedRecords, bugsnag);
+        q.queue(cancelled);
+        q.queue(voided);
+
+        org.mockito.Mockito.verifyNoInteractions(store, abhaLinks, bugsnag);
+        verify(watched, never()).find();
+    }
+
     @Test
     public void aFailureToGiveUpARemovedVisitNeverFailsTheSave() {
         Encounter voided = visit("enc-3", new DateTime(2026, 5, 2, 10, 0));

@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 // ABDM's jobs and webhook worker run on ABDM's own threads, never on Spring's one scheduler thread that every other job
@@ -74,6 +75,31 @@ public class AbdmSchedulerTest {
         assertTrue(interrupted.get());
         assertTrue(noted.get());
         assertTrue(TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - before) < 30);
+    }
+
+    // Carried from R2-3's review: work sees the scheduler stopping even after it, or the pool, cleared its interrupt flag.
+    @Test
+    public void workSeesTheSchedulerStopping_evenWithItsInterruptCleared() throws InterruptedException {
+        CountDownLatch started = new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicBoolean seenBefore = new java.util.concurrent.atomic.AtomicBoolean(true);
+        java.util.concurrent.atomic.AtomicBoolean seenAfter = new java.util.concurrent.atomic.AtomicBoolean();
+        scheduler.execute(() -> {
+            seenBefore.set(scheduler.toldToStop());
+            started.countDown();
+            try {
+                Thread.sleep(60_000);
+            } catch (InterruptedException e) {
+                Thread.interrupted();
+                seenAfter.set(scheduler.toldToStop());
+            }
+        });
+        assertTrue(started.await(3, TimeUnit.SECONDS));
+
+        scheduler.shutdown();
+
+        assertFalse(seenBefore.get());
+        assertTrue(seenAfter.get());
+        assertTrue(scheduler.toldToStop());
     }
 
     @Test

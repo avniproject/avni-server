@@ -30,11 +30,19 @@ public class AbdmJobRuns {
                 params(organisationId, task, at));
     }
 
-    public void failed(long organisationId, String task, String error, Instant at) {
+    // Kept for the status page. True when the failure is due an alarm: the first since a success (a success clears the
+    // error), or the first an hour or more after the last alarm while the run keeps failing.
+    public boolean failed(long organisationId, String task, String error, Instant at) {
         String kept = error == null ? "failed" : error.length() > MAX_ERROR ? error.substring(0, MAX_ERROR) : error;
-        jdbc.update("insert into abdm_job_run (organisation_id, task, last_error, last_error_at) values (:org, :task, :error, :at) " +
-                "on conflict (organisation_id, task) do update set last_error = excluded.last_error, last_error_at = excluded.last_error_at",
-                params(organisationId, task, at).addValue("error", kept, Types.VARCHAR));
+        Boolean alarm = jdbc.queryForObject("insert into abdm_job_run (organisation_id, task, last_error, last_error_at, last_alerted_at) " +
+                "values (:org, :task, :error, :at, :at) on conflict (organisation_id, task) do update set last_error = excluded.last_error, " +
+                "last_error_at = excluded.last_error_at, last_alerted_at = case when abdm_job_run.last_error_at is null " +
+                "  or abdm_job_run.last_success_at > abdm_job_run.last_error_at or abdm_job_run.last_alerted_at is null " +
+                "  or abdm_job_run.last_alerted_at <= excluded.last_error_at - interval '1 hour' " +
+                "  then excluded.last_error_at else abdm_job_run.last_alerted_at end " +
+                "returning last_alerted_at = last_error_at",
+                params(organisationId, task, at).addValue("error", kept, Types.VARCHAR), Boolean.class);
+        return Boolean.TRUE.equals(alarm);
     }
 
     // {task: {lastSuccessAt, lastError}} of the organisation.

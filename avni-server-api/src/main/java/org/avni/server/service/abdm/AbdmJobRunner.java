@@ -26,8 +26,9 @@ import java.util.function.Supplier;
 
 // Runs an ABDM job for each organisation with record sharing on (AbdmAccess), or for each one a selection names, as that
 // organisation's system user, one after another, as MessageSenderJob does for messaging. A failure, a system user that
-// cannot act included, is logged with its stack trace, sent to Bugsnag and kept for the status page (AbdmJobRuns); the
-// next organisation still runs. An Eka setting missing where both switches are on is kept for the status page, named.
+// cannot act included, is logged with its stack trace and kept for the status page (AbdmJobRuns), and sent to Bugsnag
+// on the first after a success and then hourly; the next organisation still runs. An Eka setting missing where both
+// switches are on is kept for the status page, named.
 // The run has a time budget; each organisation is given its share of what is left, as a deadline the work keeps to, and
 // each run starts one organisation further on. A run told to stop (the server shutting down) takes no further
 // organisation and reports nothing for the one it was in.
@@ -41,24 +42,26 @@ public class AbdmJobRunner {
     private final AbdmOrgContext orgContext;
     private final AbdmJobRuns jobRuns;
     private final Bugsnag bugsnag;
+    private final AbdmScheduler scheduler;
     private final Clock clock;
     // Runs so far of each task: each run starts one organisation further on, so no organisation is always last.
     private final Map<String, AtomicInteger> runs = new ConcurrentHashMap<>();
 
     @Autowired
     public AbdmJobRunner(AuthService authService, OrganisationConfigService organisationConfigService, AbdmAccess access,
-                         AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag) {
-        this(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, Clock.systemUTC());
+                         AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, AbdmScheduler scheduler) {
+        this(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler, Clock.systemUTC());
     }
 
     AbdmJobRunner(AuthService authService, OrganisationConfigService organisationConfigService, AbdmAccess access,
-                  AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, Clock clock) {
+                  AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, AbdmScheduler scheduler, Clock clock) {
         this.authService = authService;
         this.organisationConfigService = organisationConfigService;
         this.access = access;
         this.orgContext = orgContext;
         this.jobRuns = jobRuns;
         this.bugsnag = bugsnag;
+        this.scheduler = scheduler;
         this.clock = clock;
     }
 
@@ -91,7 +94,7 @@ public class AbdmJobRunner {
             int count = organisationIds.size();
             int start = count == 0 ? 0 : Math.floorMod(runs.computeIfAbsent(task, t -> new AtomicInteger()).getAndIncrement(), count);
             for (int i = 0; i < count; i++) {
-                if (Thread.currentThread().isInterrupted()) {
+                if (toldToStop()) {
                     logger.info("ABDM {} told to stop; {} organisation(s) left for the next run", task, count - i);
                     return;
                 }
@@ -123,8 +126,7 @@ public class AbdmJobRunner {
                     // Both need fixing: the work failed, and the system user it would have run as cannot act. Bugsnag
                     // does not send suppressed exceptions, so the system user's goes on its own.
                     failure.addSuppressed(e);
-                    bugsnag.notify(e);
-                    report(organisationId, task, organisation, failure, "; with no login, as " + e.getMessage());
+                    report(organisationId, task, organisation, failure, "; with no login, as " + e.getMessage(), e);
                     return;
                 }
                 report(organisationId, task, organisation, e, "; done without it, with no login");
@@ -132,7 +134,7 @@ public class AbdmJobRunner {
             }
             jobRuns.succeeded(organisationId, task, clock.instant());
         } catch (RuntimeException e) {
-            if (Thread.currentThread().isInterrupted()) {
+            if (toldToStop()) {
                 // The server is stopping: the failure is the stop's, not the organisation's; what is left waits for the next run.
                 logger.info("ABDM {} for {} stopped: told to stop ({})", task, organisation, e.getClass().getSimpleName());
                 return;
@@ -141,14 +143,25 @@ public class AbdmJobRunner {
         }
     }
 
-    private void report(long organisationId, String task, AbdmOrganisation organisation, RuntimeException e, String outcome) {
+    // Every failure is kept for the status page. Bugsnag hears of the first after a success, then at most once an hour
+    // while the organisation's run keeps failing (AbdmJobRuns.failed), so an outage is one alarm an hour, not one a run.
+    // The exceptions in `also` go with it, as Bugsnag drops suppressed ones.
+    private void report(long organisationId, String task, AbdmOrganisation organisation, RuntimeException e, String outcome, Throwable... also) {
         logger.error("ABDM {} failed for {}{}", task, organisation, outcome, e);
-        bugsnag.notify(e);
+        boolean alarm = true;
         try {
-            jobRuns.failed(organisationId, task, e.getClass().getSimpleName() + ": " + e.getMessage() + outcome, clock.instant());
+            alarm = jobRuns.failed(organisationId, task, e.getClass().getSimpleName() + ": " + e.getMessage() + outcome, clock.instant());
         } catch (RuntimeException recordFailure) {
             logger.error("ABDM {}: the failure for {} could not be kept for the status page", task, organisation, recordFailure);
         }
+        if (!alarm) return;
+        bugsnag.notify(e);
+        for (Throwable t : also) bugsnag.notify(t);
+    }
+
+    // The scheduler stopping, seen even when a pool has cleared the thread's interrupt, or the thread interrupted.
+    private boolean toldToStop() {
+        return scheduler.toldToStop() || Thread.currentThread().isInterrupted();
     }
 
     // As MessageSenderJob does: the switch first, then the rest of what AbdmAccess needs.

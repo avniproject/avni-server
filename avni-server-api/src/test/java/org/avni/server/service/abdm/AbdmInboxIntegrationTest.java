@@ -46,6 +46,8 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
     public static void emptyAndHoldTheInbox(NamedParameterJdbcTemplate jdbc) {
         jdbc.getJdbcOperations().execute("reset role");
+        // A session holding the table for long fails the test plainly instead of hanging it.
+        jdbc.getJdbcOperations().execute("set local lock_timeout = '10s'");
         jdbc.getJdbcOperations().execute("lock table abdm_inbound_event in share row exclusive mode");
         jdbc.update("delete from abdm_inbound_event", Map.of());
     }
@@ -143,21 +145,23 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
     // An event that will never be handled keeps no body: it can carry a patient's details.
     // A worker that died holding an event (a restart, a crash) leaves it in progress; the sweep puts it back.
+    // The sweep and the claim read every organisation's rows, so this test sets its own rows' states directly and asserts on
+    // them alone, whatever else the table holds.
     @Test
     public void anEventStuckInProgressIsSweptBack_andOneStillBeingWorkedIsLeft() {
         receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
         receive(ORG, "e-2", "LINK_CARE_CONTEXT", null, T0);
-        inbox.claim(1, T0);
         Instant later = T0.plus(AbdmInbox.IN_PROGRESS_TIMEOUT).plusSeconds(1);
-        inbox.claim(1, later);
+        inProgressSince("e-1", T0);
+        inProgressSince("e-2", later);
 
         AbdmInbox.Sweep sweep = inbox.sweep(later);
 
-        assertEquals(1, sweep.returned());
-        assertEquals(0, sweep.failed());
+        assertTrue(sweep.returned() >= 1);
         assertEquals("RECEIVED", row("e-1").get("status"));
         assertEquals("IN_PROGRESS", row("e-2").get("status"));
-        assertEquals(List.of("e-1"), inbox.claim(10, later).stream().map(AbdmInbox.Event::eventId).toList());
+        List<String> taken = inbox.claim(10, later).stream().map(AbdmInbox.Event::eventId).toList();
+        assertTrue(taken.toString(), taken.contains("e-1") && !taken.contains("e-2"));
     }
 
     // F13: a worker slower than the timeout finds its event swept back and taken again: whatever it then writes (done,
@@ -266,14 +270,18 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
     }
 
     // A push that came before its grant does not hold the grant back, or neither would ever be handled.
+    // The push's earlier try is set directly, and only this test's rows are asserted on (the claim reads every organisation's).
     @Test
     public void aDataPushThatCameFirstDoesNotHoldBackTheUpdateItWaitsFor() {
-        receive(ORG, "push-1", "HIU_DATA_PUSH", "cr-1", T0);
-        receive(ORG, "update-1", "CONSENT_UPDATE", "cr-1", T0.plusSeconds(1));
-        AbdmInbox.Event push = inbox.claim(1, T0.plusSeconds(1)).get(0);
-        inbox.retry(push, "AbdmNotReadyException: no grant yet", T0.plusSeconds(1));
+        // A consent key no other test uses, so no other update of it can hold this one back.
+        receive(ORG, "push-1", "HIU_DATA_PUSH", "cr-push-first", T0);
+        receive(ORG, "update-1", "CONSENT_UPDATE", "cr-push-first", T0.plusSeconds(1));
+        jdbc.update("update abdm_inbound_event set attempts = 1, next_attempt_at = :next, last_error = 'AbdmNotReadyException: no grant yet' " +
+                "where organisation_id = :org and event_id = 'push-1'", Map.of("org", ORG, "next", Timestamp.from(T0.plusSeconds(16))));
 
-        assertEquals(List.of("update-1"), inbox.claim(10, T0.plusSeconds(1)).stream().map(AbdmInbox.Event::eventId).toList());
+        List<String> taken = inbox.claim(10, T0.plusSeconds(1)).stream().map(AbdmInbox.Event::eventId).toList();
+
+        assertTrue(taken.toString(), taken.contains("update-1") && !taken.contains("push-1"));
     }
 
     // A withdrawal naming only artefacts finds the consent of the update still waiting that names them, so it can wait
@@ -371,6 +379,11 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
     private void receiveBody(long organisationId, String eventId, String route, String consentKey, String body, Instant at) {
         inbox.receive(organisationId, "eka", eventId, "abha.consent_update", route, consentKey, body, at);
+    }
+
+    private void inProgressSince(String eventId, Instant claimedAt) {
+        jdbc.update("update abdm_inbound_event set status = 'IN_PROGRESS', attempts = 1, claimed_at = :at where organisation_id = :org " +
+                "and event_id = :id", Map.of("org", ORG, "id", eventId, "at", Timestamp.from(claimedAt)));
     }
 
     private Map<String, Object> row(String eventId) {

@@ -29,4 +29,18 @@ public class AbdmSchedulingIntegrationTest extends AbstractControllerIntegration
         }
         assertTrue("the default scheduler's tasks were not found", anyTask);
     }
+
+    @Autowired
+    private org.springframework.context.ApplicationContext context;
+
+    // Carried from R2-3's review: the scheduler stops before the database pool, the entity manager factory and the
+    // transaction manager go, so stopped work can still note its outcome. Each name it depends on is a bean of this app;
+    // a wrong name would stop the server starting. The test context replaces the scheduler itself, so this reads the class.
+    @Test
+    public void theSchedulerDependsOnTheDatabaseBeansByTheirNamesInThisApp() {
+        org.springframework.context.annotation.DependsOn dependsOn = AbdmScheduler.class.getAnnotation(org.springframework.context.annotation.DependsOn.class);
+
+        assertTrue(java.util.Arrays.asList(dependsOn.value()).containsAll(List.of("dataSource", "entityManagerFactory", "transactionManager")));
+        for (String bean : dependsOn.value()) assertTrue(bean, context.containsBean(bean));
+    }
 }

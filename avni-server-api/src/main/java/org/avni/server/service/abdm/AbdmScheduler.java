@@ -16,9 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 // ABDM's jobs and its webhook worker run on these threads of their own. Spring's default scheduler has one thread, which
 // every organisation's messaging and storage jobs share, so a long ABDM run there would hold them all up.
 // Deliberately not a Spring bean of type TaskScheduler: one would become the default scheduler for every @Scheduled job.
-// Stopped before the database pool closes (it depends on it), so stopped work can still note what it did.
+// Stopped before the database pool, the entity manager factory and the transaction manager go (it depends on them), so
+// stopped work can still note what it did.
 @Component
-@DependsOn("dataSource")
+@DependsOn({"dataSource", "entityManagerFactory", "transactionManager"})
 public class AbdmScheduler {
     private static final Logger logger = LoggerFactory.getLogger(AbdmScheduler.class);
     public static final String THREAD_PREFIX = "abdm-";
@@ -30,6 +31,7 @@ public class AbdmScheduler {
 
     private final ThreadPoolTaskScheduler scheduler;
     private final AtomicInteger scheduled = new AtomicInteger();
+    private volatile boolean stopping;
 
     public AbdmScheduler() {
         scheduler = new ThreadPoolTaskScheduler();
@@ -61,8 +63,14 @@ public class AbdmScheduler {
         return scheduled.get();
     }
 
+    // Set before the threads are interrupted: work checks it with its own interrupt flag, which a pool may clear.
+    public boolean toldToStop() {
+        return stopping;
+    }
+
     @PreDestroy
     public void shutdown() {
+        stopping = true;
         scheduler.shutdown();
     }
 }

@@ -69,14 +69,14 @@ public class AbdmVisitQueue {
     }
 
     public void queue(AbstractEncounter visit) {
-        if (visit == null) return;
+        // A visit never done (scheduled, or cancelled or voided before it was) never had a care context: nothing to read or write.
+        if (visit == null || visit.getEncounterDateTime() == null) return;
         if (visit.isVoided() || visit.getCancelDateTime() != null) {
             giveUpRemoved(visit);
             return;
         }
         Queued queued;
         try {
-            if (visit.getEncounterDateTime() == null) return;
             EkaSystemConfig orgSettings = settings.find().orElse(null);
             if (orgSettings == null || orgSettings.getHipIds().isEmpty()) return;
             Individual individual = patientOf(visit);

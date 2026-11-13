@@ -147,9 +147,11 @@ public class EkaHipService implements EkaHipEvents {
 
     // ---- linking (the admin page's Link, and AbdmHousekeepingJob for visits queued on save)
 
-    // Links every completed visit not yet linked; answers with the same view as AbdmHipLinkingService.careContexts.
+    // The admin page's Link: links every completed visit not yet linked; answers with the same view as
+    // AbdmHipLinkingService.careContexts. Eka failing for every patient is thrown, never counted.
     public List<Map<String, Object>> linkCareContexts(String subjectUuid) {
-        return linkCareContexts(subjectUuid, false);
+        linkVisits(subjectUuid, false, false);
+        return linking.careContexts(subjectUuid);
     }
 
     // The patient as Eka knows them: the ABHA address and Eka ID of the ABHA on the saved record.
@@ -169,7 +171,15 @@ public class EkaHipService implements EkaHipEvents {
         return new EkaPatient(abhaAddress, abha.getEkaOid());
     }
 
-    public List<Map<String, Object>> linkCareContexts(String subjectUuid, boolean queuedOnly) {
+    // For AbdmHousekeepingJob: links the patient's visits queued on save that are due; true when Eka took at least one of
+    // the link calls. ekaTookALinkThisRun: Eka took another patient's link earlier in this run, so a failure of Eka's own
+    // for this patient is about this patient and is counted, not thrown (R21).
+    public boolean linkQueued(String subjectUuid, boolean ekaTookALinkThisRun) {
+        return linkVisits(subjectUuid, true, ekaTookALinkThisRun) > 0;
+    }
+
+    // How many link calls Eka took (answered 2xx).
+    private int linkVisits(String subjectUuid, boolean queuedOnly, boolean ekaTookALinkThisRun) {
         EkaSystemConfig orgSettings = settings.current();
         AbdmHipLinkingService.Patient patient = linking.loadPatient(subjectUuid);
         EkaPatient ekaPatient = ekaPatient(subjectUuid, patient, orgSettings.getAbhaAddressSuffix());
@@ -182,6 +192,7 @@ public class EkaHipService implements EkaHipEvents {
         Set<String> current = patient.visits().stream().map(AbdmHipLinkingService.Visit::reference).collect(Collectors.toSet());
         Set<String> hipIds = new LinkedHashSet<>(byHip.keySet());
         hipIds.addAll(orgSettings.getHipIds());
+        int taken = 0;
         for (String hipId : hipIds) {
             List<AbdmHipLinkingService.Visit> visits = byHip.getOrDefault(hipId, List.of());
             if (!visits.isEmpty()) {
@@ -203,13 +214,15 @@ public class EkaHipService implements EkaHipEvents {
             Map<String, List<AbdmHipStore.CareContext>> byType = toLink.stream()
                     .collect(Collectors.groupingBy(AbdmHipStore.CareContext::hiType, LinkedHashMap::new, Collectors.toList()));
             for (List<AbdmHipStore.CareContext> ofType : byType.values()) {
-                link(patient, hipId, abhaAddress, oid, ofType);
+                if (link(patient, hipId, abhaAddress, oid, ofType, ekaTookALinkThisRun)) taken++;
             }
         }
-        return linking.careContexts(subjectUuid);
+        return taken;
     }
 
-    private void link(AbdmHipLinkingService.Patient patient, String hipId, String abhaAddress, String oid, List<AbdmHipStore.CareContext> toLink) {
+    // True when Eka took the call (answered 2xx). ekaTookALinkThisRun: see linkQueued.
+    private boolean link(AbdmHipLinkingService.Patient patient, String hipId, String abhaAddress, String oid, List<AbdmHipStore.CareContext> toLink,
+                         boolean ekaTookALinkThisRun) {
         List<String> references = toLink.stream().map(AbdmHipStore.CareContext::reference).toList();
 
         ObjectNode body = AbdmJson.obj();
@@ -227,25 +240,29 @@ public class EkaHipService implements EkaHipEvents {
         // Persist before send: a webhook can arrive before post() returns.
         String linkRequestId = UUID.randomUUID().toString();
         store.markLinkRequested(hipId, references, linkRequestId);
+        boolean taken = false;
         try {
             EkaResponse response = eka.post(LINK_PATH, body, patientHeaders(oid, patient.uuid(), hipId));
+            taken = true;
             logger.info("Eka link of {} care contexts for subject {}: HTTP {}", references.size(), patient.uuid(), response.status());
             applyAnswer(hipId, linkRequestId, response.body());
         } catch (EkaCallException e) {
-            if (EkaAbdmClient.refusedForGood(e)) {
-                if (EkaAbdmClient.mayHaveActed(e)) {
-                    // An earlier try of this call may have linked them: they stay requested, and a LINKED stays.
-                    store.settleLinkRequest(linkRequestId, LINK_REQUESTED, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
-                } else {
-                    store.settleLinkRequest(linkRequestId, FAILED_FINAL, "Eka refused the link: " + e.getMessage());
-                }
+            String maybeLinked = "Eka gave no clear answer; it may have linked them: " + e.getMessage();
+            if (EkaAbdmClient.refusedForGood(e) || ekaTookALinkThisRun) {
+                // About this patient: refused, or failed by an Eka that took another patient's link this run (R21). Counted
+                // like any failure that may pass, so LINK_ATTEMPTS bounds it; one Eka may have acted on waits for its
+                // webhook as a link Eka took would (counted at the deadline, AbdmHipStore.settleLinkQueue).
+                if (EkaAbdmClient.mayHaveActed(e)) store.settleLinkRequest(linkRequestId, LINK_REQUESTED, maybeLinked);
+                else if (EkaAbdmClient.refusedForGood(e)) store.settleLinkRequest(linkRequestId, FAILED_FINAL, "Eka refused the link: " + e.getMessage());
+                else store.failLinkRequest(linkRequestId, "Eka link failed: " + e.getMessage());
                 logger.warn("Eka link of care contexts for subject {} failed: {}", patient.uuid(), e.getMessage());
-                return;
+                return false;
             }
-            // Eka failed as it would for any patient (its login, 401, 403, a server error, no answer): no try is counted
-            // against these visits, and the failure is thrown, so the run stops before every patient's tries go the same way.
+            // Eka failed as it would for any patient (its login, 401, 403, a server error, no answer), and has taken no link
+            // this run: no try is counted against these visits, and the failure is thrown, so the run stops before every
+            // patient's tries go the same way.
             if (EkaAbdmClient.mayHaveActed(e)) {
-                store.awaitLinkAnswer(linkRequestId, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
+                store.awaitLinkAnswer(linkRequestId, maybeLinked);
             } else {
                 store.putBackLinkRequest(linkRequestId, "Eka did not take the link: " + e.getMessage());
             }
@@ -256,6 +273,7 @@ public class EkaHipService implements EkaHipEvents {
             store.failLinkRequest(linkRequestId, "Eka link failed: " + e.getMessage());
             logger.warn("Eka link of care contexts for subject {} failed: {}", patient.uuid(), e.getMessage());
         }
+        return taken;
     }
 
     // Eka documents 202 with no body. A body that carries a status, overall or per care context, is applied.
@@ -556,7 +574,10 @@ public class EkaHipService implements EkaHipEvents {
 
     // A database fault that may pass on another try: a connection not had or dropped, a transaction not begun, a deadlock
     // or a timeout, however Spring, Hibernate or the driver names it, or Postgres's own code says it (a connection fault,
-    // class 08; a serialization failure, 40001; a deadlock, 40P01).
+    // class 08; a serialization failure, 40001; a deadlock, 40P01; the server shutting down or restarting, 57P01-57P03;
+    // too many connections, 53300).
+    private static final Set<String> TRANSIENT_SQL_STATES = Set.of("40001", "40P01", "57P01", "57P02", "57P03", "53300");
+
     static boolean transientDatabaseFault(Throwable e) {
         for (Throwable t = e; t != null; t = t.getCause() == t ? null : t.getCause()) {
             if (t instanceof TransientDataAccessException || t instanceof RecoverableDataAccessException
@@ -566,7 +587,7 @@ public class EkaHipService implements EkaHipEvents {
             }
             if (t instanceof SQLException sql && sql.getSQLState() != null) {
                 String state = sql.getSQLState();
-                if (state.startsWith("08") || state.equals("40001") || state.equals("40P01")) return true;
+                if (state.startsWith("08") || TRANSIENT_SQL_STATES.contains(state)) return true;
             }
         }
         return false;
