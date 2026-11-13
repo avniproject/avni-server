@@ -349,36 +349,74 @@ public class EkaHipServiceTest {
         verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
     }
 
-    // A call that never reached Eka, or a login Eka turned down, may pass later: counted, and tried again after a wait.
+    // F5: Eka failing for every patient (its login, a lapsed key, an outage, no answer) is not this patient's fault: the
+    // visits go back to the queue with no try counted, and the failure is thrown so the run stops instead of using up
+    // every other patient's tries the same way.
     @Test
-    public void aLinkCallThatMayPassLaterIsCountedForAnotherTry() {
-        for (EkaCallException e : List.of(new EkaAbdmClient.NoAnswer(false, "Eka POST " + LINK + " did not answer: ConnectException"),
-                new EkaCallException(401, null, "Eka POST " + LINK + " refused with HTTP 401"))) {
+    public void anEkaWideFailureThatTookNothingPutsTheVisitsBackUncounted_andIsThrown() {
+        for (EkaCallException e : List.of(new EkaCallException(0, null, "Eka login failed: Eka login failed with HTTP 401"),
+                new EkaCallException(401, null, "Eka POST " + LINK + " refused with HTTP 401"),
+                new EkaCallException(403, null, "Eka POST " + LINK + " refused with HTTP 403"),
+                new EkaCallException(429, null, "Eka POST " + LINK + " refused with HTTP 429"),
+                new EkaAbdmClient.NoAnswer(false, "Eka POST " + LINK + " did not answer: ConnectException"),
+                new EkaAbdmClient.NoAnswer(false, "Eka POST " + LINK + " not sent: interrupted"))) {
             reset(store, eka);
             when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING")));
             when(eka.post(eq(LINK), any(), any())).thenThrow(e);
 
-            service.linkCareContexts("subject-1");
+            assertSame(e, assertThrows(EkaCallException.class, () -> service.linkCareContexts("subject-1")));
 
             ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
             verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
-            verify(store).failLinkRequest(eq(linkRequestId.getValue()), contains(e.getMessage()));
+            verify(store).putBackLinkRequest(eq(linkRequestId.getValue()), contains(e.getMessage()));
+            verify(store, never()).failLinkRequest(anyString(), anyString());
             verify(store, never()).settleLinkRequest(anyString(), anyString(), any());
         }
     }
 
-    // Eka may have linked them, and its webhook may already have said so: they stay requested, and a LINKED stays.
+    // F5: Eka may have linked them (a server error, or no answer to a call it received): they stay requested, a LINKED
+    // stays, and they are looked at again after the deadline with no try counted; the run stops.
     @Test
-    public void aLinkCallEkaMayHaveActedOnLeavesTheVisitsLinkRequested() {
-        when(eka.post(eq(LINK), any(), any())).thenThrow(new EkaCallException(504, null, "Eka POST " + LINK + " refused with HTTP 504"));
+    public void anEkaWideFailureEkaMayHaveActedOnLeavesTheVisitsRequestedUncounted_andIsThrown() {
+        for (EkaCallException e : List.of(new EkaCallException(504, null, "Eka POST " + LINK + " refused with HTTP 504"),
+                new EkaAbdmClient.NoAnswer(true, "Eka POST " + LINK + " did not answer within 10000 ms"))) {
+            reset(store, eka);
+            when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING")));
+            when(eka.post(eq(LINK), any(), any())).thenThrow(e);
 
-        service.linkCareContexts("subject-1");
+            assertSame(e, assertThrows(EkaCallException.class, () -> service.linkCareContexts("subject-1")));
+
+            ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
+            verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
+            verify(store).awaitLinkAnswer(eq(linkRequestId.getValue()), contains("may have linked them"));
+            verify(store, never()).settleLinkRequest(anyString(), anyString(), any());
+            verify(store, never()).failLinkRequest(anyString(), anyString());
+            verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
+        }
+    }
+
+    // F5: once Eka fails for everyone, the patient's other record types are not sent to fail the same way.
+    @Test
+    public void anEkaWideFailureSendsNoMoreOfThePatientsVisits() {
+        when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING"), row(OTHER_TYPE, "PENDING", "Prescription")));
+        when(eka.post(eq(LINK), any(), any())).thenThrow(new EkaCallException(503, null, "Eka POST " + LINK + " refused with HTTP 503"));
+
+        assertThrows(EkaCallException.class, () -> service.linkCareContexts("subject-1"));
+
+        verify(eka, times(1)).post(eq(LINK), any(), any());
+    }
+
+    // A fault of Avni's own while linking (not Eka's answer) may pass later: counted, and tried again after a wait.
+    @Test
+    public void aFaultOfAvnisOwnWhileLinkingIsCountedForAnotherTry() {
+        when(eka.post(eq(LINK), any(), any())).thenThrow(new IllegalStateException("connection pool closed"));
+
+        assertSame(view, service.linkCareContexts("subject-1"));
 
         ArgumentCaptor<String> linkRequestId = ArgumentCaptor.forClass(String.class);
         verify(store).markLinkRequested(eq(HIP_ID), any(), linkRequestId.capture());
-        verify(store).settleLinkRequest(eq(linkRequestId.getValue()), eq("LINK_REQUESTED"), contains("may have linked them"));
-        verify(store, never()).settleLinkRequest(anyString(), eq("FAILED"), any());
-        verify(store, never()).markByLinkRequest(anyString(), anyString(), any());
+        verify(store).failLinkRequest(eq(linkRequestId.getValue()), contains("connection pool closed"));
+        verify(store, never()).putBackLinkRequest(anyString(), anyString());
     }
 
     @Test

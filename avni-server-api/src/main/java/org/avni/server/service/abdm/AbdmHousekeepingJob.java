@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm;
 
+import org.avni.server.service.abdm.eka.EkaCallException;
 import org.avni.server.service.abdm.eka.EkaHipService;
 import org.avni.server.service.abdm.eka.EkaHiuService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
@@ -124,7 +125,8 @@ public class AbdmHousekeepingJob {
     // HIP_INTI_LINK_505: visits queued on save (AbdmVisitQueue) are linked through Eka, patient by patient, under every
     // HIP ID of the organisation; each patient once, however many of its HIP IDs it has visits waiting under. No new
     // patient is taken after the organisation's deadline. The queue settles (AbdmHipStore): a link Eka never answered is
-    // queued again, a failure that may pass is tried again after a growing wait, and one that cannot is given up.
+    // queued again, a failure that may pass is tried again after a growing wait, and one that cannot is given up. Eka
+    // failing for every patient costs no visit a try and stops the organisation's run, which is recorded as failed.
     public void linkQueuedVisits() {
         runner.forEachOrganisation(VISIT_LINKING, LINK_BUDGET, deadline -> {
             Map<String, List<String>> waiting = new LinkedHashMap<>();
@@ -155,6 +157,11 @@ public class AbdmHousekeepingJob {
                     // The patient's own record refuses it (removed, a verified ABHA with neither address nor number): no later try changes that.
                     patient.getValue().forEach(hipId -> hipStore.failQueuedForGood(patient.getKey(), hipId, e.getMessage()));
                     logger.info("ABDM: visits of subject {} given up: {}", patient.getKey(), e.getMessage());
+                } catch (EkaCallException e) {
+                    // Eka failing for every patient (EkaHipService.link): nothing was counted, and the rest would fail the
+                    // same way. The run stops; the runner records it as failed and reports it.
+                    logger.warn("ABDM linking stopped, Eka failing for every patient; {} patient(s) left for the next run", left + 1);
+                    throw e;
                 } catch (RuntimeException e) {
                     String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
                     patient.getValue().forEach(hipId -> hipStore.failQueued(patient.getKey(), hipId, reason));

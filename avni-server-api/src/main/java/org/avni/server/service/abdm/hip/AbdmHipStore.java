@@ -127,11 +127,14 @@ public class AbdmHipStore {
     // Queued on save, or failed in a way a later try may not and past its wait.
     private static final String DUE ="(c.status = 'QUEUED' or (c.status = 'FAILED' and (c.next_attempt_at is null or c.next_attempt_at <= now())))";
 
+    // Ends the reason of every visit given up when its tries ran out, and of no other: what requeueGivenUp takes back.
+    private static final String GIVEN_UP_AFTER = "; given up after ";
+
     // One more try that did not settle the link: FAILED until the next, waiting twice as long as the last; FAILED_FINAL,
     // with the count, at the cap.
     private static final String COUNTED_FAILURE = "attempts = c.attempts + 1, " +
             "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'FAILED' end, " +
-            "error = case when c.attempts + 1 >= :maxAttempts then :error || '; given up after ' || (c.attempts + 1) || ' tries' else :error end, " +
+            "error = case when c.attempts + 1 >= :maxAttempts then :error || '" + GIVEN_UP_AFTER + "' || (c.attempts + 1) || ' tries' else :error end, " +
             "next_attempt_at = now() + make_interval(secs => :firstWait * power(2, least(c.attempts, 20))), updated_at = now()";
 
     // Patients with visits due, longest waiting first; a removed patient is never taken.
@@ -149,20 +152,25 @@ public class AbdmHipStore {
                 params().addValue("ind", individualId).addValue("hip", hipId, Types.VARCHAR), CARE_CONTEXT);
     }
 
-    // Before each run: a link Eka has said nothing about past its wait (the deadline, doubled for each earlier try) is
-    // queued again, counted as a try (Avni's own links only, never one the patient made from their app); a removed
-    // patient's waiting visits are given up, and so are waiting visits no longer the patient's (voided or cancelled since
-    // they were queued), so none is linked and none holds the queue.
+    // Before each run: a link Eka took and has said nothing about past its wait (the deadline, doubled for each earlier
+    // try) is queued again, counted as a try (Avni's own links only, never one the patient made from their app); one Eka
+    // may have taken while failing for everyone is queued again past its deadline with no try counted (awaitLinkAnswer); a
+    // removed patient's waiting visits are given up, and so are waiting visits no longer the patient's (voided or
+    // cancelled since they were queued), so none is linked and none holds the queue.
     public void settleLinkQueue(String hipId) {
         jdbc.update("update abdm_care_context c set attempts = c.attempts + 1, " +
                         "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'QUEUED' end, " +
-                        "error = case when c.attempts + 1 >= :maxAttempts then 'Eka never said whether it linked them; given up after ' " +
+                        "error = case when c.attempts + 1 >= :maxAttempts then 'Eka never said whether it linked them" + GIVEN_UP_AFTER + "' " +
                         "  || (c.attempts + 1) || ' tries' else 'Eka gave no answer about the link; queued again' end, " +
                         "next_attempt_at = null, updated_at = now() " +
                         "where c.organisation_id = :org and c.hip_id = :hip and c.status = 'LINK_REQUESTED' and c.link_mode = 'HIP' " +
-                        "and c.updated_at < now() - make_interval(secs => :deadline * power(2, least(c.attempts, 20)))",
+                        "and c.next_attempt_at is null and c.updated_at < now() - make_interval(secs => :deadline * power(2, least(c.attempts, 20)))",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("maxAttempts", LINK_ATTEMPTS)
                         .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()));
+        jdbc.update("update abdm_care_context c set status = 'QUEUED', error = 'Eka gave no clear answer about the link; queued again', " +
+                        "next_attempt_at = null, updated_at = now() " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and c.status = 'LINK_REQUESTED' and c.next_attempt_at <= now()",
+                params().addValue("hip", hipId, Types.VARCHAR));
         jdbc.update("update abdm_care_context c set status = 'FAILED_FINAL', error = 'The patient was removed', updated_at = now() " +
                         "from individual i where i.id = c.individual_id and i.is_voided = true and c.organisation_id = :org " +
                         "and c.hip_id = :hip and c.status in ('QUEUED', 'FAILED', 'AWAITING_VERIFIED_ABHA')",
@@ -244,6 +252,36 @@ public class AbdmHipStore {
         jdbc.update("update abdm_care_context c set " + COUNTED_FAILURE + " " +
                         "where c.organisation_id = :org and c.link_request_id = :req and c.status = 'LINK_REQUESTED'",
                 counted(error).addValue("req", linkRequestId, Types.VARCHAR));
+    }
+
+    // Eka failed as it would for any patient and may have taken the link (a server error, or no answer to a call it
+    // received): the visits still LINK_REQUESTED wait for its webhook, and are queued again after the deadline with no try
+    // counted (settleLinkQueue). A LINKED its webhook already gave stays.
+    public void awaitLinkAnswer(String linkRequestId, String error) {
+        jdbc.update("update abdm_care_context set error = :error, next_attempt_at = now() + make_interval(secs => :deadline), updated_at = now() " +
+                        "where organisation_id = :org and link_request_id = :req and status = 'LINK_REQUESTED'",
+                params().addValue("req", linkRequestId, Types.VARCHAR).addValue("error", error, Types.VARCHAR)
+                        .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()));
+    }
+
+    // Eka failed as it would for any patient and took nothing (its login, 401, 403, a call never made): the visits still
+    // LINK_REQUESTED are queued again with no try counted, behind the patients already waiting.
+    public void putBackLinkRequest(String linkRequestId, String error) {
+        jdbc.update("update abdm_care_context set status = 'QUEUED', error = :error, next_attempt_at = null, updated_at = now() " +
+                        "where organisation_id = :org and link_request_id = :req and status = 'LINK_REQUESTED'",
+                params().addValue("req", linkRequestId, Types.VARCHAR).addValue("error", error, Types.VARCHAR));
+    }
+
+    // The status page's requeue: visits given up when their tries ran out, under these HIP IDs, are queued afresh. Eka
+    // failing for everyone used them up; a visit Eka refused, one removed, and a removed patient's are never taken back.
+    // Returns how many were queued.
+    public int requeueGivenUp(Collection<String> hipIds) {
+        if (hipIds == null || hipIds.isEmpty()) return 0;
+        return jdbc.update("update abdm_care_context c set status = 'QUEUED', attempts = 0, error = null, next_attempt_at = null, updated_at = now() " +
+                        "from individual i where i.id = c.individual_id and i.is_voided = false and c.organisation_id = :org " +
+                        "and c.hip_id in (:hips) and c.status = 'FAILED_FINAL' and position(:givenUp in coalesce(c.error, '')) > 0 " +
+                        "and " + VISIT_IS_CURRENT,
+                params().addValue("hips", hipIds).addValue("givenUp", GIVEN_UP_AFTER, Types.VARCHAR));
     }
 
     // {status: how many} of the organisation's visits, for the admin page's status.
@@ -346,17 +384,19 @@ public class AbdmHipStore {
                         .addValue("error", error, Types.VARCHAR));
     }
 
+    // A visit already LINKED stays so whatever Eka says of a later link of it.
     public int markByLinkRequest(String linkRequestId, String status, String error) {
         return jdbc.update("update abdm_care_context set status = :status, error = :error, updated_at = now() " +
-                        "where organisation_id = :org and link_request_id = :req",
+                        "where organisation_id = :org and link_request_id = :req and (status <> 'LINKED' or :status = 'LINKED')",
                 params().addValue("req", linkRequestId, Types.VARCHAR).addValue("status", status, Types.VARCHAR)
                         .addValue("error", error, Types.VARCHAR));
     }
 
+    // Never on a visit already LINKED: a failure Eka reports for a later link of it does not undo the link.
     public void markStatus(String hipId, Collection<String> references, String status, String error) {
         if (references == null || references.isEmpty()) return;
         jdbc.update("update abdm_care_context set status = :status, error = :error, updated_at = now() " +
-                        "where organisation_id = :org and hip_id = :hip and reference in (:refs)",
+                        "where organisation_id = :org and hip_id = :hip and reference in (:refs) and status <> 'LINKED'",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("refs", references)
                         .addValue("status", status, Types.VARCHAR).addValue("error", error, Types.VARCHAR));
     }

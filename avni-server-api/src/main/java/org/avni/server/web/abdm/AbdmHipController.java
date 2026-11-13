@@ -17,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
-// The webapp's HIP screens: patients with an ABHA, their visits as care contexts, and linking them through Eka.
+// The webapp's HIP screens: patients with an ABHA, their visits as care contexts, linking them through Eka, and queueing
+// again visits given up when their tries ran out.
 // Each endpoint checks the privilege, then answers 404 unless the organisation's record sharing is on (AbdmAccess).
 // Not @Transactional: linking calls Eka, and its webhook must see what was written before the call.
 @RestController
@@ -57,6 +58,16 @@ public class AbdmHipController {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         access.requireRecordSharingOn();
         return ekaHipService.linkCareContexts(uuid);
+    }
+
+    // The status page's action: visits given up when their tries ran out, as when Eka failed for everyone, are queued
+    // again; {requeued: how many}.
+    @PostMapping("/web/abdm/hip/requeue-failed")
+    @PreAuthorize("hasAnyAuthority('user')")
+    public Map<String, Integer> requeueFailed() {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        access.requireRecordSharingOn();
+        return Map.of("requeued", linkingService.requeueGivenUp());
     }
 
     @ExceptionHandler(AbdmRequestException.class)

@@ -102,6 +102,11 @@ public class AbdmHipLinkingService {
         return new ArrayList<>(bySubject.values());
     }
 
+    // The status page's requeue (AbdmHipStore.requeueGivenUp), under the organisation's HIP IDs, which the job links under.
+    public int requeueGivenUp() {
+        return store.requeueGivenUp(settings.current().getHipIds());
+    }
+
     public List<Map<String, Object>> careContexts(String subjectUuid) {
         return view(loadPatient(subjectUuid));
     }

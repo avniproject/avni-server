@@ -179,6 +179,23 @@ public class AbdmLinkingPerOrganisationIntegrationTest extends AbstractControlle
         assertEquals(AbdmHipStore.VISIT_REMOVED, careContextRow(orgA).get("error"));
     }
 
+    // F5: Eka refusing the organisation's key (a lapsed key answers 401 to every call) costs the visit no try: it waits
+    // queued for the next run, and the organisation's run is recorded as failed for the status page.
+    @Test
+    public void anEkaThatRefusesTheKeyCostsTheVisitNothing_andTheRunIsRecordedFailed() {
+        eka.stubFor(com.github.tomakehurst.wiremock.client.WireMock.post(urlEqualTo(EkaHipService.LINK_PATH)).willReturn(aResponse().withStatus(401)));
+
+        linkingJobTurnOf(orgA).linkQueuedVisits();
+
+        assertEquals(1, eka.findAll(postRequestedFor(urlEqualTo(EkaHipService.LINK_PATH))).size());
+        assertEquals(List.of(orgA.visitUuid() + " hip-a QUEUED"), careContexts(orgA));
+        assertEquals(0, careContextRow(orgA).get("attempts"));
+        String[] lastError = new String[1];
+        asSuperAdmin(jdbc -> lastError[0] = jdbc.queryForObject("select last_error from public.abdm_job_run where organisation_id = ? and task = ?",
+                String.class, orgA.id(), AbdmHousekeepingJob.VISIT_LINKING), null);
+        org.junit.Assert.assertTrue(lastError[0], lastError[0] != null && lastError[0].contains("401"));
+    }
+
     // The job as scheduled, through the real runner, which runs the turn of the one organisation named.
     @SuppressWarnings("unchecked")
     private AbdmHousekeepingJob linkingJobTurnOf(Org org) {

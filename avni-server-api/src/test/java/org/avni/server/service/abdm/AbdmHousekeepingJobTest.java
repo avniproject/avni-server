@@ -24,6 +24,7 @@ import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -139,6 +140,24 @@ public class AbdmHousekeepingJobTest {
 
         verify(hipStore).failQueued("subject-1", AbdmTestSupport.HIP_ID, "database unavailable");
         verify(hipStore, never()).failQueuedForGood(any(), any(), any());
+    }
+
+    // F5: Eka failing for everyone (login, 401, 403, a server error, no answer) is no patient's fault: nothing is counted
+    // against any visit, no further patient is tried, and the failure goes to the runner, which records the organisation's
+    // run as failed and reports it (AbdmJobRunner).
+    @Test
+    public void anEkaWideFailureStopsTheRun_countsNothing_andIsLeftForTheRunnerToReport() {
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
+        org.avni.server.service.abdm.eka.EkaCallException lapsedKey = new org.avni.server.service.abdm.eka.EkaCallException(0, null,
+                "Eka login failed: Eka login failed with HTTP 401");
+        when(ekaHip.linkCareContexts("subject-1", true)).thenThrow(lapsedKey);
+
+        assertSame(lapsedKey, org.junit.Assert.assertThrows(org.avni.server.service.abdm.eka.EkaCallException.class, () -> job().linkQueuedVisits()));
+
+        verify(ekaHip, never()).linkCareContexts(eq("subject-2"), anyBoolean());
+        verify(hipStore, never()).failQueued(any(), any(), any());
+        verify(hipStore, never()).failQueuedForGood(any(), any(), any());
+        verify(hipStore, never()).awaitVerifiedAbha(any(), any(), any(), any());
     }
 
     // Links Eka never answered are queued again, and a removed patient's visits given up, before the run picks patients.

@@ -223,16 +223,29 @@ public class EkaHipService implements EkaHipEvents {
             EkaResponse response = eka.post(LINK_PATH, body, patientHeaders(oid, patient.uuid(), hipId));
             logger.info("Eka link of {} care contexts for subject {}: HTTP {}", references.size(), patient.uuid(), response.status());
             applyAnswer(hipId, linkRequestId, response.body());
-        } catch (RuntimeException e) {
-            if (EkaAbdmClient.mayHaveActed(e)) {
-                // Eka may have linked them, and its webhook may have said so already: they stay requested, a LINKED stays,
-                // and the queue tries again once Eka has said nothing past the deadline.
-                store.settleLinkRequest(linkRequestId, LINK_REQUESTED, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
-            } else if (EkaAbdmClient.refusedForGood(e)) {
-                store.settleLinkRequest(linkRequestId, FAILED_FINAL, "Eka refused the link: " + e.getMessage());
-            } else {
-                store.failLinkRequest(linkRequestId, "Eka link failed: " + e.getMessage());
+        } catch (EkaCallException e) {
+            if (EkaAbdmClient.refusedForGood(e)) {
+                if (EkaAbdmClient.mayHaveActed(e)) {
+                    // An earlier try of this call may have linked them: they stay requested, and a LINKED stays.
+                    store.settleLinkRequest(linkRequestId, LINK_REQUESTED, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
+                } else {
+                    store.settleLinkRequest(linkRequestId, FAILED_FINAL, "Eka refused the link: " + e.getMessage());
+                }
+                logger.warn("Eka link of care contexts for subject {} failed: {}", patient.uuid(), e.getMessage());
+                return;
             }
+            // Eka failed as it would for any patient (its login, 401, 403, a server error, no answer): no try is counted
+            // against these visits, and the failure is thrown, so the run stops before every patient's tries go the same way.
+            if (EkaAbdmClient.mayHaveActed(e)) {
+                store.awaitLinkAnswer(linkRequestId, "Eka gave no clear answer; it may have linked them: " + e.getMessage());
+            } else {
+                store.putBackLinkRequest(linkRequestId, "Eka did not take the link: " + e.getMessage());
+            }
+            logger.warn("Eka link of care contexts for subject {} not made, Eka failing for every patient: {}", patient.uuid(), e.getMessage());
+            throw e;
+        } catch (RuntimeException e) {
+            // A fault of Avni's own may pass on a later try: counted, and tried again after a wait.
+            store.failLinkRequest(linkRequestId, "Eka link failed: " + e.getMessage());
             logger.warn("Eka link of care contexts for subject {} failed: {}", patient.uuid(), e.getMessage());
         }
     }

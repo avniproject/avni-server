@@ -50,6 +50,17 @@ public class AbdmHipLinkingServiceTest {
         when(store.findCareContexts(INDIVIDUAL_ID, HIP_ID)).thenReturn(List.of(row("enc-1", "PENDING", null), row("enc-2", "PENDING", null)));
     }
 
+    // F5: the status page's requeue works under the organisation's HIP IDs, so the job, which links under those, takes them.
+    @Test
+    public void theRequeueOfVisitsGivenUpIsUnderTheOrganisationsHipIds() {
+        AbdmHipLinkingService twoHips = new AbdmHipLinkingService(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(
+                new org.avni.server.domain.JsonObject().with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2")))),
+                store, AbdmTestSupport.orgContext(), individualRepository, abhaLinkRepository);
+        when(store.requeueGivenUp(List.of("hip-1", "hip-2"))).thenReturn(4);
+
+        assertEquals(4, twoHips.requeueGivenUp());
+    }
+
     @Test
     public void programmeVisitsAreVisitsToo_newestFirst_withoutThoseOfAVoidedEnrolment() {
         Individual patient = new Individual();

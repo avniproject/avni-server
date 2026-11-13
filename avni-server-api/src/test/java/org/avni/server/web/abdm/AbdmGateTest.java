@@ -81,7 +81,8 @@ public class AbdmGateTest {
     private static final List<RequestBuilder> HIP = List.of(
             get("/web/abdm/hip/patients"),
             get("/web/abdm/hip/subjects/s-1/care-contexts"),
-            post("/web/abdm/hip/subjects/s-1/link"));
+            post("/web/abdm/hip/subjects/s-1/link"),
+            post("/web/abdm/hip/requeue-failed"));
 
     private static List<RequestBuilder> hiu() {
         return List.of(
@@ -128,6 +129,7 @@ public class AbdmGateTest {
         verify(linking).patientsWithAbha();
         verify(linking).careContexts("s-1");
         verify(ekaHip).linkCareContexts("s-1");
+        verify(linking).requeueGivenUp();
         verify(ekaHiu).requestConsent(any(), any(), any(), any(), any(), any(), any(), any());
         verify(consents).list();
         verify(data).records("c-1");
@@ -143,11 +145,22 @@ public class AbdmGateTest {
         verifyNoInteractions(ekaHiu, consents, data);
     }
 
+    // F5: the status page's requeue answers how many visits it queued again.
+    @Test
+    public void theRequeueAnswersHowManyVisitsItQueuedAgain() throws Exception {
+        settings(true, true, full());
+        when(linking.requeueGivenUp()).thenReturn(3);
+
+        mvc.perform(post("/web/abdm/hip/requeue-failed")).andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().json("{\"requeued\":3}", true));
+    }
+
     @Test
     public void thePrivilegeIsCheckedBeforeTheGate() {
         doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.EditOrganisationConfiguration)).when(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
 
         assertThrows(AvniAccessException.class, () -> hipController.patients());
+        assertThrows(AvniAccessException.class, () -> hipController.requeueFailed());
         assertThrows(AvniAccessException.class, () -> hiuController.consentRequests());
 
         verifyNoInteractions(organisationConfigService, configRepository);

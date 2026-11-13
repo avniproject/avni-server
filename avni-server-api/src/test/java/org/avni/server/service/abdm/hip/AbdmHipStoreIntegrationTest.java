@@ -237,6 +237,119 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(3, column("v-1", "attempts"));
     }
 
+    // F5: a link Eka may have taken while failing for everyone (a server error, no answer) waits for its webhook, then is
+    // queued again after the deadline with no try counted, however many times that happens.
+    @Test
+    public void aLinkEkaMayHaveTakenWhileFailingForEveryoneIsQueuedAgainAfterTheDeadline_uncounted() {
+        emptyQueue();
+        visits("v-1", "v-2");
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        for (int time = 1; time <= AbdmHipStore.LINK_ATTEMPTS + 2; time++) {
+            store.markLinkRequested(QUEUE_HIP, time == 1 ? List.of("v-1", "v-2") : List.of("v-1"), "req-" + time);
+            if (time == 1) store.markLinked(QUEUE_HIP, List.of("v-2"), "HIP");
+
+            store.awaitLinkAnswer("req-" + time, "Eka gave no clear answer; it may have linked them: HTTP 503");
+            store.settleLinkQueue(QUEUE_HIP);
+
+            assertEquals("LINK_REQUESTED", column("v-1", "status"));
+            namedJdbc.getJdbcOperations().update("update abdm_care_context set next_attempt_at = now() - interval '1 second' where reference = 'v-1'");
+            store.settleLinkQueue(QUEUE_HIP);
+
+            assertEquals("QUEUED", column("v-1", "status"));
+            assertEquals(0, column("v-1", "attempts"));
+            assertEquals("LINKED", column("v-2", "status"));
+        }
+    }
+
+    // F5: a link Eka did not take while failing for everyone (its login, 401, 403, a call never made) goes back to the
+    // queue with no try counted, behind the patients already waiting; one Eka's webhook settled meanwhile keeps that.
+    @Test
+    public void aLinkEkaDidNotTakeWhileFailingForEveryoneIsQueuedAgainUncounted_behindThoseWaiting() {
+        emptyQueue();
+        insertSubject(OTHER, "{}");
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        store.queueCareContexts(idOf(OTHER), QUEUE_HIP, OTHER, "OPConsultation", List.of(cc("v-other")));
+        age("v-1", "2 hours");
+        age("v-2", "2 hours");
+        age("v-other", "1 hour");
+        assertEquals(List.of(KNOWN, OTHER), store.subjectsToLink(QUEUE_HIP, 50));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-1", "v-2"), "req-1");
+        store.markLinked(QUEUE_HIP, List.of("v-2"), "HIP");
+
+        store.putBackLinkRequest("req-1", "Eka did not take the link: Eka login failed");
+
+        assertEquals("QUEUED", column("v-1", "status"));
+        assertEquals(0, column("v-1", "attempts"));
+        assertEquals("Eka did not take the link: Eka login failed", column("v-1", "error"));
+        assertEquals("LINKED", column("v-2", "status"));
+        assertEquals(List.of(OTHER, KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+    }
+
+    // F5: an Eka answer or webhook that a link failed never undoes a LINKED Eka or the patient made first.
+    @Test
+    public void aFailureEkaReportsNeverOverwritesALinkedVisit() {
+        emptyQueue();
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-1", "v-2"), "req-1");
+        store.markLinked(QUEUE_HIP, List.of("v-1"), "HIP");
+
+        store.markStatus(QUEUE_HIP, List.of("v-1", "v-2"), "FAILED_FINAL", "Eka reported ERRORED");
+        store.markByLinkRequest("req-1", "FAILED_FINAL", "Eka reported ERRORED");
+
+        assertEquals("LINKED", column("v-1", "status"));
+        assertEquals("FAILED_FINAL", column("v-2", "status"));
+        store.markByLinkRequest("req-1", "LINKED", null);
+        assertEquals("LINKED", column("v-2", "status"));
+    }
+
+    // F5: the status page's requeue takes back visits given up when their tries ran out (Eka's login, 401, 403, a server
+    // error, no answer), never one Eka refused, one removed, a removed patient's, or one under a HIP ID no longer the
+    // organisation's; they are queued afresh.
+    @Test
+    public void visitsGivenUpWhenTheirTriesRanOutAreQueuedAgain_neverOnesRefusedOrRemoved() {
+        emptyQueue();
+        insertSubject(OTHER, "{}");
+        visits("v-tries", "v-unanswered", "v-refused", "v-errored", "v-removed", "v-elsewhere", "v-linked");
+        visitOf(OTHER, "v-patient-removed");
+        store.queueCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-tries"), cc("v-refused"), cc("v-errored"),
+                cc("v-removed"), cc("v-linked")));
+        store.queueCareContexts(knownId(), "OLD-HIP", KNOWN, "OPConsultation", List.of(cc("v-elsewhere")));
+        store.queueCareContexts(idOf(OTHER), QUEUE_HIP, OTHER, "OPConsultation", List.of(cc("v-patient-removed")));
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("update abdm_care_context set attempts = ? where reference in ('v-tries', 'v-elsewhere', 'v-patient-removed')",
+                AbdmHipStore.LINK_ATTEMPTS - 1);
+        store.failQueued(KNOWN, QUEUE_HIP, "Eka link failed: Eka POST /abdm/v1/care-contexts/link refused with HTTP 401");
+        store.failQueued(KNOWN, "OLD-HIP", "Eka link failed: Eka login failed");
+        store.failQueued(OTHER, QUEUE_HIP, "Eka link failed: Eka login failed");
+        assertEquals("FAILED_FINAL", column("v-tries", "status"));
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-unanswered")));
+        store.markLinkRequested(QUEUE_HIP, List.of("v-unanswered"), "req-1");
+        jdbc.update("update abdm_care_context set attempts = ? where reference = 'v-unanswered'", AbdmHipStore.LINK_ATTEMPTS - 1);
+        age("v-unanswered", "30 days");
+        store.settleLinkQueue(QUEUE_HIP);
+        assertEquals("FAILED_FINAL", column("v-unanswered", "status"));
+        store.markStatus(QUEUE_HIP, List.of("v-refused"), "FAILED_FINAL", "Eka refused the link: Eka POST link refused with HTTP 400");
+        store.markStatus(QUEUE_HIP, List.of("v-errored"), "FAILED_FINAL", "ABDM-1035: Invalid HIP ID");
+        jdbc.update("update abdm_care_context set status = 'FAILED_FINAL', error = 'Eka link failed: Eka login failed; given up after 6 tries' " +
+                "where reference = 'v-removed'");
+        jdbc.update("update encounter set is_voided = true where uuid = 'v-removed'");
+        jdbc.update("update individual set is_voided = true where uuid = ?", OTHER);
+        store.markLinked(QUEUE_HIP, List.of("v-linked"), "HIP");
+
+        assertEquals(2, store.requeueGivenUp(List.of(QUEUE_HIP)));
+
+        for (String requeued : List.of("v-tries", "v-unanswered")) {
+            assertEquals(requeued, "QUEUED", column(requeued, "status"));
+            assertEquals(requeued, 0, column(requeued, "attempts"));
+            assertEquals(requeued, null, column(requeued, "error"));
+        }
+        for (String kept : List.of("v-refused", "v-errored", "v-removed", "v-elsewhere", "v-patient-removed")) {
+            assertEquals(kept, "FAILED_FINAL", column(kept, "status"));
+        }
+        assertEquals("LINKED", column("v-linked", "status"));
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
+    }
+
     // A link the patient made from their own app is not the queue's to send again.
     @Test
     public void aPatientsOwnLinkEkaDidNotAnswerIsNotTakenOverByTheQueue() {
