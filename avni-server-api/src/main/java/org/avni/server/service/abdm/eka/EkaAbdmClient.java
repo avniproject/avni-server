@@ -135,6 +135,8 @@ public class EkaAbdmClient {
                 logger.info("Eka {} {}: try {} of {} after {}", method, withoutQuery(path), attempt + 1, ATTEMPTS,
                         e.getStatus() == 0 ? "no answer" : "HTTP " + e.getStatus());
                 pause(retryBackoff.multipliedBy(1L << (attempt - 1)));
+                // Told to stop while waiting to try again: the next try is not made.
+                if (Thread.currentThread().isInterrupted()) throw actedOnBefore ? e.afterATryEkaMayHaveActedOn() : e;
             }
         }
     }
@@ -187,6 +189,8 @@ public class EkaAbdmClient {
         String call = "Eka " + method + " " + withoutQuery(path);
         Integer status = null;
         try {
+            // A thread told to stop sends nothing, so Eka cannot have acted and the work stays for another try.
+            if (Thread.currentThread().isInterrupted()) throw new NoAnswer(false, call + " not sent: interrupted");
             Long organisationId = organisationId();
             String url = baseUrlOf(config(organisationId)) + path;
             String token = token(organisationId);
@@ -244,7 +248,7 @@ public class EkaAbdmClient {
         } catch (InterruptedException e) {
             answer.cancel(true);
             Thread.currentThread().interrupt();
-            // The request may already be with Eka, so it may have acted on it.
+            // The request was sent and may already be with Eka, so it may have acted on it.
             throw new NoAnswer(true, call + " did not answer: interrupted");
         }
     }

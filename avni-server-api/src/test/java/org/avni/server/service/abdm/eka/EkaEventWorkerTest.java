@@ -378,6 +378,27 @@ public class EkaEventWorkerTest {
         assertEquals(List.of(ORGANISATION), ranAs);
     }
 
+    // Fix round 2: an interrupted thread (the scheduler stopping on a deploy) dispatches nothing more: each Eka call would
+    // fail at once, and a share might be taken as done. What it holds is swept back for another try.
+    @Test
+    public void anInterruptedDrainDispatchesNoFurtherEvent_andClaimsNoMore() {
+        stored("hip-data-fetch.json", "abha.hip_data_fetch", 1);
+        stored("hip-data-fetch.json", "abha.hip_data_fetch", 1);
+        doAnswer(inv -> {
+            Thread.currentThread().interrupt();
+            return null;
+        }).when(hip).hipDataFetch(any(), anyBoolean());
+
+        try {
+            assertEquals(1, worker.drain());
+        } finally {
+            Thread.interrupted();
+        }
+
+        verify(hip, times(1)).hipDataFetch(any(), anyBoolean());
+        verify(inbox, times(1)).claim(anyInt(), any());
+    }
+
     @Test
     public void theWorkerTakesNoNewEventsAfterItsDeadline() {
         when(inbox.claim(anyInt(), any())).thenAnswer(inv -> {

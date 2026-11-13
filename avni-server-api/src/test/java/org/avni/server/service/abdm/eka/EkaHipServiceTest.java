@@ -718,6 +718,8 @@ public class EkaHipServiceTest {
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verifyNoInteractions(assembler, builder);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("more than one patient"));
+        // Fix round 2: never caused by a patient, so it alarms.
+        verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
     // A visit of another patient only discovered here, not linked, still makes the request one for two patients.
@@ -964,6 +966,44 @@ public class EkaHipServiceTest {
         assertEquals("enc-2", body.getValue().at("/entries/0/care_context_id").asText());
         verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-1 (could not be prepared)"));
         verify(bugsnag).notify(any(org.springframework.dao.TransientDataAccessResourceException.class));
+    }
+
+    // Fix round 2: the inbox may hand over a share already sent (its done was not recorded, or the server stopped between
+    // the post and done). Once a flow of this transaction was sent, or may have been, nothing is posted again.
+    @Test
+    public void aShareAlreadySentIsNotSentAgain_whenTheInboxHandsItOverAgain() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(store.shareSent("flow-tx-1")).thenReturn(true);
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
+
+        verify(eka, never()).postSlow(any(), any(), any());
+        verify(store, never()).insertDataFlow(anyString(), anyString(), any(), anyString(), anyString(), any());
+        verifyNoInteractions(assembler, bugsnag);
+    }
+
+    // Fix round 2: a dropped connection is a database fault that may pass, however the driver or Hibernate names it.
+    @Test
+    public void aDroppedConnectionIsADatabaseFaultThatMayPass_andHoldsTheShareForAnotherTry() {
+        for (Throwable fault : List.<Throwable>of(new org.springframework.dao.DataAccessResourceFailureException("connection dropped"),
+                new org.hibernate.exception.JDBCConnectionException("connection dropped", new java.sql.SQLException("08006")),
+                new RuntimeException(new java.sql.SQLTransientConnectionException("08001")),
+                new RuntimeException(new java.sql.SQLRecoverableException("socket closed")),
+                new org.springframework.dao.TransientDataAccessResourceException("deadlock"))) {
+            assertTrue(fault.toString(), EkaHipService.transientDatabaseFault(fault));
+        }
+        assertFalse(EkaHipService.transientDatabaseFault(new IllegalStateException("a form element the builder cannot read")));
+
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(encounterRepository.findByUuid("enc-1")).thenThrow(new org.springframework.dao.DataAccessResourceFailureException("connection dropped",
+                new java.sql.SQLRecoverableException("socket closed")));
+
+        assertThrows(org.springframework.dao.DataAccessResourceFailureException.class,
+                () -> service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false));
+        verify(eka, never()).postSlow(any(), any(), any());
+        verify(store).finishDataFlow(eq(42L), eq("RETRIED"), eq(0), any());
     }
 
     // Fix round 1: a visit that cannot be built (not a passing database fault) would fail on every try, so it is not sent,

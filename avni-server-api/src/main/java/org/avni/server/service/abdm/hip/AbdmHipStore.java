@@ -231,9 +231,26 @@ public class AbdmHipStore {
 
     // The organisation's shares (HIP data flows) that ended FAILED since the time given, for the admin page's status.
     public long failedSharesSince(Instant since) {
-        Long failed = jdbc.queryForObject("select count(*) from abdm_data_flow where organisation_id = :org and role = 'HIP' " +
-                "and status = 'FAILED' and updated_at >= :since", params().addValue("since", Timestamp.from(since)), Long.class);
-        return failed == null ? 0 : failed;
+        return sharesSince("FAILED", since);
+    }
+
+    // The organisation's shares Eka never answered, so may have taken, since the time given, for the admin page's status.
+    public long unansweredSharesSince(Instant since) {
+        return sharesSince("UNANSWERED", since);
+    }
+
+    // Whether a share of this transaction was sent, or may have been: a later try must not post it again.
+    public boolean shareSent(String transactionId) {
+        if (transactionId == null) return false;
+        return Boolean.TRUE.equals(jdbc.queryForObject("select exists (select 1 from abdm_data_flow where organisation_id = :org and role = 'HIP' " +
+                "and transaction_id = :tx and status in ('TRANSFERRED', 'UNANSWERED'))", params().addValue("tx", transactionId, Types.VARCHAR), Boolean.class));
+    }
+
+    private long sharesSince(String status, Instant since) {
+        Long shares = jdbc.queryForObject("select count(*) from abdm_data_flow where organisation_id = :org and role = 'HIP' " +
+                "and status = :status and updated_at >= :since", params().addValue("status", status, Types.VARCHAR)
+                .addValue("since", Timestamp.from(since)), Long.class);
+        return shares == null ? 0 : shares;
     }
 
     private MapSqlParameterSource counted(String error) {

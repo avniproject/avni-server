@@ -246,6 +246,8 @@ public class AbdmJobRunnerTest {
         assertTrue(error.getValue(), error.getValue().contains("system user"));
         assertEquals(1, failure.getSuppressed().length);
         assertTrue(failure.getSuppressed()[0] instanceof AbdmOrgContext.SystemUserException);
+        // Fix round 2: Bugsnag drops suppressed exceptions, so the system user's is sent on its own too.
+        verify(bugsnag).notify(any(AbdmOrgContext.SystemUserException.class));
     }
 
     private void organisation(long id, boolean abha, boolean sharing, String systemUser) throws Exception {

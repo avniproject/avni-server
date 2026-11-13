@@ -102,14 +102,16 @@ public class EkaEventWorker {
         });
     }
 
-    // Handles due events until none is left or the budget is spent; what is left waits for the next drain.
+    // Handles due events until none is left or the budget is spent; what is left waits for the next drain. A thread told
+    // to stop (the scheduler shutting down) takes and hands over nothing more; what it holds is swept back for another try.
     public int drain() {
         Instant deadline = clock.instant().plus(DRAIN_BUDGET);
         int handled = 0;
-        while (clock.instant().isBefore(deadline)) {
+        while (clock.instant().isBefore(deadline) && !Thread.currentThread().isInterrupted()) {
             List<AbdmInbox.Event> batch = inbox.claim(BATCH, clock.instant());
             if (batch.isEmpty()) break;
             for (AbdmInbox.Event event : batch) {
+                if (Thread.currentThread().isInterrupted()) break;
                 handle(event);
                 handled++;
             }

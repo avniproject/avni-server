@@ -29,13 +29,16 @@ import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abha.AbhaEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.hibernate.exception.JDBCConnectionException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.util.StringUtils;
 
+import java.sql.SQLRecoverableException;
+import java.sql.SQLTransientException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -324,6 +327,11 @@ public class EkaHipService implements EkaHipEvents {
         String transactionId = AbdmFlows.firstNonNull(AbdmJson.text(data, "transaction_id"), eventId);
         String consentId = AbdmFlows.firstNonNull(AbdmJson.text(data, "consent_id"), AbdmJson.text(data, "consent_artefact_id"),
                 "eka:" + transactionId);
+        // The inbox may hand over again a share it could not mark done; one sent, or maybe sent, is never posted twice.
+        if (store.shareSent(transactionId)) {
+            logger.info("Eka data fetch {} was sent before; not sent again", transactionId);
+            return;
+        }
         long flowId = store.insertDataFlow(cut(consentId, 100), transactionId, eventId, "eka:" + ON_FETCH_PATH, FLOW_REQUESTED, null);
         Request request;
         try {
@@ -461,7 +469,7 @@ public class EkaHipService implements EkaHipEvents {
         List<AbdmHipStore.CareContext> known = store.findCareContextsByReferences(hipId, references);
         // One request is one patient's: visits of more than one, linked or not, are refused whole.
         if (known.stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
-            refuseShare(flowId, transactionId, "Not sent: the visits asked for belong to more than one patient");
+            failShare(flowId, transactionId, "Not sent: the visits asked for belong to more than one patient", null);
             return null;
         }
         Map<String, AbdmHipStore.CareContext> linkedHere = known.stream().filter(c -> !PENDING.equals(c.status()))
@@ -510,11 +518,15 @@ public class EkaHipService implements EkaHipEvents {
         return cause;
     }
 
-    // A database fault that may pass on another try: no connection, a transaction not begun, a deadlock or a timeout.
+    // A database fault that may pass on another try: a connection not had or dropped, a transaction not begun, a deadlock
+    // or a timeout, however Spring, Hibernate or the driver names it.
     static boolean transientDatabaseFault(Throwable e) {
         for (Throwable t = e; t != null; t = t.getCause() == t ? null : t.getCause()) {
             if (t instanceof TransientDataAccessException || t instanceof RecoverableDataAccessException
-                    || t instanceof CannotCreateTransactionException || t instanceof CannotGetJdbcConnectionException) return true;
+                    || t instanceof CannotCreateTransactionException || t instanceof DataAccessResourceFailureException
+                    || t instanceof JDBCConnectionException || t instanceof SQLTransientException || t instanceof SQLRecoverableException) {
+                return true;
+            }
         }
         return false;
     }

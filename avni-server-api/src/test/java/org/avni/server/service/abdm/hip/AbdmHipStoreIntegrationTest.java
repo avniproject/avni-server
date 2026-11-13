@@ -462,9 +462,50 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(2L, store.failedSharesSince(Instant.now().minus(Duration.ofDays(30))));
     }
 
+    // Fix round 2: shares Eka may have taken without saying so are counted beside the failed ones, over the same window.
+    @Test
+    public void unansweredSharesAreTheOrganisationsHipFlowsThatEndedUnansweredSinceTheTimeGiven() {
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("delete from abdm_health_information");
+        jdbc.update("delete from abdm_data_flow");
+        flow(2, "HIP", "UNANSWERED", "now()");
+        flow(2, "HIP", "UNANSWERED", "now() - interval '40 days'");
+        flow(2, "HIP", "FAILED", "now()");
+        flow(2, "HIU", "UNANSWERED", "now()");
+        flow(3, "HIP", "UNANSWERED", "now()");
+
+        assertEquals(1L, store.unansweredSharesSince(Instant.now().minus(Duration.ofDays(30))));
+        assertEquals(1L, store.failedSharesSince(Instant.now().minus(Duration.ofDays(30))));
+    }
+
+    // Fix round 2: a transaction is sent once its share was sent, or may have been; a refused, retried or still open one,
+    // an HIU flow and another organisation's are not.
+    @Test
+    public void aShareIsSentOnceAFlowOfItsTransactionWasSentOrMayHaveBeen() {
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("delete from abdm_health_information");
+        jdbc.update("delete from abdm_data_flow");
+        flow(2, "HIP", "TRANSFERRED", "now()", "tx-sent");
+        flow(2, "HIP", "UNANSWERED", "now()", "tx-unanswered");
+        flow(2, "HIP", "FAILED", "now()", "tx-failed");
+        flow(2, "HIP", "RETRIED", "now()", "tx-retried");
+        flow(2, "HIP", "REQUESTED", "now()", "tx-open");
+        flow(2, "HIU", "RECEIVED", "now()", "tx-hiu");
+        flow(3, "HIP", "TRANSFERRED", "now()", "tx-other");
+
+        assertTrue(store.shareSent("tx-sent"));
+        assertTrue(store.shareSent("tx-unanswered"));
+        for (String tx : List.of("tx-failed", "tx-retried", "tx-open", "tx-hiu", "tx-other", "tx-none")) assertFalse(tx, store.shareSent(tx));
+        assertFalse(store.shareSent(null));
+    }
+
     private void flow(long organisationId, String role, String status, String updatedAt) {
-        namedJdbc.getJdbcOperations().update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status, updated_at) " +
-                "values (?, ?, ?, 'consent-1', ?, " + updatedAt + ")", UUID.randomUUID().toString(), organisationId, role, status);
+        flow(organisationId, role, status, updatedAt, null);
+    }
+
+    private void flow(long organisationId, String role, String status, String updatedAt, String transactionId) {
+        namedJdbc.getJdbcOperations().update("insert into abdm_data_flow (uuid, organisation_id, role, consent_id, status, updated_at, transaction_id) " +
+                "values (?, ?, ?, 'consent-1', ?, " + updatedAt + ", ?)", UUID.randomUUID().toString(), organisationId, role, status, transactionId);
     }
 
     private static AbdmHipStore.NewCareContext cc(String reference) {

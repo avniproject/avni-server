@@ -135,6 +135,7 @@ public class AbdmHiuStoreIntegrationTest extends AbstractControllerIntegrationTe
         held(jdbc, 2L);
         jdbc.update("insert into abdm_parked_event (organisation_id, kind, reference, status, detail) values " +
                 "(3, 'consent_update', 'cr-other', 'GRANTED', '{\"artefacts\":[\"artefact-unknown\"]}')");
+        UserContextHolder.clear();
 
         assertTrue(store.endWithoutLogin(2L, null, List.of("artefact-unknown"), "REVOKED"));
         assertTrue(store.endWithoutLogin(2L, null, List.of("artefact-1", "artefact-unknown"), "REVOKED"));

@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 // The admin page's Status tab answers even when record sharing is off, so the page can say what is missing.
 public class AbdmAdminControllerTest {
     private static final Set<String> SHAPE = Set.of("abhaEnabled", "recordSharingEnabled", "recordSharingOn", "hiuOn", "environment",
-            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue", "failedShares");
+            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue", "failedShares", "unansweredShares");
 
     private final EkaAbdmClient ekaClient = mock(EkaAbdmClient.class);
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
@@ -155,6 +155,7 @@ public class AbdmAdminControllerTest {
         assertEquals(Map.of(), status.get("jobs"));
         assertEquals(Map.of(), status.get("queue"));
         assertEquals(0L, status.get("failedShares"));
+        assertEquals(0L, status.get("unansweredShares"));
         verifyNoInteractions(jobRuns, hipStore);
     }
 
@@ -187,6 +188,24 @@ public class AbdmAdminControllerTest {
 
         assertEquals(Map.of("QUEUED", 2L, "FAILED_FINAL", 1L), controller.status().get("queue"));
         verify(ekaClient, never()).checkToken();
+    }
+
+    // Fix round 2: shares Eka may have taken without saying so are counted beside the failed ones, over the same window.
+    @Test
+    public void theStatusCountsTheOrganisationsUnansweredSharesOverTheSameWindow() {
+        when(settings.find()).thenReturn(Optional.empty());
+        when(orgContext.organisationId()).thenReturn(7L);
+        when(hipStore.failedSharesSince(any())).thenReturn(3L);
+        when(hipStore.unansweredSharesSince(any())).thenReturn(2L);
+
+        Map<String, Object> status = controller.status();
+
+        assertEquals(2L, status.get("unansweredShares"));
+        org.mockito.ArgumentCaptor<java.time.Instant> failedSince = org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
+        org.mockito.ArgumentCaptor<java.time.Instant> unansweredSince = org.mockito.ArgumentCaptor.forClass(java.time.Instant.class);
+        verify(hipStore).failedSharesSince(failedSince.capture());
+        verify(hipStore).unansweredSharesSince(unansweredSince.capture());
+        assertEquals(failedSince.getValue(), unansweredSince.getValue());
     }
 
     private void on() {

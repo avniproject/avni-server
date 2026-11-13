@@ -22,7 +22,8 @@ import java.util.Map;
 
 // The admin page's Status tab: what record sharing needs and which of it the organisation has, the address to give Eka
 // for its webhooks, how each ABDM job last went for it, its visits by link status (queue), and its shares that ended
-// FAILED within the traffic retention (failedShares). Answers even when record sharing is off, so the page can say
+// FAILED or that Eka never answered within the traffic retention (failedShares, unansweredShares). Answers even when
+// record sharing is off, so the page can say
 // what is missing. The user's own organisation only. Organisation administrators only (EditOrganisationConfiguration).
 @RestController
 public class AbdmAdminController {
@@ -70,7 +71,9 @@ public class AbdmAdminController {
         Long organisationId = orgContext.organisationId();
         status.put("jobs", organisationId == null ? Map.of() : jobRuns.of(organisationId));
         status.put("queue", organisationId == null ? Map.of() : hipStore.linkQueueCounts());
-        status.put("failedShares", organisationId == null ? 0L : hipStore.failedSharesSince(Instant.now().minus(cfg.messageRetention())));
+        Instant since = Instant.now().minus(cfg.messageRetention());
+        status.put("failedShares", organisationId == null ? 0L : hipStore.failedSharesSince(since));
+        status.put("unansweredShares", organisationId == null ? 0L : hipStore.unansweredSharesSince(since));
         return status;
     }
 

@@ -106,8 +106,10 @@ public class AbdmJobRunner {
                         return null;
                     });
                 } catch (RuntimeException failure) {
-                    // Both need fixing: the work failed, and the system user it would have run as cannot act.
+                    // Both need fixing: the work failed, and the system user it would have run as cannot act. Bugsnag
+                    // does not send suppressed exceptions, so the system user's goes on its own.
                     failure.addSuppressed(e);
+                    bugsnag.notify(e);
                     report(organisationId, task, organisation, failure, "; with no login, as " + e.getMessage());
                     return;
                 }

@@ -328,27 +328,53 @@ public class EkaAbdmClientTest {
         }
     }
 
-    // Fix round 1: a call interrupted while waiting may already be with Eka, so it may have acted; it is never taken as a
-    // call that did not reach Eka (which a share would send again), and an interrupted thread tries nothing again.
+    // Fix round 2: a call interrupted while it waits for Eka's answer has been sent, so Eka may have acted on it; it is
+    // never taken as a call that did not reach Eka, and it is not sent again.
     @Test
-    public void anInterruptedCallMayHaveReachedEka_andIsNotTriedAgain() {
+    public void aCallInterruptedWhileWaitingMayHaveReachedEka_andIsNotSentAgain() throws Exception {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202).withFixedDelay(1500)));
         eka.stubFor(get(urlEqualTo(LINK)).willReturn(aResponse().withStatus(200).withFixedDelay(1500)));
-        EkaCallException post;
-        EkaCallException read;
-        try {
-            Thread.currentThread().interrupt();
-            post = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
-            Thread.currentThread().interrupt();
-            read = assertThrows(EkaCallException.class, () -> client.get(LINK, Map.of()));
-        } finally {
-            Thread.interrupted();
-        }
+
+        EkaCallException post = interruptedWhileWaiting(() -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        EkaCallException read = interruptedWhileWaiting(() -> client.get(LINK, Map.of()));
 
         assertTrue(post.getMessage(), EkaAbdmClient.mayHaveActed(post));
         assertFalse(EkaAbdmClient.refusedForGood(post));
         assertTrue(EkaAbdmClient.mayHaveActed(read));
-        assertTrue(eka.findAll(getRequestedFor(urlEqualTo(LINK))).size() <= 1);
+        eka.verify(1, postRequestedFor(urlEqualTo(LINK)));
+        eka.verify(1, getRequestedFor(urlEqualTo(LINK)));
+    }
+
+    // Fix round 2: on a thread already interrupted (the scheduler stopping) nothing is sent: Eka cannot have acted, so
+    // the work is left for another try rather than taken as done.
+    @Test
+    public void onAnInterruptedThreadNothingIsSent_andEkaCannotHaveActed() {
+        eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202)));
+        EkaCallException e;
+        try {
+            Thread.currentThread().interrupt();
+            e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+        } finally {
+            Thread.interrupted();
+        }
+
+        assertFalse(e.getMessage(), EkaAbdmClient.mayHaveActed(e));
+        assertTrue(e.getMessage(), e.getMessage().contains("not sent"));
+        eka.verify(0, postRequestedFor(urlEqualTo(LINK)));
+    }
+
+    // Interrupts this thread from another while the call waits for Eka's answer.
+    private static EkaCallException interruptedWhileWaiting(org.junit.function.ThrowingRunnable call) throws Exception {
+        Thread caller = Thread.currentThread();
+        java.util.concurrent.ScheduledExecutorService interrupter = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+        try {
+            interrupter.schedule(caller::interrupt, 250, java.util.concurrent.TimeUnit.MILLISECONDS);
+            return assertThrows(EkaCallException.class, call);
+        } finally {
+            interrupter.shutdownNow();
+            Thread.interrupted();
+            interrupter.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS);
+        }
     }
 
     @Test
