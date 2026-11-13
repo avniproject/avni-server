@@ -26,7 +26,7 @@ public class AbdmDeleteDataIntegrationTest extends AbstractControllerIntegration
     // here and to delete data.
     private static final List<String> ABDM_TABLES = List.of("abdm_care_context", "abdm_consent", "abdm_consent_status",
             "abdm_data_flow", "abdm_health_information", "abdm_inbound_event", "abdm_job_run", "abdm_link_request", "abdm_message",
-            "abdm_parked_event");
+            "abdm_parked_event", "abdm_record_read");
     private static final String SUBJECT_TYPE = "9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3";
 
     @Autowired
@@ -72,7 +72,7 @@ public class AbdmDeleteDataIntegrationTest extends AbstractControllerIntegration
                         "last_modified_date_time) values (?, 1, 1, current_date, false, 'ABDM', 'Patient', 1, ?, " +
                         "(select id from public.subject_type where uuid = ?), '{}'::jsonb, 1, 1, now(), now())",
                 subjectUUID, organisationId, SUBJECT_TYPE);
-        insertOneRowInEveryAbdmTable(jdbc, organisationId, subjectUUID);
+        insertOneRowInEveryAbdmTable(jdbc, organisationId, subjectUUID, organisation.getUser().getId());
         for (String table : ABDM_TABLES) {
             assertEquals(table, Integer.valueOf(1), count(jdbc, table, organisationId));
         }
@@ -88,7 +88,7 @@ public class AbdmDeleteDataIntegrationTest extends AbstractControllerIntegration
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from public.individual where uuid = ?", Integer.class, subjectUUID));
     }
 
-    private static void insertOneRowInEveryAbdmTable(JdbcTemplate jdbc, long org, String subjectUUID) {
+    private static void insertOneRowInEveryAbdmTable(JdbcTemplate jdbc, long org, String subjectUUID, long userId) {
         String individual = "(select id from public.individual where uuid = '" + subjectUUID + "')";
         jdbc.update("insert into public.abdm_message (organisation_id, direction, path) values (?, 'OUT', '/test')", org);
         jdbc.update("insert into public.abdm_care_context (uuid, organisation_id, individual_id, hip_id, patient_reference, reference, " +
@@ -107,6 +107,7 @@ public class AbdmDeleteDataIntegrationTest extends AbstractControllerIntegration
         jdbc.update("insert into public.abdm_parked_event (organisation_id, kind, reference) values (?, 'consent', 'request-1')", org);
         jdbc.update("insert into public.abdm_inbound_event (organisation_id, source, event_id, status) values (?, 'eka', 'event-1', 'RECEIVED')", org);
         jdbc.update("insert into public.abdm_job_run (organisation_id, task, last_success_at) values (?, 'visitLinking', now())", org);
+        jdbc.update("insert into public.abdm_record_read (organisation_id, user_id, consent_request_uuid) values (?, ?, 'request-1')", org, userId);
     }
 
     private static Integer count(JdbcTemplate jdbc, String table, long org) {

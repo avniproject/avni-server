@@ -1,5 +1,6 @@
 package org.avni.server.web.abdm;
 
+import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.OrganisationConfigService;
@@ -23,8 +24,8 @@ import java.util.Map;
 
 // The admin page's Status tab: what record sharing needs and which of it the organisation has, the address to give Eka
 // for its webhooks, how each ABDM job last went for it, its visits by link status (queue), and its shares that ended
-// FAILED or that Eka never answered within the traffic retention (failedShares, unansweredShares). Answers even when
-// record sharing is off, so the page can say
+// FAILED or that Eka never answered within the traffic retention (failedShares, unansweredShares), and which tabs the
+// user may use (privileges). Answers even when record sharing is off, so the page can say
 // what is missing. The user's own organisation only. Organisation administrators only (EditOrganisationConfiguration).
 @RestController
 public class AbdmAdminController {
@@ -79,7 +80,25 @@ public class AbdmAdminController {
         Instant since = Instant.now().minus(cfg.messageRetention());
         status.put("failedShares", organisationId == null ? 0L : hipStore.failedSharesSince(since));
         status.put("unansweredShares", organisationId == null ? 0L : hipStore.unansweredSharesSince(since));
+        status.put("privileges", privileges());
         return status;
+    }
+
+    // Which of the page's tabs this user may use: HIP (share) and HIU (view), by the privileges their endpoints check.
+    private Map<String, Boolean> privileges() {
+        Map<String, Boolean> privileges = new LinkedHashMap<>();
+        privileges.put("share", has(PrivilegeType.ShareAbdmRecords));
+        privileges.put("view", has(PrivilegeType.ViewAbdmRecords));
+        return privileges;
+    }
+
+    private boolean has(PrivilegeType privilegeType) {
+        try {
+            accessControlService.checkPrivilege(privilegeType);
+            return true;
+        } catch (AvniAccessException e) {
+            return false;
+        }
     }
 
     // Eka is asked only for an organisation whose record sharing is on. With both switches on and sharing still off, the

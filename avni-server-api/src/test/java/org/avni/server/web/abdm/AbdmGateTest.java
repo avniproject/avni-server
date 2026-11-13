@@ -37,7 +37,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // Every /web/abdm endpoint but the status answers 404 for an organisation whose record sharing is off; the HIU's
-// endpoints also when it has no HIU ID. The privilege is checked before the gate.
+// endpoints also when it has no HIU ID. The privilege (ShareAbdmRecords for HIP, ViewAbdmRecords for HIU) is checked
+// before the gate.
 public class AbdmGateTest {
     private static final long ORG = 3L;
     private static final String CONSENT = "{\"abhaAddress\":\"a.patient\",\"requesterName\":\"A Doctor\",\"requesterRegistrationNumber\":\"REG-1\"}";
@@ -157,13 +158,42 @@ public class AbdmGateTest {
 
     @Test
     public void thePrivilegeIsCheckedBeforeTheGate() {
-        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.EditOrganisationConfiguration)).when(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.ShareAbdmRecords)).when(accessControlService).checkPrivilege(PrivilegeType.ShareAbdmRecords);
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.ViewAbdmRecords)).when(accessControlService).checkPrivilege(PrivilegeType.ViewAbdmRecords);
 
         assertThrows(AvniAccessException.class, () -> hipController.patients());
         assertThrows(AvniAccessException.class, () -> hipController.requeueFailed());
         assertThrows(AvniAccessException.class, () -> hiuController.consentRequests());
 
         verifyNoInteractions(organisationConfigService, configRepository);
+    }
+
+    // F10: sharing (HIP) and receiving (HIU) are each their own privilege; the organisation-settings one opens neither.
+    @Test
+    public void theHipEndpointsNeedShareAbdmRecords_andTheHiuOnesViewAbdmRecords() throws Exception {
+        settings(true, true, full());
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.ViewAbdmRecords)).when(accessControlService).checkPrivilege(PrivilegeType.ViewAbdmRecords);
+
+        for (RequestBuilder request : HIP) mvc.perform(request).andExpect(status().isOk());
+        for (RequestBuilder request : hiu()) assertRefused(request);
+        verifyNoInteractions(ekaHiu, consents, data);
+
+        reset(accessControlService);
+        doThrow(AvniAccessException.createNoPrivilegeException(PrivilegeType.ShareAbdmRecords)).when(accessControlService).checkPrivilege(PrivilegeType.ShareAbdmRecords);
+        clearInvocations(linking, ekaHip);
+
+        for (RequestBuilder request : hiu()) mvc.perform(request).andExpect(status().isOk());
+        for (RequestBuilder request : HIP) assertRefused(request);
+        verifyNoInteractions(linking, ekaHip);
+        verify(accessControlService, never()).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+    }
+
+    // Standalone MockMvc has no advice for the platform's access exception, so it surfaces as the request's failure.
+    private void assertRefused(RequestBuilder request) {
+        Exception e = assertThrows(Exception.class, () -> mvc.perform(request));
+        Throwable cause = e;
+        while (cause != null && !(cause instanceof AvniAccessException)) cause = cause.getCause();
+        org.junit.Assert.assertNotNull(e.toString(), cause);
     }
 
     private void settings(boolean abha, boolean recordSharing, JsonObject json) throws Exception {

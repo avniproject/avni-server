@@ -19,7 +19,7 @@ import java.util.Map;
 
 // The webapp's HIP screens: patients with an ABHA, their visits as care contexts, linking them through Eka, and queueing
 // again visits given up when their tries ran out.
-// Each endpoint checks the privilege, then answers 404 unless the organisation's record sharing is on (AbdmAccess).
+// Each endpoint checks ShareAbdmRecords, then answers 404 unless the organisation's record sharing is on (AbdmAccess).
 // Not @Transactional: linking calls Eka, and its webhook must see what was written before the call.
 @RestController
 public class AbdmHipController {
@@ -39,7 +39,7 @@ public class AbdmHipController {
     @GetMapping("/web/abdm/hip/patients")
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> patients() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ShareAbdmRecords);
         access.requireRecordSharingOn();
         return linkingService.patientsWithAbha();
     }
@@ -47,7 +47,7 @@ public class AbdmHipController {
     @GetMapping("/web/abdm/hip/subjects/{uuid}/care-contexts")
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> careContexts(@PathVariable("uuid") String uuid) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ShareAbdmRecords);
         access.requireRecordSharingOn();
         return linkingService.careContexts(uuid);
     }
@@ -55,7 +55,7 @@ public class AbdmHipController {
     @PostMapping("/web/abdm/hip/subjects/{uuid}/link")
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> link(@PathVariable("uuid") String uuid) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ShareAbdmRecords);
         access.requireRecordSharingOn();
         return ekaHipService.linkCareContexts(uuid);
     }
@@ -65,7 +65,7 @@ public class AbdmHipController {
     @PostMapping("/web/abdm/hip/requeue-failed")
     @PreAuthorize("hasAnyAuthority('user')")
     public Map<String, Integer> requeueFailed() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ShareAbdmRecords);
         access.requireRecordSharingOn();
         return Map.of("requeued", linkingService.requeueGivenUp());
     }

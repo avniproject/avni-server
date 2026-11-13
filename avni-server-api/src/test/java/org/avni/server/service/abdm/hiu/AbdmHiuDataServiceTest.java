@@ -12,22 +12,31 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.avni.server.service.abdm.hip.AbdmTestSupport.HIU_ID;
+import org.avni.server.service.abdm.hip.AbdmRequestException;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class AbdmHiuDataServiceTest {
     private static final String BUNDLE = "{\"resourceType\":\"Bundle\",\"type\":\"document\"}";
 
     private final AbdmHiuStore store = mock(AbdmHiuStore.class);
+    private final AbdmRecordReads reads = mock(AbdmRecordReads.class);
     private AbdmHiuDataService service;
 
     @Before
     public void setUp() {
-        service = new AbdmHiuDataService(store);
+        service = new AbdmHiuDataService(store, reads);
     }
 
     @Test
@@ -88,6 +97,42 @@ public class AbdmHiuDataServiceTest {
         List<Map<String, Object>> shown = service.records("uuid-3");
 
         assertEquals(1, shown.size());
+    }
+
+    // F10: every read of a request's records is logged, before anything is read.
+    @Test
+    public void everyReadOfARequestsRecordsIsLoggedFirst() {
+        when(store.findConsentRequestByUuid("uuid-3")).thenReturn(Optional.of(requestWith("GRANTED", null)));
+        when(store.records("cr-1")).thenReturn(List.of(record("artefact-1")));
+        when(store.findArtefacts(List.of("cr-1"))).thenReturn(List.of(new AbdmHiuStore.Artefact("cr-1", "artefact-1", "GRANTED", "RECEIVED", 1)));
+
+        service.records("uuid-3");
+        service.records("uuid-3");
+
+        InOrder order = inOrder(reads, store);
+        order.verify(reads).logged("uuid-3");
+        order.verify(store).records("cr-1");
+        verify(reads, times(2)).logged("uuid-3");
+    }
+
+    @Test
+    public void aReadOfAnUnknownRequestIsRefusedAndNotLogged() {
+        when(store.findConsentRequestByUuid("uuid-9")).thenReturn(Optional.empty());
+
+        assertThrows(AbdmRequestException.class, () -> service.records("uuid-9"));
+
+        verifyNoInteractions(reads);
+    }
+
+    // No read goes unlogged: when the log cannot be written, nothing is read.
+    @Test
+    public void whenTheReadCannotBeLoggedNoRecordIsRead() {
+        when(store.findConsentRequestByUuid("uuid-3")).thenReturn(Optional.of(requestWith("GRANTED", null)));
+        doThrow(new IllegalStateException("database down")).when(reads).logged("uuid-3");
+
+        assertThrows(IllegalStateException.class, () -> service.records("uuid-3"));
+
+        verify(store, never()).records(anyString());
     }
 
     @Test

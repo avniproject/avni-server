@@ -19,9 +19,11 @@ public class AbdmHiuDataService {
     private static final Logger logger = LoggerFactory.getLogger(AbdmHiuDataService.class);
 
     private final AbdmHiuStore store;
+    private final AbdmRecordReads reads;
 
-    public AbdmHiuDataService(AbdmHiuStore store) {
+    public AbdmHiuDataService(AbdmHiuStore store, AbdmRecordReads reads) {
         this.store = store;
+        this.reads = reads;
     }
 
     // Hourly (AbdmHousekeepingJob): consents past their erase date expire, and records no live grant covers are deleted.
@@ -42,10 +44,11 @@ public class AbdmHiuDataService {
 
     // [{careContextReference, hipId, transactionId, receivedAt, checksumMatched, bundle}]. Nothing once the consent is
     // withdrawn, refused or expired, or past its erase date, and only records under an artefact still granted, whether or
-    // not the hourly erase has run yet (HIU_FLOW_202, HIU_FLOW_301).
+    // not the hourly erase has run yet (HIU_FLOW_202, HIU_FLOW_301). Each call is logged first (AbdmRecordReads).
     public List<Map<String, Object>> records(String consentRequestUuid) {
         AbdmHiuStore.Consent request = store.findConsentRequestByUuid(consentRequestUuid)
                 .orElseThrow(() -> AbdmRequestException.notFound("Consent request not found"));
+        reads.logged(consentRequestUuid);
         List<Map<String, Object>> out = new ArrayList<>();
         if (ENDED.contains(request.status())) return out;
         // A request Eka refused never got an id there, so nothing can have arrived under it.

@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 // The webapp's HIU screens: ask a patient for consent, follow the requests, read the records received.
-// Each endpoint checks the privilege, then answers 404 unless the organisation can receive records (AbdmAccess.hiuOn).
+// Each endpoint checks ViewAbdmRecords, then answers 404 unless the organisation can receive records (AbdmAccess.hiuOn).
+// Every read of records is logged (AbdmRecordReads).
 // Not @Transactional: requesting consent calls Eka.
 @RestController
 public class AbdmHiuController {
@@ -49,7 +50,7 @@ public class AbdmHiuController {
     @PostMapping("/web/abdm/hiu/consent-requests")
     @PreAuthorize("hasAnyAuthority('user')")
     public Map<String, Object> requestConsent(@RequestBody JsonNode body) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ViewAbdmRecords);
         access.requireHiuOn();
         return ekaHiuService.requestConsent(AbdmJson.text(body, "abhaAddress"), date(body, "from"), date(body, "to"),
                 AbdmFlows.texts(AbdmJson.at(body, "hiTypes"), null), AbdmJson.text(body, "purposeCode"),
@@ -59,7 +60,7 @@ public class AbdmHiuController {
     @GetMapping("/web/abdm/hiu/consent-requests")
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> consentRequests() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ViewAbdmRecords);
         access.requireHiuOn();
         return consentService.list();
     }
@@ -67,7 +68,7 @@ public class AbdmHiuController {
     @GetMapping("/web/abdm/hiu/consent-requests/{uuid}/records")
     @PreAuthorize("hasAnyAuthority('user')")
     public List<Map<String, Object>> records(@PathVariable("uuid") String uuid) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.ViewAbdmRecords);
         access.requireHiuOn();
         return dataService.records(uuid);
     }

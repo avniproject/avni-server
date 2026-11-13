@@ -1,6 +1,7 @@
 package org.avni.server.web.abdm;
 
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
 import org.avni.server.service.OrganisationConfigService;
@@ -28,8 +29,10 @@ import static org.mockito.Mockito.*;
 // The admin page's Status tab answers even when record sharing is off, so the page can say what is missing.
 public class AbdmAdminControllerTest {
     private static final Set<String> SHAPE = Set.of("abhaEnabled", "recordSharingEnabled", "recordSharingOn", "hiuOn", "environment",
-            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue", "failedShares", "unansweredShares");
+            "hipIds", "hiuId", "sharingClientConfigured", "webhookUrl", "session", "jobs", "queue", "failedShares", "unansweredShares",
+            "privileges");
 
+    private final AccessControlService accessControlService = mock(AccessControlService.class);
     private final EkaAbdmClient ekaClient = mock(EkaAbdmClient.class);
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
     private final AbdmAccess access = mock(AbdmAccess.class);
@@ -45,9 +48,39 @@ public class AbdmAdminControllerTest {
     }
 
     private AbdmAdminController controller(String publicBaseUrl) {
-        return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl, 30), ekaClient,
+        return new AbdmAdminController(accessControlService, new AbdmConfig(publicBaseUrl, 30), ekaClient,
                 organisationConfigService, access, settings, jobRuns, orgContext, hipStore,
                 new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
+    }
+
+    // F10: the page shows its HIP tab to a user who may share, and its HIU tab to one who may view; the status itself stays
+    // on the organisation-settings privilege.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void theStatusSaysWhichOfSharingAndViewingTheUserMayDo() {
+        when(settings.find()).thenReturn(Optional.empty());
+        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.ViewAbdmRecords))
+                .when(accessControlService).checkPrivilege(PrivilegeType.ViewAbdmRecords);
+
+        Map<String, Object> status = controller.status();
+
+        assertEquals(Map.of("share", true, "view", false), status.get("privileges"));
+        verify(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+
+        reset(accessControlService);
+        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.ShareAbdmRecords))
+                .when(accessControlService).checkPrivilege(PrivilegeType.ShareAbdmRecords);
+
+        assertEquals(Map.of("share", false, "view", true), controller.status().get("privileges"));
+    }
+
+    @Test
+    public void withoutTheOrganisationSettingsPrivilegeThereIsNoStatus() {
+        doThrow(org.avni.server.domain.accessControl.AvniAccessException.createNoPrivilegeException(PrivilegeType.EditOrganisationConfiguration))
+                .when(accessControlService).checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+
+        assertThrows(org.avni.server.domain.accessControl.AvniAccessException.class, () -> controller.status());
+        verifyNoInteractions(settings, ekaClient, hipStore);
     }
 
     @Test

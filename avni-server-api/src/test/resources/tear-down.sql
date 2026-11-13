@@ -22,6 +22,7 @@ DELETE FROM abdm_parked_event where 1 = 1;
 DELETE FROM abdm_inbound_event where 1 = 1;
 DELETE FROM abdm_job_run where 1 = 1;
 DELETE FROM abdm_message where 1 = 1;
+DELETE FROM abdm_record_read where 1 = 1;
 DELETE FROM abha_link where 1 = 1;
 DELETE FROM individual where 1 = 1;
 DELETE
