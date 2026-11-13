@@ -51,6 +51,7 @@ DELETE
 from message_receiver;
 DELETE
 from message_rule;
+DELETE FROM abdm_record_read;
 DELETE FROM users where username <> 'admin';
 DELETE
 FROM subject_type;

@@ -4,10 +4,14 @@ import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.framework.security.UserContextHolder;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +28,8 @@ public class AbdmRecordReadsIntegrationTest extends AbstractControllerIntegratio
     private AbdmRecordReads reads;
     @Autowired
     private NamedParameterJdbcTemplate namedJdbc;
+    @Autowired
+    private DataSource dataSource;
 
     @Test
     public void aReadIsLoggedWithItsUserItsConsentRequestAndItsTime() {
@@ -48,6 +54,27 @@ public class AbdmRecordReadsIntegrationTest extends AbstractControllerIntegratio
         UserContextHolder.clear();
 
         assertThrows(IllegalStateException.class, () -> reads.logged("request-uuid-1"));
+    }
+
+    // The test data scripts delete users, which a logged read points at, so they clear the reads first.
+    @Test
+    public void theTestDataScriptRunsOverALoggedRead() {
+        aReadIsLogged();
+
+        ScriptUtils.executeSqlScript(DataSourceUtils.getConnection(dataSource), new ClassPathResource("test-data.sql"));
+    }
+
+    @Test
+    public void theOpenchsOrganisationTestDataScriptRunsOverALoggedRead() {
+        aReadIsLogged();
+
+        ScriptUtils.executeSqlScript(DataSourceUtils.getConnection(dataSource), new ClassPathResource("test-data-openchs-organisation.sql"));
+    }
+
+    private void aReadIsLogged() {
+        setUser("demo-user");
+        reads.logged("request-uuid-1");
+        UserContextHolder.clear();
     }
 
     // Each organisation sees only its own reads, as with every ABDM table.
