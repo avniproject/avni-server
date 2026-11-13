@@ -65,6 +65,7 @@ public class AbdmJobRunnerTest {
                 Organisation organisation = new Organisation();
                 organisation.setId(Long.parseLong(username.substring("system-".length())));
                 context.setOrganisation(organisation);
+                user.setOrganisationId(organisation.getId());
             }
             UserContextHolder.create(context);
             return context;
@@ -89,9 +90,9 @@ public class AbdmJobRunnerTest {
 
         assertEquals(List.of(1L, 4L), ranFor);
         verify(authService).authenticateByUserName("admin", null);
-        verify(authService).authenticateByUserName("system-1", null);
-        verify(authService).authenticateByUserName("system-4", null);
-        verify(authService, never()).authenticateByUserName("system-2", null);
+        verify(authService).authenticateByUserName("system-1", "org-1-uuid");
+        verify(authService).authenticateByUserName("system-4", "org-4-uuid");
+        verify(authService, never()).authenticateByUserName(eq("system-2"), any());
         verify(jobRuns).succeeded(eq(1L), eq(TASK), any());
         verify(jobRuns).succeeded(eq(4L), eq(TASK), any());
         verifyNoInteractions(bugsnag);
@@ -179,8 +180,8 @@ public class AbdmJobRunnerTest {
         runner.forOrganisations(TASK, Duration.ofMinutes(4), () -> List.of(1L), deadline -> ranFor.add(UserContextHolder.getUserContext().getOrganisationId()));
 
         assertEquals(List.of(1L), ranFor);
-        verify(authService).authenticateByUserName("system-1", null);
-        verify(authService, never()).authenticateByUserName("system-2", null);
+        verify(authService).authenticateByUserName("system-1", "org-1-uuid");
+        verify(authService, never()).authenticateByUserName(eq("system-2"), any());
         verify(organisationConfigService, never()).findAllWithFeatureEnabled(anyString());
         verify(jobRuns).succeeded(eq(1L), eq(TASK), any());
         assertNull(UserContextHolder.getUserContext());
@@ -270,6 +271,7 @@ public class AbdmJobRunnerTest {
         Organisation organisation = new Organisation();
         organisation.setId(id);
         organisation.setName("Org " + id);
+        organisation.setUuid("org-" + id + "-uuid");
         when(organisationRepository.findOne(id)).thenReturn(organisation);
     }
 }

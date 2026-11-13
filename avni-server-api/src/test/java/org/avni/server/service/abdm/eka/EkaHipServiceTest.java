@@ -23,6 +23,7 @@ import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abdm.hip.AbdmTestSupport;
+import org.avni.server.service.abha.AbhaVerifiedRecords;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +53,7 @@ import static org.mockito.Mockito.*;
 
 public class EkaHipServiceTest {
     private static final long INDIVIDUAL_ID = 7L;
+    private static final long ORGANISATION_ID = 2L;
     private static final String OID = "eka-oid-0001";
     private static final String LINK = "/abdm/v1/care-contexts/link";
     private static final String ON_FETCH = "/abdm/v1/hip/care-context/data/on-fetch";
@@ -75,8 +77,8 @@ public class EkaHipServiceTest {
 
     @Before
     public void setUp() {
-        service = new EkaHipService(settings, store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository,
-                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository, bugsnag);
+        service = new EkaHipService(settings, store, linking, eka, AbdmTestSupport.orgContext(), new AbhaVerifiedRecords(abhaEventRepository, bugsnag),
+                encounterRepository, abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository, bugsnag);
 
         when(linking.loadPatient("subject-1")).thenReturn(new AbdmHipLinkingService.Patient(INDIVIDUAL_ID, "subject-1", "Asha Devi", "F",
                 1990, "12345678568912", "asha.devi", List.of(
@@ -187,6 +189,62 @@ public class EkaHipServiceTest {
 
         assertThrows(AbdmRequestException.class, () -> service.linkCareContexts("subject-1"));
         verifyNoInteractions(eka);
+    }
+
+    // The phone's record names the saved number with another person's address: the visits wait, and nothing goes to Eka.
+    @Test
+    public void aRecordWithTheSavedNumberButAnotherAddressIsNeverLinkedTo() {
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                .thenReturn(List.of(abhaEvent("linked", "oid-someone-else", "someone.else@sbx", "12345678568912")));
+
+        assertThrows(EkaHipService.NoVerifiedAbha.class, () -> service.linkCareContexts("subject-1"));
+        verifyNoInteractions(eka);
+    }
+
+    // A later record naming another Eka ID for the saved ABHA is the phone's word alone: the visits go to the first one.
+    @Test
+    public void aLaterRecordNamingAnotherEkaIdForTheSavedAbhaIsNeverLinkedTo() {
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(
+                abhaEvent("verified", "oid-someone-else", "asha.devi@sbx", "12345678568912"),
+                abhaEvent("linked", OID, "asha.devi@sbx", "12345678568912")));
+
+        service.linkCareContexts("subject-1");
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).post(eq(LINK), body.capture(), any());
+        assertEquals(OID, body.getValue().get("oid").asText());
+    }
+
+    // One Eka ID, one live patient: another patient's saved ABHA claimed this Eka ID first, so this one's visits are
+    // neither linked nor shared under it, and the clash is reported.
+    @Test
+    public void anEkaIdAnotherLivePatientClaimedFirstIsNeitherLinkedNorShared() {
+        claimedFirstByAnotherPatient();
+
+        assertThrows(EkaHipService.NoVerifiedAbha.class, () -> service.linkCareContexts("subject-1"));
+        verifyNoInteractions(eka);
+
+        EkaHipService.Prepared prepared = service.prepare("enc-1", "subject-1", OID, null, HIP_ID, settings.current());
+        assertNull(prepared.bundleJson());
+        assertEquals("the patient's ABHA is not verified with Eka", prepared.problem());
+        verify(bugsnag, atLeastOnce()).notify(any(IllegalStateException.class));
+    }
+
+    private void claimedFirstByAnotherPatient() {
+        AbhaEvent ours = abhaEvent("linked", OID, "asha.devi@sbx", "12345678568912");
+        ours.setId(9L);
+        ours.setOrganisationId(ORGANISATION_ID);
+        AbhaEvent theirs = abhaEvent("linked", OID, "first.holder@sbx", "91333344444533");
+        theirs.setSubjectUuid("subject-0");
+        theirs.setId(3L);
+        theirs.setOrganisationId(ORGANISATION_ID);
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(ours));
+        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-0")).thenReturn(List.of(theirs));
+        when(abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(ORGANISATION_ID, OID, "subject-1")).thenReturn(List.of(new AbhaEventRepository.SavedAbha() {
+            public String getSubjectUuid() { return "subject-0"; }
+            public String getAbhaNumber() { return "91333344444533"; }
+            public String getAbhaAddress() { return "first.holder@sbx"; }
+        }));
     }
 
     @Test
@@ -421,8 +479,8 @@ public class EkaHipServiceTest {
         return new EkaHipService(AbdmTestSupport.settings(AbdmTestSupport.ekaSettings(new org.avni.server.domain.JsonObject()
                 .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_IDS, List.of("hip-1", "hip-2"))
                 .with(org.avni.server.domain.extenalSystem.EkaSystemConfig.HIP_NAMES, Map.of("hip-1", "First Centre", "hip-2", "Second Centre")))),
-                store, linking, eka, AbdmTestSupport.orgContext(), abhaEventRepository, encounterRepository, abhaLinkRepository, assembler,
-                builder, crypto, phones, programEncounterRepository, individualRepository, bugsnag);
+                store, linking, eka, AbdmTestSupport.orgContext(), new AbhaVerifiedRecords(abhaEventRepository, bugsnag), encounterRepository,
+                abhaLinkRepository, assembler, builder, crypto, phones, programEncounterRepository, individualRepository, bugsnag);
     }
 
     private void visitsRecordedAt(String enc2Hip, String enc1Hip) {
@@ -779,37 +837,43 @@ public class EkaHipServiceTest {
         verify(eka).postSlow(eq(ON_FETCH), any(), any());
     }
 
-    // The record's ABHA answers are typed: the number may be the verified one while the address is not. Only the verified
-    // record's own identifiers count, and an Eka ID that is not the verified one refuses whatever address comes with it.
+    // The saved number with another address is not the saved ABHA's record, so nothing is served on it, whoever asks; and
+    // an Eka ID that is not the verified one refuses whatever address comes with it.
     @Test
-    public void aTypedAddressThatIsNotTheVerifiedAbhasGetsNothing_norDoesAnotherEkaId() {
+    public void aRecordWithAnotherAddressServesNothing_norDoesAnotherEkaId() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
-        when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
-                .thenReturn(List.of(abhaEvent("linked", OID, "asha.real@sbx", "12345678568912")));
-        for (String[] asking : new String[][]{{null, "asha.devi@sbx"}, {"oid-someone-else", "asha.real@sbx"}}) {
-            reset(eka);
+        String[][] cases = {
+                // the record's address, the Eka ID asking, the address asking, why nothing is served
+                {"asha.real@sbx", null, "asha.real@sbx", "not verified"},
+                {"asha.devi@sbx", "oid-someone-else", "asha.devi@sbx", "no longer"}};
+        for (String[] c : cases) {
+            reset(eka, store);
+            when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+            when(store.insertDataFlow(anyString(), anyString(), any(), anyString(), anyString(), any())).thenReturn(42L);
+            when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
+                    .thenReturn(List.of(abhaEvent("linked", OID, c[0], "12345678568912")));
             FideliusKeyMaterial requester = crypto.generateKeyMaterial();
             ObjectNode fetch = (ObjectNode) fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1");
             ObjectNode data = (ObjectNode) fetch.get("data");
-            data.put("abha_address", asking[1]);
-            if (asking[0] == null) data.remove("oid");
-            else data.put("oid", asking[0]);
+            data.put("abha_address", c[2]);
+            if (c[1] == null) data.remove("oid");
+            else data.put("oid", c[1]);
 
             service.hipDataFetch(fetch, false);
 
             verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
+            verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains(c[3]));
         }
-        verify(store, times(2)).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
     }
 
-    // The record sent names the patient by the verified ABHA, never the record's typed answers: a typed address that is not
-    // the verified one, or a typed answer with no number while the verified ABHA has one.
+    // The record sent names the patient by the verified ABHA, never the record's typed answers: a typed address in another
+    // case or with another suffix, or a typed answer with no number while the verified ABHA has one.
     @Test
     public void theRecordSentNamesThePatientByTheVerifiedAbha() {
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         String[][] cases = {
                 // typed number, typed address, verified address, expected address
-                {"12345678568912", "asha.devi", "asha.real@sbx", "asha.real@sbx"},
+                {"12345678568912", "Asha.Devi@abdm", "asha.devi@sbx", "asha.devi@sbx"},
                 {null, "asha.devi", "asha.devi@sbx", "asha.devi@sbx"}};
         for (String[] c : cases) {
             reset(assembler);
@@ -854,17 +918,17 @@ public class EkaHipServiceTest {
         verify(assembler, times(2)).assemble(any(), any(), eq("12-3456-7856-8912"), eq("12345678568912@sbx"), eq(HIP_ID), any());
     }
 
-    // The link goes to Eka under the verified ABHA's address, never a typed one.
+    // The link goes to Eka under the verified ABHA's address as Eka wrote it, never as it was typed.
     @Test
     public void linkingSendsTheVerifiedAbhasAddressNotTheTypedOne() {
         when(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1"))
-                .thenReturn(List.of(abhaEvent("linked", OID, "asha.real@sbx", "12345678568912")));
+                .thenReturn(List.of(abhaEvent("linked", OID, "Asha.Devi@sbx", "12345678568912")));
 
         service.linkCareContexts("subject-1");
 
         ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
         verify(eka).post(eq(LINK), body.capture(), any());
-        assertEquals("asha.real@sbx", body.getValue().get("abha_address").asText());
+        assertEquals("Asha.Devi@sbx", body.getValue().get("abha_address").asText());
     }
 
     // On 26 Oct Eka took over 10 s to take an on-fetch 3 times in 18, and each of those shares was lost.

@@ -35,6 +35,7 @@ public class EkaTokenService {
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
     private final EkaCredentialCipher ekaCredentialCipher;
     private final EkaRestClient ekaRestClient;
+    private final EkaEnvironments ekaEnvironments;
     private final ConcurrentHashMap<Key, IssuedToken> tokens = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Key, FailedLogin> failures = new ConcurrentHashMap<>();
     // A lock per organisation and client, so a slow login never holds up another organisation or the other client.
@@ -43,10 +44,12 @@ public class EkaTokenService {
     @Autowired
     public EkaTokenService(ExternalSystemConfigRepository externalSystemConfigRepository,
                            EkaCredentialCipher ekaCredentialCipher,
-                           EkaRestClient ekaRestClient) {
+                           EkaRestClient ekaRestClient,
+                           EkaEnvironments ekaEnvironments) {
         this.externalSystemConfigRepository = externalSystemConfigRepository;
         this.ekaCredentialCipher = ekaCredentialCipher;
         this.ekaRestClient = ekaRestClient;
+        this.ekaEnvironments = ekaEnvironments;
     }
 
     // The M1 client's token: ABHA sessions on the phone and the ABHA card.
@@ -76,6 +79,11 @@ public class EkaTokenService {
     private EkaToken getToken(Key key, Duration minRemaining) throws EkaNotConfiguredException {
         Long organisationId = key.organisationId();
         EkaSystemConfig config = externalSystemConfigRepository.getEkaSystemConfig(organisationId);
+        // Before the cache too: a token is never served for an environment this server does not allow.
+        if (!ekaEnvironments.allows(config.getEnvironment())) {
+            throw new EkaNotConfiguredException("Eka environment " + config.getEnvironment() + " is not allowed on this server, for organisation with id: "
+                    + organisationId);
+        }
         Credentials credentials = credentialsOf(config, key.client());
         if (!StringUtils.hasText(credentials.clientId()) || !StringUtils.hasText(credentials.encryptedSecret())) {
             throw new EkaNotConfiguredException("Eka " + describe(key.client()) + " id or secret not set for organisation with id: " + organisationId);

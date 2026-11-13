@@ -4,7 +4,6 @@ import com.bugsnag.Bugsnag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.IndividualRepository;
@@ -26,7 +25,7 @@ import org.avni.server.service.abdm.hip.AbdmFlows;
 import org.avni.server.service.abdm.hip.AbdmHipLinkingService;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
-import org.avni.server.service.abha.AbhaEventService;
+import org.avni.server.service.abha.AbhaVerifiedRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.hibernate.exception.JDBCConnectionException;
@@ -92,7 +91,7 @@ public class EkaHipService implements EkaHipEvents {
     private final AbdmHipLinkingService linking;
     private final EkaAbdmClient eka;
     private final AbdmOrgContext orgContext;
-    private final AbhaEventRepository abhaEventRepository;
+    private final AbhaVerifiedRecords verifiedRecords;
     private final EncounterRepository encounterRepository;
     private final AbhaLinkRepository abhaLinkRepository;
     private final CareContextDocumentAssembler assembler;
@@ -104,7 +103,7 @@ public class EkaHipService implements EkaHipEvents {
     private final Bugsnag bugsnag;
 
     public EkaHipService(AbdmSettings settings, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka, AbdmOrgContext orgContext,
-                         AbhaEventRepository abhaEventRepository, EncounterRepository encounterRepository,
+                         AbhaVerifiedRecords verifiedRecords, EncounterRepository encounterRepository,
                          AbhaLinkRepository abhaLinkRepository, CareContextDocumentAssembler assembler, FhirBundleBuilder builder,
                          FideliusCrypto crypto, org.avni.server.service.abdm.hip.AbdmPatientPhones phones,
                          org.avni.server.dao.ProgramEncounterRepository programEncounterRepository,
@@ -117,7 +116,7 @@ public class EkaHipService implements EkaHipEvents {
         this.linking = linking;
         this.eka = eka;
         this.orgContext = orgContext;
-        this.abhaEventRepository = abhaEventRepository;
+        this.verifiedRecords = verifiedRecords;
         this.encounterRepository = encounterRepository;
         this.abhaLinkRepository = abhaLinkRepository;
         this.assembler = assembler;
@@ -152,8 +151,7 @@ public class EkaHipService implements EkaHipEvents {
 
     private EkaPatient ekaPatient(String subjectUuid, AbdmHipLinkingService.Patient patient, String abhaAddressSuffix) {
         // The Eka ID of the ABHA on the saved record, never of a later lookup of another ABHA left unsaved.
-        AbhaEvent abha = orgContext.inReadOnlyTransaction(() -> AbhaEventService.ofSavedAbha(
-                abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid), patient.abhaNumber(), patient.abhaAddress())
+        AbhaEvent abha = orgContext.inReadOnlyTransaction(() -> verifiedRecords.of(subjectUuid, patient.abhaNumber(), patient.abhaAddress())
                 .orElse(null));
         if (abha == null) throw new NoVerifiedAbha();
         // The verified ABHA's own address: the record's ABHA answers are typed, and a typed one may be someone else's.
@@ -580,8 +578,8 @@ public class EkaHipService implements EkaHipEvents {
                 return new Prepared(reference, null, "belongs to another patient");
             }
             AbhaLink link = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individual.getId()).orElse(null);
-            Optional<AbhaEvent> verified = link == null ? Optional.empty() : AbhaEventService.ofSavedAbha(
-                    abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(individual.getUuid()), link.getAbhaNumber(), link.getAbhaAddress());
+            Optional<AbhaEvent> verified = link == null ? Optional.empty()
+                    : verifiedRecords.of(individual.getUuid(), link.getAbhaNumber(), link.getAbhaAddress());
             // A visit stays linked at NHA under the ABHA it was linked with; once the record holds another ABHA, or
             // none, or one Eka never verified, that ABHA gets nothing.
             String abhaProblem = abhaProblem(link, verified, requesterOid, requesterAddress);

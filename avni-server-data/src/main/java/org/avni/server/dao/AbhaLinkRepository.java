@@ -35,6 +35,8 @@ public interface AbhaLinkRepository extends TransactionalDataRepository<AbhaLink
 
     Optional<AbhaLink> findByIndividualIdAndIsVoidedFalse(Long individualId);
 
+    Optional<AbhaLink> findByIndividualUuidAndIsVoidedFalse(String individualUuid);
+
     @Query(value = LIVE_SUBJECT_UUIDS_BY_ADDRESS, nativeQuery = true)
     List<String> findLiveSubjectUUIDsByAddress(@Param("organisationId") Long organisationId, @Param("abhaAddress") String abhaAddress);
 

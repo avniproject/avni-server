@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -26,24 +27,47 @@ public class AbhaEventService {
     public static final String LINKED = "linked";
     public static final String REMOVED = "removed";
 
-    // The record, among a patient's records newest first, of the ABHA their saved record holds: the latest since the
-    // last removal whose ABHA number (else, with no number on either, address) is the saved one's, with an Eka ID.
+    // The record, among a patient's records newest first, of the ABHA their saved record holds (see claimOfSavedAbha).
     // Never a later lookup of another ABHA a worker left unsaved (27 Oct run: the card, the link and the consent
     // request all took the latest lookup for the patient's own).
     public static Optional<AbhaEvent> ofSavedAbha(List<AbhaEvent> newestFirst, String savedNumber, String savedAddress) {
+        return claimOfSavedAbha(newestFirst, savedNumber, savedAddress).map(Claim::latest);
+    }
+
+    // The Eka ID a patient's saved ABHA holds: first, the record that gave it, the earliest since the last removal that
+    // agrees with the saved ABHA and has an Eka ID; latest, the newest agreeing record naming that same Eka ID. A later
+    // record naming another Eka ID for the same ABHA is the phone's word alone, and never replaces it.
+    public record Claim(AbhaEvent first, AbhaEvent latest) {
+    }
+
+    public static Optional<Claim> claimOfSavedAbha(List<AbhaEvent> newestFirst, String savedNumber, String savedAddress) {
         String number = AbhaLinkService.digitsOnly(savedNumber);
         String name = addressName(savedAddress);
         if (number.length() != AbhaLinkService.ABHA_NUMBER_DIGITS) number = "";
         if (number.isEmpty() && name == null) return Optional.empty();
+        List<AbhaEvent> agreeing = new ArrayList<>();
         for (AbhaEvent record : newestFirst) {
-            if (REMOVED.equals(record.getAction())) return Optional.empty();
-            if (!StringUtils.hasText(record.getEkaOid())) continue;
-            String recordNumber = AbhaLinkService.digitsOnly(record.getAbhaNumber());
-            boolean same = !number.isEmpty() && !recordNumber.isEmpty() ? number.equals(recordNumber)
-                    : name != null && name.equals(addressName(record.getAbhaAddress()));
-            if (same) return Optional.of(record);
+            if (REMOVED.equals(record.getAction())) break;
+            if (StringUtils.hasText(record.getEkaOid()) && agrees(record, number, name)) agreeing.add(record);
         }
-        return Optional.empty();
+        if (agreeing.isEmpty()) return Optional.empty();
+        AbhaEvent first = agreeing.get(agreeing.size() - 1);
+        AbhaEvent latest = agreeing.stream().filter(record -> first.getEkaOid().equals(record.getEkaOid())).findFirst().orElse(first);
+        return Optional.of(new Claim(first, latest));
+    }
+
+    // Where the record and the saved ABHA both have a number, it is the same; where the record has an address, the saved
+    // address names the record's ABHA as AbdmFlows.namesAbha does (any case, any suffix, or its number's default address).
+    // At least one of them must meet, so a record agreeing on the number alone cannot bring in another person's address.
+    private static boolean agrees(AbhaEvent record, String number, String name) {
+        String recordNumber = AbhaLinkService.digitsOnly(record.getAbhaNumber());
+        String recordName = addressName(record.getAbhaAddress());
+        boolean numbersMeet = !number.isEmpty() && !recordNumber.isEmpty();
+        if (numbersMeet && !number.equals(recordNumber)) return false;
+        if (name == null) return numbersMeet;
+        boolean named = name.equals(recordName) || (recordNumber.length() == AbhaLinkService.ABHA_NUMBER_DIGITS && name.equals(recordNumber));
+        if (recordName != null && !named) return false;
+        return numbersMeet || named;
     }
 
     private static String addressName(String address) {
@@ -60,14 +84,16 @@ public class AbhaEventService {
     private final AbhaEventRepository abhaEventRepository;
     private final AbhaRemovedEventWriter abhaRemovedEventWriter;
     private final IndividualRepository individualRepository;
+    private final EkaAbhaPairing ekaAbhaPairing;
 
     @Autowired
     public AbhaEventService(AbhaService abhaService, AbhaEventRepository abhaEventRepository, AbhaRemovedEventWriter abhaRemovedEventWriter,
-                            IndividualRepository individualRepository) {
+                            IndividualRepository individualRepository, EkaAbhaPairing ekaAbhaPairing) {
         this.abhaService = abhaService;
         this.abhaEventRepository = abhaEventRepository;
         this.abhaRemovedEventWriter = abhaRemovedEventWriter;
         this.individualRepository = individualRepository;
+        this.ekaAbhaPairing = ekaAbhaPairing;
     }
 
     // True when stored now, false when this uuid was already stored.
@@ -99,6 +125,10 @@ public class AbhaEventService {
         event.setEkaTxnId(request.getEkaTxnId());
         event.setConsentGivenAt(instantOf(request.getConsentGivenAt(), "consentGivenAt", null));
         event.setOccurredAt(instantOf(request.getOccurredAt(), "occurredAt", Instant.now()));
+        if (StringUtils.hasText(event.getEkaOid()) && ekaAbhaPairing.check(event) == EkaAbhaPairing.Verdict.REFUTED) {
+            logger.warn("ABHA event {} refused: Eka does not hold its Eka ID under its ABHA", event.getUuid());
+            throw new AbhaEventInvalidException("ekaOid is not the ABHA's at Eka");
+        }
         abhaEventRepository.save(event);
         logger.info("ABHA event {} recorded, action {}", event.getUuid(), event.getAction());
         return true;

@@ -3,7 +3,6 @@ package org.avni.server.service.abdm.eka;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.domain.AbhaEvent;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
@@ -17,7 +16,7 @@ import org.avni.server.service.abdm.hip.AbdmHipStore;
 import org.avni.server.service.abdm.hip.AbdmNames;
 import org.avni.server.service.abdm.hip.AbdmPatientPhones;
 import org.avni.server.service.abdm.hip.AbdmPhoneOtp;
-import org.avni.server.service.abha.AbhaEventService;
+import org.avni.server.service.abha.AbhaVerifiedRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -66,14 +65,14 @@ public class EkaHipDiscovery {
     private final AbdmPhoneOtp otp;
     private final AbdmOrgContext orgContext;
     private final AbhaLinkRepository abhaLinks;
-    private final AbhaEventRepository abhaEvents;
+    private final AbhaVerifiedRecords verifiedRecords;
 
     public EkaHipDiscovery(AbdmSettings settings, AbdmHipStore store, AbdmHipLinkingService linking, EkaAbdmClient eka,
                            AbdmPatientPhones phones, AbdmPhoneOtp otp, AbdmOrgContext orgContext, AbhaLinkRepository abhaLinks,
-                           AbhaEventRepository abhaEvents) {
+                           AbhaVerifiedRecords verifiedRecords) {
         this.orgContext = orgContext;
         this.abhaLinks = abhaLinks;
-        this.abhaEvents = abhaEvents;
+        this.verifiedRecords = verifiedRecords;
         this.settings = settings;
         this.store = store;
         this.linking = linking;
@@ -151,8 +150,7 @@ public class EkaHipDiscovery {
     // patient's name and visits to whoever holds the ABHA typed.
     private List<AbdmHipStore.Subject> verified(List<AbdmHipStore.Subject> subjects, java.util.function.Predicate<AbhaEvent> asked) {
         return subjects.stream().filter(s -> orgContext.inReadOnlyTransaction(() -> abhaLinks.findByIndividualIdAndIsVoidedFalse(s.id())
-                .flatMap(link -> AbhaEventService.ofSavedAbha(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(s.uuid()),
-                        link.getAbhaNumber(), link.getAbhaAddress()))
+                .flatMap(link -> verifiedRecords.of(s.uuid(), link.getAbhaNumber(), link.getAbhaAddress()))
                 .filter(asked)
                 .isPresent())).toList();
     }

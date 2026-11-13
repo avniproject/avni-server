@@ -392,6 +392,20 @@ public class AbhaAdminControllerIntegrationTest extends AbstractControllerIntegr
         assertEquals(HttpStatus.BAD_REQUEST, put(DEMO, request, null).getStatusCode());
     }
 
+    // An account administrator acting for no organisation reads every organisation's rows, so is never one's system user.
+    @Test
+    public void anAccountAdministratorAsAvniSystemUserIs400() {
+        new JdbcTemplate(dataSource).update("insert into account_admin (name, account_id, admin_id) " +
+                "select 'demo-admin', o.account_id, u.id from organisation o, users u where o.id = ? and u.username = 'demo-admin'", DEMO_ID);
+
+        ResponseEntity<String> response = put(DEMO, config("test-hip"), null);
+
+        assertEquals(response.getBody(), HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody(), response.getBody().contains("account administrator"));
+        assertEquals(Integer.valueOf(0), new JdbcTemplate(dataSource).queryForObject(
+                "select count(*) from public.external_system_config where system_name = 'Eka'", Integer.class));
+    }
+
     @Test
     public void avniSystemUserFromOtherOrganisationIs400() {
         Map<String, Object> otherOrganisationsUser = config("test-hip");

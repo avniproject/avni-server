@@ -122,6 +122,38 @@ public class EkaHipDiscoveryTest {
         verify(store, never()).ensureCareContexts(anyLong(), any(), any(), any(), any());
     }
 
+    // One Eka ID, one live patient: another patient's saved ABHA claimed this Eka ID first, so this one is not offered.
+    @Test
+    public void aPatientWhoseEkaIdAnotherLivePatientClaimedFirstIsNotOffered() {
+        AbhaEvent ours = abhaRecord("subject-1", "12345678568912", "asha.devi@sbx", 9L);
+        AbhaEvent theirs = abhaRecord("subject-0", "91333344444533", "first.holder@sbx", 3L);
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of(ours));
+        when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-0")).thenReturn(List.of(theirs));
+        when(abhaEvents.findOtherLiveSubjectsNamingEkaOid(2L, "oid-1", "subject-1")).thenReturn(List.of(new AbhaEventRepository.SavedAbha() {
+            public String getSubjectUuid() { return "subject-0"; }
+            public String getAbhaNumber() { return "91333344444533"; }
+            public String getAbhaAddress() { return "first.holder@sbx"; }
+        }));
+        when(store.findSubjectsByAbhaAddress("asha.devi@sbx", "@sbx")).thenReturn(List.of(new AbdmHipStore.Subject(7, "subject-1", "Asha Devi")));
+
+        discovery.discover(discoverEvent());
+
+        assertEquals(0, sent(ON_DISCOVER).path("patients").size());
+        verify(linking, never()).loadPatient(anyString());
+    }
+
+    private static AbhaEvent abhaRecord(String subjectUuid, String abhaNumber, String abhaAddress, long id) {
+        AbhaEvent record = new AbhaEvent();
+        record.setId(id);
+        record.setOrganisationId(2L);
+        record.setSubjectUuid(subjectUuid);
+        record.setAction("linked");
+        record.setAbhaNumber(abhaNumber);
+        record.setAbhaAddress(abhaAddress);
+        record.setEkaOid("oid-1");
+        return record;
+    }
+
     @Test
     public void aPatientHoldingNoAbhaRecordAtAllIsNotOfferedByAbha() {
         when(abhaEvents.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-1")).thenReturn(List.of());
@@ -132,10 +164,10 @@ public class EkaHipDiscoveryTest {
         assertEquals(0, sent(ON_DISCOVER).path("patients").size());
     }
 
-    // The record's ABHA answers are typed: a verified number with a typed address that is not the verified ABHA's matches
-    // nobody by that address, and still matches by the verified number.
+    // A record with the saved number and another address is not the saved ABHA's, so the patient has no verified ABHA:
+    // nothing is offered, by the address or by the number.
     @Test
-    public void aTypedAddressThatIsNotTheVerifiedAbhasOffersNothing_whileTheVerifiedNumberStillFindsThePatient() {
+    public void aRecordWithTheSavedNumberButAnotherAddressOffersNothing_byAddressOrByNumber() {
         AbhaLink link = new AbhaLink();
         link.setAbhaNumber("12345678568912");
         link.setAbhaAddress("asha.devi");
@@ -163,7 +195,8 @@ public class EkaHipDiscoveryTest {
 
         discovery.discover(byNumber);
 
-        assertEquals("subject-1", sent(ON_DISCOVER).at("/patients/0/ref_num").asText());
+        assertEquals(0, sent(ON_DISCOVER).path("patients").size());
+        verify(linking, never()).loadPatient(anyString());
     }
 
     // Of two patients holding the typed ABHA, the one Eka verified is the one it is.
@@ -541,7 +574,8 @@ public class EkaHipDiscoveryTest {
     }
 
     private EkaHipDiscovery discovery(AbdmSettings settings) {
-        return new EkaHipDiscovery(settings, store, linking, eka, phones, otp, AbdmTestSupport.orgContext(), abhaLinks, abhaEvents);
+        return new EkaHipDiscovery(settings, store, linking, eka, phones, otp, AbdmTestSupport.orgContext(), abhaLinks,
+                new org.avni.server.service.abha.AbhaVerifiedRecords(abhaEvents, mock(com.bugsnag.Bugsnag.class)));
     }
 
     // The subject's saved ABHA and its record; a null Eka ID is an ABHA typed in and never verified with Eka.

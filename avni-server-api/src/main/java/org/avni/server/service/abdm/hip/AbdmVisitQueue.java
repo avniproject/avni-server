@@ -1,7 +1,6 @@
 package org.avni.server.service.abdm.hip;
 
 import jakarta.persistence.PersistenceException;
-import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.domain.AbstractEncounter;
 import org.avni.server.domain.Encounter;
@@ -9,7 +8,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEncounter;
 import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.service.abdm.AbdmSettings;
-import org.avni.server.service.abha.AbhaEventService;
+import org.avni.server.service.abha.AbhaVerifiedRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,26 +36,26 @@ public class AbdmVisitQueue {
     private final AbdmSettings settings;
     private final AbdmHipStore store;
     private final AbhaLinkRepository abhaLinkRepository;
-    private final AbhaEventRepository abhaEventRepository;
+    private final AbhaVerifiedRecords verifiedRecords;
     private final TransactionTemplate ownTransaction;
 
     @Autowired
     public AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
-                          PlatformTransactionManager transactionManager, AbhaEventRepository abhaEventRepository) {
+                          PlatformTransactionManager transactionManager, AbhaVerifiedRecords verifiedRecords) {
         this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
-        this.abhaEventRepository = abhaEventRepository;
+        this.verifiedRecords = verifiedRecords;
         this.ownTransaction = new TransactionTemplate(transactionManager);
         this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // Tests: runs at once, with no transaction of its own.
-    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbhaEventRepository abhaEventRepository) {
+    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbhaVerifiedRecords verifiedRecords) {
         this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
-        this.abhaEventRepository = abhaEventRepository;
+        this.verifiedRecords = verifiedRecords;
         this.ownTransaction = null;
     }
 
@@ -85,10 +84,16 @@ public class AbdmVisitQueue {
         afterCommit(() -> write(queued));
     }
 
-    // An ABHA record with an Eka ID was saved for the patient: their visits waiting for a verified ABHA are queued again,
-    // after the save commits and in a transaction of their own, so a failed write never touches the record.
+    // An ABHA record with an Eka ID was saved for the patient: if it verifies the ABHA on their saved record, their visits
+    // waiting for a verified ABHA are queued again, after the save commits and in a transaction of their own, so a failed
+    // write never touches the record.
     public void requeueForVerifiedAbha(String subjectUuid) {
-        afterCommit(() -> inOwnTransaction(subjectUuid, () -> requeue(subjectUuid)));
+        afterCommit(() -> inOwnTransaction(subjectUuid, () -> {
+            boolean verified = abhaLinkRepository.findByIndividualUuidAndIsVoidedFalse(subjectUuid)
+                    .flatMap(link -> verifiedRecords.of(subjectUuid, link.getAbhaNumber(), link.getAbhaAddress()))
+                    .isPresent();
+            if (verified) requeue(subjectUuid);
+        }));
     }
 
     // A saved subject whose ABHA now has a record with an Eka ID, as when a corrected ABHA's record came before its form:
@@ -99,8 +104,7 @@ public class AbdmVisitQueue {
         String subjectUuid = subject.getUuid();
         afterCommit(() -> inOwnTransaction(subjectUuid, () -> {
             boolean verified = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individualId)
-                    .flatMap(link -> AbhaEventService.ofSavedAbha(abhaEventRepository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc(subjectUuid),
-                            link.getAbhaNumber(), link.getAbhaAddress()))
+                    .flatMap(link -> verifiedRecords.of(subjectUuid, link.getAbhaNumber(), link.getAbhaAddress()))
                     .isPresent();
             if (verified) requeue(subjectUuid);
         }));

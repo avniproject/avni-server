@@ -42,7 +42,7 @@ public class EkaTokenServiceTest {
     public void setUp() throws EkaNotConfiguredException {
         eka = new WireMockServer(options().dynamicPort());
         eka.start();
-        service = new EkaTokenService(repository, cipher, new EkaRestClient());
+        service = new EkaTokenService(repository, cipher, new EkaRestClient(), new EkaEnvironments("sandbox,production"));
         configure(ORG, "client-1", "secret-1");
         configure(OTHER_ORG, "client-2", "secret-2");
     }
@@ -178,9 +178,25 @@ public class EkaTokenServiceTest {
         service.getAccessToken(3L);
     }
 
+    // A server allowing production only never logs in to Eka's sandbox, whichever client and whatever an organisation's
+    // settings say.
+    @Test
+    public void aSandboxOrganisationGetsNoTokenOnAServerAllowingProductionOnly() throws Exception {
+        configure(ORG, "client-1", "secret-1", "sharing-1", "sharing-secret-1");
+        stubLogin("client-1", "access-1", 1800, 0);
+        stubLogin("sharing-1", "sharing-access-1", 1800, 0);
+        EkaTokenService productionOnly = new EkaTokenService(repository, cipher, new EkaRestClient(), new EkaEnvironments("production"));
+
+        assertThrows(EkaNotConfiguredException.class, () -> productionOnly.getAccessToken(ORG));
+        assertThrows(EkaNotConfiguredException.class, () -> productionOnly.getSessionToken(ORG));
+        assertThrows(EkaNotConfiguredException.class, () -> productionOnly.getSharingToken(ORG));
+        eka.verify(0, postRequestedFor(urlEqualTo(LOGIN_PATH)));
+    }
+
     @Test
     public void missingSecretIsNotConfigured() throws Exception {
         EkaSystemConfig config = mock(EkaSystemConfig.class);
+        when(config.getEnvironment()).thenReturn("sandbox");
         when(config.getBaseUrl()).thenReturn(baseUrl());
         when(config.getClientId()).thenReturn("client-3");
         when(repository.getEkaSystemConfig(3L)).thenReturn(config);
@@ -468,6 +484,7 @@ public class EkaTokenServiceTest {
     private void configureEncrypted(Long organisationId, String clientId, String encryptedSecret, String sharingClientId,
                                     String encryptedSharingSecret) throws EkaNotConfiguredException {
         EkaSystemConfig config = mock(EkaSystemConfig.class);
+        when(config.getEnvironment()).thenReturn("sandbox");
         when(config.getBaseUrl()).thenAnswer(invocation -> baseUrl());
         when(config.getClientId()).thenReturn(clientId);
         when(config.getEncryptedClientSecret()).thenReturn(encryptedSecret);

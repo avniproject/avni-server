@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 // ABDM work with no Avni user runs as its organisation's system user, named in that organisation's Eka settings.
@@ -35,18 +34,68 @@ public class AbdmOrgContextTest {
         UserContextHolder.clear();
     }
 
+    // The login names the organisation, so the database's row filter is that organisation's whoever the user is.
     @Test
-    public void theWorkRunsAsTheOrganisationsSystemUser_andTheThreadsUserIsPutBack() {
+    public void theWorkRunsAsTheOrganisationsSystemUser_inThatOrganisation_andTheThreadsUserIsPutBack() {
         UserContext before = contextOf(9L, "someone");
         UserContextHolder.create(before);
+        onRecord(7L, "org-seven-uuid");
         logsInAs("system-7", 7L);
         AtomicReference<Long> actingFor = new AtomicReference<>();
 
         orgContext.runAs(new AbdmOrganisation(7L, "Org seven", "system-7"), () -> actingFor.set(orgContext.organisationId()));
 
         assertEquals(Long.valueOf(7L), actingFor.get());
-        verify(authService).authenticateByUserName(eq("system-7"), isNull());
+        verify(authService).authenticateByUserName(eq("system-7"), eq("org-seven-uuid"));
         assertSame(before, UserContextHolder.getUserContext());
+    }
+
+    // An account administrator acting with no organisation named reads every organisation's rows; even with one named, it
+    // is no organisation's own user.
+    @Test
+    public void anAccountAdministratorAsTheSystemUserIsAnError_andNothingRuns() {
+        onRecord(7L, "org-seven-uuid");
+        when(authService.authenticateByUserName(eq("system-7"), any())).thenAnswer(inv -> {
+            UserContext context = contextOf(7L, "system-7");
+            context.getUser().setAdmin(true);
+            UserContextHolder.create(context);
+            return context;
+        });
+        AtomicReference<Boolean> ran = new AtomicReference<>(false);
+
+        AbdmOrgContext.SystemUserException e = assertThrows(AbdmOrgContext.SystemUserException.class,
+                () -> orgContext.runAs(new AbdmOrganisation(7L, "Org seven", "system-7"), () -> ran.set(true)));
+
+        assertFalse(ran.get());
+        assertTrue(e.getMessage(), e.getMessage().contains("account administrator"));
+        assertNull(UserContextHolder.getUserContext());
+    }
+
+    // Logging in with an organisation named makes the session that organisation's, so the user's own organisation decides.
+    @Test
+    public void aUserOfAnotherOrganisationLoggedInForThisOneIsAnError_andNothingRuns() {
+        onRecord(7L, "org-seven-uuid");
+        when(authService.authenticateByUserName(eq("system-8"), any())).thenAnswer(inv -> {
+            UserContext context = contextOf(7L, "system-8");
+            context.getUser().setOrganisationId(8L);
+            UserContextHolder.create(context);
+            return context;
+        });
+        AtomicReference<Boolean> ran = new AtomicReference<>(false);
+
+        assertThrows(AbdmOrgContext.SystemUserException.class,
+                () -> orgContext.runAs(new AbdmOrganisation(7L, "Org seven", "system-8"), () -> ran.set(true)));
+
+        assertFalse(ran.get());
+    }
+
+    @Test
+    public void anOrganisationNotOnRecordIsAnError_andNoOneLogsIn() {
+        assertThrows(AbdmOrgContext.SystemUserException.class,
+                () -> orgContext.runAs(new AbdmOrganisation(7L, "Org seven", "system-7"), () -> {
+                }));
+
+        verifyNoInteractions(authService);
     }
 
     @Test
@@ -63,6 +112,7 @@ public class AbdmOrgContextTest {
 
     @Test
     public void aSystemUserOfAnotherOrganisationIsAnError_andNothingRuns() {
+        onRecord(7L, "org-seven-uuid");
         logsInAs("system-7", 8L);
         AtomicReference<Boolean> ran = new AtomicReference<>(false);
 
@@ -75,6 +125,7 @@ public class AbdmOrgContextTest {
 
     @Test
     public void aSystemUserThatCannotLogInIsAnError() {
+        onRecord(7L, "org-seven-uuid");
         when(authService.authenticateByUserName(eq("gone"), any())).thenThrow(new RuntimeException("No user, or not logged in"));
 
         assertThrows(AbdmOrgContext.SystemUserException.class,
@@ -106,6 +157,13 @@ public class AbdmOrgContextTest {
 
         when(configRepository.getEkaSystemConfig(7L)).thenThrow(new EkaNotConfiguredException("none"));
         assertEquals(new AbdmOrganisation(7L, "Org seven", null), orgContext.organisation(7L));
+    }
+
+    private void onRecord(long organisationId, String uuid) {
+        Organisation organisation = new Organisation();
+        organisation.setId(organisationId);
+        organisation.setUuid(uuid);
+        when(organisationRepository.findOne(organisationId)).thenReturn(organisation);
     }
 
     private void logsInAs(String username, long organisationId) {

@@ -2,6 +2,7 @@ package org.avni.server.service.abha;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import org.avni.server.dao.AccountAdminRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
@@ -46,18 +47,24 @@ public class AbhaAdminService {
     private final UserRepository userRepository;
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
     private final EkaCredentialCipher ekaCredentialCipher;
+    private final AccountAdminRepository accountAdminRepository;
+    private final EkaEnvironments ekaEnvironments;
 
     @Autowired
     public AbhaAdminService(EntityManager entityManager,
                             OrganisationRepository organisationRepository,
                             UserRepository userRepository,
                             ExternalSystemConfigRepository externalSystemConfigRepository,
-                            EkaCredentialCipher ekaCredentialCipher) {
+                            EkaCredentialCipher ekaCredentialCipher,
+                            AccountAdminRepository accountAdminRepository,
+                            EkaEnvironments ekaEnvironments) {
         this.entityManager = entityManager;
         this.organisationRepository = organisationRepository;
         this.userRepository = userRepository;
         this.externalSystemConfigRepository = externalSystemConfigRepository;
         this.ekaCredentialCipher = ekaCredentialCipher;
+        this.accountAdminRepository = accountAdminRepository;
+        this.ekaEnvironments = ekaEnvironments;
     }
 
     @Transactional
@@ -66,6 +73,10 @@ public class AbhaAdminService {
         Long organisationId = organisation.getId();
         if (request.getEnvironment() == null || !ENVIRONMENTS.contains(request.getEnvironment())) {
             throw new BadRequestError("environment must be sandbox or production, not %s", request.getEnvironment());
+        }
+        if (!ekaEnvironments.allows(request.getEnvironment())) {
+            throw new BadRequestError("environment %s is not allowed on this server, which allows %s", request.getEnvironment(),
+                    ekaEnvironments.describe());
         }
         if (!StringUtils.hasText(request.getClientId())) {
             throw new BadRequestError("clientId is required");
@@ -179,11 +190,15 @@ public class AbhaAdminService {
     }
 
     // Optional until the check-in story needs it, and kept when a later save leaves it out; when given, it must be a
-    // user of this organisation.
+    // user of this organisation and no account administrator (UserService.isAdmin), whose work with no organisation
+    // named would read every organisation's rows.
     private String userOfOrganisation(String username, Long organisationId) {
         User user = userRepository.findByUsernameIgnoreCaseAndIsVoidedFalse(username.trim());
         if (user == null || !organisationId.equals(user.getOrganisationId())) {
             throw new BadRequestError("avniSystemUser %s is not a user of this organisation", username);
+        }
+        if (!accountAdminRepository.findByUser_Id(user.getId()).isEmpty()) {
+            throw new BadRequestError("avniSystemUser %s is an account administrator; name a user of this organisation only", username);
         }
         return user.getUsername();
     }

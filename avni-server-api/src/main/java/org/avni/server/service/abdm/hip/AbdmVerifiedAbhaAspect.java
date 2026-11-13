@@ -16,9 +16,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-// Visits waiting for their patient's ABHA to be verified are queued again once the phone saves a record of an ABHA with
-// an Eka ID for that patient, and once a saved subject's ABHA is a verified one, only for an organisation with record
-// sharing on. A subject save reaches here through AbhaLinkAspect, after it has kept the subject's ABHA link.
+// Visits waiting for their patient's ABHA to be verified are queued again, if the ABHA on the patient's record is then a
+// verified one (AbdmVisitQueue checks), once the phone saves a record with an Eka ID for that patient and once a saved
+// subject's ABHA is kept, only for an organisation with record sharing on. A subject save reaches here through
+// AbhaLinkAspect, after it has kept the subject's ABHA link.
 @Component
 @Aspect
 // Ahead of the transaction advice, as the other save hooks are.

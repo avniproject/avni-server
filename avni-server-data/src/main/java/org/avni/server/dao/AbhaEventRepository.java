@@ -1,6 +1,8 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.AbhaEvent;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
@@ -33,4 +35,23 @@ public interface AbhaEventRepository extends CHSRepository<AbhaEvent>, CustomCHS
 
     @RestResource(exported = false)
     List<AbhaEvent> findBySubjectUuidAndUserIdAndCreatedDateTimeAfterOrderByCreatedDateTimeDescIdDesc(String subjectUuid, Long userId, Date after);
+
+    // A live subject and the ABHA its saved record holds.
+    interface SavedAbha {
+        String getSubjectUuid();
+
+        String getAbhaNumber();
+
+        String getAbhaAddress();
+    }
+
+    // The live subjects of the organisation, other than this one, holding an ABHA and with a record naming this Eka ID.
+    @RestResource(exported = false)
+    @Query(value = "select i.uuid as subjectUuid, l.abha_number as abhaNumber, l.abha_address as abhaAddress " +
+            "from public.individual i join public.abha_link l on l.individual_id = i.id and l.is_voided = false " +
+            "where i.organisation_id = :organisationId and i.is_voided = false and i.uuid <> :subjectUuid " +
+            "and i.uuid in (select e.subject_uuid from public.abha_event e where e.organisation_id = :organisationId " +
+            "and e.eka_oid = :ekaOid and e.is_voided = false)", nativeQuery = true)
+    List<SavedAbha> findOtherLiveSubjectsNamingEkaOid(@Param("organisationId") Long organisationId, @Param("ekaOid") String ekaOid,
+                                                      @Param("subjectUuid") String subjectUuid);
 }

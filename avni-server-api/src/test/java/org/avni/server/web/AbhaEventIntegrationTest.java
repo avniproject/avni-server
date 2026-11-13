@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.dao.AbhaEventRepository;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.UserGroupRepository;
@@ -79,6 +80,8 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
     private TestDataSetupService testDataSetupService;
     @Autowired
     private AbhaEventService abhaEventService;
+    @Autowired
+    private AbhaEventRepository abhaEventRepository;
 
     @Before
     public void createSubjectTypesAndPrivileges() {
@@ -193,6 +196,7 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
     public void aVerifiedAbhaSavedFromThePhoneQueuesAgainTheVisitsWaitingForIt_onlyWithRecordSharingOn() {
         readyFor(REGISTRAR, "HIP-1");
         String subject = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(subject, "12345678568912", "a@abdm");
         visitWaitingForAVerifiedAbha(subject, "visit-1");
         recordSharing(false);
         Map<String, Object> whileOff = event(UUID.randomUUID().toString(), "linked");
@@ -207,6 +211,88 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
 
         assertEquals(HttpStatus.CREATED, post(REGISTRAR, whileOn).getStatusCode());
         assertEquals("QUEUED", careContextStatus("visit-1"));
+    }
+
+    // The phone's record names the patient's saved number with another person's address: it is kept, as every ABHA action
+    // is, but it verifies nothing, so the visits keep waiting.
+    @Test
+    public void aRecordWithTheSavedNumberButAnotherAddressQueuesNothing() {
+        readyFor(REGISTRAR, "HIP-1");
+        recordSharing(true);
+        String subject = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(subject, "12345678568912", "a@abdm");
+        visitWaitingForAVerifiedAbha(subject, "visit-1");
+        Map<String, Object> otherAddress = event(UUID.randomUUID().toString(), "linked");
+        otherAddress.put("subjectUUID", subject);
+        otherAddress.put("abhaAddress", "someone.else@abdm");
+
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, otherAddress).getStatusCode());
+
+        assertEquals("AWAITING_VERIFIED_ABHA", careContextStatus("visit-1"));
+        assertEquals(1, rows().size());
+    }
+
+    // One Eka ID, one live patient: a second patient's record naming the Eka ID the first patient's saved ABHA holds
+    // verifies nothing for the second, until the first is no longer live.
+    @Test
+    public void anEkaIdALivePatientHoldsQueuesNothingForASecondPatient_untilTheFirstIsVoided() {
+        readyFor(REGISTRAR, "HIP-1");
+        recordSharing(true);
+        String first = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(first, "12345678568912", "a@abdm");
+        Map<String, Object> firstsRecord = event(UUID.randomUUID().toString(), "linked");
+        firstsRecord.put("subjectUUID", first);
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, firstsRecord).getStatusCode());
+        String second = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(second, "91333344444533", "b@abdm");
+        visitWaitingForAVerifiedAbha(second, "visit-2");
+
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, secondPatientsRecord(second, "linked")).getStatusCode());
+        assertEquals("AWAITING_VERIFIED_ABHA", careContextStatus("visit-2"));
+
+        setUser(userRepository.getDefaultSuperAdmin());
+        new JdbcTemplate(dataSource).update("update public.individual set is_voided = true where uuid = ?", first);
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, secondPatientsRecord(second, "verified")).getStatusCode());
+        assertEquals("QUEUED", careContextStatus("visit-2"));
+    }
+
+    // Who else holds a claim to an Eka ID: the live subjects of the organisation, besides the one asking, holding an ABHA
+    // and with a record naming it, each with the ABHA saved on it. A voided subject, or one holding no ABHA, is not one.
+    @Test
+    public void theOtherLiveSubjectsNamingAnEkaIdAreFoundWithTheirSavedAbha() {
+        readyFor(REGISTRAR, "HIP-1");
+        String first = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(first, "12345678568912", "a@abdm");
+        String second = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(second, "91333344444533", "b@abdm");
+        String voided = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(voided, "91111122222009", "c@abdm");
+        String holdingNoAbha = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        for (String subject : List.of(first, second, voided, holdingNoAbha)) {
+            Map<String, Object> record = event(UUID.randomUUID().toString(), "linked");
+            record.put("subjectUUID", subject);
+            assertEquals(HttpStatus.CREATED, post(REGISTRAR, record).getStatusCode());
+        }
+        setUser(userRepository.getDefaultSuperAdmin());
+        new JdbcTemplate(dataSource).update("update public.individual set is_voided = true where uuid = ?", voided);
+
+        setUser("demo-admin");
+        List<AbhaEventRepository.SavedAbha> others = abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(DEMO_ID, "oid-1", second);
+
+        assertEquals(1, others.size());
+        assertEquals(first, others.get(0).getSubjectUuid());
+        assertEquals("12345678568912", others.get(0).getAbhaNumber());
+        assertEquals("a@abdm", others.get(0).getAbhaAddress());
+        assertEquals(0, abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(DEMO_ID, "oid-another", second).size());
+    }
+
+    // The same Eka ID as event()'s, with the second patient's own ABHA.
+    private Map<String, Object> secondPatientsRecord(String subjectUuid, String action) {
+        Map<String, Object> body = event(UUID.randomUUID().toString(), action);
+        body.put("subjectUUID", subjectUuid);
+        body.put("abhaNumber", "91333344444533");
+        body.put("abhaAddress", "b@abdm");
+        return body;
     }
 
     @Test
@@ -461,6 +547,15 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
                 .with(EkaSystemConfig.ENCRYPTED_CLIENT_SECRET, ekaCredentialCipher.encrypt("test-secret-value"))
                 .with(EkaSystemConfig.HIP_IDS, Arrays.asList("HIP-1", "HIP-2")));
         externalSystemConfigRepository.save(row);
+    }
+
+    // The ABHA saved on the subject's record, as AbhaLinkService keeps it.
+    private void holdsAbha(String subjectUuid, String abhaNumber, String abhaAddress) {
+        setUser(userRepository.getDefaultSuperAdmin());
+        new JdbcTemplate(dataSource).update("insert into public.abha_link (uuid, organisation_id, individual_id, abha_number, abha_address, " +
+                        "created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values (?, ?, (select id from public.individual where uuid = ?), ?, ?, 1, 1, now(), now())",
+                UUID.randomUUID().toString(), DEMO_ID, subjectUuid, abhaNumber, abhaAddress);
     }
 
     private void visitWaitingForAVerifiedAbha(String subjectUuid, String reference) {
