@@ -26,12 +26,6 @@ import java.util.stream.Stream;
 @RepositoryRestResource(collectionResourceRel = "programEnrolment", path = "programEnrolment", exported = false)
 public interface ProgramEnrolmentRepository extends TransactionalDataRepository<ProgramEnrolment>, FindByLastModifiedDateTime<ProgramEnrolment>, OperatingIndividualScopeAwareRepository<ProgramEnrolment>, SubjectTreeItemRepository {
 
-    @Query("select new org.avni.server.projection.SearchSubjectEnrolledProgram(pe.individual.id, pe.program, pe.programExitDateTime) from ProgramEnrolment pe join pe.program join pe.program.operationalPrograms where pe.individual.id in :individualIds and pe.programExitDateTime is null and pe.isVoided = false")
-    List<SearchSubjectEnrolledProgram> findActiveEnrolmentsByIndividualIds(List<Long> individualIds);
-
-    @Query("select new org.avni.server.projection.SearchSubjectEnrolledProgram(pe.individual.id, pe.program, pe.programExitDateTime) from ProgramEnrolment pe join pe.program join pe.program.operationalPrograms where pe.individual.id in :individualIds and pe.isVoided = false")
-    List<SearchSubjectEnrolledProgram> findActiveAndExitedEnrolmentsByIndividualIds(List<Long> individualIds);
-
     @Query("select enl from ProgramEnrolment enl " +
             "join enl.individual i " +
             "where enl.program.id = :programId " +
@@ -158,4 +152,7 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
                 .and(inCurrentOrganisation())
                 .and(orderByLastModifiedAscIdAsc()), pageable);
     }
+
+    @Query("select new org.avni.server.projection.SearchSubjectEnrolledProgram(pe.individual.id, p, op.name, pe.programExitDateTime) from ProgramEnrolment pe join pe.program p join p.operationalPrograms op where pe.individual.id in :individualIds and pe.isVoided = false and p.isVoided = false and op.isVoided = false and op.organisationId = :organisationId and (:includeExited = true or pe.programExitDateTime is null)")
+    List<SearchSubjectEnrolledProgram> findEnrolmentsByIndividualIds(List<Long> individualIds, boolean includeExited, Long organisationId);
 }
