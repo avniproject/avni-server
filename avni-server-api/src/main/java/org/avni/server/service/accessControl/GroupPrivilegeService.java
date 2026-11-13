@@ -14,6 +14,7 @@ import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.NonScopeAwareService;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.CollectionUtil;
 import org.avni.server.web.request.GroupPrivilegeBundleContract;
 import org.avni.server.web.request.GroupPrivilegeContractWeb;
@@ -35,8 +36,9 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     private final FormMappingRepository formMappingRepository;
     private final GroupPrivilegeRepository groupPrivilegeRepository;
     private final UserGroupRepository userGroupRepository;
+    private final OrganisationConfigService organisationConfigService;
 
-    public GroupPrivilegeService(GroupRepository groupRepository, PrivilegeRepository privilegeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, ChecklistDetailRepository checklistDetailRepository, FormMappingRepository formMappingRepository, GroupPrivilegeRepository groupPrivilegeRepository, UserGroupRepository userGroupRepository) {
+    public GroupPrivilegeService(GroupRepository groupRepository, PrivilegeRepository privilegeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, ChecklistDetailRepository checklistDetailRepository, FormMappingRepository formMappingRepository, GroupPrivilegeRepository groupPrivilegeRepository, UserGroupRepository userGroupRepository, OrganisationConfigService organisationConfigService) {
         this.groupRepository = groupRepository;
         this.privilegeRepository = privilegeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -46,6 +48,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         this.formMappingRepository = formMappingRepository;
         this.groupPrivilegeRepository = groupPrivilegeRepository;
         this.userGroupRepository = userGroupRepository;
+        this.organisationConfigService = organisationConfigService;
     }
 
     private boolean isGroupSubjectTypePrivilege(SubjectType subjectType, Privilege privilege) {
@@ -163,7 +166,10 @@ public class GroupPrivilegeService implements NonScopeAwareService {
             }
         });
 
+        // ABDM's privileges are offered only to an organisation with both ABDM switches on; a stored grant is not affected.
+        boolean abdmSwitchedOn = organisationConfigService.isAbdmSwitchedOn();
         privilegeList.stream().filter(privilege -> PrivilegeEntityType.NotMappedViaForms.contains(privilege.getEntityType()))
+                .filter(privilege -> abdmSwitchedOn || privilege.getEntityType() != PrivilegeEntityType.Abdm)
                 .forEach(nonFormMappedPrivilege -> {
                     GroupPrivilege groupPrivilege = new GroupPrivilege();
                     groupPrivilege.setGroup(group);

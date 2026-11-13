@@ -1,11 +1,15 @@
 package org.avni.server.dao.accessControl;
 
+import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupPrivilegeRepository;
 import org.avni.server.dao.GroupRepository;
+import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Group;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.PrivilegeEntityType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.AvniAccessException;
@@ -43,8 +47,8 @@ import java.util.zip.ZipOutputStream;
 import static org.junit.Assert.*;
 
 // F10: sharing records (HIP) and reading received ones (HIU) are privileges of their own, added by V1_421. An organisation
-// grants them on the User Groups screen; an account administrator is not passed them without a grant, and no group has
-// them until an organisation grants them.
+// with both ABDM switches on grants them on the User Groups screen; an account administrator is not passed them without a
+// grant, and no group has them until an organisation grants them.
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Transactional
@@ -69,6 +73,8 @@ public class AbdmPrivilegeTest extends AbstractControllerIntegrationTest {
     private TestDataSetupService testDataSetupService;
     @Autowired
     private TestGroupService testGroupService;
+    @Autowired
+    private OrganisationConfigRepository organisationConfigRepository;
 
     @Test
     public void bothPrivilegesExistUnderAbdm() {
@@ -102,15 +108,46 @@ public class AbdmPrivilegeTest extends AbstractControllerIntegrationTest {
         assertFalse(statements.contains("group_privilege"));
     }
 
+    // An organisation that has not switched ABDM on is not offered its privileges; the others are offered as before.
     @Test
-    public void theUserGroupsScreenOffersThemToEveryGroup() {
-        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation("abdmprivscreen");
+    public void theUserGroupsScreenLeavesThemOutUnlessBothSwitchesAreOn() {
+        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation("abdmprivscreenoff");
         setUser(organisation.getUser());
 
-        List<PrivilegeType> offered = groupPrivilegeService.getAllGroupPrivileges(organisation.getGroup().getId()).stream()
-                .map(gp -> gp.getPrivilege().getType()).collect(Collectors.toList());
+        for (boolean[] abhaAndSharing : new boolean[][]{{false, false}, {true, false}, {false, true}}) {
+            switches(organisation, abhaAndSharing[0], abhaAndSharing[1]);
+            List<PrivilegeType> offered = offered(organisation);
+
+            String state = Arrays.toString(abhaAndSharing);
+            assertTrue(state, offered.contains(PrivilegeType.EditOrganisationConfiguration));
+            for (PrivilegeType type : ABDM) assertFalse(state + " " + type, offered.contains(type));
+        }
+    }
+
+    @Test
+    public void theUserGroupsScreenOffersThemOnceBothSwitchesAreOn() {
+        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation("abdmprivscreenon");
+        setUser(organisation.getUser());
+        switches(organisation, true, true);
+
+        List<PrivilegeType> offered = offered(organisation);
 
         assertTrue(offered.toString(), offered.containsAll(ABDM));
+    }
+
+    // Switching ABDM off takes the privileges off the screen, not away from a group already granted them.
+    @Test
+    public void aGrantAlreadyStoredStillPassesWithTheSwitchesOff() {
+        TestDataSetupService.TestOrganisationData organisation = testDataSetupService.setupOrganisation("abdmprivkept");
+        setUser(organisation.getUser());
+        User user = organisation.getUser();
+        switches(organisation, true, true);
+        grant(organisation.getGroup(), PrivilegeType.ShareAbdmRecords);
+
+        switches(organisation, false, false);
+
+        assertFalse(offered(organisation).contains(PrivilegeType.ShareAbdmRecords));
+        accessControlService.checkPrivilege(user, PrivilegeType.ShareAbdmRecords);
     }
 
     // A user whose group may edit the organisation's settings is refused both until each is granted to the group.
@@ -185,6 +222,19 @@ public class AbdmPrivilegeTest extends AbstractControllerIntegrationTest {
         groupPrivilegeRepository.flush();
 
         accessControlService.checkPrivilege(user, PrivilegeType.ShareAbdmRecords);
+    }
+
+    private List<PrivilegeType> offered(TestDataSetupService.TestOrganisationData organisation) {
+        return groupPrivilegeService.getAllGroupPrivileges(organisation.getGroup().getId()).stream()
+                .map(gp -> gp.getPrivilege().getType()).collect(Collectors.toList());
+    }
+
+    private void switches(TestDataSetupService.TestOrganisationData organisation, boolean abha, boolean recordSharing) {
+        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getOrganisationId());
+        config.setSettings(new JsonObject(config.getSettings())
+                .with(OrganisationConfigSettingKey.enableAbha.name(), abha)
+                .with(OrganisationConfigSettingKey.enableAbdmRecordSharing.name(), recordSharing));
+        organisationConfigRepository.saveAndFlush(config);
     }
 
     private void grant(Group group, PrivilegeType type) {

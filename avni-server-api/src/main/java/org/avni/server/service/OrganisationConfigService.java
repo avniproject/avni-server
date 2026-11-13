@@ -395,6 +395,14 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return isFeatureEnabled(OrganisationConfigSettingKey.enableAbdmRecordSharing.name());
     }
 
+    // ABHA and ABDM record sharing both on, from one read of the organisation's settings.
+    public boolean isAbdmSwitchedOn() {
+        OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
+        return organisationConfig != null
+                && organisationConfig.isFeatureEnabled(OrganisationConfigSettingKey.enableAbha.name())
+                && organisationConfig.isFeatureEnabled(OrganisationConfigSettingKey.enableAbdmRecordSharing.name());
+    }
+
     public boolean isFailOnValidationErrorEnabled() {
         return isFeatureEnabled(OrganisationConfigSettingKey.failOnValidationError.name());
     }

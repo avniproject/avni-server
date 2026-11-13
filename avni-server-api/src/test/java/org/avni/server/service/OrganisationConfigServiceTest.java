@@ -106,6 +106,34 @@ public class OrganisationConfigServiceTest {
         assertThat(organisationConfigService.isAbdmRecordSharingEnabled(), is(true));
     }
 
+    // Both ABDM switches, from one read of the organisation's settings row each time.
+    @Test
+    public void shouldCheckIfBothAbdmSwitchesAreOn() {
+        OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
+        long organisationId = 28L;
+        UserContext context = new UserContext();
+        Organisation organisation = new Organisation();
+        organisation.setId(organisationId);
+        context.setOrganisation(organisation);
+        UserContextHolder.create(context);
+
+        OrganisationConfig abhaOnly = new OrganisationConfig();
+        abhaOnly.setSettings(new JsonObject().with(OrganisationConfigSettingKey.enableAbha.name(), true));
+        OrganisationConfig sharingOnly = new OrganisationConfig();
+        sharingOnly.setSettings(new JsonObject().with(OrganisationConfigSettingKey.enableAbdmRecordSharing.name(), true));
+        OrganisationConfig both = new OrganisationConfig();
+        both.setSettings(new JsonObject().with(OrganisationConfigSettingKey.enableAbha.name(), true)
+                .with(OrganisationConfigSettingKey.enableAbdmRecordSharing.name(), true));
+        when(organisationConfigRepository.findByOrganisationId(organisationId)).thenReturn(null).thenReturn(abhaOnly).thenReturn(sharingOnly).thenReturn(both);
+        OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigRepository, null, null, null, null);
+
+        assertThat(organisationConfigService.isAbdmSwitchedOn(), is(false));
+        assertThat(organisationConfigService.isAbdmSwitchedOn(), is(false));
+        assertThat(organisationConfigService.isAbdmSwitchedOn(), is(false));
+        assertThat(organisationConfigService.isAbdmSwitchedOn(), is(true));
+        verify(organisationConfigRepository, times(4)).findByOrganisationId(organisationId);
+    }
+
     @Test
     public void shouldRemoveVoidedAddressLevelTypeFromCustomRegistrationLocations() {
         // Setup
