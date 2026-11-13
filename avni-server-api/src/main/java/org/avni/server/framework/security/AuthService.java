@@ -9,6 +9,7 @@ import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.service.IAMAuthService;
 import org.avni.server.service.IdpServiceFactory;
@@ -99,6 +100,9 @@ public class AuthService {
         Organisation organisation = null;
         if (organisationUUID != null) {
             organisation = organisationRepository.findByUuid(organisationUUID);
+            if (!canActInOrganisation(user, organisation)) {
+                throw AvniAccessException.createForOrganisationNotAccessible(user, organisationUUID);
+            }
         } else if (user.getOrganisationId() != null) {
             organisation = organisationRepository.findOne(user.getOrganisationId());
         }
@@ -132,6 +136,16 @@ public class AuthService {
     private Authentication createTempAuth(List<SimpleGrantedAuthority> authorities) {
         String token = UUID.randomUUID().toString();
         return new AnonymousAuthenticationToken(token, token, authorities);
+    }
+
+    private boolean canActInOrganisation(User user, Organisation organisation) {
+        if (organisation == null) {
+            return false;
+        }
+        if (organisation.getId().equals(user.getOrganisationId())) {
+            return true;
+        }
+        return organisationRepository.findByIdAndAccount_AccountAdmin_User_Id(organisation.getId(), user.getId()) != null;
     }
 
 }
