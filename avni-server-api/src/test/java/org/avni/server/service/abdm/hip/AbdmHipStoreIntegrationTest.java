@@ -350,17 +350,23 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
     }
 
-    // A link the patient made from their own app is not the queue's to send again.
+    // F13: a link the patient made from their own app that Eka never answered settles after the deadline like Avni's own:
+    // queued, counted as a try, so it is linked rather than shown as being linked for ever; a younger one waits.
     @Test
-    public void aPatientsOwnLinkEkaDidNotAnswerIsNotTakenOverByTheQueue() {
+    public void aPatientsOwnLinkEkaNeverAnsweredSettlesAfterTheDeadlineLikeTheOthers() {
         emptyQueue();
-        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1")));
-        store.markLinkRequestedIfPending(QUEUE_HIP, List.of("v-1"), "Eka gave no clear answer to on-confirm");
-        age("v-1", "2 hours");
+        visits("v-1", "v-2");
+        store.ensureCareContexts(knownId(), QUEUE_HIP, KNOWN, "OPConsultation", List.of(cc("v-1"), cc("v-2")));
+        store.markLinkRequestedIfPending(QUEUE_HIP, List.of("v-1", "v-2"), "Eka gave no clear answer to on-confirm");
+        age("v-1", "31 minutes");
+        age("v-2", "10 minutes");
 
         store.settleLinkQueue(QUEUE_HIP);
 
-        assertEquals("LINK_REQUESTED", column("v-1", "status"));
+        assertEquals("QUEUED", column("v-1", "status"));
+        assertEquals(1, column("v-1", "attempts"));
+        assertEquals("LINK_REQUESTED", column("v-2", "status"));
+        assertEquals(List.of(KNOWN), store.subjectsToLink(QUEUE_HIP, 50));
     }
 
     @Test
@@ -681,6 +687,40 @@ public class AbdmHipStoreIntegrationTest extends AbstractControllerIntegrationTe
 
     private long idOf(String uuid) {
         return namedJdbc.getJdbcOperations().queryForObject("select id from individual where uuid = ?", Long.class, uuid);
+    }
+
+    // F13 (V1_420): the settling's statements on visits waiting for a verified ABHA read the waiting-visits index, not every
+    // visit of the HIP ID. Many linked visits make any other path dearer, and sequential scans are priced out.
+    @Test
+    public void visitsWaitingForAVerifiedAbhaAreReadThroughTheWaitingVisitsIndex() {
+        emptyQueue();
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("insert into abdm_care_context (uuid, organisation_id, individual_id, hip_id, patient_reference, reference, display, hi_type, status) " +
+                "select 'plan-' || n, 2, (select id from individual where uuid = ?), ?, ?, 'plan-' || n, 'Visit', 'OPConsultation', " +
+                "case when n <= 5 then 'AWAITING_VERIFIED_ABHA' else 'LINKED' end from generate_series(1, 2000) n", KNOWN, QUEUE_HIP, KNOWN);
+        jdbc.execute("analyze abdm_care_context");
+        jdbc.execute("set local enable_seqscan = off");
+
+        String plan = String.join("\n", jdbc.queryForList("explain select c.id from abdm_care_context c where c.organisation_id = 2 " +
+                "and c.hip_id = 'QUEUE-HIP' and c.status in ('QUEUED', 'FAILED', 'AWAITING_VERIFIED_ABHA')", String.class));
+
+        assertTrue(plan, plan.contains("abdm_care_context_unsettled"));
+    }
+
+    // Carried from R2-2 (V1_420): a second claim to an Eka ID is found through the organisation and Eka ID index.
+    @Test
+    public void anEkaIdIsLookedUpThroughItsOwnIndex() {
+        JdbcOperations jdbc = namedJdbc.getJdbcOperations();
+        jdbc.update("insert into abha_event (uuid, organisation_id, subject_uuid, user_id, hip_id, action, route, eka_oid, occurred_at, " +
+                "created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) select 'plan-' || n, 2, 'subject-' || n, 1, " +
+                "'hip-1', 'verified', 'abha_number', 'plan-oid-' || n, now(), 1, 1, now(), now() from generate_series(1, 2000) n");
+        jdbc.execute("analyze abha_event");
+        jdbc.execute("set local enable_seqscan = off");
+
+        String plan = String.join("\n", jdbc.queryForList("explain select e.subject_uuid from abha_event e where e.organisation_id = 2 " +
+                "and e.eka_oid = 'plan-oid-7' and e.is_voided = false", String.class));
+
+        assertTrue(plan, plan.contains("abha_event_org_eka_oid"));
     }
 
     // F6: the status page counts the organisation's shares that ended FAILED since the time given. A try to be made again,

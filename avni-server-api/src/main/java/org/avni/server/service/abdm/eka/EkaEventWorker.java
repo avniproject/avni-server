@@ -39,7 +39,8 @@ public class EkaEventWorker {
     private static final Logger logger = LoggerFactory.getLogger(EkaEventWorker.class);
     // Inside the poll's cadence for a single drain, so one busy organisation cannot hold a thread for long.
     static final Duration DRAIN_BUDGET = Duration.ofMinutes(2);
-    private static final int BATCH = 10;
+    // One at a time, each just before it is handled: none waits in memory while its claim ages towards the sweep.
+    private static final int BATCH = 1;
 
     private final AbdmInbox inbox;
     private final EkaEventGate gate;
@@ -152,7 +153,7 @@ public class EkaEventWorker {
             JsonNode body = AbdmJson.read(event.body());
             endsConsent = routeOf(event) == EkaEventRoute.CONSENT_UPDATE && EkaHiuService.endsConsent(body);
             if (!gate.admits(event.organisationId(), routeOf(event), body)) {
-                inbox.fail(event.id(), "Record sharing is off for the organisation", clock.instant());
+                inbox.fail(event, "Record sharing is off for the organisation", clock.instant());
                 logger.warn("{} not handled: record sharing is off for the organisation", what);
                 return;
             }
@@ -162,7 +163,7 @@ public class EkaEventWorker {
             } catch (AbdmOrgContext.SystemUserException e) {
                 if (!endsConsent || !appliedWithoutLogin(event, body, what, e)) throw e;
             }
-            inbox.done(event.id());
+            inbox.done(event);
         } catch (AbdmNotReadyException e) {
             retry(event, what, e, false, endsConsent);
         } catch (RuntimeException e) {

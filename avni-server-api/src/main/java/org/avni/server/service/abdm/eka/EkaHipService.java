@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.util.StringUtils;
 
+import java.sql.SQLException;
 import java.sql.SQLRecoverableException;
 import java.sql.SQLTransientException;
 import java.time.Duration;
@@ -547,13 +548,18 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     // A database fault that may pass on another try: a connection not had or dropped, a transaction not begun, a deadlock
-    // or a timeout, however Spring, Hibernate or the driver names it.
+    // or a timeout, however Spring, Hibernate or the driver names it, or Postgres's own code says it (a connection fault,
+    // class 08; a serialization failure, 40001; a deadlock, 40P01).
     static boolean transientDatabaseFault(Throwable e) {
         for (Throwable t = e; t != null; t = t.getCause() == t ? null : t.getCause()) {
             if (t instanceof TransientDataAccessException || t instanceof RecoverableDataAccessException
                     || t instanceof CannotCreateTransactionException || t instanceof DataAccessResourceFailureException
                     || t instanceof JDBCConnectionException || t instanceof SQLTransientException || t instanceof SQLRecoverableException) {
                 return true;
+            }
+            if (t instanceof SQLException sql && sql.getSQLState() != null) {
+                String state = sql.getSQLState();
+                if (state.startsWith("08") || state.equals("40001") || state.equals("40P01")) return true;
             }
         }
         return false;

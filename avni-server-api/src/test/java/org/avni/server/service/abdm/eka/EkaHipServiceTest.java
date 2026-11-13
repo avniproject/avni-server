@@ -1141,6 +1141,15 @@ public class EkaHipServiceTest {
         }
         assertFalse(EkaHipService.transientDatabaseFault(new IllegalStateException("a form element the builder cannot read")));
 
+        // Carried from R2-1: Postgres's own codes, wherever the driver's exception sits in the chain: a connection fault
+        // (class 08), a serialization failure (40001) or a deadlock (40P01). A constraint broken (23505) is not one.
+        for (String state : List.of("08006", "08003", "40001", "40P01")) {
+            Throwable fault = new IllegalStateException("could not read", new RuntimeException(new java.sql.SQLException("database fault", state)));
+            assertTrue(state, EkaHipService.transientDatabaseFault(fault));
+        }
+        assertFalse(EkaHipService.transientDatabaseFault(new RuntimeException(new java.sql.SQLException("duplicate key", "23505"))));
+        assertFalse(EkaHipService.transientDatabaseFault(new RuntimeException(new java.sql.SQLException("no state"))));
+
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
         when(encounterRepository.findByUuid("enc-1")).thenThrow(new org.springframework.dao.DataAccessResourceFailureException("connection dropped",

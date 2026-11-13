@@ -38,6 +38,7 @@ public class AbdmVisitQueueTest {
     private final org.avni.server.dao.AbhaEventRepository abhaEvents = mock(org.avni.server.dao.AbhaEventRepository.class);
     private final org.avni.server.service.abha.AbhaVerifiedRecords verifiedRecords =
             new org.avni.server.service.abha.AbhaVerifiedRecords(abhaEvents, mock(com.bugsnag.Bugsnag.class));
+    private final com.bugsnag.Bugsnag bugsnag = mock(com.bugsnag.Bugsnag.class);
     private Individual patient;
 
     @Before
@@ -107,7 +108,7 @@ public class AbdmVisitQueueTest {
         Encounter voided = visit("enc-3", new DateTime(2026, 5, 2, 10, 0));
         voided.setVoided(true);
 
-        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords);
+        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords, bugsnag);
         q.queue(planned);
         q.queue(cancelled);
         q.queue(voided);
@@ -125,6 +126,29 @@ public class AbdmVisitQueueTest {
         doThrow(new IllegalStateException("table missing")).when(store).giveUpRemovedVisits(any(), any());
 
         queue().queue(voided);
+
+        // F13: a write after the save that fails leaves the visit unsettled, so it is reported, not only logged.
+        verify(bugsnag).notify(any(Throwable.class));
+    }
+
+    // F13: a visit the queue write failed for after the save committed is never linked unless someone sees it: reported.
+    @Test
+    public void aQueueWriteThatFailsAfterTheSaveIsReported() {
+        doThrow(new IllegalStateException("table missing")).when(store).queueCareContexts(anyLong(), any(), any(), any(), any());
+
+        queue().queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
+
+        verify(bugsnag).notify(any(Throwable.class));
+    }
+
+    @Test
+    public void aRequeueThatFailsAfterTheSaveIsReported() {
+        holds("12345678568913", "oid-verified-1");
+        doThrow(new IllegalStateException("table missing")).when(store).requeueForVerifiedAbha("subject-1");
+
+        queue().requeueIfAbhaVerified(patient);
+
+        verify(bugsnag).notify(any(Throwable.class));
     }
 
     @Test
@@ -140,7 +164,7 @@ public class AbdmVisitQueueTest {
         Encounter visit = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
         visit.setCreatedBy(userAt("hip-2"));
 
-        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords).queue(visit);
+        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords, bugsnag).queue(visit);
 
         verify(store).queueCareContexts(7L, "hip-2", "subject-1", "OPConsultation",
                 List.of(new AbdmHipStore.NewCareContext("enc-9", "OPD Visit, 2 May 2026")));
@@ -151,7 +175,7 @@ public class AbdmVisitQueueTest {
         Encounter elsewhere = visit("enc-8", new DateTime(2026, 5, 2, 10, 0));
         elsewhere.setCreatedBy(userAt("someone-elses-hip"));
         Encounter unknown = visit("enc-9", new DateTime(2026, 5, 2, 10, 0));
-        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords);
+        AbdmVisitQueue q = new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords, bugsnag);
 
         q.queue(elsewhere);
         q.queue(unknown);
@@ -168,7 +192,7 @@ public class AbdmVisitQueueTest {
         when(store.findCareContextsByReferences("hip-1", List.of("enc-9"))).thenReturn(List.of(new AbdmHipStore.CareContext(1, "cc-1", 7L,
                 "hip-1", "subject-1", "enc-9", "OPD Visit, 2 May 2026", "OPConsultation", "LINKED", "HIP", null, null, null)));
 
-        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords).queue(visit);
+        new AbdmVisitQueue(AbdmTestSupport.settings(twoHips()), store, abhaLinks, verifiedRecords, bugsnag).queue(visit);
 
         verify(store).queueCareContexts(eq(7L), eq("hip-1"), any(), any(), any());
         verify(store, never()).queueCareContexts(anyLong(), eq("hip-2"), any(), any(), any());
@@ -179,7 +203,7 @@ public class AbdmVisitQueueTest {
         AbdmSettings none = org.mockito.Mockito.mock(AbdmSettings.class);
         when(none.find()).thenReturn(Optional.empty());
 
-        new AbdmVisitQueue(none, store, abhaLinks, verifiedRecords).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
+        new AbdmVisitQueue(none, store, abhaLinks, verifiedRecords, bugsnag).queue(visit("enc-9", new DateTime(2026, 5, 2, 10, 0)));
 
         verify(store, never()).queueCareContexts(anyLong(), any(), any(), any(), any());
         org.mockito.Mockito.verifyNoInteractions(abhaLinks);
@@ -196,7 +220,7 @@ public class AbdmVisitQueueTest {
     }
 
     private AbdmVisitQueue queue() {
-        return new AbdmVisitQueue(settings, store, abhaLinks, verifiedRecords);
+        return new AbdmVisitQueue(settings, store, abhaLinks, verifiedRecords, bugsnag);
     }
 
     // ---- a saved subject whose ABHA is verified

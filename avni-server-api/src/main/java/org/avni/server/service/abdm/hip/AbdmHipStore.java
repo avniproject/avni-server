@@ -125,7 +125,7 @@ public class AbdmHipStore {
             "  and pe.encounter_date_time is not null and pe.cancel_date_time is null))";
 
     // Queued on save, or failed in a way a later try may not and past its wait.
-    private static final String DUE ="(c.status = 'QUEUED' or (c.status = 'FAILED' and (c.next_attempt_at is null or c.next_attempt_at <= now())))";
+    private static final String DUE = "(c.status = 'QUEUED' or (c.status = 'FAILED' and (c.next_attempt_at is null or c.next_attempt_at <= now())))";
 
     // Ends the reason of every visit given up when its tries ran out, and of no other: what requeueGivenUp takes back.
     private static final String GIVEN_UP_AFTER = "; given up after ";
@@ -153,17 +153,17 @@ public class AbdmHipStore {
     }
 
     // Before each run: a link Eka took and has said nothing about past its wait (the deadline, doubled for each earlier
-    // try) is queued again, counted as a try (Avni's own links only, never one the patient made from their app); one Eka
-    // may have taken while failing for everyone is queued again past its deadline with no try counted (awaitLinkAnswer); a
-    // removed patient's waiting visits are given up, and so are waiting visits no longer the patient's (voided or
-    // cancelled since they were queued), so none is linked and none holds the queue.
+    // try) is queued again, counted as a try, whether Avni or the patient's app asked for it, so none shows as being
+    // linked for ever; one Eka may have taken while failing for everyone is queued again past its deadline with no try
+    // counted (awaitLinkAnswer); a removed patient's waiting visits are given up, and so are waiting visits no longer the
+    // patient's (voided or cancelled since they were queued), so none is linked and none holds the queue.
     public void settleLinkQueue(String hipId) {
         jdbc.update("update abdm_care_context c set attempts = c.attempts + 1, " +
                         "status = case when c.attempts + 1 >= :maxAttempts then 'FAILED_FINAL' else 'QUEUED' end, " +
                         "error = case when c.attempts + 1 >= :maxAttempts then 'Eka never said whether it linked them" + GIVEN_UP_AFTER + "' " +
                         "  || (c.attempts + 1) || ' tries' else 'Eka gave no answer about the link; queued again' end, " +
                         "next_attempt_at = null, updated_at = now() " +
-                        "where c.organisation_id = :org and c.hip_id = :hip and c.status = 'LINK_REQUESTED' and c.link_mode = 'HIP' " +
+                        "where c.organisation_id = :org and c.hip_id = :hip and c.status = 'LINK_REQUESTED' " +
                         "and c.next_attempt_at is null and c.updated_at < now() - make_interval(secs => :deadline * power(2, least(c.attempts, 20)))",
                 params().addValue("hip", hipId, Types.VARCHAR).addValue("maxAttempts", LINK_ATTEMPTS)
                         .addValue("deadline", LINK_ANSWER_DEADLINE.toSeconds()));

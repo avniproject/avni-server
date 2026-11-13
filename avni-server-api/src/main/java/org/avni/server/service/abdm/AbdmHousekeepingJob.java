@@ -140,7 +140,7 @@ public class AbdmHousekeepingJob {
             });
             int left = waiting.size();
             for (Map.Entry<String, List<String>> patient : waiting.entrySet()) {
-                if (!clock.instant().isBefore(deadline)) {
+                if (!clock.instant().isBefore(deadline) || Thread.currentThread().isInterrupted()) {
                     logger.info("ABDM linking: {} patient(s) left for the next run", left);
                     return;
                 }
@@ -163,6 +163,11 @@ public class AbdmHousekeepingJob {
                     logger.warn("ABDM linking stopped, Eka failing for every patient; {} patient(s) left for the next run", left + 1);
                     throw e;
                 } catch (RuntimeException e) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        // Told to stop: the failure is the stop's, so no try is counted against the patient's visits.
+                        logger.info("ABDM linking told to stop; {} patient(s) left for the next run", left + 1);
+                        return;
+                    }
                     String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
                     patient.getValue().forEach(hipId -> hipStore.failQueued(patient.getKey(), hipId, reason));
                     logger.warn("ABDM: visits of subject {} not linked, to be tried again: {}", patient.getKey(), reason);

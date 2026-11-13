@@ -20,7 +20,8 @@ import java.util.Optional;
 // puts it back for a later try after a growing wait, up to MAX_ATTEMPTS, after which it is FAILED. A consent's withdrawal,
 // refusal or expiry is never FAILED: past the cap it keeps its body and is tried every PAST_CAP_WAIT (retryUntilHandled).
 // One row per event id per organisation, so an event Eka delivers again has one effect. Nothing is held in memory: a
-// restart loses nothing, and a row left in progress by a stopped server is swept back.
+// restart loses nothing, and a row left in progress by a stopped server is swept back. The worker takes one event at a
+// time, and an outcome is written only by the claim that still holds the event.
 // A consent's updates are taken in the order they came, and an event of a consent (a data push) waits behind any update
 // of that consent that came before it, so a push finds its grant. A push holds nothing back: it may come before its grant.
 // A withdrawal naming only artefacts is stored under the consent of the waiting update that names them (pendingConsentKeyOf).
@@ -42,8 +43,9 @@ public class AbdmInbox {
     private static final int MAX_ERROR = 1000;
     private static final String HOLDING_ROUTE = "CONSENT_UPDATE";
 
+    // claimedAt: when the claim that holds it took it, which fences every outcome written for it.
     public record Event(long id, long organisationId, String source, String eventId, String eventName, String route, String body,
-                        int attempts) {
+                        int attempts, Instant claimedAt) {
     }
 
     public record Sweep(int returned, int failed) {
@@ -51,7 +53,7 @@ public class AbdmInbox {
 
     private static final RowMapper<Event> EVENT = (rs, n) -> new Event(rs.getLong("id"), rs.getLong("organisation_id"),
             rs.getString("source"), rs.getString("event_id"), rs.getString("event_name"), rs.getString("route"), rs.getString("body"),
-            rs.getInt("attempts"));
+            rs.getInt("attempts"), rs.getTimestamp("claimed_at") == null ? null : rs.getTimestamp("claimed_at").toInstant());
 
     private static final String CLAIM = "update abdm_inbound_event e set status = 'IN_PROGRESS', attempts = e.attempts + 1, " +
             "claimed_at = :now, updated_at = :now " +
@@ -61,7 +63,7 @@ public class AbdmInbox {
             "    and p.consent_key = c.consent_key and p.id < c.id and p.route = '" + HOLDING_ROUTE + "' " +
             "    and p.status in ('RECEIVED', 'IN_PROGRESS')) " +
             "  order by c.id limit :max for update skip locked) " +
-            "returning e.id, e.organisation_id, e.source, e.event_id, e.event_name, e.route, e.body, e.attempts";
+            "returning e.id, e.organisation_id, e.source, e.event_id, e.event_name, e.route, e.body, e.attempts, e.claimed_at";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final AbdmOrgContext orgContext;
@@ -112,37 +114,46 @@ public class AbdmInbox {
         return events.stream().sorted(Comparator.comparingLong(Event::id)).toList();
     }
 
+    // Each outcome below is written only while the event is still held by the claim that took it: one swept back past the
+    // timeout and taken again belongs to the later try, and a slow worker's outcome changes nothing.
+    private static final String STILL_HELD = "id = :id and status = 'IN_PROGRESS' and claimed_at = :claimedAt";
+
     // The body is not kept once handled: it can carry a patient's details, and the traffic log keeps a redacted copy.
-    public void done(long id) {
+    public void done(Event event) {
         jdbc.update("update abdm_inbound_event set status = 'DONE', body = null, last_error = null, claimed_at = null, updated_at = now() " +
-                "where id = :id", new MapSqlParameterSource("id", id));
+                "where " + STILL_HELD, held(event));
     }
 
     // Back for a later try, or FAILED when this was the last; true when it is FAILED. A FAILED row keeps no body.
     public boolean retry(Event event, String error, Instant now) {
         boolean last = event.attempts() >= MAX_ATTEMPTS;
-        jdbc.update("update abdm_inbound_event set status = :status, next_attempt_at = :next, claimed_at = null, last_error = :error, " +
-                        "body = case when :status = 'FAILED' then null else body end, updated_at = :now where id = :id and status = 'IN_PROGRESS'",
-                new MapSqlParameterSource("id", event.id()).addValue("status", last ? FAILED : RECEIVED, Types.VARCHAR)
+        int written = jdbc.update("update abdm_inbound_event set status = :status, next_attempt_at = :next, claimed_at = null, last_error = :error, " +
+                        "body = case when :status = 'FAILED' then null else body end, updated_at = :now where " + STILL_HELD,
+                held(event).addValue("status", last ? FAILED : RECEIVED, Types.VARCHAR)
                         .addValue("next", Timestamp.from(now.plus(waitAfter(event.attempts()))))
                         .addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
-        return last;
+        return last && written > 0;
     }
 
     // Back for a later try, never FAILED, keeping its body: past the cap every PAST_CAP_WAIT.
     public void retryUntilHandled(Event event, String error, Instant now) {
         Duration wait = event.attempts() >= MAX_ATTEMPTS ? PAST_CAP_WAIT : waitAfter(event.attempts());
         jdbc.update("update abdm_inbound_event set status = 'RECEIVED', next_attempt_at = :next, claimed_at = null, last_error = :error, " +
-                        "updated_at = :now where id = :id and status = 'IN_PROGRESS'",
-                new MapSqlParameterSource("id", event.id()).addValue("next", Timestamp.from(now.plus(wait)))
+                        "updated_at = :now where " + STILL_HELD,
+                held(event).addValue("next", Timestamp.from(now.plus(wait)))
                         .addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
     }
 
     // Never to be handled, so its body, which can carry a patient's details, is not kept.
-    public void fail(long id, String error, Instant now) {
+    public void fail(Event event, String error, Instant now) {
         jdbc.update("update abdm_inbound_event set status = 'FAILED', body = null, claimed_at = null, last_error = :error, updated_at = :now " +
-                        "where id = :id",
-                new MapSqlParameterSource("id", id).addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
+                        "where " + STILL_HELD,
+                held(event).addValue("error", bounded(error), Types.VARCHAR).addValue("now", Timestamp.from(now)));
+    }
+
+    private static MapSqlParameterSource held(Event event) {
+        // The claim time as the claim returned it, to the microsecond Postgres keeps.
+        return new MapSqlParameterSource("id", event.id()).addValue("claimedAt", event.claimedAt() == null ? null : Timestamp.from(event.claimedAt()));
     }
 
     // Rows in progress past the timeout were left by a server that stopped: back for another try, or FAILED on their last.

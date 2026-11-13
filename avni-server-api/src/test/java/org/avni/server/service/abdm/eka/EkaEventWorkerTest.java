@@ -45,6 +45,7 @@ import static org.mockito.Mockito.*;
 // system user. A handler that throws leaves the event for a later try; at the cap it fails and goes to Bugsnag.
 public class EkaEventWorkerTest {
     private static final Instant NOW = Instant.parse("2026-11-12T10:00:00Z");
+    private static final Instant CLAIMED = NOW;
     private static final long ORG = 1L;
     private static final AbdmOrganisation ORGANISATION = new AbdmOrganisation(ORG, "Org one", "system-1");
 
@@ -99,10 +100,22 @@ public class EkaEventWorkerTest {
         InOrder order = inOrder(messageLog, hip, inbox);
         order.verify(messageLog).incoming(eq(AbdmPaths.IN_EKA_WEBHOOK + "#abha.link_care_context"), any(), any());
         order.verify(hip).linkCareContext(handed.capture());
-        order.verify(inbox).done(link.id());
+        order.verify(inbox).done(link);
         assertEquals("wh-link-1", handed.getValue().get("transaction_id").asText());
         verify(hip, never()).hipDataFetch(any(), anyBoolean());
         verifyNoInteractions(hiu, bugsnag);
+    }
+
+    // F13: events are taken one at a time, each just before it is handled, so none waits in a batch while its claim ages
+    // towards the sweep.
+    @Test
+    public void eventsAreTakenOneAtATime() {
+        stored("link-care-context.json", "abha.link_care_context", 1);
+
+        worker.drain();
+
+        verify(inbox, atLeastOnce()).claim(eq(1), any());
+        verify(inbox, never()).claim(org.mockito.ArgumentMatchers.intThat(max -> max != 1), any());
     }
 
     @Test
@@ -150,7 +163,7 @@ public class EkaEventWorkerTest {
         worker.drain();
 
         verify(messageLog).incoming(eq(AbdmPaths.IN_EKA_WEBHOOK + "#abha.created"), any(), any());
-        verify(inbox).done(created.id());
+        verify(inbox).done(created);
         verifyNoInteractions(hip, hiu, discovery);
     }
 
@@ -185,7 +198,7 @@ public class EkaEventWorkerTest {
         worker.drain();
 
         verify(messageLog).incoming(eq(AbdmPaths.IN_EKA_WEBHOOK + "#abha.consent_update"), any(), any());
-        verify(inbox).done(update.id());
+        verify(inbox).done(update);
         verifyNoInteractions(hiu);
     }
 
@@ -200,7 +213,7 @@ public class EkaEventWorkerTest {
         ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
         verify(inbox).retry(eq(link), error.capture(), eq(NOW));
         assertTrue(error.getValue(), error.getValue().contains("database down"));
-        verify(inbox, never()).done(anyLong());
+        verify(inbox, never()).done(any());
         verifyNoInteractions(bugsnag);
     }
 
@@ -226,7 +239,7 @@ public class EkaEventWorkerTest {
 
         verify(inbox).retryUntilHandled(eq(revoked), contains("database down"), eq(NOW));
         verify(inbox, never()).retry(any(), anyString(), any());
-        verify(inbox, never()).done(anyLong());
+        verify(inbox, never()).done(any());
         verifyNoInteractions(bugsnag);
     }
 
@@ -276,7 +289,7 @@ public class EkaEventWorkerTest {
 
         verify(hiu).endConsentWithoutLogin(eq(ORG), any());
         verify(hiu, never()).consentUpdate(any());
-        verify(inbox).done(revoked.id());
+        verify(inbox).done(revoked);
         verify(bugsnag).notify(cannotAct);
         assertEquals(List.of(true), withoutLogin);
     }
@@ -292,7 +305,7 @@ public class EkaEventWorkerTest {
 
         verify(hiu).endConsentWithoutLogin(eq(ORG), any());
         verify(inbox).retryUntilHandled(eq(revoked), contains("system user"), eq(NOW));
-        verify(inbox, never()).done(anyLong());
+        verify(inbox, never()).done(any());
     }
 
     @Test
@@ -332,7 +345,7 @@ public class EkaEventWorkerTest {
         worker.drain();
 
         verify(inbox).retry(eq(push), anyString(), eq(NOW));
-        verify(inbox, never()).done(anyLong());
+        verify(inbox, never()).done(any());
         verifyNoInteractions(bugsnag);
     }
 
@@ -355,7 +368,7 @@ public class EkaEventWorkerTest {
 
         worker.drain();
 
-        verify(inbox).fail(eq(link.id()), anyString(), eq(NOW));
+        verify(inbox).fail(eq(link), anyString(), eq(NOW));
         verifyNoInteractions(hip, orgContext);
     }
 
@@ -365,16 +378,16 @@ public class EkaEventWorkerTest {
         when(access.recordSharingOn(ORG)).thenReturn(false);
         when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(true);
         AbdmInbox.Event revoked = new AbdmInbox.Event(nextId++, ORG, "eka", "revoked-1", "abha.consent_update", "CONSENT_UPDATE",
-                fixture("consent-update.json").replace("\"GRANTED\"", "\"REVOKED\""), 1);
+                fixture("consent-update.json").replace("\"GRANTED\"", "\"REVOKED\""), 1, CLAIMED);
         AbdmInbox.Event push = stored("hiu-data-push-webhook.json", "abha.hiu_data_push", 1);
         when(inbox.claim(anyInt(), any())).thenReturn(List.of(revoked, push), List.of());
 
         worker.drain();
 
         verify(hiu).consentUpdate(any());
-        verify(inbox).done(revoked.id());
+        verify(inbox).done(revoked);
         verify(hiu, never()).hiuDataPush(any(), anyBoolean());
-        verify(inbox).fail(eq(push.id()), anyString(), eq(NOW));
+        verify(inbox).fail(eq(push), anyString(), eq(NOW));
         assertEquals(List.of(ORGANISATION), ranAs);
     }
 
@@ -434,7 +447,7 @@ public class EkaEventWorkerTest {
     // A consent update that ends the consent with this status, on this try.
     private AbdmInbox.Event ending(String status, int attempts) {
         AbdmInbox.Event event = new AbdmInbox.Event(nextId++, ORG, "eka", "ending-" + nextId, "abha.consent_update", "CONSENT_UPDATE",
-                fixture("consent-update.json").replace("\"GRANTED\"", "\"" + status + "\""), attempts);
+                fixture("consent-update.json").replace("\"GRANTED\"", "\"" + status + "\""), attempts, CLAIMED);
         waiting.add(event);
         when(inbox.claim(anyInt(), any())).thenReturn(new ArrayList<>(waiting), List.of());
         return event;
@@ -450,7 +463,7 @@ public class EkaEventWorkerTest {
     private static AbdmInbox.Event event(long id, String fixture, String eventName, int attempts) {
         ObjectNode body = (ObjectNode) AbdmJson.read(fixture(fixture));
         body.put("event", eventName);
-        return new AbdmInbox.Event(id, ORG, "eka", "event-" + id, eventName, EkaEventRoute.of(eventName).name(), AbdmJson.write(body), attempts);
+        return new AbdmInbox.Event(id, ORG, "eka", "event-" + id, eventName, EkaEventRoute.of(eventName).name(), AbdmJson.write(body), attempts, CLAIMED);
     }
 
     private static String fixture(String name) {

@@ -94,6 +94,38 @@ public class AbdmAdminControllerTest {
         verify(ekaClient, never()).checkToken();
     }
 
+    // F13: both switches on, but record sharing is not, for want of an Eka setting: the session's error names it, so the
+    // administrator knows what to fill in; Eka is not asked.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void withBothSwitchesOnButAnEkaSettingMissingTheSessionNamesIt() {
+        when(organisationConfigService.isAbhaEnabled()).thenReturn(true);
+        when(organisationConfigService.isAbdmRecordSharingEnabled()).thenReturn(true);
+        when(settings.find()).thenReturn(Optional.of(ekaSettings(new JsonObject()
+                .with(EkaSystemConfig.HIP_IDS, List.of("hip-1"))
+                .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-1")
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1"))));
+
+        Map<String, Object> session = (Map<String, Object>) controller.status().get("session");
+
+        assertEquals(false, session.get("ok"));
+        String error = (String) session.get("error");
+        assertTrue(error, error.contains("a system user") && error.contains("a webhook signing key"));
+        verify(ekaClient, never()).checkToken();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void withBothSwitchesOnAndNoEkaSettingsTheSessionSaysSo() {
+        when(organisationConfigService.isAbhaEnabled()).thenReturn(true);
+        when(organisationConfigService.isAbdmRecordSharingEnabled()).thenReturn(true);
+        when(settings.find()).thenReturn(Optional.empty());
+
+        String error = (String) ((Map<String, Object>) controller.status().get("session")).get("error");
+
+        assertTrue(error, error.contains("Eka settings"));
+    }
+
     @Test
     public void withoutAPublicAddressThereIsNoWebhookUrl() {
         when(settings.find()).thenReturn(Optional.of(ekaSettings(new JsonObject().with(EkaSystemConfig.WEBHOOK_ID, "webhook-1"))));

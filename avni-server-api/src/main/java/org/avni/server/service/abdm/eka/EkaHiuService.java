@@ -450,6 +450,8 @@ public class EkaHiuService implements EkaHiuEvents {
     public void retryParkedUpdates() {
         List<String> unmatched = new ArrayList<>();
         for (String id : store.parkedConsentRequestIds()) {
+            // Told to stop (the server shutting down): what is left waits for the next run.
+            if (Thread.currentThread().isInterrupted()) return;
             Optional<AbdmHiuStore.Consent> request = store.findConsentRequest(id);
             if (request.isPresent()) applyParked(id, request.get().abhaAddress(), hiuIdOf(request.get()));
             else unmatched.add(id);
@@ -481,7 +483,7 @@ public class EkaHiuService implements EkaHiuEvents {
         }
         int asked = 0;
         for (List<AbdmHiuStore.Consent> requests : byPatient.values()) {
-            if (asked >= RETRY_PATIENTS) break;
+            if (asked >= RETRY_PATIENTS || Thread.currentThread().isInterrupted()) break;
             String address = requests.get(0).abhaAddress();
             EkaPatient patient = findPatient(address, address);
             if (patient.oid() == null) continue;

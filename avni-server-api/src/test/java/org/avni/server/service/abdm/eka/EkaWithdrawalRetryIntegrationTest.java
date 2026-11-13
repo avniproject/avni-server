@@ -56,7 +56,7 @@ public class EkaWithdrawalRetryIntegrationTest extends AbstractControllerIntegra
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
-        jdbc.update("delete from abdm_inbound_event", Map.of());
+        org.avni.server.service.abdm.AbdmInboxIntegrationTest.emptyAndHoldTheInbox(jdbc);
         AbdmAccess access = mock(AbdmAccess.class);
         when(access.recordSharingOn(ORG)).thenReturn(true);
         AbdmOrgContext orgContext = mock(AbdmOrgContext.class);

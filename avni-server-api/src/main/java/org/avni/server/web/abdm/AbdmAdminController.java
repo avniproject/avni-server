@@ -57,9 +57,11 @@ public class AbdmAdminController {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         EkaSystemConfig eka = settings.find().orElse(null);
         boolean recordSharingOn = access.recordSharingOn();
+        boolean abhaEnabled = organisationConfigService.isAbhaEnabled();
+        boolean recordSharingEnabled = organisationConfigService.isAbdmRecordSharingEnabled();
         Map<String, Object> status = new LinkedHashMap<>();
-        status.put("abhaEnabled", organisationConfigService.isAbhaEnabled());
-        status.put("recordSharingEnabled", organisationConfigService.isAbdmRecordSharingEnabled());
+        status.put("abhaEnabled", abhaEnabled);
+        status.put("recordSharingEnabled", recordSharingEnabled);
         status.put("recordSharingOn", recordSharingOn);
         status.put("hiuOn", access.hiuOn());
         status.put("environment", eka == null ? null : eka.getEnvironment());
@@ -67,7 +69,7 @@ public class AbdmAdminController {
         status.put("hiuId", eka == null ? null : eka.getHiuId());
         status.put("sharingClientConfigured", eka != null && eka.isSharingClientConfigured());
         status.put("webhookUrl", cfg.webhookUrl(eka == null ? null : eka.getWebhookId()));
-        status.put("session", session(recordSharingOn));
+        status.put("session", session(recordSharingOn, abhaEnabled && recordSharingEnabled, eka));
         Long organisationId = orgContext.organisationId();
         status.put("jobs", organisationId == null ? Map.of() : jobRuns.of(organisationId));
         status.put("queue", organisationId == null ? Map.of() : hipStore.linkQueueCounts());
@@ -77,12 +79,14 @@ public class AbdmAdminController {
         return status;
     }
 
-    // Eka is asked only for an organisation whose record sharing is on.
-    private Map<String, Object> session(boolean recordSharingOn) {
+    // Eka is asked only for an organisation whose record sharing is on. With both switches on and sharing still off, the
+    // error names the Eka settings it lacks.
+    private Map<String, Object> session(boolean recordSharingOn, boolean switchedOn, EkaSystemConfig eka) {
         Map<String, Object> session = new LinkedHashMap<>();
         if (!recordSharingOn) {
+            String missing = switchedOn ? AbdmAccess.missingForSharing(eka) : null;
             session.put("ok", false);
-            session.put("error", "Record sharing is not on for this organisation");
+            session.put("error", missing != null ? missing : "Record sharing is not on for this organisation");
             return session;
         }
         try {

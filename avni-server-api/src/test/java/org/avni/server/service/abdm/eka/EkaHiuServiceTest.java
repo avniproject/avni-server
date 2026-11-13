@@ -600,6 +600,28 @@ public class EkaHiuServiceTest {
         verify(store, never()).settleUnknownConsent(anyLong(), any());
     }
 
+    // Carried from R2-1: a run told to stop (the server shutting down) takes no further request, so it asks Eka nothing
+    // and applies nothing more.
+    @Test
+    public void runsToldToStopTakeNoFurtherRequest() {
+        when(store.unknownConsentRequests()).thenReturn(List.of(unknown(5, ASKED)));
+        ekaListsConsents(listed("abdm-A", "init-9", "REQUESTED", ASKED.plusSeconds(20)));
+        when(store.parkedConsentRequestIds()).thenReturn(List.of("abdm-A"));
+        when(store.findConsentRequest("abdm-A")).thenReturn(Optional.of(request(5, "abdm-A", "REQUESTED")));
+        when(store.parkedConsentUpdates("abdm-A")).thenReturn(List.of(new AbdmHiuStore.ParkedConsentUpdate(77, "abdm-A", "GRANTED", List.of("artefact-1"))));
+        Thread.currentThread().interrupt();
+        try {
+            service.settleUnknownRequests();
+            service.retryParkedUpdates();
+        } finally {
+            assertTrue(Thread.interrupted());
+        }
+
+        verify(store, never()).settleUnknownConsent(anyLong(), any());
+        verify(store, never()).parkedConsentUpdates(any());
+        verifyNoInteractions(eka);
+    }
+
     // The hourly retry: an update parked because Eka's list did not have the id yet is applied once it does.
     @Test
     public void theRetryAppliesAParkedUpdateOnceEkasListMatchesItsRequest() {

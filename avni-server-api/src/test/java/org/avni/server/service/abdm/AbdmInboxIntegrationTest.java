@@ -35,9 +35,18 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
     @Autowired
     private AbdmOrgContext orgContext;
 
+    // The inbox's statements read every organisation's rows, so these tests start from an empty table: emptied as its
+    // owner, whatever role the pooled connection came with, and locked against other sessions' writes until the test's
+    // transaction is rolled back.
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        emptyAndHoldTheInbox(jdbc);
+    }
+
+    public static void emptyAndHoldTheInbox(NamedParameterJdbcTemplate jdbc) {
+        jdbc.getJdbcOperations().execute("reset role");
+        jdbc.getJdbcOperations().execute("lock table abdm_inbound_event in share row exclusive mode");
         jdbc.update("delete from abdm_inbound_event", Map.of());
     }
 
@@ -83,7 +92,7 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
         AbdmInbox.Event taken = inbox.claim(10, T0).get(0);
 
-        inbox.done(taken.id());
+        inbox.done(taken);
 
         assertEquals("DONE", row("e-1").get("status"));
         assertNull(row("e-1").get("body"));
@@ -125,7 +134,7 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
         AbdmInbox.Event taken = inbox.claim(10, T0).get(0);
 
-        inbox.fail(taken.id(), "Record sharing is off for the organisation", T0);
+        inbox.fail(taken, "Record sharing is off for the organisation", T0);
 
         assertEquals("FAILED", row("e-1").get("status"));
         assertNull(row("e-1").get("body"));
@@ -149,6 +158,32 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals("RECEIVED", row("e-1").get("status"));
         assertEquals("IN_PROGRESS", row("e-2").get("status"));
         assertEquals(List.of("e-1"), inbox.claim(10, later).stream().map(AbdmInbox.Event::eventId).toList());
+    }
+
+    // F13: a worker slower than the timeout finds its event swept back and taken again: whatever it then writes (done,
+    // another try, failed) changes nothing, and the try that holds it now decides.
+    @Test
+    public void aWorkerWhoseEventWasSweptBackAndTakenAgainChangesNothing() {
+        receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
+        AbdmInbox.Event held = inbox.claim(1, T0).get(0);
+        assertEquals(row("e-1").get("claimed_at"), java.sql.Timestamp.from(held.claimedAt()));
+        Instant later = T0.plus(AbdmInbox.IN_PROGRESS_TIMEOUT).plusSeconds(1);
+        inbox.sweep(later);
+        AbdmInbox.Event again = inbox.claim(1, later).get(0);
+
+        inbox.done(held);
+        assertFalse(inbox.retry(held, "IllegalStateException: slow", later));
+        inbox.retryUntilHandled(held, "IllegalStateException: slow", later);
+        inbox.fail(held, "Record sharing is off for the organisation", later);
+
+        Map<String, Object> row = row("e-1");
+        assertEquals("IN_PROGRESS", row.get("status"));
+        assertEquals(Timestamp.from(again.claimedAt()), row.get("claimed_at"));
+        assertEquals("{\"n\":\"e-1\"}", row.get("body"));
+
+        inbox.done(again);
+
+        assertEquals("DONE", row("e-1").get("status"));
     }
 
     @Test
@@ -215,7 +250,7 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals(List.of("update-1", "push-2"), first.stream().map(AbdmInbox.Event::eventId).toList());
         assertTrue(inbox.claim(10, T0.plusSeconds(5)).isEmpty());
 
-        inbox.done(first.get(0).id());
+        inbox.done(first.get(0));
 
         assertEquals(List.of("push-1"), inbox.claim(10, T0.plusSeconds(5)).stream().map(AbdmInbox.Event::eventId).toList());
     }

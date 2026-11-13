@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 // The one gate in front of ABDM record sharing, for the current user's organisation. Both switches come from one read of
 // the organisation's settings row, and are read first, so an organisation that has not switched record sharing on costs
 // that one read and no read of its Eka settings.
@@ -35,8 +38,32 @@ public class AbdmAccess {
 
     // For a named organisation, when there is no user (a webhook, a job): its own switches and Eka settings.
     public boolean recordSharingOn(long organisationId) {
-        if (!switchedOn(organisationId)) return false;
-        return canShare(ekaSettings(organisationId));
+        return sharing(organisationId).on();
+    }
+
+    // Whether both switches are on, and if so what the Eka settings lack for record sharing (null when nothing).
+    public record Sharing(boolean switchedOn, String missing) {
+        public boolean on() {
+            return switchedOn && missing == null;
+        }
+    }
+
+    // For a named organisation: a switch off is the organisation's choice, and its Eka settings are not read.
+    public Sharing sharing(long organisationId) {
+        if (!switchedOn(organisationId)) return new Sharing(false, null);
+        return new Sharing(true, missingForSharing(ekaSettings(organisationId)));
+    }
+
+    // What these Eka settings lack for record sharing, named for the administrator; null when they can share.
+    public static String missingForSharing(EkaSystemConfig settings) {
+        if (settings == null) return "Eka settings are not saved for this organisation";
+        List<String> missing = new ArrayList<>();
+        if (settings.getHipIds().isEmpty()) missing.add("a HIP ID");
+        // Not configured also when it is the M1 client, whose token the phone holds.
+        if (!settings.isSharingClientConfigured()) missing.add("a record-sharing client, other than the ABHA client");
+        if (!StringUtils.hasText(settings.getAvniSystemUser())) missing.add("a system user");
+        if (!StringUtils.hasText(settings.getEncryptedWebhookSigningKey())) missing.add("a webhook signing key");
+        return missing.isEmpty() ? null : "The organisation's Eka settings lack " + String.join(", ", missing);
     }
 
     // Record sharing on, and an HIU ID to receive records under.
@@ -74,11 +101,9 @@ public class AbdmAccess {
         }
     }
 
-    // isSharingClientConfigured is false when the sharing client is the M1 client, whose token the phone holds. Without
-    // the system user every job fails, and without the signing key every webhook is refused.
+    // Without the system user every job fails, and without the signing key every webhook is refused.
     private static boolean canShare(EkaSystemConfig settings) {
-        return settings != null && !settings.getHipIds().isEmpty() && settings.isSharingClientConfigured()
-                && StringUtils.hasText(settings.getAvniSystemUser()) && StringUtils.hasText(settings.getEncryptedWebhookSigningKey());
+        return missingForSharing(settings) == null;
     }
 
     private static Long currentOrganisationId() {

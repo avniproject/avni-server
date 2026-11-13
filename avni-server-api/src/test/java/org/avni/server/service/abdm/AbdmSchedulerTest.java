@@ -48,6 +48,34 @@ public class AbdmSchedulerTest {
         assertTrue(thread.get(), thread.get().startsWith(AbdmScheduler.THREAD_PREFIX));
     }
 
+    // Carried from R2-1: stopping interrupts ABDM's work, never waits for it to finish, but gives it time to note its
+    // outcome before the shutdown goes on and the database pool closes.
+    @Test
+    public void stoppingInterruptsTheWork_andWaitsForItToNoteItsOutcome() throws InterruptedException {
+        CountDownLatch started = new CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicBoolean interrupted = new java.util.concurrent.atomic.AtomicBoolean();
+        java.util.concurrent.atomic.AtomicBoolean noted = new java.util.concurrent.atomic.AtomicBoolean();
+        scheduler.execute(() -> {
+            started.countDown();
+            try {
+                Thread.sleep(60_000);
+            } catch (InterruptedException e) {
+                interrupted.set(true);
+                long until = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(300);
+                while (System.nanoTime() < until) Thread.onSpinWait();
+                noted.set(true);
+            }
+        });
+        assertTrue(started.await(3, TimeUnit.SECONDS));
+
+        long before = System.nanoTime();
+        scheduler.shutdown();
+
+        assertTrue(interrupted.get());
+        assertTrue(noted.get());
+        assertTrue(TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - before) < 30);
+    }
+
     @Test
     public void aDisabledCronSchedulesNothing() {
         scheduler.schedule("-", () -> {

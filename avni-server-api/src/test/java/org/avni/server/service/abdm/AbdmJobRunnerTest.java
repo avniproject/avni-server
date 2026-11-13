@@ -121,9 +121,11 @@ public class AbdmJobRunnerTest {
         verify(jobRuns).succeeded(eq(2L), eq(TASK), any());
     }
 
-    // Without a system user an organisation cannot share records (AbdmAccess): the job does not run for it, and nothing fails.
+    // F13: without a system user an organisation cannot share records (AbdmAccess), though both its switches are on: the
+    // job does not run for it, and its run is recorded as failed, naming the missing setting for the status page. The fix
+    // is the organisation's settings, which the page names, so it is not sent to Bugsnag every run.
     @Test
-    public void anOrganisationWithNoSystemUserIsNotSharingRecords_soTheJobSkipsIt() throws Exception {
+    public void anOrganisationWithBothSwitchesOnButNoSystemUserIsRecordedAsFailed_namingTheSetting() throws Exception {
         organisation(1L, true, true, null);
         List<Long> ranFor = new ArrayList<>();
 
@@ -131,7 +133,67 @@ public class AbdmJobRunnerTest {
 
         assertTrue(ranFor.isEmpty());
         verifyNoInteractions(bugsnag);
+        ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
+        verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
+        assertTrue(error.getValue(), error.getValue().contains("system user"));
+        verify(jobRuns, never()).succeeded(anyLong(), any(), any());
+    }
+
+    // F13: the same for an organisation with both switches on and no Eka settings; one with a switch off is not sharing by
+    // choice, and nothing is recorded.
+    @Test
+    public void anOrganisationWithBothSwitchesOnButNoEkaSettingsIsRecordedAsFailed_oneSwitchedOffIsNot() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, false, true, "system-2");
+        when(configRepository.getEkaSystemConfig(1L)).thenThrow(new EkaNotConfiguredException("none"));
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+
+        ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
+        verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
+        assertTrue(error.getValue(), error.getValue().contains("Eka settings"));
+        verify(jobRuns, never()).failed(eq(2L), any(), any(), any());
+        verifyNoInteractions(bugsnag);
+    }
+
+    // F13: each run starts one organisation further on, so the same organisation is not always left the least time.
+    @Test
+    public void eachRunStartsWithTheNextOrganisation() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, true, true, "system-2");
+        organisation(3L, true, true, "system-3");
+        List<List<Long>> runs = new ArrayList<>();
+
+        for (int run = 0; run < 4; run++) {
+            List<Long> ranFor = new ArrayList<>();
+            runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(UserContextHolder.getUserContext().getOrganisationId()));
+            runs.add(ranFor);
+        }
+
+        assertEquals(List.of(List.of(1L, 2L, 3L), List.of(2L, 3L, 1L), List.of(3L, 1L, 2L), List.of(1L, 2L, 3L)), runs);
+    }
+
+    // Carried from R2-1: a thread told to stop (the server shutting down) takes no further organisation, and a failure on
+    // the way out is neither recorded nor reported: it is the stop, not the organisation.
+    @Test
+    public void aRunToldToStopTakesNoFurtherOrganisation_andReportsNothing() throws Exception {
+        organisation(1L, true, true, "system-1");
+        organisation(2L, true, true, "system-2");
+        List<Long> ranFor = new ArrayList<>();
+        try {
+            runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> {
+                ranFor.add(UserContextHolder.getUserContext().getOrganisationId());
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Eka POST link not sent: interrupted");
+            });
+        } finally {
+            assertTrue(Thread.interrupted());
+        }
+
+        assertEquals(List.of(1L), ranFor);
+        verifyNoInteractions(bugsnag);
         verify(jobRuns, never()).failed(anyLong(), any(), any(), any());
+        assertNull(UserContextHolder.getUserContext());
     }
 
     // A system user named that cannot act for the organisation (removed, or another organisation's) is reported.

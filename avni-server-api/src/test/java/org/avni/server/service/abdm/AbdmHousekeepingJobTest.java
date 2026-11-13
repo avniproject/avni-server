@@ -160,6 +160,26 @@ public class AbdmHousekeepingJobTest {
         verify(hipStore, never()).awaitVerifiedAbha(any(), any(), any(), any());
     }
 
+    // Carried from R2-1: a run told to stop (the server shutting down) takes no further patient, and a failure on the way
+    // out counts against no visit.
+    @Test
+    public void aRunToldToStopTakesNoFurtherPatient_andCountsNothing() {
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1", "subject-2"));
+        when(ekaHip.linkCareContexts("subject-1", true)).thenAnswer(inv -> {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("could not get a connection: interrupted");
+        });
+        try {
+            job().linkQueuedVisits();
+        } finally {
+            org.junit.Assert.assertTrue(Thread.interrupted());
+        }
+
+        verify(ekaHip, never()).linkCareContexts(eq("subject-2"), anyBoolean());
+        verify(hipStore, never()).failQueued(any(), any(), any());
+        verify(hipStore, never()).failQueuedForGood(any(), any(), any());
+    }
+
     // Links Eka never answered are queued again, and a removed patient's visits given up, before the run picks patients.
     @Test
     public void theQueueIsSettledUnderEachHipIdBeforePatientsAreTaken() {

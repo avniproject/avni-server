@@ -1,5 +1,6 @@
 package org.avni.server.service.abdm.hip;
 
+import com.bugsnag.Bugsnag;
 import jakarta.persistence.PersistenceException;
 import org.avni.server.dao.AbhaLinkRepository;
 import org.avni.server.domain.AbstractEncounter;
@@ -38,25 +39,29 @@ public class AbdmVisitQueue {
     private final AbdmHipStore store;
     private final AbhaLinkRepository abhaLinkRepository;
     private final AbhaVerifiedRecords verifiedRecords;
+    private final Bugsnag bugsnag;
     private final TransactionTemplate ownTransaction;
 
     @Autowired
     public AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository,
-                          PlatformTransactionManager transactionManager, AbhaVerifiedRecords verifiedRecords) {
+                          PlatformTransactionManager transactionManager, AbhaVerifiedRecords verifiedRecords, Bugsnag bugsnag) {
         this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
         this.verifiedRecords = verifiedRecords;
+        this.bugsnag = bugsnag;
         this.ownTransaction = new TransactionTemplate(transactionManager);
         this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     // Tests: runs at once, with no transaction of its own.
-    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbhaVerifiedRecords verifiedRecords) {
+    AbdmVisitQueue(AbdmSettings settings, AbdmHipStore store, AbhaLinkRepository abhaLinkRepository, AbhaVerifiedRecords verifiedRecords,
+                   Bugsnag bugsnag) {
         this.settings = settings;
         this.store = store;
         this.abhaLinkRepository = abhaLinkRepository;
         this.verifiedRecords = verifiedRecords;
+        this.bugsnag = bugsnag;
         this.ownTransaction = null;
     }
 
@@ -86,7 +91,7 @@ public class AbdmVisitQueue {
             logger.warn("ABDM: visit {} not queued for linking: {}", visit.getUuid(), e.getClass().getSimpleName());
             return;
         }
-        afterCommit(() -> write(queued));
+        afterCommitInOwnTransaction("visit " + queued.careContext().reference() + " not queued for linking", () -> write(queued));
     }
 
     // A visit voided or cancelled: its care context, if one waits, is given up after the save commits, under whichever of
@@ -105,26 +110,19 @@ public class AbdmVisitQueue {
             return;
         }
         String reference = visit.getUuid();
-        afterCommit(() -> {
-            try {
-                if (ownTransaction == null) store.giveUpRemovedVisits(hipIds, List.of(reference));
-                else ownTransaction.executeWithoutResult(status -> store.giveUpRemovedVisits(hipIds, List.of(reference)));
-            } catch (RuntimeException e) {
-                logger.warn("ABDM: removed visit {} not given up: {}", reference, e.getClass().getSimpleName());
-            }
-        });
+        afterCommitInOwnTransaction("removed visit " + reference + " not given up", () -> store.giveUpRemovedVisits(hipIds, List.of(reference)));
     }
 
     // An ABHA record with an Eka ID was saved for the patient: if it verifies the ABHA on their saved record, their visits
     // waiting for a verified ABHA are queued again, after the save commits and in a transaction of their own, so a failed
     // write never touches the record.
     public void requeueForVerifiedAbha(String subjectUuid) {
-        afterCommit(() -> inOwnTransaction(subjectUuid, () -> {
+        afterCommitInOwnTransaction("visits of subject " + subjectUuid + " not queued again", () -> {
             boolean verified = abhaLinkRepository.findByIndividualUuidAndIsVoidedFalse(subjectUuid)
                     .flatMap(link -> verifiedRecords.of(subjectUuid, link.getAbhaNumber(), link.getAbhaAddress()))
                     .isPresent();
             if (verified) requeue(subjectUuid);
-        }));
+        });
     }
 
     // A saved subject whose ABHA now has a record with an Eka ID, as when a corrected ABHA's record came before its form:
@@ -133,12 +131,12 @@ public class AbdmVisitQueue {
         if (subject == null || subject.getId() == null || subject.getUuid() == null) return;
         long individualId = subject.getId();
         String subjectUuid = subject.getUuid();
-        afterCommit(() -> inOwnTransaction(subjectUuid, () -> {
+        afterCommitInOwnTransaction("visits of subject " + subjectUuid + " not queued again", () -> {
             boolean verified = abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(individualId)
                     .flatMap(link -> verifiedRecords.of(subjectUuid, link.getAbhaNumber(), link.getAbhaAddress()))
                     .isPresent();
             if (verified) requeue(subjectUuid);
-        }));
+        });
     }
 
     private void requeue(String subjectUuid) {
@@ -146,13 +144,18 @@ public class AbdmVisitQueue {
         if (requeued > 0) logger.info("ABDM: {} visit(s) of subject {} queued again, its ABHA verified", requeued, subjectUuid);
     }
 
-    private void inOwnTransaction(String subjectUuid, Runnable work) {
-        try {
-            if (ownTransaction == null) work.run();
-            else ownTransaction.executeWithoutResult(status -> work.run());
-        } catch (RuntimeException e) {
-            logger.warn("ABDM: visits of subject {} not queued again: {}", subjectUuid, e.getClass().getSimpleName());
-        }
+    // After the save commits, in a transaction of its own, so a failed write never touches what was saved. A write that
+    // fails leaves a visit unqueued or unsettled that nothing else would mend, so it is reported, not only logged.
+    private void afterCommitInOwnTransaction(String failure, Runnable work) {
+        afterCommit(() -> {
+            try {
+                if (ownTransaction == null) work.run();
+                else ownTransaction.executeWithoutResult(status -> work.run());
+            } catch (RuntimeException e) {
+                logger.warn("ABDM: {}: {}", failure, e.getClass().getSimpleName());
+                bugsnag.notify(new IllegalStateException("ABDM: " + failure, e));
+            }
+        });
     }
 
     private void afterCommit(Runnable work) {
@@ -169,16 +172,8 @@ public class AbdmVisitQueue {
     }
 
     private void write(Queued q) {
-        try {
-            Runnable work = () -> {
-                if (abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(q.individualId()).isEmpty()) return;
-                store.queueCareContexts(q.individualId(), hipIdOf(q), q.subjectUuid(), AbdmHipLinkingService.HI_TYPE, List.of(q.careContext()));
-            };
-            if (ownTransaction == null) work.run();
-            else ownTransaction.executeWithoutResult(status -> work.run());
-        } catch (RuntimeException e) {
-            logger.warn("ABDM: visit {} not queued for linking: {}", q.careContext().reference(), e.getClass().getSimpleName());
-        }
+        if (abhaLinkRepository.findByIndividualIdAndIsVoidedFalse(q.individualId()).isEmpty()) return;
+        store.queueCareContexts(q.individualId(), hipIdOf(q), q.subjectUuid(), AbdmHipLinkingService.HI_TYPE, List.of(q.careContext()));
     }
 
     // The HIP ID the visit's care context was made under, if it has one; else the one chosen at save.

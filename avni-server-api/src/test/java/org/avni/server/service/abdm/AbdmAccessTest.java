@@ -203,6 +203,42 @@ public class AbdmAccessTest {
         verify(configRepository, never()).getEkaSystemConfig(any());
     }
 
+    // F13: with both switches on, what keeps record sharing off is named, so the status page and the job can say which
+    // Eka setting to fill in; with a switch off nothing is named, and no Eka setting is read.
+    @Test
+    public void withBothSwitchesOnTheMissingEkaSettingsAreNamed() throws Exception {
+        UserContextHolder.clear();
+        switchesOf(ORG, true, true);
+
+        settings(full());
+        assertEquals(new AbdmAccess.Sharing(true, null), access.sharing(ORG));
+        assertTrue(access.sharing(ORG).on());
+
+        settings(full().with(EkaSystemConfig.AVNI_SYSTEM_USER, null).with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, null));
+        AbdmAccess.Sharing lacking = access.sharing(ORG);
+        assertFalse(lacking.on());
+        assertTrue(lacking.switchedOn());
+        assertTrue(lacking.missing(), lacking.missing().contains("a system user") && lacking.missing().contains("a webhook signing key"));
+        assertFalse(lacking.missing(), lacking.missing().contains("HIP ID"));
+
+        settings(full().with(EkaSystemConfig.HIP_IDS, List.of()));
+        assertTrue(access.sharing(ORG).missing().contains("a HIP ID"));
+        settings(full().with(EkaSystemConfig.SHARING_CLIENT_ID, "client-1"));
+        assertTrue(access.sharing(ORG).missing().contains("a record-sharing client"));
+
+        when(configRepository.getEkaSystemConfig(ORG)).thenThrow(new EkaNotConfiguredException("none"));
+        assertTrue(access.sharing(ORG).missing().contains("Eka settings"));
+    }
+
+    @Test
+    public void withASwitchOffNothingIsNamed_andNoEkaSettingIsRead() throws Exception {
+        switchesOf(ORG, true, false);
+
+        assertEquals(new AbdmAccess.Sharing(false, null), access.sharing(ORG));
+        assertFalse(access.sharing(ORG).on());
+        verify(configRepository, never()).getEkaSystemConfig(any());
+    }
+
     private void switchesOf(long organisationId, boolean abha, boolean recordSharing) {
         OrganisationConfig config = new OrganisationConfig();
         config.setOrganisationId(organisationId);
