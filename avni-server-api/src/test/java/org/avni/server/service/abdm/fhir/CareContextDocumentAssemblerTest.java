@@ -199,6 +199,18 @@ public class CareContextDocumentAssemblerTest {
         assertEquals("Advised rest", item(d, "Remarks").value());
     }
 
+    // A contact-number key with no value marks nothing, and must not stop the visit from being shared.
+    @Test
+    public void aContactNumberKeyWithNoValueLeavesTheAnswerIn() {
+        Concept remarks = concept("Remarks", "Text", "c-remarks", null);
+        KeyValues empty = new KeyValues();
+        empty.add(new KeyValue(KeyType.contact_number, null));
+        remarks.setKeyValues(empty);
+        encounter.getObservations().put("c-remarks", "Advised rest");
+
+        assertEquals("Advised rest", item(assemble(), "Remarks").value());
+    }
+
     @Test
     public void practitionerFallsBackToLastModifiedByAndThenToNothing() {
         encounter.setFilledBy(null);

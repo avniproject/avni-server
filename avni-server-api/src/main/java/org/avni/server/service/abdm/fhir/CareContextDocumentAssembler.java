@@ -4,7 +4,6 @@ import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.KeyType;
-import org.avni.server.application.KeyValues;
 import org.avni.server.application.ValueType;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.*;
@@ -94,10 +93,9 @@ public class CareContextDocumentAssembler {
 
     // A phone number kept as text: marked as Avni marks a contact number (ConceptService.findContactNumberConcept).
     private static boolean isContactNumber(Concept concept) {
-        KeyValues keyValues = concept.getKeyValues();
-        ValueType[] yes = {ValueType.yes};
-        return keyValues != null && (keyValues.containsOneOfTheValues(KeyType.contact_number, yes)
-                || keyValues.containsOneOfTheValues(KeyType.primary_contact, yes));
+        if (concept.getKeyValues() == null) return false;
+        String yes = ValueType.yes.name();
+        return yes.equals(keyValue(concept, KeyType.contact_number.name())) || yes.equals(keyValue(concept, KeyType.primary_contact.name()));
     }
 
     // The question's standard codes, from its concept's key-values loincCode and snomedCode (set by the implementer).
