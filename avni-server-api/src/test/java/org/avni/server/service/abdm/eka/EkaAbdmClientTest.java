@@ -407,6 +407,18 @@ public class EkaAbdmClientTest {
         assertEquals(0, eka.getAllServeEvents().size());
     }
 
+    // Why there is no token reaches the status page as the token service said it, whatever the reason.
+    @Test
+    public void noTokenForAnEnvironmentTheServerDoesNotAllowSaysSo() throws Exception {
+        when(tokenService.getSharingToken(1L)).thenThrow(
+                new EkaNotConfiguredException("Eka environment sandbox is not allowed on this server, for organisation with id: 1"));
+
+        EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+
+        assertTrue(e.getMessage(), e.getMessage().contains("Eka environment sandbox is not allowed on this server"));
+        assertEquals(0, eka.getAllServeEvents().size());
+    }
+
     @Test
     public void headersWithoutAValueAreLeftOut() {
         eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202)));
@@ -443,7 +455,8 @@ public class EkaAbdmClientTest {
 
     @Test
     public void withoutASharingClientNoCallIsMade() throws Exception {
-        when(tokenService.getSharingToken(1L)).thenThrow(new EkaNotConfiguredException("no sharing client"));
+        when(tokenService.getSharingToken(1L)).thenThrow(
+                new EkaNotConfiguredException("Eka record-sharing client id or secret not set for organisation with id: 1"));
 
         EkaCallException e = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
 

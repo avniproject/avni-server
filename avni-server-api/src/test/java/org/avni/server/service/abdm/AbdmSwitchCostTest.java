@@ -56,7 +56,7 @@ public class AbdmSwitchCostTest {
         switches(false, true);
 
         OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationConfigs, null, null, null, null);
-        AbdmAccess access = new AbdmAccess(organisationConfigService, ekaSettings);
+        AbdmAccess access = new AbdmAccess(organisationConfigService, ekaSettings, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
         visitHook = new AbdmCareContextAspect(access, queue);
         AbdmVerifiedAbhaAspect verifiedAbhaHook = new AbdmVerifiedAbhaAspect(access, queue, store);
         ObjectProvider<AbhaLinkListener> listeners = mock(ObjectProvider.class);

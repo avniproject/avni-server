@@ -61,7 +61,7 @@ public class AbdmGateTest {
         organisation.setId(ORG);
         context.setOrganisation(organisation);
         UserContextHolder.create(context);
-        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository);
+        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
         hipController = new AbdmHipController(linking, ekaHip, accessControlService, access);
         hiuController = new AbdmHiuController(ekaHiu, consents, data, accessControlService, access);
         mvc = MockMvcBuilders.standaloneSetup(hipController, hiuController).build();

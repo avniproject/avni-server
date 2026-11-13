@@ -289,7 +289,8 @@ public class EkaAbdmClient {
         try {
             return tokenService.getSharingToken(organisationId).getAccessToken();
         } catch (EkaNotConfiguredException e) {
-            throw new EkaCallException(0, null, "Eka record-sharing client id or secret not set for this organisation");
+            // The token service names why: no client or secret, the M1 client, or an environment this server does not allow.
+            throw new EkaCallException(0, null, e.getMessage());
         } catch (RuntimeException e) {
             throw new EkaCallException(0, null, "Eka login failed: " + e.getMessage());
         }

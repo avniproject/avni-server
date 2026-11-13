@@ -216,18 +216,19 @@ public class EkaHipServiceTest {
     }
 
     // One Eka ID, one live patient: another patient's saved ABHA claimed this Eka ID first, so this one's visits are
-    // neither linked nor shared under it, and the clash is reported.
+    // neither linked nor shared under it, they wait saying why, and the clash is reported once.
     @Test
     public void anEkaIdAnotherLivePatientClaimedFirstIsNeitherLinkedNorShared() {
         claimedFirstByAnotherPatient();
 
-        assertThrows(EkaHipService.NoVerifiedAbha.class, () -> service.linkCareContexts("subject-1"));
+        EkaHipService.NoVerifiedAbha waiting = assertThrows(EkaHipService.NoVerifiedAbha.class, () -> service.linkCareContexts("subject-1"));
+        assertEquals("Eka ID held by another live patient", waiting.getMessage());
         verifyNoInteractions(eka);
 
         EkaHipService.Prepared prepared = service.prepare("enc-1", "subject-1", OID, null, HIP_ID, settings.current());
         assertNull(prepared.bundleJson());
-        assertEquals("the patient's ABHA is not verified with Eka", prepared.problem());
-        verify(bugsnag, atLeastOnce()).notify(any(IllegalStateException.class));
+        assertEquals("Eka ID held by another live patient", prepared.problem());
+        verify(bugsnag, times(1)).notify(any(IllegalStateException.class));
     }
 
     private void claimedFirstByAnotherPatient() {

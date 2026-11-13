@@ -52,6 +52,7 @@ import static org.junit.Assert.*;
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest {
     private static final Long DEMO_ID = 2L;
+    private static final Long A_DEMO_ID = 3L;
     private static final String SUBJECT_TYPE_A = "a1b2c3d4-0000-4000-8000-00000000000a";
     private static final String SUBJECT_TYPE_B = "a1b2c3d4-0000-4000-8000-00000000000b";
     // Given RegisterSubject on A only. Catchment X, which holds Naya Gaon (address level 2).
@@ -284,6 +285,49 @@ public class AbhaEventIntegrationTest extends AbstractControllerIntegrationTest 
         assertEquals("12345678568912", others.get(0).getAbhaNumber());
         assertEquals("a@abdm", others.get(0).getAbhaAddress());
         assertEquals(0, abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(DEMO_ID, "oid-another", second).size());
+    }
+
+    // One Eka ID per live patient of an organisation: another organisation's patient naming the same Eka ID, even one who
+    // claimed it first, is no claim here. The organisation is named in the query, so this holds with row-level security off.
+    @Test
+    public void anotherOrganisationsPatientNamingTheSameEkaIdHoldsNoClaimHere() {
+        readyFor(REGISTRAR, "HIP-1");
+        recordSharing(true);
+        String elsewhere = otherOrganisationsPatientNaming("oid-1");
+        String ours = subjectOnServer(SUBJECT_TYPE_A, IN_CATCHMENT);
+        holdsAbha(ours, "12345678568912", "a@abdm");
+        visitWaitingForAVerifiedAbha(ours, "visit-1");
+
+        setUser(userRepository.getDefaultSuperAdmin());
+        assertEquals(0, abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(DEMO_ID, "oid-1", ours).size());
+        assertEquals(1, abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(A_DEMO_ID, "oid-1", "none").size());
+        assertEquals(elsewhere, abhaEventRepository.findOtherLiveSubjectsNamingEkaOid(A_DEMO_ID, "oid-1", "none").get(0).getSubjectUuid());
+
+        Map<String, Object> record = event(UUID.randomUUID().toString(), "linked");
+        record.put("subjectUUID", ours);
+        assertEquals(HttpStatus.CREATED, post(REGISTRAR, record).getStatusCode());
+        assertEquals("QUEUED", careContextStatus("visit-1"));
+    }
+
+    // A live patient of a-demo holding an ABHA, with a record naming this Eka ID stored before any of demo's.
+    private String otherOrganisationsPatientNaming(String ekaOid) {
+        setUser(userRepository.getDefaultSuperAdmin());
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        String uuid = UUID.randomUUID().toString();
+        jdbc.update("insert into public.individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, " +
+                        "gender_id, organisation_id, subject_type_id, observations, is_voided, created_by_id, last_modified_by_id, created_date_time, " +
+                        "last_modified_date_time) values (?, ?, 1, current_date, false, 'Other', 'Holder', 1, ?, " +
+                        "(select id from public.subject_type where uuid = ?), '{}'::jsonb, false, 1, 1, now(), now())",
+                uuid, IN_CATCHMENT, A_DEMO_ID, SUBJECT_TYPE_A);
+        jdbc.update("insert into public.abha_link (uuid, organisation_id, individual_id, abha_number, abha_address, created_by_id, " +
+                        "last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values (?, ?, (select id from public.individual where uuid = ?), '91333344444533', 'b@abdm', 1, 1, now(), now())",
+                UUID.randomUUID().toString(), A_DEMO_ID, uuid);
+        jdbc.update("insert into public.abha_event (uuid, organisation_id, subject_uuid, user_id, hip_id, action, route, abha_number, " +
+                        "abha_address, eka_oid, occurred_at, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time) " +
+                        "values (?, ?, ?, 1, 'HIP-9', 'linked', 'aadhaar', '91333344444533', 'b@abdm', ?, now(), 1, 1, now(), now())",
+                UUID.randomUUID().toString(), A_DEMO_ID, uuid, ekaOid);
+        return uuid;
     }
 
     // The same Eka ID as event()'s, with the second patient's own ABHA.

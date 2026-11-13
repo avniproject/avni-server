@@ -8,6 +8,7 @@ import org.avni.server.domain.extenalSystem.EkaSystemConfig;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.abdm.hip.AbdmRequestException;
+import org.avni.server.service.abha.EkaEnvironments;
 import org.avni.server.service.abha.EkaNotConfiguredException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,15 +24,18 @@ import java.util.List;
 public class AbdmAccess {
     private final OrganisationConfigService organisationConfigService;
     private final ExternalSystemConfigRepository externalSystemConfigRepository;
+    private final EkaEnvironments ekaEnvironments;
 
     @Autowired
-    public AbdmAccess(OrganisationConfigService organisationConfigService, ExternalSystemConfigRepository externalSystemConfigRepository) {
+    public AbdmAccess(OrganisationConfigService organisationConfigService, ExternalSystemConfigRepository externalSystemConfigRepository,
+                      EkaEnvironments ekaEnvironments) {
         this.organisationConfigService = organisationConfigService;
         this.externalSystemConfigRepository = externalSystemConfigRepository;
+        this.ekaEnvironments = ekaEnvironments;
     }
 
-    // ABHA and record sharing switched on, and Eka settings with a HIP ID, a record-sharing client, a system user and a
-    // webhook signing key.
+    // ABHA and record sharing switched on, and Eka settings for an environment this server allows, with a HIP ID, a
+    // record-sharing client, a system user and a webhook signing key (missingForSharing).
     public boolean recordSharingOn() {
         return canShare(switchedOnSettings());
     }
@@ -51,19 +55,27 @@ public class AbdmAccess {
     // For a named organisation: a switch off is the organisation's choice, and its Eka settings are not read.
     public Sharing sharing(long organisationId) {
         if (!switchedOn(organisationId)) return new Sharing(false, null);
-        return new Sharing(true, missingForSharing(ekaSettings(organisationId)));
+        return new Sharing(true, missingForSharing(ekaSettings(organisationId), ekaEnvironments));
     }
 
-    // What these Eka settings lack for record sharing, named for the administrator; null when they can share.
-    public static String missingForSharing(EkaSystemConfig settings) {
+    // What keeps these Eka settings from record sharing on this server, named for the administrator; null when nothing.
+    public static String missingForSharing(EkaSystemConfig settings, EkaEnvironments environments) {
         if (settings == null) return "Eka settings are not saved for this organisation";
+        List<String> problems = new ArrayList<>();
+        String environment = settings.getEnvironment();
+        // A production server never shares through Eka's sandbox (avni.eka.allowedEnvironments).
+        if (StringUtils.hasText(environment) && !environments.allows(environment)) {
+            problems.add("Eka environment " + environment + " is not allowed on this server");
+        }
         List<String> missing = new ArrayList<>();
+        if (!StringUtils.hasText(environment)) missing.add("an Eka environment");
         if (settings.getHipIds().isEmpty()) missing.add("a HIP ID");
         // Not configured also when it is the M1 client, whose token the phone holds.
         if (!settings.isSharingClientConfigured()) missing.add("a record-sharing client, other than the ABHA client");
         if (!StringUtils.hasText(settings.getAvniSystemUser())) missing.add("a system user");
         if (!StringUtils.hasText(settings.getEncryptedWebhookSigningKey())) missing.add("a webhook signing key");
-        return missing.isEmpty() ? null : "The organisation's Eka settings lack " + String.join(", ", missing);
+        if (!missing.isEmpty()) problems.add("The organisation's Eka settings lack " + String.join(", ", missing));
+        return problems.isEmpty() ? null : String.join("; ", problems);
     }
 
     // Record sharing on, and an HIU ID to receive records under.
@@ -102,8 +114,8 @@ public class AbdmAccess {
     }
 
     // Without the system user every job fails, and without the signing key every webhook is refused.
-    private static boolean canShare(EkaSystemConfig settings) {
-        return missingForSharing(settings) == null;
+    private boolean canShare(EkaSystemConfig settings) {
+        return missingForSharing(settings, ekaEnvironments) == null;
     }
 
     private static Long currentOrganisationId() {

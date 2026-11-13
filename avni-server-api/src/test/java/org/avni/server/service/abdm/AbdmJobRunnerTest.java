@@ -50,7 +50,7 @@ public class AbdmJobRunnerTest {
 
     @Before
     public void setUp() {
-        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository);
+        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
         AbdmOrgContext orgContext = new AbdmOrgContext(authService, organisationRepository, configRepository, mock(PlatformTransactionManager.class));
         runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag,
                 Clock.fixed(NOW, ZoneOffset.UTC));
@@ -320,6 +320,7 @@ public class AbdmJobRunnerTest {
         if (sharing) sharingSwitchedOn.add(config);
         when(organisationConfigService.getOrganisationConfigByOrgId(id)).thenReturn(config);
         JsonObject eka = new JsonObject()
+                .with(EkaSystemConfig.ENVIRONMENT, "sandbox")
                 .with(EkaSystemConfig.HIP_IDS, List.of("hip-" + id))
                 .with(EkaSystemConfig.CLIENT_ID, "m1-client")
                 .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-client")

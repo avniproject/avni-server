@@ -73,6 +73,17 @@ public class AbhaEventServiceSavedAbhaTest {
         assertEquals(Optional.of(firstAgain), AbhaEventService.ofSavedAbha(List.of(firstAgain, another, first), SAVED, "patient@sbx"));
     }
 
+    // A record carrying no address has none to contradict the saved one: agreeing on the number is enough. Eka's own
+    // confirmation, not this check, is what would catch a record sent without its address on purpose.
+    @Test
+    public void aRecordWithNoAddressAgreesOnTheNumberAlone() {
+        AbhaEvent numberOnly = record("linked", "oid-saved", SAVED, null);
+        AbhaEvent otherNumber = record("linked", "oid-other", "91000000000001", null);
+
+        assertEquals(Optional.of(numberOnly), AbhaEventService.ofSavedAbha(List.of(numberOnly), SAVED, "patient@sbx"));
+        assertEquals(Optional.empty(), AbhaEventService.ofSavedAbha(List.of(otherNumber), SAVED, "patient@sbx"));
+    }
+
     // A removal ends the earlier claim: an ABHA added again may come with another Eka ID.
     @Test
     public void afterARemovalTheNextEkaIdIsTheSavedAbhas() {

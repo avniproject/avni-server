@@ -10,6 +10,7 @@ import org.avni.server.service.abdm.AbdmOrgContext;
 import org.avni.server.service.abdm.AbdmSettings;
 import org.avni.server.service.abdm.eka.EkaAbdmClient;
 import org.avni.server.service.abdm.hip.AbdmHipStore;
+import org.avni.server.service.abha.EkaEnvironments;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,11 +37,12 @@ public class AbdmAdminController {
     private final AbdmJobRuns jobRuns;
     private final AbdmOrgContext orgContext;
     private final AbdmHipStore hipStore;
+    private final EkaEnvironments ekaEnvironments;
 
     @Autowired
     public AbdmAdminController(AccessControlService accessControlService, AbdmConfig cfg, EkaAbdmClient ekaClient,
                                OrganisationConfigService organisationConfigService, AbdmAccess access, AbdmSettings settings,
-                               AbdmJobRuns jobRuns, AbdmOrgContext orgContext, AbdmHipStore hipStore) {
+                               AbdmJobRuns jobRuns, AbdmOrgContext orgContext, AbdmHipStore hipStore, EkaEnvironments ekaEnvironments) {
         this.accessControlService = accessControlService;
         this.cfg = cfg;
         this.ekaClient = ekaClient;
@@ -50,6 +52,7 @@ public class AbdmAdminController {
         this.jobRuns = jobRuns;
         this.orgContext = orgContext;
         this.hipStore = hipStore;
+        this.ekaEnvironments = ekaEnvironments;
     }
 
     @GetMapping("/web/abdm/status")
@@ -84,7 +87,7 @@ public class AbdmAdminController {
     private Map<String, Object> session(boolean recordSharingOn, boolean switchedOn, EkaSystemConfig eka) {
         Map<String, Object> session = new LinkedHashMap<>();
         if (!recordSharingOn) {
-            String missing = switchedOn ? AbdmAccess.missingForSharing(eka) : null;
+            String missing = switchedOn ? AbdmAccess.missingForSharing(eka, ekaEnvironments) : null;
             session.put("ok", false);
             session.put("error", missing != null ? missing : "Record sharing is not on for this organisation");
             return session;

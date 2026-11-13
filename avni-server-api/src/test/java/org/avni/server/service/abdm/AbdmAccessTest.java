@@ -37,7 +37,7 @@ public class AbdmAccessTest {
     private static final long ORG = 5L;
     private final OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
     private final ExternalSystemConfigRepository configRepository = mock(ExternalSystemConfigRepository.class);
-    private final AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository);
+    private final AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
 
     @Before
     public void actAsTheOrganisation() {
@@ -228,6 +228,29 @@ public class AbdmAccessTest {
 
         when(configRepository.getEkaSystemConfig(ORG)).thenThrow(new EkaNotConfiguredException("none"));
         assertTrue(access.sharing(ORG).missing().contains("Eka settings"));
+    }
+
+    // F9: an organisation saved for Eka's sandbox, on a server that allows production only, has nothing on, has none of its
+    // visits queued, and is told why.
+    @Test
+    public void aSandboxOrganisationOnAProductionOnlyServerIsNotOn_queuesNothing_andTheEnvironmentIsNamed() throws Exception {
+        AbdmAccess productionOnly = new AbdmAccess(organisationConfigService, configRepository,
+                new org.avni.server.service.abha.EkaEnvironments("production"));
+        switches(true, true);
+        settings(full());
+
+        assertFalse(productionOnly.recordSharingOn());
+        assertFalse(productionOnly.hiuOn());
+        assertFalse(productionOnly.recordSharingOn(ORG));
+        AbdmAccess.Sharing sharing = productionOnly.sharing(ORG);
+        assertTrue(sharing.switchedOn());
+        assertEquals("Eka environment sandbox is not allowed on this server", sharing.missing());
+
+        org.avni.server.service.abdm.hip.AbdmVisitQueue queue = mock(org.avni.server.service.abdm.hip.AbdmVisitQueue.class);
+        new org.avni.server.service.abdm.hip.AbdmCareContextAspect(productionOnly, queue).queueForLinking(new org.avni.server.domain.Encounter());
+        org.mockito.Mockito.verifyNoInteractions(queue);
+
+        assertTrue(access.recordSharingOn());
     }
 
     @Test

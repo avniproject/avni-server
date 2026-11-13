@@ -51,6 +51,22 @@ public class AbhaVerifiedRecordsTest {
         verify(bugsnag, times(1)).notify(any(IllegalStateException.class));
     }
 
+    // Each use of a second claim refuses it, but the clash goes to Bugsnag once for each pair of patients.
+    @Test
+    public void aSecondClaimIsReportedOncePerPairOfPatients_notOnEveryUse() {
+        for (int use = 0; use < 3; use++) {
+            assertEquals(Optional.empty(), records.of("subject-2", SECOND_NUMBER, "second@sbx"));
+        }
+        verify(bugsnag, times(1)).notify(any(IllegalStateException.class));
+
+        AbhaEvent thirdClaim = record(12L, "subject-3", "91000000000001", "third@sbx");
+        when(repository.findBySubjectUuidOrderByCreatedDateTimeDescIdDesc("subject-3")).thenReturn(List.of(thirdClaim));
+        when(repository.findOtherLiveSubjectsNamingEkaOid(ORG, SHARED, "subject-3"))
+                .thenReturn(List.of(holder("subject-1", FIRST_NUMBER, "first@sbx")));
+        assertEquals(Optional.empty(), records.of("subject-3", "91000000000001", "third@sbx"));
+        verify(bugsnag, times(2)).notify(any(IllegalStateException.class));
+    }
+
     // The other subject's record names the Eka ID, but the ABHA saved on it now is another one: it holds no claim.
     @Test
     public void anotherSubjectWhoseSavedAbhaNoLongerAgreesHoldsNoClaim() {

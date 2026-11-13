@@ -130,6 +130,21 @@ public class AbdmHousekeepingJobTest {
         verify(hipStore, never()).failQueued(any(), any(), any());
     }
 
+    // A patient whose Eka ID another live patient claimed first waits too, and the visits say so.
+    @Test
+    public void aPatientWhoseEkaIdIsHeldByAnotherWaitsSayingSo() {
+        Instant looked = Instant.parse("2026-11-12T09:59:00Z");
+        when(hipStore.subjectsToLink(AbdmTestSupport.HIP_ID, 50)).thenReturn(List.of("subject-1"));
+        when(hipStore.databaseNow()).thenReturn(looked);
+        when(ekaHip.linkCareContexts("subject-1", true))
+                .thenThrow(new EkaHipService.NoVerifiedAbha(org.avni.server.service.abha.AbhaVerifiedRecords.HELD_BY_ANOTHER));
+
+        job().linkQueuedVisits();
+
+        verify(hipStore).awaitVerifiedAbha("subject-1", AbdmTestSupport.HIP_ID, "Eka ID held by another live patient", looked);
+        verify(hipStore, never()).failQueuedForGood(any(), any(), any());
+    }
+
     // Anything else may pass: counted, and tried again after a growing wait (AbdmHipStore.failQueued).
     @Test
     public void aPatientWhoseLinkFailedOtherwiseIsTriedAgainLater() {

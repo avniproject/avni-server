@@ -46,7 +46,8 @@ public class AbdmAdminControllerTest {
 
     private AbdmAdminController controller(String publicBaseUrl) {
         return new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig(publicBaseUrl, 30), ekaClient,
-                organisationConfigService, access, settings, jobRuns, orgContext, hipStore);
+                organisationConfigService, access, settings, jobRuns, orgContext, hipStore,
+                new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
     }
 
     @Test
@@ -111,6 +112,30 @@ public class AbdmAdminControllerTest {
         assertEquals(false, session.get("ok"));
         String error = (String) session.get("error");
         assertTrue(error, error.contains("a system user") && error.contains("a webhook signing key"));
+        verify(ekaClient, never()).checkToken();
+    }
+
+    // F9: an organisation saved for Eka's sandbox on a server allowing production only: the session names the environment.
+    @Test
+    @SuppressWarnings("unchecked")
+    public void aSandboxOrganisationOnAProductionOnlyServerHasItsEnvironmentNamed() {
+        when(organisationConfigService.isAbhaEnabled()).thenReturn(true);
+        when(organisationConfigService.isAbdmRecordSharingEnabled()).thenReturn(true);
+        when(settings.find()).thenReturn(Optional.of(ekaSettings(new JsonObject()
+                .with(EkaSystemConfig.ENVIRONMENT, "sandbox")
+                .with(EkaSystemConfig.HIP_IDS, List.of("hip-1"))
+                .with(EkaSystemConfig.SHARING_CLIENT_ID, "sharing-1")
+                .with(EkaSystemConfig.ENCRYPTED_SHARING_CLIENT_SECRET, "encrypted-1")
+                .with(EkaSystemConfig.AVNI_SYSTEM_USER, "system-user-1")
+                .with(EkaSystemConfig.ENCRYPTED_WEBHOOK_SIGNING_KEY, "encrypted-key-1"))));
+        AbdmAdminController productionOnly = new AbdmAdminController(mock(AccessControlService.class), new AbdmConfig("https://avni.example.org/", 30),
+                ekaClient, organisationConfigService, access, settings, jobRuns, orgContext, hipStore,
+                new org.avni.server.service.abha.EkaEnvironments("production"));
+
+        Map<String, Object> session = (Map<String, Object>) productionOnly.status().get("session");
+
+        assertEquals(false, session.get("ok"));
+        assertEquals("Eka environment sandbox is not allowed on this server", session.get("error"));
         verify(ekaClient, never()).checkToken();
     }
 
