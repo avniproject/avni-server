@@ -561,7 +561,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
      * <ul>
      *     <li>programs: the subject has a non-voided enrolment in one of them. An exited enrolment matches only when includeExited is set.</li>
      *     <li>includeExited with no programme ticked: the subject has exited (non-voided enrolment with an exit date) from any programme.</li>
-     *     <li>notEnrolled: the subject has no non-voided enrolment, in any programme, exited or not.</li>
+     *     <li>notEnrolled: the subject has no non-voided enrolment, in any programme, exited or not. Ignored with includeExited, as in the Data Entry App, where the two can't be ticked together.</li>
      *     <li>more than one: any of the conditions.</li>
      * </ul>
      * Voided (cancelled) enrolments never count. With nothing ticked, the filter is ignored.
@@ -570,6 +570,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         boolean hasPrograms = programUuids != null && !programUuids.isEmpty();
         if (!hasPrograms && !includeExited && !notEnrolled) return (T) this;
 
+        if (includeExited) notEnrolled = false;
         List<String> conditions = new ArrayList<>();
         if (hasPrograms) {
             withTickedPrograms(programUuids);

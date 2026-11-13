@@ -615,9 +615,14 @@ public class SubjectSearchQueryBuilderTest {
     }
 
     @Test
-    public void includeExitedAloneWithNotEnrolledIsJoinedWithOr() {
-        SqlQuery query = programSearch(null, true, true);
-        assertThat(query.getSql()).contains("(" + EXITED_FROM_ANY_PROGRAM + " or " + NOT_ENROLLED + ")");
+    public void notEnrolledIsIgnoredWithIncludeExitedAsInTheDataEntryApp() {
+        SqlQuery withoutPrograms = programSearch(null, true, true);
+        assertThat(withoutPrograms.getSql()).contains("(" + EXITED_FROM_ANY_PROGRAM + ")");
+        assertThat(withoutPrograms.getSql()).doesNotContain("pf_none");
+
+        SqlQuery withPrograms = programSearch(Collections.singletonList("p1"), true, true);
+        assertThat(withPrograms.getSql()).contains("(" + ENROLLED_IN_PROGRAMS + "))");
+        assertThat(withPrograms.getSql()).doesNotContain("pf_none").doesNotContain("pf_exit");
     }
 
     @Test

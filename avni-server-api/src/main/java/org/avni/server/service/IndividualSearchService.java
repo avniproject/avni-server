@@ -38,10 +38,10 @@ public class IndividualSearchService {
         long resultsEnd = new DateTime().getMillis();
         Long totalCount = subjectSearchRequest.getIncludeDisplayCount() ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : -1l;
         logger.info(String.format("Subject search: Time Taken: %dms. Sorted: %s", (resultsEnd - startTime), subjectSearchRequest.getPageElement().getSortColumn()));
-        return constructIndividual(searchResults, totalCount);
+        return constructIndividual(searchResults, totalCount, subjectSearchRequest.isIncludeExitedEnrolments());
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, Long totalCount) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, Long totalCount, boolean includeExitedEnrolments) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
@@ -50,9 +50,9 @@ public class IndividualSearchService {
                 .map(individualRecord -> (Long) individualRecord.get("addressId"))
                 .collect(Collectors.toList());
 
-        List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = !individualIds.isEmpty() ?
-                programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds) :
-                Collections.emptyList();
+        List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = individualIds.isEmpty() ? Collections.emptyList() :
+                includeExitedEnrolments ? programEnrolmentRepository.findActiveAndExitedEnrolmentsByIndividualIds(individualIds) :
+                        programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds);
 
         Map<Long, String> titleLineages = addressLevelService.getTitleLineages(addressIds);
 
@@ -61,7 +61,7 @@ public class IndividualSearchService {
                     Long individualId = Long.valueOf((Integer) individualRecord.get("id"));
                     individualRecord.put("enrolments", searchSubjectEnrolledPrograms.stream()
                             .filter(x -> x.getId().equals(individualId))
-                            .map(searchSubjectEnrolledProgram -> EnrolmentContract.fromProgram(searchSubjectEnrolledProgram.getProgram()))
+                            .map(searchSubjectEnrolledProgram -> EnrolmentContract.fromProgram(searchSubjectEnrolledProgram.getProgram(), searchSubjectEnrolledProgram.getProgramExitDateTime()))
                             .collect(Collectors.toList()));
                     individualRecord.put("addressLevel", titleLineages.get((Long) individualRecord.get("addressId")));
                 }).collect(Collectors.toList());
