@@ -242,6 +242,10 @@ public class AbdmJobRunnerTest {
         ArgumentCaptor<String> error = ArgumentCaptor.forClass(String.class);
         verify(jobRuns).failed(eq(1L), eq(TASK), error.capture(), any());
         assertTrue(error.getValue(), error.getValue().contains("database down"));
+        // Fix round 1: the system user that could not act is reported with it, not lost behind it.
+        assertTrue(error.getValue(), error.getValue().contains("system user"));
+        assertEquals(1, failure.getSuppressed().length);
+        assertTrue(failure.getSuppressed()[0] instanceof AbdmOrgContext.SystemUserException);
     }
 
     private void organisation(long id, boolean abha, boolean sharing, String systemUser) throws Exception {

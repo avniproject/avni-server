@@ -65,8 +65,12 @@ public class AbdmHousekeepingJobTest {
     }
 
     private AbdmHousekeepingJob job(AbdmSettings settings) {
+        return job(settings, 30);
+    }
+
+    private AbdmHousekeepingJob job(AbdmSettings settings, int messageRetentionDays) {
         return new AbdmHousekeepingJob(runner, mock(AbdmScheduler.class), settings, messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip,
-                ekaHiu, clock, 30);
+                ekaHiu, clock, new AbdmConfig(null, messageRetentionDays));
     }
 
     private AbdmHousekeepingJob job() {
@@ -192,6 +196,18 @@ public class AbdmHousekeepingJobTest {
         withoutLogin.getValue().accept(4L);
         verify(messageLog).purgeOlderThan(4L, Duration.ofDays(30));
         verify(inbox).purgeFinishedOlderThan(4L, cutoff);
+    }
+
+    // Fix round 1: the purge keeps to the deployment's retention as the status page counts over it (AbdmConfig), so the
+    // two cannot drift.
+    @Test
+    public void thePurgeKeepsToTheDeploymentsRetention() {
+        Instant cutoff = NOW.minus(Duration.ofDays(45));
+
+        job(AbdmTestSupport.settings(), 45).purgeOldTraffic();
+
+        verify(messageLog).purgeOlderThan(Duration.ofDays(45));
+        verify(inbox).purgeFinishedOlderThan(cutoff);
     }
 
     // Consents expire and their records are erased in every organisation holding them, record sharing on or not;

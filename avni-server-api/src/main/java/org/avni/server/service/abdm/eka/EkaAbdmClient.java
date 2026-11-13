@@ -140,6 +140,7 @@ public class EkaAbdmClient {
     }
 
     private static boolean worthTryingAgain(String method, EkaCallException e, boolean resendAfterServerError) {
+        if (Thread.currentThread().isInterrupted()) return false;
         int status = e.getStatus();
         if (status == 429) return true;
         if (status >= 500) return resendAfterServerError;
@@ -243,7 +244,8 @@ public class EkaAbdmClient {
         } catch (InterruptedException e) {
             answer.cancel(true);
             Thread.currentThread().interrupt();
-            throw new EkaCallException(0, null, call + " did not answer: interrupted");
+            // The request may already be with Eka, so it may have acted on it.
+            throw new NoAnswer(true, call + " did not answer: interrupted");
         }
     }
 

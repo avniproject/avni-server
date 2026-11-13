@@ -50,7 +50,8 @@ public class AbdmHousekeepingJob {
     private final EkaHipService ekaHip;
     private final EkaHiuService ekaHiu;
     private final Clock clock;
-    private final int messageRetentionDays;
+    // The deployment's (AbdmConfig), the window the status page counts over too.
+    private final Duration messageRetention;
 
     @Value("${abdm.housekeeping.traffic-cron:0 30 2 * * *}")
     private String trafficCron;
@@ -62,13 +63,13 @@ public class AbdmHousekeepingJob {
     @Autowired
     public AbdmHousekeepingJob(AbdmJobRunner runner, AbdmScheduler scheduler, AbdmSettings settings, AbdmMessageLog messageLog,
                                AbdmInbox inbox, AbdmHiuDataService hiuData, AbdmHiuStore hiuStore, AbdmHipStore hipStore,
-                               EkaHipService ekaHip, EkaHiuService ekaHiu, @Value("${abdm.message-retention-days:30}") int messageRetentionDays) {
-        this(runner, scheduler, settings, messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip, ekaHiu, Clock.systemUTC(), messageRetentionDays);
+                               EkaHipService ekaHip, EkaHiuService ekaHiu, AbdmConfig cfg) {
+        this(runner, scheduler, settings, messageLog, inbox, hiuData, hiuStore, hipStore, ekaHip, ekaHiu, Clock.systemUTC(), cfg);
     }
 
     AbdmHousekeepingJob(AbdmJobRunner runner, AbdmScheduler scheduler, AbdmSettings settings, AbdmMessageLog messageLog,
                         AbdmInbox inbox, AbdmHiuDataService hiuData, AbdmHiuStore hiuStore, AbdmHipStore hipStore,
-                        EkaHipService ekaHip, EkaHiuService ekaHiu, Clock clock, int messageRetentionDays) {
+                        EkaHipService ekaHip, EkaHiuService ekaHiu, Clock clock, AbdmConfig cfg) {
         this.runner = runner;
         this.scheduler = scheduler;
         this.settings = settings;
@@ -80,7 +81,7 @@ public class AbdmHousekeepingJob {
         this.ekaHip = ekaHip;
         this.ekaHiu = ekaHiu;
         this.clock = clock;
-        this.messageRetentionDays = messageRetentionDays;
+        this.messageRetention = cfg.messageRetention();
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -90,16 +91,15 @@ public class AbdmHousekeepingJob {
         scheduler.schedule(linkCron, this::linkQueuedVisits);
     }
 
-    // Traffic, and webhook events handled or given up on, older than abdm.message-retention-days, in every organisation
+    // Traffic, and webhook events handled or given up on, older than the retention (AbdmConfig), in every organisation
     // holding them: they can carry a patient's details, and the duty to delete them outlives the switch.
     public void purgeOldTraffic() {
-        Duration retention = Duration.ofDays(messageRetentionDays);
-        Instant cutoff = clock.instant().minus(retention);
+        Instant cutoff = clock.instant().minus(messageRetention);
         runner.forOrganisations(TRAFFIC_PURGE, UPKEEP_BUDGET, () -> holdingOldTraffic(cutoff), deadline -> {
-            messageLog.purgeOlderThan(retention);
+            messageLog.purgeOlderThan(messageRetention);
             inbox.purgeFinishedOlderThan(cutoff);
         }, organisationId -> {
-            messageLog.purgeOlderThan(organisationId, retention);
+            messageLog.purgeOlderThan(organisationId, messageRetention);
             inbox.purgeFinishedOlderThan(organisationId, cutoff);
         });
     }

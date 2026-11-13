@@ -53,7 +53,8 @@ public class EkaWebhookController {
     private static final int MAX_TEXT = 255;
     // Eka's own signature outside the time allowed this often points at a clock, this server's or Eka's, not a replay.
     static final int STALE_REPEATS = 3;
-    static final Duration STALE_WINDOW = Duration.ofMinutes(15);
+    // An organisation's same alarm at most once in this time: Eka delivers again and again while the fault lasts.
+    static final Duration ALARM_WINDOW = Duration.ofMinutes(15);
 
     private final ExternalSystemConfigRepository configRepository;
     private final EkaWebhookVerifier verifier;
@@ -62,6 +63,7 @@ public class EkaWebhookController {
     private final EkaEventWorker worker;
     private final Bugsnag bugsnag;
     private final Map<Long, Deque<Instant>> staleRefusals = new ConcurrentHashMap<>();
+    private final Map<Long, Instant> keyAlarms = new ConcurrentHashMap<>();
 
     @Autowired
     public EkaWebhookController(ExternalSystemConfigRepository configRepository, EkaWebhookVerifier verifier, EkaEventGate gate,
@@ -88,7 +90,7 @@ public class EkaWebhookController {
         if (result.kind() == EkaWebhookVerifier.Kind.KEY_UNUSABLE) {
             IllegalStateException fault = new IllegalStateException("Eka webhook for organisation " + organisationId + " not checked: " + result.reason());
             logger.error(fault.getMessage());
-            bugsnag.notify(fault);
+            if (firstInWindow(keyAlarms, organisationId)) bugsnag.notify(fault);
             return answer(HttpStatus.INTERNAL_SERVER_ERROR, "not checked", null);
         }
         if (!result.valid()) {
@@ -127,23 +129,34 @@ public class EkaWebhookController {
         return answer(HttpStatus.OK, "accepted", null);
     }
 
-    // Reported once per STALE_REPEATS refusals of an organisation within STALE_WINDOW; one alone may be a replay.
+    // Reported once per STALE_REPEATS refusals of an organisation within ALARM_WINDOW; one alone may be a replay.
     private void staleRefused(long organisationId) {
         Instant now = Instant.now();
         Deque<Instant> refusals = staleRefusals.computeIfAbsent(organisationId, id -> new ArrayDeque<>());
         boolean repeated;
         synchronized (refusals) {
-            while (!refusals.isEmpty() && refusals.peekFirst().isBefore(now.minus(STALE_WINDOW))) refusals.pollFirst();
+            while (!refusals.isEmpty() && refusals.peekFirst().isBefore(now.minus(ALARM_WINDOW))) refusals.pollFirst();
             refusals.addLast(now);
             repeated = refusals.size() >= STALE_REPEATS;
             if (repeated) refusals.clear();
         }
         if (!repeated) return;
         IllegalStateException fault = new IllegalStateException("Eka webhooks for organisation " + organisationId + " refused " + STALE_REPEATS
-                + " times within " + STALE_WINDOW.toMinutes() + " minutes: signed outside the " + EkaWebhookVerifier.TOLERANCE_SECONDS
+                + " times within " + ALARM_WINDOW.toMinutes() + " minutes: signed outside the " + EkaWebhookVerifier.TOLERANCE_SECONDS
                 + " s allowed; check this server's clock");
         logger.error(fault.getMessage());
         bugsnag.notify(fault);
+    }
+
+    // True for the organisation's first alarm, and again only once ALARM_WINDOW has passed since the last one.
+    private static boolean firstInWindow(Map<Long, Instant> lastAlarms, long organisationId) {
+        Instant now = Instant.now();
+        boolean[] first = {false};
+        lastAlarms.compute(organisationId, (id, last) -> {
+            first[0] = last == null || !last.isAfter(now.minus(ALARM_WINDOW));
+            return first[0] ? now : last;
+        });
+        return first[0];
     }
 
     // Eka's top-level transaction_id names the delivery; without one, the body itself, so a redelivery is still one event.

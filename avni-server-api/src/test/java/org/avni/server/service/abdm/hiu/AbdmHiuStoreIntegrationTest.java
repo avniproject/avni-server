@@ -109,19 +109,37 @@ public class AbdmHiuStoreIntegrationTest extends AbstractControllerIntegrationTe
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 2", Integer.class));
     }
 
-    // What is not held here (a request not mapped yet, an artefact not made yet) is left for the logged-in path, which can
-    // park it or ask Eka; what is held is still ended and erased now.
+    // What only a logged-in try can place (a request not mapped yet, an artefact a parked grant will make) waits for it,
+    // which can park it or ask Eka; what is held is still ended and erased now.
     @Test
-    public void anEndingNamingWhatIsNotHeldHereIsNotWhollyApplied_butWhatIsHeldStillEnds() {
+    public void anEndingNamingWhatOnlyALoggedInTryCanPlaceIsNotWhollyApplied_butWhatIsHeldStillEnds() {
         var jdbc = namedJdbc.getJdbcOperations();
         clearHiu(jdbc);
         held(jdbc, 2L);
+        jdbc.update("insert into abdm_parked_event (organisation_id, kind, reference, status, detail) values " +
+                "(2, 'consent_update', 'cr-parked', 'GRANTED', '{\"artefacts\":[\"artefact-parked\"]}')");
 
         assertFalse(store.endWithoutLogin(2L, "cr-unmapped", List.of(), "REVOKED"));
-        assertFalse(store.endWithoutLogin(2L, null, List.of("artefact-1", "artefact-not-made"), "REVOKED"));
+        assertFalse(store.endWithoutLogin(2L, null, List.of("artefact-1", "artefact-parked"), "REVOKED"));
 
         assertEquals(List.of("REVOKED", "REVOKED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 2 order by id", String.class));
         assertEquals(Integer.valueOf(0), jdbc.queryForObject("select count(*) from abdm_health_information where organisation_id = 2", Integer.class));
+    }
+
+    // Fix round 1: artefacts held nowhere and named by no parked grant are ignored, as the logged-in path ignores them, so
+    // such an ending is done rather than retried hourly as a withdrawal not applied.
+    @Test
+    public void anEndingNamingOnlyArtefactsHeldNowhereIsDone_asTheLoggedInPathIgnoresThem() {
+        var jdbc = namedJdbc.getJdbcOperations();
+        clearHiu(jdbc);
+        held(jdbc, 2L);
+        jdbc.update("insert into abdm_parked_event (organisation_id, kind, reference, status, detail) values " +
+                "(3, 'consent_update', 'cr-other', 'GRANTED', '{\"artefacts\":[\"artefact-unknown\"]}')");
+
+        assertTrue(store.endWithoutLogin(2L, null, List.of("artefact-unknown"), "REVOKED"));
+        assertTrue(store.endWithoutLogin(2L, null, List.of("artefact-1", "artefact-unknown"), "REVOKED"));
+
+        assertEquals(List.of("REVOKED", "REVOKED"), jdbc.queryForList("select status from abdm_consent where organisation_id = 2 order by id", String.class));
     }
 
     private static void clearHiu(org.springframework.jdbc.core.JdbcOperations jdbc) {

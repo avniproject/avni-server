@@ -343,6 +343,21 @@ public class EkaWebhookControllerTest {
         verifyNoInteractions(inbox, worker);
     }
 
+    // Fix round 1: every delivery Eka retries would alarm again; the first one alarms, then at most one per window for
+    // the organisation. Each delivery still answers 500, and another organisation alarms on its own.
+    @Test
+    public void anUnusableSigningKeyAlarmsOnce_thenAtMostOncePerWindowForTheOrganisation() throws Exception {
+        when(cipher.decrypt("encrypted-key-1")).thenThrow(new IllegalStateException("the deployment's key changed"));
+        when(cipher.decrypt("encrypted-key-2")).thenThrow(new IllegalStateException("the deployment's key changed"));
+        String body = event("link-care-context.json");
+
+        for (int i = 0; i < 3; i++) send(body, signature(NOW, body)).andExpect(status().isInternalServerError());
+        send("webhook-2", body, signature(OTHER_KEY, NOW, body)).andExpect(status().isInternalServerError());
+
+        verify(bugsnag, times(2)).notify(any(IllegalStateException.class));
+        verifyNoInteractions(inbox, worker);
+    }
+
     @Test
     public void anEmptySigningKeyIs500AndAlarms() throws Exception {
         when(cipher.decrypt("encrypted-key-1")).thenReturn("");

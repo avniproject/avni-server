@@ -29,7 +29,11 @@ import org.avni.server.service.abdm.hip.AbdmRequestException;
 import org.avni.server.service.abha.AbhaEventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.RecoverableDataAccessException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
@@ -310,8 +314,8 @@ public class EkaHipService implements EkaHipEvents {
     }
 
     // abha.hip_data_fetch: build each requested visit's bundle, encrypt it to the requester's key with a
-    // fresh key pair of ours, and post it on-fetch. Recorded as an HIP data flow. A failure that may pass is thrown for the
-    // inbox to try again, until its last try.
+    // fresh key pair of ours, and post it on-fetch. Recorded as an HIP data flow. A fault that may pass is thrown for the
+    // inbox to try again, until its last try; once Eka may have the records nothing is thrown, so they are never sent twice.
     @Override
     public void hipDataFetch(JsonNode event, boolean lastTry) {
         JsonNode data = dataOf(event);
@@ -321,78 +325,40 @@ public class EkaHipService implements EkaHipEvents {
         String consentId = AbdmFlows.firstNonNull(AbdmJson.text(data, "consent_id"), AbdmJson.text(data, "consent_artefact_id"),
                 "eka:" + transactionId);
         long flowId = store.insertDataFlow(cut(consentId, 100), transactionId, eventId, "eka:" + ON_FETCH_PATH, FLOW_REQUESTED, null);
-        EkaSystemConfig orgSettings = settings.current();
-        Optional<String> hip = AbdmFlows.hipOfEvent(orgSettings, data);
-        if (hip.isEmpty()) {
-            failShare(flowId, transactionId, "The request names a HIP ID that is not this organisation's");
-            logger.warn("Eka data fetch {} names a HIP ID that is not this organisation's; nothing sent", transactionId);
+        Request request;
+        try {
+            request = request(data, flowId, transactionId);
+        } catch (RuntimeException e) {
+            String error = "Request not read: " + e.getClass().getSimpleName();
+            if (!lastTry) throw retried(flowId, transactionId, error, e);
+            failShare(flowId, transactionId, error, e);
             return;
         }
-        String hipId = hip.get();
+        if (request == null) return;
 
-        String requesterKey = AbdmFlows.firstNonNull(AbdmJson.text(data, "key_information.dh_public_key.key_value"),
-                AbdmJson.text(data, "key_material.dh_public_key.key_value"), AbdmJson.text(data, "keyMaterial.dhPublicKey.keyValue"));
-        String requesterNonce = AbdmFlows.firstNonNull(AbdmJson.text(data, "key_information.nonce"),
-                AbdmJson.text(data, "key_material.nonce"), AbdmJson.text(data, "keyMaterial.nonce"));
-        if (requesterKey == null || requesterNonce == null) {
-            failShare(flowId, transactionId, "The request carries no key_information (requester key and nonce)");
-            logger.warn("Eka data fetch {} has no key material; nothing sent", transactionId);
-            return;
-        }
-        List<String> references = careContextIds(data);
-        if (references.isEmpty()) {
-            failShare(flowId, transactionId, "The request names no care context");
-            return;
-        }
-        String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
-        String oid = AbdmJson.text(data, "oid");
-        String requesterAddress = AbdmJson.text(data, "abha_address");
-        // Without the patient's ABHA there is nothing to check the visits' owner against.
-        if (!StringUtils.hasText(oid) && !StringUtils.hasText(requesterAddress)) {
-            failShare(flowId, transactionId, "Not sent: " + NAMES_NO_ABHA);
-            logger.warn("Eka data fetch {} names no patient's ABHA; nothing sent", transactionId);
-            return;
-        }
-
-        List<AbdmHipStore.CareContext> known = store.findCareContextsByReferences(hipId, references);
-        // One request is one patient's: visits of more than one, linked or not, are refused whole.
-        if (known.stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
-            failShare(flowId, transactionId, "Not sent: the visits asked for belong to more than one patient");
-            logger.warn("Eka data fetch {} asks for visits of more than one patient; nothing sent", transactionId);
-            return;
-        }
-        Map<String, AbdmHipStore.CareContext> linkedHere = known.stream().filter(c -> !PENDING.equals(c.status()))
-                .collect(Collectors.toMap(AbdmHipStore.CareContext::reference, c -> c, (a, b) -> a, LinkedHashMap::new));
-        // Share only what the consent covers. Each care context holds one record type: a visit is OPConsultation.
-        // No hi_types means the request does not narrow by type.
-        List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
-        boolean anyType = asked == null || asked.isEmpty();
-        if (!anyType && !linkedHere.isEmpty() && linkedHere.values().stream().noneMatch(c -> asked.contains(c.hiType()))) {
-            failShare(flowId, transactionId, "Not sent: no record of the types asked for is held here; asked for " + String.join(", ", asked));
-            logger.info("Eka data fetch {}: asked for record types not held here; nothing sent", transactionId);
-            return;
-        }
         List<String> problems = new ArrayList<>();
         ArrayNode entries = AbdmJson.arr();
         FideliusKeyMaterial ours;
         try {
             ours = crypto.generateKeyMaterial();
-            for (String reference : references) {
-                AbdmHipStore.CareContext row = linkedHere.get(reference);
+            for (String reference : request.references()) {
+                AbdmHipStore.CareContext row = request.linkedHere().get(reference);
                 if (row == null) {
                     problems.add(reference + " (not linked through this HIP)");
                     continue;
                 }
-                if (!anyType && !asked.contains(row.hiType())) {
+                if (!request.anyType() && !request.asked().contains(row.hiType())) {
                     problems.add(reference + " (" + row.hiType() + ", not asked for)");
                     continue;
                 }
                 Prepared p;
                 try {
-                    p = prepare(reference, patientUuid, oid, requesterAddress, hipId, orgSettings);
+                    p = prepare(reference, request.patientUuid(), request.oid(), request.requesterAddress(), request.hipId(), request.orgSettings());
                 } catch (RuntimeException e) {
-                    if (!lastTry) throw e;
+                    // Only a passing database fault holds the share back; any other would fail on every try.
+                    if (!lastTry && transientDatabaseFault(e)) throw e;
                     logger.warn("Eka: care context {} not prepared: {}", reference, e.getClass().getSimpleName());
+                    bugsnag.notify(e);
                     p = new Prepared(reference, null, "could not be prepared");
                 }
                 if (p.bundleJson() == null) {
@@ -401,8 +367,9 @@ public class EkaHipService implements EkaHipEvents {
                 }
                 String content;
                 try {
-                    content = crypto.encrypt(p.bundleJson(), ours.privateKeyBase64(), ours.nonceBase64(), requesterKey, requesterNonce);
+                    content = crypto.encrypt(p.bundleJson(), ours.privateKeyBase64(), ours.nonceBase64(), request.requesterKey(), request.requesterNonce());
                 } catch (RuntimeException e) {
+                    bugsnag.notify(e);
                     problems.add(reference + " (could not be encrypted to the requester's key)");
                     continue;
                 }
@@ -415,13 +382,13 @@ public class EkaHipService implements EkaHipEvents {
         } catch (RuntimeException e) {
             String error = "Transfer failed: " + e.getClass().getSimpleName();
             if (!lastTry) throw retried(flowId, transactionId, error, e);
-            failShare(flowId, transactionId, error);
+            failShare(flowId, transactionId, error, e);
             return;
         }
         String notSent = problems.isEmpty() ? null : "Not sent: " + String.join(", ", problems);
         if (entries.isEmpty()) {
-            failShare(flowId, transactionId, notSent == null ? "No record could be sent" : notSent);
-            logger.warn("Eka data fetch {}: no record could be sent", transactionId);
+            // A visit's fault was reported as it happened; what is left is a refusal.
+            refuseShare(flowId, transactionId, notSent == null ? "No record could be sent" : notSent);
             return;
         }
 
@@ -433,28 +400,107 @@ public class EkaHipService implements EkaHipEvents {
         body.set("key_information", keyInformation(ours));
         try {
             // Eka has taken over 10 s to answer an on-fetch (26 Oct: 3 of 18), so the share gets the slow limit.
-            eka.postSlow(ON_FETCH_PATH, body, patientHeaders(oid, patientUuid, hipId));
-            store.finishDataFlow(flowId, FLOW_TRANSFERRED, entries.size(), notSent);
-            logger.info("Eka data fetch {}: {} records sent on-fetch", transactionId, entries.size());
+            eka.postSlow(ON_FETCH_PATH, body, patientHeaders(request.oid(), request.patientUuid(), request.hipId()));
         } catch (RuntimeException e) {
-            if (!EkaAbdmClient.mayHaveActed(e)) {
-                String error = "On-fetch failed: " + e.getMessage();
-                if (!lastTry && !EkaAbdmClient.refusedForGood(e)) throw retried(flowId, transactionId, error, e);
-                failShare(flowId, transactionId, error);
+            if (EkaAbdmClient.mayHaveActed(e)) {
+                String unanswered = "Eka may have the records: " + e.getMessage() + (notSent == null ? "" : ". " + notSent);
+                noteSent(flowId, transactionId, FLOW_UNANSWERED, entries.size(), unanswered);
+                logger.warn("Eka on-fetch for {} not answered: {}", transactionId, e.getMessage());
                 return;
             }
-            String unanswered = "Eka may have the records: " + e.getMessage() + (notSent == null ? "" : ". " + notSent);
-            store.finishDataFlow(flowId, FLOW_UNANSWERED, entries.size(), unanswered);
-            logger.warn("Eka on-fetch for {} not answered: {}", transactionId, e.getMessage());
+            String error = "On-fetch failed: " + e.getMessage();
+            if (!lastTry && !EkaAbdmClient.refusedForGood(e)) throw retried(flowId, transactionId, error, e);
+            failShare(flowId, transactionId, error, e);
+            return;
+        }
+        noteSent(flowId, transactionId, FLOW_TRANSFERRED, entries.size(), notSent);
+        logger.info("Eka data fetch {}: {} records sent on-fetch", transactionId, entries.size());
+    }
+
+    // What a data fetch asks for, once read and checked against what is held here.
+    private record Request(EkaSystemConfig orgSettings, String hipId, String requesterKey, String requesterNonce, List<String> references,
+                           String patientUuid, String oid, String requesterAddress, Map<String, AbdmHipStore.CareContext> linkedHere,
+                           List<String> asked) {
+        boolean anyType() {
+            return asked == null || asked.isEmpty();
         }
     }
 
-    // A share that ends FAILED is seen: reported, and counted on the status page (AbdmHipStore.failedSharesSince).
-    private void failShare(long flowId, String transactionId, String error) {
+    // The request, or null when it cannot be served: refused, or not readable as Eka's, recorded FAILED either way.
+    private Request request(JsonNode data, long flowId, String transactionId) {
+        EkaSystemConfig orgSettings = settings.current();
+        Optional<String> hip = AbdmFlows.hipOfEvent(orgSettings, data);
+        if (hip.isEmpty()) {
+            refuseShare(flowId, transactionId, "The request names a HIP ID that is not this organisation's");
+            return null;
+        }
+        String hipId = hip.get();
+
+        String requesterKey = AbdmFlows.firstNonNull(AbdmJson.text(data, "key_information.dh_public_key.key_value"),
+                AbdmJson.text(data, "key_material.dh_public_key.key_value"), AbdmJson.text(data, "keyMaterial.dhPublicKey.keyValue"));
+        String requesterNonce = AbdmFlows.firstNonNull(AbdmJson.text(data, "key_information.nonce"),
+                AbdmJson.text(data, "key_material.nonce"), AbdmJson.text(data, "keyMaterial.nonce"));
+        if (requesterKey == null || requesterNonce == null) {
+            failShare(flowId, transactionId, "The request carries no key_information (requester key and nonce)", null);
+            return null;
+        }
+        List<String> references = careContextIds(data);
+        if (references.isEmpty()) {
+            failShare(flowId, transactionId, "The request names no care context", null);
+            return null;
+        }
+        String patientUuid = AbdmFlows.firstNonNull(AbdmJson.text(data, "partner_patient_id"), AbdmJson.text(data, "partner_user_id"));
+        String oid = AbdmJson.text(data, "oid");
+        String requesterAddress = AbdmJson.text(data, "abha_address");
+        // Without the patient's ABHA there is nothing to check the visits' owner against.
+        if (!StringUtils.hasText(oid) && !StringUtils.hasText(requesterAddress)) {
+            refuseShare(flowId, transactionId, "Not sent: " + NAMES_NO_ABHA);
+            return null;
+        }
+
+        List<AbdmHipStore.CareContext> known = store.findCareContextsByReferences(hipId, references);
+        // One request is one patient's: visits of more than one, linked or not, are refused whole.
+        if (known.stream().map(AbdmHipStore.CareContext::individualId).distinct().count() > 1) {
+            refuseShare(flowId, transactionId, "Not sent: the visits asked for belong to more than one patient");
+            return null;
+        }
+        Map<String, AbdmHipStore.CareContext> linkedHere = known.stream().filter(c -> !PENDING.equals(c.status()))
+                .collect(Collectors.toMap(AbdmHipStore.CareContext::reference, c -> c, (a, b) -> a, LinkedHashMap::new));
+        // Share only what the consent covers. Each care context holds one record type: a visit is OPConsultation.
+        // No hi_types means the request does not narrow by type.
+        List<String> asked = AbdmFlows.texts(AbdmJson.at(data, "hi_types"), null);
+        boolean anyType = asked == null || asked.isEmpty();
+        if (!anyType && !linkedHere.isEmpty() && linkedHere.values().stream().noneMatch(c -> asked.contains(c.hiType()))) {
+            refuseShare(flowId, transactionId, "Not sent: no record of the types asked for is held here; asked for " + String.join(", ", asked));
+            return null;
+        }
+        return new Request(orgSettings, hipId, requesterKey, requesterNonce, references, patientUuid, oid, requesterAddress, linkedHere, asked);
+    }
+
+    // A share that ends FAILED through a fault (an exception, Eka's own failure) is seen: reported, and counted on the
+    // status page (AbdmHipStore.failedSharesSince).
+    private void failShare(long flowId, String transactionId, String error, Throwable cause) {
         store.finishDataFlow(flowId, FLOW_FAILED, 0, error);
-        IllegalStateException failed = new IllegalStateException("Eka data fetch " + transactionId + " not shared: " + error);
+        IllegalStateException failed = new IllegalStateException("Eka data fetch " + transactionId + " not shared: " + error, cause);
         logger.warn(failed.getMessage());
         bugsnag.notify(failed);
+    }
+
+    // A request refused on its own grounds, as it should be: counted on the status page, not an alarm.
+    private void refuseShare(long flowId, String transactionId, String error) {
+        store.finishDataFlow(flowId, FLOW_FAILED, 0, error);
+        logger.info("Eka data fetch {} not shared: {}", transactionId, error);
+    }
+
+    // Eka may have the records: a failure to note so is reported, never thrown, so the inbox does not send them again.
+    private void noteSent(long flowId, String transactionId, String status, int entries, String error) {
+        try {
+            store.finishDataFlow(flowId, status, entries, error);
+        } catch (RuntimeException e) {
+            IllegalStateException unnoted = new IllegalStateException("Eka data fetch " + transactionId + " sent, but not recorded as " + status, e);
+            logger.error(unnoted.getMessage(), e);
+            bugsnag.notify(unnoted);
+        }
     }
 
     // This try's flow is closed as RETRIED, and the failure goes back to the inbox, which tries the share again.
@@ -462,6 +508,15 @@ public class EkaHipService implements EkaHipEvents {
         store.finishDataFlow(flowId, FLOW_RETRIED, 0, error + "; tried again");
         logger.warn("Eka data fetch {}: {}; it will be tried again", transactionId, error);
         return cause;
+    }
+
+    // A database fault that may pass on another try: no connection, a transaction not begun, a deadlock or a timeout.
+    static boolean transientDatabaseFault(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause() == t ? null : t.getCause()) {
+            if (t instanceof TransientDataAccessException || t instanceof RecoverableDataAccessException
+                    || t instanceof CannotCreateTransactionException || t instanceof CannotGetJdbcConnectionException) return true;
+        }
+        return false;
     }
 
     // The verified ABHA's address, else its number's default address: its 14 digits with the environment's suffix.

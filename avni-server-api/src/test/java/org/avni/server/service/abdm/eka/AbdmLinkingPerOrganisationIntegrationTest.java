@@ -176,7 +176,8 @@ public class AbdmLinkingPerOrganisationIntegrationTest extends AbstractControlle
             return null;
         }).when(runner).forEachOrganisation(eq(AbdmHousekeepingJob.VISIT_LINKING), any(), any());
         return new AbdmHousekeepingJob(runner, mock(AbdmScheduler.class), settings, mock(AbdmMessageLog.class), mock(AbdmInbox.class),
-                mock(AbdmHiuDataService.class), mock(AbdmHiuStore.class), hipStore, ekaHipService, mock(EkaHiuService.class), 30);
+                mock(AbdmHiuDataService.class), mock(AbdmHiuStore.class), hipStore, ekaHipService, mock(EkaHiuService.class),
+                new org.avni.server.service.abdm.AbdmConfig(null, 30));
     }
 
     private Org sharingOrganisation(String suffix, String hipId, String abhaNumber) {

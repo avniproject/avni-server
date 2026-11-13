@@ -100,10 +100,17 @@ public class AbdmJobRunner {
                 orgContext.runAs(organisation, () -> work.accept(deadline));
             } catch (AbdmOrgContext.SystemUserException e) {
                 if (withoutLogin == null) throw e;
-                orgContext.withoutLogin(() -> {
-                    withoutLogin.accept(organisationId);
-                    return null;
-                });
+                try {
+                    orgContext.withoutLogin(() -> {
+                        withoutLogin.accept(organisationId);
+                        return null;
+                    });
+                } catch (RuntimeException failure) {
+                    // Both need fixing: the work failed, and the system user it would have run as cannot act.
+                    failure.addSuppressed(e);
+                    report(organisationId, task, organisation, failure, "; with no login, as " + e.getMessage());
+                    return;
+                }
                 report(organisationId, task, organisation, e, "; done without it, with no login");
                 return;
             }

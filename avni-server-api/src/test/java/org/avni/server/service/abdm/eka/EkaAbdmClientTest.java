@@ -328,6 +328,29 @@ public class EkaAbdmClientTest {
         }
     }
 
+    // Fix round 1: a call interrupted while waiting may already be with Eka, so it may have acted; it is never taken as a
+    // call that did not reach Eka (which a share would send again), and an interrupted thread tries nothing again.
+    @Test
+    public void anInterruptedCallMayHaveReachedEka_andIsNotTriedAgain() {
+        eka.stubFor(post(urlEqualTo(LINK)).willReturn(aResponse().withStatus(202).withFixedDelay(1500)));
+        eka.stubFor(get(urlEqualTo(LINK)).willReturn(aResponse().withStatus(200).withFixedDelay(1500)));
+        EkaCallException post;
+        EkaCallException read;
+        try {
+            Thread.currentThread().interrupt();
+            post = assertThrows(EkaCallException.class, () -> client.post(LINK, AbdmJson.obj(), Map.of()));
+            Thread.currentThread().interrupt();
+            read = assertThrows(EkaCallException.class, () -> client.get(LINK, Map.of()));
+        } finally {
+            Thread.interrupted();
+        }
+
+        assertTrue(post.getMessage(), EkaAbdmClient.mayHaveActed(post));
+        assertFalse(EkaAbdmClient.refusedForGood(post));
+        assertTrue(EkaAbdmClient.mayHaveActed(read));
+        assertTrue(eka.findAll(getRequestedFor(urlEqualTo(LINK))).size() <= 1);
+    }
+
     @Test
     public void aReadThatDoesNotAnswerIsTriedAgain() {
         eka.stubFor(get(urlEqualTo(LINK)).willReturn(aResponse().withStatus(200).withFixedDelay(1500)));

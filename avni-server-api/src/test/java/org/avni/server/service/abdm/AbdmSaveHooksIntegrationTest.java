@@ -392,7 +392,8 @@ public class AbdmSaveHooksIntegrationTest extends AbstractControllerIntegrationT
         }).when(runner).forEachOrganisation(any(), any(), any());
         return new AbdmHousekeepingJob(runner, mock(AbdmScheduler.class), realSettings, mock(AbdmMessageLog.class), mock(AbdmInbox.class),
                 mock(org.avni.server.service.abdm.hiu.AbdmHiuDataService.class), mock(org.avni.server.service.abdm.hiu.AbdmHiuStore.class),
-                realHipStore, ekaHipService, mock(org.avni.server.service.abdm.eka.EkaHiuService.class), java.time.Clock.systemUTC(), 30);
+                realHipStore, ekaHipService, mock(org.avni.server.service.abdm.eka.EkaHiuService.class), java.time.Clock.systemUTC(),
+                new AbdmConfig(null, 30));
     }
 
     private Individual withAbhaNumber(String number) {

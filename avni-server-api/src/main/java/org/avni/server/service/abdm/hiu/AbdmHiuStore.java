@@ -16,6 +16,7 @@ import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -451,7 +452,8 @@ public class AbdmHiuStore {
     }
 
     // An ending applied as EkaHiuService.apply applies it, for the organisation named, needing no user; it supersedes updates
-    // parked earlier for its requests. True when all it names is held here; the rest waits for a logged-in try.
+    // parked earlier for its requests. False when it names what only a logged-in try can place: a request not held here, or
+    // an artefact a parked grant will make. An artefact held nowhere else is ignored, as the logged-in path ignores it.
     public boolean endWithoutLogin(long organisationId, String consentRequestId, Collection<String> artefactIds, String status) {
         List<String> artefacts = artefactIds == null ? List.of() : artefactIds.stream().filter(a -> a != null && !a.isBlank()).distinct().toList();
         Set<String> requests = new LinkedHashSet<>();
@@ -466,10 +468,14 @@ public class AbdmHiuStore {
             List<Map<String, Object>> rows = jdbc.queryForList("select consent_id, consent_request_id from abdm_consent where organisation_id = :org " +
                     "and role = 'HIU' and consent_id in (:ids)", params(organisationId).addValue("ids", artefacts));
             if (consentRequestId == null) {
-                if (rows.stream().map(r -> r.get("consent_id")).distinct().count() < artefacts.size()) whole = false;
+                Set<Object> held = new HashSet<>();
                 rows.forEach(r -> {
+                    held.add(r.get("consent_id"));
                     if (r.get("consent_request_id") != null) requests.add((String) r.get("consent_request_id"));
                 });
+                for (String artefact : artefacts) {
+                    if (!held.contains(artefact) && awaitsParkedGrant(organisationId, artefact)) whole = false;
+                }
             }
             jdbc.update("update abdm_consent set status = :status, updated_at = now() where organisation_id = :org and role = 'HIU' " +
                     "and consent_id in (:ids)", params(organisationId).addValue("ids", artefacts).addValue("status", status, Types.VARCHAR));
@@ -485,6 +491,13 @@ public class AbdmHiuStore {
         }
         eraseRecordsOfEndedConsents(organisationId);
         return whole;
+    }
+
+    // Whether an update parked for the organisation names this artefact: its grant is still to be applied.
+    private boolean awaitsParkedGrant(long organisationId, String artefactId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject("select exists (select 1 from abdm_parked_event where organisation_id = :org " +
+                        "and kind = 'consent_update' and resolved_at is null and detail -> 'artefacts' @> jsonb_build_array(cast(:artefact as text)))",
+                params(organisationId).addValue("artefact", artefactId, Types.VARCHAR), Boolean.class));
     }
 
     // One row in abdm_consent_status per change, keyed by the abdm_consent row so it survives the request id being mapped.

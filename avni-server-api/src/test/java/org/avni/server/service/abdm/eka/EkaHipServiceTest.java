@@ -506,8 +506,7 @@ public class EkaHipServiceTest {
 
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("HIP ID"));
         verify(eka, never()).postSlow(any(), any(), any());
-        verifyNoInteractions(assembler);
-        verify(bugsnag).notify(any(IllegalStateException.class));
+        verifyNoInteractions(assembler, bugsnag);
     }
 
     @Test
@@ -649,6 +648,7 @@ public class EkaHipServiceTest {
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("asked for Prescription"));
+        verifyNoInteractions(bugsnag);
     }
 
     @Test
@@ -687,6 +687,7 @@ public class EkaHipServiceTest {
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("no longer"));
+        verifyNoInteractions(bugsnag);
     }
 
     // Eka naming visits and no patient's ABHA leaves nothing to check the ABHA against: nothing is built or sent.
@@ -700,7 +701,7 @@ public class EkaHipServiceTest {
         service.hipDataFetch(fetch, false);
 
         verify(eka, never()).postSlow(eq(ON_FETCH), any(), any());
-        verifyNoInteractions(assembler, builder);
+        verifyNoInteractions(assembler, builder, bugsnag);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("names no patient"));
     }
 
@@ -940,19 +941,19 @@ public class EkaHipServiceTest {
         verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
-    // F6: a visit that could not be read (the database, say) may be read on the next try, so the share is tried again
-    // whole rather than sent without it; on the last try the rest is sent and that visit is named as not sent.
+    // F6: a visit the database could not read for now may be read on the next try, so the share is tried again whole
+    // rather than sent without it; on the last try the rest is sent, that visit is named as not sent, and it is reported.
     @Test
-    public void aVisitThatCouldNotBeReadIsTriedAgain_andOnTheLastTryTheRestIsSent() {
+    public void aVisitTheDatabaseCouldNotReadForNowIsTriedAgain_andOnTheLastTryTheRestIsSent() {
         FideliusKeyMaterial requester = crypto.generateKeyMaterial();
         when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
-        when(encounterRepository.findByUuid("enc-1")).thenThrow(new IllegalStateException("connection reset"));
+        when(encounterRepository.findByUuid("enc-1")).thenThrow(new org.springframework.dao.TransientDataAccessResourceException("connection reset"));
 
-        assertThrows(IllegalStateException.class,
+        assertThrows(org.springframework.dao.TransientDataAccessResourceException.class,
                 () -> service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false));
 
         verify(eka, never()).postSlow(any(), any(), any());
-        verify(store).finishDataFlow(eq(42L), eq("RETRIED"), eq(0), contains("IllegalStateException"));
+        verify(store).finishDataFlow(eq(42L), eq("RETRIED"), eq(0), contains("TransientDataAccessResourceException"));
         verifyNoInteractions(bugsnag);
 
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), true);
@@ -962,6 +963,66 @@ public class EkaHipServiceTest {
         assertEquals(1, body.getValue().get("entries").size());
         assertEquals("enc-2", body.getValue().at("/entries/0/care_context_id").asText());
         verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-1 (could not be prepared)"));
+        verify(bugsnag).notify(any(org.springframework.dao.TransientDataAccessResourceException.class));
+    }
+
+    // Fix round 1: a visit that cannot be built (not a passing database fault) would fail on every try, so it is not sent,
+    // it is reported, and the rest of the share goes on the first try.
+    @Test
+    public void aVisitThatCannotBeBuiltIsReported_andTheRestOfTheShareGoesOnTheFirstTry() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        IllegalStateException buildBug = new IllegalStateException("a form element the builder cannot read");
+        doThrow(buildBug).when(assembler).assemble(argThat(e -> e != null && "enc-1".equals(((org.avni.server.domain.AbstractEncounter) e).getUuid())),
+                any(), any(), any(), any(), any());
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
+
+        ArgumentCaptor<JsonNode> body = ArgumentCaptor.forClass(JsonNode.class);
+        verify(eka).postSlow(eq(ON_FETCH), body.capture(), any());
+        assertEquals(1, body.getValue().get("entries").size());
+        assertEquals("enc-2", body.getValue().at("/entries/0/care_context_id").asText());
+        verify(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), eq(1), contains("enc-1 (could not be prepared)"));
+        verify(store, never()).finishDataFlow(eq(42L), eq("RETRIED"), anyInt(), any());
+        verify(bugsnag).notify(buildBug);
+    }
+
+    // Fix round 1: once Eka has taken the records, a failure to note that is reported and never sends them again: nothing
+    // is thrown back to the inbox and no try is recorded as to be made again.
+    @Test
+    public void aShareEkaTookIsNotSentAgain_whenNotingItFails() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenReturn(List.of(row("enc-1", "LINKED"), row("enc-2", "LINKED")));
+        when(eka.postSlow(eq(ON_FETCH), any(), any())).thenReturn(new EkaResponse("r-1", 202, null));
+        IllegalStateException noted = new IllegalStateException("database down");
+        doThrow(noted).when(store).finishDataFlow(eq(42L), eq("TRANSFERRED"), anyInt(), any());
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
+
+        verify(eka, times(1)).postSlow(eq(ON_FETCH), any(), any());
+        verify(store, never()).finishDataFlow(eq(42L), eq("RETRIED"), anyInt(), any());
+        verify(store, never()).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), any());
+        verify(bugsnag).notify(any(IllegalStateException.class));
+    }
+
+    // Fix round 1: a fault before anything is built (reading the visits asked for) is tried again by the inbox, and on its
+    // last try the share ends FAILED and is reported, as a fault while building is.
+    @Test
+    public void aFaultReadingTheRequestIsTriedAgain_andOnTheLastTryEndsFailedAndIsReported() {
+        FideliusKeyMaterial requester = crypto.generateKeyMaterial();
+        org.springframework.dao.TransientDataAccessResourceException down = new org.springframework.dao.TransientDataAccessResourceException("connection reset");
+        when(store.findCareContextsByReferences(HIP_ID, List.of("enc-1", "enc-2"))).thenThrow(down);
+
+        assertSame(down, assertThrows(RuntimeException.class,
+                () -> service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false)));
+        verify(store).finishDataFlow(eq(42L), eq("RETRIED"), eq(0), contains("TransientDataAccessResourceException"));
+        verifyNoInteractions(bugsnag);
+
+        service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), true);
+
+        verify(store).finishDataFlow(eq(42L), eq("FAILED"), eq(0), contains("TransientDataAccessResourceException"));
+        verify(bugsnag).notify(any(IllegalStateException.class));
+        verify(eka, never()).postSlow(any(), any(), any());
     }
 
     @Test
@@ -971,9 +1032,8 @@ public class EkaHipServiceTest {
 
         service.hipDataFetch(fetchEvent(requester.publicKeyX509Base64(), requester.nonceBase64(), "flow-tx-1"), false);
 
-        verifyNoInteractions(eka);
+        verifyNoInteractions(eka, bugsnag);
         verify(store).finishDataFlow(eq(42L), eq("FAILED"), anyInt(), anyString());
-        verify(bugsnag).notify(any(IllegalStateException.class));
     }
 
     // ---- helpers
