@@ -33,4 +33,8 @@ public class AvniAccessException extends RuntimeException {
     public static AvniAccessException createForUserNotAllowedTokenGeneration(User user) {
         return new AvniAccessException(String.format("User %s is not allowed to invoke token generation api", user.getUsername()));
     }
+
+    public static AvniAccessException createForOrganisationNotAccessible(User user, String organisationUUID) {
+        return new AvniAccessException(String.format("User %s cannot act in organisation %s", user.getUsername(), organisationUUID));
+    }
 }
