@@ -114,4 +114,36 @@ public class AbdmSwitchCostTest {
         verifyNoMoreInteractions(organisationConfigs);
         verifyNoInteractions(abhaLinkService, ekaSettings, store, queue);
     }
+
+    // Whole-branch review: the User Groups listing of an organisation with ABDM off reads its settings once, offers no ABDM
+    // privilege, and touches nothing else of ABDM.
+    @Test
+    public void withAbdmOffTheUserGroupsListingReadsTheOrganisationsSettingsOnce_andOffersNoAbdmPrivilege() {
+        org.avni.server.dao.PrivilegeRepository privileges = mock(org.avni.server.dao.PrivilegeRepository.class);
+        when(privileges.findAllByIsVoidedFalse()).thenReturn(java.util.List.of(privilege(org.avni.server.domain.accessControl.PrivilegeType.ShareAbdmRecords,
+                org.avni.server.domain.PrivilegeEntityType.Abdm), privilege(org.avni.server.domain.accessControl.PrivilegeType.EditUserGroup,
+                org.avni.server.domain.PrivilegeEntityType.NonTransaction)));
+        org.avni.server.service.accessControl.GroupPrivilegeService groupPrivileges = new org.avni.server.service.accessControl.GroupPrivilegeService(
+                mock(org.avni.server.dao.GroupRepository.class), privileges, mock(org.avni.server.dao.SubjectTypeRepository.class),
+                mock(org.avni.server.dao.ProgramRepository.class), mock(org.avni.server.dao.EncounterTypeRepository.class),
+                mock(org.avni.server.dao.ChecklistDetailRepository.class), mock(org.avni.server.dao.application.FormMappingRepository.class),
+                mock(org.avni.server.dao.GroupPrivilegeRepository.class), mock(org.avni.server.dao.UserGroupRepository.class),
+                new OrganisationConfigService(organisationConfigs, null, null, null, null));
+
+        java.util.List<org.avni.server.domain.accessControl.PrivilegeType> offered = groupPrivileges.getAllGroupPrivileges(1L).stream()
+                .map(groupPrivilege -> groupPrivilege.getPrivilege().getType()).toList();
+
+        org.junit.Assert.assertEquals(java.util.List.of(org.avni.server.domain.accessControl.PrivilegeType.EditUserGroup), offered);
+        verify(organisationConfigs, times(1)).findByOrganisationId(ORG);
+        verifyNoMoreInteractions(organisationConfigs);
+        verifyNoInteractions(ekaSettings, store, queue, abhaLinkService);
+    }
+
+    private static org.avni.server.domain.accessControl.Privilege privilege(org.avni.server.domain.accessControl.PrivilegeType type,
+                                                                           org.avni.server.domain.PrivilegeEntityType entityType) {
+        org.avni.server.domain.accessControl.Privilege privilege = new org.avni.server.domain.accessControl.Privilege();
+        org.springframework.test.util.ReflectionTestUtils.setField(privilege, "type", type);
+        privilege.setEntityType(entityType);
+        return privilege;
+    }
 }

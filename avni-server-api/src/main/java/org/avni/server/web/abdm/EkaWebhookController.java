@@ -88,6 +88,12 @@ public class EkaWebhookController {
         String rawBody = body == null ? "" : new String(body, StandardCharsets.UTF_8);
         EkaWebhookVerifier.Result result = verifier.verify(settings.get(), signature, rawBody);
         if (result.kind() == EkaWebhookVerifier.Kind.KEY_UNUSABLE) {
+            // An organisation that takes no event (ABDM off, holding nothing a withdrawal would end; an ABHA-only one keeps
+            // its webhook address) needs no key: refused as the gate would refuse it, with no alarm.
+            if (!gate.takesAnyEvent(organisationId)) {
+                logger.warn("Eka webhook for organisation {} refused: it takes no event, and has no signing key", organisationId);
+                return answer(HttpStatus.NOT_FOUND, "rejected", null);
+            }
             IllegalStateException fault = new IllegalStateException("Eka webhook for organisation " + organisationId + " not checked: " + result.reason());
             logger.error(fault.getMessage());
             if (firstInWindow(keyAlarms, organisationId)) bugsnag.notify(fault);

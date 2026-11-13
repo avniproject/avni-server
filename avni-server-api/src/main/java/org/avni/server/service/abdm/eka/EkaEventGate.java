@@ -23,4 +23,10 @@ public class EkaEventGate {
         if (access.recordSharingOn(organisationId)) return true;
         return route == EkaEventRoute.CONSENT_UPDATE && EkaHiuService.endsConsent(event) && hiuStore.holdsConsentsOrRecords(organisationId);
     }
+
+    // Whether the organisation takes any event at all, asked of a request whose body cannot be trusted yet (its signature
+    // not checked): record sharing on, or consents or records held that a withdrawal would end.
+    public boolean takesAnyEvent(long organisationId) {
+        return access.recordSharingOn(organisationId) || hiuStore.holdsConsentsOrRecords(organisationId);
+    }
 }

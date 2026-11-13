@@ -627,13 +627,18 @@ public class EkaHipService implements EkaHipEvents {
         return orgContext.inReadOnlyTransaction(() -> {
             org.avni.server.domain.AbstractEncounter encounter = encounterRepository.findByUuid(reference);
             Individual individual = encounter == null ? null : ((Encounter) encounter).getIndividual();
+            boolean enrolmentVoided = false;
             if (encounter == null) {
                 org.avni.server.domain.ProgramEncounter programmeVisit = programEncounterRepository.findByUuid(reference);
                 encounter = programmeVisit;
                 individual = programmeVisit == null || programmeVisit.getProgramEnrolment() == null ? null
                         : programmeVisit.getProgramEnrolment().getIndividual();
+                enrolmentVoided = programmeVisit != null && programmeVisit.getProgramEnrolment() != null && programmeVisit.getProgramEnrolment().isVoided();
             }
-            if (encounter == null || encounter.isVoided() || encounter.getEncounterDateTime() == null) {
+            // A visit still the patient's, as linking reads it (AbdmHipLinkingService.visits): done, not cancelled, not voided,
+            // of an enrolment not voided. One removed since it was linked stays linked at NHA, but is never sent.
+            if (encounter == null || encounter.isVoided() || encounter.getEncounterDateTime() == null || encounter.getCancelDateTime() != null
+                    || enrolmentVoided) {
                 return new Prepared(reference, null, "visit not found");
             }
             // Voiding a patient leaves their visits as they are, and a visit already linked stays linked at NHA.

@@ -331,6 +331,36 @@ public class EkaWebhookControllerTest {
         verifyNoInteractions(inbox, worker);
     }
 
+    // Whole-branch review: an organisation with ABDM off that holds nothing ABDM sent it (an ABHA-only organisation still
+    // has a webhook address) takes no event, so a post to its address with no key to check it is a plain 404, no alarm.
+    @Test
+    public void withAbdmOffAndNothingHeldNoSigningKeyIs404AndNoAlarm() throws Exception {
+        organisation(WEBHOOK, ORG, null);
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(false);
+        String body = event("link-care-context.json");
+
+        send(body, signature(NOW, body)).andExpect(status().isNotFound())
+                .andExpect(content().json("{\"status\":\"rejected\"}", true));
+
+        verifyNoInteractions(bugsnag, inbox, worker);
+    }
+
+    // With record sharing off but consents or records held (R11), a withdrawal must still get through: no key is Avni's
+    // fault, so 500 (Eka sends it again) and an alarm.
+    @Test
+    public void withRecordSharingOffButConsentsHeldNoSigningKeyIsStill500AndAlarms() throws Exception {
+        organisation(WEBHOOK, ORG, null);
+        when(access.recordSharingOn(ORG)).thenReturn(false);
+        when(hiuStore.holdsConsentsOrRecords(ORG)).thenReturn(true);
+        String body = event("link-care-context.json");
+
+        send(body, signature(NOW, body)).andExpect(status().isInternalServerError());
+
+        verify(bugsnag).notify(any(IllegalStateException.class));
+        verifyNoInteractions(inbox, worker);
+    }
+
     @Test
     public void anUnreadableSigningKeyIs500AndAlarms_notA401() throws Exception {
         when(cipher.decrypt("encrypted-key-1")).thenThrow(new IllegalStateException("the deployment's key changed"));

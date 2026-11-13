@@ -1353,6 +1353,46 @@ public class EkaHipServiceTest {
         verifyNoInteractions(builder);
     }
 
+    // Whole-branch review: a data fetch shares only a visit still the patient's, by the rule linking uses (F4): a visit
+    // cancelled since it was linked is "visit not found" and is not built.
+    @Test
+    public void aLinkedVisitCancelledSinceIsNotSent() {
+        Individual patient = new Individual();
+        patient.setId(INDIVIDUAL_ID);
+        patient.setUuid("subject-1");
+        Encounter cancelled = encounter("enc-1", patient, new DateTime(2026, 3, 14, 10, 0));
+        cancelled.setCancelDateTime(new DateTime(2026, 3, 15, 10, 0));
+        when(encounterRepository.findByUuid("enc-1")).thenReturn(cancelled);
+
+        EkaHipService.Prepared prepared = service.prepare("enc-1", "subject-1", OID, null, HIP_ID, settings.current());
+
+        assertNull(prepared.bundleJson());
+        assertEquals("visit not found", prepared.problem());
+        verifyNoInteractions(assembler, builder);
+    }
+
+    // ... and a programme visit whose enrolment was voided since is "visit not found" too.
+    @Test
+    public void aLinkedProgrammeVisitOfAVoidedEnrolmentIsNotSent() {
+        Individual patient = new Individual();
+        patient.setId(INDIVIDUAL_ID);
+        patient.setUuid("subject-1");
+        org.avni.server.domain.ProgramEnrolment enrolment = new org.avni.server.domain.ProgramEnrolment();
+        enrolment.setIndividual(patient);
+        enrolment.setVoided(true);
+        org.avni.server.domain.ProgramEncounter visit = new org.avni.server.domain.ProgramEncounter();
+        visit.setUuid("penc-1");
+        visit.setProgramEnrolment(enrolment);
+        visit.setEncounterDateTime(new DateTime(2026, 10, 26, 9, 0), null);
+        when(programEncounterRepository.findByUuid("penc-1")).thenReturn(visit);
+
+        EkaHipService.Prepared prepared = service.prepare("penc-1", "subject-1", OID, null, HIP_ID, settings.current());
+
+        assertNull(prepared.bundleJson());
+        assertEquals("visit not found", prepared.problem());
+        verifyNoInteractions(assembler, builder);
+    }
+
     private static AbdmHipStore.CareContext row(String reference, String status) {
         return row(reference, status, "OPConsultation");
     }

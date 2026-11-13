@@ -55,14 +55,16 @@ public class AbdmInbox {
             rs.getString("source"), rs.getString("event_id"), rs.getString("event_name"), rs.getString("route"), rs.getString("body"),
             rs.getInt("attempts"), rs.getTimestamp("claimed_at") == null ? null : rs.getTimestamp("claimed_at").toInstant());
 
-    private static final String CLAIM = "update abdm_inbound_event e set status = 'IN_PROGRESS', attempts = e.attempts + 1, " +
-            "claimed_at = :now, updated_at = :now " +
-            "where e.id in (select c.id from abdm_inbound_event c " +
+    // The due events are picked once, in a materialised CTE: a sub-select in the update's where clause can be run again
+    // for each row the update visits, and each run, skipping the rows already taken, would hand out one more.
+    private static final String CLAIM = "with picked as materialized (select c.id from abdm_inbound_event c " +
             "  where c.status = 'RECEIVED' and c.next_attempt_at <= :now " +
             "  and not exists (select 1 from abdm_inbound_event p where p.organisation_id = c.organisation_id " +
             "    and p.consent_key = c.consent_key and p.id < c.id and p.route = '" + HOLDING_ROUTE + "' " +
             "    and p.status in ('RECEIVED', 'IN_PROGRESS')) " +
             "  order by c.id limit :max for update skip locked) " +
+            "update abdm_inbound_event e set status = 'IN_PROGRESS', attempts = e.attempts + 1, claimed_at = :now, updated_at = :now " +
+            "from picked where e.id = picked.id " +
             "returning e.id, e.organisation_id, e.source, e.event_id, e.event_name, e.route, e.body, e.attempts, e.claimed_at";
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -154,6 +156,12 @@ public class AbdmInbox {
     private static MapSqlParameterSource held(Event event) {
         // The claim time as the claim returned it, to the microsecond Postgres keeps.
         return new MapSqlParameterSource("id", event.id()).addValue("claimedAt", event.claimedAt() == null ? null : Timestamp.from(event.claimedAt()));
+    }
+
+    // Taken but not handled, as a drain out of time leaves it: back as it was, due at once, its try not counted.
+    public void release(Event event) {
+        jdbc.update("update abdm_inbound_event set status = 'RECEIVED', attempts = greatest(attempts - 1, 0), claimed_at = null, " +
+                "updated_at = now() where " + STILL_HELD, held(event));
     }
 
     // Rows in progress past the timeout were left by a server that stopped: back for another try, or FAILED on their last.

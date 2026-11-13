@@ -145,23 +145,40 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
     // An event that will never be handled keeps no body: it can carry a patient's details.
     // A worker that died holding an event (a restart, a crash) leaves it in progress; the sweep puts it back.
-    // The sweep and the claim read every organisation's rows, so this test sets its own rows' states directly and asserts on
-    // them alone, whatever else the table holds.
     @Test
     public void anEventStuckInProgressIsSweptBack_andOneStillBeingWorkedIsLeft() {
         receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
         receive(ORG, "e-2", "LINK_CARE_CONTEXT", null, T0);
+        inbox.claim(1, T0);
         Instant later = T0.plus(AbdmInbox.IN_PROGRESS_TIMEOUT).plusSeconds(1);
-        inProgressSince("e-1", T0);
-        inProgressSince("e-2", later);
+        inbox.claim(1, later);
 
         AbdmInbox.Sweep sweep = inbox.sweep(later);
 
-        assertTrue(sweep.returned() >= 1);
+        assertEquals(1, sweep.returned());
+        assertEquals(0, sweep.failed());
         assertEquals("RECEIVED", row("e-1").get("status"));
         assertEquals("IN_PROGRESS", row("e-2").get("status"));
-        List<String> taken = inbox.claim(10, later).stream().map(AbdmInbox.Event::eventId).toList();
-        assertTrue(taken.toString(), taken.contains("e-1") && !taken.contains("e-2"));
+        assertEquals(List.of("e-1"), inbox.claim(10, later).stream().map(AbdmInbox.Event::eventId).toList());
+    }
+
+    // Whole-branch review: a claim takes at most what it asks for. Postgres may run the selection again for each row the
+    // update visits (a nested loop semi join with the selection on its inner side); run more than once, skipping rows this
+    // statement has already updated, it hands out the next due row each time and the claim takes them all. That plan is
+    // forced here as a near-empty table gets it: statistics taken with one row, and the other join, sort and hash paths off.
+    @Test
+    public void aClaimTakesAtMostWhatItAsksFor_evenWhenPostgresWouldRunTheSelectionPerRow() {
+        receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
+        jdbc.getJdbcOperations().execute("analyze abdm_inbound_event");
+        receive(ORG, "e-2", "LINK_CARE_CONTEXT", null, T0);
+        receive(ORG, "e-3", "LINK_CARE_CONTEXT", null, T0);
+        for (String setting : List.of("enable_hashjoin", "enable_mergejoin", "enable_material", "enable_hashagg", "enable_sort")) {
+            jdbc.getJdbcOperations().execute("set local " + setting + " = off");
+        }
+
+        assertEquals(List.of("e-1"), inbox.claim(1, T0).stream().map(AbdmInbox.Event::eventId).toList());
+        assertEquals(Integer.valueOf(1), jdbc.queryForObject("select count(*) from abdm_inbound_event where status = 'IN_PROGRESS'",
+                Map.of(), Integer.class));
     }
 
     // F13: a worker slower than the timeout finds its event swept back and taken again: whatever it then writes (done,
@@ -188,6 +205,32 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
         inbox.done(again);
 
         assertEquals("DONE", row("e-1").get("status"));
+    }
+
+    // Whole-branch review: an event a drain took but had no time left to handle goes back as it was, due at once, its try
+    // not counted, and the body kept; one swept back and taken again in the meantime is left to the claim holding it.
+    @Test
+    public void anEventTakenButNotHandledIsPutBackUncounted_onlyByTheClaimHoldingIt() {
+        receive(ORG, "e-1", "LINK_CARE_CONTEXT", null, T0);
+        AbdmInbox.Event held = inbox.claim(1, T0).get(0);
+
+        inbox.release(held);
+
+        Map<String, Object> row = row("e-1");
+        assertEquals("RECEIVED", row.get("status"));
+        assertEquals(0, row.get("attempts"));
+        assertNull(row.get("claimed_at"));
+        assertEquals("{\"n\":\"e-1\"}", row.get("body"));
+
+        AbdmInbox.Event stale = inbox.claim(1, T0).get(0);
+        Instant later = T0.plus(AbdmInbox.IN_PROGRESS_TIMEOUT).plusSeconds(1);
+        inbox.sweep(later);
+        AbdmInbox.Event again = inbox.claim(1, later).get(0);
+
+        inbox.release(stale);
+
+        assertEquals("IN_PROGRESS", row("e-1").get("status"));
+        assertEquals(Timestamp.from(again.claimedAt()), row("e-1").get("claimed_at"));
     }
 
     @Test
@@ -270,18 +313,14 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
     }
 
     // A push that came before its grant does not hold the grant back, or neither would ever be handled.
-    // The push's earlier try is set directly, and only this test's rows are asserted on (the claim reads every organisation's).
     @Test
     public void aDataPushThatCameFirstDoesNotHoldBackTheUpdateItWaitsFor() {
-        // A consent key no other test uses, so no other update of it can hold this one back.
-        receive(ORG, "push-1", "HIU_DATA_PUSH", "cr-push-first", T0);
-        receive(ORG, "update-1", "CONSENT_UPDATE", "cr-push-first", T0.plusSeconds(1));
-        jdbc.update("update abdm_inbound_event set attempts = 1, next_attempt_at = :next, last_error = 'AbdmNotReadyException: no grant yet' " +
-                "where organisation_id = :org and event_id = 'push-1'", Map.of("org", ORG, "next", Timestamp.from(T0.plusSeconds(16))));
+        receive(ORG, "push-1", "HIU_DATA_PUSH", "cr-1", T0);
+        receive(ORG, "update-1", "CONSENT_UPDATE", "cr-1", T0.plusSeconds(1));
+        AbdmInbox.Event push = inbox.claim(1, T0.plusSeconds(1)).get(0);
+        inbox.retry(push, "AbdmNotReadyException: no grant yet", T0.plusSeconds(1));
 
-        List<String> taken = inbox.claim(10, T0.plusSeconds(1)).stream().map(AbdmInbox.Event::eventId).toList();
-
-        assertTrue(taken.toString(), taken.contains("update-1") && !taken.contains("push-1"));
+        assertEquals(List.of("update-1"), inbox.claim(10, T0.plusSeconds(1)).stream().map(AbdmInbox.Event::eventId).toList());
     }
 
     // A withdrawal naming only artefacts finds the consent of the update still waiting that names them, so it can wait
@@ -379,11 +418,6 @@ public class AbdmInboxIntegrationTest extends AbstractControllerIntegrationTest 
 
     private void receiveBody(long organisationId, String eventId, String route, String consentKey, String body, Instant at) {
         inbox.receive(organisationId, "eka", eventId, "abha.consent_update", route, consentKey, body, at);
-    }
-
-    private void inProgressSince(String eventId, Instant claimedAt) {
-        jdbc.update("update abdm_inbound_event set status = 'IN_PROGRESS', attempts = 1, claimed_at = :at where organisation_id = :org " +
-                "and event_id = :id", Map.of("org", ORG, "id", eventId, "at", Timestamp.from(claimedAt)));
     }
 
     private Map<String, Object> row(String eventId) {

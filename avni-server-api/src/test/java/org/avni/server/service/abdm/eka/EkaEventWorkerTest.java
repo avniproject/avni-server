@@ -412,16 +412,41 @@ public class EkaEventWorkerTest {
         verify(inbox, times(1)).claim(anyInt(), any());
     }
 
+    // Whole-branch review: the deadline is checked before each event, not only before each claim; one taken but not
+    // handled in time is put back for the next drain, its try not counted.
     @Test
     public void theWorkerTakesNoNewEventsAfterItsDeadline() {
+        List<AbdmInbox.Event> claimed = new ArrayList<>();
         when(inbox.claim(anyInt(), any())).thenAnswer(inv -> {
             clock.advance(Duration.ofMinutes(1));
-            return List.of(event(nextId++, "link-care-context.json", "abha.link_care_context", 1));
+            AbdmInbox.Event event = event(nextId++, "link-care-context.json", "abha.link_care_context", 1);
+            claimed.add(event);
+            return List.of(event);
         });
 
         int handled = worker.drain();
 
-        assertEquals(EkaEventWorker.DRAIN_BUDGET.toMinutes(), handled);
+        assertEquals(EkaEventWorker.DRAIN_BUDGET.toMinutes() - 1, handled);
+        verify(inbox).release(claimed.get(claimed.size() - 1));
+        verify(inbox, never()).release(claimed.get(0));
+    }
+
+    @Test
+    public void aBatchLargerThanTheTimeLeftIsHandledOnlyUntilTheDeadline_theRestPutBack() {
+        AbdmInbox.Event first = event(nextId++, "link-care-context.json", "abha.link_care_context", 1);
+        AbdmInbox.Event second = event(nextId++, "link-care-context.json", "abha.link_care_context", 1);
+        when(inbox.claim(anyInt(), any())).thenReturn(List.of(first, second), List.of());
+        doAnswer(inv -> {
+            clock.advance(EkaEventWorker.DRAIN_BUDGET);
+            return null;
+        }).when(hip).linkCareContext(any());
+
+        assertEquals(1, worker.drain());
+
+        verify(inbox).done(first);
+        verify(inbox, never()).done(second);
+        verify(inbox).release(second);
+        verify(hip, times(1)).linkCareContext(any());
     }
 
     @Test
