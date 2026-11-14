@@ -177,7 +177,7 @@ public class RuleControllerEncounterEligibilityTest {
         Program program = new ProgramBuilder().withUuid("program").build();
         ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().setUuid("enrolment").setProgram(program).setIndividual(subject).build();
         when(programEnrolmentRepository.findByUuid("enrolment")).thenReturn(enrolment);
-        when(formMappingRepository.getAllProgramEncounterFormMappings()).thenReturn(Arrays.stream(encounterTypes)
+        when(formMappingRepository.getAllProgramEncounterFormMappings(subjectType, program)).thenReturn(Arrays.stream(encounterTypes)
                 .map(encounterType -> new FormMappingBuilder().withSubjectType(subjectType).withProgram(program).withEncounterType(encounterType).build())
                 .collect(Collectors.toList()));
     }
