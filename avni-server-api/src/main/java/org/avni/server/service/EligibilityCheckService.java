@@ -42,7 +42,7 @@ public class EligibilityCheckService {
         try {
             eligibilityRuleResponseEntity = eligibilityRuleCall.execute(distinctTypes);
         } catch (RuleExecutionException e) {
-            logger.error("{} could not be run for subject {}", sourceType, individual.getUuid());
+            logger.error("{} could not be run for subject {}: {}", sourceType, individual.getUuid(), e.getRuleError().getMessage());
             return new ArrayList<>();
         }
         if (eligibilityRuleResponseEntity.hasNoResults()) {
@@ -52,15 +52,17 @@ public class EligibilityCheckService {
 
         Map<String, EligibilityRuleEntity> eligibilityRuleEntities = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
                 .collect(Collectors.toMap(EligibilityRuleEntity::getTypeUUID, Function.identity(), (first, second) -> first));
-        return distinctTypes.stream()
+        List<T> checkedTypes = distinctTypes.stream()
+                .filter(type -> eligibilityRuleEntities.containsKey(type.getUuid()))
+                .collect(Collectors.toList());
+        checkedTypes.stream()
+                .map(type -> eligibilityRuleEntities.get(type.getUuid()))
+                .filter(EligibilityRuleEntity::hasFailed)
+                .forEach(failed -> recordRuleFailure(individual, sourceType, failed));
+        return checkedTypes.stream()
                 .filter(type -> {
                     EligibilityRuleEntity eligibilityRuleEntity = eligibilityRuleEntities.get(type.getUuid());
-                    if (eligibilityRuleEntity == null) return false;
-                    if (eligibilityRuleEntity.hasFailed()) {
-                        recordRuleFailure(individual, sourceType, eligibilityRuleEntity);
-                        return true;
-                    }
-                    return eligibilityRuleEntity.isEligible();
+                    return eligibilityRuleEntity.hasFailed() || eligibilityRuleEntity.isEligible();
                 })
                 .collect(Collectors.toList());
     }

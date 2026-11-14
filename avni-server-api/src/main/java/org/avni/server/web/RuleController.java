@@ -164,9 +164,7 @@ public class RuleController {
         if (individual == null) {
             return ResponseEntity.notFound().build();
         }
-        List<FormMapping> formMappings = formMappingRepository.getAllGeneralEncounterFormMappings();
-        List<EncounterType> encounterTypes = formMappings.stream()
-                .filter(fm -> fm.getSubjectTypeUuid().equals(individual.getSubjectType().getUuid()))
+        List<EncounterType> encounterTypes = formMappingRepository.getAllGeneralEncounterFormMappings(individual.getSubjectType()).stream()
                 .map(FormMapping::getEncounterType).collect(Collectors.toList());
         Stream<Encounter> scheduledEncountersStream = individual
                 .getEncounters()

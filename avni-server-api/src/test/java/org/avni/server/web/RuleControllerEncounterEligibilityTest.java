@@ -9,10 +9,14 @@ import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.EncounterTypeBuilder;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.Program;
+import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.enums.ruleFailure.SourceType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
+import org.avni.server.domain.factory.metadata.ProgramBuilder;
+import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.EligibilityCheckService;
@@ -20,6 +24,7 @@ import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleFailureTelemetryService;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.EncounterContract;
+import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
 import org.avni.server.web.request.rules.response.RuleError;
@@ -48,7 +53,8 @@ public class RuleControllerEncounterEligibilityTest {
     private final FormMappingRepository formMappingRepository = mock(FormMappingRepository.class);
     private final IndividualService individualService = mock(IndividualService.class);
     private final RuleFailureTelemetryService ruleFailureTelemetryService = mock(RuleFailureTelemetryService.class);
-    private final RuleController ruleController = new RuleController(ruleService, mock(ProgramEnrolmentRepository.class), individualRepository, formMappingRepository, individualService, null, null, new EligibilityCheckService(ruleFailureTelemetryService));
+    private final ProgramEnrolmentRepository programEnrolmentRepository = mock(ProgramEnrolmentRepository.class);
+    private final RuleController ruleController = new RuleController(ruleService, programEnrolmentRepository, individualRepository, formMappingRepository, individualService, null, null, new EligibilityCheckService(ruleFailureTelemetryService));
 
     private final SubjectType subjectType = new SubjectTypeBuilder().setUuid("person").setType(Subject.Person).build();
     private final Individual subject = new SubjectBuilder().withUUID("subject").withSubjectType(subjectType).build();
@@ -64,7 +70,7 @@ public class RuleControllerEncounterEligibilityTest {
         List<FormMapping> formMappings = Arrays.asList(fineVisit, throwingVisit, ineligibleVisit).stream()
                 .map(encounterType -> new FormMappingBuilder().withSubjectType(subjectType).withEncounterType(encounterType).build())
                 .collect(Collectors.toList());
-        when(formMappingRepository.getAllGeneralEncounterFormMappings()).thenReturn(formMappings);
+        when(formMappingRepository.getAllGeneralEncounterFormMappings(subjectType)).thenReturn(formMappings);
         when(individualService.constructEncounters(any())).thenReturn(Collections.emptySet());
     }
 
@@ -122,11 +128,39 @@ public class RuleControllerEncounterEligibilityTest {
     @Test
     public void anEncounterTypeMappedTwiceIsCheckedAndListedOnce() throws RuleExecutionException {
         FormMapping fineVisitMapping = new FormMappingBuilder().withSubjectType(subjectType).withEncounterType(fineVisit).build();
-        when(formMappingRepository.getAllGeneralEncounterFormMappings()).thenReturn(Arrays.asList(fineVisitMapping, fineVisitMapping));
+        when(formMappingRepository.getAllGeneralEncounterFormMappings(subjectType)).thenReturn(Arrays.asList(fineVisitMapping, fineVisitMapping));
         when(ruleService.executeEligibilityRule(any(), any())).thenReturn(success(Collections.singletonList(new EligibilityRuleEntity(true, "fine-visit"))));
 
         assertEquals(Collections.singletonList("fine-visit"), eligibleEncounterTypeUuids());
         verify(ruleService).executeEligibilityRule(subject, Collections.singletonList(fineVisit));
+    }
+
+    @Test
+    public void programVisits_whenTheRuleServerCannotBeReached_noEncounterTypeIsEligibleButScheduledVisitsAreReturned() throws RuleExecutionException {
+        givenAnEnrolmentWithVisits(fineVisit, fineVisit);
+        Set<ProgramEncounterContract> scheduledEncounters = Collections.singleton(new ProgramEncounterContract());
+        when(individualService.constructProgramEncounters(any())).thenReturn(scheduledEncounters);
+        when(ruleService.executeEligibilityRule(any(), any())).thenThrow(new RuleExecutionException(error));
+
+        ResponseEntity<?> response = ruleController.getEligibleProgramEncounters("enrolment");
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(Collections.emptyList(), ((JsonObject) response.getBody()).get("eligibleEncounterTypeUUIDs"));
+        assertEquals(scheduledEncounters, ((JsonObject) response.getBody()).get("scheduledEncounters"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void programVisits_aThrowingRuleIsEligibleAndRecorded_andAVisitTypeMappedTwiceIsCheckedOnce() throws RuleExecutionException {
+        givenAnEnrolmentWithVisits(fineVisit, fineVisit, throwingVisit, ineligibleVisit);
+        when(individualService.constructProgramEncounters(any())).thenReturn(Collections.emptySet());
+        whenRuleServerReturns(throwingResult(false));
+
+        ResponseEntity<?> response = ruleController.getEligibleProgramEncounters("enrolment");
+
+        assertEquals(Arrays.asList("fine-visit", "throwing-visit"), ((JsonObject) response.getBody()).get("eligibleEncounterTypeUUIDs"));
+        verify(ruleService).executeEligibilityRule(subject, Arrays.asList(fineVisit, throwingVisit, ineligibleVisit));
+        verify(ruleFailureTelemetryService).recordEligibilityRuleFailure(subject, "throwing-visit", SourceType.EncounterEligibilityCheck, error);
     }
 
     @Test
@@ -137,6 +171,15 @@ public class RuleControllerEncounterEligibilityTest {
     @Test
     public void anUnknownEnrolmentIsNotFound() {
         assertEquals(404, ruleController.getEligibleProgramEncounters("unknown-enrolment").getStatusCode().value());
+    }
+
+    private void givenAnEnrolmentWithVisits(EncounterType... encounterTypes) {
+        Program program = new ProgramBuilder().withUuid("program").build();
+        ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().setUuid("enrolment").setProgram(program).setIndividual(subject).build();
+        when(programEnrolmentRepository.findByUuid("enrolment")).thenReturn(enrolment);
+        when(formMappingRepository.getAllProgramEncounterFormMappings()).thenReturn(Arrays.stream(encounterTypes)
+                .map(encounterType -> new FormMappingBuilder().withSubjectType(subjectType).withProgram(program).withEncounterType(encounterType).build())
+                .collect(Collectors.toList()));
     }
 
     private EligibilityRuleEntity throwingResult(boolean isEligible) {
