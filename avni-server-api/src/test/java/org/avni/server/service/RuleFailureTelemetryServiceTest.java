@@ -48,6 +48,7 @@ public class RuleFailureTelemetryServiceTest {
         UserContextHolder.create(userContext);
         error.setMessage("QA1079 eligibility rule throws");
         error.setStack("Error: QA1079 eligibility rule throws");
+        when(repository.tryLockFailureUntilTransactionEnds(any(), any(), any())).thenReturn(true);
     }
 
     @After
@@ -90,8 +91,32 @@ public class RuleFailureTelemetryServiceTest {
         service.recordEligibilityRuleFailure(subject, program.getUuid(), SourceType.EnrolmentEligibilityCheck, error);
 
         InOrder inOrder = inOrder(repository);
-        inOrder.verify(repository).lockFailureUntilTransactionEnds("program-uuid", "subject-uuid", "QA1079 eligibility rule throws");
+        inOrder.verify(repository).tryLockFailureUntilTransactionEnds("program-uuid", "subject-uuid", "QA1079 eligibility rule throws");
         inOrder.verify(repository).hasOpenFailure("program-uuid", "subject-uuid", "QA1079 eligibility rule throws");
         inOrder.verify(repository).save(any());
+    }
+
+    @Test
+    public void doesNotWaitOrSaveWhenAnotherCallIsAlreadySavingTheSameFailure() {
+        when(repository.tryLockFailureUntilTransactionEnds("program-uuid", "subject-uuid", "QA1079 eligibility rule throws")).thenReturn(false);
+
+        service.recordEligibilityRuleFailure(subject, program.getUuid(), SourceType.EnrolmentEligibilityCheck, error);
+
+        verify(repository, never()).hasOpenFailure(any(), any(), any());
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    public void aFailureWithoutAMessageIsSavedWithAFixedMessage_soItCanBeStoredAndMatchedNextTime() {
+        RuleError withoutMessage = new RuleError();
+
+        service.recordEligibilityRuleFailure(subject, program.getUuid(), SourceType.EnrolmentEligibilityCheck, withoutMessage);
+
+        verify(repository).tryLockFailureUntilTransactionEnds("program-uuid", "subject-uuid", RuleFailureTelemetryService.MESSAGE_WHEN_RULE_GAVE_NONE);
+        verify(repository).hasOpenFailure("program-uuid", "subject-uuid", RuleFailureTelemetryService.MESSAGE_WHEN_RULE_GAVE_NONE);
+        ArgumentCaptor<RuleFailureTelemetry> saved = ArgumentCaptor.forClass(RuleFailureTelemetry.class);
+        verify(repository).save(saved.capture());
+        assertEquals(RuleFailureTelemetryService.MESSAGE_WHEN_RULE_GAVE_NONE, saved.getValue().getErrorMessage());
+        assertEquals(RuleFailureTelemetryService.MESSAGE_WHEN_RULE_GAVE_NONE, saved.getValue().getStacktrace());
     }
 }

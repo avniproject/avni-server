@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RuleFailureTelemetryService {
+    static final String MESSAGE_WHEN_RULE_GAVE_NONE = "Eligibility rule failed without an error message";
     private final RuleFailureTelemetryRepository ruleFailureTelemetryRepository;
 
     public RuleFailureTelemetryService(RuleFailureTelemetryRepository ruleFailureTelemetryRepository) {
@@ -23,8 +24,8 @@ public class RuleFailureTelemetryService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordEligibilityRuleFailure(Individual individual, String ruleUuid, SourceType sourceType, RuleError error) {
-        String errorMessage = error == null ? null : error.getMessage();
-        ruleFailureTelemetryRepository.lockFailureUntilTransactionEnds(ruleUuid, individual.getUuid(), errorMessage);
+        String errorMessage = error == null || error.getMessage() == null || error.getMessage().isEmpty() ? MESSAGE_WHEN_RULE_GAVE_NONE : error.getMessage();
+        if (!ruleFailureTelemetryRepository.tryLockFailureUntilTransactionEnds(ruleUuid, individual.getUuid(), errorMessage)) return;
         if (ruleFailureTelemetryRepository.hasOpenFailure(ruleUuid, individual.getUuid(), errorMessage)) return;
 
         RuleFailureTelemetry ruleFailureTelemetry = new RuleFailureTelemetry();
@@ -33,7 +34,7 @@ public class RuleFailureTelemetryService {
         ruleFailureTelemetry.setRuleUuid(ruleUuid);
         ruleFailureTelemetry.setIndividualUuid(individual.getUuid());
         ruleFailureTelemetry.setErrorMessage(errorMessage);
-        ruleFailureTelemetry.setStacktrace(error == null ? null : error.getStack());
+        ruleFailureTelemetry.setStacktrace(error == null || error.getStack() == null || error.getStack().isEmpty() ? errorMessage : error.getStack());
         ruleFailureTelemetry.setErrorDateTime(DateTime.now());
         ruleFailureTelemetry.setSourceType(sourceType);
         ruleFailureTelemetry.setSourceId(ruleUuid);
