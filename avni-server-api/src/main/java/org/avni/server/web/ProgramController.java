@@ -16,7 +16,7 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
 import org.avni.server.service.ProgramService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.BadRequestError;
+import jakarta.persistence.EntityNotFoundException;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.ProgramRequest;
@@ -206,7 +206,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     @ResponseBody
     public List<ProgramContractWeb> getEligiblePrograms(@RequestParam String subjectUuid) {
         Individual individual = individualRepository.findByUuid(subjectUuid);
-        if (individual == null) throw new BadRequestError("Subject %s not found", subjectUuid);
+        if (individual == null) throw new EntityNotFoundException(String.format("Subject %s not found", subjectUuid));
         List<Program> eligiblePrograms = programService.getEligiblePrograms(individual);
         List<OperationalProgram> operationalPrograms = new ArrayList<>();
         for (Program p : eligiblePrograms) {
