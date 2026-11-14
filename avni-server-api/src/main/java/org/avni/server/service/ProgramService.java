@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -141,16 +140,12 @@ public class ProgramService implements NonScopeAwareService {
             return new ArrayList<>();
         }
 
-        if (!eligibilityRuleResponseEntity.hasNoResults()) {
-            return getEligiblePrograms(individual, staticallyEnrolablePrograms, eligibilityRuleResponseEntity);
+        if (eligibilityRuleResponseEntity.hasNoResults()) {
+            RuleError error = eligibilityRuleResponseEntity.getError();
+            logger.error("Enrolment eligibility check failed for subject {}: {}", individual.getUuid(), error == null ? null : error.getMessage());
+            return new ArrayList<>();
         }
-        if (staticallyEnrolablePrograms.size() == 1) {
-            return isEligibleAfterRuleFailure(individual, staticallyEnrolablePrograms.get(0), eligibilityRuleResponseEntity.getError())
-                    ? staticallyEnrolablePrograms : new ArrayList<>();
-        }
-        return staticallyEnrolablePrograms.stream()
-                .filter(program -> isEligibleOnItsOwn(individual, program))
-                .collect(Collectors.toList());
+        return getEligiblePrograms(individual, staticallyEnrolablePrograms, eligibilityRuleResponseEntity);
     }
 
     public void savePrograms(ProgramRequest[] programRequests) {
@@ -171,19 +166,6 @@ public class ProgramService implements NonScopeAwareService {
                 throw new BulkItemSaveException(opc, e);
             }
         }
-    }
-
-    private boolean isEligibleOnItsOwn(Individual individual, Program program) {
-        EligibilityRuleResponseEntity eligibilityRuleResponseEntity;
-        try {
-            eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, Collections.singletonList(program));
-        } catch (RuleExecutionException e) {
-            return false;
-        }
-        if (eligibilityRuleResponseEntity.hasNoResults()) {
-            return isEligibleAfterRuleFailure(individual, program, eligibilityRuleResponseEntity.getError());
-        }
-        return !getEligiblePrograms(individual, Collections.singletonList(program), eligibilityRuleResponseEntity).isEmpty();
     }
 
     private List<Program> getEligiblePrograms(Individual individual, List<Program> programs, EligibilityRuleResponseEntity eligibilityRuleResponseEntity) {

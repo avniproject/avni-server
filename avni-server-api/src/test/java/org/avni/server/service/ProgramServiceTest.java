@@ -84,31 +84,20 @@ public class ProgramServiceTest {
     }
 
     @Test
-    public void whenTheRuleServerFailsTheWholeCheck_eachProgramIsCheckedOnItsOwn() throws RuleExecutionException {
-        RuleError error = ruleError("QA1079 eligibility rule throws");
-        when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenAnswer(invocation -> {
-            List<Program> programs = invocation.getArgument(1);
-            if (programs.size() > 1) return failedResponse(error);
-            String uuid = programs.get(0).getUuid();
-            if (uuid.equals("throwing")) return failedResponse(error);
-            return new EligibilityRuleResponseEntity(Collections.singletonList(new EligibilityRuleEntity(uuid.equals("fine"), uuid)));
-        });
+    public void whenTheRuleServerFailsTheWholeCheck_noProgramIsEligibleAndNothingIsRecorded() throws RuleExecutionException {
+        when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenReturn(failedResponse(ruleError("Request failed with status code 401")));
 
-        List<Program> eligiblePrograms = eligibleProgramsFor(fineProgram, throwingProgram, ineligibleProgram);
-
-        assertEquals(Arrays.asList(fineProgram, throwingProgram), eligiblePrograms);
-        verify(ruleFailureTelemetryService).recordEligibilityRuleFailure(subjectWithoutEnrolments, "throwing", SourceType.EnrolmentEligibilityCheck, error);
-        verify(ruleFailureTelemetryService, times(1)).recordEligibilityRuleFailure(any(), any(), any(), any());
+        assertEquals(Collections.emptyList(), eligibleProgramsFor(fineProgram, throwingProgram, ineligibleProgram));
+        verify(ruleService, times(1)).executeProgramEligibilityCheckRule(any(), any());
+        verify(ruleFailureTelemetryService, never()).recordEligibilityRuleFailure(any(), any(), any(), any());
     }
 
     @Test
-    public void whenTheOnlyProgramsRuleThrows_itIsEligibleWithoutAskingTheRuleServerAgain() throws RuleExecutionException {
-        RuleError error = ruleError("QA1079 eligibility rule throws");
-        when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenReturn(failedResponse(error));
+    public void whenTheRuleServerFailsTheCheckForASingleProgram_itIsNotEligible() throws RuleExecutionException {
+        when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenReturn(failedResponse(ruleError("Request failed with status code 401")));
 
-        assertEquals(Collections.singletonList(throwingProgram), eligibleProgramsFor(throwingProgram));
-        verify(ruleService, times(1)).executeProgramEligibilityCheckRule(any(), any());
-        verify(ruleFailureTelemetryService).recordEligibilityRuleFailure(subjectWithoutEnrolments, "throwing", SourceType.EnrolmentEligibilityCheck, error);
+        assertEquals(Collections.emptyList(), eligibleProgramsFor(throwingProgram));
+        verify(ruleFailureTelemetryService, never()).recordEligibilityRuleFailure(any(), any(), any(), any());
     }
 
     @Test
