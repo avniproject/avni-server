@@ -20,11 +20,13 @@ import org.avni.server.web.request.rules.response.RuleError;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 import org.mockito.ArgumentCaptor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -81,5 +83,15 @@ public class RuleFailureTelemetryServiceTest {
         service.recordEligibilityRuleFailure(subject, program.getUuid(), SourceType.EnrolmentEligibilityCheck, error);
 
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    public void locksTheRuleSubjectAndMessageBeforeCheckingForAnOpenFailure_soCallsAtTheSameTimeSaveOneRow() {
+        service.recordEligibilityRuleFailure(subject, program.getUuid(), SourceType.EnrolmentEligibilityCheck, error);
+
+        InOrder inOrder = inOrder(repository);
+        inOrder.verify(repository).lockFailureUntilTransactionEnds("program-uuid", "subject-uuid", "QA1079 eligibility rule throws");
+        inOrder.verify(repository).hasOpenFailure("program-uuid", "subject-uuid", "QA1079 eligibility rule throws");
+        inOrder.verify(repository).save(any());
     }
 }

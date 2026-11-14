@@ -16,4 +16,7 @@ public interface RuleFailureTelemetryRepository extends AvniJpaRepository<RuleFa
 
     @Query("select count(r) > 0 from RuleFailureTelemetry r where r.ruleUuid = :ruleUuid and r.individualUuid = :individualUuid and r.errorMessage = :errorMessage and (r.isClosed is null or r.isClosed = false)")
     boolean hasOpenFailure(@Param("ruleUuid") String ruleUuid, @Param("individualUuid") String individualUuid, @Param("errorMessage") String errorMessage);
+
+    @Query(value = "select 1 from pg_advisory_xact_lock(hashtext(:ruleUuid || '|' || :individualUuid || '|' || coalesce(:errorMessage, '')))", nativeQuery = true)
+    Integer lockFailureUntilTransactionEnds(@Param("ruleUuid") String ruleUuid, @Param("individualUuid") String individualUuid, @Param("errorMessage") String errorMessage);
 }

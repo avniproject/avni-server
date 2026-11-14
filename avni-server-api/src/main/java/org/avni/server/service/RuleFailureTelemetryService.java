@@ -24,6 +24,7 @@ public class RuleFailureTelemetryService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordEligibilityRuleFailure(Individual individual, String ruleUuid, SourceType sourceType, RuleError error) {
         String errorMessage = error == null ? null : error.getMessage();
+        ruleFailureTelemetryRepository.lockFailureUntilTransactionEnds(ruleUuid, individual.getUuid(), errorMessage);
         if (ruleFailureTelemetryRepository.hasOpenFailure(ruleUuid, individual.getUuid(), errorMessage)) return;
 
         RuleFailureTelemetry ruleFailureTelemetry = new RuleFailureTelemetry();
