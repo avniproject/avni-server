@@ -58,7 +58,7 @@ public class ProgramServiceTest {
 
         EligibilityRuleResponseEntity ruleResponseEntity = new EligibilityRuleResponseEntity(Collections.singletonList(new EligibilityRuleEntity(true, program.getUuid())));
         when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenReturn(ruleResponseEntity);
-        ProgramService programService = new ProgramService(null, null, formMappingRepository, ruleService, mock(RuleFailureTelemetryService.class));
+        ProgramService programService = new ProgramService(null, null, formMappingRepository, ruleService, new EligibilityCheckService(mock(RuleFailureTelemetryService.class)));
         return programService.getEligiblePrograms(subject);
     }
 
@@ -120,11 +120,25 @@ public class ProgramServiceTest {
         assertEquals(Arrays.asList(fineProgram, throwingProgram), eligibleProgramsFor(fineProgram, throwingProgram));
     }
 
+    @Test
+    public void whenNoProgramIsLeftToCheck_theRuleServerIsNotCalled() throws RuleExecutionException {
+        assertEquals(Collections.emptyList(), eligibleProgramsFor());
+        verify(ruleService, never()).executeProgramEligibilityCheckRule(any(), any());
+    }
+
+    @Test
+    public void aProgramMappedTwiceIsCheckedAndListedOnce() throws RuleExecutionException {
+        when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenReturn(new EligibilityRuleResponseEntity(Collections.singletonList(new EligibilityRuleEntity(true, "fine"))));
+
+        assertEquals(Collections.singletonList(fineProgram), eligibleProgramsFor(fineProgram, fineProgram));
+        verify(ruleService).executeProgramEligibilityCheckRule(subjectWithoutEnrolments, Collections.singletonList(fineProgram));
+    }
+
     private List<Program> eligibleProgramsFor(Program... programs) {
         List<FormMapping> formMappings = Arrays.stream(programs).map(program -> new FormMappingBuilder().withProgram(program).build()).collect(Collectors.toList());
         FormMappingRepository formMappingRepository = mock(FormMappingRepository.class);
         when(formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(any(), any())).thenReturn(formMappings);
-        return new ProgramService(null, null, formMappingRepository, ruleService, ruleFailureTelemetryService).getEligiblePrograms(subjectWithoutEnrolments);
+        return new ProgramService(null, null, formMappingRepository, ruleService, new EligibilityCheckService(ruleFailureTelemetryService)).getEligiblePrograms(subjectWithoutEnrolments);
     }
 
     private static EligibilityRuleResponseEntity failedResponse(RuleError error) {

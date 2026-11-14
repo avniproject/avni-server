@@ -15,9 +15,11 @@ import org.avni.server.domain.enums.ruleFailure.SourceType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.service.EligibilityCheckService;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleFailureTelemetryService;
 import org.avni.server.service.RuleService;
+import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
 import org.avni.server.web.request.rules.response.RuleError;
@@ -28,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -45,7 +48,7 @@ public class RuleControllerEncounterEligibilityTest {
     private final FormMappingRepository formMappingRepository = mock(FormMappingRepository.class);
     private final IndividualService individualService = mock(IndividualService.class);
     private final RuleFailureTelemetryService ruleFailureTelemetryService = mock(RuleFailureTelemetryService.class);
-    private final RuleController ruleController = new RuleController(ruleService, mock(ProgramEnrolmentRepository.class), individualRepository, formMappingRepository, individualService, null, null, ruleFailureTelemetryService);
+    private final RuleController ruleController = new RuleController(ruleService, mock(ProgramEnrolmentRepository.class), individualRepository, formMappingRepository, individualService, null, null, new EligibilityCheckService(ruleFailureTelemetryService));
 
     private final SubjectType subjectType = new SubjectTypeBuilder().setUuid("person").setType(Subject.Person).build();
     private final Individual subject = new SubjectBuilder().withUUID("subject").withSubjectType(subjectType).build();
@@ -100,6 +103,30 @@ public class RuleControllerEncounterEligibilityTest {
 
         assertEquals(Collections.emptyList(), eligibleEncounterTypeUuids());
         verify(ruleFailureTelemetryService, never()).recordEligibilityRuleFailure(any(), any(), any(), any());
+    }
+
+    @Test
+    public void whenTheRuleServerCannotBeReached_noEncounterTypeIsEligibleButScheduledVisitsAreReturned() throws RuleExecutionException {
+        Set<EncounterContract> scheduledEncounters = Collections.singleton(new EncounterContract());
+        when(individualService.constructEncounters(any())).thenReturn(scheduledEncounters);
+        when(ruleService.executeEligibilityRule(any(), any())).thenThrow(new RuleExecutionException(error));
+
+        ResponseEntity<?> response = ruleController.getEligibleGeneralEncounters("subject");
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(Collections.emptyList(), ((JsonObject) response.getBody()).get("eligibleEncounterTypeUUIDs"));
+        assertEquals(scheduledEncounters, ((JsonObject) response.getBody()).get("scheduledEncounters"));
+        verify(ruleFailureTelemetryService, never()).recordEligibilityRuleFailure(any(), any(), any(), any());
+    }
+
+    @Test
+    public void anEncounterTypeMappedTwiceIsCheckedAndListedOnce() throws RuleExecutionException {
+        FormMapping fineVisitMapping = new FormMappingBuilder().withSubjectType(subjectType).withEncounterType(fineVisit).build();
+        when(formMappingRepository.getAllGeneralEncounterFormMappings()).thenReturn(Arrays.asList(fineVisitMapping, fineVisitMapping));
+        when(ruleService.executeEligibilityRule(any(), any())).thenReturn(success(Collections.singletonList(new EligibilityRuleEntity(true, "fine-visit"))));
+
+        assertEquals(Collections.singletonList("fine-visit"), eligibleEncounterTypeUuids());
+        verify(ruleService).executeEligibilityRule(subject, Collections.singletonList(fineVisit));
     }
 
     @Test
