@@ -52,19 +52,18 @@ public class EligibilityCheckService {
 
         Map<String, EligibilityRuleEntity> eligibilityRuleEntities = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
                 .collect(Collectors.toMap(EligibilityRuleEntity::getTypeUUID, Function.identity(), (first, second) -> first));
-        List<T> checkedTypes = distinctTypes.stream()
-                .filter(type -> eligibilityRuleEntities.containsKey(type.getUuid()))
-                .collect(Collectors.toList());
-        checkedTypes.stream()
-                .map(type -> eligibilityRuleEntities.get(type.getUuid()))
-                .filter(EligibilityRuleEntity::hasFailed)
-                .forEach(failed -> recordRuleFailure(individual, sourceType, failed));
-        return checkedTypes.stream()
-                .filter(type -> {
-                    EligibilityRuleEntity eligibilityRuleEntity = eligibilityRuleEntities.get(type.getUuid());
-                    return eligibilityRuleEntity.hasFailed() || eligibilityRuleEntity.isEligible();
-                })
-                .collect(Collectors.toList());
+        List<T> eligibleTypes = new ArrayList<>();
+        for (T type : distinctTypes) {
+            if (!eligibilityRuleEntities.containsKey(type.getUuid())) continue;
+            EligibilityRuleEntity eligibilityRuleEntity = eligibilityRuleEntities.get(type.getUuid());
+            if (eligibilityRuleEntity.hasFailed()) {
+                recordRuleFailure(individual, sourceType, eligibilityRuleEntity);
+                eligibleTypes.add(type);
+            } else if (eligibilityRuleEntity.isEligible()) {
+                eligibleTypes.add(type);
+            }
+        }
+        return eligibleTypes;
     }
 
     private void recordRuleFailure(Individual individual, SourceType sourceType, EligibilityRuleEntity failed) {
