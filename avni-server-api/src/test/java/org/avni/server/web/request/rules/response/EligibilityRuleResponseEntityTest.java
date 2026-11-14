@@ -24,17 +24,23 @@ public class EligibilityRuleResponseEntityTest {
                 "{\"typeUUID\": \"async\", \"isEligible\": {}}," +
                 "{\"typeUUID\": \"list\", \"isEligible\": [true]}," +
                 "{\"typeUUID\": \"fraction\", \"isEligible\": 0.5}," +
-                "{\"typeUUID\": \"error-null-after\", \"isEligible\": \"no\", \"error\": null}" +
+                "{\"typeUUID\": \"error-null-after\", \"isEligible\": \"no\", \"error\": null}," +
+                "{\"typeUUID\": \"count\", \"isEligible\": 3}," +
+                "{\"typeUUID\": \"quoted\", \"isEligible\": \"say \\\"no\\\"\"}," +
+                "{\"typeUUID\": \"long\", \"isEligible\": \"" + "z".repeat(1000) + "\"}" +
                 "]");
 
         assertEligible(results.get("yes"));
         assertNotEligible(results.get("no"));
         assertFailed(results.get("text-no"), "Eligibility rule returned \"no\"; it must return true or false");
-        assertFailed(results.get("object"), "Eligibility rule returned {eligible=true}; it must return true or false");
+        assertFailed(results.get("object"), "Eligibility rule returned {\"eligible\":true}; it must return true or false");
         assertFailed(results.get("async"), "Eligibility rule returned {}; it must return true or false");
         assertFailed(results.get("list"), "Eligibility rule returned [true]; it must return true or false");
         assertFailed(results.get("fraction"), "Eligibility rule returned 0.5; it must return true or false");
         assertFailed(results.get("error-null-after"), "Eligibility rule returned \"no\"; it must return true or false");
+        assertFailed(results.get("count"), "Eligibility rule returned 3; it must return true or false");
+        assertFailed(results.get("quoted"), "Eligibility rule returned \"say \\\"no\\\"\"; it must return true or false");
+        assertEquals("Eligibility rule returned \"" + "z".repeat(496) + "...; it must return true or false", results.get("long").getError().getMessage());
     }
 
     @Test

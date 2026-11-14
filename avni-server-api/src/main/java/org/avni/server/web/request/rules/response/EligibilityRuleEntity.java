@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.avni.server.util.ObjectMapperSingleton;
+
 import java.math.BigInteger;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -62,12 +65,31 @@ public class EligibilityRuleEntity {
         if (ruleResult == null) return;
         if (ruleResult instanceof Boolean) {
             isEligible = (Boolean) ruleResult;
-        } else if (ruleResult instanceof Integer || ruleResult instanceof Long || ruleResult instanceof BigInteger) {
-            isEligible = ((Number) ruleResult).longValue() != 0;
+        } else if (isZeroOrOne(ruleResult)) {
+            isEligible = ((Number) ruleResult).longValue() == 1;
         } else if (ruleResult instanceof String && isTrueFalseOrEmpty(((String) ruleResult).trim())) {
             isEligible = Boolean.parseBoolean(((String) ruleResult).trim());
         } else {
-            invalidRuleResult = ruleResult instanceof String ? "\"" + ruleResult + "\"" : String.valueOf(ruleResult);
+            invalidRuleResult = shorten(asJson(ruleResult), 500);
+        }
+    }
+
+    private static boolean isZeroOrOne(Object ruleResult) {
+        if (!(ruleResult instanceof Integer || ruleResult instanceof Long || ruleResult instanceof BigInteger)) return false;
+        long value = ((Number) ruleResult).longValue();
+        return value == 0 || value == 1;
+    }
+
+    private static String shorten(String text, int maxLength) {
+        if (text.codePointCount(0, text.length()) <= maxLength) return text;
+        return text.substring(0, text.offsetByCodePoints(0, maxLength - 3)) + "...";
+    }
+
+    private static String asJson(Object ruleResult) {
+        try {
+            return ObjectMapperSingleton.getObjectMapper().writeValueAsString(ruleResult);
+        } catch (JsonProcessingException e) {
+            return String.valueOf(ruleResult);
         }
     }
 
