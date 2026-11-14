@@ -96,7 +96,7 @@ public class ProgramServiceTest {
     public void whenTheRuleServerFailsTheCheckForASingleProgram_itIsNotEligible() throws RuleExecutionException {
         when(ruleService.executeProgramEligibilityCheckRule(any(), any())).thenReturn(failedResponse(ruleError("Request failed with status code 401")));
 
-        assertEquals(Collections.emptyList(), eligibleProgramsFor(throwingProgram));
+        assertEquals(Collections.emptyList(), eligibleProgramsFor(fineProgram));
         verify(ruleFailureTelemetryService, never()).recordEligibilityRuleFailure(any(), any(), any(), any());
     }
 

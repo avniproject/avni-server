@@ -141,8 +141,7 @@ public class ProgramService implements NonScopeAwareService {
         }
 
         if (eligibilityRuleResponseEntity.hasNoResults()) {
-            RuleError error = eligibilityRuleResponseEntity.getError();
-            logger.error("Enrolment eligibility check failed for subject {}: {}", individual.getUuid(), error == null ? null : error.getMessage());
+            logger.error("Enrolment eligibility check failed for subject {}, rules server status {}", individual.getUuid(), eligibilityRuleResponseEntity.getStatus());
             return new ArrayList<>();
         }
         return getEligiblePrograms(individual, staticallyEnrolablePrograms, eligibilityRuleResponseEntity);

@@ -230,7 +230,6 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional(readOnly = true)
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectProfile(@RequestParam("uuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualContract = individualService.getSubjectInfo(uuid);
-        // A uuid not in this organisation returns null here
         if (individualContract == null) {
             return ResponseEntity.notFound().build();
         }

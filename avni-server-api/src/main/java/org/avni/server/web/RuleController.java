@@ -15,7 +15,6 @@ import org.avni.server.web.request.RuleRequest;
 import org.avni.server.web.request.rules.request.RequestEntityWrapper;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
-import org.avni.server.web.request.rules.response.RuleError;
 import org.avni.server.web.request.rules.response.RuleResponseEntity;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.avni.server.web.validation.ValidationException;
@@ -217,8 +216,7 @@ public class RuleController {
 
     private void addEligibleEncounterUUIDsToResponse(JsonObject response, EligibilityRuleResponseEntity ruleResponse, Individual individual) {
         if (ruleResponse.hasNoResults()) {
-            RuleError error = ruleResponse.getError();
-            logger.error("Encounter eligibility check failed for subject {}: {}", individual.getUuid(), error == null ? null : error.getMessage());
+            logger.error("Encounter eligibility check failed for subject {}, rules server status {}", individual.getUuid(), ruleResponse.getStatus());
             response.with("eligibleEncounterTypeUUIDs", new ArrayList<String>());
             return;
         }
