@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
+import java.math.BigInteger;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EligibilityRuleEntity {
-    @JsonProperty("isEligible")
+    @JsonProperty(value = "isEligible", access = JsonProperty.Access.READ_ONLY)
     private boolean isEligible;
     private String typeUUID;
     private RuleError error;
+    private String invalidRuleResult;
 
     public EligibilityRuleEntity() {
     }
@@ -36,7 +39,12 @@ public class EligibilityRuleEntity {
     }
 
     public RuleError getError() {
-        return error;
+        if (error != null || invalidRuleResult == null) return error;
+        String message = String.format("Eligibility rule returned %s; it must return true or false", invalidRuleResult);
+        RuleError invalidRuleResultError = new RuleError();
+        invalidRuleResultError.setMessage(message);
+        invalidRuleResultError.setStack(message);
+        return invalidRuleResultError;
     }
 
     public void setError(RuleError error) {
@@ -44,29 +52,26 @@ public class EligibilityRuleEntity {
     }
 
     public boolean hasFailed() {
-        return error != null;
+        return error != null || invalidRuleResult != null;
     }
 
     @JsonSetter("isEligible")
     public void setEligibleFromRuleResult(Object ruleResult) {
-        if (ruleResult == null) {
-            isEligible = false;
-        } else if (ruleResult instanceof Boolean) {
+        isEligible = false;
+        invalidRuleResult = null;
+        if (ruleResult == null) return;
+        if (ruleResult instanceof Boolean) {
             isEligible = (Boolean) ruleResult;
-        } else if (ruleResult instanceof Number) {
-            isEligible = ((Number) ruleResult).doubleValue() != 0;
-        } else if (ruleResult instanceof String && ((String) ruleResult).isEmpty()) {
-            isEligible = false;
-        } else if (ruleResult instanceof String && (((String) ruleResult).equalsIgnoreCase("true") || ((String) ruleResult).equalsIgnoreCase("false"))) {
-            isEligible = Boolean.parseBoolean((String) ruleResult);
+        } else if (ruleResult instanceof Integer || ruleResult instanceof Long || ruleResult instanceof BigInteger) {
+            isEligible = ((Number) ruleResult).longValue() != 0;
+        } else if (ruleResult instanceof String && isTrueFalseOrEmpty(((String) ruleResult).trim())) {
+            isEligible = Boolean.parseBoolean(((String) ruleResult).trim());
         } else {
-            isEligible = false;
-            if (error == null) {
-                String message = String.format("Eligibility rule returned %s; it must return true or false", ruleResult instanceof String ? "\"" + ruleResult + "\"" : ruleResult);
-                error = new RuleError();
-                error.setMessage(message);
-                error.setStack(message);
-            }
+            invalidRuleResult = ruleResult instanceof String ? "\"" + ruleResult + "\"" : String.valueOf(ruleResult);
         }
+    }
+
+    private static boolean isTrueFalseOrEmpty(String text) {
+        return text.isEmpty() || text.equalsIgnoreCase("true") || text.equalsIgnoreCase("false");
     }
 }

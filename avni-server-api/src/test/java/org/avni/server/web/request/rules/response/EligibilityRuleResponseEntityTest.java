@@ -22,7 +22,9 @@ public class EligibilityRuleResponseEntityTest {
                 "{\"typeUUID\": \"text-no\", \"isEligible\": \"no\"}," +
                 "{\"typeUUID\": \"object\", \"isEligible\": {\"eligible\": true}}," +
                 "{\"typeUUID\": \"async\", \"isEligible\": {}}," +
-                "{\"typeUUID\": \"list\", \"isEligible\": [true]}" +
+                "{\"typeUUID\": \"list\", \"isEligible\": [true]}," +
+                "{\"typeUUID\": \"fraction\", \"isEligible\": 0.5}," +
+                "{\"typeUUID\": \"error-null-after\", \"isEligible\": \"no\", \"error\": null}" +
                 "]");
 
         assertEligible(results.get("yes"));
@@ -31,6 +33,8 @@ public class EligibilityRuleResponseEntityTest {
         assertFailed(results.get("object"), "Eligibility rule returned {eligible=true}; it must return true or false");
         assertFailed(results.get("async"), "Eligibility rule returned {}; it must return true or false");
         assertFailed(results.get("list"), "Eligibility rule returned [true]; it must return true or false");
+        assertFailed(results.get("fraction"), "Eligibility rule returned 0.5; it must return true or false");
+        assertFailed(results.get("error-null-after"), "Eligibility rule returned \"no\"; it must return true or false");
     }
 
     @Test
@@ -42,7 +46,8 @@ public class EligibilityRuleResponseEntityTest {
                 "{\"typeUUID\": \"one\", \"isEligible\": 1}," +
                 "{\"typeUUID\": \"empty-text\", \"isEligible\": \"\"}," +
                 "{\"typeUUID\": \"text-false\", \"isEligible\": \"false\"}," +
-                "{\"typeUUID\": \"text-true\", \"isEligible\": \"TRUE\"}" +
+                "{\"typeUUID\": \"text-true\", \"isEligible\": \"TRUE\"}," +
+                "{\"typeUUID\": \"padded-text-true\", \"isEligible\": \" true \"}" +
                 "]");
 
         assertNotEligible(results.get("missing"));
@@ -52,6 +57,7 @@ public class EligibilityRuleResponseEntityTest {
         assertNotEligible(results.get("empty-text"));
         assertNotEligible(results.get("text-false"));
         assertEligible(results.get("text-true"));
+        assertEligible(results.get("padded-text-true"));
     }
 
     @Test
