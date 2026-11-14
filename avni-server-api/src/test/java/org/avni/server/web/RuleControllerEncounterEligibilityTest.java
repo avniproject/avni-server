@@ -92,6 +92,17 @@ public class RuleControllerEncounterEligibilityTest {
     }
 
     @Test
+    public void whenTheRuleServerFailsTheWholeCheck_noEncounterTypeIsEligibleAndNothingIsRecorded() throws RuleExecutionException {
+        EligibilityRuleResponseEntity failure = new EligibilityRuleResponseEntity();
+        failure.setStatus("failure");
+        failure.setError(error);
+        when(ruleService.executeEligibilityRule(any(), any())).thenReturn(failure);
+
+        assertEquals(Collections.emptyList(), eligibleEncounterTypeUuids());
+        verify(ruleFailureTelemetryService, never()).recordEligibilityRuleFailure(any(), any(), any(), any());
+    }
+
+    @Test
     public void anUnknownSubjectIsNotFound() {
         assertEquals(404, ruleController.getEligibleGeneralEncounters("unknown-subject").getStatusCode().value());
     }

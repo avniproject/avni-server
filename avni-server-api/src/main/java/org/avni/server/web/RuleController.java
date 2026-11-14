@@ -15,6 +15,7 @@ import org.avni.server.web.request.RuleRequest;
 import org.avni.server.web.request.rules.request.RequestEntityWrapper;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
+import org.avni.server.web.request.rules.response.RuleError;
 import org.avni.server.web.request.rules.response.RuleResponseEntity;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.avni.server.web.validation.ValidationException;
@@ -31,6 +32,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -179,7 +181,7 @@ public class RuleController {
             JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
             logger.info(String.format("Executing encounter Eligibility rule for the subject uuid %s", subjectUUID));
             EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(individual, encounterTypes);
-            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes, individual);
+            addEligibleEncounterUUIDsToResponse(response, ruleResponse, individual);
             return ResponseEntity.ok().body(response);
         } catch (RuleExecutionException e) {
             return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
@@ -206,28 +208,29 @@ public class RuleController {
             JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
             logger.info(String.format("Executing encounter Eligibility rule for the enrolment uuid %s", enrolmentUUID));
             EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(programEnrolment.getIndividual(), encounterTypes);
-            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes, programEnrolment.getIndividual());
+            addEligibleEncounterUUIDsToResponse(response, ruleResponse, programEnrolment.getIndividual());
             return ResponseEntity.ok().body(response);
         } catch (RuleExecutionException e) {
             return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
         }
     }
 
-    private void addEligibleEncounterUUIDsToResponse(JsonObject response, EligibilityRuleResponseEntity ruleResponse, List<EncounterType> encounterTypes, Individual individual) {
-        if (ruleResponse.getStatus().equalsIgnoreCase("success")) {
-            ruleResponse.getEligibilityRuleEntities().stream()
-                    .filter(EligibilityRuleEntity::hasFailed)
-                    .forEach(failed -> recordEncounterEligibilityRuleFailure(individual, failed));
-            List<String> eligibleEncounterTypeUUIDs = ruleResponse.getEligibilityRuleEntities()
-                    .stream()
-                    .filter(eligibilityRuleEntity -> eligibilityRuleEntity.isEligible() || eligibilityRuleEntity.hasFailed())
-                    .map(EligibilityRuleEntity::getTypeUUID)
-                    .collect(Collectors.toList());
-            response.with("eligibleEncounterTypeUUIDs", eligibleEncounterTypeUUIDs);
-        } else {
-            List<String> encounterTypeUUIDS = encounterTypes.stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList());
-            response.with("eligibleEncounterTypeUUIDs", encounterTypeUUIDS);
+    private void addEligibleEncounterUUIDsToResponse(JsonObject response, EligibilityRuleResponseEntity ruleResponse, Individual individual) {
+        if (ruleResponse.hasNoResults()) {
+            RuleError error = ruleResponse.getError();
+            logger.error("Encounter eligibility check failed for subject {}: {}", individual.getUuid(), error == null ? null : error.getMessage());
+            response.with("eligibleEncounterTypeUUIDs", new ArrayList<String>());
+            return;
         }
+        ruleResponse.getEligibilityRuleEntities().stream()
+                .filter(EligibilityRuleEntity::hasFailed)
+                .forEach(failed -> recordEncounterEligibilityRuleFailure(individual, failed));
+        List<String> eligibleEncounterTypeUUIDs = ruleResponse.getEligibilityRuleEntities()
+                .stream()
+                .filter(eligibilityRuleEntity -> eligibilityRuleEntity.isEligible() || eligibilityRuleEntity.hasFailed())
+                .map(EligibilityRuleEntity::getTypeUUID)
+                .collect(Collectors.toList());
+        response.with("eligibleEncounterTypeUUIDs", eligibleEncounterTypeUUIDs);
     }
 
     private void recordEncounterEligibilityRuleFailure(Individual individual, EligibilityRuleEntity failed) {
