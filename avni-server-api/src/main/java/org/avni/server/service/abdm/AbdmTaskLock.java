@@ -12,12 +12,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
 
 // With more than one server, each ABDM task runs on one at a time: a run holds a Postgres advisory lock named for its
-// task, and a server finding it held skips that run. A session lock, not a transaction's: a run makes many transactions
-// and calls Eka between them. Its connection is the run's own, outside the pool, since a pooled session outlives close()
-// and would carry a lock left on it back into the pool. Postgres drops a session's locks when it ends: when the run
-// closes it, or when a crashed server's connections close.
+// task, and a server finding it held skips that run. It stops runs overlapping, not a second run in the same slot once
+// the first has finished; the tasks are safe to run again. A session lock, not a transaction's: a run makes many
+// transactions and calls Eka between them. Its connection is the run's own, outside the pool, since a pooled session
+// outlives close() and would carry a lock left on it back into the pool; it must reach Postgres directly or through a
+// pooler in session mode, as one in transaction mode would hand the session to others. Postgres drops a session's locks
+// when it ends: when the run closes it, when a crashed server's connections close, or when keepalives find it gone.
 @Component
 public class AbdmTaskLock {
     private static final Logger logger = LoggerFactory.getLogger(AbdmTaskLock.class);
@@ -36,26 +40,28 @@ public class AbdmTaskLock {
         this.unpooled = unpooled;
     }
 
-    private static DataSource unpooled(DataSourceProperties database) {
+    // A database that takes the connection but never answers is given up on, not waited on by an ABDM thread for ever.
+    // Parameters in the URL win over these.
+    static DriverManagerDataSource unpooled(DataSourceProperties database) {
         DriverManagerDataSource dataSource = new DriverManagerDataSource(database.determineUrl(), database.determineUsername(),
                 database.determinePassword());
         dataSource.setDriverClassName(database.determineDriverClassName());
+        Properties properties = new Properties();
+        properties.setProperty("loginTimeout", "10");
+        properties.setProperty("connectTimeout", "10");
+        properties.setProperty("socketTimeout", "30");
+        properties.setProperty("tcpKeepAlive", "true");
+        dataSource.setConnectionProperties(properties);
         return dataSource;
     }
 
     // Runs the work holding the task's lock and returns true; returns false at once, without running it, when another
     // server holds it. Unavailable when the lock cannot be asked for at all.
     public boolean runAlone(String task, Runnable work) {
-        Connection connection;
-        try {
-            connection = unpooled.getConnection();
-        } catch (SQLException e) {
-            throw new Unavailable(task, e);
-        }
+        Connection connection = open(task);
         try {
             boolean locked;
             try {
-                connection.setAutoCommit(true);
                 locked = ask(connection, "select pg_try_advisory_lock(?, ?)", task);
             } catch (SQLException e) {
                 throw new Unavailable(task, e);
@@ -69,6 +75,29 @@ public class AbdmTaskLock {
             }
         } finally {
             close(connection, task);
+        }
+    }
+
+    // The run's own connection, outside any transaction, opened fresh for each run.
+    Connection open(String task) {
+        Connection connection;
+        try {
+            connection = unpooled.getConnection();
+        } catch (SQLException e) {
+            throw new Unavailable(task, e);
+        }
+        try {
+            connection.setAutoCommit(true);
+            // Postgres probes a silent server after 60 s and ends its session, and the lock, about 30 s later.
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("set tcp_keepalives_idle = 60");
+                statement.execute("set tcp_keepalives_interval = 10");
+                statement.execute("set tcp_keepalives_count = 3");
+            }
+            return connection;
+        } catch (SQLException e) {
+            close(connection, task);
+            throw new Unavailable(task, e);
         }
     }
 

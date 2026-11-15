@@ -48,6 +48,9 @@ public class AbdmJobRunner {
     private final Clock clock;
     // Runs so far of each task: each run starts one organisation further on, so no organisation is always last.
     private final Map<String, AtomicInteger> runs = new ConcurrentHashMap<>();
+    private static final Duration LOCK_ALARM_INTERVAL = Duration.ofHours(1);
+    // When Bugsnag last heard that each task's lock could not be asked for, while it still cannot.
+    private final Map<String, Instant> lockAlarmedAt = new ConcurrentHashMap<>();
 
     @Autowired
     public AbdmJobRunner(AuthService authService, OrganisationConfigService organisationConfigService, AbdmAccess access,
@@ -90,11 +93,22 @@ public class AbdmJobRunner {
             ran = taskLock.runAlone(task, () -> run(task, budget, selection, work, withoutLogin));
         } catch (AbdmTaskLock.Unavailable e) {
             logger.error("ABDM {} not run: its lock could not be asked for", task, e);
-            bugsnag.notify(e);
+            if (lockAlarmDue(task)) bugsnag.notify(e);
             return;
         }
+        lockAlarmedAt.remove(task);
         // Another server is running this task; skipping it is no failure, so nothing is recorded or sent.
         if (!ran) logger.debug("ABDM {} skipped: another server is running it", task);
+    }
+
+    // A database out of connections fails every run of every task: Bugsnag hears of it on the first failure after the lock
+    // was last asked for, then at most hourly for each task, as AbdmJobRuns does for an organisation's failures.
+    private boolean lockAlarmDue(String task) {
+        Instant now = clock.instant();
+        Instant last = lockAlarmedAt.get(task);
+        if (last != null && now.isBefore(last.plus(LOCK_ALARM_INTERVAL))) return false;
+        lockAlarmedAt.put(task, now);
+        return true;
     }
 
     private void run(String task, Duration budget, Supplier<List<Long>> selection, Consumer<Instant> work, LongConsumer withoutLogin) {

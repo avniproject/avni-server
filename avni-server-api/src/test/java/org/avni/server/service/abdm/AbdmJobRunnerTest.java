@@ -52,10 +52,7 @@ public class AbdmJobRunnerTest {
 
     @Before
     public void setUp() {
-        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
-        AbdmOrgContext orgContext = new AbdmOrgContext(authService, organisationRepository, configRepository, mock(PlatformTransactionManager.class));
-        runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler, taskLock,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+        runner = runnerAt(Clock.fixed(NOW, ZoneOffset.UTC));
         // No other server is running the task, unless a test says so.
         when(taskLock.runAlone(anyString(), any())).thenAnswer(inv -> {
             ((Runnable) inv.getArgument(1)).run();
@@ -122,6 +119,47 @@ public class AbdmJobRunnerTest {
         assertTrue(ranFor.isEmpty());
         verify(bugsnag).notify(unavailable);
         verifyNoInteractions(jobRuns);
+    }
+
+    // A database out of connections fails every run: Bugsnag hears of it once, then at most hourly for each task.
+    @Test
+    public void aLockThatCannotBeAskedForAlarmsOnceThenAtMostHourlyForEachTask() {
+        AbdmHousekeepingJobTest.MovingClock clock = new AbdmHousekeepingJobTest.MovingClock(NOW);
+        AbdmJobRunner runner = runnerAt(clock);
+        reset(taskLock);
+        when(taskLock.runAlone(anyString(), any())).thenThrow(new AbdmTaskLock.Unavailable(TASK, new java.sql.SQLException("too many clients")));
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+        clock.advance(Duration.ofMinutes(5));
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+        clock.advance(Duration.ofMinutes(50));
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+        verify(bugsnag, times(1)).notify(any(AbdmTaskLock.Unavailable.class));
+
+        runner.forEachOrganisation(AbdmHousekeepingJob.CONSENT_EXPIRY, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+        verify(bugsnag, times(2)).notify(any(AbdmTaskLock.Unavailable.class));
+
+        clock.advance(Duration.ofMinutes(5));
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+        verify(bugsnag, times(3)).notify(any(AbdmTaskLock.Unavailable.class));
+        verifyNoInteractions(jobRuns);
+    }
+
+    // Once the lock is taken again the outage is over, and the next failure alarms at once.
+    @Test
+    public void aLockFailureAfterTheLockWasTakenAgainAlarmsAtOnce() {
+        AbdmHousekeepingJobTest.MovingClock clock = new AbdmHousekeepingJobTest.MovingClock(NOW);
+        AbdmJobRunner runner = runnerAt(clock);
+        reset(taskLock);
+        AbdmTaskLock.Unavailable unavailable = new AbdmTaskLock.Unavailable(TASK, new java.sql.SQLException("too many clients"));
+        when(taskLock.runAlone(anyString(), any())).thenThrow(unavailable).thenReturn(true).thenThrow(unavailable);
+
+        for (int run = 0; run < 3; run++) {
+            runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> fail("nothing runs"));
+            clock.advance(Duration.ofMinutes(5));
+        }
+
+        verify(bugsnag, times(2)).notify(unavailable);
     }
 
     @Test
@@ -393,6 +431,12 @@ public class AbdmJobRunnerTest {
         assertTrue(failure.getSuppressed()[0] instanceof AbdmOrgContext.SystemUserException);
         // Fix round 2: Bugsnag drops suppressed exceptions, so the system user's is sent on its own too.
         verify(bugsnag).notify(any(AbdmOrgContext.SystemUserException.class));
+    }
+
+    private AbdmJobRunner runnerAt(Clock clock) {
+        AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
+        AbdmOrgContext orgContext = new AbdmOrgContext(authService, organisationRepository, configRepository, mock(PlatformTransactionManager.class));
+        return new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler, taskLock, clock);
     }
 
     private static List<ch.qos.logback.classic.spi.ILoggingEvent> loggedByTheRunner(Runnable run) {

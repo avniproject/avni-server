@@ -105,7 +105,7 @@ public class AbdmTaskLockIntegrationTest extends AbstractControllerIntegrationTe
     // The lock's connection lost during the run (here, its session ended from outside): the run finishes, and the lock is
     // not left held, since a session's locks end with it.
     @Test
-    public void aLockWhoseConnectionIsLostDuringTheRunIsNotLeftHeld() {
+    public void aLockWhoseConnectionIsLostDuringTheRunIsNotLeftHeld() throws InterruptedException {
         AtomicBoolean finished = new AtomicBoolean();
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 
@@ -115,7 +115,20 @@ public class AbdmTaskLockIntegrationTest extends AbstractControllerIntegrationTe
         }));
 
         assertTrue(finished.get());
-        assertEquals(0, holders(TASK));
+        awaitNoHolders(TASK);
+    }
+
+    // The lock's connection gives up on a database that stops answering, and Postgres drops the session of a server that
+    // has vanished, and its lock, within about 90 seconds (60 idle, then 3 probes 10 apart).
+    @Test
+    public void theLockConnectionWaitsOnlySoLongAndIsKeptAlive() throws SQLException {
+        try (Connection connection = taskLock.open(TASK)) {
+            assertTrue(connection.getAutoCommit());
+            assertEquals(30_000, connection.getNetworkTimeout());
+            assertEquals("60", show(connection, "tcp_keepalives_idle"));
+            assertEquals("10", show(connection, "tcp_keepalives_interval"));
+            assertEquals("3", show(connection, "tcp_keepalives_count"));
+        }
     }
 
     // The runner against Postgres: while another server runs the task, this one does not even read its organisations.
@@ -170,6 +183,25 @@ public class AbdmTaskLockIntegrationTest extends AbstractControllerIntegrationTe
     private int holderSession(String task) {
         return new JdbcTemplate(dataSource).queryForObject("select pid from pg_locks where " + heldLock(), Integer.class,
                 Integer.toUnsignedLong(AbdmTaskLock.ABDM_TASKS), Integer.toUnsignedLong(AbdmTaskLock.keyOf(task)));
+    }
+
+    private static String show(Connection connection, String setting) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("show " + setting);
+             ResultSet result = statement.executeQuery()) {
+            result.next();
+            return result.getString(1);
+        }
+    }
+
+    // A session's locks go when Postgres has finished ending it, a moment after it is told to end.
+    private void awaitNoHolders(String task) throws InterruptedException {
+        long until = System.currentTimeMillis() + 5_000;
+        long holders = holders(task);
+        while (holders > 0 && System.currentTimeMillis() < until) {
+            Thread.sleep(50);
+            holders = holders(task);
+        }
+        assertEquals(0, holders);
     }
 
     private static String heldLock() {
