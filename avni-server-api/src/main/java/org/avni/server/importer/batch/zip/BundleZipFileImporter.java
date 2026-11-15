@@ -1,6 +1,7 @@
 package org.avni.server.importer.batch.zip;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
@@ -10,6 +11,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metadata.ObjectCollectionChangeReport;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
@@ -377,8 +379,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 groupRoleService.saveGroupRoles(groupRoleContracts, organisation);
                 break;
             case "groupPrivilege.json":
-                GroupPrivilegeBundleContract[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeBundleContract[].class);
-                groupPrivilegeService.savePrivilegesFromBundle(groupPrivilegeContracts, organisation);
+                groupPrivilegeService.savePrivilegesFromBundle(grantsOfKnownPrivilegeTypes(fileData), organisation);
                 break;
             case "groupDashboards.json":
                 GroupDashboardBundleContract[] contracts = convertString(fileData, GroupDashboardBundleContract[].class);
@@ -570,6 +571,22 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 .sorted(Comparator.comparing(contract ->
                         contract.getFormType() != null && contract.getFormType().isApprovalDecisionForm()))
                 .collect(Collectors.toList());
+    }
+
+    // A bundle from a server with a privilege this one lacks names a type that cannot be read here; that grant is skipped.
+    private GroupPrivilegeBundleContract[] grantsOfKnownPrivilegeTypes(String fileData) throws IOException {
+        Set<String> knownTypes = Arrays.stream(PrivilegeType.values()).map(Enum::name).collect(Collectors.toSet());
+        List<GroupPrivilegeBundleContract> grants = new ArrayList<>();
+        for (JsonNode grant : convertString(fileData, JsonNode[].class)) {
+            JsonNode privilegeType = grant.get("privilegeType");
+            if (privilegeType != null && !privilegeType.isNull() && !knownTypes.contains(privilegeType.asText())) {
+                logger.warn("groupPrivilege.json: privilege type {} is not known to this server; its grant to group {} is skipped",
+                        privilegeType.asText(), grant.path("groupUUID").asText());
+                continue;
+            }
+            grants.add(objectMapper.treeToValue(grant, GroupPrivilegeBundleContract.class));
+        }
+        return grants.toArray(new GroupPrivilegeBundleContract[0]);
     }
 
     private <T> T convertString(byte[] data, Class<T> convertTo) throws IOException {

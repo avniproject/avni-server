@@ -19,6 +19,8 @@ import org.avni.server.util.CollectionUtil;
 import org.avni.server.web.request.GroupPrivilegeBundleContract;
 import org.avni.server.web.request.GroupPrivilegeContractWeb;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
+    private static final Logger logger = LoggerFactory.getLogger(GroupPrivilegeService.class);
     private final GroupRepository groupRepository;
     private final PrivilegeRepository privilegeRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -197,6 +200,14 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                 Privilege bundleContractPrivilege = Objects.isNull(groupPrivilegeBundleContract.getPrivilegeType())
                         ? privilegeMapByTypeUUID.get(groupPrivilegeBundleContract.getPrivilegeUUID())
                         : privilegeMapByType.get(groupPrivilegeBundleContract.getPrivilegeType());
+                // A bundle from another server can name a privilege this one has no row for; the rest of the file still imports.
+                if (bundleContractPrivilege == null) {
+                    logger.warn("groupPrivilege.json: privilege {} is not on this server; its grant to group {} is skipped",
+                            Objects.isNull(groupPrivilegeBundleContract.getPrivilegeType())
+                                    ? groupPrivilegeBundleContract.getPrivilegeUUID() : groupPrivilegeBundleContract.getPrivilegeType(),
+                            groupPrivilegeBundleContract.getGroupUUID());
+                    return;
+                }
                 GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
                     Objects.equals(targetedGroup.getUuid(), gp.getGroupUuid())
                     // rely on type since bundleContractPrivilege uuid could be different across different installations
