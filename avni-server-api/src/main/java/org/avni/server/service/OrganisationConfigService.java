@@ -91,8 +91,11 @@ public class OrganisationConfigService implements NonScopeAwareService {
             incomingSettings.remove(key);
             if (currentSettings.containsKey(key)) incomingSettings.put(key, currentSettings.get(key));
         }
-        request.setSettings(incomingSettings);
-        return saveOrganisationConfig(request, organisation);
+        OrganisationConfigRequest withOwnSwitches = new OrganisationConfigRequest();
+        withOwnSwitches.setUuid(request.getUuid());
+        withOwnSwitches.setSettings(incomingSettings);
+        withOwnSwitches.setWorklistUpdationRule(request.getWorklistUpdationRule());
+        return saveOrganisationConfig(withOwnSwitches, organisation);
     }
 
     private void stampSqliteSnapshotGenerationTimestamps(JsonObject previousSettings, JsonObject incomingSettings) {

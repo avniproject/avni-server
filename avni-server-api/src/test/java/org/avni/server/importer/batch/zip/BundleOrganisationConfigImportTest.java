@@ -9,6 +9,7 @@ import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.factory.access.TestGroupPrivilegeBuilder;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupService;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -48,6 +49,8 @@ public class BundleOrganisationConfigImportTest extends AbstractControllerIntegr
     private OrganisationConfigRepository organisationConfigRepository;
     @Autowired
     private OrganisationConfigController organisationConfigController;
+    @Autowired
+    private OrganisationConfigService organisationConfigService;
 
     @Test
     public void switchesOnInTheBundleStayAbsentWhereTheOrganisationHasNeither() throws Exception {
@@ -89,6 +92,34 @@ public class BundleOrganisationConfigImportTest extends AbstractControllerIntegr
             assertEquals(bundle.toString(), true, settings.get(SHARING));
             assertTheRestOfTheBundleApplied(settings);
         }
+    }
+
+    @Test
+    public void aBundleWithNoSettingsSavesAndLeavesTheSwitchesAsTheyWere() throws Exception {
+        TestDataSetupService.TestOrganisationData organisation = organisationWith("bundleabdmnull",
+                new JsonObject().with(ABHA, true).with(SHARING, false));
+
+        importOrganisationConfig(organisation, null);
+
+        JsonObject settings = settingsOf(organisation);
+        assertEquals(settings.toString(), true, settings.get(ABHA));
+        assertEquals(settings.toString(), false, settings.get(SHARING));
+    }
+
+    // The bundle's request is read, not rewritten: the caller's settings object keeps the bundle's own values.
+    @Test
+    public void theRequestHandedInIsLeftAsItWas() {
+        TestDataSetupService.TestOrganisationData organisation = organisationWith("bundleabdmcopy", new JsonObject());
+        JsonObject bundle = bundleSettings().with(ABHA, true).with(SHARING, true);
+        OrganisationConfigRequest request = request(bundle);
+        request.setUuid(UUID.randomUUID().toString());
+
+        organisationConfigService.saveOrganisationConfigFromBundle(request, organisationRepository.findOne(organisation.getOrganisationId()));
+
+        assertSame(bundle, request.getSettings());
+        assertEquals(true, bundle.get(ABHA));
+        assertEquals(true, bundle.get(SHARING));
+        assertFalse(settingsOf(organisation).containsKey(ABHA));
     }
 
     // The organisation's settings screen saves through POST and PUT /organisationConfig; both still switch ABDM on.
