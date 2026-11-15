@@ -60,17 +60,21 @@ public class ZipErrorFileWriterListener {
     }
 
     public void writeError(BundleFile bundleFile, Throwable t) {
+        String stackTrace = ExceptionUtil.getFullStackTrace(t);
+        appendRow(bulkUploadS3Service.getLocalErrorFile(uuid), bundleFile.getName(),
+                (t.getMessage() == null ? "" : t.getMessage()) + "\n" + stackTrace);
+    }
+
+    // One row of the upload's error file: the bundle file, and what went wrong in it.
+    static void appendRow(File errorFile, String fileName, String message) {
         try {
-            String stackTrace = ExceptionUtil.getFullStackTrace(t);
-            File errorFile = bulkUploadS3Service.getLocalErrorFile(uuid);
-            // This file has no header row to lead with the marker, and nothing else writes to it,
-            // so the marker goes ahead of whichever failure happens to be recorded first.
+            // This file has no header row to lead with the marker, so the marker goes ahead of whichever row is first.
             boolean startingAFreshFile = !errorFile.exists() || errorFile.length() == 0;
             FileWriter fileWriter = new FileWriter(errorFile, StandardCharsets.UTF_8, true);
             if (startingAFreshFile) fileWriter.append(FileUtil.UTF8_BOM);
-            fileWriter.append(CsvCell.quoteIfNeeded(bundleFile.getName(), false));
+            fileWriter.append(CsvCell.quoteIfNeeded(fileName, false));
             fileWriter.append(",");
-            fileWriter.append(CsvCell.quoted((t.getMessage() == null ? "" : t.getMessage()) + "\n" + stackTrace));
+            fileWriter.append(CsvCell.quoted(message));
             fileWriter.append("\n");
             fileWriter.close();
         } catch (IOException e) {

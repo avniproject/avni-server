@@ -184,7 +184,9 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         return allGroupPrivileges;
     }
 
-    public void savePrivilegesFromBundle(GroupPrivilegeBundleContract[] groupPrivilegeBundleContracts, Organisation organisation) {
+    // Returns, one line each, the grants skipped for naming a privilege this server has no row for.
+    public List<String> savePrivilegesFromBundle(GroupPrivilegeBundleContract[] groupPrivilegeBundleContracts, Organisation organisation) {
+        List<String> skipped = new ArrayList<>();
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByImplVersion(GroupPrivilege.IMPL_VERSION);
         Map<PrivilegeType, Privilege> privilegeMapByType = privilegeRepository.findAll().stream().collect(Collectors.toMap(Privilege::getType, Function.identity()));
         Map<String, Privilege> privilegeMapByTypeUUID = privilegeRepository.findAll().stream().collect(Collectors.toMap(Privilege::getUuid, Function.identity()));
@@ -202,10 +204,12 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                         : privilegeMapByType.get(groupPrivilegeBundleContract.getPrivilegeType());
                 // A bundle from another server can name a privilege this one has no row for; the rest of the file still imports.
                 if (bundleContractPrivilege == null) {
-                    logger.warn("groupPrivilege.json: privilege {} is not on this server; its grant to group {} is skipped",
-                            Objects.isNull(groupPrivilegeBundleContract.getPrivilegeType())
-                                    ? groupPrivilegeBundleContract.getPrivilegeUUID() : groupPrivilegeBundleContract.getPrivilegeType(),
-                            groupPrivilegeBundleContract.getGroupUUID());
+                    String skip = String.format("Privilege %s is not on this server; its grant to group %s is skipped",
+                            oneLine(Objects.isNull(groupPrivilegeBundleContract.getPrivilegeType())
+                                    ? groupPrivilegeBundleContract.getPrivilegeUUID() : groupPrivilegeBundleContract.getPrivilegeType().name()),
+                            oneLine(groupPrivilegeBundleContract.getGroupUUID()));
+                    logger.warn("groupPrivilege.json: {}", skip);
+                    skipped.add(skip);
                     return;
                 }
                 GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
@@ -237,6 +241,12 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                 throw new BulkItemSaveException(groupPrivilegeBundleContract, e);
             }
         });
+        return skipped;
+    }
+
+    // Bundle text, so a line break in it cannot start a line of its own in the log.
+    private static String oneLine(String text) {
+        return text == null ? null : text.replaceAll("[\\r\\n]", "");
     }
 
     private Group getGroup(GroupPrivilegeContractWeb request, Organisation organisation, List<Group> groups) {

@@ -44,7 +44,10 @@ import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.scope.context.StepContext;
+import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +55,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -103,11 +107,14 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final CalendarService calendarService;
     private final CalendarDateMarkerService calendarDateMarkerService;
     private final AttendanceTypeService attendanceTypeService;
+    private final BulkUploadS3Service bulkUploadS3Service;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
+    @Value("#{jobParameters['uuid']}")
+    private String uploadUuid;
 
     /**
      * IMPORTANT: The un-tampered bundle is processed in the order of files inserted while generating the bundle,
@@ -198,7 +205,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  TranslationService translationService,
                                  RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryService customQueryService, ConceptRepository conceptRepository,
                                  AvniSpringBatchJobHelper avniSpringBatchJobHelper,
-                                 CalendarService calendarService, CalendarDateMarkerService calendarDateMarkerService, AttendanceTypeService attendanceTypeService) {
+                                 CalendarService calendarService, CalendarDateMarkerService calendarDateMarkerService, AttendanceTypeService attendanceTypeService,
+                                 BulkUploadS3Service bulkUploadS3Service) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -237,6 +245,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.calendarService = calendarService;
         this.calendarDateMarkerService = calendarDateMarkerService;
         this.attendanceTypeService = attendanceTypeService;
+        this.bulkUploadS3Service = bulkUploadS3Service;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -379,7 +388,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 groupRoleService.saveGroupRoles(groupRoleContracts, organisation);
                 break;
             case "groupPrivilege.json":
-                groupPrivilegeService.savePrivilegesFromBundle(grantsOfKnownPrivilegeTypes(fileData), organisation);
+                List<String> skippedGrants = new ArrayList<>();
+                GroupPrivilegeBundleContract[] knownGrants = grantsOfKnownPrivilegeTypes(fileData, skippedGrants);
+                skippedGrants.addAll(groupPrivilegeService.savePrivilegesFromBundle(knownGrants, organisation));
+                tellTheUploader(fileName, skippedGrants);
                 break;
             case "groupDashboards.json":
                 GroupDashboardBundleContract[] contracts = convertString(fileData, GroupDashboardBundleContract[].class);
@@ -574,19 +586,41 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     // A bundle from a server with a privilege this one lacks names a type that cannot be read here; that grant is skipped.
-    private GroupPrivilegeBundleContract[] grantsOfKnownPrivilegeTypes(String fileData) throws IOException {
+    private GroupPrivilegeBundleContract[] grantsOfKnownPrivilegeTypes(String fileData, List<String> skipped) throws IOException {
         Set<String> knownTypes = Arrays.stream(PrivilegeType.values()).map(Enum::name).collect(Collectors.toSet());
         List<GroupPrivilegeBundleContract> grants = new ArrayList<>();
         for (JsonNode grant : convertString(fileData, JsonNode[].class)) {
             JsonNode privilegeType = grant.get("privilegeType");
             if (privilegeType != null && !privilegeType.isNull() && !knownTypes.contains(privilegeType.asText())) {
-                logger.warn("groupPrivilege.json: privilege type {} is not known to this server; its grant to group {} is skipped",
-                        privilegeType.asText(), grant.path("groupUUID").asText());
+                String skip = String.format("Privilege type %s is not known to this server; its grant to group %s is skipped",
+                        oneLine(privilegeType.asText()), oneLine(grant.path("groupUUID").asText()));
+                logger.warn("groupPrivilege.json: {}", skip);
+                skipped.add(skip);
                 continue;
             }
             grants.add(objectMapper.treeToValue(grant, GroupPrivilegeBundleContract.class));
         }
         return grants.toArray(new GroupPrivilegeBundleContract[0]);
+    }
+
+    // Bundle text, so a line break in it cannot start a line of its own in the log.
+    private static String oneLine(String text) {
+        return text.replaceAll("[\\r\\n]", "");
+    }
+
+    // Each skipped grant is a row of the upload's error file, and the file counts once as skipped, so the upload shows as
+    // completed with errors and offers that file to the uploader.
+    private void tellTheUploader(String fileName, List<String> skipped) {
+        if (skipped.isEmpty()) return;
+        if (uploadUuid != null) {
+            File errorFile = bulkUploadS3Service.getLocalErrorFile(uploadUuid);
+            skipped.forEach(skip -> ZipErrorFileWriterListener.appendRow(errorFile, fileName, skip));
+        }
+        StepContext step = StepSynchronizationManager.getContext();
+        if (step != null) {
+            StepExecution execution = step.getStepExecution();
+            execution.setWriteSkipCount(execution.getWriteSkipCount() + 1);
+        }
     }
 
     private <T> T convertString(byte[] data, Class<T> convertTo) throws IOException {
