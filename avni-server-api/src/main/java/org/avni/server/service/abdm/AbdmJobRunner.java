@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 // The run has a time budget; each organisation is given its share of what is left, as a deadline the work keeps to, and
 // each run starts one organisation further on. A run told to stop (the server shutting down) takes no further
 // organisation and reports nothing for the one it was in.
+// With more than one server, a task runs on one at a time (AbdmTaskLock); a server finding it running elsewhere skips it.
 @Component
 public class AbdmJobRunner {
     private static final Logger logger = LoggerFactory.getLogger(AbdmJobRunner.class);
@@ -43,18 +44,21 @@ public class AbdmJobRunner {
     private final AbdmJobRuns jobRuns;
     private final Bugsnag bugsnag;
     private final AbdmScheduler scheduler;
+    private final AbdmTaskLock taskLock;
     private final Clock clock;
     // Runs so far of each task: each run starts one organisation further on, so no organisation is always last.
     private final Map<String, AtomicInteger> runs = new ConcurrentHashMap<>();
 
     @Autowired
     public AbdmJobRunner(AuthService authService, OrganisationConfigService organisationConfigService, AbdmAccess access,
-                         AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, AbdmScheduler scheduler) {
-        this(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler, Clock.systemUTC());
+                         AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, AbdmScheduler scheduler,
+                         AbdmTaskLock taskLock) {
+        this(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler, taskLock, Clock.systemUTC());
     }
 
     AbdmJobRunner(AuthService authService, OrganisationConfigService organisationConfigService, AbdmAccess access,
-                  AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, AbdmScheduler scheduler, Clock clock) {
+                  AbdmOrgContext orgContext, AbdmJobRuns jobRuns, Bugsnag bugsnag, AbdmScheduler scheduler, AbdmTaskLock taskLock,
+                  Clock clock) {
         this.authService = authService;
         this.organisationConfigService = organisationConfigService;
         this.access = access;
@@ -62,6 +66,7 @@ public class AbdmJobRunner {
         this.jobRuns = jobRuns;
         this.bugsnag = bugsnag;
         this.scheduler = scheduler;
+        this.taskLock = taskLock;
         this.clock = clock;
     }
 
@@ -80,6 +85,19 @@ public class AbdmJobRunner {
     // As above; where the system user cannot act, withoutLogin runs for the organisation with no user, and it is still reported.
     public void forOrganisations(String task, Duration budget, Supplier<List<Long>> selection, Consumer<Instant> work,
                                  LongConsumer withoutLogin) {
+        boolean ran;
+        try {
+            ran = taskLock.runAlone(task, () -> run(task, budget, selection, work, withoutLogin));
+        } catch (AbdmTaskLock.Unavailable e) {
+            logger.error("ABDM {} not run: its lock could not be asked for", task, e);
+            bugsnag.notify(e);
+            return;
+        }
+        // Another server is running this task; skipping it is no failure, so nothing is recorded or sent.
+        if (!ran) logger.debug("ABDM {} skipped: another server is running it", task);
+    }
+
+    private void run(String task, Duration budget, Supplier<List<Long>> selection, Consumer<Instant> work, LongConsumer withoutLogin) {
         Instant runDeadline = clock.instant().plus(budget);
         try {
             List<Long> organisationIds;

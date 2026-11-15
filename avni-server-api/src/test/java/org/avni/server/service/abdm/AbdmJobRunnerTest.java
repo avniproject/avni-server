@@ -46,6 +46,7 @@ public class AbdmJobRunnerTest {
     private final AbdmJobRuns jobRuns = mock(AbdmJobRuns.class);
     private final Bugsnag bugsnag = mock(Bugsnag.class);
     private final AbdmScheduler scheduler = mock(AbdmScheduler.class);
+    private final AbdmTaskLock taskLock = mock(AbdmTaskLock.class);
     private final List<OrganisationConfig> sharingSwitchedOn = new ArrayList<>();
     private AbdmJobRunner runner;
 
@@ -53,8 +54,13 @@ public class AbdmJobRunnerTest {
     public void setUp() {
         AbdmAccess access = new AbdmAccess(organisationConfigService, configRepository, new org.avni.server.service.abha.EkaEnvironments("sandbox,production"));
         AbdmOrgContext orgContext = new AbdmOrgContext(authService, organisationRepository, configRepository, mock(PlatformTransactionManager.class));
-        runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler,
+        runner = new AbdmJobRunner(authService, organisationConfigService, access, orgContext, jobRuns, bugsnag, scheduler, taskLock,
                 Clock.fixed(NOW, ZoneOffset.UTC));
+        // No other server is running the task, unless a test says so.
+        when(taskLock.runAlone(anyString(), any())).thenAnswer(inv -> {
+            ((Runnable) inv.getArgument(1)).run();
+            return true;
+        });
         // Each failure here is the first since a success, so it is sent to Bugsnag (AbdmJobRuns.failed decides).
         when(jobRuns.failed(anyLong(), anyString(), any(), any())).thenReturn(true);
         when(organisationConfigService.findAllWithFeatureEnabled("enableAbdmRecordSharing")).thenReturn(sharingSwitchedOn);
@@ -78,6 +84,44 @@ public class AbdmJobRunnerTest {
     @After
     public void clear() {
         UserContextHolder.clear();
+    }
+
+    // With two servers, the one that finds the task's lock taken skips that run: it reads no organisation, calls nothing,
+    // records no failure and alarms nobody; a debug line says so.
+    @Test
+    public void aTaskAnotherServerIsRunningIsSkippedQuietly() throws Exception {
+        organisation(1L, true, true, "system-1");
+        reset(taskLock);
+        when(taskLock.runAlone(anyString(), any())).thenReturn(false);
+        List<Long> ranFor = new ArrayList<>();
+
+        List<ch.qos.logback.classic.spi.ILoggingEvent> logged = loggedByTheRunner(() ->
+                runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(1L)));
+
+        assertTrue(ranFor.isEmpty());
+        verify(taskLock).runAlone(eq(TASK), any());
+        verify(authService, never()).authenticateByUserName(anyString(), any());
+        verify(organisationConfigService, never()).findAllWithFeatureEnabled(anyString());
+        verifyNoInteractions(jobRuns, bugsnag);
+        assertTrue(logged.toString(), logged.stream().anyMatch(e -> e.getLevel() == ch.qos.logback.classic.Level.DEBUG
+                && e.getFormattedMessage().contains(TASK)));
+        assertTrue(logged.toString(), logged.stream().noneMatch(e -> e.getLevel().isGreaterOrEqual(ch.qos.logback.classic.Level.INFO)));
+    }
+
+    // The lock cannot be taken at all (the database unreachable): nothing runs, and it is reported as the run not starting.
+    @Test
+    public void aTaskWhoseLockCannotBeTakenDoesNotRunAndIsReported() throws Exception {
+        organisation(1L, true, true, "system-1");
+        reset(taskLock);
+        AbdmTaskLock.Unavailable unavailable = new AbdmTaskLock.Unavailable(TASK, new java.sql.SQLException("connection refused"));
+        when(taskLock.runAlone(anyString(), any())).thenThrow(unavailable);
+        List<Long> ranFor = new ArrayList<>();
+
+        runner.forEachOrganisation(TASK, Duration.ofMinutes(4), deadline -> ranFor.add(1L));
+
+        assertTrue(ranFor.isEmpty());
+        verify(bugsnag).notify(unavailable);
+        verifyNoInteractions(jobRuns);
     }
 
     @Test
@@ -349,6 +393,22 @@ public class AbdmJobRunnerTest {
         assertTrue(failure.getSuppressed()[0] instanceof AbdmOrgContext.SystemUserException);
         // Fix round 2: Bugsnag drops suppressed exceptions, so the system user's is sent on its own too.
         verify(bugsnag).notify(any(AbdmOrgContext.SystemUserException.class));
+    }
+
+    private static List<ch.qos.logback.classic.spi.ILoggingEvent> loggedByTheRunner(Runnable run) {
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(AbdmJobRunner.class);
+        ch.qos.logback.classic.Level level = logger.getLevel();
+        ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> logged = new ch.qos.logback.core.read.ListAppender<>();
+        logged.start();
+        logger.addAppender(logged);
+        logger.setLevel(ch.qos.logback.classic.Level.DEBUG);
+        try {
+            run.run();
+        } finally {
+            logger.detachAppender(logged);
+            logger.setLevel(level);
+        }
+        return logged.list;
     }
 
     private void organisation(long id, boolean abha, boolean sharing, String systemUser) throws Exception {
