@@ -77,6 +77,24 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return organisationConfig;
     }
 
+    // A bundle carries the exporting organisation's ABDM switches; the importing organisation keeps its own, set or absent.
+    private static final List<String> SWITCHES_A_BUNDLE_CANNOT_CHANGE = List.of(
+            OrganisationConfigSettingKey.enableAbha.name(),
+            OrganisationConfigSettingKey.enableAbdmRecordSharing.name());
+
+    @Transactional
+    public OrganisationConfig saveOrganisationConfigFromBundle(OrganisationConfigRequest request, Organisation organisation) {
+        OrganisationConfig current = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        JsonObject currentSettings = current == null || current.getSettings() == null ? new JsonObject() : current.getSettings();
+        JsonObject incomingSettings = request.getSettings() == null ? new JsonObject() : new JsonObject(request.getSettings());
+        for (String key : SWITCHES_A_BUNDLE_CANNOT_CHANGE) {
+            incomingSettings.remove(key);
+            if (currentSettings.containsKey(key)) incomingSettings.put(key, currentSettings.get(key));
+        }
+        request.setSettings(incomingSettings);
+        return saveOrganisationConfig(request, organisation);
+    }
+
     private void stampSqliteSnapshotGenerationTimestamps(JsonObject previousSettings, JsonObject incomingSettings) {
         if (incomingSettings == null) return;
         String flagKey = OrganisationConfigSettingKey.enableSqliteSnapshotGeneration.name();

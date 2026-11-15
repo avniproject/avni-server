@@ -285,7 +285,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         switch (fileName) {
             case "organisationConfig.json":
                 OrganisationConfigRequest organisationConfigRequest = convertString(fileData, OrganisationConfigRequest.class);
-                organisationConfigService.saveOrganisationConfig(organisationConfigRequest, organisation);
+                organisationConfigService.saveOrganisationConfigFromBundle(organisationConfigRequest, organisation);
                 break;
             case "addressLevelTypes.json":
                 AddressLevelTypeContract[] addressLevelTypeContracts = convertString(fileData, AddressLevelTypeContract[].class);
