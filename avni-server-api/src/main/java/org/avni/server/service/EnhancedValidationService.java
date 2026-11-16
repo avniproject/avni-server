@@ -83,11 +83,9 @@ public class EnhancedValidationService {
 
     private void validateConceptValuesAreOfRequiredType(List<ObservationRequest> observationRequests, LinkedHashMap<String, FormElement> formElements, FormMapping formMapping, List<String> errorMessages) {
         observationRequests.stream()
-                .filter(observationRequest -> formElements.containsKey(observationRequest.getConceptUUID()))
                 .map(observationRequest -> new EnhancedValidationDTO(conceptRepository.findByUuid(observationRequest.getConceptUUID()),
                         formElements.get(observationRequest.getConceptUUID()),
                         observationRequest.getValue()))
-                .filter(enhancedValidationDTO -> enhancedValidationDTO.getConcept() != null)
                 .forEach(enhancedValidationDTO -> validate(enhancedValidationDTO, formMapping, errorMessages));
     }
 
@@ -129,10 +127,8 @@ public class EnhancedValidationService {
     private List<String> getDecisionConceptUuidsFromRequest(List<Decision> decisions) {
         return decisions != null ? decisions
                 .stream()
-                .map(decision -> {
-                    Concept concept = conceptRepository.findByName(decision.getName());
-                    return concept != null ? concept.getUuid() : decision.getName();
-                })
+                .map(decision -> conceptRepository.findByName(decision.getName()))
+                .map(Concept::getUuid)
                 .collect(Collectors.toList()) : new ArrayList<>();
     }
 
