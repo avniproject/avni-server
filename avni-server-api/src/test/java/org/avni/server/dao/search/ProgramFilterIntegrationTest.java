@@ -100,7 +100,7 @@ public class ProgramFilterIntegrationTest extends AbstractControllerIntegrationT
     }
 
     @Test
-    public void notEnrolledIsIgnoredWhenIncludeExitedIsAlsoSet() {
+    public void includeExitedOnlyWidensNotEnrolledAndTheTickedProgrammes() {
         setUpOrganisation("pfa");
         Individual neverEnrolled = subject("Never");
         Individual activeInA = subject("ActiveA");
@@ -111,11 +111,14 @@ public class ProgramFilterIntegrationTest extends AbstractControllerIntegrationT
         enrol(exitedFromBActiveInA, programB, DateTime.now().minusDays(1), false);
         enrol(exitedFromBActiveInA, programA, null, false);
 
-        assertThat(uuids(search(null, true, true))).containsExactlyInAnyOrder(exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
-        assertThat(uuids(search(null, true, false))).containsExactlyInAnyOrder(exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
-        assertThat(uuids(search(Collections.singletonList(programA.getUuid()), true, true)))
-                .containsExactlyInAnyOrder(activeInA.getUuid(), exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
         assertThat(uuids(search(null, false, true))).containsExactly(neverEnrolled.getUuid());
+        assertThat(uuids(search(null, true, true))).containsExactlyInAnyOrder(neverEnrolled.getUuid(), exitedFromA.getUuid());
+        assertThat(uuids(search(null, true, false)))
+                .containsExactlyInAnyOrder(neverEnrolled.getUuid(), activeInA.getUuid(), exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
+        assertThat(uuids(search(Collections.singletonList(programA.getUuid()), false, true)))
+                .containsExactlyInAnyOrder(neverEnrolled.getUuid(), activeInA.getUuid(), exitedFromBActiveInA.getUuid());
+        assertThat(uuids(search(Collections.singletonList(programA.getUuid()), true, true)))
+                .containsExactlyInAnyOrder(neverEnrolled.getUuid(), activeInA.getUuid(), exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
     }
 
     @Test

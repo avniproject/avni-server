@@ -564,8 +564,8 @@ public class SubjectSearchQueryBuilderTest {
 
     private static final String ENROLLED_IN_PROGRAMS = "exists (select 1 from program_enrolment pf_penr join program pf_p on pf_p.id = pf_penr.program_id where pf_penr.individual_id = i.id and pf_penr.is_voided is false and pf_p.uuid in (:programFilterUuids)";
     private static final String NOT_EXITED = " and pf_penr.program_exit_date_time is null";
-    private static final String EXITED_FROM_ANY_PROGRAM = "exists (select 1 from program_enrolment pf_exit where pf_exit.individual_id = i.id and pf_exit.is_voided is false and pf_exit.program_exit_date_time is not null)";
     private static final String NOT_ENROLLED = "not exists (select 1 from program_enrolment pf_none where pf_none.individual_id = i.id and pf_none.is_voided is false)";
+    private static final String NO_OPEN_ENROLMENT = "not exists (select 1 from program_enrolment pf_none where pf_none.individual_id = i.id and pf_none.is_voided is false and pf_none.program_exit_date_time is null)";
 
     private SqlQuery programSearch(List<String> programs, Boolean includeExited, Boolean notEnrolled) {
         SubjectSearchRequest request = new SubjectSearchRequest();
@@ -600,29 +600,20 @@ public class SubjectSearchQueryBuilderTest {
     }
 
     @Test
-    public void includeExitedAloneMatchesExitsFromAnyProgram() {
+    public void includeExitedAloneDoesNotLimitTheSubjects() {
         for (SqlQuery query : Arrays.asList(programSearch(null, true, null), programSearch(Collections.emptyList(), true, false))) {
-            assertThat(query.getSql()).contains("(" + EXITED_FROM_ANY_PROGRAM + ")");
-            assertThat(query.getSql()).doesNotContain("pf_penr").doesNotContain("pf_none");
+            assertThat(query.getSql()).doesNotContain("pf_penr").doesNotContain("pf_none").doesNotContain("pf_exit");
             assertThat(query.getParameters()).doesNotContainKey("programFilterUuids");
         }
     }
 
     @Test
-    public void includeExitedWithProgramsIsLimitedToThosePrograms() {
-        SqlQuery query = programSearch(Collections.singletonList("p1"), true, false);
-        assertThat(query.getSql()).doesNotContain("pf_exit");
-    }
-
-    @Test
-    public void notEnrolledIsIgnoredWithIncludeExitedAsInTheDataEntryApp() {
+    public void notEnrolledWithIncludeExitedMatchesSubjectsWithNoOpenEnrolment() {
         SqlQuery withoutPrograms = programSearch(null, true, true);
-        assertThat(withoutPrograms.getSql()).contains("(" + EXITED_FROM_ANY_PROGRAM + ")");
-        assertThat(withoutPrograms.getSql()).doesNotContain("pf_none");
+        assertThat(withoutPrograms.getSql()).contains("(" + NO_OPEN_ENROLMENT + ")");
 
         SqlQuery withPrograms = programSearch(Collections.singletonList("p1"), true, true);
-        assertThat(withPrograms.getSql()).contains("(" + ENROLLED_IN_PROGRAMS + "))");
-        assertThat(withPrograms.getSql()).doesNotContain("pf_none").doesNotContain("pf_exit");
+        assertThat(withPrograms.getSql()).contains("(" + ENROLLED_IN_PROGRAMS + ") or " + NO_OPEN_ENROLMENT + ")");
     }
 
     @Test

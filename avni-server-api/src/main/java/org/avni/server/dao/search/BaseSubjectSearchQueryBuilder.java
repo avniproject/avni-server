@@ -556,32 +556,22 @@ public class BaseSubjectSearchQueryBuilder<T> {
         return (T) this;
     }
 
-    /**
-     * Programme filter of Data Entry App search.
-     * <ul>
-     *     <li>programs: the subject has a non-voided enrolment in one of them. An exited enrolment matches only when includeExited is set.</li>
-     *     <li>includeExited with no programme ticked: the subject has exited (non-voided enrolment with an exit date) from any programme.</li>
-     *     <li>notEnrolled: the subject has no non-voided enrolment, in any programme, exited or not. Ignored with includeExited, as in the Data Entry App, where the two can't be ticked together.</li>
-     *     <li>more than one: any of the conditions.</li>
-     * </ul>
-     * Voided (cancelled) enrolments never count. With nothing ticked, the filter is ignored.
-     */
+    // includeExited only widens: ticked programmes also match exited enrolments, and notEnrolled also matches subjects whose every enrolment has exited.
     public T withProgramsFilter(List<String> programUuids, boolean includeExited, boolean notEnrolled) {
         boolean hasPrograms = programUuids != null && !programUuids.isEmpty();
-        if (!hasPrograms && !includeExited && !notEnrolled) return (T) this;
+        if (!hasPrograms && !notEnrolled) return (T) this;
 
-        if (includeExited) notEnrolled = false;
+        String exitRule = includeExited ? "" : " and pf_penr.program_exit_date_time is null";
         List<String> conditions = new ArrayList<>();
         if (hasPrograms) {
             withTickedPrograms(programUuids);
             conditions.add("exists (select 1 from program_enrolment pf_penr join program pf_p on pf_p.id = pf_penr.program_id" +
                     " where pf_penr.individual_id = i.id and pf_penr.is_voided is false and pf_p.uuid in (:programFilterUuids)" +
-                    (includeExited ? "" : " and pf_penr.program_exit_date_time is null") + ")");
-        } else if (includeExited) {
-            conditions.add("exists (select 1 from program_enrolment pf_exit where pf_exit.individual_id = i.id and pf_exit.is_voided is false and pf_exit.program_exit_date_time is not null)");
+                    exitRule + ")");
         }
         if (notEnrolled) {
-            conditions.add("not exists (select 1 from program_enrolment pf_none where pf_none.individual_id = i.id and pf_none.is_voided is false)");
+            conditions.add("not exists (select 1 from program_enrolment pf_none where pf_none.individual_id = i.id and pf_none.is_voided is false" +
+                    (includeExited ? " and pf_none.program_exit_date_time is null" : "") + ")");
         }
         whereClauses.add("(" + String.join(" or ", conditions) + ")");
         return (T) this;
