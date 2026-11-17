@@ -769,6 +769,36 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(none).doesNotContain(TICKED_PROGRAMS);
     }
 
+    private String conceptSearch(String scope, List<String> programs, List<String> encounterTypes) {
+        Concept notes = new Concept("c-notes", scope, "Notes", null, "three");
+        notes.setProgramUUIDs(programs);
+        notes.setEncounterTypeUUIDs(encounterTypes);
+        return new SubjectSearchQueryBuilder().withConceptsFilter(Collections.singletonList(notes)).build(subjectType).getSql();
+    }
+
+    @Test
+    public void conceptFilterLooksOnlyAtItsChosenProgrammesAndEncounterTypes() {
+        assertThat(conceptSearch("encounter", null, Collections.singletonList("et-1")))
+                .contains("e.encounter_type_id in (select cet.id from encounter_type cet where cet.uuid in (:conceptEncounterTypes0))")
+                .doesNotContain("conceptPrograms0");
+        assertThat(conceptSearch("programEnrolment", Collections.singletonList("p-1"), Collections.singletonList("et-1")))
+                .contains("penr.program_id in (select cp.id from program cp where cp.uuid in (:conceptPrograms0))")
+                .doesNotContain("conceptEncounterTypes0");
+        assertThat(conceptSearch("programEncounter", Collections.singletonList("p-1"), Collections.singletonList("et-1")))
+                .contains("penr.program_id in (select cp.id from program cp where cp.uuid in (:conceptPrograms0))")
+                .contains("penc.encounter_type_id in (select cet.id from encounter_type cet where cet.uuid in (:conceptEncounterTypes0))");
+        assertThat(conceptSearch("registration", Collections.singletonList("p-1"), Collections.singletonList("et-1")))
+                .doesNotContain("conceptPrograms0").doesNotContain("conceptEncounterTypes0");
+    }
+
+    @Test
+    public void conceptFilterWithNoChosenProgrammesOrEncounterTypesLooksAtAll() {
+        for (String scope : Arrays.asList("encounter", "programEnrolment", "programEncounter")) {
+            assertThat(conceptSearch(scope, null, Collections.emptyList()))
+                    .doesNotContain("conceptPrograms0").doesNotContain("conceptEncounterTypes0");
+        }
+    }
+
     @Test
     public void searchAllLooksOnlyAtEnrolmentsOfTheTickedProgrammes() {
         String ticked = tickedProgramA(true).withSearchAll("alpha").build(subjectType).getSql();

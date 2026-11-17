@@ -549,11 +549,32 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 parameters.remove(conceptUuidParam);
                 logger.warn("Search filter on concept {} of type {} is not supported and was ignored", c.getUuid(), c.getDataType());
             } else {
+                conceptConditions.addAll(chosenProgramsAndEncounterTypes(c, ci));
                 addScopedCondition(c.getSearchScope(), String.join(" and ", conceptConditions));
             }
         }
 
         return (T) this;
+    }
+
+    // As on the phone, a filter's chosen programmes and encounter types limit which enrolments and visits it looks at.
+    private List<String> chosenProgramsAndEncounterTypes(Concept c, int ci) {
+        String scope = c.getSearchScope().toUpperCase();
+        List<String> conditions = new ArrayList<>();
+        boolean programScope = scope.equals("PROGRAMENROLMENT") || scope.equals("PROGRAMENCOUNTER");
+        if (programScope && c.getProgramUUIDs() != null && !c.getProgramUUIDs().isEmpty()) {
+            String param = "conceptPrograms" + ci;
+            addParameter(param, c.getProgramUUIDs());
+            conditions.add("penr.program_id in (select cp.id from program cp where cp.uuid in (:" + param + "))");
+        }
+        boolean encounterScope = scope.equals("ENCOUNTER") || scope.equals("PROGRAMENCOUNTER");
+        if (encounterScope && c.getEncounterTypeUUIDs() != null && !c.getEncounterTypeUUIDs().isEmpty()) {
+            String param = "conceptEncounterTypes" + ci;
+            addParameter(param, c.getEncounterTypeUUIDs());
+            String alias = scope.equals("ENCOUNTER") ? "e" : "penc";
+            conditions.add(alias + ".encounter_type_id in (select cet.id from encounter_type cet where cet.uuid in (:" + param + "))");
+        }
+        return conditions;
     }
 
     // includeExited only widens: ticked programmes also match exited enrolments, and notEnrolled also matches subjects whose every enrolment has exited.
