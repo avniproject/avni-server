@@ -3,6 +3,9 @@ package org.avni.server.web;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.Subject;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.dao.ChecklistDetailRepository;
+import org.avni.server.dao.ChecklistItemRepository;
+import org.avni.server.dao.ChecklistRepository;
 import org.avni.server.dao.CommentThreadRepository;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.OrganisationConfigRepository;
@@ -76,6 +79,16 @@ public class CommentSyncTest extends AbstractControllerIntegrationTest {
     private EncounterRepository encounterRepository;
     @Autowired
     private ProgramEncounterRepository programEncounterRepository;
+    @Autowired
+    private ChecklistDetailRepository checklistDetailRepository;
+    @Autowired
+    private ChecklistRepository checklistRepository;
+    @Autowired
+    private ChecklistItemRepository checklistItemRepository;
+    @Autowired
+    private ChecklistController checklistController;
+    @Autowired
+    private ChecklistItemController checklistItemController;
     @Autowired
     private CommentController commentController;
     @Autowired
@@ -300,6 +313,39 @@ public class CommentSyncTest extends AbstractControllerIntegrationTest {
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), program.getUuid())));
     }
 
+    @Test
+    @Transactional
+    public void checklistAndChecklistItemSyncForUserSubjectTypeReturnOnlyOwnUserSubjectData() {
+        setCommentsEnabled(false);
+        Program program = testProgramService.addProgram(new ProgramBuilder().withName("userSubjectTypeChecklistProgram").build(), userSubjectType);
+        testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), userSubjectType, program);
+        ProgramEnrolment ownProgramEnrolment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(ownUserSubject).build());
+        ProgramEnrolment otherProgramEnrolment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(otherUserSubject).build());
+
+        ChecklistDetail checklistDetail = new ChecklistDetail();
+        checklistDetail.assignUUID();
+        checklistDetail.setName("userSubjectTypeChecklist");
+        checklistDetailRepository.save(checklistDetail);
+        testGroupService.giveViewChecklistPrivilegeTo(organisationData.getGroup(), userSubjectType, checklistDetail);
+        Checklist ownChecklist = saveChecklist(checklistDetail, ownProgramEnrolment);
+        Checklist otherChecklist = saveChecklist(checklistDetail, otherProgramEnrolment);
+        ChecklistItem ownChecklistItem = saveChecklistItem(ownChecklist);
+        ChecklistItem otherChecklistItem = saveChecklistItem(otherChecklist);
+
+        setUser(user.getUsername());
+        List<Checklist> checklists = contentOf(checklistController.getChecklistsByOperatingIndividualScope(DateTime.now().minusDays(1), DateTime.now(), checklistDetail.getUuid(), PageRequest.of(0, 10)));
+        assertTrue(hasEntity(ownChecklist, checklists));
+        assertFalse(hasEntity(otherChecklist, checklists));
+
+        List<ChecklistItem> checklistItems = contentOf(checklistItemController.getChecklistItemsByOperatingIndividualScope(DateTime.now().minusDays(1), DateTime.now(), checklistDetail.getUuid(), PageRequest.of(0, 10)));
+        assertTrue(hasEntity(ownChecklistItem, checklistItems));
+        assertFalse(hasEntity(otherChecklistItem, checklistItems));
+
+        List syncDetails = testSyncService.getSyncDetails();
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Checklist.name(), checklistDetail.getUuid())));
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ChecklistItem.name(), checklistDetail.getUuid())));
+    }
+
     private void setCommentsEnabled(boolean isCommentEnabled) {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationData.getOrganisationId());
         organisationConfig.setSettings(new JsonObject().with("enableComments", isCommentEnabled));
@@ -345,6 +391,23 @@ public class CommentSyncTest extends AbstractControllerIntegrationTest {
         programEncounter.setEncounterDateTime(DateTime.now(), user);
         programEncounter.setObservations(new ObservationCollection());
         return programEncounterRepository.save(programEncounter);
+    }
+
+    private Checklist saveChecklist(ChecklistDetail checklistDetail, ProgramEnrolment programEnrolment) {
+        Checklist checklist = new Checklist();
+        checklist.assignUUID();
+        checklist.setChecklistDetail(checklistDetail);
+        checklist.setProgramEnrolment(programEnrolment);
+        checklist.setBaseDate(DateTime.now());
+        return checklistRepository.save(checklist);
+    }
+
+    private ChecklistItem saveChecklistItem(Checklist checklist) {
+        ChecklistItem checklistItem = new ChecklistItem();
+        checklistItem.assignUUID();
+        checklistItem.setChecklist(checklist);
+        checklistItem.setObservations(new ObservationCollection());
+        return checklistItemRepository.save(checklistItem);
     }
 
     private List<CommentThread> getCommentThreads(SubjectType subjectType) {

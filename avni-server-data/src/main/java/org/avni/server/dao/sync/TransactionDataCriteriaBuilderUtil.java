@@ -21,6 +21,8 @@ public class TransactionDataCriteriaBuilderUtil {
             case Encounter:
             case ProgramEnrolment:
             case ProgramEncounter:
+            case Checklist:
+            case ChecklistItem:
                 return from.join("individual");
             default:
                 throw new RuntimeException("Unsupported sync entity name: " + syncParameters.getSyncEntityName());
