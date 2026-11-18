@@ -329,7 +329,10 @@ public class BaseSubjectSearchQueryBuilder<T> {
         if (partOfANumber) {
             searchAllText = searchString;
             searchAllExactAnswer = answerValueEqualTo(searchString);
-            searchAllExactFirst = "(case when lower(" + FULL_NAME + ") = lower(:searchAllExact) or cast(i.observations as text) ~* :searchAllExactAnswer then 0 else 1 end)";
+            searchAllExactFirst = "(case when lower(" + FULL_NAME + ") = lower(:searchAllExact)" +
+                    " or cast(i.observations as text) ~* :searchAllExactAnswer" +
+                    " or exists (select 1 from program_enrolment penr where penr.individual_id = i.id and penr.is_voided is false" + exitRule() + tickedProgramsRule() +
+                    " and cast(penr.observations as text) ~* :searchAllExactAnswer) then 0 else 1 end)";
         }
         return (T) this;
     }

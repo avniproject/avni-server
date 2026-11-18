@@ -97,6 +97,31 @@ public class SearchAllIntegrationTest extends AbstractControllerIntegrationTest 
         return rows.stream().map(row -> (String) row.get("uuid")).collect(Collectors.toList());
     }
 
+    private void enrolWithNumber(Individual individual, Object number, boolean deleted) {
+        ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(individual)
+                .setObservations(ObservationCollectionBuilder.withOneObservation(answerConcept, number)).build();
+        enrolment.setVoided(deleted);
+        testProgramEnrolmentService.save(enrolment);
+    }
+
+    @Test
+    public void anExactNumberInAnEnrolmentAnswerComesBeforePartialMatches() {
+        setUpOrganisation("searchallf");
+        Individual exactInEnrolment = subject("Rizwan", null, "Enrolled", null);
+        enrolWithNumber(exactInEnrolment, 8.6, false);
+        Individual exactInDeletedEnrolment = subject("Deleted", null, "Enrolment", null);
+        enrolWithNumber(exactInDeletedEnrolment, 8.6, true);
+        enrolWithNumber(exactInDeletedEnrolment, 8.65, false);
+        Individual partialInEnrolment = subject("Ali", null, "Enrolled", null);
+        enrolWithNumber(partialInEnrolment, 8.65, false);
+        Individual partialInRegistration = subjectWithNumber("Ali", 18.6);
+
+        List<String> defaultOrder = searchAllInOrder("8.6", null);
+        assertThat(defaultOrder).hasSize(4);
+        assertThat(defaultOrder.get(0)).isEqualTo(exactInEnrolment.getUuid());
+        assertThat(defaultOrder.subList(1, 4)).containsExactlyInAnyOrder(exactInDeletedEnrolment.getUuid(), partialInEnrolment.getUuid(), partialInRegistration.getUuid());
+    }
+
     private Individual subjectWithNumber(String firstName, Object number) {
         Individual individual = subject(firstName, null, "Number", null);
         individual.setObservations(ObservationCollectionBuilder.withOneObservation(answerConcept, number));
