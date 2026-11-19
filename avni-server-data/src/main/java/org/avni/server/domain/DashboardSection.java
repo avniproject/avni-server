@@ -99,6 +99,7 @@ public class DashboardSection extends OrganisationAwareEntity {
     public enum ViewType {
         Default,
         Tile,
-        List
+        List,
+        FullPage
     }
 }

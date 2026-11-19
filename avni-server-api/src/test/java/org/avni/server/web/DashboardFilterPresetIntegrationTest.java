@@ -47,6 +47,8 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -198,6 +200,43 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
         // And the endpoint the web app opens, in the organisation that restored it.
         JsonNode openedFilterConfig = openedByTheWebApp(restored.getId()).path("filters").path(0).path("filterConfig");
         assertCarriesThePreset(openedFilterConfig, "the restored dashboard opened by the web app");
+    }
+
+    // Every section view type, FullPage among them (avniproject/avni-webapp#1834), has to survive the web save, the phone's
+    // section sync, and a bundle download, upload into another organisation and download from there. The web save gives the
+    // sections new uuids, so they are matched by name.
+    @Test
+    public void everySectionViewTypeSavesSyncsAndTravelsInTheBundle() throws Exception {
+        Map<String, String> viewTypeOfSection = new TreeMap<>(Map.of(
+                "Default section", "Default", "Tile section", "Tile", "List section", "List", "Full page section", "FullPage"));
+        ObjectNode request = mapper.createObjectNode().put("name", "View types dashboard");
+        request.putArray("filters");
+        ArrayNode sections = request.putArray("sections");
+        double displayOrder = 1;
+        for (Map.Entry<String, String> section : viewTypeOfSection.entrySet()) {
+            ObjectNode sectionJson = sections.addObject().put("name", section.getKey()).put("description", "")
+                    .put("viewType", section.getValue()).put("displayOrder", displayOrder++).put("voided", false);
+            sectionJson.putArray("dashboardSectionCardMappings");
+        }
+        JsonNode saved = postDashboard(mapper.writeValueAsString(request));
+        String dashboardUuid = saved.path("uuid").textValue();
+
+        assertThat(viewTypesByName(openedByTheWebApp(saved.path("id").longValue()).path("sections")))
+                .as("sections of the dashboard opened by the web app").isEqualTo(viewTypeOfSection);
+        assertThat(viewTypesByName(sectionsFromTheSync(dashboardUuid)))
+                .as("sections of the dashboard in the section sync").isEqualTo(viewTypeOfSection);
+
+        JsonNode exportedDashboard = dashboardWithUuid(mapper.readTree(reportDashboardJsonOfTheBundleExport()), dashboardUuid);
+        assertThat(viewTypesByName(exportedDashboard.path("sections")))
+                .as("sections of the dashboard in the exported reportDashboard.json").isEqualTo(viewTypeOfSection);
+
+        switchToUserOfAnotherOrganisation("a-demo-admin");
+        importIntoThisOrganisation(exportedDashboard);
+        JsonNode reExportedDashboard = dashboardWithUuid(mapper.readTree(reportDashboardJsonOfTheBundleExport()), dashboardUuid);
+        assertThat(viewTypesByName(reExportedDashboard.path("sections")))
+                .as("sections of the dashboard in the other organisation's exported reportDashboard.json").isEqualTo(viewTypeOfSection);
+        assertThat(viewTypesByName(openedByTheWebApp(dashboardRepository.findByUuid(dashboardUuid).getId()).path("sections")))
+                .as("sections of the restored dashboard opened by the web app").isEqualTo(viewTypeOfSection);
     }
 
     // A bundle uploaded again into an organisation that already has the dashboard replaces the filter's preset: a changed
@@ -791,6 +830,29 @@ public class DashboardFilterPresetIntegrationTest extends AbstractControllerInte
             }
         }
         throw new AssertionError("the saved filter " + filterUuid + " is not under _embedded.dashboardFilter in the filter sync from " + syncedFrom + ": " + body);
+    }
+
+    // The sections of one dashboard in the section sync, read from the beginning of time, as a phone asks for them.
+    private ArrayNode sectionsFromTheSync(String dashboardUuid) throws Exception {
+        String body = mockMvc.perform(get("/v2/dashboardSection/search/lastModified")
+                        .param("lastModifiedDateTime", new DateTime(2000, 1, 1, 0, 0, DateTimeZone.UTC).toString())
+                        .param("now", DateTime.now(DateTimeZone.UTC).plusMinutes(1).toString())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        ArrayNode sections = mapper.createArrayNode();
+        for (JsonNode section : mapper.readTree(body).path("_embedded").path("dashboardSection")) {
+            if (dashboardUuid.equals(section.path("dashboardUUID").textValue())) {
+                sections.add(section);
+            }
+        }
+        return sections;
+    }
+
+    private static Map<String, String> viewTypesByName(JsonNode sections) {
+        Map<String, String> viewTypes = new TreeMap<>();
+        sections.forEach(section -> viewTypes.put(section.path("name").textValue(), section.path("viewType").textValue()));
+        return viewTypes;
     }
 
     // The last modified time a sync entry carries, as the phone reads it.
