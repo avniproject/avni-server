@@ -380,7 +380,35 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "qg text",
                 "456",
                 "789");
-        failure(validHeader(), dataRow, "None of the expected address levels provided. Expected one of: [District], value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender'");
+        failure(validHeader(), dataRow, "None of the expected address levels provided. Expected one of: [District], value required for mandatory field: 'date of birth', value required for mandatory field: 'date of registration', value required for mandatory field: 'first name', value required for mandatory field: 'gender', value required for mandatory field: 'last name'");
+    }
+
+    @Test
+    public void missingLastName() {
+        organisationConfigService.saveRegistrationLocation(district, subjectType);
+        String[] dataRow = dataRow("ABCD",
+            "SubjectType1",
+            "2020-01-01",
+            "21.5135243,85.6731848",
+            "John",
+            "",
+            "1990-01-01",
+            "true",
+            "Male",
+            "",
+            "Bihar",
+            "District1",
+            "SSC Answer 1",
+            "\"MSC Answer 1\", \"MSC Answer 2\"",
+            "2020-01-01",
+            "text",
+            "123",
+            "some notes",
+            "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+            "qg text",
+            "456",
+            "789");
+        failure(validHeader(), dataRow, "value required for mandatory field: 'Last Name'");
     }
 
     @Test
