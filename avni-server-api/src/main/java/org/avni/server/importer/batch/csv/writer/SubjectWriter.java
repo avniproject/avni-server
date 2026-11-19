@@ -96,7 +96,10 @@ public class SubjectWriter extends EntityWriter {
         setFirstName(row, individual, allErrorMsgs);
         if (subjectType.isAllowMiddleName())
             individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
-        individual.setLastName(row.get(SubjectHeadersCreator.lastName));
+        if (subjectType.isPerson())
+            setLastName(row, individual, allErrorMsgs);
+        else
+            individual.setLastName(row.get(SubjectHeadersCreator.lastName));
         setProfilePicture(subjectType, individual, row, allErrorMsgs);
         if (subjectType.isPerson())
             setDateOfBirth(individual, row, allErrorMsgs);
@@ -208,5 +211,14 @@ public class SubjectWriter extends EntityWriter {
             return;
         }
         individual.setGender(gender);
+    }
+
+    private static void setLastName(Row row, Individual individual, List<String> allErrorMsgs) {
+        String lastName = row.get(SubjectHeadersCreator.lastName);
+        if (!StringUtils.hasText(lastName)) {
+            allErrorMsgs.add(String.format("Value required for mandatory field: '%s'", SubjectHeadersCreator.lastName));
+            return;
+        }
+        individual.setLastName(lastName);
     }
 }
