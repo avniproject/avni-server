@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.ChecklistRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
@@ -25,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
@@ -35,11 +37,13 @@ public class ChecklistController extends AbstractController<Checklist> implement
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final UserService userService;
     private final ScopeBasedSyncService<Checklist> scopeBasedSyncService;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
     public ChecklistController(ChecklistRepository checklistRepository,
                                ProgramEnrolmentRepository programEnrolmentRepository,
-                               ChecklistDetailRepository checklistDetailRepository, UserService userService, ScopeBasedSyncService<Checklist> scopeBasedSyncService) {
+                               ChecklistDetailRepository checklistDetailRepository, UserService userService, ScopeBasedSyncService<Checklist> scopeBasedSyncService, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.checklistDetailRepository = checklistDetailRepository;
         this.checklistRepository = checklistRepository;
         this.programEnrolmentRepository = programEnrolmentRepository;
@@ -112,7 +116,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
     public EntityModel<Checklist> process(EntityModel<Checklist> resource) {
         Checklist checklist = resource.getContent();
         resource.removeLinks();
-        resource.add(Link.of(checklist.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        resource.add(Link.of(checklist.getLinkedProgramEnrolmentUuid(), "programEnrolmentUUID"));
         if (checklist.getChecklistDetail() != null) {
             resource.add(Link.of(checklist.getChecklistDetail().getUuid(), "checklistDetailUUID"));
         }
@@ -120,4 +124,8 @@ public class ChecklistController extends AbstractController<Checklist> implement
         return resource;
     }
 
+    @Override
+    public void beforeProcess(List<Checklist> checklists) {
+        linkedParentUuidRepository.linkChecklists(checklists);
+    }
 }

@@ -2,6 +2,7 @@ package org.avni.server.web;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.LinkedParentUuidRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
@@ -31,6 +32,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
@@ -45,9 +47,11 @@ public class IndividualRelationshipController extends AbstractController<Individ
     private final ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService;
     private final AccessControlService accessControlService;
     private final TxDataControllerHelper txDataControllerHelper;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public IndividualRelationshipController(IndividualRelationshipRepository individualRelationshipRepository, IndividualRepository individualRepository, IndividualRelationshipTypeRepository individualRelationshipTypeRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService, AccessControlService accessControlService, TxDataControllerHelper txDataControllerHelper) {
+    public IndividualRelationshipController(IndividualRelationshipRepository individualRelationshipRepository, IndividualRepository individualRepository, IndividualRelationshipTypeRepository individualRelationshipTypeRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService, AccessControlService accessControlService, TxDataControllerHelper txDataControllerHelper, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.individualRelationshipRepository = individualRelationshipRepository;
         this.individualRepository = individualRepository;
         this.individualRelationshipTypeRepository = individualRelationshipTypeRepository;
@@ -139,8 +143,8 @@ public class IndividualRelationshipController extends AbstractController<Individ
         IndividualRelationship individualRelationship = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(individualRelationship.getRelationship().getUuid(), "relationshipTypeUUID"));
-        resource.add(Link.of(individualRelationship.getIndividuala().getUuid(), "individualAUUID"));
-        resource.add(Link.of(individualRelationship.getIndividualB().getUuid(), "individualBUUID"));
+        resource.add(Link.of(individualRelationship.getLinkedIndividualAUuid(), "individualAUUID"));
+        resource.add(Link.of(individualRelationship.getLinkedIndividualBUuid(), "individualBUUID"));
         addAuditFields(individualRelationship, resource);
         return resource;
     }
@@ -163,5 +167,10 @@ public class IndividualRelationshipController extends AbstractController<Individ
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    @Override
+    public void beforeProcess(List<IndividualRelationship> individualRelationships) {
+        linkedParentUuidRepository.linkIndividualRelationships(individualRelationships);
     }
 }

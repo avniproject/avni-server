@@ -39,6 +39,9 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @JoinColumn(name = "individual_id")
     private Individual individual;
 
+    @Transient
+    private String linkedIndividualUuid;
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "programEnrolment")
     private Set<ProgramEncounter> programEncounters;
 
@@ -245,5 +248,14 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualUuid() {
+        return uuidOf(individual, linkedIndividualUuid);
+    }
+
+    public void setLinkedIndividualUuid(String linkedIndividualUuid) {
+        this.linkedIndividualUuid = linkedIndividualUuid;
     }
 }

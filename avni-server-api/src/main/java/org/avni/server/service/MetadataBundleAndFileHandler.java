@@ -2,12 +2,14 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.avni.server.util.AvniFiles;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,14 +27,15 @@ public class MetadataBundleAndFileHandler {
 
     public File extractZip(InputStream inputStream) throws IOException {
         File tempDir = Files.createTempDirectory("metadata-zip").toFile();
+        Path tempDirPath = tempDir.toPath();
 
         try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {
-                    File file = new File(tempDir, entry.getName());
+                    File file = AvniFiles.zipSlipProtect(entry, tempDirPath).toFile();
                     File parentDir = file.getParentFile();
-                    if (!parentDir.exists()) {
+                    if (parentDir != null && !parentDir.exists()) {
                         parentDir.mkdirs();
                     }
 

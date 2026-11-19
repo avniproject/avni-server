@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.framework.IdHolder;
+import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.springframework.util.StringUtils;
@@ -95,5 +96,9 @@ public class CHSBaseEntity implements IdHolder {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (uuid != null ? uuid.hashCode() : 0);
         return result;
+    }
+
+    protected static String uuidOf(CHSBaseEntity entity, String selectedUuid) {
+        return selectedUuid == null || Hibernate.isInitialized(entity) ? entity.getUuid() : selectedUuid;
     }
 }

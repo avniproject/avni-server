@@ -27,6 +27,9 @@ public class ProgramEncounter extends AbstractEncounter implements MessageableEn
     @JoinColumn(name = "program_enrolment_id")
     private ProgramEnrolment programEnrolment;
 
+    @Transient
+    private String linkedProgramEnrolmentUuid;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
     private Individual individual;
@@ -104,5 +107,14 @@ public class ProgramEncounter extends AbstractEncounter implements MessageableEn
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getProgramEnrolment().getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedProgramEnrolmentUuid() {
+        return uuidOf(programEnrolment, linkedProgramEnrolmentUuid);
+    }
+
+    public void setLinkedProgramEnrolmentUuid(String linkedProgramEnrolmentUuid) {
+        this.linkedProgramEnrolmentUuid = linkedProgramEnrolmentUuid;
     }
 }

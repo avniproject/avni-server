@@ -25,6 +25,9 @@ public class Encounter extends AbstractEncounter implements MessageableEntity, S
     @JoinColumn(name = "individual_id")
     private Individual individual;
 
+    @Transient
+    private String linkedIndividualUuid;
+
     @Column(updatable = false)
     private boolean syncDisabled;
 
@@ -76,5 +79,14 @@ public class Encounter extends AbstractEncounter implements MessageableEntity, S
     @Override
     public Date getSyncDisabledDateTime() {
         return this.syncDisabledDateTime;
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualUuid() {
+        return uuidOf(individual, linkedIndividualUuid);
+    }
+
+    public void setLinkedIndividualUuid(String linkedIndividualUuid) {
+        this.linkedIndividualUuid = linkedIndividualUuid;
     }
 }

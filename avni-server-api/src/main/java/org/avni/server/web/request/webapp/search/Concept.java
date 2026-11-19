@@ -11,6 +11,8 @@ public class Concept {
     private String minValue;
     private String maxValue;
     private String value;
+    private List<String> programUUIDs;
+    private List<String> encounterTypeUUIDs;
 
 
     public Concept() {
@@ -86,6 +88,22 @@ public class Concept {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public List<String> getProgramUUIDs() {
+        return programUUIDs;
+    }
+
+    public void setProgramUUIDs(List<String> programUUIDs) {
+        this.programUUIDs = programUUIDs;
+    }
+
+    public List<String> getEncounterTypeUUIDs() {
+        return encounterTypeUUIDs;
+    }
+
+    public void setEncounterTypeUUIDs(List<String> encounterTypeUUIDs) {
+        this.encounterTypeUUIDs = encounterTypeUUIDs;
     }
 
     private String trim(String item) {

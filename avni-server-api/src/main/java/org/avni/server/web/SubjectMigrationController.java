@@ -39,6 +39,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -57,9 +58,11 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     private final AccessControlService accessControlService;
     private final Job bulkSubjectMigrationJob;
     private final JobLauncher bulkSubjectMigrationJobLauncher;
+    private final LinkedParentUuidRepository linkedParentUuidRepository;
 
     @Autowired
-    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, Job bulkSubjectMigrationJob, JobLauncher bulkSubjectMigrationJobLauncher) {
+    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, Job bulkSubjectMigrationJob, JobLauncher bulkSubjectMigrationJobLauncher, LinkedParentUuidRepository linkedParentUuidRepository) {
+        this.linkedParentUuidRepository = linkedParentUuidRepository;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
         this.individualRepository = individualRepository;
@@ -107,7 +110,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     public EntityModel<SubjectMigration> process(EntityModel<SubjectMigration> resource) {
         SubjectMigration content = resource.getContent();
         resource.removeLinks();
-        resource.add(Link.of(content.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(content.getLinkedIndividualUuid(), "individualUUID"));
         resource.add(Link.of(content.getSubjectType().getUuid(), "subjectTypeUUID"));
         if (content.getOldAddressLevel() != null)
             resource.add(Link.of(content.getOldAddressLevel().getUuid(), "oldAddressLevelUUID"));
@@ -174,5 +177,10 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         JobStatus jobStatus = subjectMigrationService.getBulkSubjectMigrationJobStatus(jobUuid);
         return jobStatus != null ? ResponseEntity.ok(jobStatus) : ResponseEntity.notFound().build();
+    }
+
+    @Override
+    public void beforeProcess(List<SubjectMigration> subjectMigrations) {
+        linkedParentUuidRepository.linkSubjectMigrations(subjectMigrations);
     }
 }

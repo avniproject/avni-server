@@ -28,6 +28,12 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @JoinColumn(name = "member_subject_id")
     private Individual memberSubject;
 
+    @Transient
+    private String linkedGroupSubjectUuid;
+
+    @Transient
+    private String linkedMemberSubjectUuid;
+
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_role_id")
@@ -103,11 +109,11 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     }
 
     public String getGroupSubjectUUID() {
-        return groupSubject.getUuid();
+        return uuidOf(groupSubject, linkedGroupSubjectUuid);
     }
 
     public String getMemberSubjectUUID() {
-        return memberSubject.getUuid();
+        return uuidOf(memberSubject, linkedMemberSubjectUuid);
     }
 
     public String getGroupRoleUUID() {
@@ -184,5 +190,13 @@ public class GroupSubject extends OrganisationAwareEntity implements SubjectLink
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getGroupSubject(), this.getMemberSubject());
+    }
+
+    public void setLinkedGroupSubjectUuid(String linkedGroupSubjectUuid) {
+        this.linkedGroupSubjectUuid = linkedGroupSubjectUuid;
+    }
+
+    public void setLinkedMemberSubjectUuid(String linkedMemberSubjectUuid) {
+        this.linkedMemberSubjectUuid = linkedMemberSubjectUuid;
     }
 }

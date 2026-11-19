@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.CustomCardConfigRepository;
+import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
 import org.avni.server.dao.OperationalProgramRepository;
@@ -12,7 +13,9 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.attendance.AttendanceTypeRepository;
 import org.avni.server.domain.Account;
 import org.avni.server.domain.CustomCardConfig;
+import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.EncounterType;
+import org.avni.server.domain.OperationalEncounterType;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.Program;
@@ -27,14 +30,19 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.domain.ReportCard;
+import org.avni.server.domain.StandardReportCardType;
+import org.avni.server.domain.ReportCardAction;
 import org.avni.server.web.request.CustomCardConfigRequest;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -44,6 +52,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -54,6 +63,7 @@ public class CardServiceTest {
     private static final String SUBJECT_TYPE_UUID = "subject-type-uuid";
     private static final String PROGRAM_UUID = "program-uuid";
     private static final String ENCOUNTER_TYPE_UUID = "encounter-type-uuid";
+    private static final String DASHBOARD_UUID = "dashboard-uuid";
 
     @Mock private CardRepository cardRepository;
     @Mock private StandardReportCardTypeRepository standardReportCardTypeRepository;
@@ -66,6 +76,7 @@ public class CardServiceTest {
     @Mock private OperationalProgramRepository operationalProgramRepository;
     @Mock private OperationalEncounterTypeRepository operationalEncounterTypeRepository;
     @Mock private AttendanceTypeRepository attendanceTypeRepository;
+    @Mock private DashboardRepository dashboardRepository;
 
     private CardService cardService;
     private SubjectType subjectType;
@@ -83,7 +94,7 @@ public class CardServiceTest {
         cardService = new CardService(cardRepository, standardReportCardTypeRepository, subjectTypeRepository,
                 programRepository, encounterTypeRepository, customCardConfigRepository, customCardConfigService,
                 operationalSubjectTypeRepository, operationalProgramRepository, operationalEncounterTypeRepository,
-                attendanceTypeRepository);
+                attendanceTypeRepository, dashboardRepository);
 
         subjectType = new SubjectType();
         subjectType.setUuid(SUBJECT_TYPE_UUID);
@@ -438,12 +449,514 @@ public class CardServiceTest {
         verify(customCardConfigRepository, never()).save(any());
     }
 
+    @Test
+    public void uploadCard_stores_open_dashboard_target_in_action_detail() {
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("OpenDashboard");
+        bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.uploadCard(bundleRequest);
+
+        ArgumentCaptor<ReportCard> savedCard = ArgumentCaptor.forClass(ReportCard.class);
+        verify(cardRepository).save(savedCard.capture());
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getValue().getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getValue().getActionDetailDashboardUUID());
+        assertEquals(Set.of("dashboardUUID"), savedCard.getValue().getActionDetail().keySet());
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_without_target() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        // No dashboardUUID
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when dashboard UUID is missing");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard is required when action is OpenDashboard", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_with_blank_target() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID("   ");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when dashboard UUID is blank");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard is required when action is OpenDashboard", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void uploadCard_rejects_open_dashboard_without_target() {
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("OpenDashboard");
+        // No dashboardUUID
+
+        try {
+            cardService.uploadCard(bundleRequest);
+            fail("Expected BadRequestError when dashboard UUID is missing");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard is required when action is OpenDashboard", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void editCard_clears_open_dashboard_target_when_action_changes_to_view_subject_profile() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // The request still carries the old target together with the new action. The web app's card editor
+        // clears the target when the action changes (avniproject/avni-webapp#1830), but a request made any
+        // other way need not, so the server clears it itself.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ViewSubjectProfile");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void editCard_clears_open_dashboard_target_when_action_is_removed() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // The request carries no action, and still carries the old target.
+        ReportCardWebRequest request = newWebRequest();
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getAction());
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void uploadCard_clears_open_dashboard_target_when_bundle_card_changes_action() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Bundle Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(existingCard);
+
+        // Only a hand-edited bundle carries the old target together with the new action: an exported one
+        // never does, because ReportCardMapper.toBundle reads the target from actionDetail, which holds
+        // a dashboardUUID only when the action is OpenDashboard. This test guards that case.
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("ViewSubjectProfile");
+        bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.uploadCard(bundleRequest);
+
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_card_with_its_target() {
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
+
+        // A query makes this a Custom Data Card.
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("({params}) => []");
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals("({params}) => []", savedCard.getQuery());
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(dashboardRepository).findAllByUuidIn(List.of(DASHBOARD_UUID));
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_card_when_two_visible_dashboards_share_the_target_uuid() {
+        // A child organisation sees its own copy and its parent's, as it does for the Default Dashboard.
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false), newDashboard(false)));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("({params}) => []");
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_card_when_one_of_two_visible_dashboards_is_voided() {
+        // The voided copy comes first, so a check that reads only the first row would refuse the live one behind it.
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(true), newDashboard(false)));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("({params}) => []");
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_persists_open_dashboard_action_on_custom_design_card() {
+        CustomCardConfig config = new CustomCardConfig();
+        config.assignUUID();
+        config.setName("sample");
+        when(customCardConfigService.createOrUpdateCustomCardConfig(any())).thenReturn(config);
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
+
+        ReportCardWebRequest request = newWebRequest();
+        CustomCardConfigRequest configRequest = new CustomCardConfigRequest();
+        configRequest.setName("sample");
+        request.setCustomCardConfig(configRequest);
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(config, savedCard.getCustomCardConfig());
+        assertEquals(ReportCardAction.OpenDashboard, savedCard.getAction());
+        assertEquals(DASHBOARD_UUID, savedCard.getActionDetailDashboardUUID());
+        verify(cardRepository).save(savedCard);
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_when_target_dashboard_does_not_exist() {
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of());
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when the target dashboard does not exist");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard with uuid dashboard-uuid doesn't exist", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_open_dashboard_when_target_dashboard_is_voided() {
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(true)));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when the target dashboard is voided");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard with uuid dashboard-uuid doesn't exist", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void editCard_rejects_open_dashboard_when_target_dashboard_is_voided() {
+        // The card already points at a dashboard that has since been deleted.
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(true)));
+
+        // Saving it again with the same target is refused until the target changes.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        try {
+            cardService.editCard(request, 7L);
+            fail("Expected BadRequestError when the target dashboard is voided");
+        } catch (BadRequestError e) {
+            assertEquals("Dashboard with uuid dashboard-uuid doesn't exist", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void uploadCard_does_not_look_up_open_dashboard_target() {
+        // A bundle imports cards before dashboards, so the target may not exist yet.
+        when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+
+        ReportCardBundleRequest bundleRequest = newBundleRequest();
+        bundleRequest.setAction("OpenDashboard");
+        bundleRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.uploadCard(bundleRequest);
+
+        ArgumentCaptor<ReportCard> savedCard = ArgumentCaptor.forClass(ReportCard.class);
+        verify(cardRepository).save(savedCard.capture());
+        assertEquals(DASHBOARD_UUID, savedCard.getValue().getActionDetailDashboardUUID());
+        verifyNoInteractions(dashboardRepository);
+    }
+
+    @Test
+    public void saveCard_stores_only_the_dashboard_when_request_also_carries_do_visit_fields() {
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
+
+        // The request also carries a field of another action. The web app's card editor clears those when
+        // Open dashboard is chosen, but a request made any other way need not.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+        request.setActionDetailSubjectTypeUUID("unknown-subject-type");
+
+        ReportCard savedCard = cardService.saveCard(request);
+
+        assertEquals(Set.of("dashboardUUID"), savedCard.getActionDetail().keySet());
+        verify(cardRepository).save(savedCard);
+        verifyNoInteractions(subjectTypeRepository, operationalSubjectTypeRepository);
+    }
+
+    @Test
+    public void editCard_keeps_only_the_last_actions_detail_across_open_dashboard_do_visit_and_back() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
+        when(subjectTypeRepository.findByUuid(SUBJECT_TYPE_UUID)).thenReturn(subjectType);
+        when(operationalSubjectTypeRepository.findBySubjectTypeAndOrganisationId(subjectType, ORG_ID)).thenReturn(new OperationalSubjectType());
+        when(encounterTypeRepository.findByUuid(ENCOUNTER_TYPE_UUID)).thenReturn(encounterType);
+        when(operationalEncounterTypeRepository.findByEncounterTypeAndOrganisationId(encounterType, ORG_ID)).thenReturn(new OperationalEncounterType());
+
+        ReportCardWebRequest openDashboardRequest = newWebRequest();
+        openDashboardRequest.setAction("OpenDashboard");
+        openDashboardRequest.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(openDashboardRequest, 7L);
+
+        assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
+
+        ReportCardWebRequest doVisitRequest = newWebRequest();
+        doVisitRequest.setAction("DoVisit");
+        doVisitRequest.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        doVisitRequest.setActionDetailEncounterTypeUUID(ENCOUNTER_TYPE_UUID);
+        doVisitRequest.setActionDetailVisitType("SOME_VISIT");
+
+        cardService.editCard(doVisitRequest, 7L);
+
+        assertEquals(Set.of("subjectTypeUUID", "programUUID", "encounterTypeUUID", "visitType"), existingCard.getActionDetail().keySet());
+
+        cardService.editCard(openDashboardRequest, 7L);
+
+        assertEquals(ReportCardAction.OpenDashboard, existingCard.getAction());
+        assertEquals(DASHBOARD_UUID, existingCard.getActionDetailDashboardUUID());
+        assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
+        verify(cardRepository, times(3)).save(existingCard);
+    }
+
+    @Test
+    public void editCard_replaces_mark_attendance_detail_with_open_dashboard_target() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.MarkAttendance);
+        existingCard.setActionDetailFields(SUBJECT_TYPE_UUID, "attendance-type-uuid");
+
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(dashboardRepository.findAllByUuidIn(List.of(DASHBOARD_UUID))).thenReturn(List.of(newDashboard(false)));
+
+        // The request still carries the old Mark attendance fields next to the new action.
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("OpenDashboard");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+        request.setActionDetailSubjectTypeUUID(SUBJECT_TYPE_UUID);
+        request.setActionDetailAttendanceTypeUUID("attendance-type-uuid");
+
+        cardService.editCard(request, 7L);
+
+        assertEquals(ReportCardAction.OpenDashboard, existingCard.getAction());
+        assertEquals(DASHBOARD_UUID, existingCard.getActionDetailDashboardUUID());
+        assertEquals(Set.of("dashboardUUID"), existingCard.getActionDetail().keySet());
+    }
+
+    @Test
+    public void saveCard_stores_approval_status_for_approve_reject_on_a_custom_query_card() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setQuery("'use strict'; ({params}) => []");
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("Pending");
+        // The web app sends every action field whatever the action is, so leftovers of other actions arrive too.
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        ReportCard saved = cardService.saveCard(request);
+
+        assertEquals(ReportCardAction.ApproveReject, saved.getAction());
+        assertEquals("Pending", saved.getActionDetailApprovalStatus());
+        assertEquals(Set.of("approvalStatus"), saved.getActionDetail().keySet());
+        assertNull(saved.getActionDetailDashboardUUID());
+    }
+
+    @Test
+    public void uploadCard_stores_each_approval_status_for_approve_reject() {
+        for (String status : new String[]{"Pending", "Approved", "Rejected"}) {
+            when(cardRepository.findByUuid("card-uuid")).thenReturn(null);
+            ReportCardBundleRequest bundleRequest = newBundleRequest();
+            bundleRequest.setAction("ApproveReject");
+            bundleRequest.setActionDetailApprovalStatus(status);
+
+            cardService.uploadCard(bundleRequest);
+        }
+
+        ArgumentCaptor<ReportCard> savedCards = ArgumentCaptor.forClass(ReportCard.class);
+        verify(cardRepository, org.mockito.Mockito.times(3)).save(savedCards.capture());
+        assertEquals(java.util.List.of("Pending", "Approved", "Rejected"),
+                savedCards.getAllValues().stream().map(ReportCard::getActionDetailApprovalStatus).toList());
+    }
+
+    @Test
+    public void saveCard_rejects_approve_reject_without_approval_status() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ApproveReject");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError when approval status is missing");
+        } catch (BadRequestError e) {
+            assertEquals("Approval status is required when action is ApproveReject", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_approve_reject_with_unknown_approval_status() {
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("pending");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError for an approval status that is not Pending, Approved or Rejected");
+        } catch (BadRequestError e) {
+            assertEquals("Invalid approval status 'pending'. Allowed values: [Pending, Approved, Rejected]", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void saveCard_rejects_approve_reject_on_a_standard_card() {
+        StandardReportCardType pendingApproval = new StandardReportCardType();
+        pendingApproval.setType(org.avni.server.domain.StandardReportCardTypeType.PendingApproval);
+        when(standardReportCardTypeRepository.findById(11L)).thenReturn(java.util.Optional.of(pendingApproval));
+        ReportCardWebRequest request = newWebRequest();
+        request.setStandardReportCardTypeId(11L);
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("Pending");
+
+        try {
+            cardService.saveCard(request);
+            fail("Expected BadRequestError for Approve or Reject on a standard card");
+        } catch (BadRequestError e) {
+            assertEquals("Approve or Reject action is only for a card on a custom query, not a standard card", e.getMessage());
+        }
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    public void editCard_clears_approval_status_when_action_changes_to_view_subject_profile() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.ApproveReject);
+        existingCard.setActionDetailApprovalStatus("Rejected");
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ViewSubjectProfile");
+        request.setActionDetailApprovalStatus("Rejected");
+
+        cardService.editCard(request, 7L);
+
+        assertNull(existingCard.getActionDetail());
+        assertNull(existingCard.getActionDetailApprovalStatus());
+    }
+
+    @Test
+    public void editCard_replaces_open_dashboard_target_with_approval_status() {
+        ReportCard existingCard = new ReportCard();
+        existingCard.setName("Some Report Card");
+        existingCard.setAction(ReportCardAction.OpenDashboard);
+        existingCard.setActionDetailDashboardUUID(DASHBOARD_UUID);
+        when(cardRepository.findOne(7L)).thenReturn(existingCard);
+        when(cardRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportCardWebRequest request = newWebRequest();
+        request.setAction("ApproveReject");
+        request.setActionDetailApprovalStatus("Approved");
+        request.setActionDetailDashboardUUID(DASHBOARD_UUID);
+
+        cardService.editCard(request, 7L);
+
+        assertEquals(Set.of("approvalStatus"), existingCard.getActionDetail().keySet());
+        assertEquals("Approved", existingCard.getActionDetailApprovalStatus());
+    }
+
     private ReportCardWebRequest newWebRequest() {
         ReportCardWebRequest request = new ReportCardWebRequest();
         request.setName("Some Report Card");
         request.setColor("#ffffff");
         request.setCount(1);
         return request;
+    }
+
+    private ReportCardBundleRequest newBundleRequest() {
+        ReportCardBundleRequest request = new ReportCardBundleRequest();
+        request.setUuid("card-uuid");
+        request.setName("Bundle Card");
+        request.setColor("#fff");
+        request.setCount(1);
+        return request;
+    }
+
+    private Dashboard newDashboard(boolean voided) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setUuid(DASHBOARD_UUID);
+        dashboard.setName("Monthly Overview");
+        dashboard.setVoided(voided);
+        return dashboard;
     }
 
     private SubjectType newGroupSubjectType(String uuid, String name, boolean isGroup, boolean attendanceEnabled) {

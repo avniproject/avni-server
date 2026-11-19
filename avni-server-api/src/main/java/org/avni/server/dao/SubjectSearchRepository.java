@@ -37,6 +37,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
         SqlQuery query = searchBuilder.getSQLResultQuery(searchRequest, subjectType);
         try {
             setRoleToNone();
+            planForTheseSearchValues();
             logger.debug("Executing query: " + query.getSql());
             logger.debug("Parameters: " + query.getParameters());
             Query sql = entityManager.createNativeQuery(query.getSql());
@@ -57,6 +58,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
         SqlQuery query = searchBuilder.getSQLCountQuery(searchRequest, subjectType);
         try {
             setRoleToNone();
+            planForTheseSearchValues();
             Query sql = entityManager.createNativeQuery(query.getSql());
             query.getParameters().forEach((name, value) -> {
                 sql.setParameter(name, value);
@@ -66,5 +68,9 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
         } finally {
             setRoleBackToUser();
         }
+    }
+
+    private void planForTheseSearchValues() {
+        entityManager.createNativeQuery("set local plan_cache_mode = force_custom_plan").executeUpdate();
     }
 }

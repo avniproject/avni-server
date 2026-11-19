@@ -63,6 +63,8 @@ public class DashboardFilter extends OrganisationAwareEntity {
     public static class DashboardFilterConfig {
         public static final String TypeFieldName = "type";
         public static final String SubjectTypeFieldName = "subjectTypeUUID";
+        public static final String PresetSubjectTypeFieldName = "presetSubjectTypeUUID";
+        public static final String PresetProgramFieldName = "presetProgramUUID";
         public static final String WidgetFieldName = "widget";
         public static final String ObservationBasedFilterName = "observationBasedFilter";
         public static final String GroupSubjectTypeFilterName = "groupSubjectTypeFilter";
@@ -75,6 +77,14 @@ public class DashboardFilter extends OrganisationAwareEntity {
 
         public String getSubjectTypeUuid() {
             return (String) this.jsonObject.get(SubjectTypeFieldName);
+        }
+
+        public String getPresetSubjectTypeUuid() {
+            return (String) this.jsonObject.get(PresetSubjectTypeFieldName);
+        }
+
+        public String getPresetProgramUuid() {
+            return (String) this.jsonObject.get(PresetProgramFieldName);
         }
 
         public String getWidget() {

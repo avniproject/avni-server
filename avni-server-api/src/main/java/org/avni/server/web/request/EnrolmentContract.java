@@ -118,4 +118,13 @@ public class EnrolmentContract extends ReferenceDataContract{
         enrolmentContract.setProgramColor(program.getColour());
         return enrolmentContract;
     }
+
+    public static EnrolmentContract fromProgram(Program program, String operationalProgramName, DateTime programExitDateTime) {
+        EnrolmentContract enrolmentContract = new EnrolmentContract();
+        enrolmentContract.setOperationalProgramName(operationalProgramName == null ? program.getName() : operationalProgramName);
+        enrolmentContract.setProgramColor(program.getColour());
+        enrolmentContract.setProgramUuid(program.getUuid());
+        enrolmentContract.setProgramExitDateTime(programExitDateTime);
+        return enrolmentContract;
+    }
 }

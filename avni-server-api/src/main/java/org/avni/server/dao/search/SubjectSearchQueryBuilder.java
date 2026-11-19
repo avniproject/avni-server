@@ -17,7 +17,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 "                i.first_name as \"firstName\",\n" +
                 "                i.last_name as \"lastName\",\n" +
                 "                i.profile_picture as \"profilePicture\",\n" +
-                "                cast(concat_ws(' ',i.first_name,i.middle_name,i.last_name)as text) as \"fullName\",\n" +
+                "                cast(" + FULL_NAME + " as text) as \"fullName\",\n" +
                 "                i.uuid as \"uuid\",\n" +
                 "                i.address_id as \"addressId\",\n" +
                 "$SubjectTypeColumn" +
@@ -39,6 +39,9 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withSubjectSearchFilter(SubjectSearchRequest request, SubjectType subjectType) {
         return this
+                .withTimeZone(request.getTimeZone())
+                .withIncludeExitedEnrolments(request.isIncludeExitedEnrolments())
+                .withTickedPrograms(request.getPrograms())
                 .withNameFilter(request.getName())
                 .withConceptsFilter(request.getConcept())
                 .withSearchAll(request.getSearchAll())
@@ -50,6 +53,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 .withEncounterDateFilter(request.getEncounterDate())
                 .withProgramEnrolmentDateFilter(request.getProgramEnrolmentDate())
                 .withProgramEncounterDateFilter(request.getProgramEncounterDate())
+                .withProgramsFilter(request.getPrograms(), request.isIncludeExitedEnrolments(), request.isNotEnrolledInAnyProgram())
                 .withAddressIdsFilter(request.getAddressIds())
                 .withIncludeVoidedFilter(request.getIncludeVoided())
                 .withPaginationFilters(request.getPageElement())
@@ -76,24 +80,26 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
         if (encounterDateRange == null || encounterDateRange.isEmpty()) return this;
         return withRangeFilter(encounterDateRange,
                         "encounterDate",
-                        "e.encounter_date_time >= cast(:rangeParam as date)",
-                        "e.encounter_date_time <= cast(:rangeParam as date)", ENCOUNTER_FILTER);
+                        localDate("e.encounter_date_time") + " >= cast(:rangeParam as date)",
+                        localDate("e.encounter_date_time") + " <= cast(:rangeParam as date)", ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEncounterDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
         return withRangeFilter(dateRange,
                         "programEncounterDate",
-                        "pe.encounter_date_time >= cast(:rangeParam as date)",
-                        "pe.encounter_date_time <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
+                        localDate("penc.encounter_date_time") + " >= cast(:rangeParam as date)",
+                        localDate("penc.encounter_date_time") + " <= cast(:rangeParam as date)", programEncounterFilter());
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withRangeFilter(dateRange,
+        String condition = rangeCondition(dateRange,
                         "programEnrolmentDate",
-                        "penr.enrolment_date_time >= cast(trim(:rangeParam) as date)",
-                        "penr.enrolment_date_time <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
+                        localDate("penr.enrolment_date_time") + " >= cast(trim(:rangeParam) as date)",
+                        localDate("penr.enrolment_date_time") + " <= cast(trim(:rangeParam) as date)");
+        if (condition != null) addScopedCondition("programEnrolment", condition);
+        return this;
     }
 
     @Override

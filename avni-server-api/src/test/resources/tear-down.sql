@@ -1,3 +1,8 @@
+DELETE FROM checklist_item where 1 = 1;
+DELETE FROM checklist where 1 = 1;
+DELETE FROM checklist_item_detail where 1 = 1;
+DELETE FROM group_privilege where checklist_detail_id is not null;
+DELETE FROM checklist_detail where 1 = 1;
 DELETE FROM non_applicable_form_element where 1 = 1;
 DELETE FROM form_element where 1 = 1;
 DELETE FROM form_element_group where 1 = 1;
@@ -24,6 +29,8 @@ DELETE FROM abdm_job_run where 1 = 1;
 DELETE FROM abdm_message where 1 = 1;
 DELETE FROM abdm_record_read where 1 = 1;
 DELETE FROM abha_link where 1 = 1;
+DELETE FROM comment where 1 = 1;
+DELETE FROM comment_thread where 1 = 1;
 DELETE FROM individual where 1 = 1;
 DELETE
 FROM operational_program

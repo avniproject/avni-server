@@ -43,11 +43,22 @@ public abstract class BaseIAMService implements IAMAuthService {
         DecodedJWT jwt = verifyAndDecodeToken(token);
         if (jwt == null) return null;
 
+        return getUserFromDecodedToken(jwt);
+    }
+
+    protected User getUserFromDecodedToken(DecodedJWT jwt) {
         String username = getValueInToken(jwt, getUsernameField());
         String userUUID = getValueInToken(jwt, getUserUuidField());
-        return Strings.isNullOrEmpty(userUUID)
-                ? userRepository.findByUsername(username)
-                : userRepository.findByUuid(userUUID);
+        if (Strings.isNullOrEmpty(userUUID)) {
+            return userRepository.findByUsername(username);
+        }
+        User user = userRepository.findByUuid(userUUID);
+        if (user == null) return null;
+        if (username == null || !username.equals(user.getUsername())) {
+            logger.error(String.format("Rejecting token: username claim '%s' does not match the user resolved from the userUUID claim ('%s'). Possible impersonation attempt.", username, user.getUsername()));
+            return null;
+        }
+        return user;
     }
 
     protected DecodedJWT verifyAndDecodeToken(String token) throws SigningKeyNotFoundException {

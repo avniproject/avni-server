@@ -15,10 +15,13 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.domain.UserContext;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.factory.UserBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.metabase.MetabaseService;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -27,9 +30,11 @@ import org.mockito.Mock;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.assertEquals;
@@ -230,5 +235,82 @@ public class UserServiceTest {
         Method method = UserService.class.getMethod("updateUser", User.class, List.class, List.class);
         Transactional annotation = method.getAnnotation(Transactional.class);
         assertNotNull("updateUser must be @Transactional for rollback to apply", annotation);
+    }
+
+    @After
+    public void clearUserContext() {
+        UserContextHolder.clear();
+    }
+
+    @Test
+    public void updateUser_doesNotCallMetabaseWhenMetabaseUsersMembershipIsUnchanged() {
+        Group metabaseUsers = group(3L, Group.METABASE_USERS);
+        User user = userForUpdate(metabaseUsers);
+
+        userService.updateUser(user, Collections.emptyList(), List.of(1L, 3L));
+
+        verifyNoInteractions(metabaseService);
+    }
+
+    @Test
+    public void updateUser_doesNotCallMetabaseWhenOnlyOtherGroupsChange() {
+        Group metabaseUsers = group(3L, Group.METABASE_USERS);
+        Group otherGroup = group(4L, "Other");
+        User user = userForUpdate(metabaseUsers);
+        when(groupRepository.findById(4L)).thenReturn(Optional.of(otherGroup));
+
+        userService.updateUser(user, Collections.emptyList(), List.of(1L, 3L, 4L));
+
+        verifyNoInteractions(metabaseService);
+    }
+
+    @Test
+    public void updateUser_syncsToMetabaseWhenRemovedFromMetabaseUsers() {
+        Group metabaseUsers = group(3L, Group.METABASE_USERS);
+        User user = userForUpdate(metabaseUsers);
+
+        userService.updateUser(user, Collections.emptyList(), List.of(1L));
+
+        verify(metabaseService).upsertUsersOnMetabase(anyList());
+    }
+
+    @Test
+    public void updateUser_syncsToMetabaseWhenAddedToMetabaseUsers() {
+        Group metabaseUsers = group(3L, Group.METABASE_USERS);
+        User user = userForUpdate();
+        when(groupRepository.findById(3L)).thenReturn(Optional.of(metabaseUsers));
+
+        userService.updateUser(user, Collections.emptyList(), List.of(1L, 3L));
+
+        verify(metabaseService).upsertUsersOnMetabase(anyList());
+    }
+
+    private Group group(long id, String name) {
+        Group group = new Group();
+        group.setId(id);
+        group.setName(name);
+        return group;
+    }
+
+    private User userForUpdate(Group... memberOf) {
+        long orgId = 1234;
+        User user = new UserBuilder().organisationId(orgId).withDefaultValuesForNewEntity().build();
+        Group everyone = group(1L, Group.Everyone);
+        List<UserGroup> userGroups = new ArrayList<>();
+        userGroups.add(UserGroup.createMembership(user, everyone));
+        Arrays.stream(memberOf).forEach(group -> userGroups.add(UserGroup.createMembership(user, group)));
+        user.setUserGroups(userGroups);
+
+        UserContext userContext = new UserContext();
+        userContext.setOrganisation(new Organisation());
+        UserContextHolder.create(userContext);
+
+        when(accountAdminRepository.findByUser_Id(any())).thenReturn(Collections.emptyList());
+        when(idpServiceFactory.getIdpService(eq(user), anyBoolean())).thenReturn(mock(IdpService.class));
+        when(userRepository.save(user)).thenReturn(user);
+        when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(everyone);
+        when(userGroupRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(organisationConfigService.isMetabaseSetupEnabled(any())).thenReturn(true);
+        return user;
     }
 }

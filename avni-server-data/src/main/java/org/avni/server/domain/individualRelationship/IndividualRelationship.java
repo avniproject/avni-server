@@ -1,5 +1,6 @@
 package org.avni.server.domain.individualRelationship;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +37,12 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_b_id")
     private Individual individualB;
+
+    @Transient
+    private String linkedIndividualAUuid;
+
+    @Transient
+    private String linkedIndividualBUuid;
 
     @Column
     @Convert(converter = JodaDateTimeConverter.class)
@@ -129,5 +136,23 @@ public class IndividualRelationship extends OrganisationAwareEntity implements S
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividuala(), this.getIndividualB());
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualAUuid() {
+        return uuidOf(individuala, linkedIndividualAUuid);
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualBUuid() {
+        return uuidOf(individualB, linkedIndividualBUuid);
+    }
+
+    public void setLinkedIndividualAUuid(String linkedIndividualAUuid) {
+        this.linkedIndividualAUuid = linkedIndividualAUuid;
+    }
+
+    public void setLinkedIndividualBUuid(String linkedIndividualBUuid) {
+        this.linkedIndividualBUuid = linkedIndividualBUuid;
     }
 }

@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +28,9 @@ public class Checklist extends OrganisationAwareEntity implements SubjectLinkedS
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "program_enrolment_id")
     private ProgramEnrolment programEnrolment;
+
+    @Transient
+    private String linkedProgramEnrolmentUuid;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "checklist")
     private List<ChecklistItem> items = new ArrayList<>();
@@ -100,5 +104,14 @@ public class Checklist extends OrganisationAwareEntity implements SubjectLinkedS
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getProgramEnrolment().getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedProgramEnrolmentUuid() {
+        return uuidOf(programEnrolment, linkedProgramEnrolmentUuid);
+    }
+
+    public void setLinkedProgramEnrolmentUuid(String linkedProgramEnrolmentUuid) {
+        this.linkedProgramEnrolmentUuid = linkedProgramEnrolmentUuid;
     }
 }

@@ -17,7 +17,6 @@ import org.avni.server.web.request.UserGroupContract;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import java.util.List;
@@ -42,15 +41,19 @@ public class UserGroupControllerTest {
     private MetabaseService metabaseService;
 
     private UserGroupController userGroupController;
+    private User user;
 
     @Before
     public void setUp() {
         initMocks(this);
-        Organisation organisation = mock(Organisation.class);
-        when(organisation.getName()).thenReturn("test-org");
         UserContext userContext = new UserContext();
-        userContext.setOrganisation(organisation);
+        userContext.setOrganisation(new Organisation());
         UserContextHolder.create(userContext);
+
+        user = new UserBuilder().id(1L).withDefaultValuesForNewEntity().build();
+        when(userRepository.findOne(1L)).thenReturn(user);
+        when(organisationConfigService.isMetabaseSetupEnabled(any())).thenReturn(true);
+        when(userGroupRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
         userGroupController = new UserGroupController(userGroupRepository, userRepository, groupRepository,
                 accessControlService, organisationConfigService, metabaseService);
@@ -62,49 +65,68 @@ public class UserGroupControllerTest {
     }
 
     @Test
-    public void addUsersToGroup_persistsMembershipBeforeSyncingToMetabase() {
-        User user = new UserBuilder().withDefaultValuesForNewEntity().build();
-        user.setEmail("someone@example.com");
-        Group group = new Group();
-        group.setName(Group.METABASE_USERS);
+    public void addUsersToGroup_doesNotCallMetabaseForOtherGroups() {
+        when(groupRepository.findOne(2L)).thenReturn(group("Other"));
 
-        when(userRepository.findOne(1L)).thenReturn(user);
-        when(groupRepository.findOne(2L)).thenReturn(group);
-        when(userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group)).thenReturn(null);
-        when(organisationConfigService.isMetabaseSetupEnabled(any())).thenReturn(true);
-        when(userGroupRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        userGroupController.addUsersToGroup(List.of(contract()));
 
-        UserGroupContract contract = new UserGroupContract();
-        contract.setUserId(1L);
-        contract.setGroupId(2L);
-
-        userGroupController.addUsersToGroup(List.of(contract));
-
-        InOrder inOrder = inOrder(userGroupRepository, metabaseService);
-        inOrder.verify(userGroupRepository).saveAll(anyList());
-        inOrder.verify(metabaseService).upsertUsersOnMetabase(anyList());
+        verifyNoInteractions(metabaseService);
     }
 
     @Test
-    public void addUsersToGroup_syncsTheMembershipThatWasActuallySaved() {
-        User user = new UserBuilder().withDefaultValuesForNewEntity().build();
-        user.setEmail("someone@example.com");
+    public void addUsersToGroup_doesNotCallMetabaseWhenAlreadyInMetabaseUsers() {
+        Group metabaseUsers = group(Group.METABASE_USERS);
+        when(groupRepository.findOne(2L)).thenReturn(metabaseUsers);
+        when(userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, metabaseUsers)).thenReturn(UserGroup.createMembership(user, metabaseUsers));
+
+        userGroupController.addUsersToGroup(List.of(contract()));
+
+        verifyNoInteractions(metabaseService);
+    }
+
+    @Test
+    public void addUsersToGroup_syncsNewMetabaseUsersMembership() {
+        when(groupRepository.findOne(2L)).thenReturn(group(Group.METABASE_USERS));
+
+        userGroupController.addUsersToGroup(List.of(contract()));
+
+        verify(metabaseService).upsertUsersOnMetabase(anyList());
+    }
+
+    @Test
+    public void removeUserFromGroup_doesNotCallMetabaseWhenAlreadyRemoved() {
+        UserGroup userGroup = UserGroup.createMembership(user, group(Group.METABASE_USERS));
+        userGroup.setId(5L);
+        userGroup.setVoided(true);
+        when(userGroupRepository.findOne(5L)).thenReturn(userGroup);
+
+        userGroupController.removeUserFromGroup(5L);
+
+        verifyNoInteractions(metabaseService);
+    }
+
+    @Test
+    public void removeUserFromGroup_syncsRemovalFromMetabaseUsers() {
+        UserGroup userGroup = UserGroup.createMembership(user, group(Group.METABASE_USERS));
+        userGroup.setId(5L);
+        when(userGroupRepository.findOne(5L)).thenReturn(userGroup);
+
+        userGroupController.removeUserFromGroup(5L);
+
+        verify(metabaseService).upsertUsersOnMetabase(List.of(userGroup));
+    }
+
+    private Group group(String name) {
         Group group = new Group();
-        group.setName(Group.METABASE_USERS);
-        UserGroup existing = UserGroup.createMembership(user, group);
+        group.setId(2L);
+        group.setName(name);
+        return group;
+    }
 
-        when(userRepository.findOne(1L)).thenReturn(user);
-        when(groupRepository.findOne(2L)).thenReturn(group);
-        when(userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group)).thenReturn(existing);
-        when(organisationConfigService.isMetabaseSetupEnabled(any())).thenReturn(true);
-        when(userGroupRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
-
+    private UserGroupContract contract() {
         UserGroupContract contract = new UserGroupContract();
         contract.setUserId(1L);
         contract.setGroupId(2L);
-
-        userGroupController.addUsersToGroup(List.of(contract));
-
-        verify(metabaseService).upsertUsersOnMetabase(List.of(existing));
+        return contract;
     }
 }
