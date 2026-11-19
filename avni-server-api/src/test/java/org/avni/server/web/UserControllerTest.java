@@ -5,6 +5,7 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.IdpServiceFactory;
+import org.avni.server.service.abha.AbhaHealthCentreService;
 import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -34,6 +35,7 @@ public class UserControllerTest {
     @Mock private ResetSyncService resetSyncService;
     @Mock private SubjectTypeRepository subjectTypeRepository;
     @Mock private AccessControlService accessControlService;
+    @Mock private AbhaHealthCentreService abhaHealthCentreService;
 
     private UserController controller;
     private User existingUser;
@@ -42,7 +44,7 @@ public class UserControllerTest {
     public void setUp() throws Exception {
         initMocks(this);
         controller = new UserController(catchmentRepository, userRepository, organisationRepository, userService,
-                idpServiceFactory, accountRepository, accountAdminRepository, resetSyncService, subjectTypeRepository, accessControlService);
+                idpServiceFactory, accountRepository, accountAdminRepository, resetSyncService, subjectTypeRepository, accessControlService, abhaHealthCentreService);
         existingUser = new User();
         existingUser.setId(20L);
         existingUser.setUsername("worker@trialorg");
