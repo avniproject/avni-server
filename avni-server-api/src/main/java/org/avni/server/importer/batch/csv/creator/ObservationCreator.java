@@ -9,6 +9,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.ValidationException;
+import org.avni.server.importer.batch.csv.DurationCellFormat;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
@@ -30,19 +31,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
-import static org.avni.messaging.domain.Constants.DURATION_PATTERN;
 
 @Component
 public class ObservationCreator {
     private static final Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
-    private static final Map<String, String> ISO_DURATION_BY_UNIT = Map.of(
-            "years", "P%dY",
-            "months", "P%dM",
-            "weeks", "P%dW",
-            "days", "P%dD",
-            "hours", "PT%dH",
-            "minutes", "PT%dM",
-            "seconds", "PT%dS");
     private final ConceptRepository conceptRepository;
     private final FormRepository formRepository;
     private final ObservationService observationService;
@@ -176,7 +168,7 @@ public class ObservationCreator {
 
     private ObservationCollection getQuestionGroupObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex, boolean mandatoryCheckEnabled) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        for (FormElement formElement : allChildQuestions) {
+        for (FormElement formElement : withoutDeletedCopiesOfActiveQuestions(allChildQuestions)) {
             Concept concept = formElement.getConcept();
             String rowValue = getRowValue(formElement, row, questionGroupIndex);
             if (!StringUtils.hasText(rowValue)) {
@@ -197,6 +189,17 @@ public class ObservationCreator {
             observationRequests.add(observationRequest);
         }
         return observationService.createObservations(observationRequests);
+    }
+
+    // Both copies read the same column, and the one read last would win.
+    private static List<FormElement> withoutDeletedCopiesOfActiveQuestions(List<FormElement> formElements) {
+        Set<String> activeConceptUuids = formElements.stream()
+                .filter(formElement -> !formElement.isVoided())
+                .map(formElement -> formElement.getConcept().getUuid())
+                .collect(Collectors.toSet());
+        return formElements.stream()
+                .filter(formElement -> !formElement.isVoided() || !activeConceptUuids.contains(formElement.getConcept().getUuid()))
+                .toList();
     }
 
     private List<FormElement> createDecisionFormElement(Set<Concept> concepts) {
@@ -221,6 +224,9 @@ public class ObservationCreator {
                 })
                 .flatMap(List::stream)
                 .filter(formElement -> formElement.getConcept().equals(concept))
+                // A form can hold a deleted copy of a question beside the active one, and its settings
+                // (the unit of a Duration, for one) must not decide how the cell is read.
+                .sorted(Comparator.comparing(FormElement::isVoided))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
@@ -313,24 +319,14 @@ public class ObservationCreator {
         return true;
     }
 
-    // The app reads a duration only in the ISO form it writes, such as PT35M, and a value in any other
-    // form stops the sync of every user who downloads it (avniproject/avni-server#959). So a value is
-    // stored only if it passes the same check as a save from the app. A plain whole number is accepted
-    // when the question takes a single unit, because that is what a person types under "in minutes".
+    // See DurationCellFormat for what is stored and why.
     private Object handleDurationValue(FormElement formElement, String answerValue, List<String> errorMsgs, Concept concept) {
-        String trimmed = answerValue.trim();
-        if (trimmed.matches(DURATION_PATTERN)) {
-            return trimmed;
-        }
         List<String> units = formElement.getDurationOptions();
-        String isoFormOfTheOnlyUnit = units.size() == 1 ? ISO_DURATION_BY_UNIT.get(units.get(0)) : null;
-        if (isoFormOfTheOnlyUnit != null && trimmed.matches("\\d{1,9}")) {
-            return format(isoFormOfTheOnlyUnit, Integer.parseInt(trimmed));
+        String storedValue = DurationCellFormat.toStoredValue(answerValue, units);
+        if (storedValue == null) {
+            errorMsgs.add(format("Invalid value '%s' for '%s'. Enter %s", answerValue.trim(), concept.getName(), DurationCellFormat.whatToEnter(units)));
         }
-        String wholeNumberHint = isoFormOfTheOnlyUnit != null ? format("a whole number of %s, or ", units.get(0)) : "";
-        errorMsgs.add(format("Invalid value '%s' for '%s'. Enter %sa duration such as PT30M (30 minutes) or P1Y6M (1 year 6 months)",
-                trimmed, concept.getName(), wholeNumberHint));
-        return null;
+        return storedValue;
     }
 
     private Object handleDateValue(String answerValue, List<String> errorMsgs, Concept concept) {

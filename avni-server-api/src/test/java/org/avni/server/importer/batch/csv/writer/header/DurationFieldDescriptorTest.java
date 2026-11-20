@@ -25,7 +25,14 @@ public class DurationFieldDescriptorTest {
     public void shouldAskForTheFullFormWhenTheQuestionHasSeveralUnits() {
         FormElement formElement = new TestFormElementBuilder().withConcept(concept).withDurationOptions("years", "months").build();
 
-        assertEquals("Format: a duration such as PT30M (30 minutes) or P1Y6M (1 year 6 months)", descriptor.getFormat(formElement));
+        assertEquals("Format: a duration such as P2Y6M (2 years 6 months)", descriptor.getFormat(formElement));
+    }
+
+    @Test
+    public void shouldGiveAnExampleInTheQuestionsOwnUnit() {
+        FormElement formElement = new TestFormElementBuilder().withConcept(concept).withDurationOptions("years").build();
+
+        assertEquals("Format: a whole number of years, or a duration such as P2Y (2 years)", descriptor.getFormat(formElement));
     }
 
     @Test
