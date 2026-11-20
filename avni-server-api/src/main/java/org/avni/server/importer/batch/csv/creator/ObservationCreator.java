@@ -30,10 +30,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static org.avni.messaging.domain.Constants.DURATION_PATTERN;
 
 @Component
 public class ObservationCreator {
     private static final Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
+    private static final Map<String, String> ISO_DURATION_BY_UNIT = Map.of(
+            "years", "P%dY",
+            "months", "P%dM",
+            "weeks", "P%dW",
+            "days", "P%dD",
+            "hours", "PT%dH",
+            "minutes", "PT%dM",
+            "seconds", "PT%dS");
     private final ConceptRepository conceptRepository;
     private final FormRepository formRepository;
     private final ObservationService observationService;
@@ -243,6 +252,8 @@ public class ObservationCreator {
                 return locationService.getObservationValueForUpload(formElement, answerValue);
             case PhoneNumber:
                 return handlePhoneNumberValue(answerValue, errorMsgs, concept);
+            case Duration:
+                return handleDurationValue(formElement, answerValue, errorMsgs, concept);
             case QuestionGroup:
                 return this.constructChildObservations(row, headers, errorMsgs, formElement, formType, null, mandatoryCheckEnabled);
             default:
@@ -300,6 +311,26 @@ public class ObservationCreator {
             return value <= highAbsolute;
         }
         return true;
+    }
+
+    // The app reads a duration only in the ISO form it writes, such as PT35M, and a value in any other
+    // form stops the sync of every user who downloads it (avniproject/avni-server#959). So a value is
+    // stored only if it passes the same check as a save from the app. A plain whole number is accepted
+    // when the question takes a single unit, because that is what a person types under "in minutes".
+    private Object handleDurationValue(FormElement formElement, String answerValue, List<String> errorMsgs, Concept concept) {
+        String trimmed = answerValue.trim();
+        if (trimmed.matches(DURATION_PATTERN)) {
+            return trimmed;
+        }
+        List<String> units = formElement.getDurationOptions();
+        String isoFormOfTheOnlyUnit = units.size() == 1 ? ISO_DURATION_BY_UNIT.get(units.get(0)) : null;
+        if (isoFormOfTheOnlyUnit != null && trimmed.matches("\\d{1,9}")) {
+            return format(isoFormOfTheOnlyUnit, Integer.parseInt(trimmed));
+        }
+        String wholeNumberHint = isoFormOfTheOnlyUnit != null ? format("a whole number of %s, or ", units.get(0)) : "";
+        errorMsgs.add(format("Invalid value '%s' for '%s'. Enter %sa duration such as PT30M (30 minutes) or P1Y6M (1 year 6 months)",
+                trimmed, concept.getName(), wholeNumberHint));
+        return null;
     }
 
     private Object handleDateValue(String answerValue, List<String> errorMsgs, Concept concept) {

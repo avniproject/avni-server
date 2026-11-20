@@ -255,6 +255,115 @@ public class ObservationCreatorTest {
         assertEquals(1, errorMsgs.size());
     }
 
+    // avniproject/avni-server#959: a duration answer is stored only in the form the app reads.
+
+    @Test
+    public void handleDurationValue_shouldKeepAValueAlreadyInTheFormTheAppWrites() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+
+        assertEquals("PT35M", handleDurationValue(durationFormElement("minutes"), "PT35M", errorMsgs));
+        assertEquals("P1Y6M", handleDurationValue(durationFormElement("years", "months"), "P1Y6M", errorMsgs));
+        assertEquals("PT2H30M", handleDurationValue(durationFormElement("hours", "minutes"), "PT2H30M", errorMsgs));
+        assertEquals(0, errorMsgs.size());
+    }
+
+    @Test
+    public void handleDurationValue_shouldConvertAPlainNumberWhenTheQuestionHasOneUnit() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+
+        assertEquals("P2Y", handleDurationValue(durationFormElement("years"), "2", errorMsgs));
+        assertEquals("P6M", handleDurationValue(durationFormElement("months"), "6", errorMsgs));
+        assertEquals("P3W", handleDurationValue(durationFormElement("weeks"), "3", errorMsgs));
+        assertEquals("P10D", handleDurationValue(durationFormElement("days"), "10", errorMsgs));
+        assertEquals("PT4H", handleDurationValue(durationFormElement("hours"), "4", errorMsgs));
+        assertEquals("PT35M", handleDurationValue(durationFormElement("minutes"), "35", errorMsgs));
+        assertEquals(0, errorMsgs.size());
+    }
+
+    @Test
+    public void handleDurationValue_shouldStoreOnlyValuesThatPassTheDurationCheckUsedForTheApp() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+        for (String unit : new String[]{"years", "months", "weeks", "days", "hours", "minutes"}) {
+            String stored = (String) handleDurationValue(durationFormElement(unit), "35", errorMsgs);
+            assertTrue(unit + " gave " + stored, stored.matches(org.avni.messaging.domain.Constants.DURATION_PATTERN));
+        }
+    }
+
+    @Test
+    public void handleDurationValue_shouldTrimAndDropLeadingZeros() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+
+        assertEquals("PT35M", handleDurationValue(durationFormElement("minutes"), "  035 ", errorMsgs));
+        assertEquals("PT35M", handleDurationValue(durationFormElement("minutes"), " PT35M ", errorMsgs));
+        assertEquals(0, errorMsgs.size());
+    }
+
+    @Test
+    public void handleDurationValue_shouldRejectAPlainNumberWhenTheQuestionHasSeveralUnits() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+
+        Object result = handleDurationValue(durationFormElement("hours", "minutes"), "35", errorMsgs);
+
+        assertNull(result);
+        assertEquals(1, errorMsgs.size());
+        assertEquals("Invalid value '35' for 'Session duration'. Enter a duration such as PT30M (30 minutes) or P1Y6M (1 year 6 months)", errorMsgs.get(0));
+    }
+
+    @Test
+    public void handleDurationValue_shouldRejectAPlainNumberWhenTheQuestionHasNoUnit() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+
+        Object result = handleDurationValue(durationFormElement(), "35", errorMsgs);
+
+        assertNull(result);
+        assertEquals(1, errorMsgs.size());
+    }
+
+    @Test
+    public void handleDurationValue_shouldRejectTextThatIsNotADurationAndSayWhatToEnter() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+
+        assertNull(handleDurationValue(durationFormElement("minutes"), "35 mins", errorMsgs));
+        assertNull(handleDurationValue(durationFormElement("minutes"), "35.5", errorMsgs));
+        assertNull(handleDurationValue(durationFormElement("minutes"), "-35", errorMsgs));
+        assertNull(handleDurationValue(durationFormElement("minutes"), "P", errorMsgs));
+        assertNull(handleDurationValue(durationFormElement("minutes"), "99999999999999999999", errorMsgs));
+
+        assertEquals(5, errorMsgs.size());
+        assertEquals("Invalid value '35 mins' for 'Session duration'. Enter a whole number of minutes, or a duration such as PT30M (30 minutes) or P1Y6M (1 year 6 months)", errorMsgs.get(0));
+    }
+
+    @Test
+    public void getObservationValue_shouldSendADurationQuestionThroughTheDurationHandling() throws Exception {
+        List<String> errorMsgs = new ArrayList<>();
+        Method method = ObservationCreator.class.getDeclaredMethod("getObservationValue", FormElement.class, String.class,
+                org.avni.server.application.FormType.class, List.class, org.avni.server.importer.batch.model.Row.class,
+                org.avni.server.importer.batch.csv.writer.header.HeaderCreator.class,
+                org.avni.server.domain.ObservationCollection.class, boolean.class);
+        method.setAccessible(true);
+
+        Object converted = method.invoke(observationCreator, durationFormElement("minutes"), "35",
+                org.avni.server.application.FormType.Encounter, errorMsgs, null, null, null, false);
+        Object rejected = method.invoke(observationCreator, durationFormElement("hours", "minutes"), "35",
+                org.avni.server.application.FormType.Encounter, errorMsgs, null, null, null, false);
+
+        assertEquals("PT35M", converted);
+        assertNull(rejected);
+        assertEquals(1, errorMsgs.size());
+    }
+
+    private Object handleDurationValue(FormElement formElement, String answerValue, List<String> errorMsgs) throws Exception {
+        Method method = ObservationCreator.class.getDeclaredMethod("handleDurationValue", FormElement.class, String.class, List.class, Concept.class);
+        method.setAccessible(true);
+        return method.invoke(observationCreator, formElement, answerValue, errorMsgs, formElement.getConcept());
+    }
+
+    private FormElement durationFormElement(String... durationOptions) {
+        Concept concept = new ConceptBuilder().withName("Session duration").withUuid("duration-uuid").withDataType(ConceptDataType.Duration).build();
+        TestFormElementBuilder builder = new TestFormElementBuilder().withConcept(concept);
+        return durationOptions.length == 0 ? builder.build() : builder.withDurationOptions(durationOptions).build();
+    }
+
     private FormElement imageV2FormElement() {
         Concept concept = new ConceptBuilder().withName("Photo").withUuid("photo-uuid").withDataType(ConceptDataType.ImageV2).build();
         return new TestFormElementBuilder().withConcept(concept).build();
