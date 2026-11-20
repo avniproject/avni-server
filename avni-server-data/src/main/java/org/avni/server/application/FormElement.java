@@ -13,6 +13,8 @@ import org.joda.time.DateTime;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -152,6 +154,17 @@ public class FormElement extends OrganisationAwareEntity {
             return (boolean) keyValues.get(KeyType.repeatable).getValue();
         }
         return false;
+    }
+
+    // The units a Duration question takes, such as ["minutes"] or ["years", "months"]. Empty when none is set.
+    @JsonIgnore
+    public List<String> getDurationOptions() {
+        KeyValues keyValues = this.getKeyValues();
+        KeyValue durationOptions = keyValues == null ? null : keyValues.get(KeyType.durationOptions);
+        if (durationOptions == null || !(durationOptions.getValue() instanceof Collection<?> units)) {
+            return Collections.emptyList();
+        }
+        return units.stream().map(String::valueOf).toList();
     }
 
     public DateTime getLastModifiedDateTime() {

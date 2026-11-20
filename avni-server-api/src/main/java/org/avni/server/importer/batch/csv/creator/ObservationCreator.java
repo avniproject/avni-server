@@ -9,6 +9,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.ValidationException;
+import org.avni.server.importer.batch.csv.DurationCellFormat;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
@@ -167,7 +168,7 @@ public class ObservationCreator {
 
     private ObservationCollection getQuestionGroupObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex, boolean mandatoryCheckEnabled) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        for (FormElement formElement : allChildQuestions) {
+        for (FormElement formElement : withoutDeletedCopiesOfActiveQuestions(allChildQuestions)) {
             Concept concept = formElement.getConcept();
             String rowValue = getRowValue(formElement, row, questionGroupIndex);
             if (!StringUtils.hasText(rowValue)) {
@@ -188,6 +189,17 @@ public class ObservationCreator {
             observationRequests.add(observationRequest);
         }
         return observationService.createObservations(observationRequests);
+    }
+
+    // Both copies read the same column, and the one read last would win.
+    private static List<FormElement> withoutDeletedCopiesOfActiveQuestions(List<FormElement> formElements) {
+        Set<String> activeConceptUuids = formElements.stream()
+                .filter(formElement -> !formElement.isVoided())
+                .map(formElement -> formElement.getConcept().getUuid())
+                .collect(Collectors.toSet());
+        return formElements.stream()
+                .filter(formElement -> !formElement.isVoided() || !activeConceptUuids.contains(formElement.getConcept().getUuid()))
+                .toList();
     }
 
     private List<FormElement> createDecisionFormElement(Set<Concept> concepts) {
@@ -212,6 +224,9 @@ public class ObservationCreator {
                 })
                 .flatMap(List::stream)
                 .filter(formElement -> formElement.getConcept().equals(concept))
+                // A form can hold a deleted copy of a question beside the active one, and its settings
+                // (the unit of a Duration, for one) must not decide how the cell is read.
+                .sorted(Comparator.comparing(FormElement::isVoided))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
@@ -243,6 +258,8 @@ public class ObservationCreator {
                 return locationService.getObservationValueForUpload(formElement, answerValue);
             case PhoneNumber:
                 return handlePhoneNumberValue(answerValue, errorMsgs, concept);
+            case Duration:
+                return handleDurationValue(formElement, answerValue, errorMsgs, concept);
             case QuestionGroup:
                 return this.constructChildObservations(row, headers, errorMsgs, formElement, formType, null, mandatoryCheckEnabled);
             default:
@@ -300,6 +317,16 @@ public class ObservationCreator {
             return value <= highAbsolute;
         }
         return true;
+    }
+
+    // See DurationCellFormat for what is stored and why.
+    private Object handleDurationValue(FormElement formElement, String answerValue, List<String> errorMsgs, Concept concept) {
+        List<String> units = formElement.getDurationOptions();
+        String storedValue = DurationCellFormat.toStoredValue(answerValue, units);
+        if (storedValue == null) {
+            errorMsgs.add(format("Invalid value '%s' for '%s'. Enter %s", answerValue.trim(), concept.getName(), DurationCellFormat.whatToEnter(units)));
+        }
+        return storedValue;
     }
 
     private Object handleDateValue(String answerValue, List<String> errorMsgs, Concept concept) {
