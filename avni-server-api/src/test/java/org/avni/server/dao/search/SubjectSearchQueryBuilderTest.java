@@ -91,7 +91,9 @@ public class SubjectSearchQueryBuilderTest {
         System.out.println(sql);
         assertThat(sql).isNotEmpty();
         assertThat(sql).contains("i.subject_type_id = :subjectTypeId");
-        assertThat(sql).contains("'Individual' as \"subjectTypeName\"");
+        assertThat(sql).contains("cast(:subjectTypeName as text) as \"subjectTypeName\"");
+        assertThat(sql).doesNotContain("Individual");
+        assertThat(query.getParameters().get("subjectTypeName")).isEqualTo("Individual");
         assertThat(sql).doesNotContain(SubjectSearchQueryBuilder.SubjectTypeColumn);
         assertThat(sql).doesNotContain(SubjectSearchQueryBuilder.SubjectTypeJoin);
     }
@@ -120,7 +122,7 @@ public class SubjectSearchQueryBuilderTest {
         assertThat(query.getParameters().containsValue("%two%")).isTrue();
         assertThat(query.getParameters().containsValue("%tokens%")).isTrue();
         assertThat(query.getParameters().containsValue("%andAnother%")).isTrue();
-        assertThat(query.getParameters().size()).isEqualTo(6);
+        assertThat(query.getParameters().size()).isEqualTo(7);
     }
 
     @Test
@@ -129,7 +131,7 @@ public class SubjectSearchQueryBuilderTest {
                 .withSubjectTypeFilter(subjectType)
                 .withAgeFilter(new IntegerRange(1, null))
                 .build(subjectType);
-        assertThat(query.getParameters().size()).isEqualTo(4);
+        assertThat(query.getParameters().size()).isEqualTo(5);
     }
 
     @Test
@@ -138,14 +140,14 @@ public class SubjectSearchQueryBuilderTest {
                 .withSubjectTypeFilter(subjectType)
                 .withGenderFilter(null)
                 .build(subjectType);
-        assertThat(query.getParameters().size()).isEqualTo(3);
+        assertThat(query.getParameters().size()).isEqualTo(4);
 
         ArrayList<String> genders = new ArrayList<>();
         genders.add("firstGenderUuid");
         query = new SubjectSearchQueryBuilder()
                 .withGenderFilter(genders)
                 .build(subjectType);
-        assertThat(query.getParameters().size()).isEqualTo(3);
+        assertThat(query.getParameters().size()).isEqualTo(4);
     }
 
     @Test
@@ -154,7 +156,7 @@ public class SubjectSearchQueryBuilderTest {
                 .withSubjectTypeFilter(subjectType)
                 .withEncounterDateFilter(new DateRange("2021-01-01", "2022-01-01"))
                 .build(subjectType);
-        assertThat(query.getParameters().size()).isEqualTo(5);
+        assertThat(query.getParameters().size()).isEqualTo(6);
     }
 
     @Test
@@ -164,7 +166,7 @@ public class SubjectSearchQueryBuilderTest {
                 .withProgramEncounterDateFilter(new DateRange("2021-01-01", "2022-01-01"))
                 .withProgramEnrolmentDateFilter(new DateRange("2021-01-01", "2022-01-01"))
                 .build(subjectType);
-        assertThat(query.getParameters().size()).isEqualTo(7);
+        assertThat(query.getParameters().size()).isEqualTo(8);
     }
 
     @Test

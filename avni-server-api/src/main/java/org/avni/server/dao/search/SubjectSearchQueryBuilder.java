@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<SubjectSearchQueryBuilder> implements SearchBuilder {
     public static final String SubjectTypeColumn = "                st.name as \"subjectTypeName\",\n";
-    public static final String HardCodedSubjectTypeColumn = "                '$SubjectTypeName' as \"subjectTypeName\",\n";
+    // The name is bound, never pasted: this query runs with row-level security off (avni-security#97).
+    public static final String HardCodedSubjectTypeColumn = "                cast(:subjectTypeName as text) as \"subjectTypeName\",\n";
     public static final String SubjectTypeJoin = "         left outer join subject_type st on i.subject_type_id = st.id and st.is_voided is false\n";
 
     public SqlQuery build(SubjectType subjectType) {
@@ -31,8 +32,9 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
             baseQuery = baseQuery.replace("$SubjectTypeColumn", SubjectTypeColumn);
             baseQuery = baseQuery.replace("$SubjectTypeJoin", SubjectTypeJoin);
         } else {
-            baseQuery = baseQuery.replace("$SubjectTypeColumn", HardCodedSubjectTypeColumn.replace("$SubjectTypeName", subjectType.getName()));
+            baseQuery = baseQuery.replace("$SubjectTypeColumn", HardCodedSubjectTypeColumn);
             baseQuery = baseQuery.replace("$SubjectTypeJoin", "");
+            addParameter("subjectTypeName", subjectType.getName());
         }
         return super.buildUsingBaseQuery(baseQuery, "");
     }
