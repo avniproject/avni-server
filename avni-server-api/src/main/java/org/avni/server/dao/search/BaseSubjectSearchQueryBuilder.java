@@ -50,6 +50,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     private final Map<String, Object> parameters = new HashMap<>();
     private boolean forCount;
     private final Set<String> customFields = new HashSet<>();
+    private final Map<String, String> customFieldConceptParameters = new HashMap<>();
     public static final String DEFAULT_TIME_ZONE = "Asia/Kolkata";
     private String timeZone = DEFAULT_TIME_ZONE;
     private boolean includeExitedEnrolments;
@@ -165,13 +166,25 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
     protected void addCustomFields(org.avni.server.domain.Concept concept) {
         String alias = escapeSqlIdentifier(concept.getName());
+        String uuidParam = customFieldConceptParameter(concept.getUuid());
         if (concept.isCoded()) {
-            customFields.add(String.format("multi_select_coded(i.observations -> '%s') as \"%s\"", concept.getUuid(), alias));
+            customFields.add(String.format("multi_select_coded(i.observations -> :%s) as \"%s\"", uuidParam, alias));
         } else if (concept.getDataType().equals(ConceptDataType.Date.toString())) {
-            customFields.add(String.format("%s as \"%s\"", observationAsDate(String.format("i.observations ->> '%s'", concept.getUuid())), alias));
+            customFields.add(String.format("%s as \"%s\"", observationAsDate(String.format("i.observations ->> :%s", uuidParam)), alias));
         } else {
-            customFields.add(String.format("i.observations ->> '%s' as \"%s\"", concept.getUuid(), alias));
+            customFields.add(String.format("i.observations ->> :%s as \"%s\"", uuidParam, alias));
         }
+    }
+
+    // A concept's uuid is whatever its save request sent, and this query runs with row-level security off,
+    // so it is bound, never pasted (found with avni-security#97). One parameter per distinct uuid keeps
+    // customFields de-duplicating a concept listed twice.
+    private String customFieldConceptParameter(String conceptUuid) {
+        return customFieldConceptParameters.computeIfAbsent(conceptUuid, uuid -> {
+            String name = "customFieldConcept" + customFieldConceptParameters.size();
+            parameters.put(name, uuid);
+            return name;
+        });
     }
 
     // The concept name is interpolated as a SQL column alias (as "..."). Double any embedded

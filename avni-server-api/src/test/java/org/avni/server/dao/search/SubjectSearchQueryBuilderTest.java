@@ -249,7 +249,7 @@ public class SubjectSearchQueryBuilderTest {
         String sql = new SubjectSearchQueryBuilder().withCustomFields(null).build(subjectType).getSql();
 
         assertThat(sql).doesNotContain("c-verdict").doesNotContain("AI verdict");
-        assertThat(sql).contains("i.observations ->> 'c-seen' as \"Seen answer\"");
+        assertThat(sql).contains("i.observations ->> :customFieldConcept0 as \"Seen answer\"").doesNotContain("c-seen");
     }
 
     @Test
@@ -258,7 +258,7 @@ public class SubjectSearchQueryBuilderTest {
 
         String sql = new SubjectSearchQueryBuilder().withCustomFields(null).build(subjectType).getSql();
 
-        assertThat(sql).contains("i.observations ->> 'c-seen' as \"Seen answer\"");
+        assertThat(sql).contains("i.observations ->> :customFieldConcept0 as \"Seen answer\"").doesNotContain("c-seen");
     }
 
     @Test
@@ -361,8 +361,8 @@ public class SubjectSearchQueryBuilderTest {
 
         String sql = new SubjectSearchQueryBuilder().withTimeZone("Asia/Kolkata").withCustomFields(null).build(subjectType).getSql();
 
-        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) when i.observations ->> 'c-lmp' ~ '" + BaseSubjectSearchQueryBuilder.DATE_PATTERN
-                + "' then cast(i.observations ->> 'c-lmp' as date) end) as \"LMP\"");
+        assertThat(sql).contains("at time zone 'Asia/Kolkata' as date) when i.observations ->> :customFieldConcept0 ~ '" + BaseSubjectSearchQueryBuilder.DATE_PATTERN
+                + "' then cast(i.observations ->> :customFieldConcept0 as date) end) as \"LMP\"").doesNotContain("c-lmp");
     }
 
     @Test
