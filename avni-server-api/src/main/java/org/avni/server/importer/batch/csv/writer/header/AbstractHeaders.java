@@ -27,6 +27,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
         STRATEGY_MAP.put(ConceptDataType.Numeric.name(), NumericFieldDescriptor::new);
         STRATEGY_MAP.put(ConceptDataType.PhoneNumber.name(), PhoneNumberDescriptor::new);
         STRATEGY_MAP.put(ConceptDataType.Subject.name(), SubjectConceptDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Duration.name(), DurationFieldDescriptor::new);
     }
 
     private static FieldDescriptor getStrategy(String dataType) {

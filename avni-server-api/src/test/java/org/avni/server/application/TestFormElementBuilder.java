@@ -39,6 +39,11 @@ public class TestFormElementBuilder {
     	return this;
     }
 
+    public TestFormElementBuilder withDurationOptions(String... durationOptions) {
+        formElement.getKeyValues().add(new KeyValue("durationOptions", java.util.List.of(durationOptions)));
+        return this;
+    }
+
     public TestFormElementBuilder withReadOnly(boolean isEditable) {
         formElement.getKeyValues().add(new KeyValue(KeyType.editable, isEditable));
         return this;
