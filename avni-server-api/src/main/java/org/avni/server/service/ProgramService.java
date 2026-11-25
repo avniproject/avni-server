@@ -7,12 +7,11 @@ import org.avni.server.dao.OperationalProgramRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.enums.ruleFailure.SourceType;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.OperationalProgramContract;
 import org.avni.server.web.request.OperationalProgramsContract;
 import org.avni.server.web.request.ProgramRequest;
-import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
-import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -33,13 +31,15 @@ public class ProgramService implements NonScopeAwareService {
     private final OperationalProgramRepository operationalProgramRepository;
     private final FormMappingRepository formMappingRepository;
     private final RuleService ruleService;
+    private final EligibilityCheckService eligibilityCheckService;
 
     @Autowired
-    public ProgramService(ProgramRepository programRepository, OperationalProgramRepository operationalProgramRepository, FormMappingRepository formMappingRepository, RuleService ruleService) {
+    public ProgramService(ProgramRepository programRepository, OperationalProgramRepository operationalProgramRepository, FormMappingRepository formMappingRepository, RuleService ruleService, EligibilityCheckService eligibilityCheckService) {
         this.programRepository = programRepository;
         this.operationalProgramRepository = operationalProgramRepository;
         this.formMappingRepository = formMappingRepository;
         this.ruleService = ruleService;
+        this.eligibilityCheckService = eligibilityCheckService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -127,23 +127,8 @@ public class ProgramService implements NonScopeAwareService {
     }
 
     private List<Program> getEligibleProgramsFromInactivePrograms(Individual individual, List<Program> staticallyEnrolablePrograms) {
-        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = null;
-        try {
-            eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, staticallyEnrolablePrograms);
-        } catch (RuleExecutionException e) {
-            return new ArrayList<>();
-        }
-
-        List<EligibilityRuleEntity> allEligiblePrograms = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
-                .filter(EligibilityRuleEntity::isEligible)
-                .collect(Collectors.toList());
-
-        List<Program> eligiblePrograms = staticallyEnrolablePrograms.stream()
-                .filter(staticallyEnrolableProgram -> allEligiblePrograms.stream()
-                        .anyMatch(eligibilityRuleEntity -> eligibilityRuleEntity.getTypeUUID().equals(staticallyEnrolableProgram.getUuid())))
-                .collect(Collectors.toList());
-
-        return eligiblePrograms;
+        return eligibilityCheckService.getEligibleTypes(individual, staticallyEnrolablePrograms, SourceType.EnrolmentEligibilityCheck,
+                programs -> ruleService.executeProgramEligibilityCheckRule(individual, programs));
     }
 
     public void savePrograms(ProgramRequest[] programRequests) {

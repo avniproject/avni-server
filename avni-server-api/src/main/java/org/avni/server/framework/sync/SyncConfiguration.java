@@ -1,12 +1,10 @@
 package org.avni.server.framework.sync;
 
-import org.avni.server.framework.hibernate.DummyInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.MappedInterceptor;
 
@@ -17,7 +15,6 @@ import java.util.stream.Stream;
 public class SyncConfiguration implements WebMvcConfigurer {
     private final TransactionalResourceInterceptor transactionalResourceInterceptor;
     private final MetadataResourceInterceptor metadataResourceInterceptor;
-    private DummyInterceptor dummyInterceptor;
 
     private final String[] transactionalPathList = Stream.of(
             "checklist",
@@ -90,10 +87,9 @@ public class SyncConfiguration implements WebMvcConfigurer {
     ).map(path-> "/" + path + "/**").toArray(String[]::new);
 
     @Autowired
-    public SyncConfiguration(TransactionalResourceInterceptor transactionalResourceInterceptor, MetadataResourceInterceptor metadataResourceInterceptor, DummyInterceptor dummyInterceptor) {
+    public SyncConfiguration(TransactionalResourceInterceptor transactionalResourceInterceptor, MetadataResourceInterceptor metadataResourceInterceptor) {
         this.transactionalResourceInterceptor = transactionalResourceInterceptor;
         this.metadataResourceInterceptor = metadataResourceInterceptor;
-        this.dummyInterceptor = dummyInterceptor;
     }
 
     @Bean("mappedTransactionalResourceInterceptor")
@@ -104,10 +100,5 @@ public class SyncConfiguration implements WebMvcConfigurer {
     @Bean("mappedMetadataResourceInterceptor")
     public MappedInterceptor mappedMetadataResourceInterceptor() {
         return new MappedInterceptor(metadataPathList, metadataResourceInterceptor);
-    }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(dummyInterceptor);
     }
 }

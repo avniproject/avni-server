@@ -13,15 +13,16 @@ public class TransactionDataCriteriaBuilderUtil {
         return joinUserSubjectAssignment(from.join("individual"));
     }
 
-    public static Join<Object, Object> joinSubjectForUserSubjectType(SyncParameters syncParameters, From from) {
+    public static From joinSubjectForUserSubjectType(SyncParameters syncParameters, From from) {
         switch (syncParameters.getSyncEntityName()) {
             case Comment:
-                return from.join("subject");
             case CommentThread:
-                return from.join("comments").join("subject");
+                return from;
             case Encounter:
             case ProgramEnrolment:
             case ProgramEncounter:
+            case Checklist:
+            case ChecklistItem:
                 return from.join("individual");
             default:
                 throw new RuntimeException("Unsupported sync entity name: " + syncParameters.getSyncEntityName());

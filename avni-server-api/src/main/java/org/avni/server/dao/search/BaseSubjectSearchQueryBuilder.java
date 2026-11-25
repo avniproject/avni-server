@@ -30,16 +30,32 @@ public class BaseSubjectSearchQueryBuilder<T> {
     protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.encounter_date_time is not null and e.is_voided is false\n";
     protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n";
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
+    public static final String FULL_NAME = "concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, ''))";
+    private static final String NUMBER_PATTERN = "-?[0-9]{1,30}(\\.[0-9]{1,30})?";
+    private static final String PART_OF_A_NUMBER_PATTERN = "-?[0-9]*\\.?[0-9]+\\.?";
+    private static final String STORED_NUMBER_PATTERN = "[ \\t\\n\\r\\f\\v]*[+-]?([0-9]{1,255}(\\.[0-9]{0,255})?|\\.[0-9]{1,255})([eE][+-]?[0-9]{1,4})?[ \\t\\n\\r\\f\\v]*";
+    private static final String UUID_PATTERN = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
 
     private String orderByClause = "";
+    private String searchAllExactFirst;
+    private String searchAllText;
+    private String searchAllExactAnswer;
+    private static final String VALUE_START = "(: |\\[|, )";
+    private static final String VALUE_END = "[,}\\]]";
+    // An answer follows its question's uuid key, or "phoneNumber" in a PhoneNumber answer; inside a text answer a quote is stored as \", so this can't match there.
+    private static final String ANSWER_OF_A_QUESTION = "\"([0-9a-fA-F-]{36}|phoneNumber)\": ";
 
     protected final Set<String> whereClauses = new HashSet<>();
     private final Map<String, Object> parameters = new HashMap<>();
     private boolean forCount;
     private final Set<String> customFields = new HashSet<>();
+    private final Map<String, String> customFieldConceptParameters = new HashMap<>();
     public static final String DEFAULT_TIME_ZONE = "Asia/Kolkata";
     private String timeZone = DEFAULT_TIME_ZONE;
+    private boolean includeExitedEnrolments;
+    private boolean hasProgramFilter;
+    private final List<String> programEnrolmentConditions = new ArrayList<>();
 
     public BaseSubjectSearchQueryBuilder() {
         logger = LoggerFactory.getLogger(this.getClass());
@@ -51,7 +67,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
         query.append(String.format("\n where i.organisation_id = %d and\n", UserContextHolder.getOrganisation().getId()));
 
-        query.append(String.join(" \nand ", whereClauses));
+        query.append(String.join(" \nand ", allWhereClauses()));
         query.append(groupByClause);
         if (parameters.get("offset") == null || parameters.get("limit") == null) {
             addDefaultPaginationFilters();
@@ -63,8 +79,13 @@ public class BaseSubjectSearchQueryBuilder<T> {
             removePaginationFilters();
         } else {
             String offsetLimitClause = "offset :offset limit :limit";
+            boolean exactMatchesFirst = orderByClause.isEmpty() && searchAllExactFirst != null && groupByClause.isEmpty();
+            if (exactMatchesFirst) {
+                parameters.put("searchAllExact", searchAllText);
+                parameters.put("searchAllExactAnswer", searchAllExactAnswer);
+            }
             finalQuery = query.append("\n")
-                    .append(orderByClause)
+                    .append(exactMatchesFirst ? "order by " + searchAllExactFirst + ", i.id desc" : orderByClause)
                     .append("\n")
                     .append(offsetLimitClause)
                     .toString();
@@ -103,7 +124,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
             Map<String, String> columnsMap = new HashMap<String, String>() {
                 {
                     put("ID", "i.id");
-                    put("FULLNAME", "concat_ws(' ',i.first_name,i.middle_name,i.last_name)");
+                    put("FULLNAME", FULL_NAME);
                     put("SUBJECTTYPE", "st.name");
                     put("GENDER", "gender.name");
                     put("DATEOFBIRTH", "i.date_of_birth");
@@ -111,7 +132,10 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 }
             };
 
-            this.orderByClause = "order by " + columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder.name() + ", i.id desc";
+            String sortExpression = sortColumn.equalsIgnoreCase("AGE")
+                    ? "i.date_of_birth " + (sortOrder == SortOrder.asc ? SortOrder.desc : SortOrder.asc).name() + " nulls last"
+                    : columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder.name();
+            this.orderByClause = "order by " + sortExpression + ", i.id desc";
         }
 
         return (T) this;
@@ -141,13 +165,33 @@ public class BaseSubjectSearchQueryBuilder<T> {
     }
 
     protected void addCustomFields(org.avni.server.domain.Concept concept) {
+        String alias = escapeSqlIdentifier(concept.getName());
+        String uuidParam = customFieldConceptParameter(concept.getUuid());
         if (concept.isCoded()) {
-            customFields.add(String.format("multi_select_coded(i.observations -> '%s') as \"%s\"", concept.getUuid(), concept.getName()));
+            customFields.add(String.format("multi_select_coded(i.observations -> :%s) as \"%s\"", uuidParam, alias));
         } else if (concept.getDataType().equals(ConceptDataType.Date.toString())) {
-            customFields.add(String.format("%s as \"%s\"", observationAsDate(String.format("i.observations ->> '%s'", concept.getUuid())), concept.getName()));
+            customFields.add(String.format("%s as \"%s\"", observationAsDate(String.format("i.observations ->> :%s", uuidParam)), alias));
         } else {
-            customFields.add(String.format("i.observations ->> '%s' as \"%s\"", concept.getUuid(), concept.getName()));
+            customFields.add(String.format("i.observations ->> :%s as \"%s\"", uuidParam, alias));
         }
+    }
+
+    // A concept's uuid is whatever its save request sent, and this query runs with row-level security off,
+    // so it is bound, never pasted (found with avni-security#97). One parameter per distinct uuid keeps
+    // customFields de-duplicating a concept listed twice.
+    private String customFieldConceptParameter(String conceptUuid) {
+        return customFieldConceptParameters.computeIfAbsent(conceptUuid, uuid -> {
+            String name = "customFieldConcept" + customFieldConceptParameters.size();
+            parameters.put(name, uuid);
+            return name;
+        });
+    }
+
+    // The concept name is interpolated as a SQL column alias (as "..."). Double any embedded
+    // double-quote so the name stays one identifier — prevents SQL injection via a crafted
+    // concept name, and the plain breakage when a legitimate name contains a quote.
+    private static String escapeSqlIdentifier(String identifier) {
+        return identifier == null ? null : identifier.replace("\"", "\"\"");
     }
 
     private List<CustomSearchFields> getSearchFields(String subjectTypeUUID, List<CustomSearchFields> customSearchFields) {
@@ -167,9 +211,34 @@ public class BaseSubjectSearchQueryBuilder<T> {
         return (T) this;
     }
 
+    // A stored answer that isn't a valid date or time (empty, or hand-edited / uploaded text) is treated as no answer,
+    // so one bad record can't fail the whole search (avni-webapp#965). The patterns accept only real calendar dates
+    // (days per month, 29 February in leap years only), so the casts below never see a value they would reject.
+    // Postgres evaluates a case lazily, so a cast only runs on a value its pattern accepted.
+    private static final String CALENDAR_DATE = "([1-9][0-9]{3}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-8]))"
+            + "|([1-9][0-9](0[48]|[2468][048]|[13579][26])|([2468][048]|[13579][26])00)-02-29)";
+    private static final String TIME_OF_DAY = "([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9](\\.[0-9]+)?)?";
+    // Offsets stop at ±15:59, the most Postgres reads; real ones go to ±14:00.
+    static final String DATE_TIME_PATTERN = "^" + CALENDAR_DATE + "[Tt ]" + TIME_OF_DAY + "(Z|[+-](0[0-9]|1[0-5])(:?[0-5][0-9])?)?$";
+    static final String DATE_PATTERN = "^" + CALENDAR_DATE + "$";
+    // CSV upload saves a Time cell as typed, so a Time answer can be 9:30, 9:30:00 PM or 9:30am, with spaces around it.
+    // Accepted: a 24-hour time with a one- or two-digit hour, or a 12-hour time with AM/PM, all of which Postgres reads.
+    private static final String SECONDS = "(:[0-5][0-9](\\.[0-9]+)?)?";
+    static final String TIME_PATTERN = "^ *((0?[0-9]|1[0-9]|2[0-3]):[0-5][0-9]" + SECONDS + "|(0?[0-9]|1[0-2]):[0-5][0-9]" + SECONDS + " *[aApP][mM]) *$";
+
     private String observationAsDate(String observationValue) {
-        return String.format("(case when %1$s like '%%T%%' then cast(cast(%1$s as timestamp with time zone) at time zone '%2$s' as date) else cast(%1$s as date) end)",
-                observationValue, timeZone);
+        return String.format("(case when %1$s ~ '%3$s' then cast(cast(%1$s as timestamp with time zone) at time zone '%2$s' as date)" +
+                        " when %1$s ~ '%4$s' then cast(%1$s as date) end)",
+                observationValue, timeZone, DATE_TIME_PATTERN, DATE_PATTERN);
+    }
+
+    private static String observationAsTime(String observationValue) {
+        return String.format("(case when %1$s ~ '%2$s' then cast(%1$s as time) end)", observationValue, TIME_PATTERN);
+    }
+
+    // Typed text is matched as written: % and _ are not wildcards, as on the phone.
+    static String containsPattern(String value) {
+        return "%" + value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     protected String localDate(String timestampColumn) {
@@ -182,11 +251,12 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 : String.format("cast(:%s as date)", param);
     }
 
+    /**
+     * A DateTime filter compares dates in the user's time zone, not moments: From and To on the same day match any
+     * answer on that day, whatever time the date picker sent (avni-webapp#965).
+     */
     private String dateTimeComparison(String observation, String operator, String param, String value) {
-        if (value.contains("T")) {
-            return String.format("cast(%s as timestamp with time zone) %s cast(:%s as timestamp with time zone)", observation, operator, param);
-        }
-        return String.format("%s %s cast(:%s as date)", observationAsDate(observation), operator, param);
+        return String.format("%s %s %s", observationAsDate(observation), operator, parameterAsDate(param, value));
     }
 
     public T withNameFilter(String name) {
@@ -258,12 +328,90 @@ public class BaseSubjectSearchQueryBuilder<T> {
         return (T) this;
     }
 
-    public T withSearchAll(String searchString) {
+    public T withSearchAll(String typedText) {
+        String searchString = SubjectSearchRequest.trimLikeThePhone(typedText == null ? null : typedText.replace("\u0000", ""));
         if (StringUtils.isEmpty(searchString)) return (T) this;
-        String searchValue = "%" + searchString + "%";
-        parameters.put("searchAll", searchValue);
-        whereClauses.add("(cast(i.observations as text) ilike :searchAll or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and cast(penr.observations as text) ilike :searchAll))");
+        boolean partOfANumber = searchString.matches(PART_OF_A_NUMBER_PATTERN);
+        parameters.put("searchAll", containsPattern(searchString));
+        parameters.put("searchAllStored", containsPattern(asStoredInJson(searchString)));
+        parameters.put("searchAllPath", searchAllPath(searchString));
+        if (partOfANumber) parameters.put("searchAllNumber", numberValueContaining(searchString));
+        whereClauses.add("(" + FULL_NAME + " ilike :searchAll" +
+                " or " + answersContainSearchAll("i.observations", partOfANumber) +
+                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false" + exitRule() + tickedProgramsRule() + " and " + answersContainSearchAll("penr.observations", partOfANumber) + "))");
+        if (partOfANumber) {
+            searchAllText = searchString;
+            searchAllExactAnswer = answerValueEqualTo(searchString);
+            searchAllExactFirst = "(case when lower(" + FULL_NAME + ") = lower(:searchAllExact)" +
+                    " or cast(i.observations as text) ~* :searchAllExactAnswer" +
+                    " or exists (select 1 from program_enrolment penr where penr.individual_id = i.id and penr.is_voided is false" + exitRule() + tickedProgramsRule() +
+                    " and cast(penr.observations as text) ~* :searchAllExactAnswer) then 0 else 1 end)";
+        }
         return (T) this;
+    }
+
+    private static String answersContainSearchAll(String observations, boolean partOfANumber) {
+        String numberContains = partOfANumber ? String.format(" or cast(%1$s as text) ~ :searchAllNumber", observations) : "";
+        return String.format("(case when cast(%1$s as text) ilike :searchAllStored then (jsonb_path_exists(%1$s, cast(:searchAllPath as jsonpath), '{}', true)%2$s) else false end)",
+                observations, numberContains);
+    }
+
+    // In jsonb's text a value follows ": " (or "[" / ", " in a list) and ends at ",", "}" or "]"; a number has no quotes, so digits in keys or uuids never match.
+    static String numberValueContaining(String typedNumber) {
+        String before = typedNumber.startsWith("-") ? "" : "-?[0-9.]*";
+        return VALUE_START + before + regexLiteral(typedNumber) + "[0-9.]*" + VALUE_END;
+    }
+
+    static String answerValueEqualTo(String typedText) {
+        String asString = "\"" + regexLiteral(asStoredInJson(typedText)) + "\"";
+        String asNumber = typedText.matches(NUMBER_PATTERN) ? "|" + regexLiteral(new BigDecimal(typedText).toPlainString()) : "";
+        return ANSWER_OF_A_QUESTION + "(" + asString + asNumber + ")[,}]";
+    }
+
+    private static String regexLiteral(String text) {
+        return text.replaceAll("([\\\\^$.|?*+()\\[\\]{}])", "\\\\$1");
+    }
+
+    static String asStoredInJson(String value) {
+        StringBuilder stored = new StringBuilder();
+        value.chars().forEach(c -> {
+            switch (c) {
+                case '"' -> stored.append("\\\"");
+                case '\\' -> stored.append("\\\\");
+                case '\b' -> stored.append("\\b");
+                case '\f' -> stored.append("\\f");
+                case '\n' -> stored.append("\\n");
+                case '\r' -> stored.append("\\r");
+                case '\t' -> stored.append("\\t");
+                default -> {
+                    if (c < 0x20) stored.append(String.format("\\u%04x", c));
+                    else stored.append((char) c);
+                }
+            }
+        });
+        return stored.toString();
+    }
+
+    static String searchAllPath(String searchString) {
+        StringBuilder path = new StringBuilder("strict $.** ? ((@.type() == \"string\" && !(@ like_regex \"")
+                .append(UUID_PATTERN).append("\") && @ like_regex ").append(jsonPathString(searchString)).append(" flag \"iq\")");
+        if (searchString.matches(NUMBER_PATTERN)) {
+            path.append(" || (@.type() == \"number\" && @ == ").append(new BigDecimal(searchString).toPlainString()).append(")");
+        }
+        if (searchString.equalsIgnoreCase("true") || searchString.equalsIgnoreCase("false")) {
+            path.append(" || (@.type() == \"boolean\" && @ == ").append(searchString.toLowerCase()).append(")");
+        }
+        return path.append(")").toString();
+    }
+
+    private static String jsonPathString(String value) {
+        StringBuilder literal = new StringBuilder("\"");
+        value.chars().forEach(c -> {
+            if (c == '"' || c == '\\') literal.append('\\').append((char) c);
+            else if (c < 0x20) literal.append(String.format("\\u%04x", c));
+            else literal.append((char) c);
+        });
+        return literal.append("\"").toString();
     }
 
     private String getFilterForSearchScope(String searchScope) {
@@ -271,10 +419,10 @@ public class BaseSubjectSearchQueryBuilder<T> {
             return ENCOUNTER_FILTER;
         }
         if (searchScope.equalsIgnoreCase("programEnrolment")) {
-            return PROGRAM_ENROLMENT_FILTER;
+            return programEnrolmentFilter();
         }
         if (searchScope.equalsIgnoreCase("programEncounter")) {
-            return PROGRAM_ENCOUNTER_FILTER;
+            return programEncounterFilter();
         }
         return "";
     }
@@ -303,7 +451,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
             String conceptUuidParam = "conceptUuid" + ci;
             addParameter(conceptUuidParam, c.getUuid());
             String tableAlias = aliasMap.get(c.getSearchScope().toUpperCase());
-            int clausesBefore = whereClauses.size();
+            List<String> conceptConditions = new ArrayList<>();
 
             if (c.getDataType().equalsIgnoreCase("CODED")) {
                 List<String> conditions = new ArrayList<>();
@@ -319,14 +467,14 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     conditions.add(sql);
                 }
                 String codedFilter = String.join(" or ", conditions);
-                whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), "(" + codedFilter + ")"));
+                conceptConditions.add("(" + codedFilter + ")");
             }
 
             if (c.getDataType().equalsIgnoreCase("TEXT") || c.getDataType().equalsIgnoreCase("ID") || c.getDataType().equalsIgnoreCase("NOTES")) {
-                String value = "%" + c.getValue() + "%";
+                String value = containsPattern(c.getValue());
                 String param = "textValue" + ci;
                 addParameter(param, value);
-                whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), tableAlias + ".observations->> :" + conceptUuidParam + " ilike :" + param));
+                conceptConditions.add(tableAlias + ".observations->> :" + conceptUuidParam + " ilike :" + param);
             }
 
             if (c.getDataType().equalsIgnoreCase("NUMERIC")) {
@@ -335,19 +483,19 @@ public class BaseSubjectSearchQueryBuilder<T> {
                         BigDecimal value = new BigDecimal(c.getMinValue());
                         String param = "numericValueMin" + ci;
                         addParameter(param, value);
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->> :" + conceptUuidParam + " as numeric)  >= :" + param));
+                        conceptConditions.add(observationAsNumber(tableAlias + ".observations ->> :" + conceptUuidParam) + " >= :" + param);
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
                         BigDecimal value = new BigDecimal(c.getMaxValue());
                         String param = "numericValueMax" + ci;
                         addParameter(param, value);
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as numeric)  <= :" + param));
+                        conceptConditions.add(observationAsNumber(tableAlias + ".observations ->> :" + conceptUuidParam) + " <= :" + param);
                     }
                 } else {
                     BigDecimal value = new BigDecimal(c.getMinValue());
                     String param = "numericValueMin" + ci;
                     addParameter(param, value);
-                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),"cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as numeric)  = :" + param));
+                    conceptConditions.add(observationAsNumber(tableAlias + ".observations ->> :" + conceptUuidParam) + " = :" + param);
                 }
             }
 
@@ -357,19 +505,19 @@ public class BaseSubjectSearchQueryBuilder<T> {
                         String value = c.getMinValue();
                         String param = "dateTimeValueMin" + ci;
                         addParameter(param, value);
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  >= cast(:" + param + " as date)"));
+                        conceptConditions.add(observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  >= cast(:" + param + " as date)");
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
                         String value = c.getMaxValue();
                         String param = "dateTimeValueMax" + ci;
                         addParameter(param, value);
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  <= cast(:" + param + " as date)"));
+                        conceptConditions.add(observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  <= cast(:" + param + " as date)");
                     }
                 } else {
                     String value = c.getMinValue();
                     String param = "dateTimeValueMin" + ci;
                     addParameter(param, value);
-                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()),observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  = cast(:" + param + " as date)"));
+                    conceptConditions.add(observationAsDate(tableAlias + ".observations ->>:" + conceptUuidParam) + "  = cast(:" + param + " as date)");
                 }
             }
 
@@ -379,61 +527,96 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     if (!StringUtils.isEmpty(c.getMinValue())) {
                         String param = "dateTimeValueMin" + ci;
                         addParameter(param, c.getMinValue());
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), dateTimeComparison(observation, ">=", param, c.getMinValue())));
+                        conceptConditions.add(dateTimeComparison(observation, ">=", param, c.getMinValue()));
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
                         String param = "dateTimeValueMax" + ci;
                         addParameter(param, c.getMaxValue());
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), dateTimeComparison(observation, "<=", param, c.getMaxValue())));
+                        conceptConditions.add(dateTimeComparison(observation, "<=", param, c.getMaxValue()));
                     }
                 } else if (!StringUtils.isEmpty(c.getMinValue())) {
                     String param = "dateTimeValueMin" + ci;
                     addParameter(param, c.getMinValue());
-                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observationAsDate(observation) + " = " + parameterAsDate(param, c.getMinValue())));
+                    conceptConditions.add(observationAsDate(observation) + " = " + parameterAsDate(param, c.getMinValue()));
                 }
             }
 
             if (c.getDataType().equalsIgnoreCase("TIME")) {
-                String observation = "cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as time)";
+                String observation = observationAsTime(tableAlias + ".observations ->>:" + conceptUuidParam);
                 if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
                     if (!StringUtils.isEmpty(c.getMinValue())) {
                         String param = "timeValueMin" + ci;
                         addParameter(param, c.getMinValue());
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observation + " >= cast(:" + param + " as time)"));
+                        conceptConditions.add(observation + " >= cast(:" + param + " as time)");
                     }
                     if (!StringUtils.isEmpty(c.getMaxValue())) {
                         String param = "timeValueMax" + ci;
                         addParameter(param, c.getMaxValue());
-                        whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observation + " <= cast(:" + param + " as time)"));
+                        conceptConditions.add(observation + " <= cast(:" + param + " as time)");
                     }
                 } else if (!StringUtils.isEmpty(c.getMinValue())) {
                     String param = "timeValueMin" + ci;
                     addParameter(param, c.getMinValue());
-                    whereClauses.add(generateWhereClause(getFilterForSearchScope(c.getSearchScope()), observation + " = cast(:" + param + " as time)"));
+                    conceptConditions.add(observation + " = cast(:" + param + " as time)");
                 }
             }
 
-            if (whereClauses.size() == clausesBefore) {
+            if (conceptConditions.isEmpty()) {
                 parameters.remove(conceptUuidParam);
                 logger.warn("Search filter on concept {} of type {} is not supported and was ignored", c.getUuid(), c.getDataType());
+            } else {
+                conceptConditions.addAll(chosenProgramsAndEncounterTypes(c, ci));
+                addScopedCondition(c.getSearchScope(), String.join(" and ", conceptConditions));
             }
         }
 
         return (T) this;
     }
 
+    // As on the phone, a filter's chosen programmes and encounter types limit which enrolments and visits it looks at.
+    private List<String> chosenProgramsAndEncounterTypes(Concept c, int ci) {
+        String scope = c.getSearchScope().toUpperCase();
+        List<String> conditions = new ArrayList<>();
+        boolean programScope = scope.equals("PROGRAMENROLMENT") || scope.equals("PROGRAMENCOUNTER");
+        if (programScope && c.getProgramUUIDs() != null && !c.getProgramUUIDs().isEmpty()) {
+            String param = "conceptPrograms" + ci;
+            addParameter(param, c.getProgramUUIDs());
+            conditions.add("penr.program_id in (select cp.id from program cp where cp.uuid in (:" + param + "))");
+        }
+        boolean encounterScope = scope.equals("ENCOUNTER") || scope.equals("PROGRAMENCOUNTER");
+        if (encounterScope && c.getEncounterTypeUUIDs() != null && !c.getEncounterTypeUUIDs().isEmpty()) {
+            String param = "conceptEncounterTypes" + ci;
+            addParameter(param, c.getEncounterTypeUUIDs());
+            String alias = scope.equals("ENCOUNTER") ? "e" : "penc";
+            conditions.add(alias + ".encounter_type_id in (select cet.id from encounter_type cet where cet.uuid in (:" + param + "))");
+        }
+        return conditions;
+    }
+
+    // includeExited only widens: ticked programmes also match exited enrolments, and notEnrolled also matches subjects whose every enrolment has exited.
+    public T withProgramsFilter(List<String> programUuids, boolean includeExited, boolean notEnrolled) {
+        boolean hasPrograms = programUuids != null && !programUuids.isEmpty();
+        if (!hasPrograms && !notEnrolled) return (T) this;
+
+        String exitRule = includeExited ? "" : " and pf_penr.program_exit_date_time is null";
+        List<String> conditions = new ArrayList<>();
+        if (hasPrograms) {
+            withTickedPrograms(programUuids);
+            conditions.add("exists (select 1 from program_enrolment pf_penr join program pf_p on pf_p.id = pf_penr.program_id" +
+                    " where pf_penr.individual_id = i.id and pf_penr.is_voided is false and pf_p.uuid in (:programFilterUuids)" +
+                    exitRule + ")");
+        }
+        if (notEnrolled) {
+            conditions.add("not exists (select 1 from program_enrolment pf_none where pf_none.individual_id = i.id and pf_none.is_voided is false" +
+                    (includeExited ? " and pf_none.program_exit_date_time is null" : "") + ")");
+        }
+        whereClauses.add("(" + String.join(" or ", conditions) + ")");
+        return (T) this;
+    }
+
     protected T withRangeFilter(RangeFilter rangeFilter, String parameterPrefix, String minFilter, String maxFilter, String filter) {
-        if (rangeFilter == null) return (T) this;
-        if (rangeFilter.getMinValue() != null) {
-            String parameter = parameterPrefix + "Min";
-            addParameter(parameter, rangeFilter.getMinValue());
-            whereClauses.add(generateWhereClause(filter, minFilter.replace("rangeParam", parameter)));
-        }
-        if (rangeFilter.getMaxValue() != null) {
-            String parameter = parameterPrefix + "Max";
-            addParameter(parameter, rangeFilter.getMaxValue());
-            whereClauses.add(generateWhereClause(filter, maxFilter.replace("rangeParam", parameter)));
-        }
+        String condition = rangeCondition(rangeFilter, parameterPrefix, minFilter, maxFilter);
+        if (condition != null) whereClauses.add(generateWhereClause(filter, condition));
         return (T) this;
     }
 
@@ -452,5 +635,77 @@ public class BaseSubjectSearchQueryBuilder<T> {
     public T forCount() {
         this.forCount = true;
         return (T) this;
+    }
+
+    public T withIncludeExitedEnrolments(boolean includeExited) {
+        this.includeExitedEnrolments = includeExited;
+        return (T) this;
+    }
+
+    protected String programEnrolmentFilter() {
+        return withTickedProgramsRule(withExitRule(PROGRAM_ENROLMENT_FILTER));
+    }
+
+    protected String programEncounterFilter() {
+        return withTickedProgramsRule(withExitRule(PROGRAM_ENCOUNTER_FILTER));
+    }
+
+    private String withExitRule(String filter) {
+        return filter.replace("penr.is_voided is false\n", "penr.is_voided is false" + exitRule() + "\n");
+    }
+
+    private String exitRule() {
+        return includeExitedEnrolments ? "" : " and penr.program_exit_date_time is null";
+    }
+
+    public T withTickedPrograms(List<String> programUuids) {
+        if (programUuids == null || programUuids.isEmpty()) return (T) this;
+        hasProgramFilter = true;
+        addParameter("programFilterUuids", programUuids);
+        return (T) this;
+    }
+
+    private String tickedProgramsRule() {
+        return hasProgramFilter ? " and penr.program_id in (select pf_program.id from program pf_program where pf_program.uuid in (:programFilterUuids))" : "";
+    }
+
+    private String withTickedProgramsRule(String filter) {
+        return filter.substring(0, filter.length() - 1) + tickedProgramsRule() + "\n";
+    }
+
+    protected String rangeCondition(RangeFilter rangeFilter, String parameterPrefix, String minFilter, String maxFilter) {
+        if (rangeFilter == null) return null;
+        List<String> conditions = new ArrayList<>();
+        if (rangeFilter.getMinValue() != null) {
+            String parameter = parameterPrefix + "Min";
+            addParameter(parameter, rangeFilter.getMinValue());
+            conditions.add(minFilter.replace("rangeParam", parameter));
+        }
+        if (rangeFilter.getMaxValue() != null) {
+            String parameter = parameterPrefix + "Max";
+            addParameter(parameter, rangeFilter.getMaxValue());
+            conditions.add(maxFilter.replace("rangeParam", parameter));
+        }
+        return conditions.isEmpty() ? null : String.join(" and ", conditions);
+    }
+
+    protected void addScopedCondition(String searchScope, String condition) {
+        if (searchScope.equalsIgnoreCase("programEnrolment")) {
+            programEnrolmentConditions.add(condition);
+        } else {
+            whereClauses.add(generateWhereClause(getFilterForSearchScope(searchScope), condition));
+        }
+    }
+
+    private List<String> allWhereClauses() {
+        List<String> clauses = new ArrayList<>(whereClauses);
+        if (!programEnrolmentConditions.isEmpty()) {
+            clauses.add(generateWhereClause(programEnrolmentFilter(), String.join(" and ", programEnrolmentConditions)));
+        }
+        return clauses;
+    }
+
+    private static String observationAsNumber(String observationValue) {
+        return String.format("(case when %1$s ~ '^%2$s$' then cast(%1$s as numeric) end)", observationValue, STORED_NUMBER_PATTERN);
     }
 }

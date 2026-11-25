@@ -261,10 +261,11 @@ public class AvniFiles {
         }
     }
 
-    private static Path zipSlipProtect(ZipEntry zipEntry, Path targetDir) throws IOException {
-        Path targetDirResolved = targetDir.resolve(zipEntry.getName());
+    public static Path zipSlipProtect(ZipEntry zipEntry, Path targetDir) throws IOException {
+        Path normalizedTargetDir = targetDir.normalize();
+        Path targetDirResolved = normalizedTargetDir.resolve(zipEntry.getName());
         Path normalizePath = targetDirResolved.normalize();
-        if (!normalizePath.startsWith(targetDir)) {
+        if (!normalizePath.startsWith(normalizedTargetDir)) {
             throw new IOException("Bad zip entry: " + zipEntry.getName());
         }
         return normalizePath;

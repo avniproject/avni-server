@@ -12,6 +12,7 @@ import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.security.AuthService;
 import org.junit.Before;
@@ -127,5 +128,48 @@ public class AuthServiceTest {
         UserContext userContext = authService.authenticateByUserId(100L, null);
         assertThat(userContext.getUser(), is(equalTo(user)));
         assertThat(userContext.getOrganisation(), is(equalTo(organisation)));
+    }
+
+    @Test
+    public void shouldAllowOrganisationHeaderForUsersOwnOrganisation() throws SigningKeyNotFoundException {
+        Organisation ownOrganisation = organisation(1L, "own-org-uuid");
+        when(organisationRepository.findByUuid("own-org-uuid")).thenReturn(ownOrganisation);
+        when(cognitoAuthService.getUserFromToken("some token")).thenReturn(user);
+        UserContext userContext = authService.authenticateByToken("some token", "own-org-uuid");
+        assertThat(userContext.getOrganisation(), is(equalTo(ownOrganisation)));
+    }
+
+    @Test
+    public void shouldAllowOrganisationHeaderForAccountAdminOfThatOrganisation() throws SigningKeyNotFoundException {
+        user.setId(100L);
+        Organisation otherOrganisation = organisation(2L, "other-org-uuid");
+        when(organisationRepository.findByUuid("other-org-uuid")).thenReturn(otherOrganisation);
+        when(organisationRepository.findByIdAndAccount_AccountAdmin_User_Id(2L, 100L)).thenReturn(otherOrganisation);
+        when(cognitoAuthService.getUserFromToken("some token")).thenReturn(user);
+        UserContext userContext = authService.authenticateByToken("some token", "other-org-uuid");
+        assertThat(userContext.getOrganisation(), is(equalTo(otherOrganisation)));
+    }
+
+    @Test(expected = AvniAccessException.class)
+    public void shouldRefuseOrganisationHeaderForOrganisationTheUserDoesNotBelongTo() throws SigningKeyNotFoundException {
+        user.setId(100L);
+        when(organisationRepository.findByUuid("other-org-uuid")).thenReturn(organisation(2L, "other-org-uuid"));
+        when(organisationRepository.findByIdAndAccount_AccountAdmin_User_Id(2L, 100L)).thenReturn(null);
+        when(cognitoAuthService.getUserFromToken("some token")).thenReturn(user);
+        authService.authenticateByToken("some token", "other-org-uuid");
+    }
+
+    @Test(expected = AvniAccessException.class)
+    public void shouldRefuseOrganisationHeaderThatMatchesNoOrganisation() throws SigningKeyNotFoundException {
+        when(organisationRepository.findByUuid("00000000-0000-0000-0000-000000000000")).thenReturn(null);
+        when(cognitoAuthService.getUserFromToken("some token")).thenReturn(user);
+        authService.authenticateByToken("some token", "00000000-0000-0000-0000-000000000000");
+    }
+
+    private Organisation organisation(Long id, String uuid) {
+        Organisation organisation = new Organisation();
+        organisation.setId(id);
+        organisation.setUuid(uuid);
+        return organisation;
     }
 }

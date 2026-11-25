@@ -3,6 +3,7 @@ package org.avni.server.service.builder;
 import org.avni.server.dao.GroupPrivilegeRepository;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.PrivilegeRepository;
+import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
@@ -64,6 +65,10 @@ public class TestGroupService {
         Arrays.stream(programs).forEach(program -> {
             this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).setProgram(program).build(), PrivilegeType.ViewEnrolmentDetails);
         });
+    }
+
+    public void giveViewChecklistPrivilegeTo(Group group, SubjectType subjectType, ChecklistDetail checklistDetail) {
+        this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).setChecklistDetail(checklistDetail).build(), PrivilegeType.ViewChecklist);
     }
 
     public void giveMultiTxEntityTypeUpdatePrivilegeTo(Group group) {

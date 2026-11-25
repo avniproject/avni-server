@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<SubjectSearchQueryBuilder> implements SearchBuilder {
     public static final String SubjectTypeColumn = "                st.name as \"subjectTypeName\",\n";
-    public static final String HardCodedSubjectTypeColumn = "                '$SubjectTypeName' as \"subjectTypeName\",\n";
+    // The name is bound, never pasted: this query runs with row-level security off (avni-security#97).
+    public static final String HardCodedSubjectTypeColumn = "                cast(:subjectTypeName as text) as \"subjectTypeName\",\n";
     public static final String SubjectTypeJoin = "         left outer join subject_type st on i.subject_type_id = st.id and st.is_voided is false\n";
 
     public SqlQuery build(SubjectType subjectType) {
@@ -17,7 +18,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 "                i.first_name as \"firstName\",\n" +
                 "                i.last_name as \"lastName\",\n" +
                 "                i.profile_picture as \"profilePicture\",\n" +
-                "                cast(concat_ws(' ',i.first_name,i.middle_name,i.last_name)as text) as \"fullName\",\n" +
+                "                cast(" + FULL_NAME + " as text) as \"fullName\",\n" +
                 "                i.uuid as \"uuid\",\n" +
                 "                i.address_id as \"addressId\",\n" +
                 "$SubjectTypeColumn" +
@@ -31,8 +32,9 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
             baseQuery = baseQuery.replace("$SubjectTypeColumn", SubjectTypeColumn);
             baseQuery = baseQuery.replace("$SubjectTypeJoin", SubjectTypeJoin);
         } else {
-            baseQuery = baseQuery.replace("$SubjectTypeColumn", HardCodedSubjectTypeColumn.replace("$SubjectTypeName", subjectType.getName()));
+            baseQuery = baseQuery.replace("$SubjectTypeColumn", HardCodedSubjectTypeColumn);
             baseQuery = baseQuery.replace("$SubjectTypeJoin", "");
+            addParameter("subjectTypeName", subjectType.getName());
         }
         return super.buildUsingBaseQuery(baseQuery, "");
     }
@@ -40,6 +42,8 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
     public SubjectSearchQueryBuilder withSubjectSearchFilter(SubjectSearchRequest request, SubjectType subjectType) {
         return this
                 .withTimeZone(request.getTimeZone())
+                .withIncludeExitedEnrolments(request.isIncludeExitedEnrolments())
+                .withTickedPrograms(request.getPrograms())
                 .withNameFilter(request.getName())
                 .withConceptsFilter(request.getConcept())
                 .withSearchAll(request.getSearchAll())
@@ -51,6 +55,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 .withEncounterDateFilter(request.getEncounterDate())
                 .withProgramEnrolmentDateFilter(request.getProgramEnrolmentDate())
                 .withProgramEncounterDateFilter(request.getProgramEncounterDate())
+                .withProgramsFilter(request.getPrograms(), request.isIncludeExitedEnrolments(), request.isNotEnrolledInAnyProgram())
                 .withAddressIdsFilter(request.getAddressIds())
                 .withIncludeVoidedFilter(request.getIncludeVoided())
                 .withPaginationFilters(request.getPageElement())
@@ -86,15 +91,17 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
         return withRangeFilter(dateRange,
                         "programEncounterDate",
                         localDate("penc.encounter_date_time") + " >= cast(:rangeParam as date)",
-                        localDate("penc.encounter_date_time") + " <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
+                        localDate("penc.encounter_date_time") + " <= cast(:rangeParam as date)", programEncounterFilter());
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withRangeFilter(dateRange,
+        String condition = rangeCondition(dateRange,
                         "programEnrolmentDate",
                         localDate("penr.enrolment_date_time") + " >= cast(trim(:rangeParam) as date)",
-                        localDate("penr.enrolment_date_time") + " <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
+                        localDate("penr.enrolment_date_time") + " <= cast(trim(:rangeParam) as date)");
+        if (condition != null) addScopedCondition("programEnrolment", condition);
+        return this;
     }
 
     @Override

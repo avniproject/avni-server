@@ -19,4 +19,8 @@ public class EligibilityRuleResponseEntity extends BaseRuleResponseEntity {
     public void setEligibilityRuleEntities(List<EligibilityRuleEntity> eligibilityRuleEntities) {
         this.eligibilityRuleEntities = eligibilityRuleEntities;
     }
+
+    public boolean hasNoResults() {
+        return "failure".equals(getStatus()) || eligibilityRuleEntities == null;
+    }
 }

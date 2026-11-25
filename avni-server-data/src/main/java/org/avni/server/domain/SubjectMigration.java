@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +21,9 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "individual_id")
     private Individual individual;
+
+    @Transient
+    private String linkedIndividualUuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "old_address_level_id")
@@ -141,5 +145,14 @@ public class SubjectMigration extends OrganisationAwareEntity implements Subject
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedIndividualUuid() {
+        return uuidOf(individual, linkedIndividualUuid);
+    }
+
+    public void setLinkedIndividualUuid(String linkedIndividualUuid) {
+        this.linkedIndividualUuid = linkedIndividualUuid;
     }
 }

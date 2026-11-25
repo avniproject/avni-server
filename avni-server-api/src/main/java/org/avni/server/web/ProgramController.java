@@ -16,7 +16,7 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
 import org.avni.server.service.ProgramService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.BadRequestError;
+import jakarta.persistence.EntityNotFoundException;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.ProgramRequest;
@@ -30,6 +30,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -169,9 +170,10 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     @GetMapping(value = "/web/program")
     @Transactional(readOnly = true)
     @ResponseBody
-    public CollectionModel<EntityModel<ProgramContractWeb>> getAll(Pageable pageable) {
-        return wrap(operationalProgramRepository
-                .findPageByIsVoidedFalse(pageable)
+    public CollectionModel<EntityModel<ProgramContractWeb>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
+        return wrap((StringUtils.hasText(name)
+                ? operationalProgramRepository.findPageByIsVoidedFalseAndNameIgnoreCaseContaining(name.trim(), pageable)
+                : operationalProgramRepository.findPageByIsVoidedFalse(pageable))
                 .map(ProgramContractWeb::fromOperationalProgram));
     }
 
@@ -204,7 +206,7 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     @ResponseBody
     public List<ProgramContractWeb> getEligiblePrograms(@RequestParam String subjectUuid) {
         Individual individual = individualRepository.findByUuid(subjectUuid);
-        if (individual == null) throw new BadRequestError("Subject %s not found", subjectUuid);
+        if (individual == null) throw new EntityNotFoundException(String.format("Subject %s not found", subjectUuid));
         List<Program> eligiblePrograms = programService.getEligiblePrograms(individual);
         List<OperationalProgram> operationalPrograms = new ArrayList<>();
         for (Program p : eligiblePrograms) {

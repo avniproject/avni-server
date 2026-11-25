@@ -10,7 +10,7 @@ public class EncounterResourceProcessor extends ResourceProcessor<Encounter>{
         Encounter encounter = resource.getContent();
         resource.removeLinks();
         resource.add(Link.of(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(Link.of(encounter.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(encounter.getLinkedIndividualUuid(), "individualUUID"));
         return resource;
     }
 }

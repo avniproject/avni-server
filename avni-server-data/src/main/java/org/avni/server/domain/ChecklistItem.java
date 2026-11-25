@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -34,6 +35,9 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "checklist_id")
     private Checklist checklist;
+
+    @Transient
+    private String linkedChecklistUuid;
 
     @Column(updatable = false)
     private boolean syncDisabled;
@@ -100,5 +104,14 @@ public class ChecklistItem extends OrganisationAwareEntity implements SubjectLin
     @PreUpdate
     public void beforeUpdate() {
         SyncDisabledEntityHelper.handleSave(this, this.getChecklist().getProgramEnrolment().getIndividual());
+    }
+
+    @JsonIgnore
+    public String getLinkedChecklistUuid() {
+        return uuidOf(checklist, linkedChecklistUuid);
+    }
+
+    public void setLinkedChecklistUuid(String linkedChecklistUuid) {
+        this.linkedChecklistUuid = linkedChecklistUuid;
     }
 }

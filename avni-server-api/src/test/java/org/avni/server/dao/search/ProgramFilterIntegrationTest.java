@@ -1,0 +1,223 @@
+package org.avni.server.dao.search;
+
+import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.dao.OperationalProgramRepository;
+import org.avni.server.domain.*;
+import org.avni.server.domain.factory.metadata.ProgramBuilder;
+import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
+import org.avni.server.domain.factory.txn.SubjectBuilder;
+import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.IndividualSearchService;
+import org.avni.server.service.builder.*;
+import org.avni.server.web.request.EnrolmentContract;
+import org.avni.server.web.request.webapp.search.PageDetails;
+import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
+import org.joda.time.DateTime;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.jdbc.Sql;
+
+import javax.sql.DataSource;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+public class ProgramFilterIntegrationTest extends AbstractControllerIntegrationTest {
+    @Autowired
+    private TestDataSetupService testDataSetupService;
+    @Autowired
+    private TestSubjectTypeService testSubjectTypeService;
+    @Autowired
+    private TestSubjectService testSubjectService;
+    @Autowired
+    private TestProgramService testProgramService;
+    @Autowired
+    private TestProgramEnrolmentService testProgramEnrolmentService;
+    @Autowired
+    private IndividualSearchService individualSearchService;
+    @Autowired
+    private OperationalProgramRepository operationalProgramRepository;
+    @Autowired
+    private DataSource dataSource;
+
+    private SubjectType subjectType;
+    private Program programA;
+    private Program programB;
+    private TestDataSetupService.TestCatchmentData catchment;
+
+    private void setUpOrganisation(String suffix) {
+        TestDataSetupService.TestOrganisationData org = testDataSetupService.setupOrganisation(suffix);
+        setUser(org.getUser());
+        catchment = testDataSetupService.setupACatchment();
+        subjectType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setName("Person " + suffix).build());
+        programA = testProgramService.addProgram(new ProgramBuilder().withName("Programme A " + suffix).build(), subjectType);
+        programB = testProgramService.addProgram(new ProgramBuilder().withName("Programme B " + suffix).build(), subjectType);
+    }
+
+    private Individual subject(String firstName) {
+        return testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType)
+                .withLocation(catchment.getAddressLevel1()).withFirstName(firstName).build());
+    }
+
+    private void enrol(Individual individual, Program program, DateTime exitDateTime, boolean voided) {
+        ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(program).setIndividual(individual)
+                .setProgramExitDateTime(exitDateTime).build();
+        enrolment.setVoided(voided);
+        testProgramEnrolmentService.save(enrolment);
+    }
+
+    private List<Map<String, Object>> search(List<String> programs, boolean includeExited, boolean notEnrolled) {
+        SubjectSearchRequest request = new SubjectSearchRequest();
+        request.setSubjectType(subjectType.getUuid());
+        request.setPrograms(programs);
+        request.setIncludeExitedEnrolments(includeExited);
+        request.setNotEnrolledInAnyProgram(notEnrolled);
+        request.setIncludeVoided(false);
+        PageDetails page = new PageDetails();
+        page.setPageNumber(0);
+        page.setNumberOfRecordPerPage(100);
+        request.setPageElement(page);
+        return (List<Map<String, Object>>) individualSearchService.search(request).get("listOfRecords");
+    }
+
+    private List<String> uuids(List<Map<String, Object>> rows) {
+        return rows.stream().map(row -> (String) row.get("uuid")).collect(Collectors.toList());
+    }
+
+    private List<String> enrolmentsOf(List<Map<String, Object>> rows, Individual individual) {
+        Map<String, Object> row = rows.stream().filter(r -> individual.getUuid().equals(r.get("uuid"))).findFirst().orElseThrow();
+        return ((List<EnrolmentContract>) row.get("enrolments")).stream()
+                .map(e -> e.getOperationalProgramName() + (e.getProgramExitDateTime() == null ? "" : " exited"))
+                .collect(Collectors.toList());
+    }
+
+    @Test
+    public void includeExitedOnlyWidensNotEnrolledAndTheTickedProgrammes() {
+        setUpOrganisation("pfa");
+        Individual neverEnrolled = subject("Never");
+        Individual activeInA = subject("ActiveA");
+        enrol(activeInA, programA, null, false);
+        Individual exitedFromA = subject("ExitedA");
+        enrol(exitedFromA, programA, DateTime.now().minusDays(1), false);
+        Individual exitedFromBActiveInA = subject("ExitedBActiveA");
+        enrol(exitedFromBActiveInA, programB, DateTime.now().minusDays(1), false);
+        enrol(exitedFromBActiveInA, programA, null, false);
+
+        assertThat(uuids(search(null, false, true))).containsExactly(neverEnrolled.getUuid());
+        assertThat(uuids(search(null, true, true))).containsExactlyInAnyOrder(neverEnrolled.getUuid(), exitedFromA.getUuid());
+        assertThat(uuids(search(null, true, false)))
+                .containsExactlyInAnyOrder(neverEnrolled.getUuid(), activeInA.getUuid(), exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
+        assertThat(uuids(search(Collections.singletonList(programA.getUuid()), false, true)))
+                .containsExactlyInAnyOrder(neverEnrolled.getUuid(), activeInA.getUuid(), exitedFromBActiveInA.getUuid());
+        assertThat(uuids(search(Collections.singletonList(programA.getUuid()), true, true)))
+                .containsExactlyInAnyOrder(neverEnrolled.getUuid(), activeInA.getUuid(), exitedFromA.getUuid(), exitedFromBActiveInA.getUuid());
+    }
+
+    @Test
+    public void resultsListExitedEnrolmentsWithTheirExitDateOnlyWithIncludeExited() {
+        setUpOrganisation("pfb");
+        Individual activeInA = subject("ActiveA");
+        enrol(activeInA, programA, null, false);
+        Individual exitedFromA = subject("ExitedA");
+        enrol(exitedFromA, programA, DateTime.now().minusDays(1), false);
+        enrol(exitedFromA, programB, DateTime.now().minusDays(1), true);
+        Individual reEnrolledInA = subject("ReEnrolledA");
+        enrol(reEnrolledInA, programA, DateTime.now().minusDays(5), false);
+        enrol(reEnrolledInA, programA, null, false);
+        Individual deletedFromA = subject("DeletedA");
+        enrol(deletedFromA, programA, null, true);
+        String a = subjectType.getName();
+
+        List<Map<String, Object>> withoutIncludeExited = search(null, false, false);
+        assertThat(enrolmentsOf(withoutIncludeExited, activeInA)).containsExactly(a);
+        assertThat(enrolmentsOf(withoutIncludeExited, exitedFromA)).isEmpty();
+        assertThat(enrolmentsOf(withoutIncludeExited, reEnrolledInA)).containsExactly(a);
+        assertThat(enrolmentsOf(withoutIncludeExited, deletedFromA)).isEmpty();
+
+        List<Map<String, Object>> withIncludeExited = search(Collections.singletonList(programA.getUuid()), true, false);
+        assertThat(uuids(withIncludeExited)).containsExactlyInAnyOrder(activeInA.getUuid(), exitedFromA.getUuid(), reEnrolledInA.getUuid());
+        assertThat(enrolmentsOf(withIncludeExited, activeInA)).containsExactly(a);
+        assertThat(enrolmentsOf(withIncludeExited, exitedFromA)).containsExactly(a + " exited");
+        assertThat(enrolmentsOf(withIncludeExited, reEnrolledInA)).containsExactlyInAnyOrder(a, a + " exited");
+    }
+
+    @Test
+    public void exitedEnrolmentsOfProgrammesThatWereNotTickedAreNotListed() {
+        setUpOrganisation("pfc");
+        Individual activeInAExitedFromB = subject("ActiveAExitedB");
+        enrol(activeInAExitedFromB, programA, null, false);
+        enrol(activeInAExitedFromB, programB, DateTime.now().minusDays(1), false);
+        Individual exitedFromAActiveInB = subject("ExitedAActiveB");
+        enrol(exitedFromAActiveInB, programA, DateTime.now().minusDays(1), false);
+        enrol(exitedFromAActiveInB, programB, null, false);
+
+        List<Map<String, Object>> aTicked = search(Collections.singletonList(programA.getUuid()), true, false);
+        assertThat(programmesOf(aTicked, activeInAExitedFromB)).containsExactly("A");
+        assertThat(programmesOf(aTicked, exitedFromAActiveInB)).containsExactlyInAnyOrder("A exited", "B");
+
+        List<Map<String, Object>> nothingTicked = search(null, true, false);
+        assertThat(programmesOf(nothingTicked, activeInAExitedFromB)).containsExactlyInAnyOrder("A", "B exited");
+        assertThat(programmesOf(nothingTicked, exitedFromAActiveInB)).containsExactlyInAnyOrder("A exited", "B");
+    }
+
+    @Test
+    public void enrolmentsShowTheOrganisationsNameForTheProgrammeAndLeaveOutDeletedProgrammes() {
+        setUpOrganisation("pfd");
+        Individual inBoth = subject("InBoth");
+        enrol(inBoth, programA, null, false);
+        enrol(inBoth, programB, DateTime.now().minusDays(1), false);
+        renameOperationalProgram(programA, "Alpha care", false);
+        renameOperationalProgram(programB, "Beta care", true);
+        Program programC = testProgramService.addProgram(new ProgramBuilder().withName("Programme C pfd").build(), subjectType);
+        enrol(inBoth, programC, null, false);
+        new JdbcTemplate(dataSource).update("update program set is_voided = true where id = ?", programC.getId());
+
+        assertThat(enrolmentsOf(search(null, true, false), inBoth)).containsExactly("Alpha care");
+    }
+
+    private List<String> programmesOf(List<Map<String, Object>> rows, Individual individual) {
+        Map<String, Object> row = rows.stream().filter(r -> individual.getUuid().equals(r.get("uuid"))).findFirst().orElseThrow();
+        return ((List<EnrolmentContract>) row.get("enrolments")).stream()
+                .map(e -> (e.getProgramUuid().equals(programA.getUuid()) ? "A" : "B") + (e.getProgramExitDateTime() == null ? "" : " exited"))
+                .collect(Collectors.toList());
+    }
+
+    private void renameOperationalProgram(Program program, String name, boolean voided) {
+        OperationalProgram operationalProgram = operationalProgramRepository.findByProgramAndOrganisationId(program, program.getOrganisationId());
+        operationalProgram.setName(name);
+        operationalProgram.setVoided(voided);
+        operationalProgramRepository.save(operationalProgram);
+    }
+
+    @Test
+    public void enrolmentsShowOnlyTheUsersOwnOrganisationsNameWhenTheParentOrganisationAlsoNamesTheProgramme() {
+        setUpOrganisation("pfchild");
+        User childUser = UserContextHolder.getUserContext().getUser();
+        long childOrganisationId = UserContextHolder.getUserContext().getOrganisationId();
+        Individual enrolledInA = subject("EnrolledInA");
+        enrol(enrolledInA, programA, null, false);
+        renameOperationalProgram(programA, "Own name", false);
+
+        TestDataSetupService.TestOrganisationData parentOrganisation = testDataSetupService.setupOrganisation("pfparent");
+        setUser(parentOrganisation.getUser());
+        OperationalProgram parentsName = new OperationalProgram();
+        parentsName.assignUUID();
+        parentsName.setProgram(programA);
+        parentsName.setName("Parent organisation's name");
+        parentsName.setOrganisationId(parentOrganisation.getOrganisationId());
+        operationalProgramRepository.save(parentsName);
+        setUser(userRepository.getDefaultSuperAdmin());
+        new JdbcTemplate(dataSource).update("update public.organisation set parent_organisation_id = ? where id = ?", parentOrganisation.getOrganisationId(), childOrganisationId);
+        setUser(childUser);
+
+        assertThat(enrolmentsOf(search(null, false, false), enrolledInA)).containsExactly("Own name");
+    }
+}

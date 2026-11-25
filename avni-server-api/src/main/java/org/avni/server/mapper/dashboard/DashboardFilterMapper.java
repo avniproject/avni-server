@@ -57,6 +57,9 @@ public class DashboardFilterMapper {
             observationBasedFilterContract.setScope(observationBasedFilter.getScope());
             observationBasedFilterContract.setProgramUUIDs(observationBasedFilter.getPrograms());
             observationBasedFilterContract.setEncounterTypeUUIDs(observationBasedFilter.getEncounterTypes());
+        } else if (filterType.equals(DashboardFilter.FilterType.SubjectType)) {
+            filterConfigContract.setPresetSubjectTypeUUID(filterConfig.getPresetSubjectTypeUuid());
+            filterConfigContract.setPresetProgramUUID(filterConfig.getPresetProgramUuid());
         }
         return filterContract;
     }

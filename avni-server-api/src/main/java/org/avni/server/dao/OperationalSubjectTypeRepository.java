@@ -30,4 +30,6 @@ public interface OperationalSubjectTypeRepository extends ImplReferenceDataRepos
     OperationalSubjectType findByNameIgnoreCase(String name);
 
     OperationalSubjectType findBySubjectTypeAndOrganisationId(SubjectType subjectType, long organisationId);
+
+    Page<OperationalSubjectType> findPageByIsVoidedFalseAndNameIgnoreCaseContaining(String name, Pageable pageable);
 }

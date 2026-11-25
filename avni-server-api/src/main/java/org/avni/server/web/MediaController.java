@@ -45,6 +45,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +56,8 @@ import static java.lang.String.format;
 
 @RestController
 public class MediaController {
+    public static final int MAX_UPLOAD_URLS_PER_REQUEST = 50;
+
     private final Logger logger;
     private final S3Service s3Service;
     private final StorageServiceProvider storageServiceProvider;
@@ -97,16 +100,7 @@ public class MediaController {
     @Transactional(readOnly = true)
     public ResponseEntity<String> generateUploadUrl(@PathVariable String fileName) {
         logger.info("getting media upload url");
-        // A namespace reserved for admin-managed content must not be writable via the media presign.
-        Optional<ManagedContentNamespace> namespace = ManagedContentNamespace.forRelativeKey(fileName);
-        if (namespace.isPresent()) {
-            String key = authorizedNamespacedKey(namespace.get(), FilenameUtils.getName(fileName));
-            return getFileUrlResponse(key, HttpMethod.PUT, storageServiceProvider.forDataClass(namespace.get().getDataClass()));
-        }
-        if (ManagedContentNamespace.forPrefix(prefixOf(fileName)).isPresent()) {
-            throw new BadRequestError("Invalid file name '%s'. Expected %s.", fileName, ManagedContentNamespace.expectedKeyForms());
-        }
-        return getFileUrlResponse(fileName, HttpMethod.PUT, s3Service);
+        return uploadUrlResponse(fileName);
     }
 
     private ResponseEntity<String> getFileUrlResponse(String fileName, HttpMethod method) {
@@ -525,13 +519,74 @@ public class MediaController {
     }
 
     @GetMapping("/web/media/downloadStream")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true, rollbackFor = Exception.class)
     public ResponseEntity<InputStreamResource> downloadFile(@RequestParam String s3Url, @RequestParam String fileName) throws IOException {
-        InputStreamResource resource = new InputStreamResource(s3Service.getObjectContentFromUrl(s3Url));
+        S3Service storage = storageFor(s3Url);
+        try {
+            checkMediaBelongsToCurrentOrganisation(storage, s3Url);
+        } catch (AccessDeniedException e) {
+            logger.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        InputStreamResource resource = new InputStreamResource(storage.getObjectContentFromUrl(s3Url));
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                 .contentType(MediaType.parseMediaType("application/octet-stream"))
                 .body(resource);
+    }
+
+    @RequestMapping(value = "/media/uploadUrls", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> generateUploadUrls(@RequestBody List<String> fileNames) {
+        if (fileNames == null) {
+            throw new BadRequestError("Expected a list of file names.");
+        }
+        logger.info("getting {} media upload urls", fileNames.size());
+        if (fileNames.size() > MAX_UPLOAD_URLS_PER_REQUEST) {
+            throw new BadRequestError("At most %d file names per request, got %d.", MAX_UPLOAD_URLS_PER_REQUEST, fileNames.size());
+        }
+        fileNames.forEach(this::validateUploadFileName);
+        Map<String, String> uploadUrls = new LinkedHashMap<>();
+        for (String fileName : fileNames) {
+            ResponseEntity<String> response = uploadUrlResponse(fileName);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                return response;
+            }
+            uploadUrls.put(fileName, response.getBody());
+        }
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(uploadUrls);
+    }
+
+    private ResponseEntity<String> uploadUrlResponse(String fileName) {
+        validateUploadFileName(fileName);
+        // A namespace reserved for admin-managed content must not be writable via the media presign.
+        Optional<ManagedContentNamespace> namespace = ManagedContentNamespace.forRelativeKey(fileName);
+        if (namespace.isPresent()) {
+            String key = authorizedNamespacedKey(namespace.get(), FilenameUtils.getName(fileName));
+            return getFileUrlResponse(key, HttpMethod.PUT, storageServiceProvider.forDataClass(namespace.get().getDataClass()));
+        }
+        return getFileUrlResponse(fileName, HttpMethod.PUT, s3Service);
+    }
+
+    private void validateUploadFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            throw new BadRequestError("File name is missing.");
+        }
+        if (ManagedContentNamespace.forRelativeKey(fileName).isPresent()) {
+            return;
+        }
+        if (ManagedContentNamespace.forPrefix(prefixOf(fileName)).isPresent()) {
+            throw new BadRequestError("Invalid file name '%s'. Expected %s.", fileName, ManagedContentNamespace.expectedKeyForms());
+        }
+        if (!fileName.equals(FilenameUtils.getName(fileName)) || fileName.equals(".") || fileName.equals("..")) {
+            throw new BadRequestError("Invalid file name '%s'. Expected a file name without a folder.", fileName);
+        }
+    }
+
+    private void checkMediaBelongsToCurrentOrganisation(S3Service storage, String url) {
+        storage.generateMediaDownloadUrl(url);
     }
 }
