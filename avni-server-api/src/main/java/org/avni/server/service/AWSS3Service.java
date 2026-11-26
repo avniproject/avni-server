@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 
 import static java.lang.String.format;
@@ -28,16 +30,22 @@ import static java.lang.String.format;
 @ConditionalOnProperty(value = "aws.s3.enable", havingValue = "true", matchIfMissing = true)
 public class AWSS3Service extends StorageService {
     private static final Logger logger = LoggerFactory.getLogger(AWSS3Service.class);
+    // Bucket names that media URLs stored in the database may carry, read from bucketName under
+    // the same key. Lets a server run from the DR replica while URLs still name the primary bucket.
+    private final Set<String> bucketNameAliases;
 
     @Autowired
     public AWSS3Service(@Value("${avni.bucketName}") String bucketName,
                         @Value("${aws.accessKeyId}") String accessKeyId,
                         @Value("${aws.secretAccessKey}") String secretAccessKey,
                         @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev,
+                        @Value("${avni.s3.region}") String s3Region,
+                        @Value("${avni.bucketNameAliases:}") List<String> bucketNameAliases,
                         List<MediaUrlResolver> mediaUrlResolvers) {
         super(bucketName, s3InDev, logger, isDev, mediaUrlResolvers);
+        this.bucketNameAliases = bucketNameAliases.stream().map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
         s3Client = AmazonS3ClientBuilder.standard()
-                .withRegion(REGION)
+                .withRegion(s3Region)
                 .withPathStyleAccessEnabled(true)
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey)))
                 .build();
@@ -62,7 +70,7 @@ public class AWSS3Service extends StorageService {
         if (matcher.find()) {
             mediaDirectoryFromUrl = matcher.group("mediaDir");
         }
-        if (!mediaDirectory.equals(mediaDirectoryFromUrl) || !(bucketName.equals(amazonS3URI.getBucket()))) {
+        if (!mediaDirectory.equals(mediaDirectoryFromUrl) || !(bucketName.equals(amazonS3URI.getBucket()) || bucketNameAliases.contains(amazonS3URI.getBucket()))) {
             String message = format("User '%s' not authorized to access '%s'", userContext.getUserName(), url);
             throw new AccessDeniedException(message);
         }

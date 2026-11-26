@@ -7,7 +7,6 @@ package org.avni.server.auth;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.AnonymousAWSCredentials;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
 import com.amazonaws.services.cognitoidp.model.*;
@@ -90,11 +89,11 @@ public class AuthenticationHelper {
     private BigInteger A;
     private AWSCognitoIdentityProvider cognitoIdentityProvider;
 
-    public AuthenticationHelper(String userPoolID, String clientId) {
-        this(userPoolID, clientId, null);
+    public AuthenticationHelper(String userPoolID, String clientId, String region) {
+        this(userPoolID, clientId, region, null);
     }
 
-    public AuthenticationHelper(String userPoolID, String clientId, String secretKey) {
+    public AuthenticationHelper(String userPoolID, String clientId, String region, String secretKey) {
         do {
             a = new BigInteger(EPHEMERAL_KEY_LENGTH, SECURE_RANDOM).mod(N);
             A = g.modPow(a, N);
@@ -102,7 +101,7 @@ public class AuthenticationHelper {
 
         this.userPoolID = userPoolID;
         this.clientId = clientId;
-        this.region = "ap-south-1";
+        this.region = region;
         this.secretKey = secretKey;
     }
 
@@ -164,7 +163,7 @@ public class AuthenticationHelper {
             cognitoIdentityProvider = AWSCognitoIdentityProviderClientBuilder
                     .standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-                    .withRegion(Regions.fromName(this.region))
+                    .withRegion(this.region)
                     .build();
             InitiateAuthResult initiateAuthResult = cognitoIdentityProvider.initiateAuth(initiateAuthRequest);
             if (ChallengeNameType.PASSWORD_VERIFIER.toString().equals(initiateAuthResult.getChallengeName())) {

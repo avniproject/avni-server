@@ -2,7 +2,6 @@ package org.avni.server.service;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
 import com.amazonaws.services.cognitoidp.model.*;
@@ -52,7 +51,7 @@ public class CognitoIdpService extends IdpServiceImpl {
     public void init() {
         cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
                 .withCredentials(getCredentialsProvider())
-                .withRegion(Regions.fromName(region))
+                .withRegion(region)
                 .build();
         logger.info("Initialized CognitoIDP client");
     }

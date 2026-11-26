@@ -26,16 +26,19 @@ public class StorageServiceFactory {
     private final boolean s3InDev;
     private final Boolean isDev;
     private final List<MediaUrlResolver> mediaUrlResolvers;
+    private final String s3Region;
 
     @Autowired
     public StorageServiceFactory(StorageCredentialProvider credentialProvider,
                                  @Value("${avni.connectToS3InDev}") boolean s3InDev,
                                  Boolean isDev,
-                                 List<MediaUrlResolver> mediaUrlResolvers) {
+                                 List<MediaUrlResolver> mediaUrlResolvers,
+                                 @Value("${avni.s3.region}") String s3Region) {
         this.credentialProvider = credentialProvider;
         this.s3InDev = s3InDev;
         this.isDev = isDev;
         this.mediaUrlResolvers = mediaUrlResolvers;
+        this.s3Region = s3Region;
     }
 
     public S3Service build(Organisation organisation, StorageTarget target) {
@@ -59,7 +62,7 @@ public class StorageServiceFactory {
                             .build();
                 }
                 return AmazonS3ClientBuilder.standard()
-                        .withRegion(SIGNING_REGION)
+                        .withRegion(s3Region)
                         .withPathStyleAccessEnabled(true)
                         .withCredentials(credentialsProvider)
                         .build();

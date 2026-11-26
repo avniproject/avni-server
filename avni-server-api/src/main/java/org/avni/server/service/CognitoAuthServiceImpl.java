@@ -34,7 +34,7 @@ public class CognitoAuthServiceImpl extends BaseIAMService {
 
     @Override
     public String generateTokenForUser(String username, String password) {
-        AuthenticationHelper helper = new AuthenticationHelper(cognitoConfig.getPoolId(), cognitoConfig.getClientId());
+        AuthenticationHelper helper = new AuthenticationHelper(cognitoConfig.getPoolId(), cognitoConfig.getClientId(), cognitoConfig.getRegion());
         AuthenticationResultType authenticationResultType = helper.performSRPAuthentication(username, password);
         return authenticationResultType.getIdToken();
     }
