@@ -462,11 +462,9 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     String value = c.getValues().get(i);
                     String param = "codedConceptValue" + ci + "00" + i;
                     addParameter(param, value);
-                    String sql = "case when JSONB_TYPEOF(" + tableAlias + ".observations->:" + conceptUuidParam + ") = 'array'" +
-                            "then " +
-                            tableAlias + ".observations -> :" + conceptUuidParam + " @> to_jsonb(cast(:" + param + " as text)) " +
-                            "else " +
-                            tableAlias + ".observations ->> :" + conceptUuidParam + "= :" + param + " end";
+                    // Containment, so the GIN index on observations can serve it: a multi-select answer is an array holding the value, a single answer is the value itself.
+                    String sql = "(" + tableAlias + ".observations @> jsonb_build_object(cast(:" + conceptUuidParam + " as text), jsonb_build_array(cast(:" + param + " as text)))" +
+                            " or " + tableAlias + ".observations @> jsonb_build_object(cast(:" + conceptUuidParam + " as text), cast(:" + param + " as text)))";
                     conditions.add(sql);
                 }
                 String codedFilter = String.join(" or ", conditions);
