@@ -391,7 +391,7 @@ public class SubjectSearchQueryBuilderTest {
     public void searchAllAlsoLooksAtSubjectsWithoutAnEnrolment() {
         String sql = new SubjectSearchQueryBuilder().withSearchAll("alpha").build(subjectType).getSql();
 
-        assertThat(sql).contains(" or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false and penr.program_exit_date_time is null and (case when cast(penr.observations as text) ilike :searchAllStored");
+        assertThat(sql).contains(" or i.id in (select penr.individual_id from program_enrolment penr where penr.organisation_id = null and penr.is_voided is false and penr.program_exit_date_time is null and (case when cast(penr.observations as text) ilike :searchAllStored");
         assertThat(sql).doesNotContain("join program_enrolment penr on penr.individual_id = i.id");
     }
 
@@ -661,7 +661,7 @@ public class SubjectSearchQueryBuilderTest {
                 .withProgramEnrolmentDateFilter(new DateRange("2026-01-01", "2026-03-31"))
                 .build(subjectType).getSql();
 
-        assertThat(sql).contains("from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false and penr.program_exit_date_time is null");
+        assertThat(sql).contains("from program_enrolment penr where penr.organisation_id = null and penr.enrolment_date_time is not null and penr.is_voided is false and penr.program_exit_date_time is null");
     }
 
     @Test
@@ -806,9 +806,9 @@ public class SubjectSearchQueryBuilderTest {
         String ticked = tickedProgramA(true).withSearchAll("alpha").build(subjectType).getSql();
         String none = tickedProgramA(false).withSearchAll("alpha").build(subjectType).getSql();
 
-        assertThat(ticked).contains("from program_enrolment penr where penr.is_voided is false and penr.program_exit_date_time is null and " + TICKED_PROGRAMS + " and (case when cast(penr.observations as text) ilike :searchAllStored");
+        assertThat(ticked).contains("from program_enrolment penr where penr.organisation_id = null and penr.is_voided is false and penr.program_exit_date_time is null and " + TICKED_PROGRAMS + " and (case when cast(penr.observations as text) ilike :searchAllStored");
         assertThat(ticked).contains(FULL_NAME_SEARCH).contains("(case when cast(i.observations as text) ilike :searchAllStored");
-        assertThat(none).contains("from program_enrolment penr where penr.is_voided is false and penr.program_exit_date_time is null and (case when cast(penr.observations as text) ilike :searchAllStored")
+        assertThat(none).contains("from program_enrolment penr where penr.organisation_id = null and penr.is_voided is false and penr.program_exit_date_time is null and (case when cast(penr.observations as text) ilike :searchAllStored")
                 .doesNotContain(TICKED_PROGRAMS);
     }
 
@@ -816,7 +816,7 @@ public class SubjectSearchQueryBuilderTest {
     public void searchAllLooksAtExitedEnrolmentsOnlyWithIncludeExited() {
         String withExited = new SubjectSearchQueryBuilder().withIncludeExitedEnrolments(true).withSearchAll("alpha").build(subjectType).getSql();
 
-        assertThat(withExited).contains("from program_enrolment penr where penr.is_voided is false and (case when cast(penr.observations as text) ilike :searchAllStored")
+        assertThat(withExited).contains("from program_enrolment penr where penr.organisation_id = null and penr.is_voided is false and (case when cast(penr.observations as text) ilike :searchAllStored")
                 .doesNotContain("program_exit_date_time is null");
     }
 
@@ -862,7 +862,7 @@ public class SubjectSearchQueryBuilderTest {
                 .withProgramsFilter(Collections.singletonList("p-qa"), true, false)
                 .build(subjectType).getSql();
 
-        assertThat(sql).contains("from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false and " + TICKED_PROGRAMS + "\n")
+        assertThat(sql).contains("from program_enrolment penr where penr.organisation_id = null and penr.enrolment_date_time is not null and penr.is_voided is false and " + TICKED_PROGRAMS + "\n")
                 .doesNotContain("program_exit_date_time is null");
     }
 
@@ -883,5 +883,20 @@ public class SubjectSearchQueryBuilderTest {
         when(organisationConfigService.getSettingsByKey(OrganisationConfigSettingKey.searchResultFields.toString()))
                 .thenReturn(setting);
         return setting;
+    }
+
+    @Test
+    public void subqueriesShouldBeScopedToTheCurrentOrganisation() {
+        UserContextHolder.getOrganisation().setId(21L);
+        String sql = new SubjectSearchQueryBuilder()
+                .withEncounterDateFilter(new DateRange("2025-01-01", null))
+                .withProgramEnrolmentDateFilter(new DateRange("2025-01-01", null))
+                .withProgramEncounterDateFilter(new DateRange("2025-01-01", null))
+                .withSearchAll("abc")
+                .build(subjectType).getSql();
+        assertThat(sql).doesNotContain(BaseSubjectSearchQueryBuilder.ORGANISATION_ID_PLACEHOLDER);
+        assertThat(sql).contains("e.organisation_id = 21");
+        assertThat(sql).contains("penc.organisation_id = 21");
+        assertThat(sql.split("penr.organisation_id = 21", -1).length - 1).isEqualTo(3);
     }
 }

@@ -27,9 +27,10 @@ import java.util.stream.Collectors;
 public class BaseSubjectSearchQueryBuilder<T> {
     private final Logger logger;
 
-    protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.encounter_date_time is not null and e.is_voided is false\n";
-    protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n";
-    protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
+    protected static final String ORGANISATION_ID_PLACEHOLDER = "$ORGANISATION_ID";
+    protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and e.encounter_date_time is not null and e.is_voided is false\n";
+    protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penr.enrolment_date_time is not null and penr.is_voided is false\n";
+    protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penc.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
     public static final String FULL_NAME = "concat_ws(' ', nullif(i.first_name, ''), nullif(i.middle_name, ''), nullif(i.last_name, ''))";
     private static final String NUMBER_PATTERN = "-?[0-9]{1,30}(\\.[0-9]{1,30})?";
     private static final String PART_OF_A_NUMBER_PATTERN = "-?[0-9]*\\.?[0-9]+\\.?";
@@ -65,7 +66,8 @@ public class BaseSubjectSearchQueryBuilder<T> {
         StringBuilder query = new StringBuilder();
         query.append(baseQuery);
 
-        query.append(String.format("\n where i.organisation_id = %d and\n", UserContextHolder.getOrganisation().getId()));
+        Long organisationId = UserContextHolder.getOrganisation().getId();
+        query.append(String.format("\n where i.organisation_id = %d and\n", organisationId));
 
         query.append(String.join(" \nand ", allWhereClauses()));
         query.append(groupByClause);
@@ -91,7 +93,8 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     .toString();
         }
         String customFieldString = customFields.isEmpty() ? "" : ",\n".concat(String.join(",\n", customFields));
-        String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString);
+        String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString)
+                .replace(ORGANISATION_ID_PLACEHOLDER, String.valueOf(organisationId));
         logger.trace(parameters.toString());
         return new SqlQuery(queryWithCustomFields, parameters);
     }
@@ -338,7 +341,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         if (partOfANumber) parameters.put("searchAllNumber", numberValueContaining(searchString));
         whereClauses.add("(" + FULL_NAME + " ilike :searchAll" +
                 " or " + answersContainSearchAll("i.observations", partOfANumber) +
-                " or i.id in (select penr.individual_id from program_enrolment penr where penr.is_voided is false" + exitRule() + tickedProgramsRule() + " and " + answersContainSearchAll("penr.observations", partOfANumber) + "))");
+                " or i.id in (select penr.individual_id from program_enrolment penr where penr.organisation_id = " + ORGANISATION_ID_PLACEHOLDER + " and penr.is_voided is false" + exitRule() + tickedProgramsRule() + " and " + answersContainSearchAll("penr.observations", partOfANumber) + "))");
         if (partOfANumber) {
             searchAllText = searchString;
             searchAllExactAnswer = answerValueEqualTo(searchString);
